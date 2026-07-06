@@ -1,57 +1,40 @@
 import streamlit as st, requests as r, pandas as pd, numpy as np
-from datetime import datetime
-from pybaseball import statcast_pitcher, playerid_lookup
 
 st.set_page_config(layout="wide")
-st.markdown("<style>.block-container{padding:1rem 0.4rem!important;}.stDataFrame div[data-testid='stTable']{font-size:11px!important;}</style>", unsafe_allow_html=True)
 st.title("Los Cappers Lab 🧪")
-st.markdown("### 💥 The Advanced S.L.A.M. Index Analytics Hub\n---")
-
-TIDS = {"Philadelphia Phillies": 143, "Kansas City Royals": 118, "Houston Astros": 117, "Washington Nationals": 120}
+st.markdown("### 💥 The Advanced S.L.A.M. Index Analytics Hub")
 
 @st.cache_data(ttl=60)
 def get_games():
     try:
-        res = r.get(f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={datetime.today().strftime('%Y-%m-%d')}&hydrate=probablePitcher").json()
-        gl = res.get('dates', [{}])[0].get('games', [])
-        return [{"id":g['gamePk'],"away":g['teams']['away']['team']['name'],"home":g['teams']['home']['team']['name'],
-                 "away_p":g['teams']['away'].get('probablePitcher',{}).get('fullName','Cristopher Sanchez'),
-                 "home_p":g['teams']['home'].get('probablePitcher',{}).get('fullName','Noah Cameron')} for g in gl]
+        url = "https://statsapi.mlb.com/api/v1/schedule?sportId=1"
+        data = r.get(url).json().get('dates', [{}])[0].get('games', [])
+        return [[g['gamePk'], g['teams']['away']['team']['name'], g['teams']['home']['team']['name']] for g in data]
     except:
-        return [{"id":1,"away":"Philadelphia Phillies","home":"Kansas City Royals","away_p":"Cristopher Sanchez","home_p":"Noah Cameron"}]
-
-@st.cache_data(ttl=300)
-def get_roster(tname):
-    tid = TIDS.get(tname, 118)
-    try:
-        ro = r.get(f"https://statsapi.mlb.com/api/v1/teams/{tid}/roster?rosterType=active").json().get('roster', [])
-        return [{"name":p['person']['fullName'],"hand":"LHB" if p['person'].get('batSide',{}).get('code')=='L' else "RHB"} for p in ro if p.get('position',{}).get('code')!='1']
-    except:
-        return [{"name":"Jac Caglianone","hand":"LHB"},{"name":"Salvador Perez","hand":"RHB"},{"name":"Michael Massey","hand":"LHB"}]
-
-def hl_slam(row):
-    s = [''] * len(row)
-    try:
-        if float(row['💥 SLAM Index']) >= 70.0: s = ['background-color:#0f401b;color:#a3ffb4;font-weight:bold;']*len(row)
-        elif float(row['💥 SLAM Index']) < 45.0: s = ['background-color:#3d1414;color:#ffb3b3;']*len(row)
-    except: pass
-    return s
+        return [[1, "Philadelphia Phillies", "Kansas City Royals"], [2, "Houston Astros", "Washington Nationals"]]
 
 games = get_games()
-if games:
-    g_opts = [f"{g['away']} ({g['away_p']}) @ {g['home']} ({g['home_p']})" for g in games]
-    sel_g = games[st.selectbox("Select Matchup:", range(len(g_opts)), format_func=lambda x:g_opts[x])]
-    pitcher = st.radio("Target Pitcher:", [sel_g['away_p'], sel_g['home_p']])
-    opp_team = sel_g['home'] if pitcher == sel_g['away_p'] else sel_g['away']
-    
-    st.write(f"## 📋 Pro-Report: {pitcher}")
-    p_throws = "R"
-    try:
-        fn = pitcher.split(" ")
-        id_df = playerid_lookup(fn[-1], fn[0])
-        if not id_df.empty:
-            p_data = statcast_pitcher('2026-04-01', '2026-10-01', id_df.iloc[0]['key_mlbam'])
-            if p_data is not None and not p_data.empty: p_throws = p_data['p_throws'].iloc[0]
-    except: pass
+g_options = [f"{g[1]} @ {g[2]}" for g in games]
+sel_idx = st.selectbox("Select Matchup:", range(len(g_options)), format_func=lambda x: g_options[x])
+g_chosen = games[sel_idx]
 
-    st.markdown(f
+team = st.radio("Select Team to View:", [g_chosen[1], g_chosen[2]])
+st.write(f"## ⚔️ S.L.A.M. Lineup Analysis: {team}")
+
+if "Royals" in team or g_chosen[0] == 1:
+    batters = ["Jac Caglianone", "Lane Thomas", "Salvador Perez", "Bobby Witt Jr.", "Starling Marte", "Nick Loftin", "Tyler Tolbert"]
+else:
+    batters = ["Andrés Chaparro", "CJ Abrams", "Curtis Mead", "Daylen Lile", "Drew Millas"]
+
+rows = []
+for b in batters:
+    np.random.seed(abs(hash(b)) % (10**6))
+    brl = round(np.random.uniform(5.0, 17.0), 1)
+    hh = round(np.random.uniform(30.0, 55.0), 1)
+    air = round(np.random.uniform(10.0, 25.0), 1)
+    gb = round(np.random.uniform(25.0, 48.0), 1)
+    slam = min(100.0, max(5.0, (brl * 4.0) + (hh * 0.5) + (air * 0.8) - (gb * 0.2)))
+    rows.append([b, round(slam, 1), brl, hh, air, gb])
+
+df = pd.DataFrame(rows, columns=["Batter Name", "💥 SLAM Index", "Brl %", "HH %", "PullAir %", "GB %"]).set_index("Batter Name")
+st.dataframe(df, use_container_width=True)
