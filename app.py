@@ -241,7 +241,30 @@ if games:
             # --- REAL BATTER STATCAST INTEGRATION ---
             st.markdown(f"### ⚔️ Intent-To-Homer Lineup Analysis vs. {opposing_team}")
             st.caption("🌲 Emerald Glow = High Volume Verified Power + Covers Arsenal Options | 🪐 Matte Grey = Small Sample Size")
-            
+            import streamlit as st
+import requests
+import pandas as pd
+import numpy as np
+from datetime import datetime
+from pybaseball import statcast_pitcher, playerid_lookup, batting_stats
+
+st.set_page_config(layout="wide", page_title="Los Cappers Lab", page_icon="🧪")
+st.title("Los Cappers Lab 🧪")
+st.markdown("### 💥 The Advanced S.L.A.M. Index Analytics Hub")
+st.markdown("---")
+
+MLB_TEAM_IDS = {
+    "Arizona Diamondbacks": 109, "Atlanta Braves": 144, "Baltimore Orioles": 110,
+    "Boston Red Sox": 111, "Chicago Cubs": 112, "Chicago White Sox": 145,
+    "Cincinnati Reds": 113, "Cleveland Guardians": 114, "Colorado Rockies": 115,
+    "Detroit Tigers": 116, "Houston Astros": 117, "Kansas City Royals": 118,
+    "Los Angeles Angels": 108, "Los Angeles Dodgers": 119, "Miami Marlins": 146,
+    "Milwaukee Brewers": 158, "Minnesota Twins": 142, "New York Mets": 121,
+    "New York Yankees": 147, "Athletics": 131, "Philadelphia Phillies": 143,
+    "Pittsburgh Pirates": 134, "San Diego Padres": 135, "San Francisco Giants": 137,
+    "Seattle Mariners": 136, "St. Louis Cardinals": 138, "Tampa Bay Rays": 139,
+    "Texas Rangers": 140, "Toronto Blue Jays": 141, "Washington Nationals": 120
+}
             live_batters = get_live_team_roster(opposing_team)
             real_stats_df = load_real_batter_stats()
             processed_rows = []
