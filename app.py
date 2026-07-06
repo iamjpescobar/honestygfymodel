@@ -5,13 +5,14 @@ import numpy as np
 from datetime import datetime
 from pybaseball import statcast_pitcher, playerid_lookup
 
-# Standard fluid UI setup
+# --- 1. SET LAYOUT CONFIGURATION ---
 st.set_page_config(layout="wide")
 
 st.title("Los Cappers Lab 🧪")
+st.markdown("### 💥 The Advanced S.L.A.M. Index Analytics Hub")
 st.markdown("---")
 
-# Direct mapping for MLB active roster queries
+# --- 2. CONFIGURATION & MAPS ---
 MLB_TEAM_IDS = {
     "Arizona Diamondbacks": 109, "Atlanta Braves": 144, "Baltimore Orioles": 110,
     "Boston Red Sox": 111, "Chicago Cubs": 112, "Chicago White Sox": 145,
@@ -25,10 +26,20 @@ MLB_TEAM_IDS = {
     "Texas Rangers": 140, "Toronto Blue Jays": 141, "Washington Nationals": 120
 }
 
+PITCH_CODE_MAP = {
+    'FF': '4-Seam Fastball', 'SL': 'Slider', 'CH': 'Changeup', 
+    'SI': 'Sinker', 'CU': 'Curveball', 'FC': 'Cutter', 
+    'ST': 'Sweeper', 'FS': 'Splitter', 'KC': 'Knuckle-Curve'
+}
+
+# --- 3. PERSISTENT STATE MANAGEMENT FOR DRILL-DOWN ---
+if 'selected_batter' not in st.session_state:
+    st.session_state.selected_batter = None
+
+# --- 4. DATA FETCHING FUNCTIONS ---
 @st.cache_data(ttl=60)
 def get_todays_games():
     today = datetime.today().strftime('%Y-%m-%d')
-    # 🛠️ CRITICAL FIXED ENDPOINT: Added &hydrate=probablePitcher to pull ALL starters automatically
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today}&hydrate=probablePitcher"
     try:
         response = requests.get(url).json()
@@ -37,23 +48,17 @@ def get_todays_games():
         for game in games:
             away_team = game['teams']['away']['team']['name']
             home_team = game['teams']['home']['team']['name']
-            
-            # Extract pitchers safely using the newly hydrated probablePitcher object nodes
             away_p = game['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
             home_p = game['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD')
             
-            # Permanent dynamic testing backups
             if away_team == "Philadelphia Phillies" and away_p == "TBD": away_p = "Cristopher Sanchez"
             if home_team == "Kansas City Royals" and home_p == "TBD": home_p = "Noah Cameron"
             if away_team == "New York Yankees" and away_p == "TBD": away_p = "Cam Schlittler"
             if home_team == "Tampa Bay Rays" and home_p == "TBD": home_p = "Griffin Jax"
                 
             matchups.append({
-                "game_id": game['gamePk'], 
-                "away": away_team, 
-                "home": home_team, 
-                "away_pitcher": away_p, 
-                "home_pitcher": home_p
+                "game_id": game['gamePk'], "away": away_team, "home": home_team,
+                "away_pitcher": away_p, "home_pitcher": home_p
             })
         return matchups
     except Exception:
@@ -81,17 +86,36 @@ def get_live_team_roster(team_name):
     except Exception:
         return []
 
-def highlight_props(val):
+# --- 5. CONDITIONAL VISUAL HEATMAP ENGINE ---
+def highlight_slam(row):
+    styles = [''] * len(row)
     try:
-        num = float(val)
-        if num >= 55.0 or num >= 92.0: 
-            return 'background-color: #1b4d22; color: white;'
-        elif num <= 14.0 or num <= 6.0: 
-            return 'background-color: #5c1d1d; color: white;'
-    except (ValueError, TypeError):
+        slam_val = float(row['💥 SLAM Index'])
+        brl_val = float(row['Brl %'])
+        hh_val = float(row['HH %'])
+        gb_val = float(row['GB %'])
+        bbe_val = int(row['BBE'])
+        match_val = row['Top 3 Matchup']
+        
+        if bbe_val < 45:
+            for i in range(len(row)):
+                styles[i] = 'background-color: #22222b; color: #7c7c8c; font-style: italic; opacity: 0.5;'
+            return styles
+            
+        if slam_val >= 75.0 and brl_val >= 10.0 and hh_val >= 35.0 and gb_val <= 35.0 and match_val == "🔥 ELITE":
+            for i in range(len(row)):
+                styles[i] = 'background-color: #0f401b; color: #a3ffb4; font-weight: bold; border: 2px solid #a3ffb4;'
+        elif slam_val >= 70.0 and brl_val >= 10.0 and gb_val <= 35.0:
+            for i in range(len(row)):
+                styles[i] = 'background-color: #1b4d22; color: #deff9a; font-weight: bold;'
+        elif slam_val < 45.0 or brl_val < 10.0 or gb_val > 42.0:
+            for i in range(len(row)):
+                styles[i] = 'background-color: #3d1414; color: #ffb3b3; opacity: 0.7;'
+    except:
         pass
-    return ''
+    return styles
 
+# --- 6. CORE LOGIC EXECUTION ENGINE ---
 games = get_todays_games()
 
 if games:
@@ -99,85 +123,4 @@ if games:
     selected_idx = st.selectbox("Select Today's Matchup:", range(len(game_options)), format_func=lambda x: game_options[x])
     chosen_game = games[selected_idx]
     
-    pitcher = st.radio("Select Pitcher to Target:", [chosen_game['away_pitcher'], chosen_game['home_pitcher']])
-    opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
-    
-    if pitcher and pitcher != "TBD":
-        st.write(f"## 📋 Pro-Report: {pitcher}")
-        
-        with st.spinner("Analyzing live lineups & running data simulations..."):
-            try:
-                clean_name = pitcher.encode('ascii', 'ignore').decode('utf-8').replace('.', '').replace(',', '')
-                names = clean_name.split(" ")
-                
-                if len(names) >= 3 and names[-1].lower() in ['jr', 'sr', 'iii', 'ii']:
-                    first, last = names[0], names[-2]
-                else:
-                    first, last = names[0], names[-1]
-                    
-                if "Cristopher" in pitcher: first, last = "Cristopher", "Sanchez"
-                
-                id_df = playerid_lookup(last, first)
-                if not id_df.empty:
-                    pitcher_id = id_df.iloc[0]['key_mlbam']
-                    data = statcast_pitcher('2026-04-01', '2026-10-01', pitcher_id)
-                    
-                    if data is not None and not data.empty:
-                        st.markdown("### 🪓 Pitcher Splitting Profiles")
-                        lhb_data = data[data['p_throws'] == 'L']
-                        rhb_data = data[data['p_throws'] == 'R']
-                        
-                        splits_summary = pd.DataFrame({
-                            "Split Zone": ["vs LHB", "vs RHB", "Overall Season"],
-                            "Pitches Thrown": [len(lhb_data), len(rhb_data), len(data)],
-                            "Estimated Whiff %": [32.2, 26.0, 28.5], 
-                            "Strikeout %": [36.6, 26.0, 28.5]
-                        }).set_index("Split Zone")
-                        st.dataframe(splits_summary)
-                    else:
-                        st.info(f"ℹ️ Statcast splitting data profile is initializing for {pitcher}.")
-                        
-                    st.markdown("---")
-                    st.markdown(f"### ⚔️ Live Active Lineup Matchup vs. **{opposing_team}**")
-                    st.caption("🟢 Green = Hitter Advantage (Over) | 🔴 Red = Pitcher Advantage (Under)")
-                    
-                    live_batters = get_live_team_roster(opposing_team)
-                    
-                    processed_rows = []
-                    for b in live_batters:
-                        np.random.seed(abs(hash(b['name'])) % (10**8))
-                        
-                        whiff = round(np.random.uniform(12.0, 32.0), 1)
-                        k_pct = round(np.random.uniform(8.0, 28.0), 1)
-                        swstr = round(np.random.uniform(5.0, 15.0), 1)
-                        ev = round(np.random.uniform(84.0, 96.0), 1)
-                        dist = round(np.random.uniform(210.0, 310.0), 1)
-                        brl = round(np.random.uniform(2.0, 18.0), 1)
-                        pull_brl = round(np.random.uniform(0.5, 6.0), 1)
-                        pull_air = round(np.random.uniform(5.0, 26.0), 1)
-                        hh = round(np.random.uniform(35.0, 65.0), 1)
-                        fb_hr = round(np.random.uniform(5.0, 35.0), 1)
-                        
-                        slam_score = (brl * 2.5) + (hh * 0.3) + (fb_hr * 0.4) + (pull_air * 0.5)
-                        
-                        processed_rows.append({
-                            "Batter Name": b['name'], "Hand": b['hand'], "Whiff %": whiff, "K %": k_pct, "SwStr %": swstr,
-                            "EV (MPH)": ev, "Dist (Ft)": dist, "Brl %": brl, "PullBrl %": pull_brl,
-                            "PullAir %": pull_air, "HH %": hh, "FB/HR %": fb_hr, "💥 SLAM Index": round(slam_score, 1)
-                        })
-                    
-                    if processed_rows:
-                        df_lineup = pd.DataFrame(processed_rows).set_index('Batter Name')
-                        styled_lineup = df_lineup.style.format("{:.1f}", subset=df_lineup.select_dtypes(include='number').columns).map(highlight_props)
-                        st.dataframe(styled_lineup, use_container_width=True)
-                    else:
-                        st.warning("⚠️ Waiting on roster verification feed confirmation for this game.")
-                else:
-                    st.warning(f"⚠️ Pitcher search database returned no match for: {pitcher}.")
-                        
-            except Exception as e:
-                st.error(f"Error drawing dashboards: {e}")
-    else:
-        st.info("Please select a game with confirmed pitchers above.")
-else:
-    st.info("Waiting for today's MLB schedule feed to go live.")
+    pitcher = st.radio("Select Pitcher to Target:",
