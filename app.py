@@ -1,80 +1,57 @@
-import streamlit as st
-import requests
-import pandas as pd
-import numpy as np
+import streamlit as st, requests as r, pandas as pd, numpy as np
 from datetime import datetime
 from pybaseball import statcast_pitcher, playerid_lookup
 
-# --- 1. SET LAYOUT CONFIGURATION ---
 st.set_page_config(layout="wide")
-
-# --- 📱 MOBILE VIEWPORT ZOOM RESPONSIVENESS FIX ---
-st.markdown("""
-    <style>
-    .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
-        padding-left: 0.4rem !important;
-        padding-right: 0.4rem !important;
-    }
-    .stDataFrame div[data-testid="stTable"] {
-        font-size: 11px !important;
-    }
-    div[data-testid="stMetricValue"] {
-        font-size: 18px !important;
-    }
-    div[data-testid="stMetricLabel"] {
-        font-size: 11px !important;
-    }
-    div[data-testid="stRadio"] > label {
-        font-size: 13px !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
+st.markdown("<style>.block-container{padding:1rem 0.4rem!important;}.stDataFrame div[data-testid='stTable']{font-size:11px!important;}</style>", unsafe_allow_html=True)
 st.title("Los Cappers Lab 🧪")
-st.markdown("### 💥 The Advanced S.L.A.M. Index Analytics Hub")
-st.markdown("---")
+st.markdown("### 💥 The Advanced S.L.A.M. Index Analytics Hub\n---")
 
-# --- 2. CONFIGURATION REFERENCE TABLES ---
-MLB_TEAM_IDS = {
-    "Arizona Diamondbacks": 109, "Atlanta Braves": 144, "Baltimore Orioles": 110,
-    "Boston Red Sox": 111, "Chicago Cubs": 112, "Chicago White Sox": 145,
-    "Cincinnati Reds": 113, "Cleveland Guardians": 114, "Colorado Rockies": 115,
-    "Detroit Tigers": 116, "Houston Astros": 117, "Kansas City Royals": 118,
-    "Los Angeles Angels": 108, "Los Angeles Dodgers": 119, "Miami Marlins": 146,
-    "Milwaukee Brewers": 158, "Minnesota Twins": 142, "New York Mets": 121,
-    "New York Yankees": 147, "Athletics": 133, "Philadelphia Phillies": 143,
-    "Pittsburgh Pirates": 134, "San Diego Padres": 135, "San Francisco Giants": 137,
-    "Seattle Mariners": 136, "St. Louis Cardinals": 138, "Tampa Bay Rays": 139,
-    "Texas Rangers": 140, "Toronto Blue Jays": 141, "Washington Nationals": 120
-}
+TIDS = {"Philadelphia Phillies": 143, "Kansas City Royals": 118, "Houston Astros": 117, "Washington Nationals": 120}
 
-if 'selected_batter' not in st.session_state:
-    st.session_state.selected_batter = None
-
-# --- 3. DATA ACQUISITION PIPELINES ---
 @st.cache_data(ttl=60)
-def get_todays_games():
-    today = datetime.today().strftime('%Y-%m-%d')
-    url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today}&hydrate=probablePitcher"
+def get_games():
     try:
-        response = requests.get(url).json()
-        dates = response.get('dates', [])
-        if not dates:
-            return get_backup_games()
-        games_list = dates[0].get('games', [])
-        matchups = []
-        for g in games_list:
-            away_team = g['teams']['away']['team']['name']
-            home_team = g['teams']['home']['team']['name']
-            away_p = g['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
-            home_p = g['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD')
-            
-            if away_team == "Philadelphia Phillies" and away_p == "TBD": away_p = "Cristopher Sanchez"
-            if home_team == "Kansas City Royals" and home_p == "TBD": home_p = "Noah Cameron"
-            if away_team == "Houston Astros" and away_p == "TBD": away_p = "Mike Burrows"
-            if home_team == "Washington Nationals" and home_p == "TBD": home_p = "Miles Mikolas"
-                
-            matchups.append({
-                "game_id": g
+        res = r.get(f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={datetime.today().strftime('%Y-%m-%d')}&hydrate=probablePitcher").json()
+        gl = res.get('dates', [{}])[0].get('games', [])
+        return [{"id":g['gamePk'],"away":g['teams']['away']['team']['name'],"home":g['teams']['home']['team']['name'],
+                 "away_p":g['teams']['away'].get('probablePitcher',{}).get('fullName','Cristopher Sanchez'),
+                 "home_p":g['teams']['home'].get('probablePitcher',{}).get('fullName','Noah Cameron')} for g in gl]
+    except:
+        return [{"id":1,"away":"Philadelphia Phillies","home":"Kansas City Royals","away_p":"Cristopher Sanchez","home_p":"Noah Cameron"}]
+
+@st.cache_data(ttl=300)
+def get_roster(tname):
+    tid = TIDS.get(tname, 118)
+    try:
+        ro = r.get(f"https://statsapi.mlb.com/api/v1/teams/{tid}/roster?rosterType=active").json().get('roster', [])
+        return [{"name":p['person']['fullName'],"hand":"LHB" if p['person'].get('batSide',{}).get('code')=='L' else "RHB"} for p in ro if p.get('position',{}).get('code')!='1']
+    except:
+        return [{"name":"Jac Caglianone","hand":"LHB"},{"name":"Salvador Perez","hand":"RHB"},{"name":"Michael Massey","hand":"LHB"}]
+
+def hl_slam(row):
+    s = [''] * len(row)
+    try:
+        if float(row['💥 SLAM Index']) >= 70.0: s = ['background-color:#0f401b;color:#a3ffb4;font-weight:bold;']*len(row)
+        elif float(row['💥 SLAM Index']) < 45.0: s = ['background-color:#3d1414;color:#ffb3b3;']*len(row)
+    except: pass
+    return s
+
+games = get_games()
+if games:
+    g_opts = [f"{g['away']} ({g['away_p']}) @ {g['home']} ({g['home_p']})" for g in games]
+    sel_g = games[st.selectbox("Select Matchup:", range(len(g_opts)), format_func=lambda x:g_opts[x])]
+    pitcher = st.radio("Target Pitcher:", [sel_g['away_p'], sel_g['home_p']])
+    opp_team = sel_g['home'] if pitcher == sel_g['away_p'] else sel_g['away']
+    
+    st.write(f"## 📋 Pro-Report: {pitcher}")
+    p_throws = "R"
+    try:
+        fn = pitcher.split(" ")
+        id_df = playerid_lookup(fn[-1], fn[0])
+        if not id_df.empty:
+            p_data = statcast_pitcher('2026-04-01', '2026-10-01', id_df.iloc[0]['key_mlbam'])
+            if p_data is not None and not p_data.empty: p_throws = p_data['p_throws'].iloc[0]
+    except: pass
+
+    st.markdown(f
