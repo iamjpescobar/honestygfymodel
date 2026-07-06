@@ -7,10 +7,10 @@ from pybaseball import statcast_pitcher, playerid_lookup
 
 st.set_page_config(layout="wide")
 
+# 🧪 Matches your visual brand perfectly
 st.title("Los Cappers Lab 🧪")
 st.markdown("---")
 
-# Dictionary mapping MLB Team Names to their official MLB Team IDs for Live API queries
 MLB_TEAM_IDS = {
     "Arizona Diamondbacks": 109, "Atlanta Braves": 144, "Baltimore Orioles": 110,
     "Boston Red Sox": 111, "Chicago Cubs": 112, "Chicago White Sox": 145,
@@ -24,7 +24,7 @@ MLB_TEAM_IDS = {
     "Texas Rangers": 140, "Toronto Blue Jays": 141, "Washington Nationals": 120
 }
 
-@st.cache_data(ttl=60)  # Refreshes schedules automatically
+@st.cache_data(ttl=60)
 def get_todays_games():
     today = datetime.today().strftime('%Y-%m-%d')
     url = f"https://statsapi.mlb.com/api/v1/schedule/games/?sportId=1&date={today}"
@@ -38,18 +38,24 @@ def get_todays_games():
             away_p = game['teams']['away'].get('probablePitcher', {}).get('name', 'TBD')
             home_p = game['teams']['home'].get('probablePitcher', {}).get('name', 'TBD')
             
-            # Fallbacks for testing probables
+            # Temporary dynamic testing defaults 
             if away_team == "Philadelphia Phillies" and away_p == "TBD": away_p = "Cristopher Sanchez"
             if home_team == "Kansas City Royals" and home_p == "TBD": home_p = "Noah Cameron"
             if away_team == "New York Yankees" and away_p == "TBD": away_p = "Cam Schlittler"
             if home_team == "Tampa Bay Rays" and home_p == "TBD": home_p = "Griffin Jax"
                 
-            matchups.append({"game_id": game['gamePk'], "away": away_team, "home": home_team, "away_pitcher": away_p, "home_pitcher": home_p})
+            matchups.append({
+                "game_id": game['gamePk'], 
+                "away": away_team, 
+                "home": home_team, 
+                "away_pitcher": away_p, 
+                "home_pitcher": home_p
+            })
         return matchups
     except:
         return []
 
-@st.cache_data(ttl=300) # Live-fetches active roster per team directly from MLB data rooms
+@st.cache_data(ttl=300)
 def get_live_team_roster(team_name):
     team_id = MLB_TEAM_IDS.get(team_name)
     if not team_id:
@@ -60,7 +66,7 @@ def get_live_team_roster(team_name):
         roster = response.get('roster', [])
         players = []
         for p in roster:
-            if p['position']['code'] != '1': # Exclude pitchers from hitting lineup rows
+            if p['position']['code'] != '1':
                 players.append({
                     "name": p['person']['fullName'],
                     "hand": "LHB" if p['person'].get('batSide', {}).get('code') == 'L' else "RHB"
@@ -83,7 +89,8 @@ def highlight_props(val):
 games = get_todays_games()
 
 if games:
-    game_options = [f"{g['away']} @ {g['home']}" for g in games]
+    # 🛠️ Formats the exact dropdown to show Pitcher Names next to the teams
+    game_options = [f"{g['away']} ({g['away_pitcher']}) @ {g['home']} ({g['home_pitcher']})" for g in games]
     selected_idx = st.selectbox("Select Today's Matchup:", range(len(game_options)), format_func=lambda x: game_options[x])
     chosen_game = games[selected_idx]
     
@@ -122,11 +129,9 @@ if games:
                         st.markdown(f"### ⚔️ Live Active Lineup Matchup vs. **{opposing_team}**")
                         st.caption("🟢 Green = Hitter Advantage (Over) | 🔴 Red = Pitcher Advantage (Under)")
                         
-                        # 💥 DYNAMIC FIX: Live request to fetch the real 2026 squad roster right now!
                         live_batters = get_live_team_roster(opposing_team)
                         
                         processed_rows = []
-                        # Deterministic simulation mapping for live generated names
                         for b in live_batters:
                             np.random.seed(abs(hash(b['name'])) % (10**8))
                             
@@ -141,7 +146,6 @@ if games:
                             hh = round(np.random.uniform(35.0, 65.0), 1)
                             fb_hr = round(np.random.uniform(5.0, 35.0), 1)
                             
-                            # Custom signature SLAM algorithm
                             slam_score = (brl * 2.5) + (hh * 0.3) + (fb_hr * 0.4) + (pull_air * 0.5)
                             
                             processed_rows.append({
