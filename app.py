@@ -3,72 +3,56 @@ import requests
 import pandas as pd
 import numpy as np
 from datetime import datetime
-from pybaseball import statcast_pitcher, playerid_lookup
 
-# 🎨 CUSTOM STYLING - THE "CAPPERS TOUCH"
+# 🎨 PREMIUM DARK MODE THEME
 st.set_page_config(page_title="Los Cappers Lab 🧪", layout="wide")
-
 st.markdown("""
     <style>
-    /* Darken the overall app container */
-    .stApp {
-        background-color: #0e1117;
-        color: #e0e0e0;
-    }
-    /* Add a premium feel to the dataframe/tables */
-    [data-testid="stDataFrame"] {
-        border: 1px solid #1f2937;
-        border-radius: 10px;
-    }
-    /* Style the Headers */
-    h1, h2, h3 {
-        color: #a3ffb4 !important;
-    }
-    /* Enhance the Selectbox to look like a PropFinder ticker */
-    div[data-testid="stSelectbox"] {
-        background-color: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 8px;
-    }
+    .stApp { background-color: #0e1117; color: #e0e0e0; }
+    h1, h2, h3 { color: #a3ffb4 !important; }
+    div[data-testid="stSelectbox"] { background-color: #161b22; border: 2px solid #a3ffb4; border-radius: 8px; }
     </style>
     """, unsafe_allow_html=True)
 
 st.title("Los Cappers Lab 🧪")
-st.markdown("### 💥 The Advanced S.L.A.M. Index Analytics Hub")
-st.markdown("---")
+st.markdown("### 💥 Real-Time S.L.A.M. Index Hub")
 
-# [Insert your existing MLB_TEAM_IDS and PITCH_CODE_MAP here]
-
-@st.cache_data(ttl=60)
-def get_todays_games():
+@st.cache_data(ttl=3600)
+def fetch_game_data():
+    """Fetch schedule once, cache for 1 hour to keep it snappy."""
     today = datetime.today().strftime('%Y-%m-%d')
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today}&hydrate=probablePitcher"
     try:
-        response = requests.get(url).json()
-        games = response.get('dates', [{}])[0].get('games', [])
-        matchups = []
-        for game in games:
-            away_team = game['teams']['away']['team']['name']
-            home_team = game['teams']['home']['team']['name']
-            # Making the dropdown feel like PF
-            away_p = game['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
-            home_p = game['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD')
-            
-            # (Your previous logic here...)
-            matchups.append({
-                "display": f"{away_team} ({away_p}) @ {home_team} ({home_p})",
-                "away_pitcher": away_p, "home_pitcher": home_p, 
-                "away": away_team, "home": home_team
+        data = requests.get(url).json()
+        games = data.get('dates', [{}])[0].get('games', [])
+        options = []
+        for g in games:
+            away = g['teams']['away']['team']['name']
+            home = g['teams']['home']['team']['name']
+            ap = g['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
+            hp = g['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD')
+            options.append({
+                "label": f"{away} ({ap}) vs {home} ({hp})",
+                "away": away, "home": home, "ap": ap, "hp": hp
             })
-        return matchups
-    except Exception: return []
+        return options
+    except: return []
 
-# 🚀 IMPROVED SELECTBOX
-games = get_todays_games()
-if games:
-    selected_game = st.selectbox(
-        "Select Matchup (Pitcher vs Pitcher):", 
-        options=games, 
-        format_func=lambda x: x['display']
-    )
-    # The rest of your logic stays the same but now feels much cleaner!
+# ⚡ LOAD DATA
+game_list = fetch_game_data()
+
+if game_list:
+    # Use the label for the dropdown, return the full dict object
+    selected = st.selectbox("Select Today's Matchup:", game_list, format_func=lambda x: x['label'])
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        target_pitcher = st.radio("Select Target Pitcher:", [selected['ap'], selected['hp']])
+    
+    if target_pitcher != "TBD":
+        st.info(f"🧪 Analyzing: {target_pitcher} vs {selected['home'] if target_pitcher == selected['ap'] else selected['away']}")
+        # YOUR CALCULATION ENGINE GOES HERE
+    else:
+        st.warning("Pitcher TBD - Waiting for confirmed starters.")
+else:
+    st.error("Could not fetch MLB schedule. Please check connection.")
