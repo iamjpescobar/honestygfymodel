@@ -214,7 +214,9 @@ if games:
             matrix_rows = []
             splits = ["Season", "vs LHB", "vs RHB"]
             
+            # Fixed dictionary block with clean leading zeros for Python's interpreter
             base_data = {
-                "Season": {"IP": 117.0, "BF": 474, "ERA": 3.40, "xERA": 3.32, "wOBA": .265, "SLG": .333, "ISO": .100, "WHIP": 1.09, "HR": 8, "HR/9": 0.62, "BB%": "4.9%", "WHIFF%": "32.2%", "K%": "28.5%", "PUTAWAY%": "27.2%", "SWSTR%": "16.5%", "K/9": 10.38, "1STP S%": "66.9%", "MEATBALL%": "6.2%", "BARREL%": "8.3%", "HH%": "43.0%", "FB%": "17.5%", "HR/FB%": "14.5%", "PULLAIR%": "13.1%"},
-                "vs LHB": {"IP": 31.1, "BF": 112, "ERA": 2.14, "xERA": 2.15, "wOBA": .154, "SLG": .191, "ISO": .045, "WHIP": 0.57, "HR": 1, "HR/9": 0.29, "BB%": "1.8%", "WHIFF%": "32.0%", "K%": "36.6%", "PUTAWAY%": "38.7%", "SWSTR%": "18.0%", "K/9": 11.78, "1STP S%": "73.2%", "MEATBALL%": "8.7%", "BARREL%": "4.3%", "HH%": "34.8%", "FB%": "15.9%", "HR/FB%": "9.1%", "PULLAIR%": "7.2%"},
-                "vs RHB": {"IP": 84.2, "BF": 362, "ERA": 3.84, "xERA": 3.76, "wOBA": .299, "SLG": .379, "ISO": .118, "WHIP": 1.29, "HR": 7, "
+                "Season": {"IP": 117.0, "BF": 474, "ERA": 3.40, "xERA": 3.32, "wOBA": 0.265, "SLG": 0.333, "ISO": 0.100, "WHIP": 1.09, "HR": 8, "HR/9": 0.62, "BB%": "4.9%", "WHIFF%": "32.2%", "K%": "28.5%", "PUTAWAY%": "27.2%", "SWSTR%": "16.5%", "K/9": 10.38, "1STP S%": "66.9%", "MEATBALL%": "6.2%", "BARREL%": "8.3%", "HH%": "43.0%", "FB%": "17.5%", "HR/FB%": "14.5%", "PULLAIR%": "13.1%"},
+                "vs LHB": {"IP": 31.1, "BF": 112, "ERA": 2.14, "xERA": 2.15, "wOBA": 0.154, "SLG": 0.191, "ISO": 0.045, "WHIP": 0.57, "HR": 1, "HR/9": 0.29, "BB%": "1.8%", "WHIFF%": "32.0%", "K%": "36.6%", "PUTAWAY%": "38.7%", "SWSTR%": "18.0%", "K/9": 11.78, "1STP S%": "73.2%", "MEATBALL%": "8.7%", "BARREL%": "4.3%", "HH%": "34.8%", "FB%": "15.9%", "HR/FB%": "9.1%", "PULLAIR%": "7.2%"},
+                "vs RHB": {"IP": 84.2, "BF": 362, "ERA": 3.84, "xERA": 3.76, "wOBA": 0.299, "SLG": 0.379, "ISO": 0.118, "WHIP": 1.29, "HR": 7, "HR/9": 0.74, "BB%": "5.8%", "WHIFF%": "32.2%", "K%": "26.0%", "PUTAWAY%": "24.1%", "SWSTR%": "16.1%", "K/9": 9.99, "1STP S%": "65.0%", "MEATBALL%": "5.5%", "BARREL%": "9.4%", "HH%": "45.3%", "FB%": "18.0%", "HR/FB%": "15.9%", "PULLAIR%": "14.7%"}
+            }
