@@ -147,13 +147,11 @@ for b in live_batters:
 # Convert list to DataFrame BEFORE applying styles
 if processed_rows:
     df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
-    # Apply styling to the DataFrame, NOT the append list
-    styled_df = df_lineup.style.map(highlight_slam) 
+   if processed_rows:
+    df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
+    # Apply styling to the DataFrame
+    styled_df = df_lineup.style.map(highlight_slam)
     st.dataframe(styled_df, use_container_width=True)
-                    "LD %": ld, "GB %": gb
-                }).map(highlight_slam, axis=None) 
-                
-            if processed_rows:
                 df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
                 
                 selected_scout = st.selectbox(
