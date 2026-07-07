@@ -5,58 +5,45 @@ import numpy as np
 from datetime import datetime
 from pybaseball import statcast_pitcher, playerid_lookup, batting_stats
 
-# --- 1. CONFIGURATION & TEAM MAPS ---
-st.set_page_config(layout="wide", page_title="Los Cappers Lab", page_icon="🧪")
-# ... (Include your full MLB_TEAM_IDS and PITCH_CODE_MAP here) ...
+# --- CONFIG & HELPERS ---
+MLB_TEAM_IDS = {"Philadelphia Phillies": 143, "Kansas City Royals": 118, "Houston Astros": 117, "Washington Nationals": 120} # ... add your full map
+PITCH_CODE_MAP = {'FF': '4-Seam Fastball', 'SL': 'Slider', 'CH': 'Changeup'} # ... add your full map
 
-# --- 2. DATA FUNCTIONS (The 'Engine') ---
+# --- DATA FETCHING (Defined early to prevent NameError) ---
 @st.cache_data(ttl=3600)
 def get_todays_games():
-    # Keep your full logic here exactly as you had it
-    pass 
+    # Use .get() to avoid KeyError if 'probablePitcher' is missing
+    today = datetime.today().strftime('%Y-%m-%d')
+    url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today}&hydrate=probablePitcher"
+    try:
+        data = requests.get(url).json()
+        games = data.get('dates', [{}])[0].get('games', [])
+        results = []
+        for g in games:
+            away = g['teams']['away']['team']['name']
+            home = g['teams']['home']['team']['name']
+            # Safety: use .get() to prevent KeyError
+            away_p = g['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
+            home_p = g['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD')
+            results.append({"away": away, "home": home, "away_p": away_p, "home_p": home_p})
+        return results
+    except:
+        return []
 
-@st.cache_data(ttl=3600)
-def get_live_team_roster(team_name):
-    # Keep your full logic here
-    pass
-
-@st.cache_data(ttl=7200)
-def load_real_batter_stats():
-    # Keep your full logic here
-    pass
-
-# --- 3. UI RENDERING FUNCTIONS (The 'View') ---
-def render_pitcher_stats(pitcher_name):
-    st.markdown("### 🔨 Advanced Statcast Sabermetric Splits")
-    # Paste your logic for the stats matrix table here
-    
-    st.markdown("### 🎯 Verified Pitch Arsenal Distribution")
-    # Paste your logic for the arsenal table here
-
-def render_lineup_table(opposing_team):
-    st.markdown(f"### ⚔️ Intent-To-Homer Lineup Analysis vs. {opposing_team}")
-    # Paste your logic for the lineup dataframe here
-
-# --- 4. MAIN APPLICATION RUNNER ---
+# --- MAIN INTERFACE ---
 st.title("Los Cappers Lab 🧪")
-st.markdown("### 💥 The Advanced S.L.A.M. Index Analytics Hub")
-
 games = get_todays_games()
 
 if games:
-    # Sidebar Selection
+    # 1. Selection logic
     game_options = [f"{g['away']} @ {g['home']}" for g in games]
-    selected_idx = st.sidebar.selectbox("Select Matchup:", range(len(game_options)), format_func=lambda x: game_options[x])
-    chosen_game = games[selected_idx]
+    sel = st.sidebar.selectbox("Matchup:", range(len(game_options)), format_func=lambda x: game_options[x])
+    chosen = games[sel]
     
-    pitcher = st.sidebar.radio("Select Pitcher:", [chosen_game['away_pitcher'], chosen_game['home_pitcher']])
+    # 2. Header (The Pro-Report)
+    st.subheader(f"Pro-Report: {chosen['away_p']} vs {chosen['home_p']}")
     
-    if pitcher and pitcher != "TBD":
-        st.write(f"## 📋 Pro-Report: {pitcher}")
-        opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
-        
-        # Render the components in order
-        render_pitcher_stats(pitcher)
-        render_lineup_table(opposing_team)
+    # 3. Rest of your features (Pitcher data, then Lineup analysis)
+    # Paste your existing code blocks here
 else:
-    st.info("Awaiting live MLB schedule initialization data streams.")
+    st.info("Loading schedule...")
