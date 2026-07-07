@@ -158,28 +158,27 @@ def highlight_slam(row):
 # --- 5. UPDATED TERMINAL LAYOUT ---
 games = get_todays_games()
 
-# Top Header Area
-st.markdown("### 📡 LIVE TERMINAL: MLB DATA STREAMS")
-header_cols = st.columns([2, 2, 1])
+if games:
+    st.markdown("### 📡 LIVE TERMINAL: MLB DATA STREAMS")
+    header_cols = st.columns([2, 2, 1])
 
-with header_cols[0]:
-    game_options = [f"{g['away']} @ {g['home']}" for g in games]
-    selected_game_name = st.selectbox("SELECT MATCHUP:", game_options)
-    chosen_game = next(g for g in games if f"{g['away']} @ {g['home']}" == selected_game_name)
+    with header_cols[0]:
+        game_options = [f"{g['away']} @ {g['home']}" for g in games]
+        selected_game_name = st.selectbox("SELECT MATCHUP:", game_options)
+        chosen_game = next(g for g in games if f"{g['away']} @ {g['home']}" == selected_game_name)
 
-with header_cols[1]:
-    pitcher = st.selectbox("SELECT PITCHER:", [chosen_game['away_pitcher'], chosen_game['home_pitcher']])
+    with header_cols[1]:
+        pitcher = st.selectbox("SELECT PITCHER:", [chosen_game['away_pitcher'], chosen_game['home_pitcher']])
 
-with header_cols[2]:
-    st.markdown("**STATUS**")
-    st.success("LIVE DATA")
+    with header_cols[2]:
+        st.markdown("**STATUS**")
+        st.success("LIVE DATA")
 
-st.divider()
+    st.divider()
 
-# Now the rest of your app logic (pitcher reports/lineups) runs directly below this
-        
+    # EVERYTHING BELOW IS NOW PROPERLY ALIGNED
     opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
-    
+
     if pitcher and pitcher != "TBD":
         st.write(f"## 📋 Pro-Report: {pitcher}")
         
