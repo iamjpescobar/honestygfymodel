@@ -5,12 +5,9 @@ import numpy as np
 from datetime import datetime
 from pybaseball import statcast_pitcher, playerid_lookup, batting_stats
 
-# --- 1. SETUP ---
+# --- 1. CONFIGURATION ---
 st.set_page_config(layout="wide", page_title="Los Cappers Lab", page_icon="🧪")
 st.title("Los Cappers Lab 🧪")
-
-games = get_todays_games()
-st.write(f"DEBUG: Found {len(games)} games") # This will tell us if it's even finding games
 
 MLB_TEAM_IDS = {
     "Arizona Diamondbacks": 109, "Atlanta Braves": 144, "Baltimore Orioles": 110,
@@ -25,11 +22,33 @@ MLB_TEAM_IDS = {
     "Texas Rangers": 140, "Toronto Blue Jays": 141, "Washington Nationals": 120
 }
 
-# --- 2. HELPERS (Defined at top) ---
+# --- 2. FUNCTION DEFINITIONS (Must be above usage) ---
+def get_static_games():
+    return [
+        {"game_id": 1, "away": "Philadelphia Phillies", "home": "Kansas City Royals", "away_pitcher": "Cristopher Sanchez", "home_pitcher": "Noah Cameron"},
+        {"game_id": 2, "away": "Houston Astros", "home": "Washington Nationals", "away_pitcher": "Mike Burrows", "home_pitcher": "Miles Mikolas"}
+    ]
+
+@st.cache_data(ttl=3600)
+def get_todays_games():
+    today = datetime.today().strftime('%Y-%m-%d')
+    url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today}&hydrate=probablePitcher"
+    try:
+        response = requests.get(url).json()
+        games_list = response.get('dates', [{}])[0].get('games', [])
+        matchups = []
+        for g in games_list:
+            away_team = g['teams']['away']['team']['name']
+            home_team = g['teams']['home']['team']['name']
+            away_p = g['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
+            home_p = g['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD')
+            matchups.append({"game_id": g['gamePk'], "away": away_team, "home": home_team, "away_pitcher": away_p, "home_pitcher": home_p})
+        return matchups if matchups else get_static_games()
+    except Exception: return get_static_games()
+
 @st.cache_data(ttl=3600)
 def get_batter_affinity_multiplier(batter_name, pitcher_data):
-    if pitcher_data is None or pitcher_data.empty or 'pitch_type' not in pitcher_data.columns:
-        return 1.0
+    if pitcher_data is None or pitcher_data.empty: return 1.0
     np.random.seed(abs(hash(batter_name)) % (10**8))
     return 1.10 if np.random.rand() > 0.6 else 1.0
 
@@ -44,43 +63,14 @@ def get_live_team_roster(team_name):
         for p in response.get('roster', []):
             person = p.get('person', {})
             side_code = person.get('batSide', {}).get('code', 'R')
-            # CORRECTED HANDEDNESS LOGIC
             side_label = "LHB" if side_code == 'L' else ("SHB" if side_code == 'S' else "RHB")
             if p.get('position', {}).get('code') != '1':
                 players.append({"name": person['fullName'], "hand": side_label})
         return players
     except: return []
 
-@st.cache_data(ttl=7200)
-def load_real_batter_stats():
-    try:
-        df = batting_stats(2026, qual=10)
-        df['Name_Clean'] = df['Name'].str.lower().str.replace('[.,\']', '', regex=True)
-        return df
-    except: return pd.DataFrame()
+# --- 3. MAIN EXECUTION ---
+games = get_todays_games()
+st.write(f"DEBUG: Found {len(games)} games")
 
-# --- 3. MAIN LOGIC (Simplified Structure) ---
-# ... [Place your get_todays_games and sidebar code here] ...
-
-# WHEN YOU ARE INSIDE YOUR LOOP, USE THIS EXACT STRUCTURE:
-# live_batters = get_live_team_roster(opposing_team)
-# processed_rows = []
-# for b in live_batters:
-#     # ... (Your BBE, Brl, HH calculations) ...
-    
-#     # 1. Get Multiplier
-#     affinity_m = get_batter_affinity_multiplier(b['name'], pitcher_data)
-    
-#     # 2. Math
-#     base_score = (brl * 3.5) + (hh * 0.5) + (pull_air * 0.3) - (gb * 0.2)
-#     adjusted_score = base_score * affinity_m
-#     if match_rating == "✅ Good": adjusted_score *= 1.15
-    
-#     # 3. Store
-#     processed_rows.append({
-#         "Batter Name": b['name'], 
-#         "Hand": b['hand'], 
-#         "Matchup Boost": f"{int((affinity_m-1)*100)}%", 
-#         "💥 SLAM Index": round(min(100.0, adjusted_score), 1),
-#         # ... add other columns
-#     })
+# Now you can safely use the 'games' variable in your sidebar/logic
