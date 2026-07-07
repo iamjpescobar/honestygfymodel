@@ -158,8 +158,8 @@ def format_game(g):
     return f"{g['away']} @ {g['home']} ({readable_time} UTC)"
 # --- 5. APPLICATION INTERFACE AND CONTROL RUNNER ---
 games = get_todays_games()
-# Ensure this is indented 4 spaces under 'if games:'
-    chosen_game = st.segmented_control(
+
+        chosen_game = st.segmented_control(
         "Select Today's Matchup:",
         options=games,
         format_func=format_game,
