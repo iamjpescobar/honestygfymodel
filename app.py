@@ -69,26 +69,30 @@ def get_static_games():
         {"game_id": 2, "away": "Houston Astros", "home": "Washington Nationals", "away_pitcher": "Mike Burrows", "home_pitcher": "Miles Mikolas"}
     ]
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=0) # Set to 0 to bypass cache and force fresh data
 def get_live_team_roster(team_name):
     team_id = MLB_TEAM_IDS.get(team_name)
-    if not team_id: 
-        return []
+    if not team_id: return []
     url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster?rosterType=active"
     try:
         response = requests.get(url).json()
         players = []
         for p in response.get('roster', []):
             person = p.get('person', {})
+            # RAW FETCH
             side_code = person.get('batSide', {}).get('code', 'R')
+            # TEMPORARY LOGGING: This will tell us if the API is lying to us
+            print(f"DEBUG: {person.get('fullName')} | API Code: {side_code}")
             
-            # Label assignment
-            side_label = "LHB" if side_code == 'L' else ("SHB" if side_code == 'S' else "RHB")
+            # Logic: If API is empty or default, this is where we'd see it
+            if side_code == 'L': side_label = "LHB"
+            elif side_code == 'S': side_label = "SHB"
+            else: side_label = "RHB"
             
             if p.get('position', {}).get('code') != '1':
                 players.append({"name": person.get('fullName'), "hand": side_label})
         return players
-    except Exception as e:
+    except Exception:
         return []
     
 
