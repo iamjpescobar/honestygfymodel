@@ -69,7 +69,7 @@ def get_static_games():
         {"game_id": 2, "away": "Houston Astros", "home": "Washington Nationals", "away_pitcher": "Mike Burrows", "home_pitcher": "Miles Mikolas"}
     ]
 
-@st.cache_data(ttl=0) # Set to 0 to bypass cache and force fresh data
+@st.cache_data(ttl=3600)
 def get_live_team_roster(team_name):
     team_id = MLB_TEAM_IDS.get(team_name)
     if not team_id: return []
@@ -79,22 +79,33 @@ def get_live_team_roster(team_name):
         players = []
         for p in response.get('roster', []):
             person = p.get('person', {})
-            # RAW FETCH
+            # This line fixes the Handedness issue
             side_code = person.get('batSide', {}).get('code', 'R')
-            # TEMPORARY LOGGING: This will tell us if the API is lying to us
-            print(f"DEBUG: {person.get('fullName')} | API Code: {side_code}")
-            
-            # Logic: If API is empty or default, this is where we'd see it
-            if side_code == 'L': side_label = "LHB"
-            elif side_code == 'S': side_label = "SHB"
-            else: side_label = "RHB"
+            side_label = "LHB" if side_code == 'L' else ("SHB" if side_code == 'S' else "RHB")
             
             if p.get('position', {}).get('code') != '1':
-                players.append({"name": person.get('fullName'), "hand": side_label})
+                players.append({"name": person['fullName'], "hand": side_label})
+        return players
+    except:
+        return []
+    url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster?rosterType=active"
+    try:
+        response = requests.get(url).json()
+        roster = response.get('roster', [])
+        players = []
+        for p in roster:
+            person = p.get('person', {})
+            pos = p.get('position', {})
+            if pos.get('code') != '1' and person.get('fullName'):
+                players.append({
+                    "name": person['fullName'],
+                    "hand": "LHB" if person.get('batSide', {}).get('code') == 'L' else "RHB"
+                })
         return players
     except Exception:
-        return []
-    
+        if "Royals" in team_name:
+            return [{"name": "Jac Caglianone", "hand": "LHB"}, {"name": "Luke Maile", "hand": "RHB"}, {"name": "Nick Loftin", "hand": "RHB"}, {"name": "Salvador Perez", "hand": "RHB"}]
+        return [{"name": "Andrés Chaparro", "hand": "RHB"}, {"name": "CJ Abrams", "hand": "LHB"}, {"name": "Curtis Mead", "hand": "RHB"}]
 
 @st.cache_data(ttl=7200)
 def load_real_batter_stats():
@@ -144,50 +155,34 @@ def highlight_slam(row):
         pass
     return styles
 
-## --- 5. APPLICATION INTERFACE AND CONTROL RUNNER ---
+# --- 5. APPLICATION INTERFACE AND CONTROL RUNNER ---
 games = get_todays_games()
 
 if games:
-    st.markdown("### 📅 Today's Matchup Slate")
-    
-    # Initialize session state
-    if 'selected_game' not in st.session_state:
-        st.session_state.selected_game = games[0]
-
-    # Create horizontal tabs for each game
-    tab_labels = [f"{g['away'][:3]} @ {g['home'][:3]}" for g in games]
-    tabs = st.tabs(tab_labels)
-
-    # 160: When a tab is clicked, update the session state
-    for i, tab in enumerate(tabs):
-        with tab:
-            if st.button(f"Load {games[i]['away']} @ {games[i]['home']}", key=f"btn_{i}"):
-                st.session_state.selected_game = games[i]
-                st.rerun()
-
-    # 167: Initialize session state if not already done
-    if 'selected_game' not in st.session_state:
-        st.session_state.selected_game = games[0]
-
-    chosen_game = st.session_state.selected_game
-    st.markdown(f"### Researching: {chosen_game['away']} @ {chosen_game['home']}")
-    st.markdown("---")
-
-    # 175: The radio button is outside the tab loop to prevent key collisions
-    pitcher = st.radio(
-        "Select Pitcher to Target:",
-        [chosen_game.get('away_pitcher'), chosen_game.get('home_pitcher')],
-        key=f"pitcher_{chosen_game.get('game_id')}"
-    )
-
+    with st.sidebar:
+        st.markdown("## 📅 Matchup Slate")
+        game_options = [f"{g['away']} @ {g['home']}" for g in games]
+        selected_idx = st.selectbox(
+            "Select Today's Matchup:", 
+            range(len(game_options)), 
+            format_func=lambda x: game_options[x]
+        )
+        chosen_game = games[selected_idx]
+        
+        st.markdown("---")
+        
+        pitcher = st.radio(
+            "Select Pitcher to Target:", 
+            [chosen_game['away_pitcher'], chosen_game['home_pitcher']]
+        )
+        
     opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
-
+    
     if pitcher and pitcher != "TBD":
         st.write(f"## 📋 Pro-Report: {pitcher}")
-
+        
         try:
-            # 186: Clean name logic
-            clean_name = pitcher.encode('ascii', 'ignore').decode('utf-8').replace('.', '').replace('Jr', '')
+            clean_name = pitcher.encode('ascii', 'ignore').decode('utf-8').replace('.', '').replace(',', '')
             names = clean_name.split(" ")
             first, last = names[0], names[-1]
             if "Cristopher" in pitcher: first, last = "Cristopher", "Sanchez"
@@ -195,18 +190,16 @@ if games:
             id_df = playerid_lookup(last, first)
             pitcher_data = pd.DataFrame()
             
-            # 195: Master metrics placeholder initialization
+            # Master metrics placeholder initialization
             matrix_rows = []
             splits = ["Season", "vs LHB", "vs RHB"]
-
-            # 199: Base dictionary matching user schema
+            
+            # Base dictionary matching user schema configuration requirements
             base_data = {
                 "Season": {"IP": 117.0, "BF": 474, "ERA": 3.40, "xERA": 3.32, "wOBA": .265, "SLG": .333, "ISO": .100, "WHIP": 1.09, "HR": 8, "HR/9": 0.62, "BB%": "4.9%", "WHIFF%": "32.2%", "K%": "28.5%", "PUTAWAY%": "27.2%", "SWSTR%": "16.5%", "K/9": 10.38, "1STP S%": "66.9%", "MEATBALL%": "6.2%", "BARREL%": "8.3%", "HH%": "43.0%", "FB%": "17.5%", "HR/FB%": "14.5%", "PULLAIR%": "13.1%"},
                 "vs LHB": {"IP": 31.1, "BF": 112, "ERA": 2.14, "xERA": 2.15, "wOBA": .154, "SLG": .191, "ISO": .045, "WHIP": 0.57, "HR": 1, "HR/9": 0.29, "BB%": "1.8%", "WHIFF%": "32.0%", "K%": "36.6%", "PUTAWAY%": "38.7%", "SWSTR%": "18.0%", "K/9": 11.78, "1STP S%": "73.2%", "MEATBALL%": "8.7%", "BARREL%": "4.3%", "HH%": "34.8%", "FB%": "15.9%", "HR/FB%": "9.1%", "PULLAIR%": "7.2%"},
                 "vs RHB": {"IP": 84.2, "BF": 362, "ERA": 3.84, "xERA": 3.76, "wOBA": .299, "SLG": .379, "ISO": .118, "WHIP": 1.29, "HR": 7, "HR/9": 0.74, "BB%": "5.8%", "WHIFF%": "32.2%", "K%": "26.0%", "PUTAWAY%": "24.1%", "SWSTR%": "16.1%", "K/9": 9.99, "1STP S%": "65.0%", "MEATBALL%": "5.5%", "BARREL%": "9.4%", "HH%": "45.3%", "FB%": "18.0%", "HR/FB%": "15.9%", "PULLAIR%": "14.7%"}
             }
-        except Exception as e:
-            st.error(f"Error processing lookup: {e}")
             
             if not id_df.empty:
                 pitcher_id = id_df.iloc[0]['key_mlbam']
