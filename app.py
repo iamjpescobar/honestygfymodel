@@ -351,9 +351,9 @@ if games:
                     st.session_state.selected_batter = None
                     
             # Final clean version of the batter analysis block
-    if st.session_state.selected_batter:
-        sb = st.session_state.selected_batter
-        if sb in df_lineup.index:
+                if st.session_state.selected_batter:
+            sb = st.session_state.selected_batter
+            if sb in df_lineup.index:
             stats = df_lineup.loc[sb]
             st.markdown(f"#### 📊 Detailed Scout Matrix: {sb}")
             
@@ -379,4 +379,3 @@ if games:
                 "PullAir %": "{:.1f}%", "HH %": "{:.1f}%", "LD %": "{:.1f}%", "GB %": "{:.1f}%"
             }).apply(highlight_slam, axis=1)
             st.dataframe(styled_df, use_container_width=True)
-            
