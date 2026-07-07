@@ -354,14 +354,14 @@ if games:
                     sb = st.session_state.selected_batter
                     if sb in df_lineup.index:
                         stats = df_lineup.loc[sb]
-          st.markdown(f"#### 📊 Detailed Scout Matrix: {sb}")
+                        st.markdown(f"#### 📊 Detailed Scout Matrix: {sb}")
             
-            # Define 4 columns to hold the metrics
-            c1, c2, c3, c4 = st.columns(4)
+                     # Define 4 columns to hold the metrics
+                        c1, c2, c3, c4 = st.columns(4)
             
-            with c1:
-                st.markdown(f"""
-                    <div style="background-color: {get_status_color(stats['💥 SLAM Index'], 65.0)}; 
+                        with c1:
+                            st.markdown(f"""
+                 <div style="background-color: {get_status_color(stats['💥 SLAM Index'], 65.0)}; 
                                 padding: 10px; border-radius: 5px; border: 1px solid #333; color: white;">
                         <strong>SLAM: {stats['💥 SLAM Index']}</strong>
                     </div>
