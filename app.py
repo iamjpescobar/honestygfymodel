@@ -279,83 +279,53 @@ if games:
                     {"Pitch Type": "Other (PO)", "Frequency": "0.1%", "Raw Count": 1}
                 ]))
             
-            # --- REAL BATTER STATCAST INTEGRATION ---
-            st.markdown(f"### ⚔️ Intent-To-Homer Lineup Analysis vs. {opposing_team}")
-            st.caption("🌲 Emerald Glow = High Volume Verified Power + Covers Arsenal Options | 🪐 Matte Grey = Small Sample Size")
-            
-            live_batters = get_live_team_roster(opposing_team)
-            real_stats_df = load_real_batter_stats()
-            processed_rows = []
-            
-            for b in live_batters:
-                b_name_clean = b['name'].lower().replace('.', '').replace(',', '').replace("'", "")
-                
-                # 1. Fetch/Simulate metrics
-                # Ensure these match your data structure for ISO, Bat Speed, and 350ft+ counts
-                iso_val = float(match.get('ISO', [0.150])[0]) # Weighted 3-season ISO
-                bat_speed = float(match.get('BatSpeed', [70.0])[0])
-                deep_flight = int(match.get('350ft_plus_count', [0])[0]) # 350ft+ in last 25 games
-                
-                # 2. Base Calculation
-                # Rewarding Hard Hit Fly Balls (HH * FB) and penalizing excessive Line Drives
-                # LD% > 22% acts as a dampener to shift focus to pure elevation power
-                ld_penalty = 1.2 if ld > 22.0 else 1.0
-                
-                # The "Wizard Sauce" Formula
-                # We prioritize (Barrel * 3.5) + (HardHit * 0.8) + (FB * 0.5) 
-                # And dampen the score if the LD% is too high
-                base_score = ((brl * 3.5) + (hh * 0.8) + (pull_air * 0.5) - (gb * 0.2)) / ld_penalty
-                
-                # 3. Additive "Power Ceiling" Bonuses
-                if bat_speed >= 72.0: base_score += 5.0
-                if deep_flight > 5: base_score += (deep_flight * 1.5)
-                if iso_val > 0.200: base_score += 7.0
-                
-                # Apply multipliers
-                if match_rating == "✅ Good": base_score *= 1.15
-                if bbe > 120: base_score += 8
-                
-                slam_index = min(100.0, max(5.0, base_score))
-                
-                processed_rows.append({
-                    "Batter Name": b['name'], "Hand": b['hand'], "BBE": bbe, "💥 SLAM Index": round(slam_index, 1),
-                    "Top 3 Matchup": match_rating, "Brl %": brl, "PullAir %": pull_air, "HH %": hh, 
-                    "LD %": ld, "GB %": gb
-                })
-                
-            if processed_rows:
-                df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
-                
-                selected_scout = st.selectbox(
-                    "🔍 Click to inspect detailed historical performance breakdown:",
-                    ["-- Active Lineup Roster Overview --"] + list(df_lineup.index)
-                )
-                
-                if selected_scout != "-- Active Lineup Roster Overview --":
-                    st.session_state.selected_batter = selected_scout
-                else:
-                    st.session_state.selected_batter = None
-                    
-                if st.session_state.selected_batter:
-                    sb = st.session_state.selected_batter
-                    if sb in df_lineup.index:
-                        stats = df_lineup.loc[sb]
-                        st.markdown(f"#### 📊 Detailed Scout Matrix: {sb}")
-                        c1, c2, c3, c4 = st.columns(4)
-                        c1.metric("Calculated SLAM Rating", f"{stats['💥 SLAM Index']}")
-                        c2.metric("Barrel Execution Rate", f"{stats['Brl %']}%")
-                        c3.metric("Hard Hit Metric", f"{stats['HH %']}%")
-                        c4.metric("Total BBE Sample Size", f"{stats['BBE']}")
-                        st.markdown("---")
-                
-                styled_df = df_lineup.style.format({
-                    "BBE": "{:d}", "💥 SLAM Index": "{:.1f}", "Brl %": "{:.1f}%", 
-                    "PullAir %": "{:.1f}%", "HH %": "{:.1f}%", "LD %": "{:.1f}%", "GB %": "{:.1f}%"
-                }).apply(highlight_slam, axis=1)
-                
-                st.dataframe(styled_df, use_container_width=True)
-                
-        except Exception as e:
-            st.error(f"Error processing layout configurations: {e}")
+# --- REAL BATTER STATCAST INTEGRATION ---
+st.markdown(f"### ⚔️ Intent-To-Homer Lineup Analysis vs. {opposing_team}")
+st.caption("🌲 Emerald Glow = High Volume Verified Power | 🪐 Matte Grey = Small Sample Size")
+
+live_batters = get_live_team_roster(opposing_team)
+real_stats_df = load_real_batter_stats()
+processed_rows = []
+
+for b in live_batters:
+    b_name_clean = b['name'].lower().replace('.', '').replace(',', '').replace("'", "")
+    match = pd.DataFrame()
+    if not real_stats_df.empty:
+        match = real_stats_df[real_stats_df['Name_Clean'] == b_name_clean]
+    
+    # Define safe defaults
+    if not match.empty:
+        bbe = int(match['AB'].iloc[0])
+        brl = float(match.get('Barrel%', [8.5])[0])
+        hh = float(match.get('HardHit%', [40.0])[0])
+        gb = float(match.get('GB%', [42.0])[0])
+        ld = float(match.get('LD%', [20.0])[0])
+        pull_air = float(match.get('FB%', [35.0])[0])
+        iso_val = float(match.get('ISO', [0.150])[0])
+        bat_speed = float(match.get('BatSpeed', [70.0])[0])
+    else:
+        np.random.seed(abs(hash(b['name'])) % (10**8))
+        bbe, brl, hh, gb, ld, pull_air = 100, 8.5, 40.0, 42.0, 20.0, 35.0
+        iso_val, bat_speed = 0.150, 70.0
+        
+    # Wizard Sauce Logic
+    ld_penalty = 1.2 if ld > 22.0 else 1.0
+    base_score = ((brl * 3.5) + (hh * 0.8) + (pull_air * 0.5) - (gb * 0.2)) / ld_penalty
+    if bat_speed >= 72.0: base_score += 5.0
+    if bbe > 120: base_score += 8
+    
+    slam_index = min(100.0, max(5.0, base_score))
+    
+    processed_rows.append({
+        "Batter Name": b['name'],
+        "💥 SLAM Index": slam_index,
+        "Brl %": brl,
+        "HH %": hh,
+        "BBE": bbe
+    })
+
+if processed_rows:
+    df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
+    st.dataframe(df_lineup, use_container_width=True)
 else:
     st.info("Awaiting live MLB schedule initialization data streams.")
