@@ -165,10 +165,10 @@ if games:
     st.markdown(f"### Researching: {chosen_game['away']} @ {chosen_game['home']}")
     st.markdown("---")
         
-        pitcher = st.radio(
-            "Select Pitcher to Target:", 
-            [chosen_game['away_pitcher'], chosen_game['home_pitcher']]
-        )
+    pitcher = st.radio(
+     "Select Pitcher to Target:", 
+    [chosen_game['away_pitcher'], chosen_game['home_pitcher']]
+    )
         
     opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
     
