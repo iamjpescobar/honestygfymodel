@@ -294,18 +294,26 @@ if games:
             # --- DATA INITIALIZATION ---
 live_batters = get_live_team_roster(opposing_team)
 real_stats_df = load_real_batter_stats()
-processed_rows = []
 
-# DIAGNOSTIC: This code will print the actual columns to your screen if it fails
-if 'Name_Clean' not in real_stats_df.columns:
-    try:
-        # Check your CSV/Data source. If the name column is 'Player', change 'Name' to 'Player'
-        target_col = 'Name' 
+# Check if data is actually loaded
+if real_stats_df is None or real_stats_df.empty:
+    st.warning("⚠️ Data source is empty. Please check your data file path or API connection.")
+    processed_rows = []
+else:
+    # Safely handle column detection
+    target_col = None
+    # Try common variations of the name column
+    for col in ['Name', 'Player', 'Batter']:
+        if col in real_stats_df.columns:
+            target_col = col
+            break
+            
+    if target_col:
         real_stats_df['Name_Clean'] = real_stats_df[target_col].astype(str).str.lower().str.replace('.', '').str.replace(',', '').str.replace("'", "")
-    except KeyError:
-        # This will show you exactly what columns are available on your screen
-        st.error(f"Error! Column '{target_col}' not found. Available columns in your data are: {list(real_stats_df.columns)}")
-        st.stop()
+        processed_rows = []
+    else:
+        st.error(f"Could not find a name column. Found columns: {list(real_stats_df.columns)}")
+        processed_rows = []
 
 # --- QUALIFIED SLAM ENGINE ---
 MIN_BBE = 10
