@@ -72,7 +72,21 @@ def get_static_games():
 @st.cache_data(ttl=3600)
 def get_live_team_roster(team_name):
     team_id = MLB_TEAM_IDS.get(team_name)
-    if not team_id:
+    if not team_id: return []
+    url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster?rosterType=active"
+    try:
+        response = requests.get(url).json()
+        players = []
+        for p in response.get('roster', []):
+            person = p.get('person', {})
+            # This line fixes the Handedness issue
+            side_code = person.get('batSide', {}).get('code', 'R')
+            side_label = "LHB" if side_code == 'L' else ("SHB" if side_code == 'S' else "RHB")
+            
+            if p.get('position', {}).get('code') != '1':
+                players.append({"name": person['fullName'], "hand": side_label})
+        return players
+    except:
         return []
     url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster?rosterType=active"
     try:
