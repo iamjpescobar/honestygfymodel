@@ -172,12 +172,13 @@ for i, tab in enumerate(tabs):
     st.markdown("---")
         
     # Use a unique key that is guaranteed to be different per game
+    # Ensure a unique key for the radio widget based on game_id
     pitcher = st.radio(
         "Select Pitcher to Target:",
         [chosen_game['away_pitcher'], chosen_game['home_pitcher']],
-        key=f"radio_pitcher_{chosen_game.get('game_id')}"
+        key=f"pitcher_target_{chosen_game.get('game_id', 'unknown')}"
     )
-    
+
     opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
 
     if pitcher and pitcher != "TBD":
@@ -191,7 +192,7 @@ for i, tab in enumerate(tabs):
             
             id_df = playerid_lookup(last, first)
         except Exception as e:
-            st.error(f"Error processing pitcher data: {e}")
+            st.error("Could not process pitcher lookup.")
             
             # Master metrics placeholder initialization
             matrix_rows = []
