@@ -354,18 +354,35 @@ if games:
                     sb = st.session_state.selected_batter
                     if sb in df_lineup.index:
                         stats = df_lineup.loc[sb]
-                        st.markdown(f"#### 📊 Detailed Scout Matrix: {sb}")
-                        with c1:
-                            st.markdown(f"""<div style="background-color: {get_status_color(stats['💥 SLAM Index'], 65.0)}; padding: 10px; border-radius: 5px; border: 1px solid #333;">
-                                <strong>SLAM: {stats['💥 SLAM Index']}</strong></div>""", unsafe_allow_html=True)
-                        with c2:
-                            st.markdown(f"""<div style="background-color: {get_status_color(stats['Brl %'], 10.0)}; padding: 10px; border-radius: 5px; border: 1px solid #333;">
-                                <strong>Barrel: {stats['Brl %']}%</strong></div>""", unsafe_allow_html=True)
-                        with c3:
-                            st.markdown(f"""<div style="background-color: {get_status_color(stats['HH %'], 40.0)}; padding: 10px; border-radius: 5px; border: 1px solid #333;">
-                                <strong>HardHit: {stats['HH %']}%</strong></div>""", unsafe_allow_html=True)
-                        with c4:
-                            st.container(border=True).metric("Total BBE", f"{stats['BBE']}")
+                        # --- Updated Scout Matrix Display ---
+            st.markdown(f"#### 📊 Detailed Scout Matrix: {sb}")
+            
+            # Define 4 columns to hold the metrics
+            c1, c2, c3, c4 = st.columns(4)
+            
+            with c1:
+                st.markdown(f"""
+                    <div style="background-color: {get_status_color(stats['💥 SLAM Index'], 65.0)}; 
+                                padding: 10px; border-radius: 5px; border: 1px solid #333; color: white;">
+                        <strong>SLAM: {stats['💥 SLAM Index']}</strong>
+                    </div>
+                """, unsafe_allow_html=True)
+            with c2:
+                st.markdown(f"""
+                    <div style="background-color: {get_status_color(stats['Brl %'], 10.0)}; 
+                                padding: 10px; border-radius: 5px; border: 1px solid #333; color: white;">
+                        <strong>Barrel: {stats['Brl %']}%</strong>
+                    </div>
+                """, unsafe_allow_html=True)
+            with c3:
+                st.markdown(f"""
+                    <div style="background-color: {get_status_color(stats['HH %'], 40.0)}; 
+                                padding: 10px; border-radius: 5px; border: 1px solid #333; color: white;">
+                        <strong>HardHit: {stats['HH %']}%</strong>
+                    </div>
+                """, unsafe_allow_html=True)
+            with c4:
+                st.container(border=True).metric("Total BBE", f"{stats['BBE']}")
                 # --- Arsenal Compatibility Matrix ---
                         st.markdown("#### 🎯 Arsenal Compatibility Matrix")
                         pitcher_arsenal = ['4-Seam Fastball', 'Slider', 'Changeup', 'Sinker']
