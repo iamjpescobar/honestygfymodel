@@ -150,23 +150,22 @@ def highlight_slam(row):
 def format_game(g):
     # Extract time from "2026-07-07T23:10:00Z"
     time_part = g.get('start_time', 'TBD').split('T')
-    if len(time_part) > 1:
-        hm = time_part[1].split(':')
-        readable_time = f"{hm[0]}:{hm[1]}"
-    else:
-        readable_time = "TBD"
-    return f"{g['away']} @ {g['home']} ({readable_time} UTC)"
-# --- 5. APPLICATION INTERFACE AND CONTROL RUNNER ---
-games = get_todays_games()
-
-if games:
-    # This renders the horizontal selector shown in your screenshot
+    if games:
+    # Use segmented_control to get the horizontal, clickable tab look
     chosen_game = st.segmented_control(
         "Select Today's Matchup:",
         options=games,
         format_func=format_game,
         selection_mode="single"
     )
+
+    if chosen_game:
+        # Pitcher selection - standard radio
+        pitcher = st.radio(
+            "Select Pitcher to Target:",
+            [chosen_game['away_pitcher'], chosen_game['home_pitcher']],
+            horizontal=True
+        )
 
     if chosen_game:
         # Pitcher selection
