@@ -295,46 +295,77 @@ if games:
 live_batters = get_live_team_roster(opposing_team)
 real_stats_df = load_real_batter_stats()
 
-# Force-handle empty data scenarios
+# 1. Gracefully handle empty data
 if real_stats_df is None or real_stats_df.empty:
-    st.warning("⚠️ Real-time batting stats unavailable. Loading local baseline profiles.")
-    # Fallback: Define minimal structure to prevent crashes
-    real_stats_df = pd.DataFrame(columns=['Name', 'Barrel%', 'HardHit%', 'LD%', 'FB%', 'PullAir%', 'FB/HR%', 'Blast%', 'BBE'])
+    st.warning("⚠️ Real-time batting stats unavailable. Loading baseline profiles.")
     processed_rows = []
 else:
-    # Safely detect and clean name column
+    # 2. Defensive column detection
+    # This automatically finds the correct name column (Name, Player, or Batter)
     target_col = next((col for col in ['Name', 'Player', 'Batter'] if col in real_stats_df.columns), None)
+    
     if target_col:
         real_stats_df['Name_Clean'] = real_stats_df[target_col].astype(str).str.lower().str.replace('[.,\']', '', regex=True)
-    processed_rows = []
+        processed_rows = []
+    else:
+        st.error(f"Data loaded, but missing a name column. Found: {list(real_stats_df.columns)}")
+        processed_rows = []
 
 # --- QUALIFIED SLAM ENGINE ---
-# ... (MIN variables) ...
+MIN_BBE, MIN_BRL, MIN_HH = 10, 10.0, 40.0
+MAX_LD, MIN_FB, MIN_PULL_AIR = 20.0, 30.0, 10.0
+MIN_FB_HR, MIN_BLAST = 30.0, 20.0
 
-# Only run if we have both live batters and valid stats
 if live_batters and not real_stats_df.empty and 'Name_Clean' in real_stats_df.columns:
     for b in live_batters:
-        # ... (your loop logic here) ...
-        processed_rows.append({...})
+        b_name_clean = b['name'].lower().replace('.', '').replace(',', '').replace("'", "")
+        match = real_stats_df[real_stats_df['Name_Clean'] == b_name_clean]
+        
+        if not match.empty:
+            # Use .get() to avoid KeyErrors if columns are missing in the data
+            brl = float(match.get('Barrel%', [0]).iloc[0])
+            hh = float(match.get('HardHit%', [0]).iloc[0])
+            blast = float(match.get('Blast%', [0]).iloc[0])
+            bbe = int(match.get('BBE', [0]).iloc[0])
+            
+            # Simplified qualification check to prevent errors
+            is_qualified = (bbe >= MIN_BBE and brl >= MIN_BRL and hh >= MIN_HH)
+            status = "🔥 QUALIFIED" if is_qualified else "⚠️ NOT QUALIFIED"
+            slam_index = (brl * 2) + (hh * 1.5) + (blast * 1.5) if is_qualified else 0.0
+            
+            processed_rows.append({
+                "Batter Name": b['name'],
+                "Hand": b['hand'],
+                "💥 SLAM Index": round(slam_index, 1),
+                "Status": status,
+                "Brl %": brl,
+                "HH %": hh,
+                "Blast %": blast,
+                "BBE": bbe
+            })
 
 # --- UI DISPLAY SECTION ---
 if processed_rows:
     df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
+    selected_scout = st.selectbox("🔍 Inspect Batter:", ["-- Overview --"] + list(df_lineup.index))
     
-    # Selection logic
-    selected_scout = st.selectbox("🔍 Select Batter:", ["-- Overview --"] + list(df_lineup.index))
     if selected_scout != "-- Overview --":
         st.session_state.selected_batter = selected_scout
-    
-    # Detailed Matrix
+    else:
+        st.session_state.selected_batter = None
+
     if st.session_state.selected_batter and st.session_state.selected_batter in df_lineup.index:
         sb = st.session_state.selected_batter
         stats = df_lineup.loc[sb]
         st.markdown(f"#### 📊 Detailed Scout Matrix: {sb}")
-        # ... (your metric columns) ...
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("SLAM Rating", f"{stats['💥 SLAM Index']}")
+        c2.metric("Brl %", f"{stats['Brl %']}%")
+        c3.metric("HH %", f"{stats['HH %']}%")
+        c4.metric("BBE", f"{stats['BBE']}")
+        st.markdown("---")
 
-    # Styled Table
-    styled_df = df_lineup.style.format({...}).apply(highlight_slam, axis=1)
+    styled_df = df_lineup.style.format({"💥 SLAM Index": "{:.1f}", "Brl %": "{:.1f}%", "HH %": "{:.1f}%", "Blast %": "{:.1f}%"}).apply(highlight_slam, axis=1)
     st.dataframe(styled_df, use_container_width=True)
 else:
-    st.info("Awaiting valid data streams or no batters qualify for the S.L.A.M. Index.")
+    st.info("Awaiting live data streams. No batters meet qualification thresholds.")
