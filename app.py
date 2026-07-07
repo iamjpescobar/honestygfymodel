@@ -167,14 +167,6 @@ def format_game(g):
             horizontal=True
         )
 
-    if chosen_game:
-        # Pitcher selection
-        pitcher = st.radio(
-            "Select Pitcher to Target:",
-            [chosen_game['away_pitcher'], chosen_game['home_pitcher']],
-            horizontal=True
-        )
-
         opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
 
         if pitcher and pitcher != "TBD":
