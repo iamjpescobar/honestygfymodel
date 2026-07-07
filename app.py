@@ -29,8 +29,7 @@ MLB_TEAM_IDS = {
 PITCH_CODE_MAP = {
     'FF': '4-Seam Fastball', 'SL': 'Slider', 'CH': 'Changeup', 
     'SI': 'Sinker', 'CU': 'Curveball', 'FC': 'Cutter', 
-    'ST': 'Sweeper', 'FS': 'Splitter', 'KC': 'Knuckle-Curve'
-}
+    'ST': 'Sweeper', 'FS': 'Splitter', 'KC': 'Knuckle-Curve'}
 if 'selected_batter' not in st.session_state:
     st.session_state.selected_batter = None
 
