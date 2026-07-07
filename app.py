@@ -160,6 +160,7 @@ def format_game(g):
 games = get_todays_games()
 
 if games:
+    # This renders the horizontal selector shown in your screenshot
     chosen_game = st.segmented_control(
         "Select Today's Matchup:",
         options=games,
@@ -168,9 +169,9 @@ if games:
     )
 
     if chosen_game:
-        # This replaces the old sidebar radio
+        # Pitcher selection
         pitcher = st.radio(
-            "Select Pitcher to Target:", 
+            "Select Pitcher to Target:",
             [chosen_game['away_pitcher'], chosen_game['home_pitcher']],
             horizontal=True
         )
