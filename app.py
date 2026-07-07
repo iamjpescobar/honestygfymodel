@@ -43,23 +43,23 @@ st.title("Los Cappers Lab 🧪")
 st.markdown("### 💥 The Advanced S.L.A.M. Index Analytics Hub")
 
 games = get_todays_games()
+# --- 3. MAIN UI (THE TABBED HUB) ---
+st.title("Los Cappers Lab 🧪")
+st.markdown("### 💥 The Advanced S.L.A.M. Index Analytics Hub")
 
+games = get_todays_games()
+
+# Ensure this 'if' matches exactly with the 'else' below
 if games:
-    # Navigation tabs at the top
     tabs = st.tabs([f"{g['away']} @ {g['home']}" for g in games])
     
     for i, game in enumerate(games):
         with tabs[i]:
             st.subheader(f"Pro-Report: {game['away_p']} vs {game['home_p']}")
-            
-            # --- PASTE YOUR ORIGINAL ANALYTICS LOGIC BELOW ---
-            # 1. Your Statcast Sabermetric Splits code goes here
-            # 2. Your Verified Pitch Arsenal code goes here
-            # 3. Your Intent-To-Homer Lineup Analysis goes here
-            
-            import streamlit as st
-import requests
-import pandas as pd
+            # YOUR ANALYTICS GO HERE
+else:
+    # This 'else' will now be correctly attached to the 'if games:' above
+    st.warning("No games found for today's slate.")
 import numpy as np
 from datetime import datetime
 from pybaseball import statcast_pitcher, playerid_lookup, batting_stats
