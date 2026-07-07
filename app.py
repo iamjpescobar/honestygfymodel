@@ -178,9 +178,9 @@ pitcher = st.radio(
     key=f"radio_pitcher_{chosen_game.get('game_id', 'default')}"
 )
 opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
-    
+
 if pitcher and pitcher != "TBD":
-st.write(f"## 📋 Pro-Report: {pitcher}")
+    st.write(f"## 📋 Pro-Report: {pitcher}")
         
         try:
             clean_name = pitcher.encode('ascii', 'ignore').decode('utf-8').replace('.', '').replace(',', '')
