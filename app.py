@@ -41,29 +41,32 @@ def get_todays_games():
     today = datetime.today().strftime('%Y-%m-%d')
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today}&hydrate=probablePitcher"
     try:
-        matchups.append({
-    "game_id": g['gamePk'], "away": away_team, "home": home_team,
-    "game_num": g.get('gameNumber', 1), # Added this line
-    "away_pitcher": away_p, "home_pitcher": home_p
-})
+        try:
+        response = requests.get(url).json()
+        games_list = response.get('dates', [{}])[0].get('games', [])
+        matchups = []
         for g in games_list:
             away_team = g['teams']['away']['team']['name']
             home_team = g['teams']['home']['team']['name']
             away_p = g['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
             home_p = g['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD')
             
+            # Manual overrides
             if away_team == "Philadelphia Phillies" and away_p == "TBD": away_p = "Cristopher Sanchez"
             if home_team == "Kansas City Royals" and home_p == "TBD": home_p = "Noah Cameron"
             if away_team == "Houston Astros" and away_p == "TBD": away_p = "Mike Burrows"
             if home_team == "Washington Nationals" and home_p == "TBD": home_p = "Miles Mikolas"
-                
+            
+            # Correctly append the dictionary with game_num
             matchups.append({
-                "game_id": g['gamePk'], "away": away_team, "home": home_team,
-                "away_pitcher": away_p, "home_pitcher": home_p
+                "game_id": g['gamePk'], 
+                "away": away_team, 
+                "home": home_team,
+                "game_num": g.get('gameNumber', 1),
+                "away_pitcher": away_p, 
+                "home_pitcher": home_p
             })
         return matchups if matchups else get_static_games()
-    except Exception:
-        return get_static_games()
 
 def get_static_games():
     return [
@@ -77,20 +80,7 @@ def get_live_team_roster(team_name):
     if not team_id: return []
     url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster?rosterType=active"
     try:
-        response = requests.get(url).json()
-        players = []
-        for p in response.get('roster', []):
-            person = p.get('person', {})
-            # This line fixes the Handedness issue
-            side_code = person.get('batSide', {}).get('code', 'R')
-            side_label = "LHB" if side_code == 'L' else ("SHB" if side_code == 'S' else "RHB")
-            
-            if p.get('position', {}).get('code') != '1':
-                players.append({"name": person['fullName'], "hand": side_label})
-        return players
-    except:
-        return []
-    url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster?rosterType=active"
+   
     try:
         response = requests.get(url).json()
         roster = response.get('roster', [])
