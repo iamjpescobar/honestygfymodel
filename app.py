@@ -294,6 +294,12 @@ if games:
             # --- DATA INITIALIZATION ---
 live_batters = get_live_team_roster(opposing_team)
 real_stats_df = load_real_batter_stats()
+
+# Fix: Create Name_Clean if it doesn't exist to prevent KeyError
+# Replace 'Name' with the exact header name from your CSV if it differs
+if 'Name_Clean' not in real_stats_df.columns:
+    real_stats_df['Name_Clean'] = real_stats_df['Name'].astype(str).str.lower().str.replace('.', '').str.replace(',', '').str.replace("'", "")
+
 processed_rows = []
 
 # --- QUALIFIED SLAM ENGINE ---
@@ -325,12 +331,8 @@ if live_batters:
                            ld <= MAX_LD and fb >= MIN_FB and pull_air >= MIN_PULL_AIR and 
                            fb_hr >= MIN_FB_HR and blast >= MIN_BLAST)
             
-            if is_qualified:
-                slam_index = (brl * 2) + (hh * 1.5) + (blast * 1.5)
-                status = "🔥 QUALIFIED"
-            else:
-                slam_index = 0.0
-                status = "⚠️ NOT QUALIFIED"
+            status = "🔥 QUALIFIED" if is_qualified else "⚠️ NOT QUALIFIED"
+            slam_index = (brl * 2) + (hh * 1.5) + (blast * 1.5) if is_qualified else 0.0
                 
             processed_rows.append({
                 "Batter Name": b['name'],
@@ -351,10 +353,7 @@ if processed_rows:
         ["-- Active Lineup Roster Overview --"] + list(df_lineup.index)
     )
 
-    if selected_scout != "-- Active Lineup Roster Overview --":
-        st.session_state.selected_batter = selected_scout
-    else:
-        st.session_state.selected_batter = None
+    st.session_state.selected_batter = selected_scout if selected_scout != "-- Active Lineup Roster Overview --" else None
 
     if st.session_state.selected_batter:
         sb = st.session_state.selected_batter
