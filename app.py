@@ -7,7 +7,13 @@ from pybaseball import statcast_pitcher, playerid_lookup, batting_stats
 
 # --- 1. SET LAYOUT CONFIGURATION ---
 st.set_page_config(layout="wide", page_title="Los Cappers Lab", page_icon="🧪")
-
+# --- ADD THESE FUNCTIONS AT THE TOP ---
+@st.cache_data(ttl=86400)
+def get_pitcher_data(last_name, first_name, start_date, end_date):
+    player_id_df = playerid_lookup(last_name, first_name)
+    if player_id_df.empty: return None
+    player_id = player_id_df.iloc[0]['key_mlbam']
+    return statcast_pitcher(start_date, end_date, player_id)
 st.title("Los Cappers Lab 🧪")
 st.markdown("### 💥 The Advanced S.L.A.M. Index Analytics Hub")
 st.markdown("---")
