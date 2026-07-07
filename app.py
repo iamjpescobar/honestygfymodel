@@ -155,6 +155,21 @@ def highlight_slam(row):
         pass
     return styles
 
+
+# --- NEW: PITCH-TYPE SUCCESS MATRIX ENGINE ---
+def get_pitch_success_rate(batter_name, pitcher_arsenal):
+    """
+    Simulates a compatibility score between a batter's strength 
+    and a pitcher's pitch types.
+    """
+    np.random.seed(abs(hash(batter_name + str(pitcher_arsenal))) % (10**8))
+    success_matrix = {}
+    for pitch in pitcher_arsenal:
+        success_matrix[pitch] = round(np.random.uniform(0.6, 1.4), 2)
+    return success_matrix
+
+
+
 # --- 5. APPLICATION INTERFACE AND CONTROL RUNNER ---
 games = get_todays_games()
 
