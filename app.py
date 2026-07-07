@@ -116,28 +116,40 @@ def get_static_games():
 @st.cache_data(ttl=3600)
 def get_live_team_roster(team_name):
     team_id = MLB_TEAM_IDS.get(team_name)
-    if not team_id: return []
+    if not team_id: 
+        return []
+    
     url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster?rosterType=active"
+    
     try:
         response = requests.get(url).json()
         players = []
-        for p in response.get('roster', []):
+        
+        # Ensure roster exists in the response
+        roster_data = response.get('roster', [])
+        
+        for p in roster_data:
             person = p.get('person', {})
+            # Extract bat side, default to 'R' if missing
             side_code = person.get('batSide', {}).get('code', 'R')
             
-            # Map hand labels
-            if side_code == 'L': hand_label = "LHB"
-            elif side_code == 'S': hand_label = "SHB"
-            else: hand_label = "RHB"
+            # Map hand labels accurately
+            if side_code == 'L':
+                hand_label = "LHB"
+            elif side_code == 'S':
+                hand_label = "SHB"
+            else:
+                hand_label = "RHB"
             
+            # Filter for position players (exclude pitchers)
             if p.get('position', {}).get('code') != '1':
                 players.append({"name": person.get('fullName'), "hand": hand_label})
+                
         return players
-
+        
     except Exception as e:
         st.error(f"Error fetching roster: {e}")
         return []
-        hand_label = "RHB"
     
     # Filter for position players (exclude pitchers)
     if p.get('position', {}).get('code') != '1':
