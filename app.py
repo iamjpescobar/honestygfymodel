@@ -171,12 +171,12 @@ for i, tab in enumerate(tabs):
     st.markdown(f"### Researching: {chosen_game['away']} @ {chosen_game['home']}")
     st.markdown("---")
         
-    # Use a unique key that is guaranteed to be different per game
-    # Ensure a unique key for the radio widget based on game_id
+    # Ensure the radio is called once and assigned a key linked to the specific game
+    # Move this block so it is not affected by the tab loop rendering
     pitcher = st.radio(
         "Select Pitcher to Target:",
-        [chosen_game['away_pitcher'], chosen_game['home_pitcher']],
-        key=f"pitcher_target_{chosen_game.get('game_id', 'unknown')}"
+        [chosen_game.get('away_pitcher'), chosen_game.get('home_pitcher')],
+        key=f"pitcher_{chosen_game.get('game_id')}"
     )
 
     opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
@@ -185,6 +185,7 @@ for i, tab in enumerate(tabs):
         st.write(f"## 📋 Pro-Report: {pitcher}")
 
         try:
+            # Clean name logic
             clean_name = pitcher.encode('ascii', 'ignore').decode('utf-8').replace('.', '').replace('Jr', '')
             names = clean_name.split(" ")
             first, last = names[0], names[-1]
@@ -192,7 +193,7 @@ for i, tab in enumerate(tabs):
             
             id_df = playerid_lookup(last, first)
         except Exception as e:
-            st.error("Could not process pitcher lookup.")
+            st.error(f"Error processing lookup: {e}")
             
             # Master metrics placeholder initialization
             matrix_rows = []
