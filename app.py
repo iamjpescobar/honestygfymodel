@@ -150,12 +150,16 @@ games = get_todays_games()
 if games:
     # --- MODERN TOP-ALIGNED MATCHUP TICKER ---
     st.markdown("### 📅 Today's Matchup Slate")
-    game_cols = st.columns(len(games))
+    # Create horizontal tabs for each game
+    tab_labels = [f"{g['away'][:3]} @ {g['home'][:3]}" for g in games]
+    tabs = st.tabs(tab_labels)
 
-    for i, g in enumerate(games):
-        with game_cols[i]:
-            if st.button(f"{g['away']} @ {g['home']}", key=f"btn_{g['game_id']}"):
-                st.session_state.selected_game = g
+# When a tab is clicked, update the session state
+for i, tab in enumerate(tabs):
+    with tab:
+        if st.button(f"Load {games[i]['away']} @ {games[i]['home']}", key=f"tab_btn_{i}"):
+            st.session_state.selected_game = games[i]
+            st.rerun()
 
     # Initialize session state if not already done
     if 'selected_game' not in st.session_state:
