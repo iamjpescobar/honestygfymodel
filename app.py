@@ -346,7 +346,6 @@ for b in live_batters:
             "HH %": hh,
             "Blast %": blast
         })
-                
             if processed_rows:
                 df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
                 
