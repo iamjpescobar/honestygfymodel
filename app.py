@@ -134,6 +134,13 @@ def get_batter_affinity_multiplier(batter_name, pitcher_data):
     # Randomly assign affinity based on a 40% success rate
     return 1.10 if np.random.rand() > 0.6 else 1.0
 # --- 4. CONDITIONAL HEATMAP GENERATOR ---
+def get_status_color(value, threshold, higher_is_better=True):
+    """Returns a green hex if threshold is met, else a red hex."""
+    # Ensure the value is a float, cleaning up any string characters
+    val = float(str(value).replace('%', '').replace('+', ''))
+    if higher_is_better:
+        return "#0f401b" if val >= threshold else "#400f0f"
+    return "#400f0f" if val >= threshold else "#0f401b"
 def highlight_slam(row):
     styles = [''] * len(row)
     try:
