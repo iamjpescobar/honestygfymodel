@@ -41,9 +41,11 @@ def get_todays_games():
     today = datetime.today().strftime('%Y-%m-%d')
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today}&hydrate=probablePitcher"
     try:
-        response = requests.get(url).json()
-        games_list = response.get('dates', [{}])[0].get('games', [])
-        matchups = []
+        matchups.append({
+    "game_id": g['gamePk'], "away": away_team, "home": home_team,
+    "game_num": g.get('gameNumber', 1), # Added this line
+    "away_pitcher": away_p, "home_pitcher": home_p
+})
         for g in games_list:
             away_team = g['teams']['away']['team']['name']
             home_team = g['teams']['home']['team']['name']
