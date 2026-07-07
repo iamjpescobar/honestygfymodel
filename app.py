@@ -172,7 +172,7 @@ if games:
         
     opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
     
-    if pitcher and pitcher != "TBD":
+if pitcher and pitcher != "TBD":
         st.write(f"## 📋 Pro-Report: {pitcher}")
         
         try:
