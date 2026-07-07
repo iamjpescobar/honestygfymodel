@@ -170,8 +170,9 @@ for i, tab in enumerate(tabs):
     st.markdown("---")
         
     pitcher = st.radio(
-     "Select Pitcher to Target:", 
-    [chosen_game['away_pitcher'], chosen_game['home_pitcher']]
+        "Select Pitcher to Target:",
+        [chosen_game['away_pitcher'], chosen_game['home_pitcher']],
+        key=f"pitcher_selector_{chosen_game['game_id']}"
     )
         
     opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
