@@ -44,23 +44,24 @@ def get_todays_games():
         response = requests.get(url).json()
         games_list = response.get('dates', [{}])[0].get('games', [])
         matchups = []
+        # --- Replace/Update lines 48-60 inside get_todays_games ---
         for g in games_list:
             away_team = g['teams']['away']['team']['name']
             home_team = g['teams']['home']['team']['name']
             away_p = g['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
             home_p = g['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD')
             
-            # Manual overrides
-            if away_team == "Philadelphia Phillies" and away_p == "TBD": away_p = "Cristopher Sanchez"
-            if home_team == "Kansas City Royals" and home_p == "TBD": home_p = "Noah Cameron"
-            if away_team == "Houston Astros" and away_p == "TBD": away_p = "Mike Burrows"
-            if home_team == "Washington Nationals" and home_p == "TBD": home_p = "Miles Mikolas"
+            # Extract start time (ISO format)
+            start_time = g.get('gameDate', 'TBD') 
+            
+            # ... (keep your manual overrides here) ...
             
             matchups.append({
                 "game_id": g['gamePk'], 
                 "away": away_team, 
                 "home": home_team,
                 "game_num": g.get('gameNumber', 1),
+                "start_time": start_time, # Add this
                 "away_pitcher": away_p, 
                 "home_pitcher": home_p
             })
@@ -146,27 +147,35 @@ def highlight_slam(row):
     except:
         pass
     return styles
-
+def format_game(g):
+    # Extract time from "2026-07-07T23:10:00Z"
+    time_part = g.get('start_time', 'TBD').split('T')
+    if len(time_part) > 1:
+        hm = time_part[1].split(':')
+        readable_time = f"{hm[0]}:{hm[1]}"
+    else:
+        readable_time = "TBD"
+    return f"{g['away']} @ {g['home']} ({readable_time} UTC)"
 # --- 5. APPLICATION INTERFACE AND CONTROL RUNNER ---
 games = get_todays_games()
-
-if games:
-    with st.sidebar:
-        st.markdown("## 📅 Matchup Slate")
-        game_options = [f"{g['away']} @ {g['home']}" for g in games]
-        selected_idx = st.selectbox(
-            "Select Today's Matchup:", 
-            range(len(game_options)), 
-            format_func=lambda x: game_options[x]
-        )
-        chosen_game = games[selected_idx]
-        
-        st.markdown("---")
-        
+# Ensure this is indented 4 spaces under 'if games:'
+    chosen_game = st.segmented_control(
+        "Select Today's Matchup:",
+        options=games,
+        format_func=format_game,
+        selection_mode="single"
+    )
+    
+    if chosen_game:
+        # This replaces the old sidebar radio
         pitcher = st.radio(
             "Select Pitcher to Target:", 
-            [chosen_game['away_pitcher'], chosen_game['home_pitcher']]
+            [chosen_game['away_pitcher'], chosen_game['home_pitcher']],
+            horizontal=True
         )
+
+    
+        
         
     opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
     
