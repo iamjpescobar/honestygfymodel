@@ -124,69 +124,24 @@ def get_live_team_roster(team_name):
         for p in response.get('roster', []):
             person = p.get('person', {})
             side_code = person.get('batSide', {}).get('code', 'R')
-            # Proper hand mapping
             hand_label = "LHB" if side_code == 'L' else ("SHB" if side_code == 'S' else "RHB")
             if p.get('position', {}).get('code') != '1':
                 players.append({"name": person.get('fullName'), "hand": hand_label})
         return players
-    except Exception as e:
-        st.error(f"Error: {e}")
+    except Exception:
         return []
 
-# --- 2. CORRECTED LINEUP PROCESSING ---
+# --- 2. Cleaned Display Logic ---
 live_batters = get_live_team_roster(opposing_team)
 processed_rows = []
 for b in live_batters:
-    # ... (your logic for bbe, brl, hh, etc.) ...
+    # (Insert your logic here to calculate bbe, slam_index, brl, hh, gb)
     processed_rows.append({
-        "Batter Name": b['name'], "Hand": b['hand'], "BBE": bbe, 
+        "Batter Name": b['name'], "Hand": b['hand'], "BBE": bbe,
         "💥 SLAM Index": round(slam_index, 1), "Brl %": brl, 
         "HH %": hh, "GB %": gb
     })
 
-# Convert list to DataFrame BEFORE applying styles
-# --- Cleaned up display logic ---
 if processed_rows:
     df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
-    
-    # 1. Show the selection box
-    selected_scout = st.selectbox(
-        "🔍 Click to inspect detailed historical performance breakdown:",
-        ["-- Active Lineup Roster Overview --"] + list(df_lineup.index)
-    )
-
-    # 2. Update session state
-    if selected_scout != "-- Active Lineup Roster Overview --":
-        st.session_state.selected_batter = selected_scout
-    else:
-        st.session_state.selected_batter = None
-                
-                if selected_scout != "-- Active Lineup Roster Overview --":
-                    st.session_state.selected_batter = selected_scout
-                else:
-                    st.session_state.selected_batter = None
-                    
-                if st.session_state.selected_batter:
-                    sb = st.session_state.selected_batter
-                    if sb in df_lineup.index:
-                        stats = df_lineup.loc[sb]
-                        st.markdown(f"#### 📊 Detailed Scout Matrix: {sb}")
-                        c1, c2, c3, c4 = st.columns(4)
-                        c1.metric("Calculated SLAM Rating", f"{stats['💥 SLAM Index']}")
-                        c2.metric("Barrel Execution Rate", f"{stats['Brl %']}%")
-                        c3.metric("Hard Hit Metric", f"{stats['HH %']}%")
-                        c4.metric("Total BBE Sample Size", f"{stats['BBE']}")
-                        st.markdown("---")
-                
-                styled_df = df_lineup.style.format({
-                    "BBE": "{:d}", "💥 SLAM Index": "{:.1f}", "Brl %": "{:.1f}%", 
-                    "PullAir %": "{:.1f}%", "HH %": "{:.1f}%", "LD %": "{:.1f}%", "GB %": "{:.1f}%"
-                }).apply(highlight_slam, axis=1)
-                
-                st.dataframe(styled_df, use_container_width=True)
-                
-        except Exception as e:
-            st.error(f"Error processing layout configurations: {e}")
-else:
-    st.info("Awaiting live MLB schedule initialization data streams.")
-    st.warning("No games found for today's slate.")
+    st.dataframe(df_lineup.style.map(highlight_slam), use_container_width=True)
