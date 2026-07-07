@@ -8,6 +8,7 @@ from pybaseball import statcast_pitcher, playerid_lookup, batting_stats
 # --- 1. SETUP ---
 st.set_page_config(layout="wide", page_title="Los Cappers Lab", page_icon="🧪")
 st.title("Los Cappers Lab 🧪")
+
 games = get_todays_games()
 st.write(f"DEBUG: Found {len(games)} games") # This will tell us if it's even finding games
 
