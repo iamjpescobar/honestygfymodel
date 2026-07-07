@@ -178,7 +178,7 @@ def get_batter_affinity_multiplier(batter_name, pitcher_data):
     # Randomly assign affinity based on a 40% success rate
     return 1.10 if np.random.rand() > 0.6 else 1.0
 # --- 4. CONDITIONAL HEATMAP GENERATOR ---
-def highlight_slam(row):
+def highlight_slam(row, axis=None):
     styles = [''] * len(row)
     try:
         slam_val = float(row['💥 SLAM Index'])
