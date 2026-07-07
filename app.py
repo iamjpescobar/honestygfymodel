@@ -121,13 +121,18 @@ def get_live_team_roster(team_name):
     try:
         response = requests.get(url).json()
         players = []
-        # Replace the loop starting at line 123 with this:
+     
+        
         for p in response.get('roster', []):
             person = p.get('person', {})
             # Fetch the code safely
             side_code = person.get('batSide', {}).get('code', 'R')
             
-            # Explicitly map the values
+            # --- DIAGNOSTIC PRINT ---
+            # This will show you exactly what 'side_code' is for each player in your console
+            print(f"Debug: Player {person.get('fullName')} has batSide code: {side_code}")
+            
+            # Properly map codes to labels
             if side_code == 'L':
                 hand_label = "LHB"
             elif side_code == 'S':
@@ -138,8 +143,6 @@ def get_live_team_roster(team_name):
             # Filter for position players (exclude pitchers)
             if p.get('position', {}).get('code') != '1':
                 players.append({"name": person.get('fullName'), "hand": hand_label})
-        return players
-    except:
         return []
     url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster?rosterType=active"
     try:
