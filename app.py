@@ -159,13 +159,14 @@ def format_game(g):
 # --- 5. APPLICATION INTERFACE AND CONTROL RUNNER ---
 games = get_todays_games()
 
-        chosen_game = st.segmented_control(
+if games:
+    chosen_game = st.segmented_control(
         "Select Today's Matchup:",
         options=games,
         format_func=format_game,
         selection_mode="single"
     )
-    
+
     if chosen_game:
         # This replaces the old sidebar radio
         pitcher = st.radio(
@@ -174,13 +175,10 @@ games = get_todays_games()
             horizontal=True
         )
 
-    
-        
-        
-    opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
-    
-    if pitcher and pitcher != "TBD":
-        st.write(f"## 📋 Pro-Report: {pitcher}")
+        opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
+
+        if pitcher and pitcher != "TBD":
+            st.write(f"## 📋 Pro-Report: {pitcher}")
         
         try:
             clean_name = pitcher.encode('ascii', 'ignore').decode('utf-8').replace('.', '').replace(',', '')
