@@ -354,10 +354,10 @@ for b in live_batters:
                 ["-- Active Lineup Roster Overview --"] + list(df_lineup.index)
                 )
                 
-                if selected_scout != "-- Active Lineup Roster Overview --":
-                    st.session_state.selected_batter = selected_scout
-                else:
-                    st.session_state.selected_batter = None
+        if selected_scout != "-- Active Lineup Roster Overview --":
+                st.session_state.selected_batter = selected_scout
+            else:
+                st.session_state.selected_batter = None
                     
                 if st.session_state.selected_batter:
                     sb = st.session_state.selected_batter
