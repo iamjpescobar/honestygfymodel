@@ -51,28 +51,24 @@ def get_todays_games():
         games_list = response.get('dates', [{}])[0].get('games', [])
         matchups = []
         for g in games_list:
+            # Safely get team names
             away_team = g['teams']['away']['team']['name']
             home_team = g['teams']['home']['team']['name']
             
-            # Extract pitchers with fallbacks
+            # Extract pitchers
             away_p = g['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
             home_p = g['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD')
-            
-            # --- Keep your manual overrides here ---
-            if away_team == "Philadelphia Phillies" and away_p == "TBD": away_p = "Cristopher Sanchez"
-            # ... (add your other overrides) ...
             
             matchups.append({
                 "game_id": g.get('gamePk'),
                 "away": away_team,
                 "home": home_team,
-                "away_p": away_p,      # <-- This fixes the KeyError
-                "home_p": home_p,      # <-- This fixes the KeyError
-                "away_pitcher": away_p, 
-                "home_pitcher": home_p
+                "away_p": away_p,
+                "home_p": home_p
             })
         return matchups if matchups else get_static_games()
     except Exception:
+        return get_static_games()
         return get_static_games()
 
 def get_static_games():
