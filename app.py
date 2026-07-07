@@ -281,51 +281,56 @@ if games:
             
 # --- REAL BATTER STATCAST INTEGRATION ---
 st.markdown(f"### ⚔️ Intent-To-Homer Lineup Analysis vs. {opposing_team}")
-st.caption("🌲 Emerald Glow = High Volume Verified Power | 🪐 Matte Grey = Small Sample Size")
 
 live_batters = get_live_team_roster(opposing_team)
 real_stats_df = load_real_batter_stats()
 processed_rows = []
 
-for b in live_batters:
-    b_name_clean = b['name'].lower().replace('.', '').replace(',', '').replace("'", "")
-    match = pd.DataFrame()
-    if not real_stats_df.empty:
-        match = real_stats_df[real_stats_df['Name_Clean'] == b_name_clean]
-    
-    # Define safe defaults
-    if not match.empty:
-        bbe = int(match['AB'].iloc[0])
-        brl = float(match.get('Barrel%', [8.5])[0])
-        hh = float(match.get('HardHit%', [40.0])[0])
-        gb = float(match.get('GB%', [42.0])[0])
-        ld = float(match.get('LD%', [20.0])[0])
-        pull_air = float(match.get('FB%', [35.0])[0])
-        iso_val = float(match.get('ISO', [0.150])[0])
-        bat_speed = float(match.get('BatSpeed', [70.0])[0])
-    else:
-        np.random.seed(abs(hash(b['name'])) % (10**8))
-        bbe, brl, hh, gb, ld, pull_air = 100, 8.5, 40.0, 42.0, 20.0, 35.0
-        iso_val, bat_speed = 0.150, 70.0
+try: # Ensure this try block covers the processing loop
+    for b in live_batters:
+        b_name_clean = b['name'].lower().replace('.', '').replace(',', '').replace("'", "")
         
-    # Wizard Sauce Logic
-    ld_penalty = 1.2 if ld > 22.0 else 1.0
-    base_score = ((brl * 3.5) + (hh * 0.8) + (pull_air * 0.5) - (gb * 0.2)) / ld_penalty
-    if bat_speed >= 72.0: base_score += 5.0
-    if bbe > 120: base_score += 8
-    
-    slam_index = min(100.0, max(5.0, base_score))
-    
-    processed_rows.append({
-        "Batter Name": b['name'],
-        "💥 SLAM Index": slam_index,
-        "Brl %": brl,
-        "HH %": hh,
-        "BBE": bbe
-    })
+        # Initialize match as empty DataFrame to ensure it always exists
+        match = pd.DataFrame()
+        if not real_stats_df.empty:
+            # Note: Ensure this filter logic correctly identifies the batter
+            match = real_stats_df[real_stats_df['Name_Clean'] == b_name_clean]
+        
+        # Safely assign values for calculation
+        if not match.empty:
+            bbe = int(match['AB'].iloc[0])
+            brl = float(match.get('Barrel%', [8.5])[0])
+            hh = float(match.get('HardHit%', [40.0])[0])
+            gb = float(match.get('GB%', [42.0])[0])
+            ld = float(match.get('LD%', [20.0])[0])
+            pull_air = float(match.get('FB%', [35.0])[0])
+            iso_val = float(match.get('ISO', [0.150])[0])
+            bat_speed = float(match.get('BatSpeed', [70.0])[0])
+        else:
+            # Fallback values if no match found
+            bbe, brl, hh, gb, ld, pull_air = 100, 8.5, 40.0, 42.0, 20.0, 35.0
+            iso_val, bat_speed = 0.150, 70.0
+            
+        # Wizard Sauce Logic
+        ld_penalty = 1.2 if ld > 22.0 else 1.0
+        base_score = ((brl * 3.5) + (hh * 0.8) + (pull_air * 0.3) - (gb * 0.2)) / ld_penalty
+        
+        if bbe > 120: base_score += 8
+        slam_index = min(100.0, max(5.0, base_score))
+        
+        processed_rows.append({
+            "Batter Name": b['name'],
+            "💥 SLAM Index": slam_index,
+            "Brl %": brl,
+            "HH %": hh,
+            "BBE": bbe
+        })
 
-if processed_rows:
-    df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
-    st.dataframe(df_lineup, use_container_width=True)
-else:
-    st.info("Awaiting live MLB schedule initialization data streams.")
+    if processed_rows:
+        df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
+        st.dataframe(df_lineup, use_container_width=True)
+    else:
+        st.info("No active lineup data found.")
+
+except Exception as e:
+    st.error(f"Error processing layout configurations: {e}")
