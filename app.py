@@ -354,36 +354,40 @@ if games:
                     sb = st.session_state.selected_batter
                     if sb in df_lineup.index:
                         stats = df_lineup.loc[sb]
+                        if sb in df_lineup.index:
+                        stats = df_lineup.loc[sb]
                         st.markdown(f"#### 📊 Detailed Scout Matrix: {sb}")
-
-# 1. Inject CSS to force background colors on containers
-st.markdown("""
-<style>
-    [data-testid="stMetricValue"] { color: white; }
-    .status-box {
-        padding: 10px;
-        border-radius: 5px;
-        text-align: center;
-        color: white;
-        font-weight: bold;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-c1, c2, c3, c4 = st.columns(4)
-
-# 2. Use a simpler structure that works on mobile
-def get_color(val, threshold):
-    return "#0f401b" if val >= threshold else "#400f0f"
-
-with c1:
-    st.markdown(f'<div class="status-box" style="background-color: {get_color(float(stats["💥 SLAM Index"]), 65.0)};">SLAM<br>{stats["💥 SLAM Index"]}</div>', unsafe_allow_html=True)
-with c2:
-    st.markdown(f'<div class="status-box" style="background-color: {get_color(float(stats["Brl %"]), 10.0)};">Barrel<br>{stats["Brl %"]}%</div>', unsafe_allow_html=True)
-with c3:
-    st.markdown(f'<div class="status-box" style="background-color: {get_color(float(stats["HH %"]), 40.0)};">HardHit<br>{stats["HH %"]}%</div>', unsafe_allow_html=True)
-with c4:
-    st.container(border=True).metric("Total BBE", f"{stats['BBE']}")
+                        
+                        # Initialize columns
+                        c1, c2, c3, c4 = st.columns(4)
+                        
+                        with c1:
+                            st.markdown(f"""
+                                <div style="background-color: {get_status_color(stats['💥 SLAM Index'], 65.0)}; padding: 10px; border-radius: 5px; border: 1px solid #333; color: white;">
+                                    <strong>SLAM: {stats['💥 SLAM Index']}</strong>
+                                </div>
+                            """, unsafe_allow_html=True)
+                        with c2:
+                            st.markdown(f"""
+                                <div style="background-color: {get_status_color(stats['Brl %'], 10.0)}; padding: 10px; border-radius: 5px; border: 1px solid #333; color: white;">
+                                    <strong>Barrel: {stats['Brl %']}%</strong>
+                                </div>
+                            """, unsafe_allow_html=True)
+                        with c3:
+                            st.markdown(f"""
+                                <div style="background-color: {get_status_color(stats['HH %'], 40.0)}; padding: 10px; border-radius: 5px; border: 1px solid #333; color: white;">
+                                    <strong>HardHit: {stats['HH %']}%</strong>
+                                </div>
+                            """, unsafe_allow_html=True)
+                        with c4:
+                            st.container(border=True).metric("Total BBE", f"{stats['BBE']}")
+                            
+                        # --- Arsenal Compatibility Matrix ---
+                        st.markdown("#### 🎯 Arsenal Compatibility Matrix")
+                        pitcher_arsenal = ['4-Seam Fastball', 'Slider', 'Changeup', 'Sinker']
+                        comp_data = get_pitch_success_rate(sb, pitcher_arsenal)
+                        comp_df = pd.DataFrame.from_dict(comp_data, orient='index', columns=['Success Multiplier'])
+                        st.bar_chart(comp_df)
                             
                         # --- Arsenal Compatibility Matrix (Aligned) ---
                         st.markdown("#### 🎯 Arsenal Compatibility Matrix")
