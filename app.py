@@ -72,30 +72,23 @@ def get_static_games():
 @st.cache_data(ttl=3600)
 def get_live_team_roster(team_name):
     team_id = MLB_TEAM_IDS.get(team_name)
-    if not team_id: return []
+    if not team_id: 
+        return []
     url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster?rosterType=active"
     try:
         response = requests.get(url).json()
         players = []
         for p in response.get('roster', []):
             person = p.get('person', {})
-           for p in response.get('roster', []):
-        person = p.get('person', {})
-        # Everything here must be indented with the same 4-space gap
-        side_code = person.get('batSide', {}).get('code', 'R')
-        print(f"DEBUG: {person.get('fullName')} | Code: {side_code}")
-        
-        side_label = "LHB" if side_code == 'L' else ("SHB" if side_code == 'S' else "RHB")
-        
-        if p.get('position', {}).get('code') != '1':
-            players.append({"name": person['fullName'], "hand": side_label})
-    
-    side_label = "LHB" if side_code == 'L' else ("SHB" if side_code == 'S' else "RHB")
+            side_code = person.get('batSide', {}).get('code', 'R')
+            
+            # Label assignment
+            side_label = "LHB" if side_code == 'L' else ("SHB" if side_code == 'S' else "RHB")
             
             if p.get('position', {}).get('code') != '1':
-                players.append({"name": person['fullName'], "hand": side_label})
+                players.append({"name": person.get('fullName'), "hand": side_label})
         return players
-    except:
+    except Exception as e:
         return []
     
 
