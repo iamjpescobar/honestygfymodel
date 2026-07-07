@@ -359,17 +359,15 @@ if games:
                         # Fixes the Indentation/Naming error:
                         c1, c2, c3, c4 = st.columns(4)
                         
+                        # Use Streamlit's native container styling for maximum compatibility
                         with c1:
-                            st.markdown(f"""<div style="background-color: {get_status_color(stats['💥 SLAM Index'], 65.0)}; padding: 10px; border-radius: 5px; border: 1px solid #333; color: white;">
-                                <strong>SLAM: {stats['💥 SLAM Index']}</strong></div>""", unsafe_allow_html=True)
+                            st.container(border=True).write(f"**SLAM**\n\n{stats['💥 SLAM Index']}")
                         with c2:
-                            st.markdown(f"""<div style="background-color: {get_status_color(stats['Brl %'], 10.0)}; padding: 10px; border-radius: 5px; border: 1px solid #333; color: white;">
-                                <strong>Barrel: {stats['Brl %']}%</strong></div>""", unsafe_allow_html=True)
+                            st.container(border=True).write(f"**Barrel**\n\n{stats['Brl %']}%")
                         with c3:
-                            st.markdown(f"""<div style="background-color: {get_status_color(stats['HH %'], 40.0)}; padding: 10px; border-radius: 5px; border: 1px solid #333; color: white;">
-                                <strong>HardHit: {stats['HH %']}%</strong></div>""", unsafe_allow_html=True)
+                            st.container(border=True).write(f"**HardHit**\n\n{stats['HH %']}%")
                         with c4:
-                            st.container(border=True).metric("Total BBE", f"{stats['BBE']}")
+                            st.container(border=True).write(f"**Total BBE**\n\n{stats['BBE']}")
                             
                         # --- Arsenal Compatibility Matrix (Aligned) ---
                         st.markdown("#### 🎯 Arsenal Compatibility Matrix")
