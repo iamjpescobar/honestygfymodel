@@ -355,22 +355,35 @@ if games:
                     if sb in df_lineup.index:
                         stats = df_lineup.loc[sb]
                         st.markdown(f"#### 📊 Detailed Scout Matrix: {sb}")
-                        c1, c2, c3, c4 = st.columns(4)
 
-                        # Logic to determine if it's "good" (green) or "bad" (red)
-                        # We use the delta to show the change or simply use it for color
-                        slam_val = float(str(stats['💥 SLAM Index']).replace('%', '').replace('+', ''))
-                        brl_val = float(str(stats['Brl %']).replace('%', '').replace('+', ''))
-                        hh_val = float(str(stats['HH %']).replace('%', '').replace('+', ''))
+# 1. Inject CSS to force background colors on containers
+st.markdown("""
+<style>
+    [data-testid="stMetricValue"] { color: white; }
+    .status-box {
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+        color: white;
+        font-weight: bold;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-                        with c1:
-                            st.metric("SLAM", stats['💥 SLAM Index'], delta="Elite" if slam_val >= 65.0 else "Low")
-                        with c2:
-                            st.metric("Barrel", f"{stats['Brl %']}%", delta="Good" if brl_val >= 10.0 else "Low")
-                        with c3:
-                            st.metric("HardHit", f"{stats['HH %']}%", delta="Strong" if hh_val >= 40.0 else "Low")
-                        with c4:
-                            st.metric("BBE", stats['BBE'])
+c1, c2, c3, c4 = st.columns(4)
+
+# 2. Use a simpler structure that works on mobile
+def get_color(val, threshold):
+    return "#0f401b" if val >= threshold else "#400f0f"
+
+with c1:
+    st.markdown(f'<div class="status-box" style="background-color: {get_color(float(stats["💥 SLAM Index"]), 65.0)};">SLAM<br>{stats["💥 SLAM Index"]}</div>', unsafe_allow_html=True)
+with c2:
+    st.markdown(f'<div class="status-box" style="background-color: {get_color(float(stats["Brl %"]), 10.0)};">Barrel<br>{stats["Brl %"]}%</div>', unsafe_allow_html=True)
+with c3:
+    st.markdown(f'<div class="status-box" style="background-color: {get_color(float(stats["HH %"]), 40.0)};">HardHit<br>{stats["HH %"]}%</div>', unsafe_allow_html=True)
+with c4:
+    st.container(border=True).metric("Total BBE", f"{stats['BBE']}")
                             
                         # --- Arsenal Compatibility Matrix (Aligned) ---
                         st.markdown("#### 🎯 Arsenal Compatibility Matrix")
