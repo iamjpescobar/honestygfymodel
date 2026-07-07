@@ -395,5 +395,4 @@ if games:
             st.error(f"Error processing layout configurations: {e}")
 else:
     st.info("Awaiting live MLB schedule initialization data streams.")
-
     st.warning("No games found for today's slate.")
