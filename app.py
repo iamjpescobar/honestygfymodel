@@ -268,10 +268,8 @@ if games:
                     gb = round(np.random.uniform(35.0, 48.0), 1)
                     ld = round(np.random.uniform(15.0, 25.0), 1)
                     pull_air = round(np.random.uniform(10.0, 25.0), 1)
-                    swsp = round(np.random.uniform(32.0, 44.0), 1)
                 
                 match_rating = np.random.choice(["🔥 ELITE", "✅ Good", "Neutral", "⚠️ Cold"], p=[0.15, 0.45, 0.30, 0.10])
-                
                 base_score = (brl * 3.5) + (hh * 0.5) + (pull_air * 0.3) - (gb * 0.2)
                 if match_rating == "✅ Good": base_score *= 1.15
                 if bbe > 120: base_score += 8
@@ -286,7 +284,6 @@ if games:
                 
             if processed_rows:
                 df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
-                
                 selected_scout = st.selectbox(
                     "🔍 Click to inspect detailed historical performance breakdown:",
                     ["-- Active Lineup Roster Overview --"] + list(df_lineup.index)
@@ -313,10 +310,4 @@ if games:
                     "BBE": "{:d}", "💥 SLAM Index": "{:.1f}", "Brl %": "{:.1f}%", 
                     "PullAir %": "{:.1f}%", "HH %": "{:.1f}%", "LD %": "{:.1f}%", "GB %": "{:.1f}%"
                 }).apply(highlight_slam, axis=1)
-                
                 st.dataframe(styled_df, use_container_width=True)
-                
-        except Exception as e:
-            st.error(f"Error processing layout configurations: {e}")
-else:
-    st.info("Awaiting live MLB schedule initialization data streams.")
