@@ -155,26 +155,28 @@ def highlight_slam(row):
         pass
     return styles
 
-# --- 5. APPLICATION INTERFACE AND CONTROL RUNNER ---
+# --- 5. UPDATED TERMINAL LAYOUT ---
 games = get_todays_games()
 
-if games:
-    with st.sidebar:
-        st.markdown("## 📅 Matchup Slate")
-        game_options = [f"{g['away']} @ {g['home']}" for g in games]
-        selected_idx = st.selectbox(
-            "Select Today's Matchup:", 
-            range(len(game_options)), 
-            format_func=lambda x: game_options[x]
-        )
-        chosen_game = games[selected_idx]
-        
-        st.markdown("---")
-        
-        pitcher = st.radio(
-            "Select Pitcher to Target:", 
-            [chosen_game['away_pitcher'], chosen_game['home_pitcher']]
-        )
+# Top Header Area
+st.markdown("### 📡 LIVE TERMINAL: MLB DATA STREAMS")
+header_cols = st.columns([2, 2, 1])
+
+with header_cols[0]:
+    game_options = [f"{g['away']} @ {g['home']}" for g in games]
+    selected_game_name = st.selectbox("SELECT MATCHUP:", game_options)
+    chosen_game = next(g for g in games if f"{g['away']} @ {g['home']}" == selected_game_name)
+
+with header_cols[1]:
+    pitcher = st.selectbox("SELECT PITCHER:", [chosen_game['away_pitcher'], chosen_game['home_pitcher']])
+
+with header_cols[2]:
+    st.markdown("**STATUS**")
+    st.success("LIVE DATA")
+
+st.divider()
+
+# Now the rest of your app logic (pitcher reports/lineups) runs directly below this
         
     opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
     
