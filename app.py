@@ -130,18 +130,24 @@ def get_live_team_roster(team_name):
         return players
     except Exception:
         return []
-
 # --- 2. Cleaned Display Logic ---
-live_batters = get_live_team_roster(opposing_team)
-processed_rows = []
-for b in live_batters:
-    # (Insert your logic here to calculate bbe, slam_index, brl, hh, gb)
-    processed_rows.append({
-        "Batter Name": b['name'], "Hand": b['hand'], "BBE": bbe,
-        "💥 SLAM Index": round(slam_index, 1), "Brl %": brl, 
-        "HH %": hh, "GB %": gb
-    })
+# --- 2. Corrected Display Logic ---
+# Ensure you have a selector defined before using the variable
+opposing_team = st.selectbox("Select Opposing Team:", list(MLB_TEAM_IDS.keys()))
 
-if processed_rows:
-    df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
-    st.dataframe(df_lineup.style.map(highlight_slam), use_container_width=True)
+if opposing_team:
+    live_batters = get_live_team_roster(opposing_team)
+    processed_rows = []
+    
+    for b in live_batters:
+        # Ensure 'bbe', 'slam_index', etc., are calculated here
+        # or defined before this loop
+        processed_rows.append({
+            "Batter Name": b['name'], "Hand": b['hand'], "BBE": 0, 
+            "💥 SLAM Index": 0.0, "Brl %": 0, "HH %": 0, "GB %": 0
+        })
+
+    if processed_rows:
+        df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
+        # Apply the style directly to the dataframe object
+        st.dataframe(df_lineup.style.map(highlight_slam), use_container_width=True)
