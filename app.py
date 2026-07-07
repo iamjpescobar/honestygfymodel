@@ -355,12 +355,17 @@ if games:
                     if sb in df_lineup.index:
                         stats = df_lineup.loc[sb]
                         st.markdown(f"#### 📊 Detailed Scout Matrix: {sb}")
-                        c1, c2, c3, c4 = st.columns(4)
-                        c1.metric("Calculated SLAM Rating", f"{stats['💥 SLAM Index']}")
-                        c2.metric("Barrel Execution Rate", f"{stats['Brl %']}%")
-                        c3.metric("Hard Hit Metric", f"{stats['HH %']}%")
-                        c4.metric("Total BBE Sample Size", f"{stats['BBE']}")
-                        st.markdown("---")
+                        with c1:
+                            st.markdown(f"""<div style="background-color: {get_status_color(stats['💥 SLAM Index'], 65.0)}; padding: 10px; border-radius: 5px; border: 1px solid #333;">
+                                <strong>SLAM: {stats['💥 SLAM Index']}</strong></div>""", unsafe_allow_html=True)
+                        with c2:
+                            st.markdown(f"""<div style="background-color: {get_status_color(stats['Brl %'], 10.0)}; padding: 10px; border-radius: 5px; border: 1px solid #333;">
+                                <strong>Barrel: {stats['Brl %']}%</strong></div>""", unsafe_allow_html=True)
+                        with c3:
+                            st.markdown(f"""<div style="background-color: {get_status_color(stats['HH %'], 40.0)}; padding: 10px; border-radius: 5px; border: 1px solid #333;">
+                                <strong>HardHit: {stats['HH %']}%</strong></div>""", unsafe_allow_html=True)
+                        with c4:
+                            st.container(border=True).metric("Total BBE", f"{stats['BBE']}")
                 # --- Arsenal Compatibility Matrix ---
                         st.markdown("#### 🎯 Arsenal Compatibility Matrix")
                         pitcher_arsenal = ['4-Seam Fastball', 'Slider', 'Changeup', 'Sinker']
