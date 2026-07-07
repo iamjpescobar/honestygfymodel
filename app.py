@@ -172,12 +172,13 @@ for i, tab in enumerate(tabs):
     st.markdown("---")
         
     # Use a hardcoded, unique prefix to ensure no collision occurs
-pitcher = st.radio(
-    "Select Pitcher to Target:",
-    [chosen_game['away_pitcher'], chosen_game['home_pitcher']],
-    key=f"radio_pitcher_{chosen_game.get('game_id', 'default')}"
-)
-opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
+    pitcher = st.radio(
+        "Select Pitcher to Target:",
+        [chosen_game['away_pitcher'], chosen_game['home_pitcher']],
+        key=f"radio_pitcher_{chosen_game.get('game_id', 'default')}"
+    )
+    
+    opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
 
     if pitcher and pitcher != "TBD":
         st.write(f"## 📋 Pro-Report: {pitcher}")
