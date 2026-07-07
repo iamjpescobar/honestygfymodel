@@ -203,6 +203,9 @@ if games:
             if "Cristopher" in pitcher: first, last = "Cristopher", "Sanchez"
             
             id_df = playerid_lookup(last, first)
+            pitcher_data = pd.DataFrame() 
+        except Exception as e:
+            st.warning(f"Error processing pitcher lookup: {e}")
             pitcher_data = pd.DataFrame()
             
             # Master metrics placeholder initialization
