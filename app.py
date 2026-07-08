@@ -39,15 +39,22 @@ if 'selected_batter' not in st.session_state:
 # --- 3. DATA ACQUISITION FUNCTIONS ---
 @st.cache_data(ttl=3600)
 def get_todays_games():
+    # Today's date
     today = datetime.today().strftime('%Y-%m-%d')
+    # MLB Stats API URL
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today}&hydrate=probablePitcher"
+    
     try:
         response = requests.get(url).json()
         games_list = response.get('dates', [{}])[0].get('games', [])
         matchups = []
+        
         for g in games_list:
+            # Safely get team names
             away_team = g['teams']['away']['team']['name']
             home_team = g['teams']['home']['team']['name']
+            
+            # Extract live pitcher data directly from the API
             away_p = g['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
             home_p = g['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD')
             
@@ -58,12 +65,10 @@ def get_todays_games():
                 "away_pitcher": away_p, 
                 "home_pitcher": home_p
             })
-        return matchups if matchups else get_static_games()
+            
+        return matchups
     except Exception:
-        return get_static_games()
-
-def get_static_games():
-    return []
+        return [] # Return empty list if API fails
 
 @st.cache_data(ttl=3600)
 def get_live_team_roster(team_name):
