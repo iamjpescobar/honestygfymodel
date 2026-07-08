@@ -100,14 +100,17 @@ if chosen_game and pitcher:
         processed_rows = []
         
         # --- REFINED DATA PIPELINE ---
+        # --- REFINED PRECISION PIPELINE ---
         for b in live_batters:
-            b_name_clean = b['name'].lower().replace('.', '').replace(',', '').replace("'", "")
+            b_name = b['name'].lower()
+            # Split the name to find the last name for matching
+            last_name = b_name.split()[-1].replace('.', '').replace("'", "")
             
-            # Use 'str.contains' for a smarter, fuzzy match
-            match = real_stats_df[real_stats_df['Name_Clean'].str.contains(b_name_clean.split()[-1], na=False)]
+            # Find the match where 'Name_Clean' contains the last name
+            match = real_stats_df[real_stats_df['Name_Clean'].str.contains(last_name, na=False)]
             
             if not match.empty:
-                # Select the best match if multiple exist
+                # Pick the row that matches best (usually the first one found)
                 best_match = match.iloc[0]
                 bbe = int(best_match.get('AB', 50))
                 brl = float(best_match.get('Barrel%', 8.0))
@@ -115,15 +118,18 @@ if chosen_game and pitcher:
                 gb = float(best_match.get('GB%', 42.0))
                 pull = float(best_match.get('FB%', 20.0))
             else:
-                # Default values remain as a safety net
-                bbe, brl, hh, gb, pull = 50, 8.0, 40.0, 42.0, 20.0
+                # No match found - set to None/0 so you can visually identify them
+                bbe, brl, hh, gb, pull = 0, 0.0, 0.0, 0.0, 0.0
             
-            # ... (Rest of your slam_index formula and row appending)
-            
+            # THE FORMULA
             slam_index = min(100.0, max(5.0, (brl * W_BRL) + (hh * W_HH) + (pull * W_PULL) - (gb * W_GB)))
+            
             processed_rows.append({
-                "Batter Name": b['name'], "Hand": b['hand'], "BBE": bbe, 
-                "💥 SLAM Index": round(slam_index, 1), "Brl %": brl, "HH %": hh, "GB %": gb
+                "Batter Name": b['name'], 
+                "Hand": b['hand'], 
+                "BBE": bbe if bbe > 0 else "N/A", 
+                "💥 SLAM Index": round(slam_index, 1) if bbe > 0 else "N/A", 
+                "Brl %": brl, "HH %": hh, "GB %": gb
             })
             
         df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
