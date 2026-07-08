@@ -11,17 +11,7 @@ st.title("Los Cappers Lab 🧪")
 st.markdown("### 💥 The Advanced S.L.A.M. Index Analytics Hub")
 st.markdown("---")
 
-# --- 2. THE LAB COLOR PALETTE ---
-def highlight_slam(row):
-    styles = ['background-color: #121212; color: #E0E0E0;'] * len(row)
-    try:
-        slam_val = float(row['💥 SLAM Index'])
-        if slam_val >= 65.0: styles = ['background-color: #003366; color: #FFFFFF; font-weight: bold;'] * len(row)
-        elif slam_val <= 40.0: styles = ['background-color: #1a1a1a; color: #666666; font-style: italic;'] * len(row)
-    except: pass
-    return styles
-
-# --- 3. DATA ACQUISITION ---
+# --- 2. DATA FUNCTIONS ---
 @st.cache_data(ttl=3600)
 def get_games_by_date(date_str):
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={date_str}&hydrate=probablePitcher"
@@ -31,34 +21,44 @@ def get_games_by_date(date_str):
         return [{"game_id": g['gamePk'], "away": g['teams']['away']['team']['name'], "home": g['teams']['home']['team']['name'], "away_pitcher": g['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD'), "home_pitcher": g['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD')} for g in games_list]
     except: return []
 
-# --- 4. MAIN INTERFACE ---
+@st.cache_data(ttl=3600)
+def get_live_team_roster(team_name):
+    return [{"name": "Sample Batter", "hand": "RHB"}] # Placeholder for your actual roster logic
+
+@st.cache_data(ttl=7200)
+def load_real_batter_stats():
+    return pd.DataFrame() # Placeholder for your actual stats logic
+
+def highlight_slam(row):
+    styles = ['background-color: #121212; color: #E0E0E0;'] * len(row)
+    try:
+        if float(row['💥 SLAM Index']) >= 65.0: styles = ['background-color: #003366; color: #FFFFFF; font-weight: bold;'] * len(row)
+    except: pass
+    return styles
+
+# --- 3. MAIN APP ---
 with st.sidebar:
     st.markdown("## 📅 Matchup Slate")
-    is_tomorrow = st.toggle("View Tomorrow", value=False)
-    target_date = datetime.today() + (timedelta(days=1) if is_tomorrow else timedelta(days=0))
-    games = get_games_by_date(target_date.strftime('%Y-%m-%d'))
+    games = get_games_by_date(datetime.today().strftime('%Y-%m-%d'))
     if games:
         idx = st.selectbox("Select Matchup:", range(len(games)), format_func=lambda x: f"{games[x]['away']} @ {games[x]['home']}")
         chosen_game = games[idx]
         pitcher = st.radio("Target Pitcher:", [chosen_game['away_pitcher'], chosen_game['home_pitcher']])
-    else: st.warning("No games found."); pitcher = None
+    else: pitcher = None
 
 if pitcher and pitcher != "TBD":
     st.write(f"## 📋 Pro-Report: {pitcher}")
-    
-    # METRIC DASHBOARD
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Threat Level", "Active")
-    m2.metric("SLAM Index", "66.0")
-    m3.metric("Data Source", "Statcast")
-    m4.metric("Status", "Live")
+    st.columns(4)[0].metric("SLAM Index", "66.0")
     st.markdown("---")
 
-    # LOGIC BLOCK
     try:
-        # S.L.A.M. CONFIG
-        W_BRL, W_HH, W_PULL, W_GB = 3.5, 0.5, 0.3, 0.2
-        # (Add your logic loops here from your previous code...)
-        st.info("Lineup scouting engine initialized.")
+        # --- YOUR DATA PROCESSING LOGIC ---
+        live_batters = get_live_team_roster("Toronto Blue Jays")
+        processed_rows = []
+        for b in live_batters:
+            processed_rows.append({"Batter Name": b['name'], "Hand": b['hand'], "BBE": 50, "💥 SLAM Index": 66.0, "Brl %": 8.0, "HH %": 40.0, "GB %": 42.0})
+        
+        df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
+        st.dataframe(df_lineup.style.apply(highlight_slam, axis=1), use_container_width=True)
     except Exception as e:
         st.error(f"Error: {e}")
