@@ -38,11 +38,9 @@ if 'selected_batter' not in st.session_state:
 
 # --- 3. DATA ACQUISITION FUNCTIONS ---
 @st.cache_data(ttl=3600)
-def get_todays_games():
-    # Today's date
-    today = datetime.today().strftime('%Y-%m-%d')
-    # MLB Stats API URL
-    url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today}&hydrate=probablePitcher"
+def get_games_by_date(date_string):
+    # Use the passed date_string instead of generating it inside
+    url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={date_string}&hydrate=probablePitcher"
     
     try:
         response = requests.get(url).json()
@@ -50,11 +48,8 @@ def get_todays_games():
         matchups = []
         
         for g in games_list:
-            # Safely get team names
             away_team = g['teams']['away']['team']['name']
             home_team = g['teams']['home']['team']['name']
-            
-            # Extract live pitcher data directly from the API
             away_p = g['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
             home_p = g['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD')
             
@@ -65,10 +60,9 @@ def get_todays_games():
                 "away_pitcher": away_p, 
                 "home_pitcher": home_p
             })
-            
         return matchups
     except Exception:
-        return [] # Return empty list if API fails
+        return []
 
 @st.cache_data(ttl=3600)
 def get_live_team_roster(team_name):
@@ -152,12 +146,25 @@ def highlight_slam(row):
         pass
     return styles
 
-# --- 5. APPLICATION INTERFACE AND CONTROL RUNNER ---
-games = get_todays_games()
 
-if games:
-    with st.sidebar:
-        st.markdown("## 📅 Matchup Slate")
+        # --- 5. APPLICATION INTERFACE AND CONTROL RUNNER ---
+
+with st.sidebar:
+    st.markdown("## 📅 Matchup Slate")
+    
+    # Toggle switch to flip between today and tomorrow
+    is_tomorrow = st.toggle("View Tomorrow's Games", value=False)
+    
+    # Calculate the target date string
+    target_date = datetime.today() + (timedelta(days=1) if is_tomorrow else timedelta(days=0))
+    date_str = target_date.strftime('%Y-%m-%d')
+    
+    st.caption(f"Currently viewing: {date_str}")
+    
+    # Call the updated function
+    games = get_games_by_date(date_str)
+    
+    if games:
         game_options = [f"{g['away']} @ {g['home']}" for g in games]
         selected_idx = st.selectbox(
             "Select Today's Matchup:", 
@@ -172,12 +179,16 @@ if games:
             "Select Pitcher to Target:", 
             [chosen_game['away_pitcher'], chosen_game['home_pitcher']]
         )
-        
+    else:
+        st.warning("No games found for this date or API data unavailable.")
+        chosen_game = None
+        pitcher = None
+
+# Proceed with analysis only if a game and pitcher are selected
+if chosen_game and pitcher and pitcher != "TBD":
     opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
-    
-    if pitcher and pitcher != "TBD":
-        st.write(f"## 📋 Pro-Report: {pitcher}")
-        
+    st.write(f"## 📋 Pro-Report: {pitcher}")
+    # ... (Keep all your remaining code that generates the report)
         try:
             clean_name = pitcher.encode('ascii', 'ignore').decode('utf-8').replace('.', '').replace(',', '')
             names = clean_name.split(" ")
