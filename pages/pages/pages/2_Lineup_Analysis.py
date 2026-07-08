@@ -2,14 +2,16 @@ import streamlit as st
 import pandas as pd
 import requests
 from datetime import datetime
+import altair as alt
 
 from engines.roster import get_live_team_roster
 from engines.batter_stats import load_batting_stats, get_batter_profile
 from engines.slam_engine import compute_slam_index, random_match_tag
 
 st.title("⚔️ Lineup SLAM Index Analysis")
-st.markdown("---")
+st.markdown("----")
 
+# ---- GET TODAY'S GAMES ----
 @st.cache_data(ttl=3600)
 def get_todays_games():
     today = datetime.today().strftime("%Y-%m-%d")
@@ -23,7 +25,7 @@ def get_todays_games():
                 "away": g["teams"]["away"]["team"]["name"],
                 "home": g["teams"]["home"]["team"]["name"],
                 "away_pitcher": g["teams"]["away"].get("probablePitcher", {}).get("fullName", "TBD"),
-                "home_pitcher": g["teams"]["home"].get("probablePitcher", {}).get("fullName", "TBD"),
+                "home_pitcher": g["teams"]["home"].get("probablePitcher", {}).get("fullName", "TBD")
             })
         return matchups
     except:
@@ -31,6 +33,7 @@ def get_todays_games():
 
 games = get_todays_games()
 
+# ---- SIDEBAR MATCHUP SELECTOR ----
 if games:
     game_options = [f"{g['away']} @ {g['home']}" for g in games]
     selected_idx = st.selectbox("Select Matchup:", range(len(game_options)), format_func=lambda x: game_options[x])
@@ -42,6 +45,7 @@ if games:
 
     st.subheader(f"Lineup Analysis vs {opposing_team}")
 
+    # ---- LOAD BATTERS ----
     batters = get_live_team_roster(opposing_team)
     stats_df = load_batting_stats()
 
@@ -73,6 +77,77 @@ if games:
 
     df = pd.DataFrame(rows).set_index("Batter")
     st.dataframe(df, use_container_width=True)
+
+    # ---- BATTER CHARTS START HERE ----
+
+    # ---- SLAM INDEX BAR CHART ----
+    slam_chart = (
+        alt.Chart(df.reset_index())
+        .mark_bar()
+        .encode(
+            x=alt.X("Batter:N", sort="-y"),
+            y=alt.Y("SLAM:Q"),
+            color="Matchup:N"
+        )
+        .properties(title="SLAM Index by Batter")
+    )
+    st.altair_chart(slam_chart, use_container_width=True)
+
+    # ---- BARREL VS HARD HIT SCATTER ----
+    scatter_chart = (
+        alt.Chart(df.reset_index())
+        .mark_circle(size=80, opacity=0.6)
+        .encode(
+            x="Brl %:Q",
+            y="HH %:Q",
+            color="Matchup:N",
+            tooltip=["Batter", "Brl %", "HH %", "SLAM"]
+        )
+        .properties(title="Barrel% vs HardHit%")
+    )
+    st.altair_chart(scatter_chart, use_container_width=True)
+
+    # ---- PULL AIR VS GROUND BALL ----
+    pull_chart = (
+        alt.Chart(df.reset_index())
+        .mark_circle(size=70, opacity=0.6)
+        .encode(
+            x="PullAir %:Q",
+            y="GB %:Q",
+            color="Matchup:N",
+            tooltip=["Batter", "PullAir %", "GB %", "SLAM"]
+        )
+        .properties(title="PullAir% vs Groundball%")
+    )
+    st.altair_chart(pull_chart, use_container_width=True)
+
+    # ---- LD VS GB HEATMAP ----
+    heatmap = (
+        alt.Chart(df.reset_index())
+        .mark_rect()
+        .encode(
+            x=alt.X("LD %:Q", bin=True),
+            y=alt.Y("GB %:Q", bin=True),
+            color=alt.Color("count()", scale=alt.Scale(scheme="greens")),
+            tooltip=["count()"]
+        )
+        .properties(title="Line Drive% vs Groundball% Heatmap")
+    )
+    st.altair_chart(heatmap, use_container_width=True)
+
+    # ---- POWER QUADRANT CHART ----
+    quadrant = (
+        alt.Chart(df.reset_index())
+        .mark_circle(size=90, opacity=0.7)
+        .encode(
+            x="Brl %:Q",
+            y="PullAir %:Q",
+            color="Matchup:N",
+            tooltip=["Batter", "Brl %", "PullAir %", "SLAM"]
+        )
+        .properties(title="Power Quadrant (Barrel% vs PullAir%)")
+    )
+    st.altair_chart(quadrant, use_container_width=True)
+
 else:
     st.info("No games available.")
-
