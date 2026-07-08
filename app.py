@@ -148,13 +148,13 @@ def highlight_slam(row):
 
 # --- 5. APPLICATION INTERFACE AND CONTROL RUNNER ---
 
+# (Sidebar logic remains exactly as you have it)
 with st.sidebar:
     st.markdown("## 📅 Matchup Slate")
     is_tomorrow = st.toggle("View Tomorrow's Games", value=False)
     target_date = datetime.today() + (timedelta(days=1) if is_tomorrow else timedelta(days=0))
     date_str = target_date.strftime('%Y-%m-%d')
     st.caption(f"Currently viewing: {date_str}")
-    
     games = get_games_by_date(date_str)
     
     if games:
@@ -168,39 +168,43 @@ with st.sidebar:
         chosen_game = None
         pitcher = None
 
-# --- ENSURE THE LINE BELOW IS ALIGNED TO THE LEFT MARGIN (NO INDENT) ---
+# --- EVERYTHING BELOW IS AT THE FAR LEFT MARGIN (LEVEL 0) ---
 if chosen_game and pitcher and pitcher != "TBD":
+    # Everything below is indented 4 spaces (Level 1)
     opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
     st.write(f"## 📋 Pro-Report: {pitcher}")
     
+    # The try block is at Level 1
     try:
+        # Code inside try is at Level 2 (8 spaces)
         clean_name = pitcher.encode('ascii', 'ignore').decode('utf-8').replace('.', '').replace(',', '')
         names = clean_name.split(" ")
-        # ... (continue with the rest of your existing code block here)
-            first, last = names[0], names[-1]
-            if "Cristopher" in pitcher: first, last = "Cristopher", "Sanchez"
+        first, last = names[0], names[-1]
+        
+        if "Cristopher" in pitcher: 
+            first, last = "Cristopher", "Sanchez"
             
-            id_df = playerid_lookup(last, first)
-            pitcher_data = pd.DataFrame()
+        id_df = playerid_lookup(last, first)
+        pitcher_data = pd.DataFrame()
+        
+        matrix_rows = []
+        splits = ["Season", "vs LHB", "vs RHB"]
+        
+        base_data = {
+            "Season": {"IP": 117.0, "BF": 474, "ERA": 3.40, "xERA": 3.32, "wOBA": .265, "SLG": .333, "ISO": .100, "WHIP": 1.09, "HR": 8, "HR/9": 0.62, "BB%": "4.9%", "WHIFF%": "32.2%", "K%": "28.5%", "PUTAWAY%": "27.2%", "SWSTR%": "16.5%", "K/9": 10.38, "1STP S%": "66.9%", "MEATBALL%": "6.2%", "BARREL%": "8.3%", "HH%": "43.0%", "FB%": "17.5%", "HR/FB%": "14.5%", "PULLAIR%": "13.1%"},
+            "vs LHB": {"IP": 31.1, "BF": 112, "ERA": 2.14, "xERA": 2.15, "wOBA": .154, "SLG": .191, "ISO": .045, "WHIP": 0.57, "HR": 1, "HR/9": 0.29, "BB%": "1.8%", "WHIFF%": "32.0%", "K%": "36.6%", "PUTAWAY%": "38.7%", "SWSTR%": "18.0%", "K/9": 11.78, "1STP S%": "73.2%", "MEATBALL%": "8.7%", "BARREL%": "4.3%", "HH%": "34.8%", "FB%": "15.9%", "HR/FB%": "9.1%", "PULLAIR%": "7.2%"},
+            "vs RHB": {"IP": 84.2, "BF": 362, "ERA": 3.84, "xERA": 3.76, "wOBA": .299, "SLG": .379, "ISO": .118, "WHIP": 1.29, "HR": 7, "HR/9": 0.74, "BB%": "5.8%", "WHIFF%": "32.2%", "K%": "26.0%", "PUTAWAY%": "24.1%", "SWSTR%": "16.1%", "K/9": 9.99, "1STP S%": "65.0%", "MEATBALL%": "5.5%", "BARREL%": "9.4%", "HH%": "45.3%", "FB%": "18.0%", "HR/FB%": "15.9%", "PULLAIR%": "14.7%"}
+        }
+        
+        if not id_df.empty:
+            pitcher_id = id_df.iloc[0]['key_mlbam']
+            pitcher_data = statcast_pitcher('2026-04-01', '2026-10-01', pitcher_id)
             
-            # Master metrics placeholder initialization
-            matrix_rows = []
-            splits = ["Season", "vs LHB", "vs RHB"]
-            
-            # Base dictionary matching user schema configuration requirements
-            base_data = {
-                "Season": {"IP": 117.0, "BF": 474, "ERA": 3.40, "xERA": 3.32, "wOBA": .265, "SLG": .333, "ISO": .100, "WHIP": 1.09, "HR": 8, "HR/9": 0.62, "BB%": "4.9%", "WHIFF%": "32.2%", "K%": "28.5%", "PUTAWAY%": "27.2%", "SWSTR%": "16.5%", "K/9": 10.38, "1STP S%": "66.9%", "MEATBALL%": "6.2%", "BARREL%": "8.3%", "HH%": "43.0%", "FB%": "17.5%", "HR/FB%": "14.5%", "PULLAIR%": "13.1%"},
-                "vs LHB": {"IP": 31.1, "BF": 112, "ERA": 2.14, "xERA": 2.15, "wOBA": .154, "SLG": .191, "ISO": .045, "WHIP": 0.57, "HR": 1, "HR/9": 0.29, "BB%": "1.8%", "WHIFF%": "32.0%", "K%": "36.6%", "PUTAWAY%": "38.7%", "SWSTR%": "18.0%", "K/9": 11.78, "1STP S%": "73.2%", "MEATBALL%": "8.7%", "BARREL%": "4.3%", "HH%": "34.8%", "FB%": "15.9%", "HR/FB%": "9.1%", "PULLAIR%": "7.2%"},
-                "vs RHB": {"IP": 84.2, "BF": 362, "ERA": 3.84, "xERA": 3.76, "wOBA": .299, "SLG": .379, "ISO": .118, "WHIP": 1.29, "HR": 7, "HR/9": 0.74, "BB%": "5.8%", "WHIFF%": "32.2%", "K%": "26.0%", "PUTAWAY%": "24.1%", "SWSTR%": "16.1%", "K/9": 9.99, "1STP S%": "65.0%", "MEATBALL%": "5.5%", "BARREL%": "9.4%", "HH%": "45.3%", "FB%": "18.0%", "HR/FB%": "15.9%", "PULLAIR%": "14.7%"}
-            }
-            
-            if not id_df.empty:
-                pitcher_id = id_df.iloc[0]['key_mlbam']
-                pitcher_data = statcast_pitcher('2026-04-01', '2026-10-01', pitcher_id)
-            
-            # --- SABERMETRIC SPLITS TRACKING PARSER ENGINE ---
-            for s in splits:
-                row = {"Split Zone": s}
+        for s in splits:
+            row = {"Split Zone": s}
+            # ... (the rest of your loop logic here)
+    except Exception as e:
+        st.error(f"Error processing layout configurations: {e}")
                 if pitcher_data is not None and not pitcher_data.empty:
                     # Dynamic filtering based on visual requirements map
                     if s == "vs LHB": sub_df = pitcher_data[pitcher_data['stand'] == 'L']
