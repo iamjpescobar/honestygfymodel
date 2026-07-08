@@ -11,6 +11,17 @@ st.title("⚔️ KC-Style Lineup Analysis")
 st.markdown("### 🟢 Emerald Glow = Verified Power | ⚫ Matte Grey = Small Sample Size")
 st.markdown("---")
 
+# ---------------------------------------------------------
+# ARSENAL COVERAGE ICON LOGIC
+# ---------------------------------------------------------
+def coverage_icon(value):
+    if value >= 0.12:   # strong affinity
+        return "🔥"
+    elif value >= 0.06: # weak affinity
+        return "⚠️"
+    return "❌"
+
+
 team_name = st.text_input("Enter Opposing Team:", "Baltimore Orioles")
 
 if st.button("Load Lineup"):
@@ -39,16 +50,28 @@ if st.button("Load Lineup"):
             "BBE": prof["BBE"],
             "SLAM": round(slam, 1),
             "Matchup": tag,
+
+            # Power profile
             "Brl %": prof["Brl %"],
             "HH %": prof["HH %"],
             "PullAir %": prof["PullAir %"],
             "LD %": prof["LD %"],
-            "GB %": prof["GB %"]
+            "GB %": prof["GB %"],
+
+            # Arsenal coverage icons
+            "FF": coverage_icon(prof["FF Affinity"]),
+            "SL": coverage_icon(prof["SL Affinity"]),
+            "CH": coverage_icon(prof["CH Affinity"]),
+            "SI": coverage_icon(prof["SI Affinity"]),
+            "SW": coverage_icon(prof["SW Affinity"]),
+            "CU": coverage_icon(prof["CU Affinity"])
         })
 
     df = pd.DataFrame(processed_rows).set_index("Batter")
 
-    # --- EMERALD GLOW + MATTE GREY ---
+    # ---------------------------------------------------------
+    # EMERALD GLOW + MATTE GREY STYLING
+    # ---------------------------------------------------------
     def color_slam(val):
         if val >= 75:
             return "background-color: #00b36b; color: white; font-weight: bold;"  # Emerald Glow
@@ -72,7 +95,21 @@ if st.button("Load Lineup"):
                          "GB %": "{:.1f}%"
                      })
 
-    st.dataframe(styled, use_container_width=True)
+    # ---------------------------------------------------------
+    # DISPLAY TABLE WITH COVERAGE ICONS
+    # ---------------------------------------------------------
+    st.dataframe(
+        styled,
+        use_container_width=True,
+        column_config={
+            "FF": "FF",
+            "SL": "SL",
+            "CH": "CH",
+            "SI": "SI",
+            "SW": "SW",
+            "CU": "CU"
+        }
+    )
 
     st.markdown("---")
     st.subheader("🔍 Detailed Scout Card")
@@ -94,6 +131,10 @@ if st.button("Load Lineup"):
         st.write(f"- **PullAir %:** {sb['PullAir %']}%")
         st.write(f"- **Line Drive %:** {sb['LD %']}%")
         st.write(f"- **Groundball %:** {sb['GB %']}%")
+
+        st.markdown("#### Arsenal Coverage")
+        st.write(f"**FF:** {sb['FF']}  |  **SL:** {sb['SL']}  |  **CH:** {sb['CH']}")
+        st.write(f"**SI:** {sb['SI']}  |  **SW:** {sb['SW']}  |  **CU:** {sb['CU']}")
 
         st.markdown("#### Matchup Tag")
         st.write(f"**{sb['Matchup']}**")
