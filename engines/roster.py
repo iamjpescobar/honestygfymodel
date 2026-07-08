@@ -1,11 +1,12 @@
 import requests
+from bs4 import BeautifulSoup
 
 def get_live_team_roster(team_name: str):
     """
     FINAL FIX:
-    Uses Baseball Savant's player search endpoint.
-    ALWAYS returns correct handedness (L/R/S).
+    Scrapes MLB.com player pages for handedness.
     Works on Streamlit Cloud.
+    ALWAYS returns correct L/R/S.
     """
 
     # ---- GET ALL MLB TEAMS ----
@@ -29,13 +30,25 @@ def get_live_team_roster(team_name: str):
 
     for player in roster_data:
         pid = str(player["person"]["id"])
+        full_name = player["person"]["fullName"]
 
-        # ---- BASEBALL SAVANT LOOKUP ----
-        savant_url = f"https://baseballsavant.mlb.com/player/{pid}"
-        data = requests.get(savant_url).json()
+        # ---- SCRAPE MLB.COM PLAYER PAGE ----
+        mlb_url = f"https://www.mlb.com/player/{full_name.replace(' ', '-').lower()}-{pid}"
 
-        full_name = data.get("player_name", player["person"]["fullName"])
-        bats = data.get("bats", "R").upper()  # ALWAYS L/R/S
+        try:
+            html = requests.get(mlb_url).text
+            soup = BeautifulSoup(html, "html.parser")
+
+            # MLB always shows: "Bats: Left" or "Bats: Right" or "Bats: Switch"
+            bats_text = soup.find(string=lambda s: s and "Bats:" in s)
+
+            if bats_text:
+                bats = bats_text.split(":")[1].strip().upper()[0]  # L/R/S
+            else:
+                bats = "R"
+
+        except:
+            bats = "R"
 
         batters.append({
             "name": full_name,
