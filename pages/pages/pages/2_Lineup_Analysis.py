@@ -6,12 +6,17 @@ import altair as alt
 
 from engines.roster import get_live_team_roster
 from engines.batter_stats import load_batting_stats, get_batter_profile
-from engines.slam_engine import compute_slam_index, random_match_tag
+from engines.statcast_engine import build_pitch_arsenal, get_pitcher_id, get_pitcher_statcast
+from engines.slam_engine import (
+    compute_slam_index,
+    random_match_tag,
+    compute_matchup_affinity,
+    pitcher_affinity_score
+)
 
 st.title("⚔️ Lineup SLAM Index Analysis")
 st.markdown("----")
 
-# ---- GET TODAY'S GAMES ----
 @st.cache_data(ttl=3600)
 def get_todays_games():
     today = datetime.today().strftime("%Y-%m-%d")
@@ -33,7 +38,6 @@ def get_todays_games():
 
 games = get_todays_games()
 
-# ---- SIDEBAR MATCHUP SELECTOR ----
 if games:
     game_options = [f"{g['away']} @ {g['home']}" for g in games]
     selected_idx = st.selectbox("Select Matchup:", range(len(game_options)), format_func=lambda x: game_options[x])
@@ -45,14 +49,26 @@ if games:
 
     st.subheader(f"Lineup Analysis vs {opposing_team}")
 
-    # ---- LOAD BATTERS ----
     batters = get_live_team_roster(opposing_team)
     stats_df = load_batting_stats()
+
+    # get pitcher arsenal for matchup affinity
+    pitcher_id = get_pitcher_id(pitcher)
+    pitcher_data = get_pitcher_statcast(pitcher_id)
+    arsenal_df = build_pitch_arsenal(pitcher_data) if pitcher_data is not None else None
+
+    primary_pitch = None
+    if arsenal_df is not None and not arsenal_df.empty:
+        primary_pitch = arsenal_df.sort_values("Raw Count", ascending=False).iloc[0]["Pitch Type"]
 
     rows = []
     for b in batters:
         prof = get_batter_profile(b["name"], stats_df)
         tag = random_match_tag(b["name"])
+
+        matchup_mult = compute_matchup_affinity(arsenal_df, prof) if arsenal_df is not None else 1.0
+        affinity_mult = pitcher_affinity_score(primary_pitch, prof) if primary_pitch else 1.0
+
         slam = compute_slam_index(
             brl=prof["Brl %"],
             hh=prof["HH %"],
@@ -60,8 +76,9 @@ if games:
             gb=prof["GB %"],
             bbe=prof["BBE"],
             matchup_tag=tag,
-            affinity_mult=1.0
+            affinity_mult=matchup_mult * affinity_mult
         )
+
         rows.append({
             "Batter": b["name"],
             "Hand": b["hand"],
@@ -77,8 +94,6 @@ if games:
 
     df = pd.DataFrame(rows).set_index("Batter")
     st.dataframe(df, use_container_width=True)
-
-    # ---- BATTER CHARTS START HERE ----
 
     # ---- SLAM INDEX BAR CHART ----
     slam_chart = (
