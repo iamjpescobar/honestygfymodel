@@ -51,28 +51,12 @@ def get_todays_games():
             away_p = g['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
             home_p = g['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD')
             
-            for g in games_list:
-            away_team = g['teams']['away']['team']['name']
-            home_team = g['teams']['home']['team']['name']
-            
-            # This fetches the live data from the API
-            away_p = g['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
-            home_p = g['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD')
-            
-            # Only add to the list if we have found games
             matchups.append({
                 "game_id": g['gamePk'], 
                 "away": away_team, 
                 "home": home_team,
                 "away_pitcher": away_p, 
                 "home_pitcher": home_p
-            })
-        
-        return matchups if matchups else get_static_games()
-                
-            matchups.append({
-                "game_id": g['gamePk'], "away": away_team, "home": home_team,
-                "away_pitcher": away_p, "home_pitcher": home_p
             })
         return matchups if matchups else get_static_games()
     except Exception:
