@@ -39,7 +39,6 @@ if 'selected_batter' not in st.session_state:
 # --- 3. DATA ACQUISITION FUNCTIONS ---
 @st.cache_data(ttl=3600)
 def get_games_by_date(date_string):
-    # Use the passed date_string instead of generating it inside
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={date_string}&hydrate=probablePitcher"
     
     try:
@@ -50,8 +49,8 @@ def get_games_by_date(date_string):
         for g in games_list:
             away_team = g['teams']['away']['team']['name']
             home_team = g['teams']['home']['team']['name']
-            away_p = g['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
-            home_p = g['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD')
+            away_p = g['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD') # Corrected API path
+            home_p = g['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
             
             matchups.append({
                 "game_id": g['gamePk'], 
@@ -147,51 +146,37 @@ def highlight_slam(row):
     return styles
 
 
-        # --- 5. APPLICATION INTERFACE AND CONTROL RUNNER ---
+# --- 5. APPLICATION INTERFACE AND CONTROL RUNNER ---
 
 with st.sidebar:
     st.markdown("## 📅 Matchup Slate")
-    
-    # Toggle switch to flip between today and tomorrow
     is_tomorrow = st.toggle("View Tomorrow's Games", value=False)
-    
-    # Calculate the target date string
     target_date = datetime.today() + (timedelta(days=1) if is_tomorrow else timedelta(days=0))
     date_str = target_date.strftime('%Y-%m-%d')
-    
     st.caption(f"Currently viewing: {date_str}")
     
-    # Call the updated function
     games = get_games_by_date(date_str)
     
     if games:
         game_options = [f"{g['away']} @ {g['home']}" for g in games]
-        selected_idx = st.selectbox(
-            "Select Today's Matchup:", 
-            range(len(game_options)), 
-            format_func=lambda x: game_options[x]
-        )
+        selected_idx = st.selectbox("Select Matchup:", range(len(game_options)), format_func=lambda x: game_options[x])
         chosen_game = games[selected_idx]
-        
         st.markdown("---")
-        
-        pitcher = st.radio(
-            "Select Pitcher to Target:", 
-            [chosen_game['away_pitcher'], chosen_game['home_pitcher']]
-        )
+        pitcher = st.radio("Select Pitcher to Target:", [chosen_game['away_pitcher'], chosen_game['home_pitcher']])
     else:
-        st.warning("No games found for this date or API data unavailable.")
+        st.warning("No games found for this date.")
         chosen_game = None
         pitcher = None
 
-# Proceed with analysis only if a game and pitcher are selected
+# --- ENSURE THE LINE BELOW IS ALIGNED TO THE LEFT MARGIN (NO INDENT) ---
 if chosen_game and pitcher and pitcher != "TBD":
     opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
     st.write(f"## 📋 Pro-Report: {pitcher}")
-    # ... (Keep all your remaining code that generates the report)
-        try:
-            clean_name = pitcher.encode('ascii', 'ignore').decode('utf-8').replace('.', '').replace(',', '')
-            names = clean_name.split(" ")
+    
+    try:
+        clean_name = pitcher.encode('ascii', 'ignore').decode('utf-8').replace('.', '').replace(',', '')
+        names = clean_name.split(" ")
+        # ... (continue with the rest of your existing code block here)
             first, last = names[0], names[-1]
             if "Cristopher" in pitcher: first, last = "Cristopher", "Sanchez"
             
