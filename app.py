@@ -35,7 +35,36 @@ def get_live_team_roster(team_name):
     return [{"name": "Sample Batter", "hand": "RHB"}] 
 
 def load_real_batter_stats():
-    # Add your stats-loading logic here
+    try:
+        # 1. Fetch live roster and stats
+        live_batters = get_live_team_roster(opposing_team)
+        real_stats_df = load_real_batter_stats()
+        processed_rows = []
+
+        # 2. Process each batter through your custom SLAM formula
+        for b in live_batters:
+            b_name_clean = b['name'].lower().replace('.', '').replace(',', '').replace("'", "")
+            match = real_stats_df[real_stats_df['Name_Clean'] == b_name_clean] if not real_stats_df.empty else pd.DataFrame()
+            
+            if not match.empty:
+                bbe, brl, hh, gb, pull_air = int(match['AB'].iloc[0]), float(match['Barrel%'].iloc[0]), float(match['HardHit%'].iloc[0]), float(match['GB%'].iloc[0]), float(match['FB%'].iloc[0])
+            else:
+                bbe, brl, hh, gb, pull_air = 50, 8.0, 40.0, 42.0, 20.0
+            
+            # The S.L.A.M. Index Formula
+            slam_index = min(100.0, max(5.0, (brl * 3.5) + (hh * 0.5) + (pull_air * 0.3) - (gb * 0.2)))
+            
+            processed_rows.append({
+                "Batter Name": b['name'], "Hand": b['hand'], "BBE": bbe, 
+                "💥 SLAM Index": round(slam_index, 1), "Brl %": brl, "HH %": hh, "GB %": gb
+            })
+
+        # 3. Render the dynamic grid
+        df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
+        st.dataframe(df_lineup.style.apply(highlight_slam, axis=1), use_container_width=True)
+        
+    except Exception as e:
+        st.error(f"Engine Error: {e}")# Add your stats-loading logic here
     return pd.DataFrame()
 
 # --- 3. UI LAYOUT ---
