@@ -42,26 +42,41 @@ st.write(f"## 📋 Pro-Report: {pitcher}")
 
 # --- 4. ENGINE (The try block) ---
 try:
-    # Use the functions defined above
-    live_batters = get_live_team_roster(opposing_team)
-    real_stats = load_real_batter_stats()
-    
-    processed = []
-    for b in live_batters:
-        name_clean = b['name'].lower().replace('.', '').replace(',', '').replace("'", "")
-        match = real_stats[real_stats['Name_Clean'] == name_clean]
+        # 1. Fetch data
+        live_batters = get_live_team_roster(opposing_team)
+        real_stats_df = load_real_batter_stats()
         
-        # Calculate values safely
-        brl = float(match['Barrel%'].iloc[0]) if not match.empty else 8.0
-        hh = float(match['HardHit%'].iloc[0]) if not match.empty else 40.0
-        
-        processed.append({
-            "Batter Name": b['name'], 
-            "Hand": b['hand'], 
-            "💥 SLAM Index": round((brl * 3.5) + (hh * 0.5), 1)
-        })
+        # 2. Safety: Create 'Name_Clean' if it's missing (Crucial Fix)
+        if 'Name' in real_stats_df.columns and 'Name_Clean' not in real_stats_df.columns:
+            real_stats_df['Name_Clean'] = real_stats_df['Name'].str.lower().str.replace('[.,\']', '', regex=True)
 
-    st.dataframe(pd.DataFrame(processed).set_index("Batter Name"), use_container_width=True)
+        processed_rows = []
+        for b in live_batters:
+            b_name_clean = b['name'].lower().replace('.', '').replace(',', '').replace("'", "")
+            
+            # Check if our cleaned name exists in the clean column
+            match = real_stats_df[real_stats_df['Name_Clean'] == b_name_clean] if not real_stats_df.empty else pd.DataFrame()
+            
+            # Extract stats safely
+            if not match.empty:
+                # Use .get to prevent errors if a specific column is missing
+                bbe = int(match['AB'].iloc[0]) if 'AB' in match.columns else 50
+                brl = float(match['Barrel%'].iloc[0]) if 'Barrel%' in match.columns else 8.0
+                hh = float(match['HardHit%'].iloc[0]) if 'HardHit%' in match.columns else 40.0
+                gb = float(match['GB%'].iloc[0]) if 'GB%' in match.columns else 42.0
+                pull_air = float(match['FB%'].iloc[0]) if 'FB%' in match.columns else 20.0
+            else:
+                bbe, brl, hh, gb, pull_air = 50, 8.0, 40.0, 42.0, 20.0
+            
+            slam_index = min(100.0, max(5.0, (brl * 3.5) + (hh * 0.5) + (pull_air * 0.3) - (gb * 0.2)))
+            
+            processed_rows.append({
+                "Batter Name": b['name'], "Hand": b['hand'], "BBE": bbe, 
+                "💥 SLAM Index": round(slam_index, 1), "Brl %": brl, "HH %": hh, "GB %": gb
+            })
 
-except Exception as e:
-    st.error(f"Engine Error: {e}")
+        df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
+        st.dataframe(df_lineup.style.apply(highlight_slam, axis=1), use_container_width=True)
+                
+    except Exception as e:
+        st.error(f"Engine Error: {e}")
