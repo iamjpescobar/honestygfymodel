@@ -13,7 +13,6 @@ from engines.statcast_engine import (
 st.title("⚾ Pitcher Statcast Report")
 st.markdown("----")
 
-# ---- GET TODAY'S GAMES ----
 @st.cache_data(ttl=3600)
 def get_todays_games():
     today = datetime.today().strftime("%Y-%m-%d")
@@ -35,7 +34,6 @@ def get_todays_games():
 
 games = get_todays_games()
 
-# ---- SIDEBAR MATCHUP SELECTOR ----
 if games:
     game_options = [f"{g['away']} @ {g['home']}" for g in games]
     selected_idx = st.selectbox("Select Matchup:", range(len(game_options)), format_func=lambda x: game_options[x])
@@ -43,7 +41,6 @@ if games:
 
     pitcher = st.radio("Select Pitcher:", [chosen["away_pitcher"], chosen["home_pitcher"]])
 
-    # ---- PITCHER REPORT ----
     if pitcher != "TBD":
         st.subheader(f"⚾ Pitcher Report: {pitcher}")
 
@@ -51,9 +48,8 @@ if games:
         data = get_pitcher_statcast(pitcher_id)
 
         st.markdown("### Pitch Arsenal")
-        st.table(build_pitch_arsenal(data))
-
-        # ---- CHARTS START HERE ----
+        arsenal_df = build_pitch_arsenal(data)
+        st.table(arsenal_df)
 
         # ---- BAR CHART: Pitch Arsenal ----
         if not data.empty and "pitch_type" in data.columns:
