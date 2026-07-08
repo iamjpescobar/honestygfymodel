@@ -148,25 +148,49 @@ def highlight_slam(row):
 
 # --- 5. APPLICATION INTERFACE AND CONTROL RUNNER ---
 
-# Ensure session state variables exist
+# 1. Initialize session state variables so they are NEVER undefined
 if 'chosen_game' not in st.session_state: st.session_state.chosen_game = None
 if 'pitcher' not in st.session_state: st.session_state.pitcher = None
 
-# Main runner using session state
-if st.session_state.chosen_game and st.session_state.pitcher:
-    chosen_game = st.session_state.chosen_game
-    pitcher = st.session_state.pitcher
+with st.sidebar:
+    st.markdown("## 📅 Matchup Slate")
+    is_tomorrow = st.toggle("View Tomorrow's Games", value=False)
+    target_date = datetime.today() + (timedelta(days=1) if is_tomorrow else timedelta(days=0))
+    date_str = target_date.strftime('%Y-%m-%d')
+    st.caption(f"Currently viewing: {date_str}")
     
+    games = get_games_by_date(date_str)
+    
+    if games:
+        game_options = [f"{g['away']} @ {g['home']}" for g in games]
+        selected_idx = st.selectbox("Select Matchup:", range(len(game_options)), format_func=lambda x: game_options[x])
+        st.session_state.chosen_game = games[selected_idx]
+        
+        st.markdown("---")
+        st.session_state.pitcher = st.radio(
+            "Select Pitcher to Target:", 
+            [st.session_state.chosen_game['away_pitcher'], st.session_state.chosen_game['home_pitcher']]
+        )
+    else:
+        st.warning("No games found.")
+        st.session_state.chosen_game = None
+        st.session_state.pitcher = None
+
+# 2. Main Logic: Access variables from session_state
+chosen_game = st.session_state.chosen_game
+pitcher = st.session_state.pitcher
+
+if chosen_game and pitcher and pitcher != "TBD":
     opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
     st.write(f"## 📋 Pro-Report: {pitcher}")
     
     try:
-        # [PASTE YOUR ORIGINAL DATA PROCESSING LOGIC HERE, INDENTED BY 8 SPACES]
-        # Make sure every line inside this 'try' is indented 8 spaces.
+        # [PASTE YOUR EXISTING DATA PROCESSING LOGIC HERE]
+        # ENSURE ALL LINES BELOW ARE INDENTED BY 8 SPACES
+        clean_name = pitcher.encode('ascii', 'ignore').decode('utf-8').replace('.', '').replace(',', '')
+        # ... rest of your original logic ...
         
     except Exception as e:
         st.error(f"Error processing report: {e}")
 else:
     st.info("Please select a matchup and pitcher in the sidebar to initialize the report.")
-else:
-    st.info("Awaiting live MLB schedule initialization data streams.")
