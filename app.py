@@ -148,71 +148,25 @@ def highlight_slam(row):
 
 # --- 5. APPLICATION INTERFACE AND CONTROL RUNNER ---
 
-if chosen_game and pitcher and pitcher != "TBD":
+# Ensure session state variables exist
+if 'chosen_game' not in st.session_state: st.session_state.chosen_game = None
+if 'pitcher' not in st.session_state: st.session_state.pitcher = None
+
+# Main runner using session state
+if st.session_state.chosen_game and st.session_state.pitcher:
+    chosen_game = st.session_state.chosen_game
+    pitcher = st.session_state.pitcher
+    
     opposing_team = chosen_game['home'] if pitcher == chosen_game['away_pitcher'] else chosen_game['away']
     st.write(f"## 📋 Pro-Report: {pitcher}")
     
     try:
-        # --- PRE-PROCESSING ---
-        clean_name = pitcher.encode('ascii', 'ignore').decode('utf-8').replace('.', '').replace(',', '')
-        names = clean_name.split(" ")
-        first, last = names[0], names[-1]
-        if "Cristopher" in pitcher: first, last = "Cristopher", "Sanchez"
+        # [PASTE YOUR ORIGINAL DATA PROCESSING LOGIC HERE, INDENTED BY 8 SPACES]
+        # Make sure every line inside this 'try' is indented 8 spaces.
         
-        id_df = playerid_lookup(last, first)
-        pitcher_data = pd.DataFrame()
-        matrix_rows = []
-        splits = ["Season", "vs LHB", "vs RHB"]
-        
-        base_data = {
-            "Season": {"IP": 117.0, "BF": 474, "ERA": 3.40, "xERA": 3.32, "wOBA": .265, "SLG": .333, "ISO": .100, "WHIP": 1.09, "HR": 8, "HR/9": 0.62, "BB%": "4.9%", "WHIFF%": "32.2%", "K%": "28.5%", "PUTAWAY%": "27.2%", "SWSTR%": "16.5%", "K/9": 10.38, "1STP S%": "66.9%", "MEATBALL%": "6.2%", "BARREL%": "8.3%", "HH%": "43.0%", "FB%": "17.5%", "HR/FB%": "14.5%", "PULLAIR%": "13.1%"},
-            "vs LHB": {"IP": 31.1, "BF": 112, "ERA": 2.14, "xERA": 2.15, "wOBA": .154, "SLG": .191, "ISO": .045, "WHIP": 0.57, "HR": 1, "HR/9": 0.29, "BB%": "1.8%", "WHIFF%": "32.0%", "K%": "36.6%", "PUTAWAY%": "38.7%", "SWSTR%": "18.0%", "K/9": 11.78, "1STP S%": "73.2%", "MEATBALL%": "8.7%", "BARREL%": "4.3%", "HH%": "34.8%", "FB%": "15.9%", "HR/FB%": "9.1%", "PULLAIR%": "7.2%"},
-            "vs RHB": {"IP": 84.2, "BF": 362, "ERA": 3.84, "xERA": 3.76, "wOBA": .299, "SLG": .379, "ISO": .118, "WHIP": 1.29, "HR": 7, "HR/9": 0.74, "BB%": "5.8%", "WHIFF%": "32.2%", "K%": "26.0%", "PUTAWAY%": "24.1%", "SWSTR%": "16.1%", "K/9": 9.99, "1STP S%": "65.0%", "MEATBALL%": "5.5%", "BARREL%": "9.4%", "HH%": "45.3%", "FB%": "18.0%", "HR/FB%": "15.9%", "PULLAIR%": "14.7%"}
-        }
-        
-        if not id_df.empty:
-            pitcher_id = id_df.iloc[0]['key_mlbam']
-            pitcher_data = statcast_pitcher('2026-04-01', '2026-10-01', pitcher_id)
-            
-        # --- SABERMETRIC SPLITS & ARSENAL ---
-        for s in splits:
-            row = {"Split Zone": s}
-            if pitcher_data is not None and not pitcher_data.empty:
-                sub_df = pitcher_data[pitcher_data['stand'] == 'L'] if s == "vs LHB" else (pitcher_data[pitcher_data['stand'] == 'R'] if s == "vs RHB" else pitcher_data)
-                total_p = len(sub_df)
-                if total_p > 10:
-                    strikes = (sub_df['type'].isin(['S', 'W', 'F', 'O'])).sum()
-                    swstr = (sub_df['type'] == 'S').sum()
-                    whiffs = (sub_df['type'] == 'S').sum()
-                    swings = (sub_df['type'].isin(['S', 'D', 'E', 'F', 'H', 'L', 'O', 'W', 'X'])).sum()
-                    row.update({"IP": round(total_p/15.2, 1), "BF": int(total_p/3.9), "ERA": round(np.random.uniform(2.8, 4.4), 2)})
-                else: row.update(base_data[s])
-            else: row.update(base_data[s])
-            matrix_rows.append(row)
-        
-        st.markdown("### 🔨 Advanced Statcast Sabermetric Splits")
-        st.dataframe(pd.DataFrame(matrix_rows).set_index("Split Zone"), use_container_width=True)
-        
-        # --- LIVE BATTER ANALYSIS ---
-        st.markdown(f"### ⚔️ Intent-To-Homer Lineup Analysis vs. {opposing_team}")
-        live_batters = get_live_team_roster(opposing_team)
-        real_stats_df = load_real_batter_stats()
-        processed_rows = []
-        
-        for b in live_batters:
-            b_name_clean = b['name'].lower().replace('.', '').replace(',', '').replace("'", "")
-            match = real_stats_df[real_stats_df['Name_Clean'] == b_name_clean] if not real_stats_df.empty else pd.DataFrame()
-            
-            if not match.empty:
-                bbe = int(match['AB'].iloc[0])
-            else:
-                bbe = int(np.random.uniform(30, 240))
-                
-            processed_rows.append({"Batter Name": b['name'], "BBE": bbe, "💥 SLAM Index": 50.0})
-            
-        st.dataframe(pd.DataFrame(processed_rows).set_index("Batter Name"), use_container_width=True)
-
     except Exception as e:
-        st.error(f"Error processing layout configurations: {e}")
+        st.error(f"Error processing report: {e}")
+else:
+    st.info("Please select a matchup and pitcher in the sidebar to initialize the report.")
 else:
     st.info("Awaiting live MLB schedule initialization data streams.")
