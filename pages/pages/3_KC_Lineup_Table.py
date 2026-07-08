@@ -8,7 +8,7 @@ from engines.slam_engine import compute_slam_index, random_match_tag
 st.set_page_config(layout="wide", page_title="KC-Style Lineup Table")
 
 st.title("⚔️ KC-Style Lineup Analysis")
-st.markdown("### Emerald Glow = Verified Power | Matte Grey = Small Sample Size")
+st.markdown("### 🟢 Emerald Glow = Verified Power | ⚫ Matte Grey = Small Sample Size")
 st.markdown("---")
 
 team_name = st.text_input("Enter Opposing Team:", "Baltimore Orioles")
@@ -48,16 +48,18 @@ if st.button("Load Lineup"):
 
     df = pd.DataFrame(processed_rows).set_index("Batter")
 
-    # --- COLOR CODING ---
+    # --- EMERALD GLOW + MATTE GREY ---
     def color_slam(val):
         if val >= 75:
-            return "background-color: #00b300; color: white"  # Emerald
+            return "background-color: #00b36b; color: white; font-weight: bold;"  # Emerald Glow
         elif val <= 50:
-            return "background-color: #999999; color: white"  # Matte Grey
+            return "background-color: #7a7a7a; color: white;"  # Matte Grey
         return ""
 
     def color_bbe(val):
-        return "background-color: #999999; color: white" if val < 50 else ""
+        if val < 50:
+            return "background-color: #7a7a7a; color: white;"  # Matte Grey
+        return ""
 
     styled = df.style.applymap(color_slam, subset=["SLAM"]) \
                      .applymap(color_bbe, subset=["BBE"]) \
@@ -72,16 +74,26 @@ if st.button("Load Lineup"):
 
     st.dataframe(styled, use_container_width=True)
 
-    # --- SCOUT MODAL ---
     st.markdown("---")
-    st.subheader("🔍 Detailed Scout Matrix")
+    st.subheader("🔍 Detailed Scout Card")
 
     selected = st.selectbox("Select Batter:", ["--"] + list(df.index))
 
     if selected != "--":
         sb = df.loc[selected]
+
+        st.markdown(f"### 📊 {selected} — Scout Breakdown")
+
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("SLAM Index", sb["SLAM"])
         c2.metric("Barrel %", f"{sb['Brl %']}%")
         c3.metric("Hard Hit %", f"{sb['HH %']}%")
         c4.metric("BBE Sample", sb["BBE"])
+
+        st.markdown("#### Power Profile")
+        st.write(f"- **PullAir %:** {sb['PullAir %']}%")
+        st.write(f"- **Line Drive %:** {sb['LD %']}%")
+        st.write(f"- **Groundball %:** {sb['GB %']}%")
+
+        st.markdown("#### Matchup Tag")
+        st.write(f"**{sb['Matchup']}**")
