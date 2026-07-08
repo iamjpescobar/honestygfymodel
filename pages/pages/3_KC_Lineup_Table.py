@@ -8,7 +8,7 @@ from engines.slam_engine import compute_slam_index, random_match_tag
 st.set_page_config(layout="wide", page_title="KC-Style Lineup Table")
 
 st.title("⚔️ KC-Style Lineup Analysis")
-st.markdown("### 🟢 Emerald Glow = Verified Power | ⚫ Matte Grey = Small Sample Size")
+st.markdown("### 🟢 Emerald Glow = Verified Power | ⚫ Matte Grey = Small Sample Size | 🔥 Arsenal Coverage | 🎯 Top-3 Matchup Ranking")
 st.markdown("---")
 
 # ---------------------------------------------------------
@@ -21,6 +21,21 @@ def coverage_icon(value):
         return "⚠️"
     return "❌"
 
+# ---------------------------------------------------------
+# MATCHUP RANK COLORING
+# ---------------------------------------------------------
+def matchup_color(val):
+    if val == "ELITE":
+        return "background-color: #00b36b; color: white; font-weight: bold;"  # Emerald
+    elif val == "GOOD":
+        return "background-color: #1e90ff; color: white;"  # Blue
+    elif val == "Neutral":
+        return ""
+    elif val == "Cold":
+        return "background-color: #7a7a7a; color: white;"  # Grey
+    elif val == "⚠️":
+        return "background-color: #ff4500; color: white;"  # Danger
+    return ""
 
 team_name = st.text_input("Enter Opposing Team:", "Baltimore Orioles")
 
@@ -32,7 +47,7 @@ if st.button("Load Lineup"):
 
     for b in live_batters:
         prof = get_batter_profile(b["name"], stats_df)
-        tag = random_match_tag(b["name"])
+        tag = random_match_tag(b["name"])  # Top-3 matchup tag
 
         slam = compute_slam_index(
             brl=prof["Brl %"],
@@ -70,22 +85,23 @@ if st.button("Load Lineup"):
     df = pd.DataFrame(processed_rows).set_index("Batter")
 
     # ---------------------------------------------------------
-    # EMERALD GLOW + MATTE GREY STYLING
+    # EMERALD GLOW + MATTE GREY + MATCHUP COLORING
     # ---------------------------------------------------------
     def color_slam(val):
         if val >= 75:
-            return "background-color: #00b36b; color: white; font-weight: bold;"  # Emerald Glow
+            return "background-color: #00b36b; color: white; font-weight: bold;"
         elif val <= 50:
-            return "background-color: #7a7a7a; color: white;"  # Matte Grey
+            return "background-color: #7a7a7a; color: white;"
         return ""
 
     def color_bbe(val):
         if val < 50:
-            return "background-color: #7a7a7a; color: white;"  # Matte Grey
+            return "background-color: #7a7a7a; color: white;"
         return ""
 
     styled = df.style.applymap(color_slam, subset=["SLAM"]) \
                      .applymap(color_bbe, subset=["BBE"]) \
+                     .applymap(matchup_color, subset=["Matchup"]) \
                      .format({
                          "SLAM": "{:.1f}",
                          "Brl %": "{:.1f}%",
@@ -96,7 +112,7 @@ if st.button("Load Lineup"):
                      })
 
     # ---------------------------------------------------------
-    # DISPLAY TABLE WITH COVERAGE ICONS
+    # DISPLAY TABLE WITH COVERAGE ICONS + MATCHUP RANK
     # ---------------------------------------------------------
     st.dataframe(
         styled,
