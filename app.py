@@ -83,11 +83,45 @@ if pitcher and pitcher != "TBD":
     st.markdown("---")
 
     try:
-        # DATA PROCESSING
+        # 1. Fetch data
         live_batters = get_live_team_roster(opposing_team)
-        processed_rows = [{"Batter Name": b['name'], "Hand": b['hand'], "BBE": 50, "💥 SLAM Index": 66.0, "Brl %": 8.0, "HH %": 40.0, "GB %": 42.0} for b in live_batters]
+        real_stats_df = load_real_batter_stats()
+        
+        # DIAGNOSTIC: Uncomment this line to see your data columns in the app
+        # st.write("Available Columns:", real_stats_df.columns.tolist())
+        
+        processed_rows = []
+        
+        for b in live_batters:
+            # Match the cleaning logic exactly to how you processed Name_Clean
+            b_name_clean = b['name'].lower().replace('.', '').replace(',', '').replace("'", "")
+            
+            # Use .isin() to see if we have ANY match at all
+            match = real_stats_df[real_stats_df['Name_Clean'] == b_name_clean]
+            
+            if not match.empty:
+                # Use .get() to avoid KeyError if the column name is slightly different
+                bbe = int(match['AB'].iloc[0])
+                brl = float(match.get('Barrel%', 0).iloc[0])
+                hh = float(match.get('HardHit%', 0).iloc[0])
+                gb = float(match.get('GB%', 0).iloc[0])
+                pull_air = float(match.get('FB%', 0).iloc[0])
+                
+                slam_index = min(100.0, max(5.0, (brl * W_BRL) + (hh * W_HH) + (pull_air * W_PULL) - (gb * W_GB)))
+                
+                processed_rows.append({
+                    "Batter Name": b['name'], "Hand": b['hand'], "BBE": bbe, 
+                    "💥 SLAM Index": round(slam_index, 1), "Brl %": brl, "HH %": hh, "GB %": gb
+                })
+            else:
+                # Keep the sample data, but label it so you know it's a fallback
+                processed_rows.append({
+                    "Batter Name": f"{b['name']} (No Statcast)", "Hand": b['hand'], "BBE": 0, 
+                    "💥 SLAM Index": 0.0, "Brl %": 0.0, "HH %": 0.0, "GB %": 0.0
+                })
         
         df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
         st.dataframe(df_lineup.style.apply(highlight_slam, axis=1), use_container_width=True)
+                
     except Exception as e:
-        st.error(f"Error processing data: {e}")
+        st.error(f"Engine Error: {e}")
