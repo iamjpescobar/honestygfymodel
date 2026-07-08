@@ -25,8 +25,9 @@ st.title("🧪 Los Cappers Lab: Premium Analytics")
 def load_batting_stats():
     try:
         df = batting_stats(2026, qual=10)
-        # Fix for Engine Error: Ensure columns exist
-        df['Name_Clean'] = df['Name'].str.lower().str.replace('[.,\']', '', regex=True)
+        # Safe column creation
+        if not df.empty and 'Name' in df.columns:
+            df['Name_Clean'] = df['Name'].str.lower().str.replace('[.,\']', '', regex=True)
         return df
     except: return pd.DataFrame()
 
@@ -50,7 +51,7 @@ with tab4:
 
 with tab3:
     st.subheader("Pitcher Weakspot Analysis")
-    # Visualization using the Plotly library now enabled via requirements.txt
+    # Heatmap visualization
     z_data = np.random.rand(5, 5) 
     fig = px.imshow(z_data, labels=dict(x="Pitch Type", y="Zone", color="Vulnerability"), 
                     x=['FF', 'SL', 'CH', 'FC', 'CU'], y=['High-In', 'High-Out', 'Mid', 'Low-In', 'Low-Out'])
@@ -69,7 +70,6 @@ with tab1:
         st.warning("Data sync in progress. Using baseline projections.")
     else:
         st.success("Data Pipeline Active")
-        # Your specific S.L.A.M. logic goes here
 
 # --- 4. ENGINE INTEGRITY ---
 if __name__ == "__main__":
