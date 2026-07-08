@@ -47,7 +47,7 @@ def get_todays_games():
         for g in games_list:
             away_team = g['teams']['away']['team']['name']
             home_team = g['teams']['home']['team']['name']
-             for g['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
+            away_p = g['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
             home_p = g['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD')
             
             if away_team == "Philadelphia Phillies" and away_p == "TBD": away_p = "Cristopher Sanchez"
