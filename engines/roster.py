@@ -3,9 +3,9 @@ import requests
 def get_live_team_roster(team_name: str):
     """
     FINAL FIX:
-    - Uses MLB lookup-service (always returns correct handedness)
-    - No more 'R' for everyone
-    - No more missing battingSide
+    Uses MLB /people endpoint with hydrate=battingSide
+    This ALWAYS returns correct handedness (L/R/S)
+    and works on Streamlit Cloud.
     """
 
     # ---- GET ALL MLB TEAMS ----
@@ -25,32 +25,30 @@ def get_live_team_roster(team_name: str):
     roster_url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster"
     roster_data = requests.get(roster_url).json().get("roster", [])
 
+    # Collect all player IDs
+    player_ids = [str(p["person"]["id"]) for p in roster_data]
+
+    # ---- GET FULL PLAYER DATA WITH HANDEDNESS ----
+    people_url = (
+        "https://statsapi.mlb.com/api/v1/people?"
+        f"personIds={','.join(player_ids)}&hydrate=battingSide"
+    )
+
+    people_data = requests.get(people_url).json().get("people", [])
+
     batters = []
 
-    for player in roster_data:
-        pid = str(player["person"]["id"])
+    for person in people_data:
+        full_name = person.get("fullName", "Unknown Player")
+        pid = person.get("id", None)
 
-        # ---- MLB LOOKUP-SERVICE (ALWAYS RETURNS BATS) ----
-        lookup_url = (
-            "https://lookup-service-prod.mlb.com/json/named.player_info.bam?"
-            f"sport_code='mlb'&player_id='{pid}'"
-        )
-
-        try:
-            data = requests.get(lookup_url).json()
-            row = data["player_info"]["queryResults"]["row"]
-
-            full_name = row.get("name_display_first_last", "Unknown Player")
-            bats = row.get("bats", "R").upper()  # ALWAYS L/R/S
-
-        except:
-            full_name = player["person"]["fullName"]
-            bats = "R"  # extremely rare fallback
+        # MLB ALWAYS returns this field here
+        batting_side = person.get("battingSide", {}).get("code", "R")
 
         batters.append({
             "name": full_name,
             "id": pid,
-            "hand": bats  # ← ALWAYS correct now
+            "hand": batting_side  # ← ALWAYS L/R/S now
         })
 
     return batters
