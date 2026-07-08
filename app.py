@@ -1,6 +1,6 @@
 import streamlit as st
+import requests
 import pandas as pd
-import numpy as np
 from datetime import datetime
 
 # --- ENGINE IMPORTS ---
@@ -26,29 +26,32 @@ st.title("Los Cappers Lab 🧪")
 st.markdown("### 💥 The Advanced S.L.A.M. Index Analytics Hub")
 st.markdown("---")
 
+if "selected_batter" not in st.session_state:
+    st.session_state.selected_batter = None
+
 # --- 2. GET TODAY'S GAMES ---
 @st.cache_data(ttl=3600)
 def get_todays_games():
-    today = datetime.today().strftime('%Y-%m-%d')
+    today = datetime.today().strftime("%Y-%m-%d")
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today}&hydrate=probablePitcher"
 
     try:
         response = requests.get(url).json()
-        games_list = response.get('dates', [{}])[0].get('games', [])
+        games_list = response.get("dates", [{}])[0].get("games", [])
         matchups = []
 
         for g in games_list:
-            away_team = g['teams']['away']['team']['name']
-            home_team = g['teams']['home']['team']['name']
-            away_p = g['teams']['away'].get('probablePitcher', {}).get('fullName', 'TBD')
-            home_p = g['teams']['home'].get('probablePitcher', {}).get('fullName', 'TBD')
+            away_team = g["teams"]["away"]["team"]["name"]
+            home_team = g["teams"]["home"]["team"]["name"]
+            away_p = g["teams"]["away"].get("probablePitcher", {}).get("fullName", "TBD")
+            home_p = g["teams"]["home"].get("probablePitcher", {}).get("fullName", "TBD")
 
             matchups.append({
-                "game_id": g['gamePk'],
+                "game_id": g["gamePk"],
                 "away": away_team,
                 "home": home_team,
                 "away_pitcher": away_p,
-                "home_pitcher": home_p
+                "home_pitcher": home_p,
             })
 
         return matchups
@@ -67,7 +70,7 @@ if games:
         selected_idx = st.selectbox(
             "Select Today's Matchup:",
             range(len(game_options)),
-            format_func=lambda x: game_options[x]
+            format_func=lambda x: game_options[x],
         )
 
         chosen_game = games[selected_idx]
@@ -76,13 +79,13 @@ if games:
 
         pitcher = st.radio(
             "Select Pitcher to Target:",
-            [chosen_game['away_pitcher'], chosen_game['home_pitcher']]
+            [chosen_game["away_pitcher"], chosen_game["home_pitcher"]],
         )
 
     opposing_team = (
-        chosen_game['home']
-        if pitcher == chosen_game['away_pitcher']
-        else chosen_game['away']
+        chosen_game["home"]
+        if pitcher == chosen_game["away_pitcher"]
+        else chosen_game["away"]
     )
 
     # --- 4. PITCHER REPORT ---
@@ -99,6 +102,10 @@ if games:
 
         # --- 5. BATTER LINEUP ANALYSIS ---
         st.markdown(f"### ⚔️ Intent-To-Homer Lineup Analysis vs. {opposing_team}")
+        st.caption(
+            "🌲 Emerald Glow = High Volume Verified Power + Covers Arsenal Options | "
+            "🪐 Matte Grey = Small Sample Size"
+        )
 
         live_batters = get_live_team_roster(opposing_team)
         real_stats_df = load_batting_stats()
@@ -116,7 +123,7 @@ if games:
                 gb=prof["GB %"],
                 bbe=prof["BBE"],
                 matchup_tag=match_tag,
-                affinity_mult=1.0
+                affinity_mult=1.0,
             )
 
             processed_rows.append({
@@ -129,11 +136,44 @@ if games:
                 "PullAir %": prof["PullAir %"],
                 "HH %": prof["HH %"],
                 "LD %": prof["LD %"],
-                "GB %": prof["GB %"]
+                "GB %": prof["GB %"],
             })
 
-        df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
-        st.dataframe(df_lineup, use_container_width=True)
+        if processed_rows:
+            df_lineup = pd.DataFrame(processed_rows).set_index("Batter Name")
+
+            selected_scout = st.selectbox(
+                "🔍 Click to inspect detailed historical performance breakdown:",
+                ["-- Active Lineup Roster Overview --"] + list(df_lineup.index),
+            )
+
+            if selected_scout != "-- Active Lineup Roster Overview --":
+                st.session_state.selected_batter = selected_scout
+            else:
+                st.session_state.selected_batter = None
+
+            if st.session_state.selected_batter:
+                sb = st.session_state.selected_batter
+                if sb in df_lineup.index:
+                    stats = df_lineup.loc[sb]
+                    st.markdown(f"#### 📊 Detailed Scout Matrix: {sb}")
+                    c1, c2, c3, c4 = st.columns(4)
+                    c1.metric("Calculated SLAM Rating", f"{stats['💥 SLAM Index']}")
+                    c2.metric("Barrel Execution Rate", f"{stats['Brl %']}%")
+                    c3.metric("Hard Hit Metric", f"{stats['HH %']}%")
+                    c4.metric("Total BBE Sample Size", f"{stats['BBE']}")
+                    st.markdown("---")
+
+            styled_df = df_lineup.style.format({
+                "BBE": "{:d}",
+                "💥 SLAM Index": "{:.1f}",
+                "Brl %": "{:.1f}%",
+                "PullAir %": "{:.1f}%",
+                "HH %": "{:.1f}%",
+                "LD %": "{:.1f}%",
+                "GB %": "{:.1f}%",
+            })
+            st.dataframe(styled_df, use_container_width=True)
 
 else:
     st.info("Awaiting live MLB schedule initialization data streams.")
