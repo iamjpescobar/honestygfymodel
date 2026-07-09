@@ -4,10 +4,10 @@ import requests
 from datetime import datetime
 import altair as alt
 
-from app.engines.roster import get_live_team_roster
-from app.engines.batter_stats import load_batting_stats, get_batter_profile
-from app.engines.statcast_engine import get_pitcher_id, get_pitcher_statcast, build_pitch_arsenal
-from app.engines.slam_engine import (
+from engines.roster import get_live_team_roster
+from engines.batter_stats import load_batting_stats, get_batter_profile
+from engines.statcast_engine import get_pitcher_id, get_pitcher_statcast, build_pitch_arsenal
+from engines.slam_engine import (
     compute_slam_index,
     random_match_tag,
     compute_matchup_affinity,
