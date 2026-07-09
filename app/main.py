@@ -5,37 +5,29 @@ import sys
 import os
 
 # ---------------------------------------------------------
-# FIX: Ensure Python can find your project + engines folder
+# FIX: Ensure Python can find the repo root
 # ---------------------------------------------------------
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT_DIR not in sys.path:
-    sys.path.append(ROOT_DIR)
-
-ENGINES_DIR = os.path.join(ROOT_DIR, "engines")
-if ENGINES_DIR not in sys.path:
-    sys.path.append(ENGINES_DIR)
-
-STYLES_DIR = os.path.join(ROOT_DIR, "styles")
-if STYLES_DIR not in sys.path:
-    sys.path.append(STYLES_DIR)
+    sys.path.insert(0, ROOT_DIR)
 
 # ---------------------------------------------------------
 # SAFE STREAMLIT IMPORTS FOR ENGINES
 # ---------------------------------------------------------
-import danger_zone as dz
-import pitcher_danger_zone as pdz
-import slam_engine as slam
-import bvp_engine as bvp
-import matchup_engine as matchup
-import pitch_affinity_engine as affinity
-import batter_stats as batter
-import statcast_engine as statcast
-import roster as roster
+from engines import danger_zone as dz
+from engines import pitcher_danger_zone as pdz
+from engines import slam_engine as slam
+from engines import bvp_engine as bvp
+from engines import matchup_engine as matchup
+from engines import pitch_affinity_engine as affinity
+from engines import batter_stats as batter
+from engines import statcast_engine as statcast
+from engines import roster as roster
 
 # ---------------------------------------------------------
 # THEME
 # ---------------------------------------------------------
-from kc_theme import inject_kc_theme
+from styles.kc_theme import inject_kc_theme
 
 # ---------------------------------------------------------
 # PAGE CONFIG
