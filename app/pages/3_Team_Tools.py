@@ -1,5 +1,5 @@
 import streamlit as st
-from app.engines.roster import get_live_team_roster
+from engines.roster import get_live_team_roster
 
 st.title("🛠️ Team Tools")
 st.markdown("---")
