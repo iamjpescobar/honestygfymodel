@@ -1,1 +1,1 @@
-import app.main  # This loads your real Streamlit app
+import app.pages.KC_Page
