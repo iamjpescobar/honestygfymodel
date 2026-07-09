@@ -1,194 +1,118 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 
-# --- KC THEME ---
+# SAFE STREAMLIT IMPORTS FOR ENGINES
+import engines.danger_zone as dz
+import engines.pitcher_danger_zone as pdz
+import engines.slam_engine as slam
+import engines.bvp_engine as bvp
+import engines.matchup_engine as matchup
+import engines.pitch_affinity_engine as affinity
+import engines.batter_stats as batter
+import engines.statcast_engine as statcast
+import engines.roster as roster
+
+# THEME
 from styles.kc_theme import inject_kc_theme
-inject_kc_theme()
-
-# --- ENGINES ---
-from engines.statcast_engine import (
-    get_pitcher_id,
-    get_pitcher_statcast,
-    build_pitch_arsenal
-)
-
-from engines.batter_stats import (
-    load_batting_stats,
-    get_batter_profile
-)
-
-from engines.matchup_engine import compute_matchup_multiplier
-from engines.pitch_affinity_engine import compute_pitch_affinity_multiplier
-from engines.slam_engine import compute_slam_index
-
-from engines.danger_zone import build_danger_zone
-from engines.pitcher_danger_zone import build_pitcher_danger_zone
-
-from engines.roster import get_live_team_roster
 
 
 # ---------------------------------------------------------
 # PAGE CONFIG
 # ---------------------------------------------------------
 st.set_page_config(
-    layout="wide",
-    page_title="Los Cappers Lab — KC Home Hub",
-    page_icon="🧪"
+    page_title="Los Cappers MLB Model",
+    page_icon="⚾",
+    layout="wide"
 )
 
-# ---------------------------------------------------------
-# HEADER
-# ---------------------------------------------------------
-st.markdown('<div class="main-header">LOS CAPPERS LAB</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-header">The Advanced S.L.A.M. Index Analytics Hub</div>', unsafe_allow_html=True)
-st.markdown("---")
+inject_kc_theme()
 
 
 # ---------------------------------------------------------
-# INPUTS — PITCHER + TEAM
+# SIDEBAR — PLAYER SELECTOR
 # ---------------------------------------------------------
-colA, colB = st.columns(2)
+st.sidebar.header("Player Selection")
 
-with colA:
-    pitcher_name = st.text_input("🎯 Enter Pitcher Name:", "")
+# Load roster
+player_list = roster.get_player_list()
+selected_player = st.sidebar.selectbox("Choose a Player", player_list)
 
-with colB:
-    team_name = st.text_input("⚔️ Enter Opposing Team:", "")
+# Load batter + pitcher profiles
+batter_profile = batter.get_batter_profile(selected_player)
+pitcher_profile = roster.get_pitcher_profile(selected_player)
 
 
-if pitcher_name and team_name:
+# ---------------------------------------------------------
+# MAIN HEADER
+# ---------------------------------------------------------
+st.markdown(
+    """
+    <h1 class="main-header">Los Cappers MLB Model</h1>
+    <h3 class="sub-header">Advanced Sabermetric Engine</h3>
+    """,
+    unsafe_allow_html=True
+)
 
-    # ---------------------------------------------------------
-    # PITCHER PROFILE + ARSENAL
-    # ---------------------------------------------------------
-    st.markdown("## 📋 Pitcher Pro-Report")
 
-    pitcher_id = get_pitcher_id(pitcher_name)
-    pitcher_data = get_pitcher_statcast(pitcher_id)
+# ---------------------------------------------------------
+# DANGER ZONE GRID (Batter)
+# ---------------------------------------------------------
+st.subheader("Batter Danger Zone Grid")
 
-    arsenal_df = build_pitch_arsenal(pitcher_data)
-    st.markdown("### 🎯 Verified Pitch Arsenal Distribution")
-    st.dataframe(arsenal_df, use_container_width=True)
+danger_grid = dz.build_danger_zone(batter_profile)
+st.dataframe(danger_grid, use_container_width=True)
 
-    # Pitcher danger zone
-    pitcher_profile = {
-        "HR/BBE": pitcher_data.get("hr_rate", 0),
-        "HH %": pitcher_data.get("hard_hit_rate", 0),
-        "LD %": pitcher_data.get("line_drive_rate", 0),
-        "Brl %": pitcher_data.get("barrel_rate", 0),
-        "ZoneContact %": pitcher_data.get("zone_contact", 0)
-    }
 
-    pdz = build_pitcher_danger_zone(pitcher_profile)
-    pdz_reset = pdz.reset_index().melt(id_vars="index")
-    pdz_reset.columns = ["Vertical", "Horizontal", "Danger"]
+# ---------------------------------------------------------
+# PITCHER DANGER ZONE GRID
+# ---------------------------------------------------------
+st.subheader("Pitcher Danger Zone Grid")
 
-    st.markdown("### 🔥 Pitcher Danger Zone Heatmap")
-    st.altair_chart(
-        alt.Chart(pdz_reset)
-        .mark_rect()
-        .encode(
-            x="Horizontal:N",
-            y="Vertical:N",
-            color=alt.Color("Danger:Q", scale=alt.Scale(scheme="reds")),
-            tooltip=["Vertical", "Horizontal", "Danger"]
-        )
-        .properties(width=300, height=300),
-        use_container_width=False
-    )
+pitcher_grid = pdz.build_pitcher_danger_zone(pitcher_profile)
+st.dataframe(pitcher_grid, use_container_width=True)
 
-    # ---------------------------------------------------------
-    # LINEUP ANALYSIS
-    # ---------------------------------------------------------
-    st.markdown(f"## ⚔️ Intent-To-Homer Lineup Analysis vs. {team_name}")
 
-    live_batters = get_live_team_roster(team_name)
-    stats_df = load_batting_stats()
+# ---------------------------------------------------------
+# MATCHUP ENGINE
+# ---------------------------------------------------------
+st.subheader("Matchup Engine")
 
-    processed_rows = []
+matchup_results = matchup.build_matchup(selected_player)
+st.dataframe(matchup_results, use_container_width=True)
 
-    for b in live_batters:
-        prof = get_batter_profile(b["name"], stats_df)
 
-        # matchup engine
-        matchup_mult, matchup_tag = compute_matchup_multiplier(prof, pitcher_profile)
+# ---------------------------------------------------------
+# BVP ENGINE
+# ---------------------------------------------------------
+st.subheader("BVP History")
 
-        # pitch affinity engine
-        pitch_affinity_mult = compute_pitch_affinity_multiplier(prof, arsenal_df)
+bvp_history = bvp.get_bvp_history(selected_player)
+st.dataframe(bvp_history, use_container_width=True)
 
-        # SLAM
-        slam = compute_slam_index(
-            brl=prof["Brl %"],
-            hh=prof["HH %"],
-            pull_air=prof["PullAir %"],
-            ld=prof["LD %"],
-            gb=prof["GB %"],
-            bbe=prof["BBE"],
-            matchup_mult=matchup_mult,
-            pitch_affinity_mult=pitch_affinity_mult
-        )
 
-        processed_rows.append({
-            "Batter": b["name"],
-            "Hand": b["hand"],
-            "BBE": prof["BBE"],
-            "SLAM": round(slam, 1),
-            "Matchup": matchup_tag,
-            "Brl %": prof["Brl %"],
-            "HH %": prof["HH %"],
-            "PullAir %": prof["PullAir %"],
-            "LD %": prof["LD %"],
-            "GB %": prof["GB %"],
-        })
+# ---------------------------------------------------------
+# SLAM ENGINE
+# ---------------------------------------------------------
+st.subheader("SLAM Engine")
 
-    df = pd.DataFrame(processed_rows).set_index("Batter")
+slam_results = slam.build_slam_score(selected_player)
+st.dataframe(slam_results, use_container_width=True)
 
-    st.dataframe(df, use_container_width=True)
 
-    # ---------------------------------------------------------
-    # SCOUT CARD
-    # ---------------------------------------------------------
-    st.markdown("### 🔍 KC Scout Card")
+# ---------------------------------------------------------
+# PITCH AFFINITY ENGINE
+# ---------------------------------------------------------
+st.subheader("Pitch Affinity")
 
-    selected = st.selectbox("Select Batter:", ["--"] + list(df.index))
+affinity_results = affinity.build_pitch_affinity(selected_player)
+st.dataframe(affinity_results, use_container_width=True)
 
-    if selected != "--":
-        sb = df.loc[selected]
 
-        st.markdown(f"## 📊 {selected} — Full KC Breakdown")
+# ---------------------------------------------------------
+# STATCAST ENGINE
+# ---------------------------------------------------------
+st.subheader("Statcast Summary")
 
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("SLAM Index", sb["SLAM"])
-        c2.metric("Barrel %", f"{sb['Brl %']}%")
-        c3.metric("Hard Hit %", f"{sb['HH %']}%")
-        c4.metric("BBE Sample", sb["BBE"])
-
-        st.markdown("### 🔋 Power Profile")
-        st.write(f"- PullAir %: {sb['PullAir %']}%")
-        st.write(f"- Line Drive %: {sb['LD %']}%")
-        st.write(f"- Groundball %: {sb['GB %']}%")
-
-        st.markdown("### ⚔️ Matchup Tag")
-        st.write(f"**{sb['Matchup']}**")
-
-        # Batter danger zone
-        dz = build_danger_zone(sb)
-        dz_reset = dz.reset_index().melt(id_vars="index")
-        dz_reset.columns = ["Vertical", "Horizontal", "Danger"]
-
-        st.markdown("### 🔥 Batter Danger Zone Heatmap")
-        st.altair_chart(
-            alt.Chart(dz_reset)
-            .mark_rect()
-            .encode(
-                x="Horizontal:N",
-                y="Vertical:N",
-                color=alt.Color("Danger:Q", scale=alt.Scale(scheme="purples")),
-                tooltip=["Vertical", "Horizontal", "Danger"]
-            )
-            .properties(width=300, height=300),
-            use_container_width=False
-        )
-
-else:
-    st.info("Enter a pitcher and team to begin KC analysis.")
+statcast_summary = statcast.get_statcast_summary(selected_player)
+st.dataframe(statcast_summary, use_container_width=True)
