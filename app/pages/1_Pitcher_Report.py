@@ -4,23 +4,23 @@ import pandas as pd
 # ---------------------------------------------------------
 # THEME
 # ---------------------------------------------------------
-from app.styles.kc_theme import inject_kc_theme
+from styles.kc_theme import inject_kc_theme
 
 # ---------------------------------------------------------
 # ENGINES
 # ---------------------------------------------------------
-from app.engines.roster import get_all_teams, get_live_team_roster
-from app.engines.statcast_engine import (
+from engines.roster import get_all_teams, get_live_team_roster
+from engines.statcast_engine import (
     get_pitcher_id,
     get_pitcher_statcast,
     build_pitch_arsenal
 )
-from app.engines.pitcher_danger_zone import build_pitcher_danger_zone
-from app.engines.matchup_engine import compute_matchup_multiplier
-from app.engines.slam_engine import compute_slam_index
-from app.engines.pitch_affinity_engine import compute_pitch_affinity_multiplier
-from app.engines.bvp_engine import get_bvp_history
-from app.engines.batter_stats import load_batting_stats, get_batter_profile
+from engines.pitcher_danger_zone import build_pitcher_danger_zone
+from engines.matchup_engine import compute_matchup_multiplier
+from engines.slam_engine import compute_slam_index
+from engines.pitch_affinity_engine import compute_pitch_affinity_multiplier
+from engines.bvp_engine import get_bvp_history
+from engines.batter_stats import load_batting_stats, get_batter_profile
 
 # ---------------------------------------------------------
 # PAGE CONFIG
