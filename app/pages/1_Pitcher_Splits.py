@@ -1,10 +1,10 @@
-from app.styles.kc_theme import inject_kc_theme
+from styles.kc_theme import inject_kc_theme
 inject_kc_theme()
 
 import streamlit as st
 import pandas as pd
 
-from app.engines.statcast_engine import (
+from engines.statcast_engine import (
     get_pitcher_id,
     get_pitcher_statcast,
     build_pitch_arsenal
