@@ -1,10 +1,11 @@
 import pandas as pd
 import numpy as np
 
-def build_pitcher_danger_zone(pitcher_profile):
+def build_pitcher_danger_zone(pitcher_profile: dict) -> pd.DataFrame:
     """
     Builds a 3x3 vulnerability grid from pitcher profile:
     High/Mid/Low x Inside/Middle/Outside
+    Also returns a scalar ZoneVuln Score for matchup engine.
     """
 
     hr_rate = pitcher_profile["HR/BBE"]
