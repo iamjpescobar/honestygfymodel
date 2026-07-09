@@ -1,3 +1,11 @@
+import sys
+import os
+
+# Ensure project root is in Python path
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+if ROOT_DIR not in sys.path:
+    sys.path.append(ROOT_DIR)
+
 import pandas as pd
 import baseball_scraper as bs
 
