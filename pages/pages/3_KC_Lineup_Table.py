@@ -7,34 +7,34 @@ from engines.slam_engine import compute_slam_index, random_match_tag
 
 st.set_page_config(layout="wide", page_title="KC-Style Lineup Table")
 
-st.title("⚔️ KC-Style Lineup Analysis")
-st.markdown("### 🟢 Emerald Glow | ⚫ Matte Grey | 🔥 Arsenal Coverage | 🎯 Top-3 Matchup Ranking | 📊 Full Scout Card Expansion")
+st.title("⚔️ KC-Style Lineup Analysis — Custom Theme")
+st.markdown("### 💜 Purple Glow | Deep Navy Matte | Gold/Silver Matchups | Custom Arsenal Icons")
 st.markdown("---")
 
 # ---------------------------------------------------------
-# ARSENAL COVERAGE ICON LOGIC
+# ARSENAL COVERAGE ICON LOGIC (CUSTOM)
 # ---------------------------------------------------------
 def coverage_icon(value):
     if value >= 0.12:
-        return "🔥"
+        return "🦾"      # Strong
     elif value >= 0.06:
-        return "⚠️"
-    return "❌"
+        return "👌🏾"     # Weak
+    return "🧑🏾‍🦯"       # None
 
 # ---------------------------------------------------------
-# MATCHUP RANK COLORING
+# MATCHUP RANK COLORING (CUSTOM)
 # ---------------------------------------------------------
 def matchup_color(val):
     if val == "ELITE":
-        return "background-color: #00b36b; color: white; font-weight: bold;"
+        return "background-color: #d4af37; color: black; font-weight: bold;"  # Gold
     elif val == "GOOD":
-        return "background-color: #1e90ff; color: white;"
+        return "background-color: #c0c0c0; color: black;"  # Silver
     elif val == "Neutral":
         return ""
     elif val == "Cold":
-        return "background-color: #7a7a7a; color: white;"
+        return "background-color: #1e90ff; color: white;"  # Blue
     elif val == "⚠️":
-        return "background-color: #ff4500; color: white;"
+        return "background-color: #7d3cff; color: white;"  # Purple Danger
     return ""
 
 team_name = st.text_input("Enter Opposing Team:", "Baltimore Orioles")
@@ -85,18 +85,18 @@ if st.button("Load Lineup"):
     df = pd.DataFrame(processed_rows).set_index("Batter")
 
     # ---------------------------------------------------------
-    # EMERALD GLOW + MATTE GREY + MATCHUP COLORING
+    # EMERALD GLOW + MATTE GREY (CUSTOM PURPLE + NAVY)
     # ---------------------------------------------------------
     def color_slam(val):
         if val >= 75:
-            return "background-color: #00b36b; color: white; font-weight: bold;"
+            return "background-color: #7d3cff; color: white; font-weight: bold;"  # Purple Glow
         elif val <= 50:
-            return "background-color: #7a7a7a; color: white;"
+            return "background-color: #0a1a2f; color: white;"  # Deep Navy Matte
         return ""
 
     def color_bbe(val):
         if val < 50:
-            return "background-color: #7a7a7a; color: white;"
+            return "background-color: #0a1a2f; color: white;"  # Deep Navy Matte
         return ""
 
     styled = df.style.applymap(color_slam, subset=["SLAM"]) \
@@ -128,7 +128,7 @@ if st.button("Load Lineup"):
     )
 
     st.markdown("---")
-    st.subheader("🔍 Full KC Scout Card")
+    st.subheader("🔍 Full KC Scout Card — Custom Theme")
 
     selected = st.selectbox("Select Batter:", ["--"] + list(df.index))
 
@@ -168,7 +168,7 @@ if st.button("Load Lineup"):
         st.write(f"**{sb['Matchup']}**")
 
         # ---------------------------------------------------------
-        # HISTORICAL PERFORMANCE SECTION (KC STYLE)
+        # HISTORICAL PERFORMANCE SECTION
         # ---------------------------------------------------------
         st.markdown("### 📈 Historical Performance Snapshot")
         st.info("Historical performance charts, heatmaps, and pitch-type danger zones can be added here.")
