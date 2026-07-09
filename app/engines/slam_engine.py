@@ -1,6 +1,28 @@
 import pandas as pd
 from pybaseball import statcast_pitcher, statcast_batter
 
+
+def compute_slam_index(batter_profile: dict, pitcher_profile: dict) -> float:
+    """
+    Composite 'SLAM' score blending batter power/contact quality with
+    pitcher vulnerability into a single 0-100ish index for quick scanning.
+    Uses defensive .get() calls so missing profile keys never crash the app.
+    """
+    brl = batter_profile.get("Brl %", 0)
+    hh = batter_profile.get("HH %", 0)
+    pull_air = batter_profile.get("PullAir %", 0)
+    ld = batter_profile.get("LD %", 0)
+
+    hr_bbe = pitcher_profile.get("HR/BBE", 0)
+    pitcher_hh = pitcher_profile.get("HH %", 0)
+    pitcher_brl = pitcher_profile.get("Brl %", 0)
+
+    batter_power = (brl * 0.40) + (hh * 0.25) + (pull_air * 0.20) + (ld * 0.15)
+    pitcher_weakness = (hr_bbe * 0.50) + (pitcher_hh * 0.30) + (pitcher_brl * 0.20)
+
+    slam_score = (batter_power * 0.6) + (pitcher_weakness * 0.4)
+    return float(round(slam_score, 2))
+
 # Pitch code → readable pitch name
 PITCH_MAP = {
     "FF": "4-Seam Fastball",
