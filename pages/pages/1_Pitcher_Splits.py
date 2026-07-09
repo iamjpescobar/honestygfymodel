@@ -1,3 +1,6 @@
+from styles.kc_theme import inject_kc_theme
+inject_kc_theme()
+
 import streamlit as st
 import pandas as pd
 
