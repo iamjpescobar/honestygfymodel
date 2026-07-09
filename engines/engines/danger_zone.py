@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-
 def build_danger_zone(batter_profile: dict) -> pd.DataFrame:
     """
     Builds a 3x3 danger grid from batter profile:
