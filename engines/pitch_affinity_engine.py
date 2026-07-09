@@ -1,3 +1,11 @@
+import sys
+import os
+
+# Ensure project root is in Python path
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+if ROOT_DIR not in sys.path:
+    sys.path.append(ROOT_DIR)
+
 import numpy as np
 
 def compute_pitch_affinity_multiplier(batter_profile: dict, pitcher_arsenal: dict):
