@@ -41,38 +41,50 @@ def _pct(value) -> float:
 
 def get_batter_profile(name: str, stats_df: pd.DataFrame, load_error: str = None):
     """
-    Returns a batter's real stat profile from FanGraphs (via pybaseball).
-    Never fabricates data. If no match is found, returns a profile with
-    "_error" set so the UI can show an honest "no data" state instead of
-    silently displaying fake numbers.
+    Returns a batter's real stat profile. Tries FanGraphs first (larger
+    season-long sample); if that's unavailable (e.g. FanGraphs blocking
+    cloud-host requests with a 403, as it commonly does on Streamlit Cloud/
+    Render) or has no match for this name, falls back to Baseball Savant/
+    Statcast data instead — a second, independent, still 100% real source.
+    Never fabricates data under any circumstance.
     """
     clean = name.lower().replace(".", "").replace(",", "").replace("'", "")
+    match = pd.DataFrame()
 
-    if stats_df.empty:
-        reason = load_error or "Batting stats came back empty from FanGraphs."
+    if not stats_df.empty:
+        match = stats_df[stats_df["Name_Clean"] == clean]
+
+    if not match.empty:
+        row = match.iloc[0]
         return {
-            "BBE": 0, "Brl %": 0.0, "HH %": 0.0, "GB %": 0.0,
-            "LD %": 0.0, "PullAir %": 0.0,
-            "_error": reason
+            "BBE": int(row.get("AB", 0)),
+            "Brl %": _pct(row.get("Barrel%", 0.0)),
+            "HH %": _pct(row.get("HardHit%", 0.0)),
+            "GB %": _pct(row.get("GB%", 0.0)),
+            "LD %": _pct(row.get("LD%", 0.0)),
+            "PullAir %": _pct(row.get("FB%", 0.0)),
+            "_source": "FanGraphs",
+            "_error": None
         }
 
-    match = stats_df[stats_df["Name_Clean"] == clean]
+    # FanGraphs unavailable or no match — fall back to real Statcast data
+    from engines.statcast_engine import get_player_id, get_batter_statcast
 
-    if match.empty:
-        return {
-            "BBE": 0, "Brl %": 0.0, "HH %": 0.0, "GB %": 0.0,
-            "LD %": 0.0, "PullAir %": 0.0,
-            "_error": f"No matching FanGraphs stats found for '{name}'. They may not meet the minimum plate-appearance threshold yet, or the name format doesn't match FanGraphs' listing."
-        }
+    fg_reason = load_error or f"No matching FanGraphs stats found for '{name}'."
+    batter_id = get_player_id(name)
+    sc_profile = get_batter_statcast(batter_id)
 
-    row = match.iloc[0]
+    if sc_profile.get("_error") is None and sc_profile.get("BBE", 0) > 0:
+        sc_profile["_source"] = "Statcast (FanGraphs unavailable)"
+        sc_profile["_error"] = None
+        return sc_profile
+
+    # Both real sources failed — surface both reasons honestly, no fabrication
+    sc_reason = sc_profile.get("_error") or "no batted-ball events found"
     return {
-        "BBE": int(row.get("AB", 0)),
-        "Brl %": _pct(row.get("Barrel%", 0.0)),
-        "HH %": _pct(row.get("HardHit%", 0.0)),
-        "GB %": _pct(row.get("GB%", 0.0)),
-        "LD %": _pct(row.get("LD%", 0.0)),
-        "PullAir %": _pct(row.get("FB%", 0.0)),
-        "_error": None
+        "BBE": 0, "Brl %": 0.0, "HH %": 0.0, "GB %": 0.0,
+        "LD %": 0.0, "PullAir %": 0.0,
+        "_source": None,
+        "_error": f"FanGraphs: {fg_reason} | Statcast fallback: {sc_reason}"
     }
 

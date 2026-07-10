@@ -37,11 +37,12 @@ def _safe_statcast_pull(func, player_id, start_date=DEFAULT_START_DATE, end_date
         return pd.DataFrame(), f"Statcast pull failed: {e}"
 
 
-def get_pitcher_id(full_name: str):
+def get_player_id(full_name: str):
     """
     Resolves a player's full name (e.g. "Gerrit Cole") to an MLBAM id
-    using pybaseball's player lookup. Returns None if no match is found
-    so callers can fail safely instead of crashing.
+    using pybaseball's player lookup. Works for batters and pitchers alike.
+    Returns None if no match is found so callers can fail safely instead
+    of crashing.
     """
     if not full_name or not isinstance(full_name, str):
         return None
@@ -61,6 +62,11 @@ def get_pitcher_id(full_name: str):
         return int(matches.iloc[0]["key_mlbam"])
     except Exception:
         return None
+
+
+# Kept as an alias — existing code calls get_pitcher_id(), and the lookup
+# itself isn't pitcher-specific.
+get_pitcher_id = get_player_id
 
 
 def build_pitch_arsenal(pitcher_data: dict) -> pd.DataFrame:

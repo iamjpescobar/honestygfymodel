@@ -60,6 +60,8 @@ batter_profile = get_batter_profile(selected_player, stats_df, stats_load_error)
 
 if batter_profile.get("_error"):
     st.error(f"⚠️ Batter data did not load: {batter_profile['_error']}")
+elif batter_profile.get("_source"):
+    st.caption(f"Batter data source: {batter_profile['_source']}")
 
 # ---------------------------------------------------------
 # BUILD PITCHER PROFILE (STATCAST + ARSENAL)
