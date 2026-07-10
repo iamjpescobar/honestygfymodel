@@ -55,8 +55,8 @@ selected_player = st.sidebar.selectbox("Choose a Player", player_list)
 # ---------------------------------------------------------
 # LOAD BATTER STATS + BUILD BATTER PROFILE
 # ---------------------------------------------------------
-stats_df = load_batting_stats()
-batter_profile = get_batter_profile(selected_player, stats_df)
+stats_df, stats_load_error = load_batting_stats()
+batter_profile = get_batter_profile(selected_player, stats_df, stats_load_error)
 
 if batter_profile.get("_error"):
     st.error(f"⚠️ Batter data did not load: {batter_profile['_error']}")
