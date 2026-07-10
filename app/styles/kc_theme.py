@@ -10,13 +10,11 @@ def inject_kc_theme():
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
-        /* ---------------- BASE APP BACKGROUND ---------------- */
         .stApp {
             background-color: #0a0a0d;
             color: #e8e8ec;
         }
 
-        /* Hide default Streamlit chrome for a cleaner "product" feel */
         #MainMenu, footer, header {visibility: hidden;}
 
         section[data-testid="stSidebar"] {
@@ -24,7 +22,6 @@ def inject_kc_theme():
             border-right: 1px solid #232329;
         }
 
-        /* ---------------- HEADERS ---------------- */
         .main-header {
             text-align: center;
             font-size: 34px;
@@ -43,7 +40,6 @@ def inject_kc_theme():
             letter-spacing: 0.08em;
         }
 
-        /* ---------------- SECTION LABELS (replaces st.subheader look) ---------------- */
         h3 {
             color: #f0f0f3 !important;
             font-size: 15px !important;
@@ -55,7 +51,6 @@ def inject_kc_theme():
             margin-top: 1.6rem !important;
         }
 
-        /* ---------------- CARD CONTAINER ---------------- */
         .pf-card {
             background: #131318;
             border: 1px solid #232329;
@@ -75,7 +70,6 @@ def inject_kc_theme():
             margin-bottom: 10px;
         }
 
-        /* ---------------- BADGES / PILLS ---------------- */
         .pf-badge {
             display: inline-flex;
             align-items: center;
@@ -92,7 +86,6 @@ def inject_kc_theme():
         .pf-badge-bad     { background: rgba(30, 58, 95, 0.30);   color: #7ba3d0; border: 1px solid rgba(30,58,95,0.6); }
         .pf-badge-neutral { background: rgba(148, 163, 184, 0.12); color: #cbd5e1; border: 1px solid rgba(148,163,184,0.3); }
 
-        /* ---------------- DATAFRAMES / TABLES ---------------- */
         div[data-testid="stDataFrame"] {
             border-radius: 10px;
             overflow: hidden;
@@ -115,7 +108,6 @@ def inject_kc_theme():
             letter-spacing: 0.05em;
         }
 
-        /* ---------------- TABS (top nav look) ---------------- */
         .stTabs [data-baseweb="tab-list"] {
             gap: 6px;
             border-bottom: 1px solid #232329;
@@ -131,14 +123,12 @@ def inject_kc_theme():
             border-bottom: 2px solid #8b0000 !important;
         }
 
-        /* ---------------- SIDEBAR SELECTBOX LABELS ---------------- */
         section[data-testid="stSidebar"] label {
             color: #cbd5e1 !important;
             font-weight: 600;
             font-size: 13px;
         }
 
-        /* ---------------- METRIC-LIKE TEXT ---------------- */
         .pf-metric-value {
             font-size: 22px;
             font-weight: 800;
@@ -151,7 +141,6 @@ def inject_kc_theme():
             letter-spacing: 0.05em;
         }
 
-        /* ---------------- STATUS BANNERS (replaces default st.error/warning boxes) ---------------- */
         .pf-status {
             border-radius: 12px;
             padding: 14px 18px;
@@ -179,7 +168,6 @@ def inject_kc_theme():
             color: #cbd5e1;
         }
 
-        /* Also restyle Streamlit's native alert boxes for anything not yet converted */
         div[data-testid="stAlert"] {
             background: #131318 !important;
             border: 1px solid #232329 !important;
@@ -218,6 +206,9 @@ def status_banner(kind: str, message: str, details: str = None):
     if details:
         with st.expander("Technical details"):
             st.code(details, language=None)
+
+
+def badge(text: str, style: str = "neutral") -> str:
     """
     Returns an HTML pill/badge string, e.g. badge("vs RHB 0.83", "bad").
     style options: 'accent' (blood red), 'good' (gold), 'bad' (dark blue), 'neutral'
