@@ -403,8 +403,17 @@ def get_batter_profile_windowed(batter_id, window: str = "season", unit: str = "
     metrics["SwStr %"] = _compute_swstr_pct(windowed_df)
     if not windowed_df.empty and {"estimated_slg_using_speedangle", "estimated_woba_using_speedangle"}.issubset(windowed_df.columns):
         bbe_only = windowed_df[windowed_df["type"] == "X"] if "type" in windowed_df.columns else windowed_df
-        metrics["xSLG"] = round(pd.to_numeric(bbe_only["estimated_slg_using_speedangle"], errors="coerce").mean(), 3) if not bbe_only.empty else None
-        metrics["xwOBA"] = round(pd.to_numeric(bbe_only["estimated_woba_using_speedangle"], errors="coerce").mean(), 3) if not bbe_only.empty else None
+        if not bbe_only.empty:
+            xslg = pd.to_numeric(bbe_only["estimated_slg_using_speedangle"], errors="coerce").mean()
+            xwoba = pd.to_numeric(bbe_only["estimated_woba_using_speedangle"], errors="coerce").mean()
+            # pd.notna guards against both NaN and pandas' NA marker, which
+            # round() can't handle — happens when a window has BBE rows but
+            # no measured expected-stat values.
+            metrics["xSLG"] = round(float(xslg), 3) if pd.notna(xslg) else None
+            metrics["xwOBA"] = round(float(xwoba), 3) if pd.notna(xwoba) else None
+        else:
+            metrics["xSLG"] = None
+            metrics["xwOBA"] = None
     else:
         metrics["xSLG"] = None
         metrics["xwOBA"] = None
