@@ -90,8 +90,54 @@ def _pull_and_trim(func, player_id, start_date, end_date):
         return pd.DataFrame(), f"Statcast pull failed: {e}"
 
 
-@st.cache_data(ttl=7200, max_entries=6, show_spinner=False)
+# ------------------------------------------------------------
+# PRECOMPUTED DATA (parquet-first, live fallback)
+#
+# The nightly pipeline (precompute.py + GitHub Actions) fetches the
+# same real Baseball Savant data ahead of time and ships it with the
+# deploy as data/statcast/{batters|pitchers}/{mlbam_id}.parquet.
+# If a player's file exists, we read it from disk (milliseconds, no
+# memory spike). If it doesn't — new call-up, pipeline not run yet —
+# we fall back to the exact live pull the app has always done.
+# ------------------------------------------------------------
+
+from pathlib import Path
+import json as _json
+
+_DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "statcast"
+
+
+def _read_local_parquet(kind: str, player_id):
+    """Returns the player's precomputed dataframe, or None if unavailable."""
+    try:
+        pid = int(player_id)
+    except (TypeError, ValueError):
+        return None
+    path = _DATA_DIR / kind / f"{pid}.parquet"
+    if not path.exists():
+        return None
+    try:
+        return pd.read_parquet(path)
+    except Exception:
+        return None
+
+
+def get_data_timestamp():
+    """Returns the UTC ISO timestamp of the precomputed data fetch, or
+    None if running on live pulls only. Show this in the UI so users can
+    see exactly how fresh the numbers are."""
+    try:
+        manifest = _json.loads((_DATA_DIR / "manifest.json").read_text())
+        return manifest.get("generated_at_utc")
+    except Exception:
+        return None
+
+
+@st.cache_data(ttl=7200, max_entries=20, show_spinner=False)
 def _get_batter_df(batter_id, start_date=DEFAULT_START_DATE, end_date=None):
+    local = _read_local_parquet("batters", batter_id)
+    if local is not None:
+        return local, None
     if end_date is None:
         end_date = _today_str()
     return _pull_and_trim(statcast_batter, batter_id, start_date, end_date)
@@ -99,6 +145,9 @@ def _get_batter_df(batter_id, start_date=DEFAULT_START_DATE, end_date=None):
 
 @st.cache_data(ttl=7200, max_entries=6, show_spinner=False)
 def _get_pitcher_df(pitcher_id, start_date=DEFAULT_START_DATE, end_date=None):
+    local = _read_local_parquet("pitchers", pitcher_id)
+    if local is not None:
+        return local, None
     if end_date is None:
         end_date = _today_str()
     return _pull_and_trim(statcast_pitcher, pitcher_id, start_date, end_date)

@@ -1,0 +1,45 @@
+name: Nightly Statcast Data
+
+on:
+  schedule:
+    - cron: "0 10 * * *"   # 10:00 UTC = 6:00 AM ET, after all games are final
+  workflow_dispatch: {}     # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write           # needed to publish the release asset
+
+jobs:
+  build-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pybaseball pandas pyarrow
+
+      - name: Fetch and package real Statcast data
+        run: python precompute.py
+
+      - name: Publish data as release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete nightly-data -y || true
+          gh release create nightly-data statcast_data.tar.gz \
+            -t "Nightly Statcast Data" \
+            -n "Auto-generated nightly. Real Baseball Savant pitch data, per-player parquet. See manifest.json inside for fetch timestamp."
+
+      - name: Trigger Render deploy
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$HOOK" ]; then
+            curl -fsS "$HOOK" && echo "Render deploy triggered."
+          else
+            echo "RENDER_DEPLOY_HOOK secret not set — skipping deploy trigger."
+          fi
