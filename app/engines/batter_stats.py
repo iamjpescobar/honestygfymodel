@@ -1,15 +1,14 @@
 import sys
 import os
-
 # Ensure project root is in Python path
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 if ROOT_DIR not in sys.path:
     sys.path.append(ROOT_DIR)
-
 import streamlit as st
 import pandas as pd
 import numpy as np
 from pybaseball import batting_stats
+
 
 @st.cache_data(ttl=7200)
 def load_batting_stats():
@@ -28,6 +27,7 @@ def load_batting_stats():
     except Exception as e:
         return pd.DataFrame(), f"{type(e).__name__}: {e}"
 
+
 def _pct(value) -> float:
     """
     Normalizes a percentage value regardless of whether the source
@@ -39,7 +39,8 @@ def _pct(value) -> float:
     return round(v * 100, 2) if v <= 1.5 else round(v, 2)
 
 
-def get_batter_profile(name: str, stats_df: pd.DataFrame, load_error: str = None):
+def get_batter_profile(name: str, stats_df: pd.DataFrame, load_error: str = None,
+                       batter_id=None):
     """
     Returns a batter's real stat profile. Tries FanGraphs first (larger
     season-long sample); if that's unavailable (e.g. FanGraphs blocking
@@ -47,13 +48,17 @@ def get_batter_profile(name: str, stats_df: pd.DataFrame, load_error: str = None
     Render) or has no match for this name, falls back to Baseball Savant/
     Statcast data instead — a second, independent, still 100% real source.
     Never fabricates data under any circumstance.
+
+    batter_id: the batter's MLBAM id if the caller already has it (e.g.
+    from the live roster). Passing it lets the Statcast fallback read the
+    player's data directly instead of resolving the name via pybaseball's
+    full player-register download — which is enormous in memory and was
+    OOM-crashing the 512MB instance whenever FanGraphs was blocked.
     """
     clean = name.lower().replace(".", "").replace(",", "").replace("'", "")
     match = pd.DataFrame()
-
     if not stats_df.empty:
         match = stats_df[stats_df["Name_Clean"] == clean]
-
     if not match.empty:
         row = match.iloc[0]
         return {
@@ -69,11 +74,13 @@ def get_batter_profile(name: str, stats_df: pd.DataFrame, load_error: str = None
 
     # FanGraphs unavailable or no match — fall back to real Statcast data
     from engines.statcast_engine import get_player_id, get_batter_statcast
-
     fg_reason = load_error or f"No matching FanGraphs stats found for '{name}'."
-    batter_id = get_player_id(name)
-    sc_profile = get_batter_statcast(batter_id)
 
+    # Use the caller-provided MLBAM id when available; only resort to the
+    # heavyweight name lookup when we genuinely have no id.
+    if batter_id is None:
+        batter_id = get_player_id(name)
+    sc_profile = get_batter_statcast(batter_id)
     if sc_profile.get("_error") is None and sc_profile.get("BBE", 0) > 0:
         sc_profile["_source"] = "Statcast (FanGraphs unavailable)"
         sc_profile["_error"] = None
@@ -110,4 +117,3 @@ def get_league_percentile(stats_df: pd.DataFrame, column: str, value: float) -> 
         series = series * 100
     pct = (series < value).mean() * 100
     return int(round(pct))
-

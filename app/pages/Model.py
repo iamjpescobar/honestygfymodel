@@ -78,9 +78,14 @@ selected_pitcher = st.sidebar.selectbox(
 
 # ---------------------------------------------------------
 # LOAD BATTER STATS + BUILD BATTER PROFILE
+# The batter's real MLBAM id from the roster is passed in so the
+# Statcast fallback (used whenever FanGraphs blocks cloud hosts)
+# reads the player's data directly — no player-register download.
 # ---------------------------------------------------------
+selected_batter_id = next((p["id"] for p in batters if p["name"] == selected_batter), None)
 stats_df, stats_load_error = cached_batting_stats()
-batter_profile = get_batter_profile(selected_batter, stats_df, stats_load_error)
+batter_profile = get_batter_profile(selected_batter, stats_df, stats_load_error,
+                                    batter_id=selected_batter_id)
 
 if batter_profile.get("_error"):
     status_banner(
@@ -179,7 +184,6 @@ st.markdown(card_close(), unsafe_allow_html=True)
 # ---------------------------------------------------------
 # SLAM ENGINE
 # ---------------------------------------------------------
-selected_batter_id = next((p["id"] for p in batters if p["name"] == selected_batter), None)
 slam_result = compute_slam_window(selected_batter_id, "season", "bbe")
 slam_score = slam_result["slam_score"] if slam_result["slam_score"] is not None else 0.0
 st.markdown(card_open("SLAM Engine"), unsafe_allow_html=True)
