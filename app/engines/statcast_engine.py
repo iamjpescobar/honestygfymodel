@@ -90,14 +90,14 @@ def _pull_and_trim(func, player_id, start_date, end_date):
         return pd.DataFrame(), f"Statcast pull failed: {e}"
 
 
-@st.cache_data(ttl=1800, max_entries=16, show_spinner=False)
+@st.cache_data(ttl=7200, max_entries=6, show_spinner=False)
 def _get_batter_df(batter_id, start_date=DEFAULT_START_DATE, end_date=None):
     if end_date is None:
         end_date = _today_str()
     return _pull_and_trim(statcast_batter, batter_id, start_date, end_date)
 
 
-@st.cache_data(ttl=1800, max_entries=16, show_spinner=False)
+@st.cache_data(ttl=7200, max_entries=6, show_spinner=False)
 def _get_pitcher_df(pitcher_id, start_date=DEFAULT_START_DATE, end_date=None):
     if end_date is None:
         end_date = _today_str()
