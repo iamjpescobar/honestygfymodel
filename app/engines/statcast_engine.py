@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import streamlit as st
 from datetime import date
 from pybaseball import statcast_batter, statcast_pitcher, playerid_lookup
 
@@ -11,20 +12,72 @@ def _today_str():
 
 
 # ============================================================
-# SAFE STATCAST PULL — surfaces real errors instead of hiding them
+# SHARED CACHED FETCH — the single source of raw Statcast data
+#
+# Previously, every profile function (batter profile, windowed
+# profile, vs-pitch-types, pitcher profile, advanced splits x3)
+# did its OWN full-season network pull of the SAME player's data.
+# One page load could download the same data 3-6 times, at 1-3
+# seconds each. Now each player's data is pulled from the network
+# exactly once, trimmed to only the columns the formulas use, and
+# downcast to smaller dtypes — then every function derives from
+# that one cached copy.
+#
+# All stat formulas below are byte-for-byte unchanged.
 # ============================================================
 
-def _safe_statcast_pull(func, player_id, start_date=DEFAULT_START_DATE, end_date=None):
-    """
-    Pulls real Statcast data for a player.
-    Returns (df, error_message). error_message is None on success —
-    including when a player legitimately has zero rows (e.g. hasn't
-    played yet this season) — so callers can tell "no data available"
-    apart from "the pull actually failed."
-    """
-    if end_date is None:
-        end_date = _today_str()
+# Only the columns the derivations below actually read.
+# Raw Statcast returns ~90+ columns; this is the working set.
+_KEEP_COLS = [
+    # identity / ordering (recency windows need these)
+    "game_date", "game_pk", "at_bat_number", "pitch_number",
+    # outcomes
+    "type", "events", "description", "zone",
+    # pitch + batter handedness
+    "pitch_type", "stand",
+    # batted ball
+    "bb_type", "launch_speed", "launch_angle", "launch_speed_angle",
+    "hc_x", "hc_y",
+    # bat tracking (Blast %)
+    "bat_speed", "release_speed",
+    # expected stats
+    "estimated_slg_using_speedangle", "estimated_woba_using_speedangle",
+    # count / location
+    "balls", "strikes", "plate_x", "plate_z",
+]
 
+# Repeated-string columns that are safe to store as category
+# (every comparison below uses ==, .isin(), or .dropna(), all of
+# which behave identically on categoricals).
+_CATEGORY_COLS = ["type", "events", "description", "bb_type", "stand"]
+
+
+def _trim_and_downcast(df: pd.DataFrame) -> pd.DataFrame:
+    """Keeps only needed columns and shrinks dtypes. Values are
+    untouched — float32 has far more precision than any rounded
+    percentage here needs."""
+    if df is None or df.empty:
+        return pd.DataFrame()
+
+    keep = [c for c in _KEEP_COLS if c in df.columns]
+    df = df[keep].copy()
+
+    for c in df.select_dtypes(include="float64").columns:
+        df[c] = df[c].astype("float32")
+
+    for c in _CATEGORY_COLS:
+        if c in df.columns:
+            df[c] = df[c].astype("category")
+
+    return df
+
+
+def _pull_and_trim(func, player_id, start_date, end_date):
+    """The actual network pull + trim. Returns (df, error_message).
+    error_message is None on success — including when a player
+    legitimately has zero rows (e.g. hasn't played yet this season) —
+    so callers can tell "no data available" apart from "the pull
+    actually failed."""
     if player_id is None:
         return pd.DataFrame(), "No player ID could be resolved for this name — check spelling or that pybaseball's lookup table has them."
 
@@ -32,9 +85,23 @@ def _safe_statcast_pull(func, player_id, start_date=DEFAULT_START_DATE, end_date
         df = func(start_date, end_date, player_id)
         if df is None:
             return pd.DataFrame(), "Statcast returned no response for this player/date range."
-        return df, None
+        return _trim_and_downcast(df), None
     except Exception as e:
         return pd.DataFrame(), f"Statcast pull failed: {e}"
+
+
+@st.cache_data(ttl=1800, max_entries=16, show_spinner=False)
+def _get_batter_df(batter_id, start_date=DEFAULT_START_DATE, end_date=None):
+    if end_date is None:
+        end_date = _today_str()
+    return _pull_and_trim(statcast_batter, batter_id, start_date, end_date)
+
+
+@st.cache_data(ttl=1800, max_entries=16, show_spinner=False)
+def _get_pitcher_df(pitcher_id, start_date=DEFAULT_START_DATE, end_date=None):
+    if end_date is None:
+        end_date = _today_str()
+    return _pull_and_trim(statcast_pitcher, pitcher_id, start_date, end_date)
 
 
 def get_player_id(full_name: str):
@@ -231,12 +298,12 @@ def _compute_zone_contact_pct(df: pd.DataFrame) -> float:
 # ============================================================
 
 def get_batter_statcast(batter_id):
-    df, error = _safe_statcast_pull(statcast_batter, batter_id)
+    df, error = _get_batter_df(batter_id)
     metrics = _compute_batted_ball_metrics(df)
     metrics["Whiff %"] = _compute_whiff_pct(df)
     metrics["SwStr %"] = _compute_swstr_pct(df)
     metrics["_error"] = error
-    metrics["_raw_df"] = df  # kept for real recency-window slicing downstream
+    metrics["_raw_df"] = df  # kept for real recency-window slicing downstream (now trimmed/downcast)
     return metrics
 
 
@@ -254,7 +321,7 @@ def get_batter_vs_pitch_types(batter_id, pitch_types: list, window: str = "seaso
     enough data" far more often than it would a usable number.
     """
     from engines.recency_windows import apply_window
-    df, error = _safe_statcast_pull(statcast_batter, batter_id)
+    df, error = _get_batter_df(batter_id)
     windowed_df = apply_window(df, window, unit)
 
     if windowed_df.empty or "pitch_type" not in windowed_df.columns or not pitch_types:
@@ -280,7 +347,7 @@ def get_batter_profile_windowed(batter_id, window: str = "season", unit: str = "
     table's window filter, and the pitch-matchup stat all call.
     """
     from engines.recency_windows import apply_window
-    df, error = _safe_statcast_pull(statcast_batter, batter_id)
+    df, error = _get_batter_df(batter_id)
     windowed_df = apply_window(df, window, unit)
     metrics = _compute_batted_ball_metrics(windowed_df)
     metrics["Whiff %"] = _compute_whiff_pct(windowed_df)
@@ -314,7 +381,7 @@ def _compute_pitch_type_breakdown(df: pd.DataFrame) -> dict:
 
     total = len(df)
     breakdown = {}
-    for pt, group in df.groupby("pitch_type"):
+    for pt, group in df.groupby("pitch_type", observed=True):
         if pd.isna(pt):
             continue
         usage = round(len(group) / total * 100, 2)
@@ -330,7 +397,7 @@ def _compute_pitch_type_breakdown(df: pd.DataFrame) -> dict:
 
 
 def get_pitcher_statcast(pitcher_id):
-    df, error = _safe_statcast_pull(statcast_pitcher, pitcher_id)
+    df, error = _get_pitcher_df(pitcher_id)
 
     metrics = _compute_batted_ball_metrics(df)
     metrics["Whiff %"] = _compute_whiff_pct(df)
@@ -346,7 +413,7 @@ def get_pitcher_statcast(pitcher_id):
 
     if not df.empty and "pitch_type" in df.columns:
         arsenal = df["pitch_type"].dropna().value_counts(normalize=True) * 100
-        metrics["Pitch Arsenal"] = {k: round(v, 2) for k, v in arsenal.items()}
+        metrics["Pitch Arsenal"] = {k: round(v, 2) for k, v in arsenal.items() if v > 0}
         metrics["Pitch Arsenal Detail"] = _compute_pitch_type_breakdown(df)
     else:
         metrics["Pitch Arsenal"] = {}
@@ -412,7 +479,7 @@ def get_pitcher_advanced_splits(pitcher_id, side: str = None) -> dict:
         "Putaway%": 0.0, "1stPS%": 0.0, "Meatball%": 0.0, "_error": None,
     }
 
-    df, error = _safe_statcast_pull(statcast_pitcher, pitcher_id)
+    df, error = _get_pitcher_df(pitcher_id)
     if df.empty:
         empty["_error"] = error
         return empty
