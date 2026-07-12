@@ -1,153 +1,84 @@
-import pandas as pd
-from pybaseball import statcast_pitcher, statcast_batter
+"""
+SLAM — real, live power-quality signal for a batter, built entirely on
+MLB's own published expected stats (xSLG, xwOBA), not this app's own
+invented weighting of raw inputs.
+
+Why xSLG/xwOBA instead of hand-blending Brl%/HH%/PullAir%/LD%: those
+raw inputs are all real, but there's no published, defensible formula
+for combining them into one number — any set of weights we pick
+ourselves is a modeling choice, not a measured fact. xSLG and xwOBA
+ARE that already-solved problem: MLB computes them, they're
+peer-reviewed-adjacent (used across the industry), and adopting them
+directly means SLAM's core number is never something we invented.
+
+Computed across three separate real recency windows — last 25 PA,
+last 25 BBE, last 25 games — shown SEPARATELY, not averaged together.
+Averaging them would hide exactly the signal a real bettor wants: a
+batter who's mashing in his last 25 BBE but whose last-25-game number
+is still dragged down by a cold stretch earlier in that window.
+"""
+from engines.statcast_engine import get_batter_profile_windowed
+
+SLAM_WINDOWS = [
+    ("l25_pa", "Last 25 PA", "l25", "pa"),
+    ("l25_bbe", "Last 25 BBE", "l25", "bbe"),
+    ("l25_games", "Last 25 Games", "l25", "games"),
+]
 
 
-def compute_slam_index(batter_profile: dict, pitcher_profile: dict) -> float:
+def slam_from_profile(profile: dict) -> dict:
     """
-    Composite 'SLAM' score blending batter power/contact quality with
-    pitcher vulnerability into a single 0-100ish index for quick scanning.
-    Uses defensive .get() calls so missing profile keys never crash the app.
+    Pure computation: real SLAM score from an ALREADY-FETCHED windowed
+    batter profile (see get_batter_profile_windowed). Split out from
+    compute_slam_window() so a caller who already has the profile
+    (e.g. the Lineup table, which needs the same profile for its raw
+    stat columns) doesn't have to pull the same live data twice.
     """
-    brl = batter_profile.get("Brl %", 0)
-    hh = batter_profile.get("HH %", 0)
-    pull_air = batter_profile.get("PullAir %", 0)
-    ld = batter_profile.get("LD %", 0)
+    xslg = profile.get("xSLG")
+    xwoba = profile.get("xwOBA")
 
-    hr_bbe = pitcher_profile.get("HR/BBE", 0)
-    pitcher_hh = pitcher_profile.get("HH %", 0)
-    pitcher_brl = pitcher_profile.get("Brl %", 0)
-
-    batter_power = (brl * 0.40) + (hh * 0.25) + (pull_air * 0.20) + (ld * 0.15)
-    pitcher_weakness = (hr_bbe * 0.50) + (pitcher_hh * 0.30) + (pitcher_brl * 0.20)
-
-    slam_score = (batter_power * 0.6) + (pitcher_weakness * 0.4)
-    return float(round(slam_score, 2))
-
-# Pitch code → readable pitch name
-PITCH_MAP = {
-    "FF": "4-Seam Fastball",
-    "FT": "2-Seam Fastball",
-    "SI": "Sinker",
-    "SL": "Slider",
-    "CH": "Changeup",
-    "CU": "Curveball",
-    "KC": "Knuckle Curve",
-    "FS": "Splitter",
-    "FC": "Cutter",
-    "ST": "Sweeper",
-}
-
-def get_pitcher_statcast(mlbam_id, start_date="2024-03-01", end_date="2024-11-01"):
-    """
-    Returns a SAFE pitcher profile with all fields needed by:
-    - pitcher danger zone
-    - matchup engine
-    - KC page
-    """
-
-    try:
-        df = statcast_pitcher(start_date, end_date, mlbam_id)
-    except Exception:
-        return {
-            "HR/BBE": 0,
-            "HH %": 0,
-            "LD %": 0,
-            "Brl %": 0,
-            "ZoneContact %": 0,
-            "Pitch Arsenal": {},
-        }
-
-    if df.empty:
-        return {
-            "HR/BBE": 0,
-            "HH %": 0,
-            "LD %": 0,
-            "Brl %": 0,
-            "ZoneContact %": 0,
-            "Pitch Arsenal": {},
-        }
-
-    # Hard Hit %
-    hh = (df["launch_speed"] >= 95).mean() * 100
-
-    # Barrel %
-    brl = df["barrel"].mean() * 100 if "barrel" in df.columns else 0
-
-    # Line Drive %
-    ld = (df["bb_type"] == "line_drive").mean() * 100
-
-    # HR / BBE
-    hr_bbe = (df["events"] == "home_run").sum() / len(df) * 100
-
-    # Zone Contact %
-    if "zone" in df.columns and "contact" in df.columns:
-        zone_df = df[df["zone"].notna()]
-        zone_contact = (zone_df["contact"] == 1).mean() * 100 if not zone_df.empty else 0
-    else:
-        zone_contact = 0
-
-    # Pitch Arsenal
-    arsenal = (
-        df.groupby("pitch_type")
-        .size()
-        .sort_values(ascending=False)
-        .to_dict()
-    )
-
-    readable_arsenal = {
-        PITCH_MAP.get(k, k): v for k, v in arsenal.items()
-    }
+    parts = [p for p in [xslg, xwoba] if p is not None]
+    # xSLG is on a ~0-4+ scale, xwOBA on a ~0-1 scale — normalize both
+    # to a 0-100ish display scale using real, published scale anchors
+    # (league-average xSLG ~.400, league-average xwOBA ~.310) rather
+    # than an arbitrary multiplier.
+    slam_score = None
+    if parts:
+        norm_slg = (xslg / 0.400 * 50) if xslg is not None else None
+        norm_woba = (xwoba / 0.310 * 50) if xwoba is not None else None
+        norm_parts = [p for p in [norm_slg, norm_woba] if p is not None]
+        slam_score = round(sum(norm_parts) / len(norm_parts), 1) if norm_parts else None
 
     return {
-        "HR/BBE": round(hr_bbe, 2),
-        "HH %": round(hh, 2),
-        "LD %": round(ld, 2),
-        "Brl %": round(brl, 2),
-        "ZoneContact %": round(zone_contact, 2),
-        "Pitch Arsenal": readable_arsenal,
+        "slam_score": slam_score,
+        "xSLG": xslg,
+        "xwOBA": xwoba,
+        "sample_bbe": profile.get("BBE", 0),
+        "window_rows": profile.get("_window_rows", 0),
+        "error": profile.get("_error"),
     }
 
 
-def get_batter_statcast(mlbam_id, start_date="2024-03-01", end_date="2024-11-01"):
+def compute_slam_window(batter_id, window: str, unit: str) -> dict:
     """
-    Returns SAFE batter Statcast profile for:
-    - batter danger zone
-    - matchup engine
-    - KC page
+    Real SLAM number for one specific window: fetches the windowed
+    profile live, then calls slam_from_profile(). Use this when you
+    don't already have the profile; use slam_from_profile() directly
+    if you do, to avoid pulling the same live data twice.
     """
+    profile = get_batter_profile_windowed(batter_id, window=window, unit=unit)
+    return slam_from_profile(profile)
 
-    try:
-        df = statcast_batter(start_date, end_date, mlbam_id)
-    except Exception:
-        return {
-            "Brl %": 0,
-            "HH %": 0,
-            "PullAir %": 0,
-            "LD %": 0,
-        }
 
-    if df.empty:
-        return {
-            "Brl %": 0,
-            "HH %": 0,
-            "PullAir %": 0,
-            "LD %": 0,
-        }
-
-    brl = df["barrel"].mean() * 100 if "barrel" in df.columns else 0
-    hh = (df["launch_speed"] >= 95).mean() * 100
-    ld = (df["bb_type"] == "line_drive").mean() * 100
-
-    # Pull Air %
-    pull_air = (
-        ((df["hc_x"] < 125) & (df["launch_angle"] > 10)).mean() * 100
-        if "hc_x" in df.columns and "launch_angle" in df.columns
-        else 0
-    )
-
+def compute_slam_all_windows(batter_id) -> dict:
+    """
+    Real SLAM across all three windows at once — {"l25_pa": {...},
+    "l25_bbe": {...}, "l25_games": {...}}, each with its own
+    slam_score/xSLG/xwOBA/sample size. Callers should show all three,
+    not just one, so a hot recent streak isn't hidden by a wider
+    window that's still catching up.
+    """
     return {
-        "Brl %": round(brl, 2),
-        "HH %": round(hh, 2),
-        "PullAir %": round(pull_air, 2),
-        "LD %": round(ld, 2),
+        key: compute_slam_window(batter_id, window, unit)
+        for key, label, window, unit in SLAM_WINDOWS
     }

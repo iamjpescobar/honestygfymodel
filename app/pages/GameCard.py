@@ -1,0 +1,810 @@
+import streamlit as st
+import pandas as pd
+from datetime import datetime
+
+from styles.kc_theme import (
+    inject_kc_theme, badge, card, footer, COLOR,
+    sport_switcher, internal_nav, pitch_color, pitch_name, edge_tag
+)
+from styles.table_style import style_stat_table, plain_dark_table
+from auth import render_account_sidebar
+
+from engines.weather_engine import get_todays_games_with_weather
+from engines.park_factors import get_park_factor
+from engines.headshots import get_headshot_url
+from engines.roster import get_live_team_roster, get_all_teams, get_confirmed_lineup
+from engines.statcast_engine import (
+    get_pitcher_id, get_pitcher_statcast, get_pitcher_advanced_splits, get_batter_profile_windowed, get_batter_vs_pitch_types
+)
+from engines.savant_leaderboard import load_percentile_ranks
+from engines.slam_engine import slam_from_profile
+from engines.top_plays import rank_batters, confidence_tier, matchup_tier
+from engines.team_abbreviations import team_abbr
+
+st.set_page_config(page_title="Game Card", layout="wide")
+inject_kc_theme()
+render_account_sidebar()
+
+games, games_error = get_todays_games_with_weather()
+
+if games_error:
+    st.error(f"Couldn't load today's schedule: {games_error}")
+    st.stop()
+
+if not games:
+    st.info("No games found for today. MLB may not have posted today's slate yet, or it's an off-day.")
+    st.stop()
+
+# ---------------------------------------------------------
+# LAYOUT: persistent left view-nav + main content
+# (kept WITHIN this one page \u2014 switching views never re-picks
+# the game or pitcher, unlike Streamlit's page-level nav)
+# ---------------------------------------------------------
+NAV_ITEMS = [
+    "\U0001F3E0 Matchup", "\U0001F465 Lineups", "\U0001F3AF Pitchers",
+    "\U0001F3CF Hitters", "\U0001F4C8 Projections", "\U0001F4C9 Trends", "\U0001F514 Alerts",
+]
+LIVE_VIEWS = {"\U0001F3E0 Matchup"}
+
+# -----------------------------------------------------
+# WORDMARK \u2014 spans full width, anchors brand identity without
+# eating into the game carousel's fixed height (a text mark, not an
+# image, since there's no logo asset to work from yet)
+# -----------------------------------------------------
+st.markdown(
+    f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">'
+    f'<span style="font-size:20px; font-weight:800; letter-spacing:-0.02em; color:{COLOR["text"]};">LOS</span>'
+    f'<span style="font-size:20px; font-weight:800; letter-spacing:-0.02em; color:{COLOR["stat_high"]};">CAPPERS</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
+
+st.session_state.setdefault("nav_collapsed", False)
+
+if st.session_state["nav_collapsed"]:
+    content_col, nav_col = st.columns([9.4, 0.9])
+else:
+    content_col, nav_col = st.columns([5, 1.3])
+
+with nav_col:
+    toggle_icon = "\u2630" if st.session_state["nav_collapsed"] else "\u2715"
+    if st.button(toggle_icon, key="nav_toggle_btn", help="Show sidebar" if st.session_state["nav_collapsed"] else "Hide sidebar"):
+        st.session_state["nav_collapsed"] = not st.session_state["nav_collapsed"]
+        st.rerun()
+
+    if not st.session_state["nav_collapsed"]:
+        sport_switcher(active="MLB")
+        st.markdown(f'<div style="height:8px;"></div>', unsafe_allow_html=True)
+
+        name = st.session_state.get("name", "")
+        role = st.session_state.get("lc_role", "subscriber")
+        role_badge_color = COLOR["stat_high"] if role == "admin" else COLOR["warn"]
+        st.markdown(
+            f'<div class="pf-card" style="padding:12px 14px; margin-bottom:10px;">'
+            f'<div style="font-size:13px; font-weight:700; color:{COLOR["text"]};">{name}</div>'
+            f'<div style="display:inline-block; margin-top:6px; padding:3px 10px; border-radius:4px; '
+            f'background:{role_badge_color}22; color:{role_badge_color}; font-size:10.5px; font-weight:700; '
+            f'text-transform:uppercase; letter-spacing:0.05em;">{role}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+        view = internal_nav(NAV_ITEMS, active="\U0001F3E0 Matchup", key="gc_view_nav")
+
+        with st.expander("\U0001F4D6 Glossary"):
+            def _section(title):
+                st.markdown(
+                    f'<div style="display:inline-block; padding:3px 10px; border-radius:4px; '
+                    f'background:{COLOR["error"]}22; border:1px solid {COLOR["error"]}55; '
+                    f'color:{COLOR["error"]}; font-weight:700; font-size:10.5px; text-transform:uppercase; '
+                    f'letter-spacing:0.04em; margin:10px 0 6px 0;">{title}</div>',
+                    unsafe_allow_html=True,
+                )
+
+            _section("Colors")
+            st.markdown(
+                f'<span style="color:{COLOR["player_name"]}; font-weight:700;">Names</span> \u00b7 '
+                f'<span style="color:{COLOR["bats_l"]}; font-weight:700;">L</span>/'
+                f'<span style="color:{COLOR["bats_r"]}; font-weight:700;">R</span>/'
+                f'<span style="color:{COLOR["bats_s"]}; font-weight:700;">S</span> \u00b7 '
+                f'<span style="color:{COLOR["error"]}; font-weight:700;">weak</span>\u2192'
+                f'<span style="color:{COLOR["warn"]}; font-weight:700;">avg</span>\u2192'
+                f'<span style="color:{COLOR["stat_high"]}; font-weight:700;">strong</span>',
+                unsafe_allow_html=True,
+            )
+
+            _section("Composite Scores")
+            st.markdown(
+                "- **SLAM** \u2014 real xSLG/xwOBA power score, last 25 PA/BBE/Games. ~50 = league avg.\n"
+                "- **HR/Hit/K Score** \u2014 real MLB percentile rankings, matched by player ID.\n"
+                "- **Matchup tier** \u2014 bucketed from SLAM. **Confidence** \u2014 sample size only.\n"
+                "- **Edge tag** \u2014 from HR/Hit/K Score thresholds, see engines/top_plays.py."
+            )
+            _section("Contact Quality")
+            st.markdown(
+                "- **Brl% / HH%** \u2014 Barrel% / Hard-Hit% (95+ mph EV).\n"
+                "- **SweetSpot%** \u2014 launch angle 8\u201332\u00b0.\n"
+                "- **Blast%** \u2014 (squared-up% \u00d7 100) + bat speed \u2265 164, MLB's real formula."
+            )
+            _section("Batted Ball Direction")
+            st.markdown(
+                "- **LD% / FB% / GB%** \u2014 Line Drive / Fly Ball / Ground Ball %.\n"
+                "- **PullAir% / PullBrl%** \u2014 pulled fly balls / pulled AND barreled, real "
+                "spray-angle math (handedness-aware)."
+            )
+            _section("Plate Discipline")
+            st.markdown(
+                "- **SwStr%** \u2014 whiffs / ALL pitches. **Whiff%** \u2014 whiffs / SWINGS only "
+                "(different denominator, don't conflate them).\n"
+                "- **xSLG / xwOBA** \u2014 MLB's own expected stats from exit velo + launch angle."
+            )
+            _section("Pitcher Splits")
+            st.markdown(
+                "- **BA/SLG/ISO/WHIP/HR9** \u2014 computed from raw Statcast (IP is an estimate).\n"
+                "- **Putaway%** \u2014 K rate on 2-strike counts. **1stPS%** \u2014 first-pitch strike rate. "
+                "**Meatball%** \u2014 pitches in the heart of the zone."
+            )
+    else:
+        view = st.session_state.get("gc_view_nav", "\U0001F3E0 Matchup")
+
+with content_col:
+    # -----------------------------------------------------
+    # GAME PICKER \u2014 paginated carousel, fixed height no matter
+    # how many games are on the slate (was wrapping into a tall
+    # multi-row block before; this caps it at one row, always)
+    # -----------------------------------------------------
+    PAGE_SIZE = 4
+    total_pages = max(1, (len(games) + PAGE_SIZE - 1) // PAGE_SIZE)
+    st.session_state.setdefault("gc_page", 0)
+    st.session_state.setdefault("gc_selected_game_idx", 0)
+    st.session_state["gc_page"] = min(st.session_state["gc_page"], total_pages - 1)
+
+    nav_prev, nav_pills, nav_next = st.columns([0.6, 8, 0.6])
+    with nav_prev:
+        if st.button("\u25c0", key="gc_prev_page", disabled=st.session_state["gc_page"] == 0):
+            st.session_state["gc_page"] -= 1
+            st.rerun()
+    with nav_next:
+        if st.button("\u25b6", key="gc_next_page", disabled=st.session_state["gc_page"] >= total_pages - 1):
+            st.session_state["gc_page"] += 1
+            st.rerun()
+
+    page = st.session_state["gc_page"]
+    visible_games = games[page * PAGE_SIZE: page * PAGE_SIZE + PAGE_SIZE]
+    visible_labels = [f"{team_abbr(g['away'])} @ {team_abbr(g['home'])}" for g in visible_games]
+    current_global_label = f"{team_abbr(games[st.session_state['gc_selected_game_idx']]['away'])} @ {team_abbr(games[st.session_state['gc_selected_game_idx']]['home'])}"
+
+    with nav_pills:
+        default_pill = current_global_label if current_global_label in visible_labels else None
+        selected_label = st.pills(
+            "Today's Games", visible_labels, default=default_pill,
+            label_visibility="collapsed", key=f"game_picker_p{page}"
+        )
+        if selected_label:
+            st.session_state["gc_selected_game_idx"] = games.index(
+                next(g for g in visible_games if f"{team_abbr(g['away'])} @ {team_abbr(g['home'])}" == selected_label)
+            )
+
+    st.markdown(
+        f'<div style="color:{COLOR["text"]}; font-size:13px; font-weight:600; margin:4px 0 12px 0;">'
+        f'Page {page + 1} of {total_pages} \u2014 {len(games)} games today</div>',
+        unsafe_allow_html=True,
+    )
+    game = games[st.session_state["gc_selected_game_idx"]]
+
+    # -----------------------------------------------------
+    # BREADCRUMB
+    # -----------------------------------------------------
+    try:
+        game_time_str = datetime.fromisoformat(game["game_time"].replace("Z", "+00:00")).strftime("%-I:%M %p") if game.get("game_time") else "TBD"
+    except Exception:
+        game_time_str = "TBD"
+    st.markdown(
+        f'<div style="font-size:12.5px; color:{COLOR["gold"]}; margin-bottom:14px;">'
+        f'MLB &nbsp;\u203a&nbsp; {game["away"]} @ {game["home"]} &nbsp;\u203a&nbsp; Today, {game_time_str}</div>',
+        unsafe_allow_html=True,
+    )
+
+    if view not in LIVE_VIEWS:
+        with card("coming_soon"):
+            st.markdown(f'<div class="pf-card-title">{view}</div><div class="pf-card-subtitle">Coming soon \u2014 not wired up yet</div>', unsafe_allow_html=True)
+            st.info(f"The {view} view isn't built yet. Matchup and Top Plays are live; the rest are next.")
+        footer()
+        st.stop()
+
+    # -----------------------------------------------------
+    # MATCHUP HEADER
+    # -----------------------------------------------------
+    st.markdown(
+        f"""
+        <div style="text-align:center; margin-bottom:6px;">
+            <span style="font-size:26px; font-weight:800; color:{COLOR['headline']};">
+                {game['away']} @ {game['home']}
+            </span>
+        </div>
+        <div style="text-align:center; color:{COLOR['gold']}; font-size:13px; margin-bottom:18px;">
+            {game['venue']}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # -----------------------------------------------------
+    # WEATHER + PARK FACTOR \u2014 one compact row, not 4 separate cards
+    # -----------------------------------------------------
+    park = get_park_factor(game["home"])
+    temp_display = game["weather_temp"] if game["weather_temp"] else "\u2014"
+    park_display = f'{park["park_factor"]}' if park["verified"] else "Not verified"
+
+    def _weather_icon(condition: str) -> str:
+        c = (condition or "").lower()
+        if "rain" in c or "shower" in c:
+            return "\U0001F327\uFE0F"
+        if "storm" in c or "thunder" in c:
+            return "\u26C8\uFE0F"
+        if "cloud" in c or "overcast" in c:
+            return "\u2601\uFE0F"
+        if "clear" in c or "sunny" in c:
+            return "\u2600\uFE0F"
+        if "dome" in c or "roof" in c:
+            return "\U0001F3DF\uFE0F"
+        return "\U0001F324\uFE0F"
+
+    st.markdown(
+        f'<div class="pf-card" style="display:flex; justify-content:space-around; text-align:center; padding:10px 16px;">'
+        f'<div><div class="pf-metric-label" style="color:{COLOR["gold"]};">Condition</div>'
+        f'<div style="font-size:20px; margin:2px 0;" class="lc-weather-icon">{_weather_icon(game["weather_condition"])}</div>'
+        f'<div style="font-size:13px; color:{COLOR["gold"]}; font-weight:600;">{game["weather_condition"] or "Not posted yet"}</div></div>'
+        f'<div><div class="pf-metric-label" style="color:{COLOR["gold"]};">Temp</div>'
+        f'<div style="font-size:20px; margin:2px 0;">\U0001F321\uFE0F</div>'
+        f'<div style="font-size:13px; color:{COLOR["gold"]}; font-weight:600;">{temp_display}\u00b0F</div></div>'
+        f'<div><div class="pf-metric-label" style="color:{COLOR["gold"]};">Wind</div>'
+        f'<div style="font-size:20px; margin:2px 0;" class="lc-wind-icon">\U0001F4A8</div>'
+        f'<div style="font-size:13px; color:{COLOR["gold"]}; font-weight:600;">{game["weather_wind"] or "Not posted yet"}</div></div>'
+        f'<div><div class="pf-metric-label" style="color:{COLOR["gold"]};">Park Factor</div>'
+        f'<div style="font-size:20px; margin:2px 0;">\U0001F3DF\uFE0F</div>'
+        f'<div style="font-size:13px; color:{COLOR["gold"]}; font-weight:600;">{park_display}</div></div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    # -----------------------------------------------------
+    # PITCHER SELECTOR
+    # -----------------------------------------------------
+    pitcher_options = [f"{game['away_pitcher']} ({game['away']})", f"{game['home_pitcher']} ({game['home']})"]
+    st.markdown(f'<div style="font-size:14px; font-weight:600; color:{COLOR["magenta_purple"]}; margin-bottom:4px;">Select Pitcher</div>', unsafe_allow_html=True)
+    pitcher_choice = st.segmented_control(
+        "Select Pitcher", pitcher_options, default=pitcher_options[0], key=f"pitcher_choice_{st.session_state['gc_selected_game_idx']}",
+        label_visibility="collapsed",
+    )
+    if not pitcher_choice:
+        pitcher_choice = pitcher_options[0]
+    selected_pitcher_name = game["away_pitcher"] if pitcher_choice.startswith(game["away_pitcher"]) else game["home_pitcher"]
+    opposing_team = game["home"] if pitcher_choice.startswith(game["away_pitcher"]) else game["away"]
+
+    real_pitcher_id = game["away_pitcher_id"] if pitcher_choice.startswith(game["away_pitcher"]) else game["home_pitcher_id"]
+    pitcher_id = real_pitcher_id or get_pitcher_id(selected_pitcher_name)
+    pitcher_data = get_pitcher_statcast(pitcher_id) if pitcher_id else {}
+
+    if pitcher_id is None:
+        st.warning(f"Couldn't resolve a player ID for {selected_pitcher_name} \u2014 stats below will be empty.")
+
+    splits_vs_r = get_pitcher_advanced_splits(pitcher_id, side="R") if pitcher_id else None
+    splits_vs_l = get_pitcher_advanced_splits(pitcher_id, side="L") if pitcher_id else None
+
+    # -----------------------------------------------------
+    # PITCHER HEADER + PITCH MIX (colored bars, real usage%)
+    # -----------------------------------------------------
+    with card("pitcher_header"):
+        col_head, col_mix = st.columns([1, 3])
+        with col_head:
+            if pitcher_id:
+                st.image(get_headshot_url(pitcher_id), width=80)
+            st.markdown(f'<span style="font-weight:700; color:{COLOR["gold"]};">{selected_pitcher_name}</span>', unsafe_allow_html=True)
+
+        with col_mix:
+            st.markdown(f'<div class="pf-card-title" style="margin-bottom:8px; color:{COLOR["gold"]};">Pitch Mix (Season)</div>', unsafe_allow_html=True)
+            arsenal = pitcher_data.get("Pitch Arsenal", {}) if pitcher_data else {}
+            if arsenal:
+                bars_html = '<div style="display:flex; gap:18px; flex-wrap:wrap;">'
+                for pt, usage in sorted(arsenal.items(), key=lambda x: -x[1])[:6]:
+                    c = pitch_color(pt)
+                    bars_html += (
+                        f'<div style="min-width:100px;">'
+                        f'<div style="font-size:11px; color:{c}; font-weight:600;">{pitch_name(pt)}</div>'
+                        f'<div style="height:5px; width:100%; background:{COLOR["surface_raised"]}; border-radius:3px; margin:4px 0;">'
+                        f'<div style="height:5px; width:{min(usage,100)}%; background:{c}; border-radius:3px;"></div>'
+                        f'</div>'
+                        f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:12px; color:{COLOR["text"]};">{usage:.2f}%</div>'
+                        f'</div>'
+                    )
+                bars_html += '</div>'
+                st.markdown(bars_html, unsafe_allow_html=True)
+            else:
+                st.caption("No arsenal data available.")
+
+    # -----------------------------------------------------
+    # LOAD LINEUP + SCORES (shared across everything below)
+    # -----------------------------------------------------
+    opposing_side = "home" if opposing_team == game["home"] else "away"
+    confirmed_lineup, lineup_confirmed = get_confirmed_lineup(game.get("game_pk"), opposing_side)
+
+    if lineup_confirmed:
+        batters = [p for p in confirmed_lineup if not p["is_pitcher"]]
+    else:
+        # MLB hasn't posted today's real lineup yet (normal 1-3 hours
+        # before first pitch) — honest fallback to the team's general
+        # roster, clearly labeled as NOT yet confirmed rather than
+        # silently passed off as today's real batting order.
+        roster = get_live_team_roster(opposing_team)
+        batters = [p for p in roster if not p["is_pitcher"]][:9]
+        st.info(
+            f"MLB hasn't posted {opposing_team}'s confirmed starting lineup yet "
+            f"(usually posted 1\u20133 hours before first pitch) \u2014 showing their general roster "
+            f"below instead. This will switch to the real confirmed batting order automatically "
+            f"once MLB posts it."
+        )
+
+    # HR Score / Hit Score / K Score come from a SEPARATE, real, live
+    # source: MLB's own Statcast percentile rankings, matched by player
+    # ID. This doesn't depend on FanGraphs at all, so it doesn't have
+    # the "blocked from cloud hosts" problem the old version did.
+    savant_df, savant_error = load_percentile_ranks()
+    league_data_available = savant_df is not None and not savant_df.empty
+    if not league_data_available:
+        st.warning(
+            f"Baseball Savant's live percentile rankings aren't reachable right now "
+            f"({savant_error}). HR Score / Hit Score / K Score below will show as N/A "
+            f"until that's back \u2014 raw stats (Brl%, HH%, LD%) are unaffected."
+        )
+
+    batter_profiles = []
+    for b in batters:
+        # Real, ID-matched batted-ball profile — same reliable engine
+        # SLAM uses, not the old name-matching one. Eliminates the
+        # missing-fields bug AND the accented-name matching failures
+        # in one move, since there's no name string involved at all.
+        profile = get_batter_profile_windowed(b.get("id"), window="season", unit="bbe")
+        batter_profiles.append({"name": b["name"], "bats": b.get("bats") or "?", "id": b.get("id"), "profile": profile})
+
+    ranked = rank_batters(batter_profiles, savant_df) if batter_profiles else []
+
+    def _score_sort_key(r, field):
+        v = r.get(field)
+        return -1 if v is None else -v  # None sorts last regardless of view
+
+    def _score_display(v):
+        return "N/A" if v is None else str(v)
+
+    def _score_num(v):
+        """0 for display-only numeric contexts (progress bars) \u2014 always
+        paired with the N/A text elsewhere so it's never the only signal."""
+        return 0 if v is None else v
+
+    # -----------------------------------------------------
+    # TODAY'S TOP PLAYS \u2014 plain section label, not its own card,
+    # since each item below is now its own standalone card \u2014 a card
+    # wrapping four more cards would just nest borders inside borders.
+    # -----------------------------------------------------
+    st.markdown(
+        f'<div class="pf-card-title" style="margin-top:6px; color:{COLOR["gold"]};">Today\'s Top Plays</div>'
+        f'<div class="pf-card-subtitle">This app\'s own composite scores \u2014 see engines/top_plays.py</div>',
+        unsafe_allow_html=True,
+    )
+    if not ranked:
+        st.info(f"No lineup data available for {opposing_team} right now.")
+    else:
+        if not league_data_available:
+            st.caption("Scores below will show as N/A \u2014 see warning above.")
+
+        def _targets_table(sort_field, label):
+            rows = []
+            for r in sorted(ranked, key=lambda x: _score_sort_key(x, sort_field))[:5]:
+                rows.append({"Player": r["name"], "Bats": r["bats"], label: _score_num(r[sort_field])})
+            return pd.DataFrame(rows)
+
+        top_row1, top_row2 = st.columns(2)
+        with top_row1:
+            with card("hr_targets"):
+                st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Top HR Targets</div>', unsafe_allow_html=True)
+                hr_df = _targets_table("hr_score", "HR Score")
+                st.dataframe(style_stat_table(hr_df, favor_high=["HR Score"], gradient=True), width="stretch")
+        with top_row2:
+            with card("hit_targets"):
+                st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Best Hit Targets</div>', unsafe_allow_html=True)
+                hit_df = _targets_table("hit_score", "Hit Score")
+                st.dataframe(style_stat_table(hit_df, favor_high=["Hit Score"], gradient=True), width="stretch")
+
+        bot_row1, bot_row2 = st.columns(2)
+        with bot_row1:
+            with card("k_targets"):
+                st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Strikeout Targets</div>', unsafe_allow_html=True)
+                k_df = _targets_table("k_score", "K Score")
+                st.dataframe(style_stat_table(k_df, favor_high=["K Score"], gradient=True), width="stretch")
+        with bot_row2:
+            hr_vals = [r["hr_score"] for r in ranked if r["hr_score"] is not None]
+            hit_vals = [r["hit_score"] for r in ranked if r["hit_score"] is not None]
+            avg_hr = round(sum(hr_vals) / len(hr_vals)) if hr_vals else None
+            avg_hit = round(sum(hit_vals) / len(hit_vals)) if hit_vals else None
+            with card("stack_pick"):
+                st.markdown(
+                    f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Stack Pick</div>'
+                    f'<div style="font-size:17px; font-weight:800; color:{COLOR["magenta_purple"]}; margin-bottom:12px;">{opposing_team}</div>'
+                    f'<div style="display:flex; gap:16px;">'
+                    f'<div><div style="font-family:\'JetBrains Mono\',monospace; font-size:22px; font-weight:700; color:{COLOR["stat_high"]};">{_score_display(avg_hr)}</div>'
+                    f'<div style="font-size:10px; color:{COLOR["gold"]}; text-transform:uppercase;">Avg HR Score</div></div>'
+                    f'<div><div style="font-family:\'JetBrains Mono\',monospace; font-size:22px; font-weight:700; color:{COLOR["warn"]};">{_score_display(avg_hit)}</div>'
+                    f'<div style="font-size:10px; color:{COLOR["gold"]}; text-transform:uppercase;">Avg Hit Score</div></div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+
+    # =======================================================
+    # VIEW: MATCHUP
+    # =======================================================
+    if view == "\U0001F3E0 Matchup":
+        st.markdown(
+            f'<div class="pf-card-title" style="margin-top:6px; color:{COLOR["gold"]};">Splits</div>'
+            f'<div class="pf-card-subtitle" style="color:{COLOR["magenta_purple"]};">Blue = favorable for batter, red = favorable for pitcher</div>',
+            unsafe_allow_html=True,
+        )
+        splits_overall = get_pitcher_advanced_splits(pitcher_id) if pitcher_id else None
+        rows = {"Overall": splits_overall, "vs RHB": splits_vs_r, "vs LHB": splits_vs_l}
+        rows = {k: v for k, v in rows.items() if v is not None}
+
+        if rows:
+            full_df = pd.DataFrame(rows).T
+            stats_cols = ["BA", "SLG", "ISO", "WHIP", "HR", "HR/9"]
+            strikes_cols = ["BB%", "Whiff%", "K%", "Putaway%", "SwStr%", "K/9", "1stPS%", "Meatball%"]
+            g1, g2 = st.columns(2)
+            with g1:
+                with card("stats_table"):
+                    st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">STATS</div>', unsafe_allow_html=True)
+                    st.dataframe(
+                        style_stat_table(full_df[stats_cols], favor_high=["BA", "SLG", "ISO", "HR", "HR/9"], favor_low=["WHIP"], gradient=True),
+                        width="stretch",
+                    )
+            with g2:
+                with card("strikes_table"):
+                    st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">STRIKES</div>', unsafe_allow_html=True)
+                    st.dataframe(
+                        style_stat_table(full_df[strikes_cols], favor_low=["BB%", "Whiff%", "K%", "Putaway%", "SwStr%", "K/9", "Meatball%"], favor_high=["1stPS%"], gradient=True),
+                        width="stretch",
+                    )
+            st.caption("Computed by this app directly from raw Statcast pitch data \u2014 see get_pitcher_advanced_splits() for exact definitions.")
+        else:
+            st.info("No split data available for this pitcher yet.")
+
+        # -------------------------------------------------
+        # DENSE LINEUP TABLE \u2014 percentiles, progress bars,
+        # matchup/edge tags, confidence \u2014 all from real data
+        # -------------------------------------------------
+        if arsenal:
+            with card("arsenal_pills"):
+                st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Pitcher\'s arsenal (overall usage)</div>', unsafe_allow_html=True)
+                badges_html = '<div style="display:flex; gap:8px; flex-wrap:wrap;">'
+                for pt, usage in sorted(arsenal.items(), key=lambda x: -x[1]):
+                    c = pitch_color(pt)
+                    badges_html += (
+                        f'<div style="padding:6px 14px; border-radius:6px; background:{c}22; '
+                        f'border:1px solid {c}66; color:{c}; font-weight:700; font-size:13px; '
+                        f'font-family:\'JetBrains Mono\',monospace;">{pitch_name(pt)} {usage:.0f}%</div>'
+                    )
+                badges_html += '</div>'
+                st.markdown(badges_html, unsafe_allow_html=True)
+
+        table_rows = []
+        with card("lineup"):
+            st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">{opposing_team} Lineup</div><div class="pf-card-subtitle" style="color:{COLOR["magenta_purple"]};">vs {selected_pitcher_name}</div>', unsafe_allow_html=True)
+
+            if not ranked:
+                st.info(f"No lineup data available for {opposing_team} right now.")
+            else:
+                filt_col, sort_col, window_col = st.columns([1, 1, 1])
+                with filt_col:
+                    bats_present = sorted(set(r["bats"] for r in ranked if r["bats"] in ("R", "L", "S")))
+                    bats_filter = st.segmented_control(
+                        "Bats", ["All"] + bats_present, default="All", key="lineup_bats_filter"
+                    )
+                with sort_col:
+                    sort_choice = st.selectbox(
+                        "Sort by", ["SLAM", "HR Score", "Hit Score", "Brl%", "HH%"], key="lineup_sort_by"
+                    )
+                with window_col:
+                    window_choice = st.selectbox(
+                        "Window", ["Season", "Last 60 BBE", "Last 25 BBE", "Last 15 BBE", "Last 5 BBE"], key="lineup_window"
+                    )
+                window_map = {"Season": "season", "Last 60 BBE": "l60", "Last 25 BBE": "l25", "Last 15 BBE": "l15", "Last 5 BBE": "l5"}
+                window_key = window_map[window_choice]
+
+                filtered = ranked if not bats_filter or bats_filter == "All" else [r for r in ranked if r["bats"] == bats_filter]
+
+                # Real windowed profile fetched ONCE per batter for the
+                # selected window — both SLAM and the raw stat columns
+                # (Brl%, HH%, etc.) below now come from this SAME real
+                # pull, so they always agree with each other and both
+                # genuinely respect the Window filter, not just SLAM.
+                windowed_profile_cache = {
+                    r["name"]: get_batter_profile_windowed(r.get("id"), window=window_key, unit="bbe")
+                    for r in filtered
+                }
+                slam_cache = {name: slam_from_profile(p) for name, p in windowed_profile_cache.items()}
+
+                sort_key_map = {
+                    "SLAM": lambda r: slam_cache[r["name"]]["slam_score"] or 0.0,
+                    "HR Score": lambda r: _score_num(r["hr_score"]),
+                    "Hit Score": lambda r: _score_num(r["hit_score"]),
+                    "Brl%": lambda r: windowed_profile_cache[r["name"]].get("Brl %", 0),
+                    "HH%": lambda r: windowed_profile_cache[r["name"]].get("HH %", 0),
+                }
+                filtered = sorted(filtered, key=sort_key_map[sort_choice], reverse=True)
+
+                if not filtered:
+                    st.info(f"No batters match that Bats filter for {opposing_team}.")
+
+                table_rows = []
+                for r in filtered:
+                    profile = windowed_profile_cache[r["name"]]
+                    slam_result = slam_cache[r["name"]]
+                    slam = slam_result["slam_score"] if slam_result["slam_score"] is not None else 0.0
+                    tier = matchup_tier(slam)
+                    conf_label, sample = confidence_tier(profile.get("BBE", 0))
+
+                    hr_s, hit_s, k_s = r["hr_score"], r["hit_score"], r["k_score"]
+
+                    if hr_s is None and hit_s is None and k_s is None:
+                        tag_label, tag_tier = "No League Data", "neutral"
+                    elif hr_s is not None and hr_s >= 20:
+                        tag_label, tag_tier = f"Strong HR Target +{hr_s-10}%", "strong"
+                    elif k_s is not None and k_s >= 70:
+                        tag_label, tag_tier = f"K Risk -{k_s-60}%", "risk"
+                    elif hit_s is not None and hit_s >= 60:
+                        tag_label, tag_tier = f"Good Hit Pick +{hit_s-50}%", "good"
+                    elif hr_s is not None and hit_s is not None and hr_s < 15 and hit_s < 30:
+                        tag_label, tag_tier = "Avoid", "risk"
+                    else:
+                        tag_label, tag_tier = "Neutral", "neutral"
+
+                    table_rows.append({
+                        "Player": r["name"],
+                        "Bats": r["bats"],
+                        "Matchup": tier,
+                        "SLAM": round(slam, 1),
+                        "Brl%": profile.get("Brl %", 0),
+                        "HH%": profile.get("HH %", 0),
+                        "LD%": profile.get("LD %", 0),
+                        "FB%": profile.get("FB %", 0),
+                        "GB%": profile.get("GB %", 0),
+                        "SweetSpot%": profile.get("SweetSpot %", 0),
+                        "PullAir%": profile.get("PullAir %", 0),
+                        "PullBrl%": profile.get("PullBrl %", 0),
+                        "Blast%": profile.get("Blast %", 0),
+                        "SwStr%": profile.get("SwStr %", 0),
+                        "HR Score": r["hr_score"],
+                        "Hit Score": r["hit_score"],
+                        "Edge": edge_tag(tag_label, tag_tier),
+                        "EdgeLabel": tag_label,
+                        "EdgeTier": tag_tier,
+                        "Confidence": f"{conf_label} \u2014 n={sample}",
+                    })
+
+                display_df = pd.DataFrame(table_rows) if table_rows else None
+                if display_df is not None:
+                    edge_col = display_df.pop("Edge")
+
+                    styled = style_stat_table(
+                        display_df.drop(columns=["Matchup", "Confidence", "EdgeLabel", "EdgeTier"]),
+                        favor_high=["SLAM", "Brl%", "HH%", "LD%", "FB%", "SweetSpot%", "PullAir%", "PullBrl%", "Blast%", "HR Score", "Hit Score"],
+                        favor_low=["GB%", "SwStr%"],
+                        gradient=True,
+                    )
+                    styled = styled.format({
+                        "SLAM": "{:.1f}", "Brl%": "{:.1f}", "HH%": "{:.1f}", "LD%": "{:.1f}",
+                        "FB%": "{:.1f}", "GB%": "{:.1f}", "SweetSpot%": "{:.1f}", "PullAir%": "{:.1f}",
+                        "PullBrl%": "{:.1f}", "Blast%": "{:.1f}", "SwStr%": "{:.1f}",
+                        "HR Score": "{:.0f}", "Hit Score": "{:.0f}",
+                    }, na_rep="N/A")
+                    st.dataframe(
+                        styled,
+                        width="stretch",
+                        column_config={
+                            "HR Score": st.column_config.ProgressColumn("HR Score", min_value=0, max_value=100, format="%d", color=COLOR["stat_high"]),
+                            "Hit Score": st.column_config.ProgressColumn("Hit Score", min_value=0, max_value=100, format="%d", color=COLOR["warn"]),
+                        },
+                    )
+                    if not league_data_available:
+                        st.caption("HR Score / Hit Score / K Score show N/A above because Baseball Savant's live percentile rankings aren't reachable right now (see warning above) \u2014 not because these players lack power or contact skill.")
+                    else:
+                        st.caption("HR Score / Hit Score are this app's own composite scores from real, live MLB percentile rankings (baseballsavant.mlb.com) \u2014 not calibrated predictive probabilities. See engines/top_plays.py for the exact formula.")
+
+        if table_rows:
+            top_3_pitches = [pt for pt, usage in sorted(arsenal.items(), key=lambda x: -x[1])[:3]] if arsenal else []
+            with card("vs_top_pitches"):
+                top_3_names = ", ".join(pitch_name(pt) for pt in top_3_pitches) if top_3_pitches else "unknown"
+                st.markdown(
+                    f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Vs {selected_pitcher_name}\'s Top 3 Pitches</div>'
+                    f'<div class="pf-card-subtitle">Real per-batter performance specifically against {top_3_names} \u2014 same {window_choice} window as the Lineup table above</div>',
+                    unsafe_allow_html=True,
+                )
+                if not top_3_pitches:
+                    st.info("No real pitch arsenal data available for this pitcher yet \u2014 nothing to honestly compare batters against.")
+                else:
+                    matchup_rows = []
+                    for r in filtered:
+                        vs_profile = get_batter_vs_pitch_types(r.get("id"), top_3_pitches, window=window_key, unit="bbe")
+                        pitches_seen = vs_profile.get("_pitches_seen", 0)
+                        matchup_rows.append({
+                            "Player": r["name"],
+                            "Bats": r["bats"],
+                            "Pitches Seen": pitches_seen,
+                            "Brl%": vs_profile.get("Brl %") if pitches_seen > 0 else None,
+                            "HH%": vs_profile.get("HH %") if pitches_seen > 0 else None,
+                            "Whiff%": vs_profile.get("Whiff %") if pitches_seen > 0 else None,
+                        })
+                    matchup_df = pd.DataFrame(matchup_rows)
+                    st.dataframe(
+                        style_stat_table(matchup_df, favor_high=["Brl%", "HH%"], favor_low=["Whiff%"], gradient=True),
+                        width="stretch",
+                    )
+                    st.caption(
+                        "\"Pitches Seen\" is the real sample size behind each row \u2014 a low number is a real, honest "
+                        "small sample, not a hidden flaw. Blank cells mean this batter hasn't faced any of these "
+                        "specific pitch types in the selected window yet."
+                    )
+
+        if table_rows:
+            with card("matchup_edges"):
+                st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Matchup Edges</div>', unsafe_allow_html=True)
+
+                tier_order = [
+                    ("strong", "Strong Targets"),
+                    ("good", "Good Picks"),
+                    ("neutral", "Neutral"),
+                    ("risk", "Risk / Avoid"),
+                ]
+                for tier_key, tier_label in tier_order:
+                    tier_rows = [r for r in table_rows if r["EdgeTier"] == tier_key]
+                    if not tier_rows:
+                        continue
+                    st.markdown(
+                        f'<div style="margin:10px 0 6px 0;">{edge_tag(f"{tier_label} ({len(tier_rows)})", tier_key)}</div>',
+                        unsafe_allow_html=True,
+                    )
+                    tier_df = pd.DataFrame([
+                        {"Player": r["Player"], "Bats": r["Bats"], "Detail": r["EdgeLabel"], "Confidence": r["Confidence"]}
+                        for r in tier_rows
+                    ])
+                    st.dataframe(plain_dark_table(tier_df), width="stretch", height=min(250, 40 + 35 * len(tier_rows)))
+
+        tab_arsenal, tab_scout = st.tabs(["Pitch Arsenal", "\U0001F52D Scout Report"])
+        with tab_arsenal:
+            with card("pitch_arsenal_tab"):
+                st.markdown(
+                    f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Pitch Arsenal</div>'
+                    f'<div class="pf-card-subtitle" style="color:{COLOR["magenta_purple"]};">What each pitch actually does, not just how often it\'s thrown</div>',
+                    unsafe_allow_html=True,
+                )
+                arsenal_detail = pitcher_data.get("Pitch Arsenal Detail", {}) if pitcher_data else {}
+                if not arsenal_detail:
+                    st.info("No pitch-level data available for this pitcher yet.")
+                else:
+                    sorted_pitches = sorted(arsenal_detail.items(), key=lambda x: -x[1]["usage"])
+                    for pt, d in sorted_pitches:
+                        c = pitch_color(pt)
+                        whiff_display = f"{d['whiff']:.1f}%" if d["whiff"] is not None else "N/A"
+                        hh_display = f"{d['hh_allowed']:.1f}%" if d["hh_allowed"] is not None else "N/A"
+                        st.markdown(
+                            f'<div style="margin-bottom:14px;">'
+                            f'<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;">'
+                            f'<span style="font-weight:700; color:{c}; font-size:14px;">{pitch_name(pt)}</span>'
+                            f'<span style="font-family:\'JetBrains Mono\',monospace; color:{COLOR["gold"]}; font-size:12px;">n={d["n"]}</span>'
+                            f'</div>'
+                            f'<div style="height:8px; width:100%; background:{COLOR["surface_raised"]}; border-radius:4px; margin-bottom:6px;">'
+                            f'<div style="height:8px; width:{min(d["usage"],100)}%; background:{c}; border-radius:4px;"></div>'
+                            f'</div>'
+                            f'<div style="display:flex; gap:18px; font-size:12px; font-family:\'JetBrains Mono\',monospace;">'
+                            f'<span style="color:{COLOR["gold"]};">Usage <b style="color:{COLOR["text"]};">{d["usage"]:.1f}%</b></span>'
+                            f'<span style="color:{COLOR["gold"]};">Whiff <b style="color:{COLOR["stat_high"] if (d["whiff"] or 0) >= 25 else COLOR["text"]};">{whiff_display}</b></span>'
+                            f'<span style="color:{COLOR["gold"]};">Hard-Hit Allowed <b style="color:{COLOR["error"] if (d["hh_allowed"] or 0) >= 40 else COLOR["text"]};">{hh_display}</b></span>'
+                            f'</div>'
+                            f'</div>',
+                            unsafe_allow_html=True,
+                        )
+                    st.caption("Whiff% / Hard-Hit% are real, computed per pitch type from this pitcher's own raw Statcast data \u2014 not league averages.")
+
+        with tab_scout:
+            st.markdown(
+                f'<div class="pf-card-title">Scout Report</div>'
+                f'<div class="pf-card-subtitle">Pull any team\'s roster \u2014 not just today\'s matchups. Get ahead of tomorrow\'s opponent before anyone else does.</div>',
+                unsafe_allow_html=True,
+            )
+            all_teams = get_all_teams()
+            if not all_teams:
+                st.warning("Couldn't load the team list from the MLB Stats API right now.")
+            else:
+                with card("scout_controls"):
+                    sel_col, refresh_col = st.columns([4, 1])
+                    with sel_col:
+                        lookup_team = st.selectbox("Team", all_teams, key="scout_team_lookup")
+                    with refresh_col:
+                        st.markdown('<div style="height:28px;"></div>', unsafe_allow_html=True)
+                        if st.button("\U0001F504 Refresh", key="scout_refresh", help="Forces a fresh pull instead of the cached roster (cached up to 30 min) \u2014 use this right before first pitch for the most current confirmed roster."):
+                            get_live_team_roster.clear()
+                            st.session_state["scout_fetch_time"] = datetime.now().strftime("%-I:%M:%S %p")
+                            st.rerun()
+
+                    if "scout_fetch_time" not in st.session_state:
+                        st.session_state["scout_fetch_time"] = datetime.now().strftime("%-I:%M:%S %p")
+
+                    st.caption(f"Roster as of {st.session_state['scout_fetch_time']} \u2014 auto-refreshes every 30 min, or hit Refresh for the latest right now.")
+
+                    lookup_roster = get_live_team_roster(lookup_team)
+                    if lookup_roster:
+                        pitchers = [p for p in lookup_roster if p.get("is_pitcher")]
+                        hitters = [p for p in lookup_roster if not p.get("is_pitcher")]
+
+                        st.markdown(
+                            badge(f"{len(lookup_roster)} Total", "neutral")
+                            + badge(f"{len(pitchers)} Pitchers", "accent")
+                            + badge(f"{len(hitters)} Position Players", "good"),
+                            unsafe_allow_html=True,
+                        )
+
+                if lookup_roster:
+                    with card("scout_position_players"):
+                        st.markdown('<div class="pf-card-title">Position Players</div>', unsafe_allow_html=True)
+                        if hitters:
+                            hitters_df = pd.DataFrame(hitters)[["name", "position", "bats", "throws"]]
+                            hitters_df.columns = ["Name", "Pos", "Bats", "Throws"]
+                            st.dataframe(plain_dark_table(hitters_df), width="stretch", height=min(370, 40 + 35 * len(hitters)))
+                        else:
+                            st.caption("No position players found.")
+
+                    with card("scout_pitchers"):
+                        st.markdown('<div class="pf-card-title">Pitchers</div>', unsafe_allow_html=True)
+                        if pitchers:
+                            pitchers_df = pd.DataFrame(pitchers)[["name", "position", "bats", "throws"]]
+                            pitchers_df.columns = ["Name", "Pos", "Bats", "Throws"]
+                            st.dataframe(plain_dark_table(pitchers_df), width="stretch", height=min(370, 40 + 35 * len(pitchers)))
+                        else:
+                            st.caption("No pitchers found.")
+                else:
+                    st.info(f"No roster data available for {lookup_team} right now.")
+
+        # -------------------------------------------------
+        # AI MATCHUP SUMMARY / KEY INSIGHTS / LEGEND
+        # (template-generated from real numbers, no live LLM call)
+        # -------------------------------------------------
+        s1, s2, s3 = st.columns(3)
+        with s1:
+            with card("matchup_summary"):
+                st.markdown(f'<div class="pf-card-title" style="color:{COLOR["magenta_purple"]};">Matchup Summary</div>', unsafe_allow_html=True)
+                top_arsenal = ", ".join(pitch_name(k) for k, v in sorted(arsenal.items(), key=lambda x: -x[1])[:2]) if arsenal else "an unclear arsenal"
+                top_hr_names = ", ".join(r["name"] for r in sorted(ranked, key=lambda x: _score_sort_key(x, "hr_score"))[:2]) if ranked else "the lineup"
+                st.markdown(
+                    f'<span style="color:{COLOR["gold"]};">'
+                    f"{selected_pitcher_name} relies heavily on {top_arsenal}. "
+                    f"{top_hr_names} rate highest on HR Score against this arsenal. "
+                    f"These are this app's own composite scores, not a certified prediction."
+                    f'</span>',
+                    unsafe_allow_html=True,
+                )
+        with s2:
+            with card("key_insights"):
+                st.markdown(f'<div class="pf-card-title" style="color:{COLOR["magenta_purple"]};">Key Insights</div>', unsafe_allow_html=True)
+                above_avg_hr = sum(1 for r in ranked if r["hr_score"] is not None and r["hr_score"] >= 60)
+                high_k_risk = sum(1 for r in ranked if r["k_score"] is not None and r["k_score"] >= 70)
+                st.markdown(f'<span style="color:{COLOR["gold"]};">\u2713 {above_avg_hr} batters with above-average HR Score</span>', unsafe_allow_html=True)
+                st.markdown(f'<span style="color:{COLOR["gold"]};">\u2713 {high_k_risk} batters carrying elevated strikeout risk</span>', unsafe_allow_html=True)
+                if park["verified"]:
+                    st.markdown(f'<span style="color:{COLOR["gold"]};">\u2713 {park["venue"]} park factor: {park["park_factor"]}</span>', unsafe_allow_html=True)
+        with s3:
+            with card("legend"):
+                st.markdown(f'<div class="pf-card-title" style="color:{COLOR["magenta_purple"]};">Legend</div>', unsafe_allow_html=True)
+                st.markdown(
+                    edge_tag("Strong Edge", "strong") + " " + edge_tag("Good Pick", "good") + "<br><br>"
+                    + edge_tag("Neutral", "neutral") + " " + edge_tag("Risk / Avoid", "risk"),
+                    unsafe_allow_html=True,
+                )
+
+    footer()

@@ -1,25 +1,27 @@
-from styles.kc_theme import inject_kc_theme
-inject_kc_theme()
-
 import streamlit as st
 import pandas as pd
 
+from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, footer
+from styles.table_style import plain_dark_table
+from auth import render_account_sidebar
 from engines.statcast_engine import (
     get_pitcher_id,
     get_pitcher_statcast,
     build_pitch_arsenal
 )
 
-st.set_page_config(layout="wide", page_title="Pitcher Splits Dashboard")
+inject_kc_theme()
+render_account_sidebar()
 
-st.title("🎯 Pitcher Split Dashboard")
-st.markdown("### Platoon Performance vs RHB / LHB")
-st.markdown("---")
+page_header("Pitcher Split Dashboard", "Platoon performance vs RHB / LHB")
 
 # --- INPUT ---
-pitcher_name = st.text_input("Enter Pitcher Name:", "Dean Kremer")
+st.markdown(card_open("Pitcher Lookup"), unsafe_allow_html=True)
+pitcher_name = st.text_input("Pitcher name", "Dean Kremer")
+load = st.button("Load Pitcher Splits", type="primary")
+st.markdown(card_close(), unsafe_allow_html=True)
 
-if st.button("Load Pitcher Splits"):
+if load:
     pid = get_pitcher_id(pitcher_name)
     if not pid:
         st.error("Pitcher not found.")
@@ -52,32 +54,30 @@ if st.button("Load Pitcher Splits"):
     c1, c2 = st.columns(2)
 
     with c1:
-        st.subheader("🔥 vs RHB")
+        st.markdown(card_open("vs RHB"), unsafe_allow_html=True)
         if split_R:
             st.metric("wOBA", split_R["wOBA"])
             st.metric("xSLG", split_R["xSLG"])
             st.metric("K%", f"{split_R['K%']}%")
             st.metric("BB%", f"{split_R['BB%']}%")
-            st.caption(f"Sample Size: {split_R['sample']} pitches")
+            st.caption(f"Sample size: {split_R['sample']} pitches")
         else:
             st.info("No RHB data available.")
+        st.markdown(card_close(), unsafe_allow_html=True)
 
     with c2:
-        st.subheader("🔥 vs LHB")
+        st.markdown(card_open("vs LHB"), unsafe_allow_html=True)
         if split_L:
             st.metric("wOBA", split_L["wOBA"])
             st.metric("xSLG", split_L["xSLG"])
             st.metric("K%", f"{split_L['K%']}%")
             st.metric("BB%", f"{split_L['BB%']}%")
-            st.caption(f"Sample Size: {split_L['sample']} pitches")
+            st.caption(f"Sample size: {split_L['sample']} pitches")
         else:
             st.info("No LHB data available.")
-
-    st.markdown("---")
+        st.markdown(card_close(), unsafe_allow_html=True)
 
     # --- PITCH MIX SPLITS ---
-    st.subheader("🎛 Pitch Usage vs RHB / LHB")
-
     def pitch_mix(df, side):
         sub = df[df["stand"] == side]
         if sub.empty:
@@ -98,9 +98,13 @@ if st.button("Load Pitcher Splits"):
     c3, c4 = st.columns(2)
 
     with c3:
-        st.markdown("#### ⚔️ Pitch Mix vs RHB")
-        st.dataframe(mix_R, use_container_width=True)
+        st.markdown(card_open("Pitch Mix vs RHB"), unsafe_allow_html=True)
+        st.dataframe(plain_dark_table(mix_R), width="stretch")
+        st.markdown(card_close(), unsafe_allow_html=True)
 
     with c4:
-        st.markdown("#### ⚔️ Pitch Mix vs LHB")
-        st.dataframe(mix_L, use_container_width=True)
+        st.markdown(card_open("Pitch Mix vs LHB"), unsafe_allow_html=True)
+        st.dataframe(plain_dark_table(mix_L), width="stretch")
+        st.markdown(card_close(), unsafe_allow_html=True)
+
+footer()

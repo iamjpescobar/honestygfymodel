@@ -88,3 +88,26 @@ def get_batter_profile(name: str, stats_df: pd.DataFrame, load_error: str = None
         "_error": f"FanGraphs: {fg_reason} | Statcast fallback: {sc_reason}"
     }
 
+
+def get_league_percentile(stats_df: pd.DataFrame, column: str, value: float) -> int:
+    """
+    Real percentile rank of `value` against the actual qualified-batter
+    league leaderboard already loaded in stats_df (FanGraphs, qual=10).
+    Returns None if the column isn't available or there's no data to
+    rank against \u2014 callers must handle that rather than assume a number.
+    This is a genuine league-wide percentile, not a percentile within
+    just today's lineup.
+    """
+    if stats_df is None or stats_df.empty or column not in stats_df.columns:
+        return None
+    series = pd.to_numeric(stats_df[column], errors="coerce").dropna()
+    if series.empty:
+        return None
+    # FanGraphs sometimes returns these as fractions (0.085) rather than
+    # whole percents (8.5) \u2014 normalize both sides the same way _pct() does
+    # elsewhere in this file so the comparison is apples-to-apples.
+    if series.median() <= 1.5:
+        series = series * 100
+    pct = (series < value).mean() * 100
+    return int(round(pct))
+

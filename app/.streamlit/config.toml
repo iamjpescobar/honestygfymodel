@@ -1,0 +1,26 @@
+# Streamlit's own theme config \u2014 separate from app/styles/kc_theme.py's
+# CSS injection. Some native widget internals (notably the dataframe
+# grid, which is canvas-rendered, not plain HTML/CSS) pull their base
+# colors from THIS file directly, bypassing our CSS entirely. Without
+# this file, Streamlit defaults to a light theme underneath everything
+# \u2014 which is exactly the kind of "light chrome that won't go away no
+# matter what CSS I write" leak this was built to eliminate.
+#
+# Values here are pulled directly from app/styles/kc_theme.py's COLOR
+# dict so the two stay in sync \u2014 if the palette changes there, update
+# this file to match.
+
+[theme]
+base = "dark"
+primaryColor = "#00E5FF"
+backgroundColor = "#0a0d10"
+secondaryBackgroundColor = "#12161a"
+textColor = "#e6edf0"
+font = "monospace"
+
+# Makes the dataframe's internal cell/row gridlines blend into the same
+# black background instead of drawing visible separator lines \u2014 this
+# is canvas-rendered chrome, same as backgroundColor above, so it can
+# only be controlled here, not via CSS.
+dataframeBorderColor = "#0a0d10"
+dataframeHeaderBackgroundColor = "#0a0d10"

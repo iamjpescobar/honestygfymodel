@@ -1,21 +1,26 @@
 import streamlit as st
 import pandas as pd
 
+from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, footer
+from styles.table_style import plain_dark_table
+from auth import render_account_sidebar
 from engines.statcast_engine import (
     get_pitcher_id,
     get_pitcher_statcast
 )
 
-st.set_page_config(layout="wide", page_title="Pitch Mix Splits")
+inject_kc_theme()
+render_account_sidebar()
 
-st.title("🎛 Pitch Mix vs RHB / LHB")
-st.markdown("### Side-by-side pitch usage comparison")
-st.markdown("---")
+page_header("Pitch Mix vs RHB / LHB", "Side-by-side pitch usage comparison")
 
 # --- INPUT ---
-pitcher_name = st.text_input("Enter Pitcher Name:", "Dean Kremer")
+st.markdown(card_open("Pitcher Lookup"), unsafe_allow_html=True)
+pitcher_name = st.text_input("Pitcher name", "Dean Kremer")
+load = st.button("Load Pitch Mix Splits", type="primary")
+st.markdown(card_close(), unsafe_allow_html=True)
 
-if st.button("Load Pitch Mix Splits"):
+if load:
     pid = get_pitcher_id(pitcher_name)
     if not pid:
         st.error("Pitcher not found.")
@@ -49,18 +54,16 @@ if st.button("Load Pitch Mix Splits"):
     c1, c2 = st.columns(2)
 
     with c1:
-        st.subheader("⚔️ Pitch Mix vs RHB")
-        st.dataframe(mix_R, use_container_width=True)
+        st.markdown(card_open("Pitch Mix vs RHB"), unsafe_allow_html=True)
+        st.dataframe(plain_dark_table(mix_R), width="stretch")
+        st.markdown(card_close(), unsafe_allow_html=True)
 
     with c2:
-        st.subheader("⚔️ Pitch Mix vs LHB")
-        st.dataframe(mix_L, use_container_width=True)
+        st.markdown(card_open("Pitch Mix vs LHB"), unsafe_allow_html=True)
+        st.dataframe(plain_dark_table(mix_L), width="stretch")
+        st.markdown(card_close(), unsafe_allow_html=True)
 
-    st.markdown("---")
-
-    # --- OPTIONAL: Arsenal Bias Summary ---
-    st.subheader("🎯 Arsenal Bias Summary")
-
+    # --- ARSENAL BIAS SUMMARY ---
     def bias_summary(mix_R, mix_L):
         if mix_R.empty or mix_L.empty:
             return pd.DataFrame()
@@ -70,4 +73,8 @@ if st.button("Load Pitch Mix Splits"):
         return merged.sort_values("Bias", ascending=False)
 
     bias_df = bias_summary(mix_R, mix_L)
-    st.dataframe(bias_df, use_container_width=True)
+    st.markdown(card_open("Arsenal Bias Summary", "Positive bias = used more against RHB"), unsafe_allow_html=True)
+    st.dataframe(plain_dark_table(bias_df), width="stretch")
+    st.markdown(card_close(), unsafe_allow_html=True)
+
+footer()

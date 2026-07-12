@@ -1,0 +1,39 @@
+# -----------------------------------------------------------------------
+# AUTH CONFIG TEMPLATE — copy this file to auth_config.yaml and edit it.
+# auth_config.yaml is in .gitignore on purpose: real subscriber credentials
+# should never be committed to git, even to a private repo.
+#
+# HOW TO ADD A REAL USER:
+#   1. Run:  python app/utils/hash_password.py "TheirChosenPassword"
+#   2. Copy the printed hash into a new entry below under usernames.
+#   3. Never store the plaintext password anywhere once it's hashed.
+#
+# roles: "admin" unlocks internal/debug tooling. "subscriber" is a paying
+# customer. Add more roles later (e.g. "trial") if you want tiered access.
+#
+# ON RENDER: don't ship auth_config.yaml in the repo at all. Use Render's
+# "Secret Files" feature to mount this file directly onto the server's
+# persistent disk at deploy time, at the path app/auth_config.yaml — that
+# way credentials never touch git or your public repo history.
+# -----------------------------------------------------------------------
+
+credentials:
+  usernames:
+    admin:
+      email: admin@loscappers.com
+      name: Admin
+      # DEMO password: ChangeMe_Admin123!  — rotate before going live
+      password: $2b$12$ilnZ53Hx1xLS22zqAB59COB5CdTgUvO7VuJ6kgaj4V3wCt8uRkJjS
+      role: admin
+    demo_subscriber:
+      email: demo@loscappers.com
+      name: Demo Subscriber
+      # DEMO password: ChangeMe_Sub123!  — rotate before going live
+      password: $2b$12$a6gMDsG/qUgl4HXhqKYz/ePWprvVbvmXm4p3QQlnu18SRdxc6umTC
+      role: subscriber
+
+cookie:
+  name: los_cappers_auth
+  # Generate your own with: python -c "import secrets; print(secrets.token_hex(32))"
+  key: 9cb3cbd572d47d5eb57c138d2c34156a557762a4f0c66d0faf2bdd57f4e62e15
+  expiry_days: 7

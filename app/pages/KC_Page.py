@@ -1,85 +1,29 @@
 import streamlit as st
 import pandas as pd
 
-from engines.roster import get_team_roster
+from engines.roster import get_all_teams, get_live_team_roster
 from engines.statcast_engine import get_batter_statcast, get_pitcher_statcast
-from engines.slam_engine import build_slam_score
+from engines.slam_engine import compute_slam_window
 from engines.danger_zone import build_danger_zone
 from engines.pitcher_danger_zone import build_pitcher_danger_zone
-from engines.matchup_engine import get_matchup_rank
+from engines.matchup_engine import compute_matchup_multiplier
 from engines.bvp_engine import get_bvp_history
-from engines.pitch_affinity_engine import build_pitch_affinity
+from engines.pitch_affinity_engine import compute_pitch_affinity_multiplier
 
-
-# ============================
-# KC THEME
-# ============================
-
-def kc_header(title, subtitle=""):
-    st.markdown(
-        f"""
-        <div style="
-            background: linear-gradient(90deg, #0a1a2f 0%, #1b2b4f 50%, #7d3cff 100%);
-            padding: 18px 24px;
-            border-radius: 12px;
-            box-shadow: 0 0 18px rgba(125,60,255,0.6);
-            color: white;
-            margin-bottom: 12px;
-        ">
-            <h2 style="margin:0;">{title}</h2>
-            <p style="margin:4px 0 0 0; color:#cfd8dc;">{subtitle}</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def kc_card(content_html):
-    st.markdown(
-        f"""
-        <div style="
-            background-color:#0a1a2f;
-            padding:18px;
-            border-radius:12px;
-            box-shadow:0px 0px 14px #7d3cff;
-            color:white;
-            font-size:16px;
-            margin-bottom:12px;
-        ">
-            {content_html}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def kc_section(title, subtitle=""):
-    st.markdown(
-        f"""
-        <div style="
-            margin-top:18px;
-            background-color:#0a1a2f;
-            padding:14px;
-            border-radius:10px;
-            color:white;
-        ">
-            <b style="color:#7d3cff;">{title}</b><br>
-            <span style="color:#cfd8dc;">{subtitle}</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
+from styles.kc_theme import inject_kc_theme, page_header, badge, card_open, card_close, footer
+from styles.table_style import style_stat_table, plain_dark_table
+from auth import render_account_sidebar
 
 # ============================
-# PAGE CONFIG
+# THEME
 # ============================
 
-st.set_page_config(page_title="KC Lineup Dashboard", layout="wide")
+inject_kc_theme()
+render_account_sidebar()
 
-kc_header(
+page_header(
     "KC Lineup Dashboard",
-    "SLAM • Danger Zone • Matchup • BvP • Pitch Affinity • Whiff%"
+    "SLAM \u2022 Danger Zone \u2022 Matchup \u2022 BvP \u2022 Pitch Affinity \u2022 Whiff%"
 )
 
 # ============================
@@ -87,23 +31,31 @@ kc_header(
 # ============================
 
 with st.sidebar:
-    kc_card("<b>Select Team & Pitcher</b><br><span style='color:#cfd8dc;'>Drives the whole dashboard.</span>")
+    st.header("Team & Pitcher")
+    st.caption("Drives the whole dashboard.")
 
-    teams = ["KC", "PHI", "NYY", "LAD", "ATL", "HOU", "BAL", "TEX"]
-    team = st.selectbox("Team", teams, index=0)
+    teams = get_all_teams()
+    if not teams:
+        st.warning("Couldn't load the team list from the MLB Stats API right now.")
+        st.stop()
 
-    roster_df = get_team_roster(team)
-    pitchers_df = roster_df[roster_df["Role"] == "P"]
-    pitcher_name = st.selectbox("Pitcher", pitchers_df["Name"].tolist())
+    team = st.selectbox("Team", teams)
+
+    roster = get_live_team_roster(team)
+    pitchers = [p for p in roster if p.get("is_pitcher")]
+    if not pitchers:
+        st.warning(f"No pitchers found for {team} right now.")
+        st.stop()
+
+    pitcher_name = st.selectbox("Pitcher", [p["name"] for p in pitchers])
 
 
 # ============================
 # PITCHER PROFILE
 # ============================
 
-pitcher_row = roster_df[roster_df["Name"] == pitcher_name].iloc[0]
-pitcher_id = pitcher_row.get("MLBAM_ID", 0)
-pitcher_team = pitcher_row.get("Team", team)
+pitcher_row = next(p for p in pitchers if p["name"] == pitcher_name)
+pitcher_id = pitcher_row.get("id")
 
 pitcher_profile = get_pitcher_statcast(pitcher_id)
 pitcher_grid = build_pitcher_danger_zone(pitcher_profile)
@@ -115,52 +67,65 @@ pitcher_grid = build_pitcher_danger_zone(pitcher_profile)
 col1, col2 = st.columns([1, 1])
 
 with col1:
-    kc_card(
-        f"""
-        <b style="font-size:20px;">{pitcher_name}</b><br>
-        <span style="color:#cfd8dc;">{pitcher_team}</span><br><br>
-
-        <b style="color:#ffcc00;">Vulnerability Profile</b><br>
-        • HR/BBE: {pitcher_profile.get("HR/BBE", 0)}<br>
-        • HH %: {pitcher_profile.get("HH %", 0)}<br>
-        • LD %: {pitcher_profile.get("LD %", 0)}<br>
-        • Brl %: {pitcher_profile.get("Brl %", 0)}<br>
-        • ZoneContact %: {pitcher_profile.get("ZoneContact %", 0)}<br>
-        • Whiff %: {pitcher_profile.get("Whiff %", 0)}<br><br>
-
-        <b style="color:#7d3cff;">Pitch Arsenal</b><br>
-        {"<br>".join([f"• {k}: {v}%" for k, v in pitcher_profile.get("Pitch Arsenal", {}).items()])}
-        """
+    st.markdown(card_open(pitcher_name, team), unsafe_allow_html=True)
+    st.markdown(
+        badge(f"HR/BBE {pitcher_profile.get('HR/BBE', 0)}", "neutral")
+        + badge(f"HH% {pitcher_profile.get('HH %', 0)}", "neutral")
+        + badge(f"LD% {pitcher_profile.get('LD %', 0)}", "neutral")
+        + badge(f"Brl% {pitcher_profile.get('Brl %', 0)}", "neutral")
+        + badge(f"ZoneContact% {pitcher_profile.get('ZoneContact %', 0)}", "neutral")
+        + badge(f"Whiff% {pitcher_profile.get('Whiff %', 0)}", "neutral"),
+        unsafe_allow_html=True,
     )
+    st.markdown("**Pitch Arsenal**")
+    arsenal = pitcher_profile.get("Pitch Arsenal", {})
+    if arsenal:
+        st.markdown(
+            "".join(badge(f"{k} {v}%", "accent") for k, v in arsenal.items()),
+            unsafe_allow_html=True,
+        )
+    else:
+        st.caption("No arsenal data available.")
+    st.markdown(card_close(), unsafe_allow_html=True)
 
 with col2:
-    kc_section("Pitcher Danger Zone Grid", "High / Mid / Low vs Inside / Middle / Outside")
-    st.dataframe(
-        pitcher_grid.style.background_gradient(cmap="inferno"),
-        use_container_width=True,
-    )
+    st.markdown(card_open("Pitcher Danger Zone Grid", "High / Mid / Low vs Inside / Middle / Outside"), unsafe_allow_html=True)
+    styled_pitcher_grid = style_stat_table(pitcher_grid, favor_high=list(pitcher_grid.columns))
+    st.dataframe(styled_pitcher_grid, width="stretch")
+    st.markdown(card_close(), unsafe_allow_html=True)
 
 # ============================
 # FULL LINEUP TABLE
 # ============================
 
-kc_section("Full Lineup vs Selected Pitcher", "SLAM • Danger Zone • Matchup • BvP • Statcast • Whiff%")
+st.markdown(card_open("Full Lineup vs Selected Pitcher", "SLAM \u2022 Danger Zone \u2022 Matchup \u2022 BvP \u2022 Statcast \u2022 Whiff%"), unsafe_allow_html=True)
 
-batters_df = roster_df[roster_df["Role"] != "P"].copy()
+batters_roster = [p for p in roster if not p.get("is_pitcher")]
+
+if not batters_roster:
+    st.info(f"No position players found for {team} right now.")
+    st.stop()
 
 lineup_rows = []
 
-for _, row in batters_df.iterrows():
-    batter_name = row["Name"]
-    batter_id = row["MLBAM_ID"]
-    batter_pos = row.get("Pos", "")
+for row in batters_roster:
+    batter_name = row["name"]
+    batter_id = row.get("id")
+    batter_pos = row.get("position", "")
 
-    batter_profile = get_batter_statcast(batter_id)
+    batter_profile = get_batter_statcast(batter_id) if batter_id else {}
 
-    dz_score, dz_tag = build_danger_zone(batter_profile)
-    slam_score, slam_tag = build_slam_score(batter_profile, pitcher_profile)
-    matchup_rank, matchup_color = get_matchup_rank(batter_profile, pitcher_profile)
-    bvp_history = get_bvp_history(batter_id, pitcher_id)
+    required_keys = {"PullAir %", "LD %", "GB %", "Brl %", "HH %"}
+    if required_keys.issubset(batter_profile.keys()):
+        dz_grid = build_danger_zone(batter_profile)
+        dz_score = round(float(dz_grid.values.mean()), 2)  # single-number summary of the 3x3 grid
+    else:
+        dz_score = 0.0
+
+    slam_result = compute_slam_window(batter_id, "season", "bbe")
+    slam_score = slam_result["slam_score"] if slam_result["slam_score"] is not None else 0.0
+    matchup_mult, matchup_tag = compute_matchup_multiplier(batter_profile, pitcher_profile)
+    bvp_history = get_bvp_history(pitcher_name, batter_name)
 
     lineup_rows.append(
         {
@@ -168,77 +133,68 @@ for _, row in batters_df.iterrows():
             "Pos": batter_pos,
             "SLAM": slam_score,
             "DangerZone": dz_score,
-            "Matchup": matchup_rank,
+            "Matchup": matchup_mult,
             "Brl%": batter_profile.get("Brl %", 0),
             "HH%": batter_profile.get("HH %", 0),
             "PullAir%": batter_profile.get("PullAir %", 0),
             "LD%": batter_profile.get("LD %", 0),
             "Whiff%": batter_profile.get("Whiff %", 0),
-            "BvP": bvp_history,
+            "BvP PA": len(bvp_history) if bvp_history is not None else 0,
         }
     )
 
 lineup_df = pd.DataFrame(lineup_rows)
 
-
-def style_lineup(df):
-    return df.style.background_gradient(subset=["SLAM"], cmap="PuBu") \
-                     .background_gradient(subset=["DangerZone"], cmap="YlOrBr")
-
-
-st.dataframe(style_lineup(lineup_df), use_container_width=True, height=400)
+styled_lineup = style_stat_table(lineup_df, favor_high=["SLAM", "DangerZone", "Matchup"])
+st.dataframe(styled_lineup, width="stretch", height=400)
+st.markdown(card_close(), unsafe_allow_html=True)
 
 # ============================
 # MATCHUP BARS
 # ============================
 
-kc_section("Matchup Strength Bars", "Visual SLAM + Danger Zone comparison")
-
+st.markdown(card_open("Matchup Strength Bars", "Visual SLAM + Danger Zone comparison"), unsafe_allow_html=True)
 bars_df = lineup_df[["Name", "SLAM", "DangerZone"]].set_index("Name")
-st.bar_chart(bars_df)
+st.bar_chart(bars_df, color=["#00E5FF", "#0E7C86"])
+st.markdown(card_close(), unsafe_allow_html=True)
 
 # ============================
 # FOCUS BATTER DETAIL
 # ============================
 
-kc_section("Focus Batter Detail", "SLAM Gauge • Danger Zone • Whiff% • Pitch Affinity")
-
+st.markdown(card_open("Focus Batter Detail", "SLAM \u2022 Danger Zone \u2022 Whiff% \u2022 Pitch Affinity"), unsafe_allow_html=True)
 focus_batter = st.selectbox("Focus Batter", lineup_df["Name"].tolist())
+st.markdown(card_close(), unsafe_allow_html=True)
 
 focus_row = lineup_df[lineup_df["Name"] == focus_batter].iloc[0]
-focus_batter_id = batters_df[batters_df["Name"] == focus_batter]["MLBAM_ID"].iloc[0]
-focus_profile = get_batter_statcast(focus_batter_id)
+focus_batter_id = next((r["id"] for r in batters_roster if r["name"] == focus_batter), None)
+focus_profile = get_batter_statcast(focus_batter_id) if focus_batter_id else {}
 
-affinity = build_pitch_affinity(focus_profile, pitcher_profile)
-affinity_df = pd.DataFrame(
-    [{"Pitch": k, "Affinity": v} for k, v in affinity.items()]
-).set_index("Pitch")
+pitcher_arsenal = pitcher_profile.get("Pitch Arsenal", {})
+affinity_mult = compute_pitch_affinity_multiplier(focus_profile, pitcher_arsenal)
 
 colA, colB = st.columns([1, 1])
 
 with colA:
-    kc_card(
-        f"""
-        <b style="font-size:20px;">{focus_batter}</b><br>
-        <span style="color:#cfd8dc;">vs {pitcher_name}</span><br><br>
-
-        <b style="color:#7d3cff;">SLAM Gauge</b><br>
-        """
-    )
+    st.markdown(card_open(focus_batter, f"vs {pitcher_name}"), unsafe_allow_html=True)
+    st.markdown('<div class="pf-metric-label">SLAM Score</div>', unsafe_allow_html=True)
     st.progress(min(max(focus_row["SLAM"] / 100.0, 0.0), 1.0))
-
-    kc_card(
-        f"""
-        <b style="color:#ffcc00;">Danger Zone Score</b><br>
-        {focus_row["DangerZone"]}<br><br>
-        <b style="color:#ffcc00;">Whiff %</b><br>
-        {focus_profile.get("Whiff %", 0)}
-        """
+    st.markdown(
+        f'<div class="pf-metric-value">{focus_row["DangerZone"]}</div>'
+        f'<div class="pf-metric-label">Danger Zone Score</div>',
+        unsafe_allow_html=True,
     )
+    st.markdown(
+        f'<div class="pf-metric-value">{focus_profile.get("Whiff %", 0)}</div>'
+        f'<div class="pf-metric-label">Whiff %</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(card_close(), unsafe_allow_html=True)
 
 with colB:
-    kc_section("Pitch Affinity vs Arsenal", "Higher = better matchup vs that pitch type")
-    st.bar_chart(affinity_df)
+    st.markdown(card_open("Pitch Affinity vs Arsenal", "Single composite multiplier \u2014 this app doesn't have a per-pitch-type affinity breakdown implemented"), unsafe_allow_html=True)
+    st.markdown(badge(f"Affinity Multiplier {affinity_mult:.2f}", "accent"), unsafe_allow_html=True)
+    st.markdown(card_close(), unsafe_allow_html=True)
 
 # ============================
 # DEBUG
@@ -247,3 +203,5 @@ with colB:
 with st.expander("Debug Info"):
     st.write("Pitcher Profile:", pitcher_profile)
     st.write("Lineup DataFrame:", lineup_df)
+
+footer()
