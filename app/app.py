@@ -31,6 +31,7 @@ pages = {
     "": [
         st.Page("pages/GameCard.py", title="Game Card", icon=":material/stadium:", default=True),
     ],
+
     "Legacy Tools": [
         st.Page("pages/Model.py", title="Model", icon=":material/monitoring:"),
         st.Page("pages/1_Pitcher_Report.py", title="Pitcher Report", icon=":material/sports_baseball:"),
@@ -39,6 +40,21 @@ pages = {
         st.Page("pages/2_Lineup_Analysis.py", title="Lineup Analysis", icon=":material/groups:"),
         st.Page("pages/3_Team_Tools.py", title="Team Tools", icon=":material/handyman:"),
         st.Page("pages/KC_Page.py", title="KC Lineup Dashboard", icon=":material/dashboard:"),
+    ],
+
+    # -----------------------------
+    # NEW MULTI-SPORT SECTIONS
+    # -----------------------------
+    "NFL": [
+        st.Page("pages/NFL.py", title="NFL Analytics", icon=":material/sports_football:")
+    ],
+
+    "NBA": [
+        st.Page("pages/NBA.py", title="NBA Analytics", icon=":material/sports_basketball:")
+    ],
+
+    "NHL": [
+        st.Page("pages/NHL.py", title="NHL Analytics", icon=":material/sports_hockey:")
     ],
 }
 
