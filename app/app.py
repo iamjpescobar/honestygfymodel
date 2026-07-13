@@ -12,7 +12,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from styles.kc_theme import inject_kc_theme
+from styles.kc_theme import inject_kc_theme, sport_switcher
 from auth import require_login, is_admin
 
 st.set_page_config(
@@ -25,11 +25,16 @@ inject_kc_theme()
 require_login()  # blocks with a themed login screen until authenticated
 
 # -------------------------
-# Sport selection — driven by the clickable sport_switcher strip that
-# pages render in place (see styles/kc_theme.py). Clicking a tab there
-# sets this session key and reruns; no separate header radio needed.
+# Sport selection — the clickable sport_switcher strip renders here at
+# app level, above navigation, so it exists on EVERY page and can never
+# be hidden by a page that stops early (e.g. Game Card on an off-day).
+# Clicking a tab sets st.session_state["lc_sport"] and reruns.
 # -------------------------
 selected_sport = st.session_state.get("lc_sport", "MLB")
+
+_, _strip_col = st.columns([7, 3])
+with _strip_col:
+    sport_switcher(active=selected_sport)
 
 # -------------------------
 # MLB navigation (the live product)
