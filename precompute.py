@@ -103,13 +103,18 @@ def save_player_files(season_df: pd.DataFrame) -> dict:
         ascending=[False, False, False],
     )
 
-    for kind, id_col in (("batters", "batter"), ("pitchers", "pitcher")):
+    # Each player's file keeps the OPPONENT's id column ("pitcher" in a
+    # batter's file, "batter" in a pitcher's file) — that single column is
+    # what makes real BvP history computable straight from these files.
+    for kind, id_col, keep_opp in (("batters", "batter", "pitcher"),
+                                    ("pitchers", "pitcher", "batter")):
         out_dir = DATA_DIR / kind
         out_dir.mkdir(parents=True, exist_ok=True)
         for pid, group in season_df.groupby(id_col):
             if pd.isna(pid):
                 continue
-            g = group.drop(columns=[c for c in ID_COLS if c in group.columns]).copy()
+            drop_cols = [c for c in ID_COLS if c in group.columns and c != keep_opp]
+            g = group.drop(columns=drop_cols).copy()
             for c in CATEGORY_COLS:
                 if c in g.columns:
                     g[c] = g[c].astype("category")
@@ -120,6 +125,26 @@ def save_player_files(season_df: pd.DataFrame) -> dict:
     return counts
 
 
+def fetch_fangraphs() -> bool:
+    """Fetches the real FanGraphs batting leaderboard (same call the app
+    makes) from GitHub's servers — which FanGraphs does not block, unlike
+    cloud hosts like Render — and ships it with the data package so the
+    app can read it locally in production. Returns True on success."""
+    try:
+        from pybaseball import batting_stats
+        fg = batting_stats(2026, qual=10)
+        if fg is None or fg.empty:
+            print("  FanGraphs returned no data — app will use its live/Statcast fallback.")
+            return False
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        fg.to_parquet(DATA_DIR / "fangraphs_batting.parquet", index=False)
+        print(f"  FanGraphs leaderboard saved: {len(fg):,} qualified batters")
+        return True
+    except Exception as exc:
+        print(f"  FanGraphs fetch failed ({exc}) — app will use its live/Statcast fallback.")
+        return False
+
+
 def main():
     print("Fetching real Statcast data (bulk, weekly chunks)...")
     season_df = fetch_season()
@@ -127,6 +152,9 @@ def main():
 
     print("Splitting per player...")
     counts = save_player_files(season_df)
+
+    print("Fetching FanGraphs leaderboard...")
+    fangraphs_ok = fetch_fangraphs()
 
     manifest = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -136,6 +164,7 @@ def main():
         "n_batters": counts["batters"],
         "n_pitchers": counts["pitchers"],
         "source": "Baseball Savant via pybaseball bulk statcast()",
+        "fangraphs_included": fangraphs_ok,
     }
     (DATA_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2))
     print("Manifest:", json.dumps(manifest, indent=2))

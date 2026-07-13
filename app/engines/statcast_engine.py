@@ -44,6 +44,8 @@ _KEEP_COLS = [
     "estimated_slg_using_speedangle", "estimated_woba_using_speedangle",
     # count / location
     "balls", "strikes", "plate_x", "plate_z",
+    # opponent ids (BvP support — "pitcher" in a batter's data and vice versa)
+    "batter", "pitcher",
 ]
 
 # Repeated-string columns that are safe to store as category

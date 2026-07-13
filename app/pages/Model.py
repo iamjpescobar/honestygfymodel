@@ -28,18 +28,8 @@ from styles.kc_theme import (
 from styles.table_style import style_stat_table, plain_dark_table
 from auth import render_account_sidebar
 
-import os as _os
-import psutil as _psutil
-
-def _log_mem(label: str):
-    """Prints current process memory to the server log so a crash's last
-    line names the step that was running. Temporary diagnostics."""
-    mb = _psutil.Process(_os.getpid()).memory_info().rss / 1024**2
-    print(f"[MEM][Model] {label}: {mb:.0f} MB", flush=True)
-
 inject_kc_theme()
 render_account_sidebar()
-_log_mem("page start")
 
 # ---------------------------------------------------------
 # CACHED WRAPPERS
@@ -54,8 +44,9 @@ def cached_batting_stats():
 
 
 @st.cache_data(ttl=3600, max_entries=24, show_spinner=False)
-def cached_bvp(pitcher_name, batter_name):
-    return get_bvp_history(pitcher_name, batter_name)
+def cached_bvp(pitcher_name, batter_name, pitcher_id, batter_id):
+    return get_bvp_history(pitcher_name, batter_name,
+                           pitcher_id=pitcher_id, batter_id=batter_id)
 
 
 # ---------------------------------------------------------
@@ -96,7 +87,6 @@ selected_batter_id = next((p["id"] for p in batters if p["name"] == selected_bat
 stats_df, stats_load_error = cached_batting_stats()
 batter_profile = get_batter_profile(selected_batter, stats_df, stats_load_error,
                                     batter_id=selected_batter_id)
-_log_mem("batter profile built")
 
 if batter_profile.get("_error"):
     status_banner(
@@ -121,7 +111,6 @@ pitcher_id = pitcher_row.get("id") if pitcher_row else None
 
 pitcher_data = get_pitcher_statcast(pitcher_id)
 pitcher_arsenal = build_pitch_arsenal(pitcher_data)
-_log_mem("pitcher statcast + arsenal built")
 
 if pitcher_data.get("_error"):
     status_banner(
@@ -153,7 +142,6 @@ data_timestamp()
 st.markdown(card_open("Batter Danger Zone Grid", "Green = higher damage potential for the batter"), unsafe_allow_html=True)
 danger_grid = build_danger_zone(batter_profile)
 styled_danger = style_stat_table(danger_grid, favor_high=list(danger_grid.columns))
-_log_mem("batter danger grid styled")
 st.dataframe(styled_danger, width='stretch')
 st.markdown(card_close(), unsafe_allow_html=True)
 
@@ -163,7 +151,6 @@ st.markdown(card_close(), unsafe_allow_html=True)
 st.markdown(card_open("Pitcher Danger Zone Grid", "Green = higher vulnerability (favorable for the batter)"), unsafe_allow_html=True)
 pitcher_grid = build_pitcher_danger_zone(pitcher_profile)
 styled_pitcher_grid = style_stat_table(pitcher_grid, favor_high=list(pitcher_grid.columns))
-_log_mem("pitcher danger grid styled")
 st.dataframe(styled_pitcher_grid, width='stretch')
 st.markdown(card_close(), unsafe_allow_html=True)
 
@@ -191,8 +178,9 @@ st.markdown(card_close(), unsafe_allow_html=True)
 # BVP ENGINE
 # ---------------------------------------------------------
 st.markdown(card_open("BVP History"), unsafe_allow_html=True)
-bvp_history = cached_bvp(selected_pitcher, selected_batter)
-_log_mem("bvp loaded")
+bvp_history = cached_bvp(selected_pitcher, selected_batter, pitcher_id, selected_batter_id)
+if bvp_history.empty:
+    st.caption("No 2026 head-to-head meetings between these two on record.")
 st.dataframe(plain_dark_table(bvp_history), width='stretch')
 st.markdown(card_close(), unsafe_allow_html=True)
 
@@ -200,7 +188,6 @@ st.markdown(card_close(), unsafe_allow_html=True)
 # SLAM ENGINE
 # ---------------------------------------------------------
 slam_result = compute_slam_window(selected_batter_id, "season", "bbe")
-_log_mem("slam computed")
 slam_score = slam_result["slam_score"] if slam_result["slam_score"] is not None else 0.0
 st.markdown(card_open("SLAM Engine"), unsafe_allow_html=True)
 st.markdown(
@@ -216,7 +203,6 @@ affinity_mult = compute_pitch_affinity_multiplier(
     batter_profile,
     pitcher_arsenal
 )
-_log_mem("affinity computed")
 st.markdown(card_open("Pitch Affinity"), unsafe_allow_html=True)
 st.markdown(badge(f"Affinity Multiplier {affinity_mult:.2f}", "accent"), unsafe_allow_html=True)
 st.markdown(card_close(), unsafe_allow_html=True)
@@ -228,5 +214,4 @@ st.markdown(card_open("Pitcher Statcast Arsenal"), unsafe_allow_html=True)
 st.dataframe(plain_dark_table(pitcher_arsenal), width='stretch')
 st.markdown(card_close(), unsafe_allow_html=True)
 
-_log_mem("page complete")
 footer()

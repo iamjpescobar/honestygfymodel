@@ -10,12 +10,32 @@ import numpy as np
 from pybaseball import batting_stats
 
 
+from pathlib import Path
+
+_FG_LOCAL = Path(__file__).resolve().parent.parent / "data" / "statcast" / "fangraphs_batting.parquet"
+
+
 @st.cache_data(ttl=7200)
 def load_batting_stats():
     """
-    Loads real MLB batting stats from pybaseball (FanGraphs leaderboard).
-    Returns (df, error_message). error_message is None on success.
+    Loads real MLB batting stats (FanGraphs leaderboard).
+    Reads the copy shipped by the nightly pipeline first — FanGraphs
+    blocks requests from cloud hosts like Render, but not from the
+    GitHub Action that fetches it — and only tries a live pull if no
+    local copy exists. Returns (df, error_message); error is None on
+    success.
     """
+    if _FG_LOCAL.exists():
+        try:
+            df = pd.read_parquet(_FG_LOCAL)
+            df["Name_Clean"] = (
+                df["Name"]
+                .str.lower()
+                .str.replace("[.,']", "", regex=True)
+            )
+            return df, None
+        except Exception:
+            pass  # fall through to the live pull
     try:
         df = batting_stats(2026, qual=10)
         df["Name_Clean"] = (

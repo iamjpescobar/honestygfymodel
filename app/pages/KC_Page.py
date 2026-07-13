@@ -125,7 +125,8 @@ for row in batters_roster:
     slam_result = compute_slam_window(batter_id, "season", "bbe")
     slam_score = slam_result["slam_score"] if slam_result["slam_score"] is not None else 0.0
     matchup_mult, matchup_tag = compute_matchup_multiplier(batter_profile, pitcher_profile)
-    bvp_history = get_bvp_history(pitcher_name, batter_name)
+    bvp_history = get_bvp_history(pitcher_name, batter_name,
+                                   pitcher_id=pitcher_id, batter_id=batter_id)
 
     lineup_rows.append(
         {
@@ -139,7 +140,7 @@ for row in batters_roster:
             "PullAir%": batter_profile.get("PullAir %", 0),
             "LD%": batter_profile.get("LD %", 0),
             "Whiff%": batter_profile.get("Whiff %", 0),
-            "BvP PA": len(bvp_history) if bvp_history is not None else 0,
+            "BvP PA": int(bvp_history["Plate Appearances"].iloc[0]) if bvp_history is not None and not bvp_history.empty else 0,
         }
     )
 
