@@ -64,6 +64,7 @@ if is_admin():
 # -------------------------
 SPORT_PAGES = {
     "KBO": "pages/KBO.py",
+    "NPB": "pages/NPB.py",
     "NFL": "pages/NFL.py",
     "NBA": "pages/NBA.py",
     "NHL": "pages/NHL.py",

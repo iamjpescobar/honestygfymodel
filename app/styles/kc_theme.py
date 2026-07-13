@@ -581,7 +581,7 @@ def sport_switcher(active: str = "MLB"):
     """
     import streamlit as st
 
-    sports = ["MLB", "KBO", "NBA", "NHL", "NFL"]
+    sports = ["MLB", "KBO", "NPB", "NBA", "NHL", "NFL"]
     st.session_state.setdefault("lc_sport", "MLB")
 
     choice = st.segmented_control(
