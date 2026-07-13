@@ -1,24 +1,29 @@
 name: International Source Probe
 
 on:
-  workflow_dispatch: {}   # run manually from the Actions tab — no schedule, no deploys
+  workflow_dispatch: {}
 
 jobs:
   probe:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install requests
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
 
-      - name: Probe KBO + NPB sources
+      - name: Run international source probe
         run: python intl_probe.py
 
       - name: Sample chosen sources (structure recon)
+        if: ${{ false }}
         run: python intl_sample.py
