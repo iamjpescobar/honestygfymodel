@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+EASTERN = ZoneInfo("America/New_York")
 
 from styles.kc_theme import (
     inject_kc_theme, badge, card, footer, COLOR,
@@ -32,7 +35,7 @@ if games_error:
     st.stop()
 
 if not games:
-    st.info("No games found for today. MLB may not have posted today's slate yet, or it's an off-day.")
+    st.info("No MLB games on today's schedule \u2014 likely an off-day or the All-Star break. The slate returns here automatically on the next game day.")
     st.stop()
 
 # ---------------------------------------------------------
@@ -196,7 +199,7 @@ with content_col:
     # BREADCRUMB
     # -----------------------------------------------------
     try:
-        game_time_str = datetime.fromisoformat(game["game_time"].replace("Z", "+00:00")).strftime("%-I:%M %p") if game.get("game_time") else "TBD"
+        game_time_str = datetime.fromisoformat(game["game_time"].replace("Z", "+00:00")).astimezone(EASTERN).strftime("%-I:%M %p ET") if game.get("game_time") else "TBD"
     except Exception:
         game_time_str = "TBD"
     st.markdown(
@@ -282,8 +285,12 @@ with content_col:
     selected_pitcher_name = game["away_pitcher"] if pitcher_choice.startswith(game["away_pitcher"]) else game["home_pitcher"]
     opposing_team = game["home"] if pitcher_choice.startswith(game["away_pitcher"]) else game["away"]
 
+    # The pitcher's real MLBAM id comes from MLB's schedule feed. If MLB
+    # hasn't posted a probable pitcher yet, we show the honest warning
+    # below instead of falling back to a name lookup (which downloaded
+    # pybaseball's entire player register into memory).
     real_pitcher_id = game["away_pitcher_id"] if pitcher_choice.startswith(game["away_pitcher"]) else game["home_pitcher_id"]
-    pitcher_id = real_pitcher_id or get_pitcher_id(selected_pitcher_name)
+    pitcher_id = real_pitcher_id
     pitcher_data = get_pitcher_statcast(pitcher_id) if pitcher_id else {}
 
     if pitcher_id is None:
@@ -730,11 +737,11 @@ with content_col:
                         st.markdown('<div style="height:28px;"></div>', unsafe_allow_html=True)
                         if st.button("\U0001F504 Refresh", key="scout_refresh", help="Forces a fresh pull instead of the cached roster (cached up to 30 min) \u2014 use this right before first pitch for the most current confirmed roster."):
                             get_live_team_roster.clear()
-                            st.session_state["scout_fetch_time"] = datetime.now().strftime("%-I:%M:%S %p")
+                            st.session_state["scout_fetch_time"] = datetime.now(EASTERN).strftime("%-I:%M:%S %p ET")
                             st.rerun()
 
                     if "scout_fetch_time" not in st.session_state:
-                        st.session_state["scout_fetch_time"] = datetime.now().strftime("%-I:%M:%S %p")
+                        st.session_state["scout_fetch_time"] = datetime.now(EASTERN).strftime("%-I:%M:%S %p ET")
 
                     st.caption(f"Roster as of {st.session_state['scout_fetch_time']} \u2014 auto-refreshes every 30 min, or hit Refresh for the latest right now.")
 
