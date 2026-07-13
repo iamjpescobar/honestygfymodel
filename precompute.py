@@ -1,232 +1,179 @@
-#!/usr/bin/env python3
 """
-kbo_precompute.py
+Nightly Statcast precompute for Los Cappers.
 
-Fetches the KBO schedule page from koreabaseball.com and produces
-data/kbo/games.json with the exact shape the app expects.
+Pulls REAL pitch-level Statcast data for the whole season to date —
+the exact same Baseball Savant source the app uses live — in one bulk
+league-wide pass, splits it per player, trims it to the exact columns
+the app's engine uses, and packages everything as parquet files plus
+a manifest recording precisely when the data was fetched.
 
-Rules enforced:
-- No invented values: unknown fields are null or "TBD"
-- Fail loud and empty: on any parse error produce an empty "games" list
-- Times are interpreted as KST (Asia/Seoul) and converted to ET for time_et
-- Uses a browser UA and short timeouts suitable for CI
-- Minimal dependencies: requests + lxml (add lxml to requirements if needed)
+No estimates, no filler: every row is a real recorded pitch. A player
+with no data simply gets no file, and the app falls back to a live
+pull for them.
+
+Run by GitHub Actions nightly (see .github/workflows/nightly-data.yml).
+Can also be run locally: python precompute.py
 """
 
-from __future__ import annotations
 import json
-import os
-import re
 import sys
-from datetime import datetime, time
-from zoneinfo import ZoneInfo
+import tarfile
+import time
+from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 
-import requests
+import pandas as pd
+from pybaseball import statcast
 
-# User agent tuned for Actions
-UA = {
-    "User-Agent": (
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/126.0.0.0 Safari/537.36"
-    ),
-    "Accept-Language": "en-US,en;q=0.9,ko;q=0.8",
-}
+# Must match DEFAULT_START_DATE in app/engines/statcast_engine.py so the
+# precomputed data covers the identical range as a live pull would.
+SEASON_START = date(2026, 3, 1)
 
-SCHEDULE_URL = "https://www.koreabaseball.com/Schedule/Schedule.aspx"
-OUT_DIR = "data/kbo"
-OUT_FILE = os.path.join(OUT_DIR, "games.json")
+# ------------------------------------------------------------
+# Column set — keep in sync with _KEEP_COLS in
+# app/engines/statcast_engine.py. ID_COLS are needed here only to
+# split the bulk data per player and are dropped before saving.
+# ------------------------------------------------------------
+ENGINE_COLS = [
+    "game_date", "game_pk", "at_bat_number", "pitch_number",
+    "type", "events", "description", "zone",
+    "pitch_type", "stand",
+    "bb_type", "launch_speed", "launch_angle", "launch_speed_angle",
+    "hc_x", "hc_y",
+    "bat_speed", "release_speed",
+    "estimated_slg_using_speedangle", "estimated_woba_using_speedangle",
+    "balls", "strikes", "plate_x", "plate_z",
+]
+ID_COLS = ["batter", "pitcher"]
+CATEGORY_COLS = ["type", "events", "description", "bb_type", "stand"]
+
+OUT_ROOT = Path("build_data")
+DATA_DIR = OUT_ROOT / "data" / "statcast"
+ARCHIVE = Path("statcast_data.tar.gz")
 
 
-def safe_mkdir(path: str) -> None:
+def week_ranges(start: date, end: date):
+    cur = start
+    while cur <= end:
+        stop = min(cur + timedelta(days=6), end)
+        yield cur, stop
+        cur = stop + timedelta(days=1)
+
+
+def fetch_season() -> pd.DataFrame:
+    """Bulk-pulls the whole league's real pitch data in weekly chunks,
+    trimming each chunk immediately to keep memory in check."""
+    today = date.today()
+    chunks = []
+    for start, stop in week_ranges(SEASON_START, today):
+        s, e = start.strftime("%Y-%m-%d"), stop.strftime("%Y-%m-%d")
+        df = None
+        for attempt in (1, 2):
+            try:
+                df = statcast(start_dt=s, end_dt=e)
+                break
+            except Exception as exc:
+                print(f"  chunk {s}..{e} attempt {attempt} failed: {exc}")
+                time.sleep(15)
+        if df is None or df.empty:
+            print(f"  chunk {s}..{e}: no data")
+            continue
+
+        keep = [c for c in ENGINE_COLS + ID_COLS if c in df.columns]
+        df = df[keep].copy()
+        for c in df.select_dtypes(include="float64").columns:
+            df[c] = df[c].astype("float32")
+        chunks.append(df)
+        print(f"  chunk {s}..{e}: {len(df):,} pitches")
+
+    if not chunks:
+        raise SystemExit("No Statcast data fetched — aborting without writing anything.")
+    return pd.concat(chunks, ignore_index=True)
+
+
+def save_player_files(season_df: pd.DataFrame) -> dict:
+    """Splits the bulk data per batter and per pitcher, matching exactly
+    what statcast_batter()/statcast_pitcher() would return for each
+    player (their rows from the same dataset), most-recent-first."""
+    counts = {"batters": 0, "pitchers": 0}
+
+    # Most-recent-first, matching Baseball Savant's ordering convention.
+    season_df = season_df.sort_values(
+        ["game_date", "at_bat_number", "pitch_number"],
+        ascending=[False, False, False],
+    )
+
+    # Each player's file keeps the OPPONENT's id column ("pitcher" in a
+    # batter's file, "batter" in a pitcher's file) — that single column is
+    # what makes real BvP history computable straight from these files.
+    for kind, id_col, keep_opp in (("batters", "batter", "pitcher"),
+                                    ("pitchers", "pitcher", "batter")):
+        out_dir = DATA_DIR / kind
+        out_dir.mkdir(parents=True, exist_ok=True)
+        for pid, group in season_df.groupby(id_col):
+            if pd.isna(pid):
+                continue
+            drop_cols = [c for c in ID_COLS if c in group.columns and c != keep_opp]
+            g = group.drop(columns=drop_cols).copy()
+            for c in CATEGORY_COLS:
+                if c in g.columns:
+                    g[c] = g[c].astype("category")
+            g.to_parquet(out_dir / f"{int(pid)}.parquet", index=False)
+            counts[kind] += 1
+        print(f"  wrote {counts[kind]:,} {kind} files")
+
+    return counts
+
+
+def fetch_fangraphs() -> bool:
+    """Fetches the real FanGraphs batting leaderboard (same call the app
+    makes) from GitHub's servers — which FanGraphs does not block, unlike
+    cloud hosts like Render — and ships it with the data package so the
+    app can read it locally in production. Returns True on success."""
     try:
-        os.makedirs(path, exist_ok=True)
-    except Exception:
-        # If we can't create the directory, we'll still attempt to print the result
-        pass
-
-
-def write_output(games: list[dict]) -> None:
-    now_kst = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M")
-    payload = {"generated_at_kst": now_kst, "games": games}
-    safe_mkdir(OUT_DIR)
-    try:
-        with open(OUT_FILE, "w", encoding="utf-8") as fh:
-            json.dump(payload, fh, ensure_ascii=False, indent=2)
-        print(f"WROTE {OUT_FILE} ({len(games)} games)")
+        from pybaseball import batting_stats
+        fg = batting_stats(2026, qual=10)
+        if fg is None or fg.empty:
+            print("  FanGraphs returned no data — app will use its live/Statcast fallback.")
+            return False
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        fg.to_parquet(DATA_DIR / "fangraphs_batting.parquet", index=False)
+        print(f"  FanGraphs leaderboard saved: {len(fg):,} qualified batters")
+        return True
     except Exception as exc:
-        # If writing fails, print payload to logs so Actions preserves evidence
-        print(f"ERROR writing {OUT_FILE}: {exc}")
-        print(json.dumps(payload, ensure_ascii=False))
+        print(f"  FanGraphs fetch failed ({exc}) — app will use its live/Statcast fallback.")
+        return False
 
 
-def parse_time_kst_to_et(time_str: str) -> tuple[str | None, str | None]:
-    """
-    Given a time string (e.g., "18:30", "18:30(연장)" or "18:30 KST"), parse it as KST
-    and return (time_kst_formatted, time_et_formatted). If parsing fails, return (None, None).
-    """
-    if not time_str:
-        return None, None
-    # Extract HH:MM
-    m = re.search(r"(\d{1,2}[:.]\d{2})", time_str)
-    if not m:
-        return None, None
-    hhmm = m.group(1).replace(".", ":")
-    try:
-        kst = ZoneInfo("Asia/Seoul")
-        et = ZoneInfo("America/New_York")
-        today_kst = datetime.now(kst).date()
-        hh, mm = map(int, hhmm.split(":"))
-        dt_kst = datetime.combine(today_kst, time(hh, mm), tzinfo=kst)
-        dt_et = dt_kst.astimezone(et)
-        return dt_kst.strftime("%H:%M"), dt_et.strftime("%-I:%M %p")
-    except Exception:
-        return None, None
+def main():
+    print("Fetching real Statcast data (bulk, weekly chunks)...")
+    season_df = fetch_season()
+    print(f"Total pitches fetched: {len(season_df):,}")
 
+    print("Splitting per player...")
+    counts = save_player_files(season_df)
 
-def try_extract_with_lxml(body: str) -> list[dict]:
-    """
-    Attempt a best-effort parse using lxml. We try multiple heuristics:
-    1) Look for tables with schedule-like headers
-    2) Fallback: find rows with 3+ <td> and map columns heuristically
-    This function never raises; on failure it returns [].
-    """
-    try:
-        from lxml import html
-    except Exception as exc:
-        print(f"[WARN] lxml not available: {exc} — parser will not run")
-        return []
+    print("Fetching FanGraphs leaderboard...")
+    fangraphs_ok = fetch_fangraphs()
 
-    try:
-        doc = html.fromstring(body)
-    except Exception as exc:
-        print(f"[WARN] lxml failed to parse HTML: {exc}")
-        return []
+    manifest = {
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "season_start": SEASON_START.isoformat(),
+        "through_date": date.today().isoformat(),
+        "total_pitches": int(len(season_df)),
+        "n_batters": counts["batters"],
+        "n_pitchers": counts["pitchers"],
+        "source": "Baseball Savant via pybaseball bulk statcast()",
+        "fangraphs_included": fangraphs_ok,
+    }
+    (DATA_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2))
+    print("Manifest:", json.dumps(manifest, indent=2))
 
-    games: list[dict] = []
-
-    # Heuristic 1: find tables that look like schedules
-    tables = doc.findall(".//table")
-    for tbl in tables:
-        headers = [h.text_content().strip().lower() for h in tbl.findall(".//th")]
-        header_text = " ".join(headers)
-        if any(k in header_text for k in ("시간", "구장", "팀", "팀명", "경기")) or "schedule" in header_text:
-            # iterate rows
-            for tr in tbl.findall(".//tr"):
-                tds = tr.findall(".//td")
-                if len(tds) < 3:
-                    continue
-                # Heuristic mapping: many KBO tables are [date/time, away, home, stadium, ...]
-                texts = [td.text_content().strip() for td in tds]
-                # Normalize empty strings to None
-                texts = [t if t else None for t in texts]
-                # Try to find time-like cell
-                time_cell = None
-                stadium = None
-                away = None
-                home = None
-                # find first time-like token
-                for t in texts:
-                    if t and re.search(r"\d{1,2}[:.]\d{2}", t):
-                        time_cell = t
-                        break
-                # find team-like tokens: often two adjacent cells with vs or '-' between
-                # fallback: pick the first two non-time, non-stadium short tokens
-                candidates = [t for t in texts if t and t != time_cell]
-                if len(candidates) >= 2:
-                    # crude guess: last candidate might be stadium if it contains '구장' or 'stadium'
-                    for c in candidates[::-1]:
-                        if c and ("구장" in c or "stadium" in c or len(c) > 10 and any(ch.isalpha() for ch in c)):
-                            stadium = c
-                            break
-                    # pick two short tokens for teams
-                    short_tokens = [c for c in candidates if c and len(c) <= 20]
-                    if len(short_tokens) >= 2:
-                        away = short_tokens[0]
-                        home = short_tokens[1]
-                    else:
-                        # fallback: use first two candidates
-                        away = candidates[0] if candidates else None
-                        home = candidates[1] if len(candidates) > 1 else None
-
-                time_kst, time_et = (None, None)
-                if time_cell:
-                    time_kst, time_et = parse_time_kst_to_et(time_cell)
-
-                game = {
-                    "away": away or None,
-                    "home": home or None,
-                    "stadium": stadium or None,
-                    "time_kst": time_kst or None,
-                    "time_et": time_et or None,
-                    "away_starter": None,
-                    "home_starter": None,
-                }
-                # Only add if we have at least one team name
-                if game["away"] or game["home"]:
-                    games.append(game)
-
-            if games:
-                return games
-
-    # Heuristic 2: look for list items or divs that contain "vs" or "VS"
-    text_nodes = doc.findall(".//text()")
-    # skip: lxml text() returns strings; we won't iterate that heavy path here
-    # fallback: return empty
-    return []
-
-
-def fetch_and_parse(url: str) -> list[dict]:
-    try:
-        r = requests.get(url, headers=UA, timeout=(10, 20))
-    except Exception as exc:
-        print(f"[ERR] network fetch failed: {exc}")
-        return []
-
-    if r.status_code != 200:
-        print(f"[ERR] HTTP {r.status_code} fetching {url}")
-        return []
-
-    body = r.text or ""
-    # Quick sanity check for markers we expect
-    if not any(m in body for m in ("KBO", "경기", "일정", "Schedule")):
-        print("[WARN] expected markers not found in page body; parser may fail")
-    games = try_extract_with_lxml(body)
-    return games
-
-
-def main() -> int:
-    print("kbo_precompute: fetching schedule from koreabaseball.com")
-    games = []
-    try:
-        games = fetch_and_parse(SCHEDULE_URL)
-    except Exception as exc:
-        print(f"[ERR] unexpected error during fetch/parse: {exc}")
-
-    # If parser produced nothing, fail loud and produce an empty games list (no fake data)
-    if not games:
-        print("No games parsed or parse failed — producing empty games list (fail loud, empty).")
-        write_output([])
-        return 0
-
-    # Final normalization: ensure exact shape and nulls where missing
-    normalized = []
-    for g in games:
-        normalized.append(
-            {
-                "away": g.get("away") or None,
-                "home": g.get("home") or None,
-                "stadium": g.get("stadium") or None,
-                "time_kst": g.get("time_kst") or None,
-                "time_et": g.get("time_et") or None,
-                "away_starter": g.get("away_starter") or None,
-                "home_starter": g.get("home_starter") or None,
-            }
-        )
-
-    write_output(normalized)
-    return 0
+    print("Packaging archive...")
+    with tarfile.open(ARCHIVE, "w:gz") as tar:
+        tar.add(OUT_ROOT / "data", arcname="data")
+    print(f"Wrote {ARCHIVE} ({ARCHIVE.stat().st_size / 1024**2:.1f} MB)")
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    sys.exit(main())
