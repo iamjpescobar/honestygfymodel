@@ -25,23 +25,11 @@ inject_kc_theme()
 require_login()  # blocks with a themed login screen until authenticated
 
 # -------------------------
-# Header: top-right sport tabs
+# Sport selection — driven by the clickable sport_switcher strip that
+# pages render in place (see styles/kc_theme.py). Clicking a tab there
+# sets this session key and reruns; no separate header radio needed.
 # -------------------------
-def _render_sport_tabs():
-    """Renders the sport tab bar in the header, returns the selected sport."""
-    left, right = st.columns([6, 2])
-    with right:
-        return st.radio(
-            "Sport",
-            options=["MLB", "NFL", "NBA", "NHL"],
-            index=0,
-            horizontal=True,
-            label_visibility="collapsed",
-            key="lc_sport_tab",
-        )
-
-
-selected_sport = _render_sport_tabs()
+selected_sport = st.session_state.get("lc_sport", "MLB")
 
 # -------------------------
 # MLB navigation (the live product)
