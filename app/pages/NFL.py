@@ -1,73 +1,54 @@
 import streamlit as st
 
-from styles.kc_theme import inject_kc_theme
-from auth import require_login
+from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, badge, footer, COLOR
+from auth import render_account_sidebar
 
-# Page meta
-st.set_page_config(page_title="NFL Analytics", page_icon="🏈", layout="wide")
+# NOTE: no st.set_page_config here — app.py already sets it once for the
+# whole app, and these pages render inside that same run.
 
-# Theme + auth
 inject_kc_theme()
-require_login()
+render_account_sidebar()
 
-# Page header
-st.title("NFL Analytics")
-st.markdown("Comprehensive NFL matchup, player, and betting insights — NFL engine coming soon.")
+page_header("NFL Analytics", "In development — built on real data or not at all", eyebrow="COMING SOON")
 
-# Layout: left selectors, main content, right insights
-left_col, main_col, right_col = st.columns([1, 3, 1])
+st.markdown(card_open("🏈 NFL is on the roadmap"), unsafe_allow_html=True)
+st.markdown(
+    f'<div style="color:{COLOR["gold"]}; font-size:14px; line-height:1.7;">'
+    f'NFL tools are being built on the same standard as the MLB engine: every number '
+    f'traced to a real, verifiable source — no placeholders, no estimates, no filler. '
+    f'Nothing ships on this page until its data engine is real.'
+    f'</div>',
+    unsafe_allow_html=True,
+)
+st.markdown(card_close(), unsafe_allow_html=True)
 
-with left_col:
-    st.subheader("Select Game")
-    # TODO: Replace with your real game picker widget / data source
-    game_date = st.date_input("Game date")
-    home_team = st.selectbox("Home team", ["PIT", "GB", "NE", "DAL"], index=0)
-    away_team = st.selectbox("Away team", ["NYG", "CHI", "MIA", "KC"], index=1)
+st.markdown(card_open("What\'s planned"), unsafe_allow_html=True)
+st.markdown(
+    f'<div style="margin-bottom:12px;">'
+    f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:13.5px;">Game Cards</div>'
+    f'<div style="color:{COLOR["gold"]}; font-size:12.5px;">Weekly matchup pages — offense vs defense profiles, pace, and weather</div>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
+st.markdown(
+    f'<div style="margin-bottom:12px;">'
+    f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:13.5px;">QB & Matchup Reports</div>'
+    f'<div style="color:{COLOR["gold"]}; font-size:12.5px;">Passing profiles against coverage tendencies</div>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
+st.markdown(
+    f'<div style="margin-bottom:12px;">'
+    f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:13.5px;">Totals & Spread Models</div>'
+    f'<div style="color:{COLOR["gold"]}; font-size:12.5px;">Game-level leans built on real play-by-play data</div>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
+st.markdown(card_close(), unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.subheader("Select Player")
-    # TODO: Replace with dynamic roster loader
-    team_side = st.radio("Side", ["Home", "Away"])
-    player = st.selectbox("Player", ["Player A", "Player B", "Player C"])
+st.markdown(
+    badge("MLB — live now", "good") + badge("NFL — in development", "neutral"),
+    unsafe_allow_html=True,
+)
 
-    st.markdown("---")
-    st.subheader("Filters")
-    st.checkbox("Show advanced metrics", value=True)
-    st.checkbox("Include weather adjustments", value=False)
-
-with main_col:
-    st.header("Matchup Card")
-    st.info("This area mirrors the MLB Game Card layout. Replace placeholders with NFL engine outputs.")
-    # Top summary
-    st.markdown("**Game:** {} @ {} — {}".format(away_team, home_team, game_date))
-    st.markdown("**Selected player:** {} ({})".format(player, team_side))
-
-    # Two-column matchup details
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.subheader("Team Overview")
-        st.write("Offense/Defense ratings, pace, situational splits.")
-        st.table({"Metric": ["Off Rating", "Def Rating"], "Value": [None, None]})
-    with col_b:
-        st.subheader("Player Overview")
-        st.write("QB/RB/WR advanced metrics, snap share, target share.")
-        st.table({"Metric": ["EPA/play", "Success Rate"], "Value": [None, None]})
-
-    st.markdown("---")
-    st.subheader("Matchup Visuals")
-    st.write("Placeholder for matchup charts (routes vs coverage, pass rush vs OL).")
-    # TODO: Insert charts and visual components used by MLB GameCard
-
-with right_col:
-    st.subheader("Betting Insights")
-    st.metric("Implied Win %", "—")
-    st.metric("Edge (EV)", "—")
-    st.markdown("**Lines**")
-    st.write("Open: —  |  Close: —")
-    st.markdown("---")
-    st.subheader("Quick Notes")
-    st.write("- Weather: TBD\n- Injuries: TBD\n- Line movement: TBD")
-
-# Footer / debug
-st.markdown("---")
-st.caption("NFL page scaffolded to match MLB Game Card structure. TODO: hook NFL data engines.")
+footer()
