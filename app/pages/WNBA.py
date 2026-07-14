@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pandas as pd
+
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, badge, footer, COLOR
@@ -99,5 +101,31 @@ else:
                         f'<div style="font-size:10.5px; color:{COLOR["gold"]}; opacity:0.8; '
                         f'margin-top:2px;">{caption}</div></div>', unsafe_allow_html=True)
         st.markdown(card_close(), unsafe_allow_html=True)
+
+        if g.get("away_players") or g.get("home_players"):
+            with st.expander(f'\U0001F3C0 Player research \u2014 {g.get("away","")} @ {g.get("home","")}'):
+                st.caption(
+                    "Real box-score data: season averages plus last-5 / last-10 form, "
+                    "computed from every game each player has actually played. "
+                    "GP = games played; small GP means a small sample \u2014 that\'s an "
+                    "honest flag, not a hidden flaw."
+                )
+                for side in ("away", "home"):
+                    plist = g.get(f"{side}_players")
+                    if not plist:
+                        continue
+                    st.markdown(
+                        f'<div style="font-weight:700; color:{COLOR["text"]}; '
+                        f'font-size:13px; margin:6px 0 2px 0;">{g.get(side, "")}</div>',
+                        unsafe_allow_html=True,
+                    )
+                    df = pd.DataFrame(plist).rename(columns={
+                        "name": "Player", "pos": "Pos", "gp": "GP", "min": "MIN",
+                        "ppg": "PPG", "rpg": "RPG", "apg": "APG",
+                        "l5_ppg": "L5 PPG", "l10_ppg": "L10 PPG",
+                        "l5_rpg": "L5 RPG", "l5_apg": "L5 APG",
+                    })
+                    st.dataframe(df, width="stretch", hide_index=True,
+                                 height=40 + 36 * len(df))
 
 footer()
