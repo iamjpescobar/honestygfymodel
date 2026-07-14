@@ -26,6 +26,9 @@ jobs:
       - name: Fetch NPB slate (real npb.jp data)
         run: python npb_precompute.py || echo "NPB fetch failed - continuing without it"
 
+      - name: Fetch KBO slate (real MyKBOStats data)
+        run: python kbo_precompute.py || echo "KBO fetch failed - continuing without it"
+
       - name: Fetch and package real Statcast data
         run: python precompute.py
 
