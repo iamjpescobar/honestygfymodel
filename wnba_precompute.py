@@ -1,20 +1,21 @@
 """
-WNBA slate + full player research data — real data from ESPN's public
-WNBA API (scoreboard verified open from GitHub Actions; the summary
-endpoint is the same public API surface).
+WNBA slate + full matchup research data — real data from ESPN's public
+WNBA API (scoreboard + game box scores, both verified from Actions).
 
-Three jobs:
-1. Today's ET slate: teams, arena, tip time, status, records, stat
-   leaders, and the betting line where ESPN carries one.
-2. Season crawl: every final since opening day -> every game's real
-   box score -> per-player game logs (MIN/PTS/REB/AST per game).
-3. Player research: per player, season averages AND last-5 / last-10
-   form computed from those logs -- attached to today's matchups so
-   each game card carries both rosters' real prop-relevant numbers.
+What this produces, all computed from real games:
+- Today's ET slate: teams (with their real brand colors), arena, tip
+  time, status, records, leaders, and the betting line where present.
+- Team research per side: points for/against per game, last-10 record,
+  and average total points in their games (the totals read).
+- TEAM H2H: the season series between tonight's two teams — record,
+  every meeting's score, and the average total in those meetings.
+- PLAYER research: per player, season + L5/L10 MIN/PTS/REB/AST from
+  real box-score logs — plus PLAYER H2H: her averages specifically in
+  games against tonight's opponent, with the meeting count shown.
 
-Every value is read from ESPN's feeds or is arithmetic on them.
-Anything absent is omitted -- never estimated. A player's L5 is the
-mean of her last five REAL box-score lines, nothing else.
+Every number is read from the feed or is arithmetic on it. Absent
+data is omitted, never estimated. Small samples are shipped with
+their sample size so the reader can judge them honestly.
 """
 
 import json
@@ -26,7 +27,7 @@ from zoneinfo import ZoneInfo
 import requests
 
 EASTERN = ZoneInfo("America/New_York")
-SEASON_START = date(2026, 4, 3)   # from the feed's own season.startDate
+SEASON_START = date(2026, 4, 3)
 BASE = "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba"
 
 UA = {
@@ -89,7 +90,6 @@ def _leaders(competitor):
 
 
 def parse_scoreboard_events(payload):
-    """Yields (event_id, date_str, status, game_dict) for each event."""
     for event in payload.get("events", []) or []:
         comps = event.get("competitions") or []
         if not comps:
@@ -108,6 +108,8 @@ def parse_scoreboard_events(payload):
         g = {
             "away": (away.get("team") or {}).get("displayName", "TBD"),
             "home": (home.get("team") or {}).get("displayName", "TBD"),
+            "away_color": (away.get("team") or {}).get("color"),
+            "home_color": (home.get("team") or {}).get("color"),
             "arena": (comp.get("venue") or {}).get("fullName", ""),
             "time_et": _to_et(comp.get("date", "")),
             "status": status,
@@ -123,9 +125,10 @@ def parse_scoreboard_events(payload):
 
         if completed or status == "in progress":
             try:
+                a_s, h_s = int(float(away.get("score", 0))), int(float(home.get("score", 0)))
+                g["away_score"], g["home_score"] = a_s, h_s
                 g["final" if completed else "score"] = (
-                    f'{g["away"]} {int(float(away.get("score", 0)))} - '
-                    f'{int(float(home.get("score", 0)))} {g["home"]}')
+                    f'{g["away"]} {a_s} - {h_s} {g["home"]}')
             except (TypeError, ValueError):
                 pass
 
@@ -151,12 +154,12 @@ def _num(s):
 
 
 def parse_boxscore(event_id, game_date, logs, debug=False):
-    """Reads one game's real box score into per-player logs.
-    Label-driven: stat positions are looked up from the feed's own
-    labels list, never assumed."""
     data = get_json(f"{BASE}/summary?event={event_id}")
-    for team_block in (data.get("boxscore") or {}).get("players", []) or []:
-        team_name = (team_block.get("team") or {}).get("displayName", "")
+    blocks = (data.get("boxscore") or {}).get("players", []) or []
+    names = [(b.get("team") or {}).get("displayName", "") for b in blocks]
+    for i, team_block in enumerate(blocks):
+        team_name = names[i]
+        opp_name = names[1 - i] if len(names) == 2 else ""
         for stat_group in team_block.get("statistics", []) or []:
             labels = [l.upper() for l in (stat_group.get("labels") or stat_group.get("names") or [])]
             if "PTS" not in labels:
@@ -171,9 +174,9 @@ def parse_boxscore(event_id, game_date, logs, debug=False):
                 stats = entry.get("stats") or []
                 if not athlete.get("id") or len(stats) <= max(idx.values(), default=0):
                     continue
-                line = {"date": game_date, "team": team_name}
-                for k, i in idx.items():
-                    line[k.lower()] = _num(stats[i])
+                line = {"date": game_date, "team": team_name, "opp": opp_name}
+                for k, i2 in idx.items():
+                    line[k.lower()] = _num(stats[i2])
                 if line.get("min") in (None, 0):
                     continue
                 rec = logs.setdefault(str(athlete["id"]), {
@@ -191,8 +194,54 @@ def _avg(vals):
     return round(sum(vals) / len(vals), 1) if vals else None
 
 
+def team_research(finals):
+    """Per-team: PF/PA per game, last-10 record, avg total — arithmetic
+    on real final scores."""
+    per = {}
+    for g in sorted(finals, key=lambda x: x["date"]):
+        for side, opp in (("home", "away"), ("away", "home")):
+            t = per.setdefault(g[side], {"pf": [], "pa": [], "results": []})
+            us, them = g[f"{side}_score"], g[f"{opp}_score"]
+            t["pf"].append(us)
+            t["pa"].append(them)
+            t["results"].append("W" if us > them else "L")
+    out = {}
+    for team, t in per.items():
+        last10 = t["results"][-10:]
+        out[team] = {
+            "pf_pg": _avg(t["pf"]), "pa_pg": _avg(t["pa"]),
+            "avg_total": _avg([a + b for a, b in zip(t["pf"], t["pa"])]),
+            "l10": f'{last10.count("W")}-{last10.count("L")}',
+        }
+    return out
+
+
+def team_h2h(finals, away, home):
+    """Season series between tonight's two teams, from real finals."""
+    meetings = [g for g in finals if {g["home"], g["away"]} == {away, home}]
+    if not meetings:
+        return None
+    a_w = h_w = 0
+    totals, scorelines = [], []
+    for g in sorted(meetings, key=lambda x: x["date"]):
+        winner = g["home"] if g["home_score"] > g["away_score"] else g["away"]
+        if winner == away:
+            a_w += 1
+        else:
+            h_w += 1
+        totals.append(g["home_score"] + g["away_score"])
+        scorelines.append(f'{g["away"]} {g["away_score"]}-{g["home_score"]} {g["home"]} ({g["date"][5:]})')
+    if a_w > h_w:
+        summary = f"{away} lead {a_w}-{h_w}"
+    elif h_w > a_w:
+        summary = f"{home} lead {h_w}-{a_w}"
+    else:
+        summary = f"Series tied {a_w}-{h_w}"
+    return {"summary": summary, "meetings": len(meetings),
+            "avg_total": _avg(totals), "scorelines": scorelines}
+
+
 def player_summaries(logs):
-    """Season + L5/L10 lines per player, from real game logs."""
     out = {}
     for pid, rec in logs.items():
         games = sorted(rec["games"], key=lambda g: g["date"])
@@ -202,6 +251,7 @@ def player_summaries(logs):
         def col(key, subset):
             return _avg([g.get(key) for g in subset])
         out[pid] = {
+            "pid": pid,
             "name": rec["name"], "full_name": rec["full_name"],
             "pos": rec["pos"], "team": rec["team"], "gp": gp,
             "min": col("min", games), "ppg": col("pts", games),
@@ -214,17 +264,26 @@ def player_summaries(logs):
     return out
 
 
+def player_h2h(logs, pid, opponent):
+    """A player's real averages specifically vs tonight's opponent."""
+    games = [g for g in logs.get(pid, {}).get("games", []) if g.get("opp") == opponent]
+    if not games:
+        return None
+    return {"h2h_gp": len(games),
+            "h2h_ppg": _avg([g.get("pts") for g in games]),
+            "h2h_rpg": _avg([g.get("reb") for g in games]),
+            "h2h_apg": _avg([g.get("ast") for g in games])}
+
+
 def main():
     now_et = datetime.now(EASTERN)
     today = now_et.strftime("%Y-%m-%d")
 
-    # ---- 1. Today's slate ----
     sb = get_json(f"{BASE}/scoreboard?dates={today.replace('-', '')}")
     todays = [g for _, _, _, g in parse_scoreboard_events(sb)]
     print(f"WNBA: slate for {today} ET — {len(todays)} games")
 
-    # ---- 2. Season crawl: every final's real box score ----
-    logs = {}
+    logs, finals = {}, []
     finals_count = 0
     d = SEASON_START
     first_debug = True
@@ -235,9 +294,12 @@ def main():
             print(f"  scoreboard {d} failed: {exc}")
             d += timedelta(days=1)
             continue
-        for event_id, status, completed, _g in parse_scoreboard_events(day_sb):
+        for event_id, status, completed, g in parse_scoreboard_events(day_sb):
             if not completed or not event_id:
                 continue
+            if g.get("away_score") is not None and g.get("home_score") is not None:
+                finals.append({"date": d.isoformat(), "away": g["away"], "home": g["home"],
+                               "away_score": g["away_score"], "home_score": g["home_score"]})
             try:
                 parse_boxscore(event_id, d.isoformat(), logs, debug=first_debug)
                 first_debug = False
@@ -248,32 +310,46 @@ def main():
         d += timedelta(days=1)
 
     players = player_summaries(logs)
+    teams = team_research(finals)
     print(f"WNBA: parsed {finals_count} real box scores -> "
-          f"{len(players)} players with game logs")
+          f"{len(players)} players with game logs; {len(teams)} teams with research")
     if players:
         sample = sorted(players.values(), key=lambda p: -(p["ppg"] or 0))[0]
         print(f"  [verify] season PPG leader parsed: {sample['full_name']} "
               f"({sample['team']}) {sample['ppg']} PPG over {sample['gp']} GP, "
               f"L5 {sample['l5_ppg']} / L10 {sample['l10_ppg']}")
 
-    # ---- 3. Attach both rosters' research lines to today's games ----
     by_team = {}
     for p in players.values():
         by_team.setdefault(p["team"], []).append(p)
-    for team, plist in by_team.items():
+    for plist in by_team.values():
         plist.sort(key=lambda p: -(p["ppg"] or 0))
 
     for g in todays:
-        for side in ("away", "home"):
-            roster = by_team.get(g[side], [])
-            picks = [p for p in roster if p["gp"] >= 3][:7]
-            if picks:
-                g[f"{side}_players"] = [
-                    {k: p[k] for k in ("name", "pos", "gp", "min", "ppg", "rpg",
-                                        "apg", "l5_ppg", "l10_ppg", "l5_rpg",
-                                        "l5_apg")}
-                    for p in picks
-                ]
+        for side, opp_side in (("away", "home"), ("home", "away")):
+            t = teams.get(g[side])
+            if t:
+                g[f"{side}_pf_pg"] = t["pf_pg"]
+                g[f"{side}_pa_pg"] = t["pa_pg"]
+                g[f"{side}_avg_total"] = t["avg_total"]
+                g[f"{side}_l10"] = t["l10"]
+
+            opponent = g[opp_side]
+            picks = [p for p in by_team.get(g[side], []) if p["gp"] >= 3][:7]
+            rows = []
+            for p in picks:
+                row = {k: p[k] for k in ("name", "pos", "gp", "min", "ppg", "rpg",
+                                          "apg", "l5_ppg", "l10_ppg", "l5_rpg", "l5_apg")}
+                hh = player_h2h(logs, p["pid"], opponent)
+                if hh:
+                    row.update(hh)
+                rows.append(row)
+            if rows:
+                g[f"{side}_players"] = rows
+
+        hh = team_h2h(finals, g["away"], g["home"])
+        if hh:
+            g["h2h"] = hh
 
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "games.json").write_text(json.dumps({
