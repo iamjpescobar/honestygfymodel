@@ -66,18 +66,38 @@ else:
             badges += badge(g["final"], "accent")
         st.markdown(badges, unsafe_allow_html=True)
 
+        if g.get("score"):
+            st.markdown(badge(g["score"], "accent"), unsafe_allow_html=True)
+        if g.get("line"):
+            st.markdown(badge(f'Line: {g["line"]}', "neutral"), unsafe_allow_html=True)
+
+        dot = " \u00b7 "
         lines = ""
         for side in ("away", "home"):
             name = g.get(side, "TBD")
             rec = g.get(f"{side}_record")
+            leaders = g.get(f"{side}_leaders") or []
+            right_bits = []
             if rec:
-                lines += (f'<div style="display:flex; justify-content:space-between; gap:12px; '
-                          f'font-size:12.5px; margin-bottom:6px;">'
-                          f'<span style="font-weight:700; color:{COLOR["text"]};">{name}</span>'
-                          f'<span style="font-family:\'JetBrains Mono\',monospace; '
-                          f'color:{COLOR["gold"]};">{rec}</span></div>')
+                right_bits.append(rec)
+            for ld in leaders:
+                right_bits.append(f'{ld["name"]} {ld["value"]} {ld["cat"]}')
+            if not right_bits:
+                continue
+            joined = dot.join(right_bits)
+            lines += (f'<div style="display:flex; justify-content:space-between; gap:12px; '
+                      f'font-size:12.5px; margin-bottom:6px;">'
+                      f'<span style="font-weight:700; color:{COLOR["text"]}; white-space:nowrap;">{name}</span>'
+                      f'<span style="font-family:\'JetBrains Mono\',monospace; '
+                      f'color:{COLOR["gold"]}; text-align:right;">{joined}</span></div>')
         if lines:
-            st.markdown(f'<div style="margin-top:10px;">{lines}</div>', unsafe_allow_html=True)
+            kind = g.get("leaders_kind", "season")
+            caption = ("Leaders shown are season averages \u2014 the players carrying each side tonight."
+                       if kind == "season"
+                       else "Leaders shown are this game\'s actual totals.")
+            st.markdown(f'<div style="margin-top:10px;">{lines}'
+                        f'<div style="font-size:10.5px; color:{COLOR["gold"]}; opacity:0.8; '
+                        f'margin-top:2px;">{caption}</div></div>', unsafe_allow_html=True)
         st.markdown(card_close(), unsafe_allow_html=True)
 
 footer()

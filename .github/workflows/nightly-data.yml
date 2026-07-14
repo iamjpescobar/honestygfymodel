@@ -29,6 +29,9 @@ jobs:
       - name: Fetch KBO slate (real MyKBOStats data)
         run: python kbo_precompute.py || echo "KBO fetch failed - continuing without it"
 
+      - name: Fetch WNBA slate (real ESPN data)
+        run: python wnba_precompute.py || echo "WNBA fetch failed - continuing without it"
+
       - name: Fetch and package real Statcast data
         run: python precompute.py
 
