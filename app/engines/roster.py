@@ -85,13 +85,16 @@ def get_all_teams():
 @st.cache_data(ttl=300)
 def get_live_team_roster(team_name: str):
     """
-    Returns this team's CURRENT roster — rosterType=active (the real,
-    live 26-man active roster MLB itself maintains right now) as the
-    primary source, since that's the roster that's actually true today.
-    Falls back to rosterType=40Man ONLY if the active-roster call fails
-    or comes back empty (e.g. a transient API hiccup) — 40Man is a
-    backup, never the primary source, so a healthy active-roster
-    response is always what's shown.
+    Returns this team's CURRENT roster: rosterType=active (the real 26
+    on the active roster right now) UNION rosterType=40Man (adds back
+    anyone real but currently off the active 26 — IL, optioned,
+    restricted, bereavement/paternity, etc.), de-duped by person id
+    with the active entry kept on overlap.
+    active-only was the actual bug: a team ALWAYS has some active
+    roster, so a plain active-first/40Man-on-failure fallback never
+    actually fell through — anyone off the active 26 was structurally
+    guaranteed to be missing no matter what. Union is what "40Man as a
+    backup" has to mean for every real player to show up.
     Cached for 5 minutes (short on purpose, so roster moves show up
     fast) rather than the 30-minute window used elsewhere.
     Returns an empty list (rather than crashing the page) if the MLB
@@ -113,23 +116,24 @@ def get_live_team_roster(team_name: str):
     if not team_id:
         return []
 
-    roster_data = []
-    for roster_type in ("active", "40Man"):  # active first; 40Man is backup only
+    roster_by_pid = {}  # active entries win on overlap; 40Man fills in the rest
+    for roster_type in ("40Man", "active"):  # loaded in this order so active overwrites 40Man on overlap
         roster_url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster?rosterType={roster_type}"
         try:
             resp = requests.get(roster_url, timeout=10).json().get("roster", [])
         except Exception:
             resp = []
-        if resp:
-            roster_data = resp
-            break  # active worked — stop, don't fall through to the backup
+        for player in resp:
+            pid = player.get("person", {}).get("id")
+            if pid is not None:
+                roster_by_pid[pid] = player
 
-    if not roster_data:
+    if not roster_by_pid:
         return []
 
     players = []
 
-    for player in roster_data:
+    for player in roster_by_pid.values():
         pid = str(player["person"]["id"])
         full_name = player["person"]["fullName"]
         position_code = player.get("position", {}).get("abbreviation", "?")
