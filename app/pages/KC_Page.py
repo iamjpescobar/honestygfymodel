@@ -1,208 +1,310 @@
+import json
+from pathlib import Path
+
 import streamlit as st
-import pandas as pd
 
-from engines.roster import get_all_teams, get_live_team_roster
-from engines.statcast_engine import get_batter_statcast, get_pitcher_statcast
-from engines.slam_engine import compute_slam_window
-from engines.danger_zone import build_danger_zone
-from engines.pitcher_danger_zone import build_pitcher_danger_zone
-from engines.matchup_engine import compute_matchup_multiplier
-from engines.bvp_engine import get_bvp_history
-from engines.pitch_affinity_engine import compute_pitch_affinity_multiplier
-
-from styles.kc_theme import inject_kc_theme, page_header, badge, card_open, card_close, footer
-from styles.table_style import style_stat_table, plain_dark_table
+from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, badge, footer, COLOR
 from auth import render_account_sidebar
 
-# ============================
-# THEME
-# ============================
+# NOTE: no st.set_page_config here — app.py already sets it once.
 
 inject_kc_theme()
 render_account_sidebar()
 
-page_header(
-    "KC Lineup Dashboard",
-    "SLAM \u2022 Danger Zone \u2022 Matchup \u2022 BvP \u2022 Pitch Affinity \u2022 Whiff%"
-)
+_KBO_GAMES = Path(__file__).resolve().parent.parent / "data" / "kbo" / "games.json"
+_KBO_PITCHERS = Path(__file__).resolve().parent.parent / "data" / "kbo" / "pitchers.json"
+_KBO_BATTERS = Path(__file__).resolve().parent.parent / "data" / "kbo" / "batters.json"
+_KBO_TEAM_STATS = Path(__file__).resolve().parent.parent / "data" / "kbo" / "team_stats.json"
 
-# ============================
-# SIDEBAR CONTROLS
-# ============================
+page_header("KBO Analytics", "Korean Baseball Organization — game-level markets", eyebrow="IN ACTIVE DEVELOPMENT")
 
-with st.sidebar:
-    st.header("Team & Pitcher")
-    st.caption("Drives the whole dashboard.")
+DOT = " \u00b7 "
+DASH = "\u2014"
 
-    teams = get_all_teams()
-    if not teams:
-        st.warning("Couldn't load the team list from the MLB Stats API right now.")
-        st.stop()
 
-    team = st.selectbox("Team", teams)
+def _load(path, key):
+    """Generic loader matching the existing honest-omission pattern —
+    returns (payload_list_or_dict, generated_at) or (None/[], None) if
+    the pipeline hasn't shipped this file yet."""
+    try:
+        payload = json.loads(path.read_text())
+        return payload.get(key), payload.get("generated_at_kst")
+    except Exception:
+        return None, None
 
-    roster = get_live_team_roster(team)
-    pitchers = [p for p in roster if p.get("is_pitcher")]
+
+def _load_games():
+    try:
+        payload = json.loads(_KBO_GAMES.read_text())
+        return payload.get("games", []), payload.get("generated_at_kst")
+    except Exception:
+        return None, None
+
+
+def _load_pitchers():
+    pitchers, gen = _load(_KBO_PITCHERS, "pitchers")
+    return pitchers or [], gen
+
+
+def _load_batters():
+    batters, gen = _load(_KBO_BATTERS, "batters")
+    return batters or [], gen
+
+
+def _load_team_stats():
+    try:
+        payload = json.loads(_KBO_TEAM_STATS.read_text())
+        return payload
+    except Exception:
+        return None
+
+
+def _stat_row(left, right, mono_right=True):
+    style = f'font-family:\'JetBrains Mono\',monospace; color:{COLOR["gold"]};' if mono_right else f'color:{COLOR["gold"]};'
+    return (f'<div style="display:flex; justify-content:space-between; gap:12px; '
+            f'font-size:12.5px; margin-bottom:6px;">'
+            f'<span style="font-weight:700; color:{COLOR["text"]}; white-space:nowrap;">{left}</span>'
+            f'<span style="{style} text-align:right;">{right}</span></div>')
+
+
+def _render_pitching_leaders():
+    pitchers, p_generated = _load_pitchers()
     if not pitchers:
-        st.warning(f"No pitchers found for {team} right now.")
-        st.stop()
-
-    pitcher_name = st.selectbox("Pitcher", [p["name"] for p in pitchers])
-
-
-# ============================
-# PITCHER PROFILE
-# ============================
-
-pitcher_row = next(p for p in pitchers if p["name"] == pitcher_name)
-pitcher_id = pitcher_row.get("id")
-
-pitcher_profile = get_pitcher_statcast(pitcher_id)
-pitcher_grid = build_pitcher_danger_zone(pitcher_profile)
-
-# ============================
-# TOP ROW: PITCHER CARD + GRID
-# ============================
-
-col1, col2 = st.columns([1, 1])
-
-with col1:
-    st.markdown(card_open(pitcher_name, team), unsafe_allow_html=True)
-    st.markdown(
-        badge(f"HR/BBE {pitcher_profile.get('HR/BBE', 0)}", "neutral")
-        + badge(f"HH% {pitcher_profile.get('HH %', 0)}", "neutral")
-        + badge(f"LD% {pitcher_profile.get('LD %', 0)}", "neutral")
-        + badge(f"Brl% {pitcher_profile.get('Brl %', 0)}", "neutral")
-        + badge(f"ZoneContact% {pitcher_profile.get('ZoneContact %', 0)}", "neutral")
-        + badge(f"Whiff% {pitcher_profile.get('Whiff %', 0)}", "neutral"),
-        unsafe_allow_html=True,
-    )
-    st.markdown("**Pitch Arsenal**")
-    arsenal = pitcher_profile.get("Pitch Arsenal", {})
-    if arsenal:
+        return
+    st.markdown(card_open("KBO Pitching Leaders", "Real 2026 season lines \u2014 official KBO leaderboard"),
+                unsafe_allow_html=True)
+    if p_generated:
+        st.caption(f"Pitcher data as of {p_generated} KST.")
+    for p in pitchers[:15]:
+        bits = []
+        if p.get("wins") is not None and p.get("losses") is not None:
+            bits.append(f'{p["wins"]}-{p["losses"]}')
+        if p.get("innings_pitched"):
+            bits.append(f'{p["innings_pitched"]} IP')
+        if p.get("strikeouts") is not None:
+            bits.append(f'{p["strikeouts"]} K')
+        if p.get("whip") is not None:
+            bits.append(f'{p["whip"]} WHIP')
+        for k, lbl in (("saves", "SV"), ("holds", "HLD")):
+            v = p.get(k)
+            if v and str(v) not in ("0", "-"):
+                bits.append(f'{v} {lbl}')
+        joined = DOT.join(bits)
+        era_display = p.get("era", DASH)
         st.markdown(
-            "".join(badge(f"{k} {v}%", "accent") for k, v in arsenal.items()),
+            _stat_row(
+                f'{p.get("name", "")} <span style="color:{COLOR["gold"]}; font-weight:400;">({p.get("team", "")})</span>',
+                f'ERA {era_display}{DOT}{joined}',
+            ),
             unsafe_allow_html=True,
         )
-    else:
-        st.caption("No arsenal data available.")
     st.markdown(card_close(), unsafe_allow_html=True)
 
-with col2:
-    st.markdown(card_open("Pitcher Danger Zone Grid", "High / Mid / Low vs Inside / Middle / Outside"), unsafe_allow_html=True)
-    styled_pitcher_grid = style_stat_table(pitcher_grid, favor_high=list(pitcher_grid.columns))
-    st.dataframe(styled_pitcher_grid, width="stretch")
+
+def _render_batting_leaders():
+    batters, b_generated = _load_batters()
+    if not batters:
+        return
+    st.markdown(card_open("KBO Batting Leaders", "Real 2026 season lines \u2014 official KBO leaderboard, sorted by OPS"),
+                unsafe_allow_html=True)
+    if b_generated:
+        st.caption(f"Batter data as of {b_generated} KST.")
+    for b in batters[:15]:
+        bits = []
+        if b.get("avg") is not None:
+            bits.append(f'{b["avg"]} AVG')
+        if b.get("hr") is not None:
+            bits.append(f'{b["hr"]} HR')
+        if b.get("rbi") is not None:
+            bits.append(f'{b["rbi"]} RBI')
+        if b.get("sb") is not None:
+            bits.append(f'{b["sb"]} SB')
+        if b.get("obp") is not None:
+            bits.append(f'{b["obp"]} OBP')
+        if b.get("slg") is not None:
+            bits.append(f'{b["slg"]} SLG')
+        joined = DOT.join(bits)
+        ops_display = b.get("ops", DASH)
+        st.markdown(
+            _stat_row(
+                f'{b.get("name", "")} <span style="color:{COLOR["gold"]}; font-weight:400;">({b.get("team", "")})</span>',
+                f'OPS {ops_display}{DOT}{joined}',
+            ),
+            unsafe_allow_html=True,
+        )
     st.markdown(card_close(), unsafe_allow_html=True)
 
-# ============================
-# FULL LINEUP TABLE
-# ============================
 
-st.markdown(card_open("Full Lineup vs Selected Pitcher", "SLAM \u2022 Danger Zone \u2022 Matchup \u2022 BvP \u2022 Statcast \u2022 Whiff%"), unsafe_allow_html=True)
+def _ou_badges(ou_trend, label):
+    """Renders over/under hit-rate badges for a team's real finals
+    against a few reference totals. Explicitly NOT tied to tonight's
+    actual sportsbook line — this pipeline doesn't have access to
+    betting lines, only real scored totals."""
+    if not ou_trend:
+        return ""
+    bits = [f'Avg total {ou_trend["avg_total"]} ({ou_trend["games"]}G)']
+    for line in (7.5, 8.5, 9.5):
+        key = f"line_{line}"
+        if key in ou_trend:
+            pct = ou_trend[key]["over_pct"]
+            bits.append(f'O{line}: {pct}%')
+    return (f'<div style="font-size:11px; color:{COLOR["gold"]}; opacity:0.85; margin-top:2px;">'
+            f'{label} O/U trend: {DOT.join(bits)}</div>')
 
-batters_roster = [p for p in roster if not p.get("is_pitcher")]
 
-if not batters_roster:
-    st.info(f"No position players found for {team} right now.")
+games, generated_at = _load_games()
+
+if games is None:
+    st.markdown(card_open("\u26be KBO engine is being connected"), unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="color:{COLOR["gold"]}; font-size:14px; line-height:1.7;">'
+        f'KBO coverage is in active development on the same standard as the MLB engine: '
+        f'every number traced to a real, verifiable source \u2014 no placeholders, no estimates. '
+        f'This page lights up with the real slate the moment the data pipeline ships; '
+        f'nothing appears here before that.'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(card_close(), unsafe_allow_html=True)
+
+    st.markdown(card_open("What launches first"), unsafe_allow_html=True)
+    for name, desc in [
+        ("Daily Slate", "Every KBO game with starters, park, and start time (JST + ET) - start times shown in KST and ET"),
+        ("Team Profiles", "Real offense/pitching form, home/away splits, and official league stats for totals and run-line handicapping"),
+        ("Starter Form", "Season and recent-start lines for the day\'s probables"),
+    ]:
+        st.markdown(
+            f'<div style="margin-bottom:12px;">'
+            f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:13.5px;">{name}</div>'
+            f'<div style="color:{COLOR["gold"]}; font-size:12.5px;">{desc}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+    st.markdown(card_close(), unsafe_allow_html=True)
+    st.markdown(badge("MLB \u2014 live now", "good") + badge("KBO \u2014 in development", "accent"), unsafe_allow_html=True)
+    _render_pitching_leaders()
+    _render_batting_leaders()
+    footer()
     st.stop()
 
-lineup_rows = []
+# ------------------------------------------------------------
+# REAL SLATE (renders only when the pipeline has shipped data)
+# ------------------------------------------------------------
+if generated_at:
+    st.caption(f"Slate data as of {generated_at} KST \u2014 refreshed by the nightly pipeline.")
 
-for row in batters_roster:
-    batter_name = row["name"]
-    batter_id = row.get("id")
-    batter_pos = row.get("position", "")
+_render_pitching_leaders()
+_render_batting_leaders()
 
-    batter_profile = get_batter_statcast(batter_id) if batter_id else {}
+if not games:
+    st.info("No KBO games on today\'s schedule \u2014 likely a league off-day.")
+else:
+    def _team_line(g, side):
+        name = g.get(side, "TBD")
+        bits = []
+        if g.get(f"{side}_record"):
+            bits.append(f'{g[f"{side}_record"]}')
+        if g.get(f"{side}_rs_pg") is not None and g.get(f"{side}_ra_pg") is not None:
+            bits.append(f'{g[f"{side}_rs_pg"]} RS / {g[f"{side}_ra_pg"]} RA per game')
+        if g.get(f"{side}_last10"):
+            bits.append(f'L10: {g[f"{side}_last10"]}')
+        if g.get(f"{side}_streak"):
+            bits.append(f'Streak: {g[f"{side}_streak"]}')
+        if not bits:
+            return ""
+        return _stat_row(name, DOT.join(bits))
 
-    required_keys = {"PullAir %", "LD %", "GB %", "Brl %", "HH %"}
-    if required_keys.issubset(batter_profile.keys()):
-        dz_grid = build_danger_zone(batter_profile)
-        dz_score = round(float(dz_grid.values.mean()), 2)  # single-number summary of the 3x3 grid
-    else:
-        dz_score = 0.0
+    def _home_away_split(g, side):
+        """Splits are the bigger edge signal than the blended record for
+        a team playing at home tonight vs. one on the road."""
+        hr, ar = g.get(f"{side}_home_record"), g.get(f"{side}_away_record")
+        if not hr and not ar:
+            return ""
+        bits = []
+        if hr:
+            bits.append(f'Home {hr}')
+            if g.get(f"{side}_home_rs_pg") is not None:
+                bits.append(f'{g[f"{side}_home_rs_pg"]}/{g[f"{side}_home_ra_pg"]} RS/RA')
+        if ar:
+            bits.append(f'Away {ar}')
+            if g.get(f"{side}_away_rs_pg") is not None:
+                bits.append(f'{g[f"{side}_away_rs_pg"]}/{g[f"{side}_away_ra_pg"]} RS/RA')
+        return (f'<div style="font-size:11px; color:{COLOR["text"]}; opacity:0.85; margin-top:2px;">'
+                f'{DOT.join(bits)}</div>')
 
-    slam_result = compute_slam_window(batter_id, "season", "bbe")
-    slam_score = slam_result["slam_score"] if slam_result["slam_score"] is not None else 0.0
-    matchup_mult, matchup_tag = compute_matchup_multiplier(batter_profile, pitcher_profile)
-    bvp_history = get_bvp_history(pitcher_name, batter_name,
-                                   pitcher_id=pitcher_id, batter_id=batter_id)
+    def _official_team_stats(g, side):
+        """Official league-maintained batting/pitching for this team —
+        independent of the scoreline scraper, so it renders even on
+        days the season crawl parses zero finals."""
+        tb = g.get(f"{side}_team_batting")
+        tp = g.get(f"{side}_team_pitching")
+        if not tb and not tp:
+            return ""
+        bits = []
+        if tb:
+            bits.append(f'{tb.get("avg", DASH)} AVG / {tb.get("ops", DASH)} OPS')
+            if tb.get("runs_per_game") is not None:
+                bits.append(f'{tb["runs_per_game"]} R/G')
+        if tp:
+            bits.append(f'{tp.get("era", DASH)} ERA / {tp.get("whip", DASH)} WHIP')
+            if tp.get("runs_allowed_per_game") is not None:
+                bits.append(f'{tp["runs_allowed_per_game"]} RA/G')
+        return (f'<div style="font-size:11px; color:{COLOR["gold"]}; opacity:0.9; margin-top:2px;">'
+                f'Official: {DOT.join(bits)}</div>')
 
-    lineup_rows.append(
-        {
-            "Name": batter_name,
-            "Pos": batter_pos,
-            "SLAM": slam_score,
-            "DangerZone": dz_score,
-            "Matchup": matchup_mult,
-            "Brl%": batter_profile.get("Brl %", 0),
-            "HH%": batter_profile.get("HH %", 0),
-            "PullAir%": batter_profile.get("PullAir %", 0),
-            "LD%": batter_profile.get("LD %", 0),
-            "Whiff%": batter_profile.get("Whiff %", 0),
-            "BvP PA": int(bvp_history["Plate Appearances"].iloc[0]) if bvp_history is not None and not bvp_history.empty else 0,
-        }
-    )
+    for g in games:
+        status = g.get("status", "scheduled")
+        subtitle = f'{g.get("stadium", "")} \u00b7 {g.get("time_kst", "TBD")} KST / {g.get("time_et", "TBD")} ET'
+        st.markdown(card_open(f'{g.get("away", "TBD")} @ {g.get("home", "TBD")}', subtitle), unsafe_allow_html=True)
 
-lineup_df = pd.DataFrame(lineup_rows)
+        status_style = {"postponed": "bad", "final": "good", "final (tie)": "good"}.get(status, "neutral")
+        badges = badge(status.upper(), status_style)
+        if g.get("final"):
+            badges += badge(g["final"], "accent")
+        if g.get("starters_raw"):
+            badges += badge(f'Announced starters: {g["starters_raw"]}', "neutral")
+        else:
+            badges += (badge(f'Away SP: {g.get("away_starter", "TBD")}', "neutral")
+                       + badge(f'Home SP: {g.get("home_starter", "TBD")}', "neutral"))
+        st.markdown(badges, unsafe_allow_html=True)
 
-styled_lineup = style_stat_table(lineup_df, favor_high=["SLAM", "DangerZone", "Matchup"])
-st.dataframe(styled_lineup, width="stretch", height=400)
-st.markdown(card_close(), unsafe_allow_html=True)
+        stats_html = ""
+        for side in ("away", "home"):
+            line = _team_line(g, side)
+            if line:
+                stats_html += line
+                stats_html += _home_away_split(g, side)
+                stats_html += _official_team_stats(g, side)
+            elif _official_team_stats(g, side):
+                # Scoreline crawl parsed nothing, but official stats still exist.
+                stats_html += _stat_row(g.get(side, "TBD"), "")
+                stats_html += _official_team_stats(g, side)
 
-# ============================
-# MATCHUP BARS
-# ============================
+        if g.get("h2h_official"):
+            stats_html += (f'<div style="font-size:11.5px; color:{COLOR["gold"]}; '
+                           f'margin-top:6px;">Official season H2H: <b>{g["h2h_official"]}</b></div>')
+        if g.get("h2h"):
+            stats_html += (f'<div style="font-size:11.5px; color:{COLOR["gold"]}; '
+                           f'margin-top:2px;">Scoreline H2H: {g["h2h"]}</div>')
+            det = g.get("h2h_detail") or {}
+            if det.get("avg_total") is not None:
+                stats_html += (
+                    f'<div style="font-size:11px; color:{COLOR["text"]}; margin-top:2px;">'
+                    f'H2H runs: {g.get("away")} {det.get("away_avg_runs")} R/G vs '
+                    f'{g.get("home")} {det.get("home_avg_runs")} R/G \u00b7 '
+                    f'Avg total in series: <b>{det.get("avg_total")}</b></div>')
+            if det.get("scorelines"):
+                joined = " \u00b7 ".join(det["scorelines"][:6])
+                stats_html += (f'<div style="font-size:10.5px; color:{COLOR["gold"]}; '
+                               f'opacity:0.85; margin-top:2px;">{joined}</div>')
 
-st.markdown(card_open("Matchup Strength Bars", "Visual SLAM + Danger Zone comparison"), unsafe_allow_html=True)
-bars_df = lineup_df[["Name", "SLAM", "DangerZone"]].set_index("Name")
-st.bar_chart(bars_df, color=["#00E5FF", "#0E7C86"])
-st.markdown(card_close(), unsafe_allow_html=True)
+        for side in ("away", "home"):
+            ou_html = _ou_badges(g.get(f"{side}_ou_trend"), g.get(side, ""))
+            if ou_html:
+                stats_html += ou_html
 
-# ============================
-# FOCUS BATTER DETAIL
-# ============================
-
-st.markdown(card_open("Focus Batter Detail", "SLAM \u2022 Danger Zone \u2022 Whiff% \u2022 Pitch Affinity"), unsafe_allow_html=True)
-focus_batter = st.selectbox("Focus Batter", lineup_df["Name"].tolist())
-st.markdown(card_close(), unsafe_allow_html=True)
-
-focus_row = lineup_df[lineup_df["Name"] == focus_batter].iloc[0]
-focus_batter_id = next((r["id"] for r in batters_roster if r["name"] == focus_batter), None)
-focus_profile = get_batter_statcast(focus_batter_id) if focus_batter_id else {}
-
-pitcher_arsenal = pitcher_profile.get("Pitch Arsenal", {})
-affinity_mult = compute_pitch_affinity_multiplier(focus_profile, pitcher_arsenal)
-
-colA, colB = st.columns([1, 1])
-
-with colA:
-    st.markdown(card_open(focus_batter, f"vs {pitcher_name}"), unsafe_allow_html=True)
-    st.markdown('<div class="pf-metric-label">SLAM Score</div>', unsafe_allow_html=True)
-    st.progress(float(min(max(focus_row["SLAM"] / 100.0, 0.0), 1.0)))
-    st.markdown(
-        f'<div class="pf-metric-value">{focus_row["DangerZone"]}</div>'
-        f'<div class="pf-metric-label">Danger Zone Score</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        f'<div class="pf-metric-value">{focus_profile.get("Whiff %", 0)}</div>'
-        f'<div class="pf-metric-label">Whiff %</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(card_close(), unsafe_allow_html=True)
-
-with colB:
-    st.markdown(card_open("Pitch Affinity vs Arsenal", "Single composite multiplier \u2014 this app doesn't have a per-pitch-type affinity breakdown implemented"), unsafe_allow_html=True)
-    st.markdown(badge(f"Affinity Multiplier {affinity_mult:.2f}", "accent"), unsafe_allow_html=True)
-    st.markdown(card_close(), unsafe_allow_html=True)
-
-# ============================
-# DEBUG
-# ============================
-
-with st.expander("Debug Info"):
-    st.write("Pitcher Profile:", pitcher_profile)
-    st.write("Lineup DataFrame:", lineup_df)
+        if stats_html:
+            st.markdown(f'<div style="margin-top:10px;">{stats_html}</div>', unsafe_allow_html=True)
+        st.markdown(card_close(), unsafe_allow_html=True)
 
 footer()
