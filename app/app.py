@@ -1,10 +1,10 @@
 """
-Los Cappers — entry point (single right sidebar, hide extra sidebar for subscribers)
+app.py — Los Cappers entrypoint (single right sidebar, pickle-safe sidebar shim)
 
-This entry file:
+This file:
 - Renders a single right-hand sidebar containing the full subscriber navigation.
-- Prevents any code from rendering into Streamlit's built-in left `st.sidebar`
-  for non-admin users by replacing `st.sidebar` with a no-op shim.
+- Prevents any leftover code from rendering a second sidebar for subscribers by
+  replacing st.sidebar with a pickle-safe shim (module-level no-op).
 - Ensures admin pages and controls are only included when is_admin() returns True.
 - Loads page modules by running their file when selected from the right menu.
 - Adds minimal responsive CSS and an expander fallback so the menu collapses on phones.
@@ -13,7 +13,6 @@ This entry file:
 import runpy
 from pathlib import Path
 import os
-import types
 
 import streamlit as st
 
@@ -40,27 +39,33 @@ except Exception:
     user_is_admin = bool(force_admin_env)
 
 # -------------------------
-# Defensive shim: disable st.sidebar for subscribers
-# This prevents any leftover code from rendering a second sidebar.
-# For admins we leave st.sidebar intact.
+# Pickle-safe shim: disable st.sidebar for subscribers
+# Use a module-level no-op so Streamlit's caching/pickling won't fail.
 # -------------------------
+def _lc_no_op(*args, **kwargs):
+    return None
+
+class _HiddenSidebar:
+    """A minimal shim that swallows common Streamlit sidebar calls.
+    Returns a module-level no-op so it is pickle-safe.
+    Supports context manager usage: `with st.sidebar: ...`
+    """
+    def __getattr__(self, name):
+        # Return the module-level no-op for any attribute access
+        return _lc_no_op
+
+    def __call__(self, *args, **kwargs):
+        return _lc_no_op(*args, **kwargs)
+
+    # Support context manager usage: `with st.sidebar: ...`
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        return False
+
+# Replace the sidebar object with the shim for non-admin users
 if not user_is_admin:
-    class _HiddenSidebar:
-        """A minimal shim that swallows common Streamlit sidebar calls."""
-        def __getattr__(self, name):
-            # Return a callable that does nothing for widget calls
-            def _no_op(*args, **kwargs):
-                return None
-            return _no_op
-
-        # Support context manager usage: `with st.sidebar: ...`
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc, tb):
-            return False
-
-    # Replace the sidebar object with the shim
     st.sidebar = _HiddenSidebar()
 
 # -------------------------
