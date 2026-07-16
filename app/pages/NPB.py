@@ -5,6 +5,7 @@ import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, badge, footer, COLOR
 from auth import render_account_sidebar
+from engines.matchup_grades_intl import grade_npb_matchup, render_matchup_grades_card
 
 # NOTE: no st.set_page_config here — app.py already sets it once.
 
@@ -160,5 +161,15 @@ else:
         if stats_html:
             st.markdown(f'<div style="margin-top:10px;">{stats_html}</div>', unsafe_allow_html=True)
         st.markdown(card_close(), unsafe_allow_html=True)
+
+        grades = grade_npb_matchup(g)
+        render_matchup_grades_card(
+            grades,
+            subtitle=("This app's own signal checklist \u2014 starter vs. starter (WHIP/ERA/K9/HR9, "
+                      "computed from npb.jp's own leaderboard) when both probables are matched to a "
+                      "real stat line, team form otherwise. Formula documented in "
+                      "engines/matchup_grades_intl.py. Not calibrated probabilities."),
+            source_line="Source: npb.jp official leaderboards \u00b7 starter or team form.",
+        )
 
 footer()

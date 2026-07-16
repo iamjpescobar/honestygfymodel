@@ -8,6 +8,7 @@ import streamlit as st
 from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, badge, footer, COLOR
 from styles.table_style import style_stat_table
 from auth import render_account_sidebar
+from engines.matchup_grades_intl import grade_wnba_matchup, render_matchup_grades_card
 
 # NOTE: no st.set_page_config here — app.py already sets it once.
 
@@ -217,6 +218,16 @@ def _render_slate():
             )
 
         st.markdown(card_close(), unsafe_allow_html=True)
+
+        grades = grade_wnba_matchup(g)
+        render_matchup_grades_card(
+            grades,
+            subtitle=("This app's own signal checklist from real team scoring, shooting, and "
+                      "turnover rates \u2014 there's no starting-pitcher analog in basketball, so this "
+                      "is graded on team form. Formula documented in "
+                      "engines/matchup_grades_intl.py. Not calibrated probabilities."),
+            source_line="Source: real WNBA box-score-derived team stats.",
+        )
 
         if g.get("away_players") or g.get("home_players"):
             with st.expander(f'\U0001F3C0 Prop research \u2014 {away} @ {home}'):

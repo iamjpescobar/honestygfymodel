@@ -5,6 +5,7 @@ import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, badge, footer, COLOR
 from auth import render_account_sidebar
+from engines.matchup_grades_intl import grade_kbo_matchup, render_matchup_grades_card
 
 # NOTE: no st.set_page_config here — app.py already sets it once.
 
@@ -306,5 +307,15 @@ else:
         if stats_html:
             st.markdown(f'<div style="margin-top:10px;">{stats_html}</div>', unsafe_allow_html=True)
         st.markdown(card_close(), unsafe_allow_html=True)
+
+        grades = grade_kbo_matchup(g)
+        render_matchup_grades_card(
+            grades,
+            subtitle=("This app's own signal checklist from real KBO team OPS/ERA/WHIP and "
+                      "run-scoring form — formula documented in engines/matchup_grades_intl.py. "
+                      "No probable-starter data in this pipeline yet, so this is graded on team "
+                      "form rather than starter vs. starter. Not calibrated probabilities."),
+            source_line="Source: official KBO leaderboards \u00b7 team form.",
+        )
 
 footer()
