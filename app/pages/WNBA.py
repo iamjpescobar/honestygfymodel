@@ -115,10 +115,16 @@ PROP_TABS = [
     ("Assists", "apg", "l5_apg", "l10_apg", "h2h_apg"),
     ("Threes", "tpm", "l5_tpm", "l10_tpm", "h2h_tpm"),
     ("PRA", "pra", "l5_pra", "l10_pra", "h2h_pra"),
+    ("Pts+Reb", "pr", "l5_pr", "l10_pr", "h2h_pr"),
+    ("Pts+Ast", "pa", "l5_pa", "l10_pa", "h2h_pa"),
+    ("Reb+Ast", "ra", "l5_ra", "l10_ra", "h2h_ra"),
     ("Stocks", "stocks", "l5_stocks", "l10_stocks", "h2h_stocks"),
     ("Volume", "fga", "l5_fga", "l10_fga", "h2h_fga"),
 ]
 TAB_NOTES = {
+    "Pts+Reb": "Points + rebounds combined \u2014 a standard sportsbook combo market (PR).",
+    "Pts+Ast": "Points + assists combined \u2014 a standard sportsbook combo market (PA).",
+    "Reb+Ast": "Rebounds + assists combined \u2014 a standard sportsbook combo market (RA).",
     "Stocks": "Stocks = steals + blocks combined \u2014 the STL/BLK columns show the season split.",
     "Volume": "FGA per game \u2014 shot volume drives points props; FTA and TO shown for context.",
 }

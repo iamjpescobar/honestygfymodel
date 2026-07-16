@@ -37,29 +37,41 @@ def get_confirmed_lineup(game_pk, side: str):
         position = p.get("position", {})
         pid = person.get("id")
 
-        # Bat side isn't reliably present on the boxscore player object
-        # itself (confirmed: get_live_team_roster below has to make this
-        # same separate call for the same reason) — a real per-player
-        # lookup, not a guess.
-        bats = "?"
-        try:
-            people_resp = requests.get(f"https://statsapi.mlb.com/api/v1/people/{pid}", timeout=10).json()
-            person_detail = people_resp.get("people", [{}])[0]
-            bats = person_detail.get("batSide", {}).get("code") or "?"
-        except Exception:
-            pass  # leave as "?" rather than silently guessing a side
-
         lineup.append({
             "id": str(pid or ""),
             "name": person.get("fullName", "Unknown"),
             "position": position.get("abbreviation", ""),
             "is_pitcher": position.get("abbreviation") == "P",
-            "bats": bats,
+            "bats": "?",  # filled in below via one bulk lookup, not N calls
             "battingOrder": int(batting_order),
         })
 
     if not lineup:
         return [], False
+
+    # Bat side isn't reliably present on the boxscore player object itself,
+    # so it needs a real separate lookup — but ONE bulk call for every
+    # player in the lineup (MLB's people endpoint accepts a comma-separated
+    # personIds list) instead of a request per player. That was the real
+    # latency/fragility problem: a 9-player lineup used to mean 9 sequential
+    # HTTP round trips just for handedness, and any single one of them
+    # timing out on a slow connection could bog down the whole page load.
+    ids = ",".join(x["id"] for x in lineup if x["id"])
+    if ids:
+        try:
+            people_resp = requests.get(
+                "https://statsapi.mlb.com/api/v1/people",
+                params={"personIds": ids},
+                timeout=10,
+            ).json()
+            bats_by_id = {
+                str(person["id"]): (person.get("batSide", {}).get("code") or "?")
+                for person in people_resp.get("people", [])
+            }
+            for x in lineup:
+                x["bats"] = bats_by_id.get(x["id"], "?")
+        except Exception:
+            pass  # leave everyone as "?" rather than silently guessing a side
 
     lineup.sort(key=lambda x: x["battingOrder"])
     return lineup, True
@@ -99,6 +111,16 @@ def get_live_team_roster(team_name: str):
     fast) rather than the 30-minute window used elsewhere.
     Returns an empty list (rather than crashing the page) if the MLB
     Stats API is unreachable or returns something unexpected.
+
+    Uses hydrate=person on the roster call itself to get bats/throws
+    inline, instead of one extra /people/{id} request per player — for
+    a 40-man+active roster that used to mean 60-80 sequential HTTP
+    calls per team (each with its own 10s timeout to fail badly on),
+    which is what actually made roster pages slow and made a single
+    flaky request look like a "missing player." Falls back to a single
+    bulk /people?personIds=... call only for anyone hydrate didn't
+    fill in, so worst case is a handful of extra calls, never one per
+    player.
     """
 
     teams_url = "https://statsapi.mlb.com/api/v1/teams?sportId=1"
@@ -118,9 +140,13 @@ def get_live_team_roster(team_name: str):
 
     roster_by_pid = {}  # active entries win on overlap; 40Man fills in the rest
     for roster_type in ("40Man", "active"):  # loaded in this order so active overwrites 40Man on overlap
-        roster_url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster?rosterType={roster_type}"
+        roster_url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster"
         try:
-            resp = requests.get(roster_url, timeout=10).json().get("roster", [])
+            resp = requests.get(
+                roster_url,
+                params={"rosterType": roster_type, "hydrate": "person"},
+                timeout=10,
+            ).json().get("roster", [])
         except Exception:
             resp = []
         for player in resp:
@@ -132,6 +158,7 @@ def get_live_team_roster(team_name: str):
         return []
 
     players = []
+    missing_bio_ids = []
 
     for player in roster_by_pid.values():
         pid = str(player["person"]["id"])
@@ -140,15 +167,13 @@ def get_live_team_roster(team_name: str):
         position_type = player.get("position", {}).get("type", "Unknown")  # "Pitcher" or "Hitter" etc.
         is_pitcher = position_type == "Pitcher" or position_code == "P"
 
-        people_url = f"https://statsapi.mlb.com/api/v1/people/{pid}"
-        bats, throws = None, None
-        try:
-            data = requests.get(people_url, timeout=10).json()
-            person = data["people"][0]
-            bats = person.get("batSide", {}).get("code", "").upper() or None
-            throws = person.get("pitchHand", {}).get("code", "").upper() or None
-        except Exception:
-            pass  # leave as None rather than silently guessing "R"
+        # hydrate=person should already have embedded batSide/pitchHand
+        # on player["person"] — no per-player request needed for the
+        # common case.
+        bats = (player["person"].get("batSide", {}) or {}).get("code", "").upper() or None
+        throws = (player["person"].get("pitchHand", {}) or {}).get("code", "").upper() or None
+        if bats is None and throws is None:
+            missing_bio_ids.append(pid)
 
         players.append({
             "name": full_name,
@@ -158,6 +183,25 @@ def get_live_team_roster(team_name: str):
             "bats": bats,     # None means "unknown, real lookup failed" — not a guess
             "throws": throws
         })
+
+    # Rare fallback: hydrate didn't come through for a handful of players
+    # (older cached edge or a schema hiccup) — one bulk call fills them
+    # in rather than falling back to N individual requests.
+    if missing_bio_ids:
+        try:
+            people_resp = requests.get(
+                "https://statsapi.mlb.com/api/v1/people",
+                params={"personIds": ",".join(missing_bio_ids)},
+                timeout=10,
+            ).json().get("people", [])
+            bio_by_id = {str(p["id"]): p for p in people_resp}
+            for pl in players:
+                if pl["id"] in bio_by_id:
+                    src = bio_by_id[pl["id"]]
+                    pl["bats"] = (src.get("batSide", {}).get("code", "").upper() or None)
+                    pl["throws"] = (src.get("pitchHand", {}).get("code", "").upper() or None)
+        except Exception:
+            pass  # leave as None rather than silently guessing "R"
 
     return players
 

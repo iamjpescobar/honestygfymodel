@@ -226,6 +226,10 @@ def parse_boxscore(event_id, game_date, logs, debug=False):
                 _made_att(ft_i, "ftm", "fta")
                 if line.get("pts") is not None:
                     line["pra"] = (line.get("pts") or 0) + (line.get("reb") or 0) + (line.get("ast") or 0)
+                    line["pr"] = (line.get("pts") or 0) + (line.get("reb") or 0)
+                    line["pa"] = (line.get("pts") or 0) + (line.get("ast") or 0)
+                if line.get("reb") is not None and line.get("ast") is not None:
+                    line["ra"] = (line.get("reb") or 0) + (line.get("ast") or 0)
                 if line.get("stl") is not None or line.get("blk") is not None:
                     line["stocks"] = (line.get("stl") or 0) + (line.get("blk") or 0)
                 if line.get("min") in (None, 0):
@@ -311,6 +315,9 @@ def player_summaries(logs):
             "apg": col("ast", games), "l5_apg": col("ast", games[-5:]), "l10_apg": col("ast", games[-10:]),
             "tpm": col("tpm", games), "l5_tpm": col("tpm", games[-5:]), "l10_tpm": col("tpm", games[-10:]),
             "pra": col("pra", games), "l5_pra": col("pra", games[-5:]), "l10_pra": col("pra", games[-10:]),
+            "pr": col("pr", games), "l5_pr": col("pr", games[-5:]), "l10_pr": col("pr", games[-10:]),
+            "pa": col("pa", games), "l5_pa": col("pa", games[-5:]), "l10_pa": col("pa", games[-10:]),
+            "ra": col("ra", games), "l5_ra": col("ra", games[-5:]), "l10_ra": col("ra", games[-10:]),
             "stocks": col("stocks", games), "l5_stocks": col("stocks", games[-5:]),
             "l10_stocks": col("stocks", games[-10:]),
             "stl": col("stl", games), "blk": col("blk", games),
@@ -332,6 +339,9 @@ def player_h2h(logs, pid, opponent):
             "h2h_apg": _avg([g.get("ast") for g in games]),
             "h2h_tpm": _avg([g.get("tpm") for g in games]),
             "h2h_pra": _avg([g.get("pra") for g in games]),
+            "h2h_pr": _avg([g.get("pr") for g in games]),
+            "h2h_pa": _avg([g.get("pa") for g in games]),
+            "h2h_ra": _avg([g.get("ra") for g in games]),
             "h2h_stocks": _avg([g.get("stocks") for g in games]),
             "h2h_fga": _avg([g.get("fga") for g in games])}
 
@@ -403,11 +413,15 @@ def main():
                         "apg", "l5_apg", "l10_apg",
                         "tpm", "l5_tpm", "l10_tpm",
                         "pra", "l5_pra", "l10_pra",
+                        "pr", "l5_pr", "l10_pr",
+                        "pa", "l5_pa", "l10_pa",
+                        "ra", "l5_ra", "l10_ra",
                         "stocks", "l5_stocks", "l10_stocks", "stl", "blk",
                         "to", "l5_to", "l10_to",
                         "fga", "l5_fga", "l10_fga",
                         "fta", "l5_fta", "l10_fta")
             h2h_keys = ("h2h_ppg", "h2h_rpg", "h2h_apg", "h2h_tpm", "h2h_pra",
+                        "h2h_pr", "h2h_pa", "h2h_ra",
                         "h2h_stocks", "h2h_fga", "h2h_gp")
             rows = []
             for p in picks:

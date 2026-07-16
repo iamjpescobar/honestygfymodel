@@ -15,7 +15,7 @@ from auth import render_account_sidebar
 from engines.weather_engine import get_todays_games_with_weather
 from engines.park_factors import get_park_factor
 from engines.headshots import get_headshot_url
-from engines.roster import get_live_team_roster, get_all_teams, get_confirmed_lineup
+from engines.roster import get_live_team_roster, get_all_teams, get_confirmed_lineup, get_last_starting_lineup
 from engines.statcast_engine import (
     get_pitcher_id, get_pitcher_statcast, get_pitcher_advanced_splits, get_batter_profile_windowed, get_batter_vs_pitch_types
 )
@@ -445,17 +445,37 @@ with content_col:
         batters = [p for p in confirmed_lineup if not p["is_pitcher"]]
     else:
         # MLB hasn't posted today's real lineup yet (normal 1-3 hours
-        # before first pitch) — honest fallback to the team's general
-        # roster, clearly labeled as NOT yet confirmed rather than
-        # silently passed off as today's real batting order.
-        roster = get_live_team_roster(opposing_team)
-        batters = [p for p in roster if not p["is_pitcher"]][:9]
-        st.info(
-            f"MLB hasn't posted {opposing_team}'s confirmed starting lineup yet "
-            f"(usually posted 1\u20133 hours before first pitch) \u2014 showing their general roster "
-            f"below instead. This will switch to the real confirmed batting order automatically "
-            f"once MLB posts it."
-        )
+        # before first pitch). Honest fallback #1: this team's REAL 9
+        # starters from their most recently completed game (real posted
+        # data, not a guess) — this is what belongs here, not an
+        # arbitrary slice of the roster. The old fallback below took the
+        # first 9 non-pitchers in whatever order the MLB API happened to
+        # return the roster in (not sorted by playing time or batting
+        # order at all) — which silently cut regulars like a cleanup
+        # hitter or DH from the page any time they didn't happen to land
+        # in that arbitrary first 9, while bench/depth players did.
+        last_lineup, last_game_date, last_confirmed = get_last_starting_lineup(opposing_team)
+        if last_confirmed:
+            batters = [p for p in last_lineup if not p["is_pitcher"]]
+            st.info(
+                f"MLB hasn't posted {opposing_team}'s confirmed starting lineup yet "
+                f"(usually posted 1\u20133 hours before first pitch) \u2014 showing their real "
+                f"starting 9 from their last game ({last_game_date}) instead. This will switch "
+                f"to today's confirmed batting order automatically once MLB posts it."
+            )
+        else:
+            # Fallback #2: no completed game in the last 14 days to pull a
+            # real lineup from (e.g. after a long break) — show the full
+            # position-player roster rather than an arbitrary, misleading
+            # slice of it, clearly labeled as just the roster.
+            roster = get_live_team_roster(opposing_team)
+            batters = [p for p in roster if not p["is_pitcher"]]
+            st.info(
+                f"MLB hasn't posted {opposing_team}'s confirmed starting lineup yet, and there's "
+                f"no recent game to pull a real starting 9 from \u2014 showing their full roster "
+                f"below instead. This will switch to the real confirmed batting order automatically "
+                f"once MLB posts it."
+            )
 
     # HR Score / Hit Score / K Score come from a SEPARATE, real, live
     # source: MLB's own Statcast percentile rankings, matched by player
