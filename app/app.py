@@ -1,11 +1,13 @@
 """
-Los Cappers — entry point (multi-sport header tabs).
+Los Cappers — entry point (single right sidebar).
 
-This entry file enforces that subscribers never see admin UI. The
-subscriber navigation is rendered in a single right-hand sidebar.
-Admin pages and controls are only included when is_admin() returns True.
-A mobile-friendly expander fallback is provided so the site remains usable
-on phones (the right sidebar is visually collapsed on narrow screens).
+This entry file:
+- Renders a single right-hand sidebar containing the full subscriber navigation
+  (everything that used to be on the left).
+- Never shows admin UI to subscribers; admin pages and controls appear only
+  when is_admin() returns True.
+- Loads page modules by running their file when selected from the right menu.
+- Provides a mobile-friendly expander fallback so the menu is accessible on phones.
 """
 import runpy
 from pathlib import Path
@@ -35,30 +37,24 @@ with _strip_col:
     sport_switcher(active=selected_sport)
 
 # -------------------------
-# Helper: build MLB pages dict
+# Helper: build MLB pages list
 # Admin pages are only added when include_admin is True.
 # -------------------------
 def build_mlb_pages(include_admin: bool):
-    pages = {
-        "": [
-            st.Page("pages/GameCard.py", title="Game Card", icon=":material/stadium:", default=True),
-            st.Page("pages/Player_Of_The_Day.py", title="Player of the Day", icon=":material/star:"),
-        ],
-        "Legacy Tools": [
-            st.Page("pages/Model.py", title="Model", icon=":material/monitoring:"),
-            st.Page("pages/1_Pitcher_Report.py", title="Pitcher Report", icon=":material/sports_baseball:"),
-            st.Page("pages/1_Pitcher_Splits.py", title="Pitcher Splits", icon=":material/split_scene:"),
-            st.Page("pages/2_Pitch_Mix_Splits.py", title="Pitch Mix Splits", icon=":material/blender:"),
-            st.Page("pages/2_Lineup_Analysis.py", title="Lineup Analysis", icon=":material/groups:"),
-            st.Page("pages/3_Team_Tools.py", title="Team Tools", icon=":material/handyman:"),
-            st.Page("pages/KC_Page.py", title="KC Lineup Dashboard", icon=":material/dashboard:"),
-        ],
-    }
+    pages = [
+        ("Game Card", "pages/GameCard.py"),
+        ("Player of the Day", "pages/Player_Of_The_Day.py"),
+        ("Model", "pages/Model.py"),
+        ("Pitcher Report", "pages/1_Pitcher_Report.py"),
+        ("Pitcher Splits", "pages/1_Pitcher_Splits.py"),
+        ("Pitch Mix Splits", "pages/2_Pitch_Mix_Splits.py"),
+        ("Lineup Analysis", "pages/2_Lineup_Analysis.py"),
+        ("Team Tools", "pages/3_Team_Tools.py"),
+        ("KC Lineup Dashboard", "pages/KC_Page.py"),
+    ]
 
     if include_admin:
-        pages["Admin"] = [
-            st.Page("pages/0_Debug_Roster.py", title="Debug Roster", icon=":material/bug_report:"),
-        ]
+        pages.append(("Debug Roster (Admin)", "pages/0_Debug_Roster.py"))
 
     return pages
 
@@ -97,10 +93,8 @@ def load_page_module(rel_path: str):
     except Exception as e:
         st.exception(e)
 
-
 # -------------------------
-# CSS injection (minimal responsive rules)
-# If you have a static/styles.css, prefer to edit that file and call load_local_css.
+# Minimal responsive CSS injection
 # -------------------------
 def inject_minimal_css():
     css = """
@@ -122,59 +116,88 @@ def inject_minimal_css():
     """
     st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
-
 inject_minimal_css()
 
 # -------------------------
-# Render navigation or sport page
+# Render UI
 # -------------------------
 if selected_sport == "MLB":
-    # Build navigation dict with admin pages only when user_is_admin is True
-    navigation = st.navigation(build_mlb_pages(include_admin=user_is_admin), expanded=True)
-    # Render the navigation UI (this will create the left-hand navigation in Streamlit's nav)
-    navigation.run()
+    pages = build_mlb_pages(include_admin=user_is_admin)
 
-    # Layout: main content + right-hand subscriber sidebar (single visible sidebar)
+    # Layout: main content + right-hand sidebar
     main_col, right_col = st.columns([8, 2])
 
-    # MAIN: run the currently selected page's code in the main column
+    # MAIN: render the currently selected page (default to first page)
     with main_col:
-        # The navigation.run() above will have set the active page and executed it.
-        # If you have additional global main-level content to render, place it here.
-        # Keep main content behavior unchanged.
-        pass
+        active_page = st.session_state.get("lc_active_page", pages[0][0] if pages else None)
+        if active_page:
+            # Find module path for active page
+            module_path = None
+            for title, path in pages:
+                if title == active_page:
+                    module_path = path
+                    break
 
-    # RIGHT: subscriber navigation widgets (always) and admin-only controls (only for admins)
+            if module_path:
+                load_page_module(module_path)
+            else:
+                st.error("Selected page not found.")
+        else:
+            st.info("No pages available.")
+
+    # RIGHT: subscriber navigation (everything that used to be on the left)
     with right_col:
-        # Provide an expander so mobile users can access the menu when the column is hidden
+        # Expander fallback for mobile
         with st.expander("Menu", expanded=False):
             st.markdown('<div class="right-sidebar">', unsafe_allow_html=True)
 
-            # -------------------------
-            # Subscriber navigation widgets
-            # -------------------------
-            # Move your subscriber navigation widgets here. Keep original key= values.
-            # Example placeholders (replace with your actual widgets):
-            # selected_page = st.radio("Menu", ["Game Card", "Player of the Day", "Model"], key="menu_radio")
-            # st.selectbox("Choose team", ["NYM", "PHI"], key="team_select")
+            # Build a menu UI (radio) that sets st.session_state["lc_active_page"]
+            # Include all subscriber items (everything that was on the left)
+            # Admin-only titles are excluded from the main subscriber list
+            menu_titles = [title for title, _ in pages if not title.lower().startswith("debug roster (admin)")]
+            # Determine default index safely
+            default_index = 0
+            current = st.session_state.get("lc_active_page")
+            if current in menu_titles:
+                default_index = menu_titles.index(current)
+
+            selected = st.radio(
+                "Navigation",
+                menu_titles,
+                index=default_index,
+                key="lc_nav_radio"
+            )
+            # Persist selection
+            st.session_state["lc_active_page"] = selected
+
+            # --- Everything that used to live in the left sidebar goes here ---
+            # Move your left-sidebar widgets into this block. Preserve original keys.
+            # Example placeholders (replace with your actual widgets and keep keys):
+            # st.markdown("### Subscriber")
             # st.button("Sign out", key="sign_out")
+            # st.selectbox("Choose team", ["NYM", "PHI"], key="team_select")
+            # st.checkbox("Master Subscriber", value=True, key="master_subscriber")
             #
-            # IMPORTANT: preserve widget keys to keep session state intact.
+            # If you had a helper like render_account_sidebar() that produced left-sidebar
+            # content, call it here instead (but ensure it doesn't render admin-only items).
             #
+            # Example:
+            # from auth import render_account_sidebar
+            # render_account_sidebar()  # ensure this function does not render admin UI for subscribers
+
             st.markdown("</div>", unsafe_allow_html=True)
 
-        # Admin-only controls: render only for admins
+        # Admin-only controls: render only for admins and in a separate section
         if user_is_admin:
             st.markdown('<div class="admin-sidebar">', unsafe_allow_html=True)
             st.markdown("### Admin Controls")
-            # Insert admin-only widgets here (these will not render for subscribers)
+            # Admin widgets (only visible to admins)
             # Example:
             # st.checkbox("Show debug logs", key="admin_debug")
             st.markdown("</div>", unsafe_allow_html=True)
         else:
-            # Defensive: ensure nothing else renders for subscribers
             st.empty()
 
 else:
-    # Non-MLB sports load their own page modules (these pages are responsible for their own UI)
+    # Non-MLB sports load their own page modules
     load_page_module(SPORT_PAGES[selected_sport])
