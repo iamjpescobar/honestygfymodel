@@ -91,7 +91,19 @@ GAME_LINE = re.compile(
     r'<a[^>]*href="/games/\d+-([A-Za-z]+)-vs-([A-Za-z]+)-(\d{8})"[^>]*>(.*?)</a>',
     re.S,
 )
-SCORE_PAT = re.compile(r'(?<![\d.:])(\d{1,2})\s*:\s*(\d{1,2})(?!\s*[ap]m)(?!\d)', re.I)
+# Real finished-game text, confirmed against actual CI log output:
+# "Kia Tigers 2 NC Dinos 3 Final" — away name, away score, home name,
+# home score, then "Final". No colon anywhere (an earlier colon-based
+# pattern here was wrong and matched zero real finals in production —
+# see the changelog in the module docstring). Since each game's away/
+# home full names are already known from the URL slug, the score
+# pattern is built per-game anchored on those literal names rather
+# than a generic digit pattern — far less likely to misfire on some
+# other pair of numbers in the line.
+def _score_pattern(away_full, home_full):
+    return re.compile(re.escape(away_full) + r'\D*(\d{1,3})\D+?' + re.escape(home_full) + r'\D*(\d{1,3})')
+
+
 POSTPONED_PAT = re.compile(r'postponed|cancell?ed', re.I)
 FINAL_PAT = re.compile(r'final', re.I)
 
@@ -154,7 +166,7 @@ def parse_week(html, today_str, sample_holder):
             if sample_holder and sample_holder.get("sample") is None:
                 sample_holder["sample"] = text[:400]
             if FINAL_PAT.search(text):
-                sm = SCORE_PAT.search(text)
+                sm = _score_pattern(g["away"], g["home"]).search(text)
                 if sm:
                     g["away_score"], g["home_score"] = int(sm.group(1)), int(sm.group(2))
                     g["status"] = "final"
@@ -172,10 +184,27 @@ def _val(row, col):
     return v
 
 
+def _pick_table(page_tables, required_cols):
+    """Finds the table whose columns are a superset of required_cols.
+    Replaces an earlier "just take the biggest table on the page"
+    heuristic that, in production, picked the wrong table whenever some
+    other table on the page (nav, related-players, whatever) happened
+    to have more rows than the actual stats leaderboard — confirmed as
+    the cause of a real bug (20 pitchers/batters fetched, 0 written,
+    because the merged frame never actually had an ERA/OPS column).
+    Returns None if no table matches, so the caller can log and skip
+    that section rather than silently use the wrong data."""
+    for t in page_tables:
+        cols = set(str(c) for c in t.columns)
+        if required_cols <= cols:
+            return t
+    return None
+
+
 def fetch_pitcher_stats():
     """Real season pitching lines from the official KBO leaderboard."""
     tables = []
-    for url in PITCHING_LEADER_URLS:
+    for url, required in zip(PITCHING_LEADER_URLS, ({"PLAYER", "TEAM", "ERA"}, {"PLAYER", "TEAM", "WHIP"})):
         try:
             r = requests.get(url, headers=UA, timeout=25)
             r.raise_for_status()
@@ -183,10 +212,11 @@ def fetch_pitcher_stats():
         except Exception as exc:
             print(f"  KBO pitching leaders fetch failed for {url}: {exc}")
             continue
-        if not page_tables:
+        picked = _pick_table(page_tables, required)
+        if picked is None:
+            print(f"  KBO pitching leaders: no table on {url} matched columns {required}")
             continue
-        page_tables.sort(key=len, reverse=True)
-        tables.append(page_tables[0])
+        tables.append(picked)
 
     if not tables:
         return {}
@@ -224,7 +254,7 @@ def fetch_batting_leaders():
     BB-K/XBH-H/MH/OPS/RISP/PH. Degrades to {} on any failure — the KBO
     build must still ship without this section rather than break."""
     tables = []
-    for url in BATTING_LEADER_URLS:
+    for url, required in zip(BATTING_LEADER_URLS, ({"PLAYER", "TEAM", "AVG", "HR"}, {"PLAYER", "TEAM", "OPS", "SLG"})):
         try:
             r = requests.get(url, headers=UA, timeout=25)
             r.raise_for_status()
@@ -232,10 +262,11 @@ def fetch_batting_leaders():
         except Exception as exc:
             print(f"  KBO batting leaders fetch failed for {url}: {exc}")
             continue
-        if not page_tables:
+        picked = _pick_table(page_tables, required)
+        if picked is None:
+            print(f"  KBO batting leaders: no table on {url} matched columns {required}")
             continue
-        page_tables.sort(key=len, reverse=True)
-        tables.append(page_tables[0])
+        tables.append(picked)
 
     if not tables:
         return {}
@@ -319,6 +350,8 @@ def fetch_team_stats():
         opp_cols = [c for c in h2h_matrix.columns if str(c).endswith("(W-L-T)")]
         for _, row in h2h_matrix.iterrows():
             team = str(row["TEAM"]).strip()
+            if team.upper() == "TOTAL":
+                continue
             for oc in opp_cols:
                 opp = str(oc).split(" (")[0].strip()
                 val = str(row[oc]).strip()
