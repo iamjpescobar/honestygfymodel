@@ -9,9 +9,9 @@ This file:
   an admin section for admins.
 - The Game Card no longer renders its own sidebar; pages get the full
   width of the main column.
-- Prevents any leftover code from rendering a second sidebar for
-  subscribers by replacing st.sidebar with a pickle-safe shim
-  (module-level no-op).
+- Never reassigns st.sidebar (doing so corrupts every st.cache_data
+  write — see the note above _lc_no_op). The native sidebar is
+  suppressed via the views/ folder name, config.toml, and CSS instead.
 - Ensures admin pages and controls are only included when is_admin()
   returns True.
 - Loads page modules by running their file when selected from the sidebar.
@@ -49,34 +49,21 @@ except Exception:
     user_is_admin = bool(force_admin_env)
 
 # -------------------------
-# Pickle-safe shim: disable st.sidebar for subscribers
-# Use a module-level no-op so Streamlit's caching/pickling won't fail.
+# No-op helper (used to temporarily disable st.set_page_config while
+# view modules execute — see load_page_module).
+#
+# NOTE: this app must NEVER reassign st.sidebar (the old _HiddenSidebar
+# shim). Streamlit's st.cache_data reads an id off st.sidebar when it
+# writes ANY cache entry; a shimmed sidebar hands back a function
+# object, pickle chokes on it, and every cached function in the app
+# dies with UnserializableReturnValueError for subscriber sessions.
+# The native sidebar is already fully handled the right way: the
+# views/ folder isn't auto-registered as pages, config.toml sets
+# client.showSidebarNavigation = false, and the CSS below hides
+# [data-testid="stSidebar"] as a final backstop.
 # -------------------------
 def _lc_no_op(*args, **kwargs):
     return None
-
-class _HiddenSidebar:
-    """A minimal shim that swallows common Streamlit sidebar calls.
-    Returns a module-level no-op so it is pickle-safe.
-    Supports context manager usage: `with st.sidebar: ...`
-    """
-    def __getattr__(self, name):
-        # Return the module-level no-op for any attribute access
-        return _lc_no_op
-
-    def __call__(self, *args, **kwargs):
-        return _lc_no_op(*args, **kwargs)
-
-    # Support context manager usage: `with st.sidebar: ...`
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc, tb):
-        return False
-
-# Replace the sidebar object with the shim for non-admin users
-if not user_is_admin:
-    st.sidebar = _HiddenSidebar()
 
 # -------------------------
 # Sport selection — top-level sport switcher (always visible)
