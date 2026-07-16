@@ -1,17 +1,19 @@
 """
-Los Cappers — entry point (single right sidebar).
+Los Cappers — entry point (single right sidebar, hide extra sidebar for subscribers)
 
 This entry file:
-- Renders a single right-hand sidebar containing the full subscriber navigation
-  (everything that used to be on the left).
-- Never shows admin UI to subscribers; admin pages and controls appear only
-  when is_admin() returns True.
+- Renders a single right-hand sidebar containing the full subscriber navigation.
+- Prevents any code from rendering into Streamlit's built-in left `st.sidebar`
+  for non-admin users by replacing `st.sidebar` with a no-op shim.
+- Ensures admin pages and controls are only included when is_admin() returns True.
 - Loads page modules by running their file when selected from the right menu.
-- Provides a mobile-friendly expander fallback so the menu is accessible on phones.
+- Adds minimal responsive CSS and an expander fallback so the menu collapses on phones.
+- Preserve widget keys: when moving widgets into the right sidebar, keep original key= values.
 """
 import runpy
 from pathlib import Path
 import os
+import types
 
 import streamlit as st
 
@@ -26,6 +28,40 @@ st.set_page_config(
 
 inject_kc_theme()
 require_login()  # blocks with a themed login screen until authenticated
+
+# -------------------------
+# Admin detection (authoritative server-side is_admin())
+# Optional local dev toggle via LC_FORCE_ADMIN env var
+# -------------------------
+force_admin_env = os.getenv("LC_FORCE_ADMIN", "").lower() in ("1", "true", "yes")
+try:
+    user_is_admin = is_admin() or force_admin_env
+except Exception:
+    user_is_admin = bool(force_admin_env)
+
+# -------------------------
+# Defensive shim: disable st.sidebar for subscribers
+# This prevents any leftover code from rendering a second sidebar.
+# For admins we leave st.sidebar intact.
+# -------------------------
+if not user_is_admin:
+    class _HiddenSidebar:
+        """A minimal shim that swallows common Streamlit sidebar calls."""
+        def __getattr__(self, name):
+            # Return a callable that does nothing for widget calls
+            def _no_op(*args, **kwargs):
+                return None
+            return _no_op
+
+        # Support context manager usage: `with st.sidebar: ...`
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    # Replace the sidebar object with the shim
+    st.sidebar = _HiddenSidebar()
 
 # -------------------------
 # Sport selection — top-level sport switcher (always visible)
@@ -57,16 +93,6 @@ def build_mlb_pages(include_admin: bool):
         pages.append(("Debug Roster (Admin)", "pages/0_Debug_Roster.py"))
 
     return pages
-
-# -------------------------
-# Admin detection (authoritative server-side is_admin())
-# Optional local dev toggle via LC_FORCE_ADMIN env var
-# -------------------------
-force_admin_env = os.getenv("LC_FORCE_ADMIN", "").lower() in ("1", "true", "yes")
-try:
-    user_is_admin = is_admin() or force_admin_env
-except Exception:
-    user_is_admin = bool(force_admin_env)
 
 # -------------------------
 # Non-MLB sport page loader
@@ -106,6 +132,10 @@ def inject_minimal_css():
 
     /* Admin visual separator (admins only) */
     .admin-sidebar { margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.5rem; }
+
+    /* Defensive: hide any leftover left sidebar or duplicate menu elements that might be injected */
+    [data-testid="stSidebar"] { display: none !important; }
+    .css-1d391kg { display: none !important; } /* fallback for some Streamlit versions */
 
     /* Mobile: hide the right column content so main content becomes full width */
     @media (max-width: 900px) {
@@ -153,7 +183,6 @@ if selected_sport == "MLB":
 
             # Build a menu UI (radio) that sets st.session_state["lc_active_page"]
             # Include all subscriber items (everything that was on the left)
-            # Admin-only titles are excluded from the main subscriber list
             menu_titles = [title for title, _ in pages if not title.lower().startswith("debug roster (admin)")]
             # Determine default index safely
             default_index = 0
@@ -178,13 +207,9 @@ if selected_sport == "MLB":
             # st.selectbox("Choose team", ["NYM", "PHI"], key="team_select")
             # st.checkbox("Master Subscriber", value=True, key="master_subscriber")
             #
-            # If you had a helper like render_account_sidebar() that produced left-sidebar
-            # content, call it here instead (but ensure it doesn't render admin-only items).
+            # If you have a helper like render_account_sidebar(), call it here
+            # but ensure it does not render admin-only items for subscribers.
             #
-            # Example:
-            # from auth import render_account_sidebar
-            # render_account_sidebar()  # ensure this function does not render admin UI for subscribers
-
             st.markdown("</div>", unsafe_allow_html=True)
 
         # Admin-only controls: render only for admins and in a separate section
