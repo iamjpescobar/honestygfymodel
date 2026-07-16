@@ -9,6 +9,7 @@ placeholder data, per the same real-data standard the MLB engines hold.
 """
 import runpy
 from pathlib import Path
+import os
 
 import streamlit as st
 
@@ -37,28 +38,51 @@ with _strip_col:
     sport_switcher(active=selected_sport)
 
 # -------------------------
-# MLB navigation (the live product)
+# Build the pages dict for MLB (the live product)
 # -------------------------
-pages = {
-    "": [
-        st.Page("pages/GameCard.py", title="Game Card", icon=":material/stadium:", default=True),
-        st.Page("pages/Player_Of_The_Day.py", title="Player of the Day", icon=":material/star:"),
-    ],
-    "Legacy Tools": [
-        st.Page("pages/Model.py", title="Model", icon=":material/monitoring:"),
-        st.Page("pages/1_Pitcher_Report.py", title="Pitcher Report", icon=":material/sports_baseball:"),
-        st.Page("pages/1_Pitcher_Splits.py", title="Pitcher Splits", icon=":material/split_scene:"),
-        st.Page("pages/2_Pitch_Mix_Splits.py", title="Pitch Mix Splits", icon=":material/blender:"),
-        st.Page("pages/2_Lineup_Analysis.py", title="Lineup Analysis", icon=":material/groups:"),
-        st.Page("pages/3_Team_Tools.py", title="Team Tools", icon=":material/handyman:"),
-        st.Page("pages/KC_Page.py", title="KC Lineup Dashboard", icon=":material/dashboard:"),
-    ],
-}
+def build_mlb_pages(include_admin: bool):
+    """Return the pages dict for MLB. Admin pages are only added when
+    include_admin is True."""
+    pages = {
+        "": [
+            st.Page("pages/GameCard.py", title="Game Card", icon=":material/stadium:", default=True),
+            st.Page("pages/Player_Of_The_Day.py", title="Player of the Day", icon=":material/star:"),
+        ],
+        "Legacy Tools": [
+            st.Page("pages/Model.py", title="Model", icon=":material/monitoring:"),
+            st.Page("pages/1_Pitcher_Report.py", title="Pitcher Report", icon=":material/sports_baseball:"),
+            st.Page("pages/1_Pitcher_Splits.py", title="Pitcher Splits", icon=":material/split_scene:"),
+            st.Page("pages/2_Pitch_Mix_Splits.py", title="Pitch Mix Splits", icon=":material/blender:"),
+            st.Page("pages/2_Lineup_Analysis.py", title="Lineup Analysis", icon=":material/groups:"),
+            st.Page("pages/3_Team_Tools.py", title="Team Tools", icon=":material/handyman:"),
+            st.Page("pages/KC_Page.py", title="KC Lineup Dashboard", icon=":material/dashboard:"),
+        ],
+    }
 
-if is_admin():
-    pages["Admin"] = [
-        st.Page("pages/0_Debug_Roster.py", title="Debug Roster", icon=":material/bug_report:"),
-    ]
+    if include_admin:
+        # Admin pages are appended only when include_admin is True.
+        pages["Admin"] = [
+            st.Page("pages/0_Debug_Roster.py", title="Debug Roster", icon=":material/bug_report:"),
+        ]
+
+    return pages
+
+# -------------------------
+# Admin detection
+# -------------------------
+# Production: is_admin() should be implemented server-side and return True
+# only for authenticated admin users. Do NOT rely on query params in prod.
+#
+# Local dev convenience: set environment variable LC_FORCE_ADMIN=true to
+# simulate admin locally (useful for testing). This is optional.
+force_admin_env = os.getenv("LC_FORCE_ADMIN", "").lower() in ("1", "true", "yes")
+
+# Evaluate admin status. is_admin() is authoritative; env toggle only helps local dev.
+try:
+    user_is_admin = is_admin() or force_admin_env
+except Exception:
+    # If is_admin() raises for any reason, default to False to avoid leaking admin UI.
+    user_is_admin = bool(force_admin_env)
 
 # -------------------------
 # Sport page loader (non-MLB sports)
@@ -86,8 +110,12 @@ def load_page_module(rel_path: str):
         st.exception(e)
 
 
+# -------------------------
+# Render navigation or sport page
+# -------------------------
 if selected_sport == "MLB":
-    navigation = st.navigation(pages, expanded=True)
+    # Build pages with admin pages included only when user_is_admin is True.
+    navigation = st.navigation(build_mlb_pages(include_admin=user_is_admin), expanded=True)
     navigation.run()
 else:
     load_page_module(SPORT_PAGES[selected_sport])
