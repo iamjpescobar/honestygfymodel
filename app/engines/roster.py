@@ -85,18 +85,13 @@ def get_all_teams():
 @st.cache_data(ttl=300)
 def get_live_team_roster(team_name: str):
     """
-    Returns this team's roster, merging rosterType=40Man with
-    rosterType=fullRoster and de-duping by person id, each entry tagged
-    with its real position so callers can filter pitchers vs. position
-    players instead of guessing from a single mixed dropdown.
-    fullRoster is queried in addition to 40Man because a just-traded or
-    just-signed player can lag behind on the official 40-man transaction
-    before fullRoster picks him up — merging both is the most complete
-    real roster this API can give without inventing anything.
-    Deliberately NOT the 26-man active roster — that default excludes
-    anyone on the Injured List, optioned to the minors, restricted, or
-    suspended, which is why key/star players were going missing from
-    research pages that use this list.
+    Returns this team's CURRENT roster — rosterType=active (the real,
+    live 26-man active roster MLB itself maintains right now) as the
+    primary source, since that's the roster that's actually true today.
+    Falls back to rosterType=40Man ONLY if the active-roster call fails
+    or comes back empty (e.g. a transient API hiccup) — 40Man is a
+    backup, never the primary source, so a healthy active-roster
+    response is always what's shown.
     Cached for 5 minutes (short on purpose, so roster moves show up
     fast) rather than the 30-minute window used elsewhere.
     Returns an empty list (rather than crashing the page) if the MLB
@@ -118,24 +113,23 @@ def get_live_team_roster(team_name: str):
     if not team_id:
         return []
 
-    roster_data = {}  # keyed by person id, so 40Man + fullRoster merge cleanly
-    for roster_type in ("40Man", "fullRoster"):
+    roster_data = []
+    for roster_type in ("active", "40Man"):  # active first; 40Man is backup only
         roster_url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster?rosterType={roster_type}"
         try:
             resp = requests.get(roster_url, timeout=10).json().get("roster", [])
         except Exception:
-            continue
-        for player in resp:
-            pid = player.get("person", {}).get("id")
-            if pid is not None and pid not in roster_data:
-                roster_data[pid] = player
+            resp = []
+        if resp:
+            roster_data = resp
+            break  # active worked — stop, don't fall through to the backup
 
     if not roster_data:
         return []
 
     players = []
 
-    for player in roster_data.values():
+    for player in roster_data:
         pid = str(player["person"]["id"])
         full_name = player["person"]["fullName"]
         position_code = player.get("position", {}).get("abbreviation", "?")
@@ -162,6 +156,73 @@ def get_live_team_roster(team_name: str):
         })
 
     return players
+
+
+@st.cache_data(ttl=300)
+def get_last_starting_lineup(team_name: str):
+    """
+    The real 9 starters from this team's most recently COMPLETED game —
+    MLB's own posted lineup for that game, via the same boxscore source
+    get_confirmed_lineup() uses. Nothing here is inferred from season
+    usage patterns or depth-chart guessing; if MLB hasn't played/posted
+    a game, this returns nothing rather than a fabricated "usual"
+    lineup.
+
+    Returns (lineup, game_date, confirmed) where lineup is a list of
+    {"id", "name", "position", "bats", "battingOrder"} sorted by real
+    batting order (9 real starters, one is "P" for the actual starter
+    that day), game_date is the real date (YYYY-MM-DD) of that game, and
+    confirmed is True only if a real posted lineup was found. Callers
+    MUST check `confirmed` before showing this as "the starters."
+    """
+    teams_url = "https://statsapi.mlb.com/api/v1/teams?sportId=1"
+    try:
+        teams = requests.get(teams_url, timeout=10).json().get("teams", [])
+    except Exception:
+        return [], None, False
+
+    team_id = None
+    for t in teams:
+        if t["name"].lower() == team_name.lower():
+            team_id = t["id"]
+            break
+
+    if not team_id:
+        return [], None, False
+
+    # Real schedule, last 14 real days through today — finds the most
+    # recent actually-played (Final) game, never guesses one.
+    from datetime import datetime, timedelta
+    today = datetime.utcnow().date()
+    start = today - timedelta(days=14)
+    sched_url = (
+        "https://statsapi.mlb.com/api/v1/schedule"
+        f"?sportId=1&teamId={team_id}&startDate={start.isoformat()}&endDate={today.isoformat()}"
+    )
+    try:
+        sched = requests.get(sched_url, timeout=10).json()
+    except Exception:
+        return [], None, False
+
+    games = []
+    for date_entry in sched.get("dates", []):
+        for g in date_entry.get("games", []):
+            state = g.get("status", {}).get("abstractGameState")
+            if state == "Final":
+                games.append(g)
+
+    if not games:
+        return [], None, False
+
+    games.sort(key=lambda g: g.get("gameDate", ""))
+    last_game = games[-1]
+    game_pk = last_game.get("gamePk")
+    away_id = last_game.get("teams", {}).get("away", {}).get("team", {}).get("id")
+    side = "away" if away_id == team_id else "home"
+    game_date = (last_game.get("gameDate") or "")[:10] or None
+
+    lineup, confirmed = get_confirmed_lineup(game_pk, side)
+    return lineup, game_date, confirmed
 
 
 def get_pitchers(team_name: str):
