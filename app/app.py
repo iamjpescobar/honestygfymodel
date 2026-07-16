@@ -270,6 +270,31 @@ if selected_sport == "MLB":
         # Page navigation — always visible (was hidden inside the "Menu"
         # dropdown before). Same key as the old radio so nothing else
         # reading lc_nav_radio breaks.
+        #
+        # Accent-rail restyle: pure CSS over the same st.radio — circles
+        # hidden, each option becomes a full-width row, the active row
+        # gets a teal left rail + tint (matches the section-tag / badge
+        # language in kc_theme). Targets Streamlit's .st-key-lc_nav_radio
+        # wrapper and :has(input:checked); if a future Streamlit version
+        # changes that DOM, the nav gracefully degrades to plain radios.
+        _rail = COLOR["stat_high"]
+        _hover = COLOR["text"]
+        st.markdown(
+            "<style>"
+            ".st-key-lc_nav_radio [role='radiogroup'] label > div:first-child { display: none; }"
+            ".st-key-lc_nav_radio [role='radiogroup'] label {"
+            "  display: flex; width: 100%; padding: 8px 12px; margin: 0;"
+            "  border-left: 2px solid transparent; border-radius: 0;"
+            "  cursor: pointer; transition: background 0.15s; }"
+            ".st-key-lc_nav_radio [role='radiogroup'] label:hover {"
+            f"  background: {_hover}0D; }}"
+            ".st-key-lc_nav_radio [role='radiogroup'] label:has(input:checked) {"
+            f"  background: {_rail}1A; border-left-color: {_rail}; }}"
+            ".st-key-lc_nav_radio [role='radiogroup'] label:has(input:checked) p {"
+            f"  color: {_rail}; font-weight: 600; }}"
+            "</style>",
+            unsafe_allow_html=True,
+        )
         selected = st.radio(
             "Navigation",
             menu_titles,
