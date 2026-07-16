@@ -44,32 +44,62 @@ def get_todays_games_with_weather(date_str: str = None):
     except Exception as e:
         return [], f"Schedule request failed: {e}"
 
-    games_list = resp.get("dates", [{}])[0].get("games", []) if resp.get("dates") else []
+    # Defensive: st.cache_data pickles whatever this function returns, so
+    # every field below is forced to a plain str/int/None rather than
+    # trusted as-is. If the MLB API ever changes shape (e.g. returns a
+    # nested object where a string is expected), a stray non-primitive
+    # here is exactly the kind of thing that causes an
+    # UnserializableReturnValueError crash on the Game Card page — this
+    # makes that class of crash structurally impossible going forward.
+    def _clean(v, default=None):
+        if v is None:
+            return default
+        if isinstance(v, (str, int, float, bool)):
+            return v
+        return str(v) if v not in ({}, []) else default
+
+    def _clean_int(v):
+        try:
+            return int(v) if v is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    try:
+        games_list = resp.get("dates", [{}])[0].get("games", []) if resp.get("dates") else []
+    except Exception as e:
+        return [], f"Unexpected schedule response shape: {e}"
 
     games = []
-    for g in games_list:
-        game_pk = g.get("gamePk")
-        weather = g.get("weather", {})
+    try:
+        for g in games_list:
+            game_pk = _clean_int(g.get("gamePk"))
+            weather = g.get("weather") or {}
+            if not isinstance(weather, dict):
+                weather = {}
 
-        # Schedule hydration doesn't always carry weather — fall back to
-        # the live game feed, which reliably does once MLB posts it.
-        if not weather and game_pk:
-            weather = _fetch_weather_from_feed(game_pk)
+            # Schedule hydration doesn't always carry weather — fall back to
+            # the live game feed, which reliably does once MLB posts it.
+            if not weather and game_pk:
+                weather = _fetch_weather_from_feed(game_pk)
+                if not isinstance(weather, dict):
+                    weather = {}
 
-        games.append({
-            "game_pk": game_pk,
-            "away": g.get("teams", {}).get("away", {}).get("team", {}).get("name", "TBD"),
-            "home": g.get("teams", {}).get("home", {}).get("team", {}).get("name", "TBD"),
-            "away_pitcher": g.get("teams", {}).get("away", {}).get("probablePitcher", {}).get("fullName", "TBD"),
-            "home_pitcher": g.get("teams", {}).get("home", {}).get("probablePitcher", {}).get("fullName", "TBD"),
-            "away_pitcher_id": g.get("teams", {}).get("away", {}).get("probablePitcher", {}).get("id"),
-            "home_pitcher_id": g.get("teams", {}).get("home", {}).get("probablePitcher", {}).get("id"),
-            "venue": g.get("venue", {}).get("name", "Unknown Venue"),
-            "game_time": g.get("gameDate"),
-            "weather_condition": weather.get("condition"),
-            "weather_temp": weather.get("temp"),
-            "weather_wind": weather.get("wind"),
-        })
+            games.append({
+                "game_pk": game_pk,
+                "away": _clean(g.get("teams", {}).get("away", {}).get("team", {}).get("name"), "TBD"),
+                "home": _clean(g.get("teams", {}).get("home", {}).get("team", {}).get("name"), "TBD"),
+                "away_pitcher": _clean(g.get("teams", {}).get("away", {}).get("probablePitcher", {}).get("fullName"), "TBD"),
+                "home_pitcher": _clean(g.get("teams", {}).get("home", {}).get("probablePitcher", {}).get("fullName"), "TBD"),
+                "away_pitcher_id": _clean_int(g.get("teams", {}).get("away", {}).get("probablePitcher", {}).get("id")),
+                "home_pitcher_id": _clean_int(g.get("teams", {}).get("home", {}).get("probablePitcher", {}).get("id")),
+                "venue": _clean(g.get("venue", {}).get("name"), "Unknown Venue"),
+                "game_time": _clean(g.get("gameDate")),
+                "weather_condition": _clean(weather.get("condition")),
+                "weather_temp": _clean(weather.get("temp")),
+                "weather_wind": _clean(weather.get("wind")),
+            })
+    except Exception as e:
+        return [], f"Unexpected game data shape: {e}"
 
     return games, None
 

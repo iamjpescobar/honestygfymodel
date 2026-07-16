@@ -71,17 +71,85 @@ def inject_kc_theme():
         f"""
         <style>
         /* ---------- Mobile / small screens ---------- */
+        /* IMPORTANT: this block used to force
+           `stHorizontalBlock {{ flex-wrap: wrap }}` on EVERY row of
+           columns site-wide. That fought Streamlit's own built-in mobile
+           behavior (columns stack to full width, one per row, below
+           640px) and instead squeezed things like the Game Card's
+           content/nav columns side-by-side into slivers — that was the
+           main "nightmare to navigate" cause on phones. Fixed by letting
+           Streamlit's native stacking do its job everywhere, and only
+           opting specific rows (badge/pill rows, the game-picker
+           carousel) back into horizontal scrolling where that's
+           actually wanted. Those opt-ins are handled by their own
+           scoped `.st-key-...` rules elsewhere in this file, not here. */
         @media (max-width: 700px) {{
-            .lc-title {{ font-size: 24px !important; }}
+            html, body {{ overflow-x: hidden !important; }}
+            .stApp {{ overflow-x: hidden !important; }}
+
+            .lc-title {{ font-size: 22px !important; }}
             .lc-subtitle {{ font-size: 12px !important; }}
-            .block-container {{ padding-left: 0.8rem !important;
-                                padding-right: 0.8rem !important;
-                                padding-top: 2.2rem !important; }}
-            .pf-card {{ padding: 12px 12px !important; }}
-            div[data-testid="stHorizontalBlock"] {{ flex-wrap: wrap !important;
-                                                    gap: 0.4rem !important; }}
-            div[data-testid="stHorizontalBlock"] > div {{ min-width: 0 !important; }}
-            div[data-testid="stDataFrame"] {{ font-size: 11px !important; }}
+            .lc-eyebrow {{ font-size: 10px !important; }}
+            .block-container {{
+                padding-left: 0.9rem !important;
+                padding-right: 0.9rem !important;
+                padding-top: 1.6rem !important;
+                max-width: 100vw !important;
+            }}
+            .pf-card, div[class*="st-key-card_"] {{ padding: 12px 12px !important; }}
+            .pf-metric-value {{ font-size: 21px !important; }}
+
+            /* Columns: let Streamlit's native full-width stacking apply.
+               Just make sure nothing inside a stacked column can force
+               the page wider than the viewport (long team names, wide
+               badges, etc.), and give stacked rows a bit of breathing
+               room between them. */
+            div[data-testid="stHorizontalBlock"] {{
+                gap: 0.6rem !important;
+            }}
+            div[data-testid="stHorizontalBlock"] > div {{
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+            }}
+
+            /* Tables/dataframes: scroll horizontally WITHIN their own
+               box instead of pushing the whole page sideways. */
+            div[data-testid="stDataFrame"], div[data-testid="stTable"] {{
+                font-size: 11px !important;
+                max-width: 100% !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }}
+
+            /* Buttons, pills, and the view-nav radio need real touch
+               targets on mobile — the desktop sizing (0.5rem padding)
+               is too small to reliably tap. */
+            .stButton > button, .stDownloadButton > button {{
+                min-height: 40px !important;
+                padding: 0.55rem 1rem !important;
+                font-size: 14px !important;
+            }}
+            div[data-testid="stButtonGroup"] button {{
+                min-height: 38px !important;
+                font-size: 13px !important;
+            }}
+            .st-key-gc_view_nav label {{
+                padding: 12px 12px !important;
+            }}
+            .st-key-gc_view_nav label div[data-testid="stMarkdownContainer"] p {{
+                font-size: 14px !important;
+            }}
+
+            /* Sidebar: full-width and comfortably tappable when open. */
+            section[data-testid="stSidebar"] {{ min-width: 82vw !important; }}
+
+            /* Long unbroken strings (team/venue names inside badges,
+               wordmark, etc.) wrap instead of forcing horizontal scroll. */
+            .pf-badge, .pf-card-title, .pf-card-subtitle {{
+                white-space: normal !important;
+                word-break: break-word !important;
+            }}
         }}
 
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
