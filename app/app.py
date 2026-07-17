@@ -281,7 +281,7 @@ if selected_sport == "MLB":
         _hover = COLOR["text"]
         st.markdown(
             "<style>"
-            "div[role='radiogroup'][aria-label='Navigation'] label > div:not(:last-child) {"
+            "div[role='radiogroup'][aria-label='Navigation'] label > div > div:not(:has(p)) {"
             "  display: none !important; }"
             "div[role='radiogroup'][aria-label='Navigation'] label {"
             "  display: flex !important; align-items: center !important;"
@@ -290,9 +290,9 @@ if selected_sport == "MLB":
             "  cursor: pointer; transition: background 0.15s; }"
             "div[role='radiogroup'][aria-label='Navigation'] label:hover {"
             f"  background: {_hover}0D !important; }}"
-            "div[role='radiogroup'][aria-label='Navigation'] label:has(input:checked) {"
+            "div[role='radiogroup'][aria-label='Navigation'] label[data-selected='true'] {"
             f"  background: {_rail}1A !important; border-left-color: {_rail} !important; }}"
-            "div[role='radiogroup'][aria-label='Navigation'] label:has(input:checked) p {"
+            "div[role='radiogroup'][aria-label='Navigation'] label[data-selected='true'] p {"
             f"  color: {_rail} !important; font-weight: 600 !important; }}"
             "</style>",
             unsafe_allow_html=True,
