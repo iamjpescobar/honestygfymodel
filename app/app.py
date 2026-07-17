@@ -141,21 +141,38 @@ def inject_minimal_css():
     /* Make images and tables responsive */
     img, table { max-width: 100%; height: auto; }
 
-    /* Right sidebar wrapper */
-    .right-sidebar { position: sticky; top: 1rem; padding-left: 0.5rem; padding-right: 0.5rem; }
-
-    /* Admin visual separator (admins only) */
+    /* Right sidebar / admin markers (cosmetic wrappers only — Streamlit
+       widgets are NOT inside these divs, so never rely on them to
+       show/hide the actual sidebar content) */
+    .right-sidebar { padding-left: 0.5rem; padding-right: 0.5rem; }
     .admin-sidebar { margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.5rem; }
 
-    /* Defensive: hide any leftover left sidebar or duplicate menu elements that might be injected */
+    /* Defensive: hide any leftover native left sidebar */
     [data-testid="stSidebar"] { display: none !important; }
-    .css-1d391kg { display: none !important; } /* fallback for some Streamlit versions */
 
-    /* Mobile: hide the right column content so main content becomes full width */
+    /* MOBILE (portrait phones / narrow windows): Streamlit keeps
+       st.columns side-by-side at every width, which crushed the 80/20
+       content+sidebar split into an unreadable sliver. Stack the two
+       top-level rows vertically at full width — the sport switcher row
+       (spacer column collapses to nothing) and the content+sidebar row
+       (page content first, then account card / nav / glossary / sign
+       out below it). :has() scopes this to exactly those two blocks;
+       columns inside pages (weather strip, pitcher pills, carousels)
+       are untouched. */
     @media (max-width: 900px) {
-      .right-sidebar { display: none !important; }
-      .admin-sidebar { display: none !important; }
-      [data-testid="stAppViewContainer"] .main { width: 100% !important; }
+      div[data-testid="stHorizontalBlock"]:has([aria-label="Navigation"]),
+      div[data-testid="stHorizontalBlock"]:has([aria-label="Sport"]) {
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+      }
+      div[data-testid="stHorizontalBlock"]:has([aria-label="Navigation"]) > div[data-testid="stColumn"],
+      div[data-testid="stHorizontalBlock"]:has([aria-label="Sport"]) > div[data-testid="stColumn"],
+      div[data-testid="stHorizontalBlock"]:has([aria-label="Navigation"]) > div[data-testid="column"],
+      div[data-testid="stHorizontalBlock"]:has([aria-label="Sport"]) > div[data-testid="column"] {
+        width: 100% !important;
+        min-width: 100% !important;
+        flex: 1 1 100% !important;
+      }
     }
     """
     st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
