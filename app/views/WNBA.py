@@ -316,14 +316,24 @@ def _render_slate():
                                 if label == "Volume":
                                     row["FTA"] = p.get("fta")
                                     row["TO"] = p.get("to")
+                                    row["FG%"] = p.get("fg_pct")
+                                if label == "Points":
+                                    row["FG%"] = p.get("fg_pct")
+                                    row["3P%"] = p.get("tp_pct")
+                                if label == "Threes":
+                                    row["3P%"] = p.get("tp_pct")
                                 rows.append(row)
                             df = pd.DataFrame(rows)
                             num_cols = [c for c in df.columns if c != "Player"]
                             for c in num_cols:
                                 df[c] = pd.to_numeric(df[c], errors="coerce")
-                            fmts = {c: "{:.1f}" for c in num_cols}
-                            fmts["GP"] = "{:.0f}"
-                            fmts["H2H GP"] = "{:.0f}"
+                            for c in ("GP", "H2H GP"):
+                                if c in df.columns:
+                                    df[c] = df[c].map(
+                                        lambda v: "\u2014" if pd.isna(v) else str(int(v))
+                                    )
+                            fmts = {c: "{:.1f}" for c in num_cols
+                                    if c not in ("GP", "H2H GP")}
                             # The Styler already hides its own index (see
                             # table_style._base_styler) — passing hide_index or
                             # column_config on TOP of a Styler makes Streamlit
@@ -333,7 +343,7 @@ def _render_slate():
                             # widget the Styler and NOTHING else that touches
                             # column layout.
                             styled = style_stat_table(
-                                df, favor_high=["MIN", "Season", "L5", "L10", "vs OPP"],
+                                df, favor_high=["MIN", "Season", "L5", "L10", "vs OPP", "FG%", "3P%"],
                                 gradient=True,
                             ).format(fmts, na_rep="\u2014")
                             st.dataframe(styled, width="stretch",

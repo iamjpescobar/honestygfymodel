@@ -296,6 +296,16 @@ def team_h2h(finals, away, home):
             "avg_total": _avg(totals), "scorelines": scorelines}
 
 
+def _shooting_pct(subset, made_key, att_key):
+    """Attempts-weighted shooting percentage over a set of game logs —
+    total makes / total attempts, NOT an average of per-game
+    percentages (which would let a 1-for-1 night count the same as a
+    10-for-20 one). None when there are no attempts."""
+    made = sum(g.get(made_key) or 0 for g in subset)
+    att = sum(g.get(att_key) or 0 for g in subset)
+    return round(made / att * 100, 1) if att > 0 else None
+
+
 def player_summaries(logs):
     out = {}
     for pid, rec in logs.items():
@@ -324,6 +334,8 @@ def player_summaries(logs):
             "to": col("to", games), "l5_to": col("to", games[-5:]), "l10_to": col("to", games[-10:]),
             "fga": col("fga", games), "l5_fga": col("fga", games[-5:]), "l10_fga": col("fga", games[-10:]),
             "fta": col("fta", games), "l5_fta": col("fta", games[-5:]), "l10_fta": col("fta", games[-10:]),
+            "fg_pct": _shooting_pct(games, "fgm", "fga"),
+            "tp_pct": _shooting_pct(games, "tpm", "tpa"),
         }
     return out
 
@@ -419,7 +431,8 @@ def main():
                         "stocks", "l5_stocks", "l10_stocks", "stl", "blk",
                         "to", "l5_to", "l10_to",
                         "fga", "l5_fga", "l10_fga",
-                        "fta", "l5_fta", "l10_fta")
+                        "fta", "l5_fta", "l10_fta",
+                        "fg_pct", "tp_pct")
             h2h_keys = ("h2h_ppg", "h2h_rpg", "h2h_apg", "h2h_tpm", "h2h_pra",
                         "h2h_pr", "h2h_pa", "h2h_ra",
                         "h2h_stocks", "h2h_fga", "h2h_gp")
