@@ -327,13 +327,21 @@ def _render_slate():
                             num_cols = [c for c in df.columns if c != "Player"]
                             for c in num_cols:
                                 df[c] = pd.to_numeric(df[c], errors="coerce")
-                            for c in ("GP", "H2H GP"):
-                                if c in df.columns:
-                                    df[c] = df[c].map(
-                                        lambda v: "\u2014" if pd.isna(v) else str(int(v))
-                                    )
-                            fmts = {c: "{:.1f}" for c in num_cols
-                                    if c not in ("GP", "H2H GP")}
+                            # Render every stat as fixed-format TEXT so
+                            # values sit flush under their left-aligned
+                            # headers — the grid right-aligns real numbers,
+                            # floating them across stretched columns. Safe
+                            # for the color gradients: _magnitude_column in
+                            # table_style.py coerces each column back to
+                            # numeric internally, so color math still runs
+                            # on the real values. NaN becomes an em dash in
+                            # the DATA rather than relying on Styler na_rep.
+                            int_like = ("GP", "H2H GP")
+                            for c in num_cols:
+                                if c in int_like:
+                                    df[c] = df[c].map(lambda v: "\u2014" if pd.isna(v) else str(int(v)))
+                                else:
+                                    df[c] = df[c].map(lambda v: "\u2014" if pd.isna(v) else f"{v:.1f}")
                             # The Styler already hides its own index (see
                             # table_style._base_styler) — passing hide_index or
                             # column_config on TOP of a Styler makes Streamlit
@@ -343,9 +351,10 @@ def _render_slate():
                             # widget the Styler and NOTHING else that touches
                             # column layout.
                             styled = style_stat_table(
-                                df, favor_high=["MIN", "Season", "L5", "L10", "vs OPP", "FG%", "3P%"],
+                                df, favor_high=["MIN", "Season", "L5", "L10",
+                                                "vs OPP", "FG%", "3P%"],
                                 gradient=True,
-                            ).format(fmts, na_rep="\u2014")
+                            )
                             st.dataframe(styled, width="stretch",
                                          height=40 + 36 * len(df))
                             note = TAB_NOTES.get(label)
