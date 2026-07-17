@@ -224,6 +224,14 @@ with content_col:
             if pitcher_id:
                 st.image(get_headshot_url(pitcher_id), width=80)
             st.markdown(f'<span style="font-weight:700; color:{COLOR["gold"]};">{selected_pitcher_name}</span>', unsafe_allow_html=True)
+            _baa = pitcher_data.get("BA") if pitcher_data else None
+            if _baa is not None and (pitcher_data.get("AB") or 0) > 0:
+                st.markdown(
+                    f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:12px; '
+                    f'color:{COLOR["text"]}; margin-top:2px;">BA allowed '
+                    f'<span style="font-weight:700; color:{COLOR["stat_high"]};">{_baa:.3f}</span></div>',
+                    unsafe_allow_html=True,
+                )
 
         with col_mix:
             st.markdown(f'<div class="pf-card-title" style="margin-bottom:8px; color:{COLOR["gold"]};">Pitch Mix (Season)</div>', unsafe_allow_html=True)
@@ -381,6 +389,7 @@ with content_col:
                                     vs = get_batter_vs_pitch_types(ob.get("id"), bp_top3, window="season", unit="bbe")
                                     bp_rows.append({
                                         "Player": ob.get("name", "?"),
+                                        "BA": vs.get("BA"),
                                         "Brl %": vs.get("Brl %"),
                                         "HH %": vs.get("HH %"),
                                         "Whiff %": vs.get("Whiff %"),
@@ -396,7 +405,7 @@ with content_col:
                                 st.dataframe(
                                     style_stat_table(
                                         pd.DataFrame(bp_rows).set_index("Player"),
-                                        favor_high=["Brl %", "HH %"],
+                                        favor_high=["BA", "Brl %", "HH %"],
                                         favor_low=["Whiff %", "SwStr %"],
                                         gradient=True,
                                     ),
@@ -678,6 +687,7 @@ with content_col:
                         "Bats": r["bats"],
                         "Matchup": tier,
                         "SLAM": round(slam, 1),
+                        "BA": profile.get("BA", 0),
                         "Brl%": profile.get("Brl %", 0),
                         "HH%": profile.get("HH %", 0),
                         "LD%": profile.get("LD %", 0),
@@ -702,12 +712,12 @@ with content_col:
 
                     styled = style_stat_table(
                         display_df.drop(columns=["Matchup", "Confidence", "EdgeLabel", "EdgeTier"]),
-                        favor_high=["SLAM", "Brl%", "HH%", "LD%", "FB%", "SweetSpot%", "PullAir%", "PullBrl%", "Blast%", "HR Score", "Hit Score"],
+                        favor_high=["SLAM", "BA", "Brl%", "HH%", "LD%", "FB%", "SweetSpot%", "PullAir%", "PullBrl%", "Blast%", "HR Score", "Hit Score"],
                         favor_low=["GB%", "SwStr%"],
                         gradient=True,
                     )
                     styled = styled.format({
-                        "SLAM": "{:.1f}", "Brl%": "{:.1f}", "HH%": "{:.1f}", "LD%": "{:.1f}",
+                        "SLAM": "{:.1f}", "BA": "{:.3f}", "Brl%": "{:.1f}", "HH%": "{:.1f}", "LD%": "{:.1f}",
                         "FB%": "{:.1f}", "GB%": "{:.1f}", "SweetSpot%": "{:.1f}", "PullAir%": "{:.1f}",
                         "PullBrl%": "{:.1f}", "Blast%": "{:.1f}", "SwStr%": "{:.1f}",
                         "HR Score": "{:.0f}", "Hit Score": "{:.0f}",

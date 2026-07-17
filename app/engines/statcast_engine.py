@@ -231,14 +231,26 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
     empty = {
         "Brl %": 0.0, "HH %": 0.0, "LD %": 0.0, "GB %": 0.0, "FB %": 0.0,
         "SweetSpot %": 0.0, "PullAir %": 0.0, "PullBrl %": 0.0, "Blast %": 0.0, "BBE": 0,
+        "BA": 0.0, "AB": 0,
     }
     if df.empty or "type" not in df.columns:
         return empty
 
+    # Real batting average from PA outcomes — hits / at-bats using the
+    # standard AB definition (walks/HBP/sac excluded), same event sets
+    # the pitcher Splits table uses. On a batter's rows this is his BA;
+    # on a pitcher's rows the identical figure is his BA ALLOWED.
+    ba, ab = 0.0, 0
+    if "events" in df.columns:
+        _ev = df["events"].dropna()
+        _hits = _ev.isin(_HIT_EVENTS).sum()
+        ab = int(_ev.isin(_AB_EVENTS).sum())
+        ba = round(_hits / ab, 3) if ab > 0 else 0.0
+
     bbe_df = df[df["type"] == "X"].copy()
     bbe_count = len(bbe_df)
     if bbe_count == 0:
-        return empty
+        return {**empty, "BA": ba, "AB": ab}
 
     ls = pd.to_numeric(bbe_df.get("launch_speed"), errors="coerce")
     la = pd.to_numeric(bbe_df.get("launch_angle"), errors="coerce")
@@ -306,6 +318,7 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
         "PullAir %": round(pull_air / bbe_count * 100, 2),
         "PullBrl %": round(pull_barrel / bbe_count * 100, 2),
         "Blast %": blast_pct,
+        "BA": ba, "AB": ab,
         "BBE": bbe_count,
     }
 
@@ -511,6 +524,10 @@ _OUT_EVENTS = {
 # not mistaken for a certified stat.
 _WALK_EVENTS = {"walk", "hit_by_pitch"}
 _STRIKEOUT_EVENTS = {"strikeout", "strikeout_double_play"}
+# Standard at-bat definition: hits + outs + errors; walks/HBP/sac excluded.
+_AB_EVENTS = _HIT_EVENTS | {"field_out", "strikeout", "strikeout_double_play",
+                            "double_play", "grounded_into_double_play",
+                            "force_out", "fielders_choice_out", "field_error"}
 
 
 def get_pitcher_advanced_splits(pitcher_id, side: str = None) -> dict:
@@ -578,9 +595,7 @@ def get_pitcher_advanced_splits(pitcher_id, side: str = None) -> dict:
     home_runs = (pa_events == "home_run").sum()
     outs = pa_events.isin(_OUT_EVENTS).sum()
 
-    at_bats = pa_events.isin(_HIT_EVENTS | {"field_out", "strikeout", "strikeout_double_play",
-                                             "double_play", "grounded_into_double_play",
-                                             "force_out", "fielders_choice_out", "field_error"}).sum()
+    at_bats = pa_events.isin(_AB_EVENTS).sum()
 
     total_bases = (
         (pa_events == "single").sum() * 1
