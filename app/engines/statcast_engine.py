@@ -119,7 +119,12 @@ def _read_local_parquet(kind: str, player_id):
     if not path.exists():
         return None
     try:
-        return pd.read_parquet(path)
+        # Trim + downcast on read as well: the nightly pipeline already
+        # writes lean files, but this guarantees nothing full-width ever
+        # enters the cache — e.g. a parquet from an older pipeline run,
+        # or a future pipeline edit that drifts out of sync with
+        # _KEEP_COLS. Costs nothing when the file is already trimmed.
+        return _trim_and_downcast(pd.read_parquet(path))
     except Exception:
         return None
 
