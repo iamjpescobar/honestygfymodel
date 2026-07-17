@@ -38,7 +38,7 @@ def _grade(net):
     return _GRADES.get(min(net, 4), "A" if net > 4 else None)
 
 
-@st.cache_data(ttl=3600, max_entries=24, show_spinner=False)
+@st.cache_data(ttl=3600, max_entries=8, show_spinner=False)
 def grade_matchup(away_pitcher_id, home_pitcher_id, away_name, home_name,
                   park_factor=None, park_verified=False, temp=None):
     """Returns {"ml": {...}|None, "ou": {...}|None, "error": str|None}."""

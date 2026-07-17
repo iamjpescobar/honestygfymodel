@@ -135,7 +135,7 @@ def get_data_timestamp():
         return None
 
 
-@st.cache_data(ttl=7200, max_entries=20, show_spinner=False)
+@st.cache_data(ttl=7200, max_entries=10, show_spinner=False)
 def _get_batter_df(batter_id, start_date=DEFAULT_START_DATE, end_date=None):
     local = _read_local_parquet("batters", batter_id)
     if local is not None:
@@ -145,7 +145,7 @@ def _get_batter_df(batter_id, start_date=DEFAULT_START_DATE, end_date=None):
     return _pull_and_trim(statcast_batter, batter_id, start_date, end_date)
 
 
-@st.cache_data(ttl=7200, max_entries=10, show_spinner=False)
+@st.cache_data(ttl=7200, max_entries=4, show_spinner=False)
 def _get_pitcher_df(pitcher_id, start_date=DEFAULT_START_DATE, end_date=None):
     local = _read_local_parquet("pitchers", pitcher_id)
     if local is not None:
