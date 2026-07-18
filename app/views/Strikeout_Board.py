@@ -5,12 +5,15 @@ on today's MLB slate, sorted highest projection first.
 Runs inside app.py's loader (no st.set_page_config here). The formula
 and all inputs are shown on the page — see engines/k_projection.py.
 """
+import json
+
 import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
 from styles.table_style import style_stat_table
 from engines.k_projection import get_slate_k_projections
+from engines.statcast_engine import get_pitcher_k_game_log_json
 
 inject_kc_theme()
 
@@ -72,6 +75,52 @@ else:
             )
         else:
             st.info("No projectable starters yet \u2014 probables usually fill in through the morning.")
+
+    # ---- Game-by-game K trend for any starter on the board ----
+    if projected:
+        with card("k_trend"):
+            st.markdown(
+                f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Season K trend \u2014 game by game</div>'
+                f'<div class="pf-card-subtitle">Pick a starter from today\'s board \u00b7 real strikeouts '
+                f'per appearance from his own Statcast rows, in schedule order.</div>',
+                unsafe_allow_html=True,
+            )
+            _by_name = {r["pitcher"]: r for r in projected if r.get("pid")}
+            _pick = st.selectbox(
+                "Pitcher",
+                ["Select a pitcher\u2026"] + list(_by_name.keys()),
+                key="kb_trend_pick",
+                label_visibility="collapsed",
+            )
+            if _pick in _by_name:
+                _r = _by_name[_pick]
+                try:
+                    _trend = json.loads(get_pitcher_k_game_log_json(_r["pid"]))
+                except Exception:
+                    _trend = []
+                if not _trend:
+                    st.caption("No Statcast appearances on file for this pitcher yet.")
+                else:
+                    _tdf = pd.DataFrame(_trend)
+                    # MM-DD labels; doubleheader same-day starts get a
+                    # suffix so the chart doesn't merge two appearances
+                    _lbls, _seen = [], {}
+                    for _d in _tdf["date"].str[5:]:
+                        _seen[_d] = _seen.get(_d, 0) + 1
+                        _lbls.append(_d if _seen[_d] == 1 else f"{_d} ({_seen[_d]})")
+                    _tdf["Game"] = _lbls
+                    st.bar_chart(
+                        _tdf.set_index("Game")["k"],
+                        color=COLOR["stat_high"],
+                        height=240,
+                    )
+                    _ks = [t["k"] for t in _trend]
+                    _avg = sum(_ks) / len(_ks)
+                    st.caption(
+                        f"{len(_ks)} appearances \u00b7 season avg {_avg:.1f} K \u00b7 "
+                        f"last 5: {', '.join(str(x) for x in _ks[-5:])} \u00b7 "
+                        f"tonight's projection: {_r['proj']} vs {_r['opp']}"
+                    )
 
     if unprojected:
         with st.expander(f"\u26a0\ufe0f Not projected ({len(unprojected)})"):

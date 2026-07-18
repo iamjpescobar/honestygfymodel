@@ -64,7 +64,14 @@ except Exception:
 # -------------------------
 # Sport selection — top-level sport switcher (always visible)
 # -------------------------
-selected_sport = st.session_state.get("lc_sport", "MLB")
+# Read the switcher's WIDGET key first — Streamlit updates it at click
+# time, before this rerun executes. Reading only lc_sport (which
+# sport_switcher sets at the bottom of its render, after this line has
+# already run) made every sport change take two clicks.
+selected_sport = (
+    st.session_state.get("lc_sport_seg")
+    or st.session_state.get("lc_sport", "MLB")
+)
 
 _, _strip_col = st.columns([4, 6])
 with _strip_col:

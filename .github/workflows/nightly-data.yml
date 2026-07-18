@@ -4,6 +4,7 @@ on:
   schedule:
     - cron: "0 10 * * *"   # 10:00 UTC = 6:00 AM ET — MLB refresh after all games final
     - cron: "0 8 * * *"    # 08:00 UTC = 5:00 PM JST/KST — pre-game international refresh (postponement calls)
+    - cron: "0 22 * * *"   # 22:00 UTC = 6:00 PM ET — pre-slate WNBA/NBA refresh so evening slates get same-day data
   workflow_dispatch: {}     # lets you run it manually from the Actions tab
 
 permissions:

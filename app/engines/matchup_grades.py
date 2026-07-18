@@ -38,19 +38,25 @@ def _grade(net):
     return _GRADES.get(min(net, 4), "A" if net > 4 else None)
 
 
-@st.cache_data(ttl=3600, max_entries=8, show_spinner=False)
+@st.cache_data(ttl=3600, max_entries=16, show_spinner=False)
 def grade_matchup(away_pitcher_id, home_pitcher_id, away_name, home_name,
-                  park_factor=None, park_verified=False, temp=None):
-    """Returns {"ml": {...}|None, "ou": {...}|None, "error": str|None}."""
+                  park_factor=None, park_verified=False, temp=None,
+                  window: str = "season"):
+    """Returns {"ml": {...}|None, "ou": {...}|None, "error": str|None,
+    "window": window}. window slices BOTH starters' splits to their
+    last N games ("l25"/"l15"/"l10"/"l5") via the shared recency
+    engine; "season" (default) is the exact behavior this checklist
+    has always had. Same thresholds in every window — the window
+    changes the EVIDENCE, never the bar it has to clear."""
     if not away_pitcher_id or not home_pitcher_id:
-        return {"ml": None, "ou": None,
+        return {"ml": None, "ou": None, "window": window,
                 "error": "Starter not posted yet — no grade without both starters' real data."}
 
-    a = get_pitcher_advanced_splits(away_pitcher_id)
-    h = get_pitcher_advanced_splits(home_pitcher_id)
+    a = get_pitcher_advanced_splits(away_pitcher_id, window=window)
+    h = get_pitcher_advanced_splits(home_pitcher_id, window=window)
     if not a or not h:
-        return {"ml": None, "ou": None,
-                "error": "Season splits unavailable for one starter — no grade."}
+        return {"ml": None, "ou": None, "window": window,
+                "error": "Splits unavailable for one starter in this window — no grade."}
 
     def val(d, k):
         v = d.get(k)
@@ -148,4 +154,4 @@ def grade_matchup(away_pitcher_id, home_pitcher_id, away_name, home_name,
         ou = {"lean": None, "grade": None, "signals": ou_signals,
               "score": "signals split evenly — no lean"}
 
-    return {"ml": ml, "ou": ou, "error": None}
+    return {"ml": ml, "ou": ou, "error": None, "window": window}

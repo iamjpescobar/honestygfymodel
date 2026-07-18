@@ -530,13 +530,38 @@ _AB_EVENTS = _HIT_EVENTS | {"field_out", "strikeout", "strikeout_double_play",
                             "force_out", "fielders_choice_out", "field_error"}
 
 
-def get_pitcher_advanced_splits(pitcher_id, side: str = None) -> dict:
+@st.cache_data(ttl=3600, max_entries=8, show_spinner=False)
+def get_pitcher_k_game_log_json(pitcher_id) -> str:
+    """Game-by-game strikeout log for a pitcher, schedule order —
+    powers the Strikeout Board trend viewer. Returns a JSON string
+    (always pickle-serializable): [{"date": "YYYY-MM-DD", "k": N}, ...]
+    Empty list when there's no data — the caller says so honestly."""
+    try:
+        df, _err = _get_pitcher_df(pitcher_id)
+    except Exception:
+        return _json.dumps([])
+    if df is None or df.empty or "events" not in df.columns or "game_pk" not in df.columns:
+        return _json.dumps([])
+    entries = []
+    for _gpk, gdf in df.groupby("game_pk"):
+        gdate = str(gdf["game_date"].iloc[0])[:10] if "game_date" in gdf.columns else ""
+        k = int(gdf["events"].dropna().isin(_STRIKEOUT_EVENTS).sum())
+        entries.append({"date": gdate, "k": k})
+    entries.sort(key=lambda r: r["date"])
+    return _json.dumps(entries)
+
+
+def get_pitcher_advanced_splits(pitcher_id, side: str = None, window: str = "season") -> dict:
     """
     Computes BA/SLG/ISO/WHIP/HR/HR9/BB%/K%/Whiff%/SwStr%/K9/Putaway%/
     1stPitchStrike%/Meatball% against a pitcher from raw Statcast rows.
 
     side: None for overall, "R" for vs RHB, "L" for vs LHB (filters on
     the batter's stand).
+    window: "season" (default — unchanged behavior) or "l25"/"l15"/
+    "l10"/"l5" — the pitcher's last N GAMES (i.e. starts/appearances),
+    sliced by engines/recency_windows before anything is computed, so
+    every stat (including IP and _games) honestly reflects the window.
 
     Definitions used:
       BA        = hits / at-bats (at-bats = PAs with a batted-ball or
@@ -563,6 +588,12 @@ def get_pitcher_advanced_splits(pitcher_id, side: str = None) -> dict:
     }
 
     df, error = _get_pitcher_df(pitcher_id)
+    if df is not None and not df.empty and window != "season":
+        # Slice to the pitcher's last N GAMES before anything is
+        # computed — IP, _games, and every rate below then honestly
+        # reflect the window, not the season.
+        from engines.recency_windows import apply_window
+        df = apply_window(df, window, "games")
     if df.empty:
         empty["_error"] = error
         return empty

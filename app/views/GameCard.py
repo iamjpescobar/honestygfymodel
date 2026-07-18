@@ -90,8 +90,22 @@ with content_col:
 
     page = st.session_state["gc_page"]
     visible_games = games[page * PAGE_SIZE: page * PAGE_SIZE + PAGE_SIZE]
-    visible_labels = [f"{team_abbr(g['away'])} @ {team_abbr(g['home'])}" for g in visible_games]
-    current_global_label = f"{team_abbr(games[st.session_state['gc_selected_game_idx']]['away'])} @ {team_abbr(games[st.session_state['gc_selected_game_idx']]['home'])}"
+    # Doubleheader-safe labels: two games with the same teams used to
+    # produce IDENTICAL pills, so selecting by label could only ever
+    # reach game 1 of a doubleheader. Append G1/G2 (schedule order)
+    # whenever a matchup appears more than once on the slate, keeping
+    # single games clean.
+    _base_labels = [f"{team_abbr(x['away'])} @ {team_abbr(x['home'])}" for x in games]
+    _dh_counter = {}
+    _labels = []
+    for _lbl in _base_labels:
+        if _base_labels.count(_lbl) > 1:
+            _dh_counter[_lbl] = _dh_counter.get(_lbl, 0) + 1
+            _labels.append(f"{_lbl} \u00b7 G{_dh_counter[_lbl]}")
+        else:
+            _labels.append(_lbl)
+    visible_labels = _labels[page * PAGE_SIZE: page * PAGE_SIZE + PAGE_SIZE]
+    current_global_label = _labels[st.session_state["gc_selected_game_idx"]]
 
     with nav_pills:
         default_pill = current_global_label if current_global_label in visible_labels else None
@@ -100,9 +114,9 @@ with content_col:
             label_visibility="collapsed", key=f"game_picker_p{page}"
         )
         if selected_label:
-            st.session_state["gc_selected_game_idx"] = games.index(
-                next(g for g in visible_games if f"{team_abbr(g['away'])} @ {team_abbr(g['home'])}" == selected_label)
-            )
+            # labels are unique now (G1/G2 suffixes), so this index is
+            # exact — game 2 of a doubleheader is directly reachable
+            st.session_state["gc_selected_game_idx"] = _labels.index(selected_label)
 
     st.markdown(
         f'<div style="color:{COLOR["text"]}; font-size:13px; font-weight:600; margin:4px 0 12px 0;">'
@@ -257,15 +271,26 @@ with content_col:
     # -----------------------------------------------------
     # MATCHUP GRADES — transparent signal checklists, both starters
     # -----------------------------------------------------
+    # Grade window — Season is the exact formula that's been hitting;
+    # L25/L15/L10/L5 re-run the SAME checklist on both starters' last
+    # N games only. Widget return value is read directly, so it takes
+    # effect on the first click.
+    _gw_opts = {"Season": "season", "L25": "l25", "L15": "l15", "L10": "l10", "L5": "l5"}
+    _gw_choice = st.segmented_control(
+        "Grade window", list(_gw_opts.keys()), default="Season",
+        key="gc_grade_window", label_visibility="collapsed",
+    )
+    _gw_label = _gw_choice or "Season"
+    _grade_window = _gw_opts.get(_gw_label, "season")
     grades = grade_matchup(
         game.get("away_pitcher_id"), game.get("home_pitcher_id"),
         game.get("away_pitcher", "Away"), game.get("home_pitcher", "Home"),
         park_factor=park.get("park_factor"), park_verified=park.get("verified", False),
-        temp=game.get("weather_temp"),
+        temp=game.get("weather_temp"), window=_grade_window,
     )
     with card("matchup_grades_card"):
         st.markdown(
-            f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Matchup Grades</div>'
+            f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Matchup Grades \u00b7 {_gw_label}</div>'
             f'<div class="pf-card-subtitle">This app\'s own signal checklists from real Statcast splits, '
             f'park factor, and posted weather \u2014 formula documented in engines/matchup_grades.py. '
             f'Not calibrated probabilities.</div>',

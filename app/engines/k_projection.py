@@ -105,6 +105,7 @@ def _slate_projections_json(date_str: str) -> str:
             row = {
                 "matchup": matchup,
                 "pitcher": name,
+                "pid": pid,
                 "team": team_abbr(team),
                 "opp": team_abbr(opp),
                 "ip_gs": None, "k9": None, "opp_k_pct": None,

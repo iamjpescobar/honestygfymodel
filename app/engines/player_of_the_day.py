@@ -64,7 +64,7 @@ PITCHER_VULN_CHECKS = [
 _WNBA_GAMES = Path(__file__).resolve().parent.parent / "data" / "wnba" / "games.json"
 
 
-def _pitcher_vuln_signals(pitcher_id, batter_bats):
+def _pitcher_vuln_signals(pitcher_id, batter_bats, window: str = "season"):
     """
     Real signals only. Returns (signals, note) — note explains WHY there
     are zero signals when that's because of missing data, so the page
@@ -76,7 +76,7 @@ def _pitcher_vuln_signals(pitcher_id, batter_bats):
         return [], "Opposing starter not posted yet."
 
     side = batter_bats if batter_bats in ("L", "R") else None
-    splits = get_pitcher_advanced_splits(pitcher_id, side=side)
+    splits = get_pitcher_advanced_splits(pitcher_id, side=side, window=window)
     if splits.get("_error"):
         return [], splits["_error"]
 
@@ -95,7 +95,7 @@ def _pitcher_vuln_signals(pitcher_id, batter_bats):
 
 
 @st.cache_data(ttl=600, show_spinner=False)
-def get_mlb_player_of_the_day():
+def get_mlb_player_of_the_day(window: str = "season"):
     """
     Returns (pick, all_candidates, error).
     pick: the top-ranked real candidate dict, or None if nothing
@@ -142,7 +142,7 @@ def get_mlb_player_of_the_day():
                     continue  # not enough real Savant sample yet — never crown a guess
                 k = k_score(pid, savant_df)
 
-                signals, signals_note = _pitcher_vuln_signals(opp_pitcher_id, b.get("bats"))
+                signals, signals_note = _pitcher_vuln_signals(opp_pitcher_id, b.get("bats"), window=window)
                 batter_quality = round((hr + hit) / 2, 1)
                 score = round(batter_quality + 10 * len(signals), 1)
 

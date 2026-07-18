@@ -77,6 +77,7 @@ WINDOW_LABELS = {
     "l60": "Last 60 Games",
     "l25": "Last 25",
     "l15": "Last 15",
+    "l10": "Last 10",
     "l5": "Last 5",
 }
 
@@ -91,7 +92,7 @@ def apply_window(df: pd.DataFrame, window: str, unit: str) -> pd.DataFrame:
     if window == "season" or df.empty:
         return df
 
-    n = {"l60": 60, "l25": 25, "l15": 15, "l5": 5}.get(window)
+    n = {"l60": 60, "l25": 25, "l15": 15, "l10": 10, "l5": 5}.get(window)
     if n is None:
         return df
 
