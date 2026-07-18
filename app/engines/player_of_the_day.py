@@ -166,7 +166,7 @@ def get_mlb_player_of_the_day(window: str = "season"):
 
 
 @st.cache_data(ttl=600, show_spinner=False)
-def get_wnba_player_of_the_day():
+def get_wnba_player_of_the_day(form_window: str = "l5"):
     """
     Same honesty contract, WNBA version — see module docstring. Returns
     (pick, all_candidates, error) exactly like get_mlb_player_of_the_day.
@@ -189,19 +189,25 @@ def get_wnba_player_of_the_day():
                 gp = p.get("gp") or 0
                 if gp < 5:
                     continue  # real games played, but too small a sample to crown
-                l5_pra, season_pra = p.get("l5_pra"), p.get("pra")
-                if l5_pra is None or season_pra is None:
+                form_pra, season_pra = p.get(f"{form_window}_pra"), p.get("pra")
+                if form_pra is None or season_pra is None:
                     continue
                 candidates.append({
                     "name": p.get("name"), "team": team_name,
                     "opponent": g.get(opp_side, ""),
                     "pos": p.get("pos"), "gp": gp,
-                    "l5_pra": l5_pra, "season_pra": season_pra,
-                    "l5_ppg": p.get("l5_ppg"), "l5_rpg": p.get("l5_rpg"), "l5_apg": p.get("l5_apg"),
+                    "form_window": form_window,
+                    "form_pra": form_pra, "season_pra": season_pra,
+                    "form_ppg": p.get(f"{form_window}_ppg"),
+                    "form_rpg": p.get(f"{form_window}_rpg"),
+                    "form_apg": p.get(f"{form_window}_apg"),
                 })
 
     if not candidates:
-        return None, [], "No eligible real candidates today — need at least 5 real games played this season."
+        msg = "No eligible real candidates today — need at least 5 real games played this season."
+        if form_window in ("l15", "l25"):
+            msg += " (L15/L25 form appears after the next nightly data build.)"
+        return None, [], msg
 
-    candidates.sort(key=lambda c: (-c["l5_pra"], -c["season_pra"]))
+    candidates.sort(key=lambda c: (-c["form_pra"], -c["season_pra"]))
     return candidates[0], candidates, None

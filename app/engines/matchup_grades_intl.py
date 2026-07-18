@@ -297,16 +297,35 @@ def grade_npb_matchup(g):
 # WNBA — team form (no starting-pitcher analog in basketball)
 # =====================================================================
 
-def grade_wnba_matchup(g):
+def grade_wnba_matchup(g, window: str = "season"):
+    """window: "season" (default — the exact checklist that's been
+    running) or "l25"/"l15"/"l10"/"l5" — scoring form, differential,
+    totals, and record come from that many recent REAL finals (the
+    pipeline's windowed team form). FG% and TO/G stay season-based in
+    every window: ESPN publishes them as season team stats, there are
+    no per-game shooting logs to slice, and this app won't fake them.
+    Same thresholds in every window — the window changes the evidence,
+    never the bar. If the data file predates windowed form, non-season
+    windows fall back to season values (the view labels this)."""
     def side(s):
-        pf, pa = _f(g.get(f"{s}_pf_pg")), _f(g.get(f"{s}_pa_pg"))
+        form = None
+        if window != "season":
+            form = (g.get(f"{s}_form") or {}).get(window)
+        if form:
+            pf, pa = _f(form.get("pf_pg")), _f(form.get("pa_pg"))
+            avg_total = _f(form.get("avg_total"))
+            win_pct = _winpct(form.get("record"))
+        else:
+            pf, pa = _f(g.get(f"{s}_pf_pg")), _f(g.get(f"{s}_pa_pg"))
+            avg_total = _f(g.get(f"{s}_avg_total"))
+            win_pct = _winpct(g.get(f"{s}_record"))
         return {
             "PPG_DIFF": (pf - pa) if pf is not None and pa is not None else None,
             "FG_PCT": _f(g.get(f"{s}_fg_pct")),
             "TO_PG": _f(g.get(f"{s}_to_g")),
-            "WIN_PCT": _winpct(g.get(f"{s}_record")),
+            "WIN_PCT": win_pct,
             "PF_PG": pf, "PA_PG": pa,
-            "AVG_TOTAL": _f(g.get(f"{s}_avg_total")),
+            "AVG_TOTAL": avg_total,
         }
 
     away_name, home_name = g.get("away", "Away"), g.get("home", "Home")

@@ -263,10 +263,28 @@ def team_research(finals):
     out = {}
     for team, t in per.items():
         last10 = t["results"][-10:]
+
+        def _form(n=None, _t=t):
+            pf = _t["pf"] if n is None else _t["pf"][-n:]
+            pa = _t["pa"] if n is None else _t["pa"][-n:]
+            res = _t["results"] if n is None else _t["results"][-n:]
+            return {
+                "pf_pg": _avg(pf), "pa_pg": _avg(pa),
+                "avg_total": _avg([a + b for a, b in zip(pf, pa)]),
+                "record": f'{res.count("W")}-{res.count("L")}',
+                "gp": len(res),
+            }
+
         out[team] = {
             "pf_pg": _avg(t["pf"]), "pa_pg": _avg(t["pa"]),
             "avg_total": _avg([a + b for a, b in zip(t["pf"], t["pa"])]),
             "l10": f'{last10.count("W")}-{last10.count("L")}',
+            # Windowed scoring form from the same real final scores —
+            # feeds the Season/L25/L15/L10/L5 grade windows. FG% and
+            # TO/G can't be windowed (ESPN publishes them as season
+            # team stats, not per-game logs) and stay season-based.
+            "form": {"season": _form(), "l25": _form(25), "l15": _form(15),
+                     "l10": _form(10), "l5": _form(5)},
         }
     return out
 
@@ -325,6 +343,10 @@ def player_summaries(logs):
             "apg": col("ast", games), "l5_apg": col("ast", games[-5:]), "l10_apg": col("ast", games[-10:]),
             "tpm": col("tpm", games), "l5_tpm": col("tpm", games[-5:]), "l10_tpm": col("tpm", games[-10:]),
             "pra": col("pra", games), "l5_pra": col("pra", games[-5:]), "l10_pra": col("pra", games[-10:]),
+            "l15_pra": col("pra", games[-15:]), "l25_pra": col("pra", games[-25:]),
+            "l15_ppg": col("pts", games[-15:]), "l25_ppg": col("pts", games[-25:]),
+            "l15_rpg": col("reb", games[-15:]), "l25_rpg": col("reb", games[-25:]),
+            "l15_apg": col("ast", games[-15:]), "l25_apg": col("ast", games[-25:]),
             "pr": col("pr", games), "l5_pr": col("pr", games[-5:]), "l10_pr": col("pr", games[-10:]),
             "pa": col("pa", games), "l5_pa": col("pa", games[-5:]), "l10_pa": col("pa", games[-10:]),
             "ra": col("ra", games), "l5_ra": col("ra", games[-5:]), "l10_ra": col("ra", games[-10:]),
@@ -416,6 +438,7 @@ def main():
                 g[f"{side}_pa_pg"] = t["pa_pg"]
                 g[f"{side}_avg_total"] = t["avg_total"]
                 g[f"{side}_l10"] = t["l10"]
+                g[f"{side}_form"] = t["form"]
 
             opponent = g[opp_side]
             picks = [p for p in by_team.get(g[side], []) if p["gp"] >= 3][:9]
@@ -432,7 +455,9 @@ def main():
                         "to", "l5_to", "l10_to",
                         "fga", "l5_fga", "l10_fga",
                         "fta", "l5_fta", "l10_fta",
-                        "fg_pct", "tp_pct")
+                        "fg_pct", "tp_pct",
+                        "l15_pra", "l25_pra", "l15_ppg", "l25_ppg",
+                        "l15_rpg", "l25_rpg", "l15_apg", "l25_apg")
             h2h_keys = ("h2h_ppg", "h2h_rpg", "h2h_apg", "h2h_tpm", "h2h_pra",
                         "h2h_pr", "h2h_pa", "h2h_ra",
                         "h2h_stocks", "h2h_fga", "h2h_gp")

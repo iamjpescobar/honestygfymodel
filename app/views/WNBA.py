@@ -103,7 +103,15 @@ if not games:
 
 if games:
     from engines.player_of_the_day import get_wnba_player_of_the_day
-    wnba_pick, _wnba_candidates, wnba_potd_error = get_wnba_player_of_the_day()
+    _fw_opts = {"L5": "l5", "L10": "l10", "L15": "l15", "L25": "l25"}
+    _fw_choice = st.segmented_control(
+        "Form window", list(_fw_opts.keys()), default="L5",
+        key="wnba_potd_window", label_visibility="collapsed",
+    )
+    _fw_label = _fw_choice or "L5"
+    wnba_pick, _wnba_candidates, wnba_potd_error = get_wnba_player_of_the_day(
+        form_window=_fw_opts.get(_fw_label, "l5")
+    )
     if wnba_pick:
         st.markdown(card_open(f'\u2b50 Player of the Day \u2014 {wnba_pick["name"]} ({wnba_pick["team"]})'),
                     unsafe_allow_html=True)
@@ -111,16 +119,16 @@ if games:
         potd_badges = (
             badge(f'{wnba_pick["pos"] or "?"}', "neutral")
             + badge(f'vs {wnba_pick["opponent"]}', "neutral")
-            + badge(f'L5 PRA {wnba_pick["l5_pra"]}', "accent")
+            + badge(f'{_fw_label} PRA {wnba_pick["form_pra"]}', "accent")
         )
         st.markdown(f'<div>{potd_badges}</div>', unsafe_allow_html=True)
         pc1, pc2, pc3, pc4 = st.columns(4)
-        pc1.metric("L5 PPG", wnba_pick["l5_ppg"] if wnba_pick["l5_ppg"] is not None else "N/A")
-        pc2.metric("L5 RPG", wnba_pick["l5_rpg"] if wnba_pick["l5_rpg"] is not None else "N/A")
-        pc3.metric("L5 APG", wnba_pick["l5_apg"] if wnba_pick["l5_apg"] is not None else "N/A")
+        pc1.metric(f"{_fw_label} PPG", wnba_pick["form_ppg"] if wnba_pick["form_ppg"] is not None else "N/A")
+        pc2.metric(f"{_fw_label} RPG", wnba_pick["form_rpg"] if wnba_pick["form_rpg"] is not None else "N/A")
+        pc3.metric(f"{_fw_label} APG", wnba_pick["form_apg"] if wnba_pick["form_apg"] is not None else "N/A")
         pc4.metric("Season PRA", wnba_pick["season_pra"])
         st.caption(
-            f'Real games played this season: {wnba_pick["gp"]} \u2014 ranked by real last-5-game PRA '
+            f'Real games played this season: {wnba_pick["gp"]} \u2014 ranked by real last-{_fw_label[1:]}-game PRA '
             f'(points+rebounds+assists), season PRA as tiebreaker.'
         )
         st.markdown(card_close(), unsafe_allow_html=True)
@@ -172,6 +180,19 @@ TAB_NOTES = {
 def _render_slate():
     live = _live_overrides()
     any_live = False
+
+    # Grade window — Season is the checklist that's been running;
+    # L25/L15/L10/L5 re-grade every game on that many recent REAL
+    # finals (scoring form, differential, totals, record). FG% and
+    # TO/G stay season-based — ESPN has no per-game shooting logs and
+    # this page won't fake them.
+    _gw_opts = {"Season": "season", "L25": "l25", "L15": "l15", "L10": "l10", "L5": "l5"}
+    _gw_choice = st.segmented_control(
+        "Grade window", list(_gw_opts.keys()), default="Season",
+        key="wnba_grade_window", label_visibility="collapsed",
+    )
+    _gw_label = _gw_choice or "Season"
+    _gw = _gw_opts.get(_gw_label, "season")
 
     for gi, g in enumerate(games):
         away, home = g.get("away", "TBD"), g.get("home", "TBD")
@@ -264,13 +285,20 @@ def _render_slate():
 
         st.markdown(card_close(), unsafe_allow_html=True)
 
-        grades = grade_wnba_matchup(g)
+        grades = grade_wnba_matchup(g, window=_gw)
+        _gw_note = "" if _gw == "season" else (
+            f" Graded on the {_gw_label} window \u2014 scoring form, differential, totals, and "
+            f"record from that many recent real finals; FG%/TO remain season stats."
+        )
+        if _gw != "season" and not g.get("away_form"):
+            _gw_note = (" Windowed form isn't in the current data file yet \u2014 showing season "
+                        "values until the next nightly build.")
         render_matchup_grades_card(
             grades,
             subtitle=("This app's own signal checklist from real team scoring, shooting, and "
                       "turnover rates \u2014 there's no starting-pitcher analog in basketball, so this "
                       "is graded on team form. Formula documented in "
-                      "engines/matchup_grades_intl.py. Not calibrated probabilities."),
+                      "engines/matchup_grades_intl.py. Not calibrated probabilities." + _gw_note),
             source_line="Source: real WNBA box-score-derived team stats.",
             key=f'wnba_{gi}_{away}_{home}',
         )
