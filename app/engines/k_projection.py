@@ -40,6 +40,36 @@ from engines.team_abbreviations import team_abbr
 
 EASTERN = ZoneInfo("America/New_York")
 _TEAM_STATS_URL = "https://statsapi.mlb.com/api/v1/teams/stats"
+_PLAYER_STATS_URL = "https://statsapi.mlb.com/api/v1/people/{pid}/stats"
+
+
+@st.cache_data(ttl=3600, max_entries=64, show_spinner=False)
+def _k_vs_team_json(pid: int, opp_team: str, season: int) -> str:
+    """The pitcher's real strikeout counts in starts AGAINST this
+    opponent, this season + last, from MLB official game logs.
+    Returns {"avg", "n", "ks"} — n=0 means they simply haven't met."""
+    ks = []
+    for yr in (season, season - 1):
+        try:
+            resp = requests.get(
+                _PLAYER_STATS_URL.format(pid=pid),
+                params={"stats": "gameLog", "group": "pitching", "season": yr},
+                timeout=10,
+            )
+            resp.raise_for_status()
+            stats = resp.json().get("stats") or []
+            splits = (stats[0].get("splits") if stats else []) or []
+        except Exception:
+            continue
+        for sp in splits:
+            if ((sp.get("opponent") or {}).get("name") or "") == opp_team:
+                try:
+                    ks.append(int((sp.get("stat") or {}).get("strikeOuts", 0)))
+                except Exception:
+                    pass
+    if not ks:
+        return json.dumps({"avg": None, "n": 0, "ks": []})
+    return json.dumps({"avg": round(sum(ks) / len(ks), 1), "n": len(ks), "ks": ks})
 
 # Minimum real work before a projection is honest enough to print.
 _MIN_STARTS = 2
@@ -146,6 +176,11 @@ def _slate_projections_json(date_str: str, basis: str = "season") -> str:
             if opp_k_pct and league_k:
                 factor = min(max(opp_k_pct / league_k, 0.85), 1.15)
 
+            _vs = {"avg": None, "n": 0}
+            try:
+                _vs = json.loads(_k_vs_team_json(pid, opp, datetime.now(EASTERN).year))
+            except Exception:
+                pass
             l5_avg = None
             try:
                 _log = json.loads(get_pitcher_k_game_log_json(pid))
@@ -155,6 +190,8 @@ def _slate_projections_json(date_str: str, basis: str = "season") -> str:
             except Exception:
                 pass
             row.update({
+                "vs_opp_avg": _vs.get("avg"),
+                "vs_opp_n": _vs.get("n", 0),
                 "l5_avg": l5_avg,
                 "ip_gs": round(ip_per_start, 1),
                 "k9": round(k9, 2),

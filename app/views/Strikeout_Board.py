@@ -59,7 +59,9 @@ else:
             f'every input is in the table. This app\'s own projection from real Statcast + MLB team stats, '
             f'not a sportsbook line and not a certified prediction. '
             f'Basis: <b>{_basis_label}</b> \u2014 pitcher inputs from '
-            f'{"the full season" if _basis_label == "Season" else "his last 10 appearances"}.</div>',
+            f'{"the full season" if _basis_label == "Season" else "his last 10 appearances"}. '
+            f"vs Opp = his real K average against tonight's opponent, this season + last "
+            f"(meetings in parentheses; \u2014 means they haven't met).</div>",
             unsafe_allow_html=True,
         )
         if projected:
@@ -73,6 +75,8 @@ else:
                     "K/9": r["k9"],
                     "Opp K%": r["opp_k_pct"],
                     "L5 avg": r.get("l5_avg"),
+                    "vs Opp": (f'{r["vs_opp_avg"]} ({r["vs_opp_n"]})'
+                               if r.get("vs_opp_avg") is not None else "\u2014"),
                     "Proj K": r["proj"],
                 }
                 for r in projected
@@ -139,6 +143,10 @@ else:
                         f"{len(_ks)} appearances \u00b7 season avg {_avg:.1f} K \u00b7 "
                         f"last 5: {', '.join(str(x) for x in _ks[-5:])} \u00b7 "
                         f"tonight's projection: {_r['proj']} vs {_r['opp']}"
+                        + (f" \u00b7 vs {_r['opp']} history: {_r['vs_opp_avg']} K avg over "
+                           f"{_r['vs_opp_n']} meeting(s)"
+                           if _r.get('vs_opp_avg') is not None else
+                           f" \u00b7 no starts vs {_r['opp']} since last season")
                     )
 
     if unprojected:

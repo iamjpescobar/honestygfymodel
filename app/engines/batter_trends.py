@@ -24,6 +24,7 @@ import requests
 import streamlit as st
 
 from styles.kc_theme import COLOR
+from engines.trend_chart import window_hit_chips, render_trend_bars
 
 EASTERN = ZoneInfo("America/New_York")
 _URL = "https://statsapi.mlb.com/api/v1/people/{pid}/stats"
@@ -67,9 +68,9 @@ def _game_log_json(batter_id: int, season: int) -> str:
 
 
 def render_batter_trend(batter_id, name, stat_label: str = "Hits",
-                        window_label: str = "L10") -> None:
-    """Bar chart of the chosen stat per game over the chosen window,
-    with an honest summary line (avg, >=1 rate, >=2 rate, last 5)."""
+                        window_label: str = "L10", line: float = 0.5) -> None:
+    """Window chips (cleared/total per window vs the chosen line) +
+    labeled bar chart for the chosen window, + honest summary line."""
     season = datetime.now(EASTERN).year
     try:
         payload = json.loads(_game_log_json(int(batter_id), season))
@@ -84,9 +85,12 @@ def render_batter_trend(batter_id, name, stat_label: str = "Hits",
         st.caption("No official game log for this batter yet this season.")
         return
 
+    key = _STAT_KEY.get(stat_label, "h")
+    all_vals = [g[key] for g in games]
+    window_hit_chips(all_vals, line, window_label,
+                     windows=("Season", "L25", "L10", "L5"))
     n = _WIN_N.get(window_label)
     sub = games if n is None else games[-n:]
-    key = _STAT_KEY.get(stat_label, "h")
     vals = [g[key] for g in sub]
 
     # Unique x labels — doubleheader same-day games get a suffix so the
@@ -97,19 +101,15 @@ def render_batter_trend(batter_id, name, stat_label: str = "Hits",
         seen[base] = seen.get(base, 0) + 1
         labels.append(base if seen[base] == 1 else f"{base} ({seen[base]})")
 
-    tdf = pd.DataFrame({"Game": labels, stat_label: vals}).set_index("Game")
-    st.bar_chart(tdf[stat_label], color=COLOR["stat_high"], height=230)
+    render_trend_bars(labels, vals, stat_label, line)
 
     total_games = len(vals)
     avg = sum(vals) / total_games
-    ge1 = sum(1 for v in vals if v >= 1)
-    ge2 = sum(1 for v in vals if v >= 2)
     last5 = [g[key] for g in games[-5:]]
     st.caption(
         f"{name} \u00b7 {window_label}: {total_games} games \u00b7 "
-        f"avg {avg:.2f} {stat_label}/game \u00b7 "
-        f"\u22651: {ge1}/{total_games} ({ge1 / total_games * 100:.0f}%) \u00b7 "
-        f"\u22652: {ge2}/{total_games} ({ge2 / total_games * 100:.0f}%) \u00b7 "
+        f"avg {avg:.2f} {stat_label}/game \u00b7 line {line} \u00b7 "
         f"last 5: {', '.join(str(v) for v in last5)} \u00b7 "
+        f"teal bars cleared the line, red didn't \u00b7 "
         f"Source: MLB official box-score game logs."
     )

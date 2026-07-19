@@ -13,6 +13,7 @@ from engines.matchup_grades_intl import grade_wnba_matchup, render_matchup_grade
 # NOTE: no st.set_page_config here — app.py already sets it once.
 
 from engines.live_sync import sync_latest_button
+from engines.trend_chart import window_hit_chips, render_trend_bars
 
 inject_kc_theme()
 sync_latest_button(key="sync_wnba", include_data_package=True)
@@ -317,6 +318,67 @@ def _render_slate():
                     unsafe_allow_html=True,
                 )
                 tabs = st.tabs([t[0] for t in PROP_TABS])
+
+                # ---- Player Trend: game-by-game bars + hit-rate chips ----
+                st.markdown(
+                    f'<div style="font-size:12px; font-weight:700; color:{COLOR["gold"]}; '
+                    f'margin:10px 0 2px 0;">Player Trend</div>'
+                    f'<div class="pf-card-subtitle">Game-by-game results with the line drawn in \u2014 '
+                    f'chips show how many games cleared it per window. Real box scores; the log carries '
+                    f'the last 25 games.</div>',
+                    unsafe_allow_html=True,
+                )
+                _pt_pool = {}
+                for _side in ("away", "home"):
+                    for _pp in g.get(f"{_side}_players") or []:
+                        if _pp.get("name"):
+                            _pt_pool[f'{_pp["name"]} \u2014 {g.get(_side, "")}'] = _pp
+                _pt_pick = st.selectbox(
+                    "Player trend", ["Select a player\u2026"] + list(_pt_pool.keys()),
+                    key=f"wnba_trend_pick_{gi}", label_visibility="collapsed",
+                )
+                if _pt_pick in _pt_pool:
+                    _pl = _pt_pool[_pt_pick]
+                    _plog = _pl.get("log") or []
+                    if not _plog:
+                        st.caption("Per-game logs arrive with the next data build \u2014 "
+                                   "press \u27f3 Sync latest up top to pull it.")
+                    else:
+                        _pt_stat = st.segmented_control(
+                            "Stat", ["Points", "Rebounds", "Assists", "PRA", "3PM"],
+                            default="Points", key=f"wnba_trend_stat_{gi}",
+                            label_visibility="collapsed",
+                        ) or "Points"
+                        _pt_win = st.segmented_control(
+                            "Window", ["L25", "L15", "L10", "L5"],
+                            default="L10", key=f"wnba_trend_win_{gi}",
+                            label_visibility="collapsed",
+                        ) or "L10"
+                        _pt_line = float(st.segmented_control(
+                            "Line", ["0.5", "4.5", "9.5", "14.5", "19.5", "24.5"],
+                            default="14.5", key=f"wnba_trend_line_{gi}",
+                            label_visibility="collapsed",
+                        ) or "14.5")
+                        _pt_key = {"Points": "pts", "Rebounds": "reb",
+                                   "Assists": "ast", "PRA": "pra", "3PM": "tpm"}[_pt_stat]
+                        _pt_all = [(gl.get(_pt_key) or 0) for gl in _plog]
+                        window_hit_chips(_pt_all, _pt_line, _pt_win,
+                                         windows=("L25", "L15", "L10", "L5"))
+                        _n = {"L25": 25, "L15": 15, "L10": 10, "L5": 5}[_pt_win]
+                        _sub = _plog[-_n:]
+                        _lbls, _seen = [], {}
+                        for gl in _sub:
+                            _b = str(gl.get("date") or "")[5:]
+                            _seen[_b] = _seen.get(_b, 0) + 1
+                            _lbls.append(_b if _seen[_b] == 1 else f"{_b} ({_seen[_b]})")
+                        _vals = [(gl.get(_pt_key) or 0) for gl in _sub]
+                        render_trend_bars(_lbls, _vals, _pt_stat, _pt_line)
+                        _avg = sum(_vals) / len(_vals)
+                        st.caption(
+                            f"{_pl.get('name')} \u00b7 {_pt_win}: {len(_vals)} games \u00b7 "
+                            f"avg {_avg:.1f} {_pt_stat}/game \u00b7 line {_pt_line} \u00b7 "
+                            f"teal bars cleared it, red didn't \u00b7 real box scores."
+                        )
                 for tab, (label, season_k, l5_k, l10_k, h2h_k) in zip(tabs, PROP_TABS):
                     with tab:
                         for side, col in (("away", a_col), ("home", h_col)):

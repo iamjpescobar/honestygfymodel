@@ -789,9 +789,14 @@ with content_col:
                                 "Window", ["Season", "L25", "L10", "L5"],
                                 default="L10", key="bt_window", label_visibility="collapsed",
                             )
+                            _bt_line = st.segmented_control(
+                                "Line", ["0.5", "1.5", "2.5", "3.5"],
+                                default="0.5", key="bt_line", label_visibility="collapsed",
+                            )
                             render_batter_trend(
                                 _bt_ids[_bt_pick], _bt_pick,
                                 _bt_stat or "Hits", _bt_win or "L10",
+                                line=float(_bt_line or "0.5"),
                             )
 
         if table_rows:

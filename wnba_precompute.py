@@ -344,6 +344,15 @@ def player_summaries(logs):
             "tpm": col("tpm", games), "l5_tpm": col("tpm", games[-5:]), "l10_tpm": col("tpm", games[-10:]),
             "pra": col("pra", games), "l5_pra": col("pra", games[-5:]), "l10_pra": col("pra", games[-10:]),
             "l15_pra": col("pra", games[-15:]), "l25_pra": col("pra", games[-25:]),
+            # Per-game log (last 25) — powers the Player Trend chart.
+            # Slim on purpose: only what the chart plots.
+            "log": [
+                {"date": gl.get("date"), "opp": gl.get("opp"),
+                 "pts": gl.get("pts"), "reb": gl.get("reb"),
+                 "ast": gl.get("ast"), "tpm": gl.get("tpm"),
+                 "pra": gl.get("pra")}
+                for gl in games[-25:]
+            ],
             "l15_ppg": col("pts", games[-15:]), "l25_ppg": col("pts", games[-25:]),
             "l15_rpg": col("reb", games[-15:]), "l25_rpg": col("reb", games[-25:]),
             "l15_apg": col("ast", games[-15:]), "l25_apg": col("ast", games[-25:]),
@@ -457,7 +466,7 @@ def main():
                         "fta", "l5_fta", "l10_fta",
                         "fg_pct", "tp_pct",
                         "l15_pra", "l25_pra", "l15_ppg", "l25_ppg",
-                        "l15_rpg", "l25_rpg", "l15_apg", "l25_apg")
+                        "l15_rpg", "l25_rpg", "l15_apg", "l25_apg", "log")
             h2h_keys = ("h2h_ppg", "h2h_rpg", "h2h_apg", "h2h_tpm", "h2h_pra",
                         "h2h_pr", "h2h_pa", "h2h_ra",
                         "h2h_stocks", "h2h_fga", "h2h_gp")
