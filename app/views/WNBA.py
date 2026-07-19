@@ -12,7 +12,10 @@ from engines.matchup_grades_intl import grade_wnba_matchup, render_matchup_grade
 
 # NOTE: no st.set_page_config here — app.py already sets it once.
 
+from engines.live_sync import sync_latest_button
+
 inject_kc_theme()
+sync_latest_button(key="sync_wnba", include_data_package=True)
 
 # Prop-tab styling — match the MLB page's language: JetBrains Mono,
 # gold idle tabs, teal active tab + underline.

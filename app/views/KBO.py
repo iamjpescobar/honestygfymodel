@@ -9,7 +9,10 @@ from engines.matchup_grades_intl import grade_kbo_matchup, render_matchup_grades
 
 # NOTE: no st.set_page_config here — app.py already sets it once.
 
+from engines.live_sync import sync_latest_button
+
 inject_kc_theme()
+sync_latest_button(key="sync_kbo", include_data_package=True)
 render_account_sidebar()
 
 _KBO_GAMES = Path(__file__).resolve().parent.parent / "data" / "kbo" / "games.json"

@@ -33,7 +33,9 @@ import requests
 import streamlit as st
 
 from engines.weather_engine import get_todays_games_with_weather
-from engines.statcast_engine import get_pitcher_advanced_splits
+from engines.statcast_engine import (
+    get_pitcher_advanced_splits, get_pitcher_k_game_log_json,
+)
 from engines.team_abbreviations import team_abbr
 
 EASTERN = ZoneInfo("America/New_York")
@@ -81,7 +83,7 @@ def _team_k_rates_json() -> str:
 
 
 @st.cache_data(ttl=900, show_spinner=False)
-def _slate_projections_json(date_str: str) -> str:
+def _slate_projections_json(date_str: str, basis: str = "season") -> str:
     """Builds the full board for a date. Cached 15 min so the page is
     instant for everyone after the first load. Returns a JSON string."""
     games, games_error = get_todays_games_with_weather()
@@ -117,7 +119,15 @@ def _slate_projections_json(date_str: str) -> str:
                 rows.append(row)
                 continue
 
-            sp = get_pitcher_advanced_splits(pid)
+            # basis="season": K/9 and IP/start from the full season —
+            # a stable baseline, but by midseason it still carries
+            # April ramp-up outings and short hooks, so it can run
+            # under a starter's CURRENT strikeout pace.
+            # basis="l10": same math on his last 10 appearances only —
+            # tonight's actual leash and current form.
+            sp = get_pitcher_advanced_splits(
+                pid, window=("l10" if basis == "l10" else "season")
+            )
             ip = float(sp.get("IP") or 0.0)
             k9 = float(sp.get("K/9") or 0.0)
             starts = int(sp.get("_games") or 0)
@@ -136,7 +146,16 @@ def _slate_projections_json(date_str: str) -> str:
             if opp_k_pct and league_k:
                 factor = min(max(opp_k_pct / league_k, 0.85), 1.15)
 
+            l5_avg = None
+            try:
+                _log = json.loads(get_pitcher_k_game_log_json(pid))
+                if _log:
+                    _last5 = [e["k"] for e in _log[-5:]]
+                    l5_avg = round(sum(_last5) / len(_last5), 1)
+            except Exception:
+                pass
             row.update({
+                "l5_avg": l5_avg,
                 "ip_gs": round(ip_per_start, 1),
                 "k9": round(k9, 2),
                 "opp_k_pct": opp_k_pct,
@@ -151,12 +170,14 @@ def _slate_projections_json(date_str: str) -> str:
     return json.dumps({"rows": rows, "warning": warning}, default=str)
 
 
-def get_slate_k_projections():
-    """(rows, warning) for today's slate (US Eastern). Thin uncached
+def get_slate_k_projections(basis: str = "season"):
+    """(rows, warning) for today's slate (US Eastern). basis:
+    "season" (default, the original formula) or "l10" (same formula
+    computed on each starter's last 10 appearances). Thin uncached
     wrapper around the JSON-string cache layer."""
     date_str = datetime.now(EASTERN).strftime("%Y-%m-%d")
     try:
-        payload = json.loads(_slate_projections_json(date_str))
+        payload = json.loads(_slate_projections_json(date_str, basis))
     except Exception as e:
         return [], f"Projection cache error: {e}"
     return payload.get("rows") or [], payload.get("warning")

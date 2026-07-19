@@ -6,6 +6,7 @@ from styles.kc_theme import (
 )
 from auth import render_account_sidebar
 from engines.player_of_the_day import get_mlb_player_of_the_day
+from engines.live_sync import sync_latest_button
 
 inject_kc_theme()
 render_account_sidebar()
@@ -22,6 +23,8 @@ page_header(
 # percentiles in every window (Savant doesn't publish windowed
 # percentiles, and this app doesn't fake them) — the window changes
 # the starter-weakness evidence, labeled below.
+sync_latest_button(key="sync_potd")
+
 _win_opts = {"Season": "season", "L25": "l25", "L15": "l15", "L10": "l10", "L5": "l5"}
 _win_choice = st.segmented_control(
     "Starter-signal window", list(_win_opts.keys()), default="Season",

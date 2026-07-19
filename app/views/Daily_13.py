@@ -12,6 +12,7 @@ import streamlit as st
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
 from styles.table_style import style_stat_table
 from engines.daily_13 import get_daily_13, MIN_HIT_RATE, MIN_GAMES, BOARD_SIZE
+from engines.live_sync import sync_latest_button
 
 inject_kc_theme()
 
@@ -22,6 +23,8 @@ st.markdown(
     f'</div>',
     unsafe_allow_html=True,
 )
+
+sync_latest_button(key="sync_daily13", include_data_package=True)
 
 with st.spinner("Scanning every hitter on today's slate\u2026 (first load of the day does the real work; it's cached after)"):
     rows, meta = get_daily_13()

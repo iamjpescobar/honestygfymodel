@@ -14,6 +14,7 @@ from styles.kc_theme import inject_kc_theme, card, footer, COLOR
 from styles.table_style import style_stat_table
 from engines.k_projection import get_slate_k_projections
 from engines.statcast_engine import get_pitcher_k_game_log_json
+from engines.live_sync import sync_latest_button
 
 inject_kc_theme()
 
@@ -25,7 +26,22 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-rows, warning = get_slate_k_projections()
+sync_latest_button(key="sync_kboard")
+
+# Projection basis — Season is the original formula (stable, but by
+# midseason it can lag a starter's current pace: it still averages in
+# April ramp-ups and short hooks). L10 form runs the SAME formula on
+# each starter's last 10 appearances: tonight's actual leash. Compare
+# both against your book's line; the L5 avg column shows what each
+# starter has ACTUALLY done lately.
+_basis_opts = {"Season": "season", "L10 form": "l10"}
+_basis_choice = st.segmented_control(
+    "Projection basis", list(_basis_opts.keys()), default="Season",
+    key="kb_basis", label_visibility="collapsed",
+)
+_basis_label = _basis_choice or "Season"
+
+rows, warning = get_slate_k_projections(basis=_basis_opts.get(_basis_label, "season"))
 
 if warning:
     st.warning(warning)
@@ -41,7 +57,9 @@ else:
             f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Projected K \u2014 today\'s probable starters</div>'
             f'<div class="pf-card-subtitle">proj K = (K/9 \u00f7 9) \u00d7 innings per start \u00d7 opponent K factor \u2014 '
             f'every input is in the table. This app\'s own projection from real Statcast + MLB team stats, '
-            f'not a sportsbook line and not a certified prediction.</div>',
+            f'not a sportsbook line and not a certified prediction. '
+            f'Basis: <b>{_basis_label}</b> \u2014 pitcher inputs from '
+            f'{"the full season" if _basis_label == "Season" else "his last 10 appearances"}.</div>',
             unsafe_allow_html=True,
         )
         if projected:
@@ -54,6 +72,7 @@ else:
                     "IP/GS": r["ip_gs"],
                     "K/9": r["k9"],
                     "Opp K%": r["opp_k_pct"],
+                    "L5 avg": r.get("l5_avg"),
                     "Proj K": r["proj"],
                 }
                 for r in projected
@@ -61,7 +80,7 @@ else:
             st.dataframe(
                 style_stat_table(
                     df,
-                    favor_high=["Proj K", "K/9", "Opp K%"],
+                    favor_high=["Proj K", "K/9", "Opp K%", "L5 avg"],
                     gradient=True,
                 ),
                 width="stretch",

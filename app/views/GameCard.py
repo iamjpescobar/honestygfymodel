@@ -19,6 +19,7 @@ from engines.statcast_engine import (
     get_pitcher_id, get_pitcher_statcast, get_pitcher_advanced_splits, get_batter_profile_windowed, get_batter_vs_pitch_types
 )
 from engines.savant_leaderboard import load_percentile_ranks
+from engines.live_sync import sync_latest_button
 from engines.slam_engine import slam_from_profile
 from engines.top_plays import rank_batters, confidence_tier, matchup_tier
 from engines.team_abbreviations import team_abbr
@@ -64,6 +65,8 @@ st.markdown(
 # Plain container instead of st.columns — keeps the `with content_col:`
 # indentation below untouched while letting the page use the full width
 # app.py's main column gives it.
+sync_latest_button(key="sync_gamecard")
+
 content_col = st.container()
 
 with content_col:
