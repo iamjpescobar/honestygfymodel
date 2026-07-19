@@ -20,6 +20,7 @@ from engines.statcast_engine import (
 )
 from engines.savant_leaderboard import load_percentile_ranks
 from engines.live_sync import sync_latest_button
+from engines.batter_trends import render_batter_trend
 from engines.slam_engine import slam_from_profile
 from engines.top_plays import rank_batters, confidence_tier, matchup_tier
 from engines.team_abbreviations import team_abbr
@@ -762,6 +763,36 @@ with content_col:
                         st.caption("HR Score / Hit Score / K Score show N/A above because Baseball Savant's live percentile rankings aren't reachable right now (see warning above) \u2014 not because these players lack power or contact skill.")
                     else:
                         st.caption("HR Score / Hit Score are this app's own composite scores from real, live MLB percentile rankings (baseballsavant.mlb.com) \u2014 not calibrated predictive probabilities. See engines/top_plays.py for the exact formula.")
+
+                        # ---- Batter Trend: pick any batter in this lineup,
+                        # see his real game-by-game results (official MLB
+                        # box scores — the source that actually carries RBI
+                        # and runs, which Statcast pitch data doesn't) ----
+                        st.markdown(
+                            f'<div class="pf-card-title" style="color:{COLOR["magenta_purple"]}; margin-top:14px;">Batter Trend</div>'
+                            f'<div class="pf-card-subtitle">Game-by-game Hits / HR / RBI / H+R+RBI from MLB official box scores.</div>',
+                            unsafe_allow_html=True,
+                        )
+                        _bt_ids = {r["name"]: r["id"] for r in ranked if r.get("id")}
+                        _bt_pick = st.selectbox(
+                            "Batter trend",
+                            ["Select a batter\u2026"] + list(_bt_ids.keys()),
+                            key=f"bt_pick_{st.session_state['gc_selected_game_idx']}",
+                            label_visibility="collapsed",
+                        )
+                        if _bt_pick in _bt_ids:
+                            _bt_stat = st.segmented_control(
+                                "Stat", ["Hits", "HR", "RBI", "H+R+RBI"],
+                                default="Hits", key="bt_stat", label_visibility="collapsed",
+                            )
+                            _bt_win = st.segmented_control(
+                                "Window", ["Season", "L25", "L10", "L5"],
+                                default="L10", key="bt_window", label_visibility="collapsed",
+                            )
+                            render_batter_trend(
+                                _bt_ids[_bt_pick], _bt_pick,
+                                _bt_stat or "Hits", _bt_win or "L10",
+                            )
 
         if table_rows:
             top_3_pitches = [pt for pt, usage in sorted(arsenal.items(), key=lambda x: -x[1])[:3]] if arsenal else []

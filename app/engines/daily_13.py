@@ -29,6 +29,7 @@ local file are counted and skipped). Cached layers return JSON strings
 """
 import json
 from datetime import datetime
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -40,6 +41,17 @@ from engines.statcast_engine import _read_local_parquet, _HIT_EVENTS
 from engines.team_abbreviations import team_abbr
 
 EASTERN = ZoneInfo("America/New_York")
+
+
+def _data_stamp():
+    """(through_date, built_at) from the data package manifest — shown
+    on the board so 'is this today's data?' answers itself."""
+    try:
+        p = Path(__file__).resolve().parents[1] / "data" / "statcast" / "manifest.json"
+        m = json.loads(p.read_text())
+        return m.get("through_date"), m.get("generated_at_utc")
+    except Exception:
+        return None, None
 
 MIN_HIT_RATE = 60.0   # percent of games with >= 1 hit
 MIN_GAMES = 25        # sample floor before a rate counts as "consistent"
@@ -117,7 +129,10 @@ def _daily13_json(date_str: str) -> str:
             })
 
     qualified.sort(key=lambda r: (-r["rate"], -r["gp"]))
+    through, built = _data_stamp()
     return json.dumps({
+        "data_through": through,
+        "built": built,
         "rows": qualified[:BOARD_SIZE],
         "scanned": scanned,
         "no_file": no_file,

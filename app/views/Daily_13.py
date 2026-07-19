@@ -78,6 +78,8 @@ with card("daily13"):
             )
 
     st.caption(
+        f"Game logs through {meta.get('data_through') or 'unknown'} "
+        f"(build {meta.get('built') or '?'} \u00b7 press \u27f3 Sync latest to pull a newer one) \u00b7 "
         f"Scanned {meta.get('scanned', 0)} hitters across today's rosters \u00b7 "
         f"{meta.get('qualified', 0)} met the bar \u00b7 "
         f"{meta.get('no_file', 0)} had no local game log (called up recently or no Statcast file yet). "
