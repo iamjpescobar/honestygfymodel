@@ -21,6 +21,7 @@ from engines.statcast_engine import (
 from engines.savant_leaderboard import load_percentile_ranks
 from engines.live_sync import sync_latest_button
 from engines.batter_trends import render_batter_trend
+from engines.bvp import render_bvp_card, render_zone_map, render_spray_chart
 from engines.slam_engine import slam_from_profile
 from engines.top_plays import rank_batters, confidence_tier, matchup_tier
 from engines.team_abbreviations import team_abbr
@@ -798,6 +799,20 @@ with content_col:
                                 _bt_stat or "Hits", _bt_win or "L10",
                                 line=float(_bt_line or "0.5"),
                             )
+                            # Deep dive: career BvP vs tonight's selected
+                            # pitcher, then zone map + spray chart on the
+                            # SAME window the trend chart is showing.
+                            render_bvp_card(
+                                _bt_ids[_bt_pick], _bt_pick,
+                                pitcher_id, selected_pitcher_name,
+                            )
+                            _dd1, _dd2 = st.columns([1, 1.35])
+                            with _dd1:
+                                render_zone_map(_bt_ids[_bt_pick], _bt_pick,
+                                                _bt_win or "L10")
+                            with _dd2:
+                                render_spray_chart(_bt_ids[_bt_pick], _bt_pick,
+                                                   _bt_win or "L10")
 
         if table_rows:
             top_3_pitches = [pt for pt, usage in sorted(arsenal.items(), key=lambda x: -x[1])[:3]] if arsenal else []

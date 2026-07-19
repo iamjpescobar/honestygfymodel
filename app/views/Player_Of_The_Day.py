@@ -27,7 +27,7 @@ sync_latest_button(key="sync_potd")
 
 _win_opts = {"Season": "season", "L25": "l25", "L15": "l15", "L10": "l10", "L5": "l5"}
 _win_choice = st.segmented_control(
-    "Starter-signal window", list(_win_opts.keys()), default="Season",
+    "Starter-signal window", list(_win_opts.keys()), default="L15",
     key="potd_window", label_visibility="collapsed",
 )
 _win_label = _win_choice or "Season"

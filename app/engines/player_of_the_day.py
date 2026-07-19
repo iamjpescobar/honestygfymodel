@@ -148,6 +148,7 @@ def get_mlb_player_of_the_day(window: str = "season"):
 
                 candidates.append({
                     "name": b.get("name"), "team": team_name, "id": pid,
+                    "opp_pitcher_id": opp_pitcher_id,
                     "bats": b.get("bats") or "?",
                     "opponent": g.get("home") if side == "away" else g.get("away"),
                     "hr_score": hr, "hit_score": hit, "k_score": k,
@@ -161,6 +162,36 @@ def get_mlb_player_of_the_day(window: str = "season"):
         return None, [], ("No eligible real candidates today — either an off-day, or Baseball "
                            "Savant doesn't have enough season samples for today's lineups yet.")
 
+    candidates.sort(key=lambda c: -c["score"])
+
+    # Career BvP vs tonight's starter — official MLB vs-player split,
+    # checked for the TOP 10 candidates only (one API call each,
+    # cached 6h). Documented, capped adjustment worth exactly one
+    # signal on the existing scale:
+    #   +10 when PA >= 8 and SLG >= .500 (real career damage vs him)
+    #   -10 when PA >= 10 and AVG <= .150 (real career futility)
+    # Smaller samples or anything in between changes nothing; the raw
+    # line is attached to the candidate either way so the page can
+    # show it.
+    from engines.bvp import career_bvp
+    for c in candidates[:10]:
+        opp_pid = c.get("opp_pitcher_id")
+        if not opp_pid:
+            continue
+        d = career_bvp(c["id"], opp_pid)
+        if not d or not d.get("ab"):
+            continue
+        avg, slg, pa = d.get("avg"), d.get("slg"), d.get("pa", 0)
+        line = f'{d["h"]}-for-{d["ab"]}, {d["hr"]} HR ({pa} PA)'
+        c["bvp_line"] = line
+        if pa >= 8 and slg is not None and slg >= 0.500:
+            c["score"] = round(c["score"] + 10, 1)
+            c["pitcher_signals"] = list(c.get("pitcher_signals") or []) + [
+                f"Career BvP edge vs this starter: {line}, SLG {slg:.3f}"]
+        elif pa >= 10 and avg is not None and avg <= 0.150:
+            c["score"] = round(c["score"] - 10, 1)
+            c["pitcher_signals"] = list(c.get("pitcher_signals") or []) + [
+                f"Career BvP struggle vs this starter: {line}, AVG {avg:.3f}"]
     candidates.sort(key=lambda c: -c["score"])
     return candidates[0], candidates, None
 
@@ -180,6 +211,15 @@ def get_wnba_player_of_the_day(form_window: str = "l5"):
     if not games:
         return None, [], "No WNBA games on today's slate."
 
+
+    # Slate-average points allowed, for the opponent-defense factor.
+    _pa_vals = []
+    for _g in games:
+        for _s in ("away", "home"):
+            _v = _g.get(f"{_s}_pa_pg")
+            if _v:
+                _pa_vals.append(float(_v))
+    slate_pa_avg = (sum(_pa_vals) / len(_pa_vals)) if _pa_vals else None
     candidates = []
     for g in games:
         for side, opp_side in (("away", "home"), ("home", "away")):
@@ -192,12 +232,25 @@ def get_wnba_player_of_the_day(form_window: str = "l5"):
                 form_pra, season_pra = p.get(f"{form_window}_pra"), p.get("pra")
                 if form_pra is None or season_pra is None:
                     continue
+                # Opponent-defense context: how many points the opponent
+                # actually allows per game vs the slate average, capped
+                # to +/-10% so one leaky defense can't swing the pick by
+                # itself. Real box-score-derived numbers; the factor is
+                # shown on the pick.
+                opp_pa = g.get(f"{opp_side}_pa_pg")
+                factor = 1.0
+                if opp_pa and slate_pa_avg:
+                    factor = min(max(float(opp_pa) / slate_pa_avg, 0.9), 1.1)
                 candidates.append({
                     "name": p.get("name"), "team": team_name,
                     "opponent": g.get(opp_side, ""),
                     "pos": p.get("pos"), "gp": gp,
                     "form_window": form_window,
                     "form_pra": form_pra, "season_pra": season_pra,
+                    "adj_pra": round(form_pra * factor, 1),
+                    "def_factor": round(factor, 3),
+                    "opp_pa_pg": opp_pa,
+                    "slate_pa_avg": round(slate_pa_avg, 1) if slate_pa_avg else None,
                     "form_ppg": p.get(f"{form_window}_ppg"),
                     "form_rpg": p.get(f"{form_window}_rpg"),
                     "form_apg": p.get(f"{form_window}_apg"),
@@ -209,5 +262,5 @@ def get_wnba_player_of_the_day(form_window: str = "l5"):
             msg += " (L15/L25 form appears after the next nightly data build.)"
         return None, [], msg
 
-    candidates.sort(key=lambda c: (-c["form_pra"], -c["season_pra"]))
+    candidates.sort(key=lambda c: (-c.get("adj_pra", c["form_pra"]), -c["season_pra"]))
     return candidates[0], candidates, None

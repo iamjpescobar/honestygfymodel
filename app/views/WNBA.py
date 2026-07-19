@@ -109,7 +109,7 @@ if games:
     from engines.player_of_the_day import get_wnba_player_of_the_day
     _fw_opts = {"L5": "l5", "L10": "l10", "L15": "l15", "L25": "l25"}
     _fw_choice = st.segmented_control(
-        "Form window", list(_fw_opts.keys()), default="L5",
+        "Form window", list(_fw_opts.keys()), default="L15",
         key="wnba_potd_window", label_visibility="collapsed",
     )
     _fw_label = _fw_choice or "L5"
@@ -133,7 +133,10 @@ if games:
         pc4.metric("Season PRA", wnba_pick["season_pra"])
         st.caption(
             f'Real games played this season: {wnba_pick["gp"]} \u2014 ranked by real last-{_fw_label[1:]}-game PRA '
-            f'(points+rebounds+assists), season PRA as tiebreaker.'
+            f'(points+rebounds+assists) \u00d7 opponent-defense factor '
+            f'({wnba_pick.get("def_factor", 1.0)}\u00d7: opponent allows {wnba_pick.get("opp_pa_pg") or "?"} PPG '
+            f'vs a slate average of {wnba_pick.get("slate_pa_avg") or "?"}, capped \u00b110%), '
+            f'season PRA as tiebreaker.'
         )
         st.markdown(card_close(), unsafe_allow_html=True)
     elif wnba_potd_error:
