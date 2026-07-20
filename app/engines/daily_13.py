@@ -35,8 +35,10 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 import streamlit as st
 
+from datetime import timedelta
+
 from engines.weather_engine import get_todays_games_with_weather
-from engines.roster import get_live_team_roster
+from engines.roster import get_live_team_roster, get_confirmed_lineup
 from engines.statcast_engine import _read_local_parquet, _HIT_EVENTS
 from engines.team_abbreviations import team_abbr
 
@@ -59,8 +61,9 @@ BOARD_SIZE = 13
 
 
 def _hit_log(pid):
-    """(games_played, games_with_hit, active_streak) from the player's
-    local parquet, or None when there's no usable file."""
+    """(games_played, games_with_hit, active_streak, last_game_date)
+    from the player's local parquet, or None when there's no usable
+    file."""
     df = _read_local_parquet("batters", pid)
     if df is None or df.empty:
         return None
@@ -83,7 +86,7 @@ def _hit_log(pid):
             streak += 1
         else:
             break
-    return games_n, hit_games, streak
+    return games_n, hit_games, streak, per_game[-1][0]
 
 
 @st.cache_data(ttl=1800, show_spinner=False)
@@ -99,21 +102,48 @@ def _daily13_json(date_str: str) -> str:
         for side in ("away", "home"):
             t = g.get(side)
             if t and t not in teams:
-                teams.append(t)
+                teams.append((t, g.get("game_pk"), side))
 
-    scanned, no_file = 0, 0
+    # "Playing today" guard, two layers:
+    # 1) If a team's CONFIRMED lineup is posted, that IS the pool for
+    #    that team — the literal answer to who's playing.
+    # 2) For teams without a posted lineup yet, fall back to the
+    #    roster, but require recent activity: last game within 6 days
+    #    of the data build's through-date. That's what keeps IL'd and
+    #    inactive names off the board without pretending to know
+    #    injury statuses this data doesn't carry.
+    through, _built = _data_stamp()
+    cutoff = None
+    if through:
+        try:
+            cutoff = (datetime.strptime(through, "%Y-%m-%d")
+                      - timedelta(days=6)).strftime("%Y-%m-%d")
+        except Exception:
+            cutoff = None
+
+    scanned, no_file, inactive = 0, 0, 0
+    confirmed_teams = 0
     qualified = []
-    for team in teams:
-        roster = get_live_team_roster(team) or []
-        for p in roster:
-            if p.get("is_pitcher") or not p.get("id"):
+    for team, gpk, side in teams:
+        lineup, is_confirmed = get_confirmed_lineup(gpk, side)
+        if is_confirmed and lineup:
+            pool = [p for p in lineup if not p.get("is_pitcher")]
+            confirmed_teams += 1
+        else:
+            pool = [p for p in (get_live_team_roster(team) or [])
+                    if not p.get("is_pitcher")]
+        for p in pool:
+            if not p.get("id"):
                 continue
             scanned += 1
             log = _hit_log(p["id"])
             if log is None:
                 no_file += 1
                 continue
-            games_n, hit_games, streak = log
+            games_n, hit_games, streak, last_date = log
+            if not is_confirmed and cutoff and last_date and last_date < cutoff:
+                inactive += 1
+                continue
             if games_n < MIN_GAMES:
                 continue
             rate = hit_games / games_n * 100.0
@@ -126,6 +156,7 @@ def _daily13_json(date_str: str) -> str:
                 "hit_gp": hit_games,
                 "rate": round(rate, 1),
                 "streak": streak,
+                "today": "\u2713 lineup" if is_confirmed else "roster",
             })
 
     qualified.sort(key=lambda r: (-r["rate"], -r["gp"]))
@@ -137,6 +168,8 @@ def _daily13_json(date_str: str) -> str:
         "scanned": scanned,
         "no_file": no_file,
         "qualified": len(qualified),
+        "inactive": inactive,
+        "confirmed_teams": confirmed_teams,
         "warning": games_error,
     }, default=str)
 

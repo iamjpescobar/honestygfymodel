@@ -40,7 +40,8 @@ def _load(path, key):
 def _load_games():
     try:
         payload = json.loads(_KBO_GAMES.read_text())
-        return payload.get("games", []), payload.get("generated_at_kst")
+        return (payload.get("games", []), payload.get("generated_at_kst"),
+                payload.get("slate_date_kst"))
     except Exception:
         return None, None
 
@@ -156,7 +157,24 @@ def _ou_badges(ou_trend, label):
             f'{label} O/U trend: {DOT.join(bits)}</div>')
 
 
-games, generated_at = _load_games()
+games, generated_at, slate_date = _load_games()
+
+# Date-boundary guard: KBO plays on Korea time (UTC+9). The file holds
+# the slate for whatever "today" was in Korea when the pipeline last
+# ran; by the time a US user looks, Korea may have rolled to the next
+# day, leaving the file a day behind. Compare the file's slate date to
+# TODAY in Korea and, if it's stale, say so plainly instead of showing
+# yesterday's games as if they're tonight's.
+from datetime import datetime as _dt
+from zoneinfo import ZoneInfo as _ZI
+_today_kst = _dt.now(_ZI("Asia/Seoul")).strftime("%Y-%m-%d")
+_stale = bool(slate_date and slate_date != _today_kst)
+if _stale:
+    st.warning(
+        f"Showing the {slate_date} KST slate \u2014 today in Korea is {_today_kst}. "
+        f"The nightly build hasn't refreshed for today yet; press \u27f3 Sync latest above "
+        f"to pull the current slate. If it stays empty after syncing, it's a real KBO off-day."
+    )
 
 if games is None:
     st.markdown(card_open("\u26be KBO engine is being connected"), unsafe_allow_html=True)
@@ -200,7 +218,7 @@ if generated_at:
 _render_pitching_leaders()
 _render_batting_leaders()
 
-if not games:
+if not games and not _stale:
     st.info("No KBO games on today\'s schedule \u2014 likely a league off-day.")
 else:
     def _team_line(g, side):

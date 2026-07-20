@@ -27,12 +27,27 @@ def _load_games():
     instead of anything fabricated."""
     try:
         payload = json.loads(_NPB_GAMES.read_text())
-        return payload.get("games", []), payload.get("generated_at_jst")
+        return (payload.get("games", []), payload.get("generated_at_jst"),
+                payload.get("slate_date_jst"))
     except Exception:
         return None, None
 
 
-games, generated_at = _load_games()
+games, generated_at, slate_date = _load_games()
+
+# Date-boundary guard: NPB plays on Japan time (UTC+9); see the KBO
+# view for the full rationale. Compare the file's slate date to today
+# in Japan and flag staleness instead of showing yesterday's slate.
+from datetime import datetime as _dt
+from zoneinfo import ZoneInfo as _ZI
+_today_jst = _dt.now(_ZI("Asia/Tokyo")).strftime("%Y-%m-%d")
+_stale = bool(slate_date and slate_date != _today_jst)
+if _stale:
+    st.warning(
+        f"Showing the {slate_date} JST slate \u2014 today in Japan is {_today_jst}. "
+        f"The nightly build hasn't refreshed for today yet; press \u27f3 Sync latest above "
+        f"to pull the current slate. If it stays empty after syncing, it's a real NPB off-day."
+    )
 
 if games is None:
     st.markdown(card_open("\u26be NPB engine is being connected"), unsafe_allow_html=True)
@@ -71,7 +86,7 @@ if games is None:
 if generated_at:
     st.caption(f"Slate data as of {generated_at} JST \u2014 refreshed by the nightly pipeline.")
 
-if not games:
+if not games and not _stale:
     st.info("No NPB games on today\'s schedule \u2014 likely a league off-day.")
 else:
     def _team_line(g, side):

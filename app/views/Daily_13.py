@@ -59,6 +59,7 @@ with card("daily13"):
                 "Games w/ Hit": str(r["hit_gp"]),
                 "Hit%": f'{r["rate"]:.1f}',
                 "Active streak": str(r["streak"]),
+                "Today": r.get("today", "roster"),
             }
             for r in rows
         ])
@@ -80,7 +81,10 @@ with card("daily13"):
     st.caption(
         f"Game logs through {meta.get('data_through') or 'unknown'} "
         f"(build {meta.get('built') or '?'} \u00b7 press \u27f3 Sync latest to pull a newer one) \u00b7 "
-        f"Scanned {meta.get('scanned', 0)} hitters across today's rosters \u00b7 "
+        f"Playing-today guard: {meta.get('confirmed_teams', 0)} team(s) pooled from their CONFIRMED "
+        f"lineup; the rest from rosters with a recent-activity filter (last game within 6 days of the "
+        f"data build \u2014 {meta.get('inactive', 0)} inactive/IL name(s) filtered out). "
+        f"Scanned {meta.get('scanned', 0)} hitters \u00b7 "
         f"{meta.get('qualified', 0)} met the bar \u00b7 "
         f"{meta.get('no_file', 0)} had no local game log (called up recently or no Statcast file yet). "
         f"Refreshes every 30 minutes."
