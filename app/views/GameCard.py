@@ -79,7 +79,7 @@ with content_col:
     # how many games are on the slate (was wrapping into a tall
     # multi-row block before; this caps it at one row, always)
     # -----------------------------------------------------
-    PAGE_SIZE = 4
+    PAGE_SIZE = 5
     total_pages = max(1, (len(games) + PAGE_SIZE - 1) // PAGE_SIZE)
     st.session_state.setdefault("gc_page", 0)
     st.session_state.setdefault("gc_selected_game_idx", 0)
@@ -121,6 +121,16 @@ with content_col:
         # a button carrying the unique G1/G2-safe label. on_click
         # callbacks run BEFORE the rerun renders, so the selection AND
         # the teal highlight update together on the first click.
+        st.markdown(
+            "<style>"
+            "div[data-testid='stHorizontalBlock']:has(img[src*='team-logos']) button {"
+            "  padding: 1px 4px !important; min-height: 26px !important; }"
+            "div[data-testid='stHorizontalBlock']:has(img[src*='team-logos']) button p {"
+            "  font-size: 10px !important; }"
+            "</style>",
+            unsafe_allow_html=True,
+        )
+
         def _pick_game(_gidx):
             st.session_state["gc_selected_game_idx"] = _gidx
 
@@ -129,17 +139,17 @@ with content_col:
             _gidx = _labels.index(_lbl)
             _sel = _gidx == st.session_state["gc_selected_game_idx"]
             _a, _h = logo_for(_vg.get("away")), logo_for(_vg.get("home"))
-            _ai = (f'<img src="{_a}" width="30" height="30" style="vertical-align:middle;">'
-                   if _a else f'<b>{team_abbr(_vg.get("away", "?"))}</b>')
-            _hi = (f'<img src="{_h}" width="30" height="30" style="vertical-align:middle;">'
-                   if _h else f'<b>{team_abbr(_vg.get("home", "?"))}</b>')
+            _ai = (f'<img src="{_a}" width="21" height="21" style="vertical-align:middle;">'
+                   if _a else f'<b style="font-size:11px;">{team_abbr(_vg.get("away", "?"))}</b>')
+            _hi = (f'<img src="{_h}" width="21" height="21" style="vertical-align:middle;">'
+                   if _h else f'<b style="font-size:11px;">{team_abbr(_vg.get("home", "?"))}</b>')
             with _card_cols[_ci]:
                 st.markdown(
-                    f'<div style="text-align:center; padding:6px 2px 2px 2px; border-radius:8px 8px 0 0; '
+                    f'<div style="text-align:center; padding:3px 2px 1px 2px; border-radius:8px 8px 0 0; '
                     f'border:{"2px solid " + COLOR["stat_high"] if _sel else "1px solid " + COLOR["text"] + "22"}; '
                     f'border-bottom:none; background:{COLOR["stat_high"] + "14" if _sel else "transparent"};">'
                     f'{_ai}<span style="margin:0 5px; color:{COLOR["text"]}; opacity:0.55; '
-                    f'font-size:11px;">@</span>{_hi}</div>',
+                    f'font-size:9px;">@</span>{_hi}</div>',
                     unsafe_allow_html=True,
                 )
                 st.button(
