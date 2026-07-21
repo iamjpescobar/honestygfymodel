@@ -22,6 +22,7 @@ from engines.savant_leaderboard import load_percentile_ranks
 from engines.live_sync import sync_latest_button
 from engines.batter_trends import render_batter_trend
 from engines.bvp import render_bvp_card, render_zone_map, render_spray_chart
+from engines.edge import edge_components, pen_context
 from engines.slam_engine import slam_from_profile
 from engines.top_plays import rank_batters, confidence_tier, matchup_tier
 from engines.team_abbreviations import team_abbr
@@ -516,6 +517,17 @@ with content_col:
 
     ranked = rank_batters(batter_profiles, savant_df) if batter_profiles else []
 
+    # ---- Matchup Edge layer (Phase 2): HR Edge = HR Score + BvP(±15)
+    # + Zone Fit(±15) + Bullpen(±10). Every component sample-floored
+    # and shown in the Edge breakdown below the table. engines/edge.py
+    # documents the exact tiers and math.
+    if ranked and pitcher_id:
+        _pitcher_team = game["away"] if opposing_team == game["home"] else game["home"]
+        _pen_adj, _pen_note = pen_context(_pitcher_team, pitcher_id)
+        for _r in ranked:
+            _r.update(edge_components(_r.get("id"), pitcher_id,
+                                      _r.get("hr_score"), _pen_adj, _pen_note))
+
     def _score_sort_key(r, field):
         v = r.get(field)
         return -1 if v is None else -v  # None sorts last regardless of view
@@ -655,7 +667,7 @@ with content_col:
                     )
                 with sort_col:
                     sort_choice = st.selectbox(
-                        "Sort by", ["SLAM", "HR Score", "Hit Score", "Brl%", "HH%"], key="lineup_sort_by"
+                        "Sort by", ["SLAM", "HR Edge", "HR Score", "Hit Score", "Brl%", "HH%"], key="lineup_sort_by"
                     )
                 with window_col:
                     window_choice = st.selectbox(
@@ -679,6 +691,7 @@ with content_col:
 
                 sort_key_map = {
                     "SLAM": lambda r: slam_cache[r["name"]]["slam_score"] or 0.0,
+                    "HR Edge": lambda r: _score_num(r.get("edge")),
                     "HR Score": lambda r: _score_num(r["hr_score"]),
                     "Hit Score": lambda r: _score_num(r["hit_score"]),
                     "Brl%": lambda r: windowed_profile_cache[r["name"]].get("Brl %", 0),
@@ -728,6 +741,7 @@ with content_col:
                         "PullBrl%": profile.get("PullBrl %", 0),
                         "Blast%": profile.get("Blast %", 0),
                         "SwStr%": profile.get("SwStr %", 0),
+                        "HR Edge": r.get("edge"),
                         "HR Score": r["hr_score"],
                         "Hit Score": r["hit_score"],
                         "Edge": edge_tag(tag_label, tag_tier),
@@ -742,7 +756,7 @@ with content_col:
 
                     styled = style_stat_table(
                         display_df.drop(columns=["Matchup", "Confidence", "EdgeLabel", "EdgeTier"]),
-                        favor_high=["SLAM", "BA", "Brl%", "HH%", "LD%", "FB%", "SweetSpot%", "PullAir%", "PullBrl%", "Blast%", "HR Score", "Hit Score"],
+                        favor_high=["SLAM", "BA", "Brl%", "HH%", "LD%", "FB%", "SweetSpot%", "PullAir%", "PullBrl%", "Blast%", "HR Edge", "HR Score", "Hit Score"],
                         favor_low=["GB%", "SwStr%"],
                         gradient=True,
                     )
@@ -750,12 +764,13 @@ with content_col:
                         "SLAM": "{:.1f}", "BA": "{:.3f}", "Brl%": "{:.1f}", "HH%": "{:.1f}", "LD%": "{:.1f}",
                         "FB%": "{:.1f}", "GB%": "{:.1f}", "SweetSpot%": "{:.1f}", "PullAir%": "{:.1f}",
                         "PullBrl%": "{:.1f}", "Blast%": "{:.1f}", "SwStr%": "{:.1f}",
-                        "HR Score": "{:.0f}", "Hit Score": "{:.0f}",
+                        "HR Edge": "{:.0f}", "HR Score": "{:.0f}", "Hit Score": "{:.0f}",
                     }, na_rep="N/A")
                     st.dataframe(
                         styled,
                         width="stretch",
                         column_config={
+                            "HR Edge": st.column_config.ProgressColumn("HR Edge", min_value=0, max_value=100, format="%d", color=COLOR["gold"]),
                             "HR Score": st.column_config.ProgressColumn("HR Score", min_value=0, max_value=100, format="%d", color=COLOR["stat_high"]),
                             "Hit Score": st.column_config.ProgressColumn("Hit Score", min_value=0, max_value=100, format="%d", color=COLOR["warn"]),
                         },
@@ -763,7 +778,24 @@ with content_col:
                     if not league_data_available:
                         st.caption("HR Score / Hit Score / K Score show N/A above because Baseball Savant's live percentile rankings aren't reachable right now (see warning above) \u2014 not because these players lack power or contact skill.")
                     else:
-                        st.caption("HR Score / Hit Score are this app's own composite scores from real, live MLB percentile rankings (baseballsavant.mlb.com) \u2014 not calibrated predictive probabilities. See engines/top_plays.py for the exact formula.")
+                        st.caption("HR Score / Hit Score are this app's own composite scores from real, live MLB percentile rankings (baseballsavant.mlb.com); HR Score now includes the Exit Velocity percentile. HR Edge = HR Score + the matchup layer (BvP \u00b115, Zone Fit \u00b115, Bullpen \u00b110 \u2014 engines/edge.py has every tier). Not calibrated predictive probabilities.")
+                        with st.expander("\U0001F9EE Edge breakdown \u2014 why each bat moved"):
+                            for _r in filtered:
+                                if _r.get("edge") is None:
+                                    continue
+                                _parts = []
+                                if _r.get("bvp_adj"):
+                                    _parts.append(f'BvP {_r["bvp_adj"]:+d} ({_r.get("bvp_line")})')
+                                elif _r.get("bvp_line"):
+                                    _parts.append(f'BvP 0 ({_r.get("bvp_line")})')
+                                if _r.get("zone_adj"):
+                                    _parts.append(f'Zone {_r["zone_adj"]:+d} ({_r.get("zone_note")})')
+                                elif _r.get("zone_note"):
+                                    _parts.append(f'Zone 0 ({_r.get("zone_note")})')
+                                if _r.get("pen_note"):
+                                    _parts.append(f'Pen {_r.get("pen_adj", 0):+d} ({_r.get("pen_note")})')
+                                st.caption(f'**{_r["name"]}** \u2014 HR Score {_r["hr_score"]} \u2192 '
+                                           f'Edge {_r["edge"]} \u00b7 ' + " \u00b7 ".join(_parts))
 
                         # ---- Batter Trend: pick any batter in this lineup,
                         # see his real game-by-game results (official MLB

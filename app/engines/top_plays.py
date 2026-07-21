@@ -23,7 +23,8 @@ from engines.savant_leaderboard import get_percentile
 
 def hr_score(player_id, savant_df):
     """
-    Real MLB-computed percentile average of Barrel% and Hard-Hit% —
+    Real MLB-computed percentile average of Barrel%, Hard-Hit%, and
+    average Exit Velocity —
     both pulled live from Baseball Savant's percentile-rankings
     leaderboard, not derived or approximated by this app.
     Returns None (not 0) when Savant doesn't have this player yet
@@ -32,7 +33,12 @@ def hr_score(player_id, savant_df):
     """
     brl = get_percentile(savant_df, player_id, "brl_percent")
     hh = get_percentile(savant_df, player_id, "hard_hit_percent")
-    parts = [p for p in [brl, hh] if p is not None]
+    # Exit velocity percentile added in Phase 2 of the scoring rework —
+    # same live Savant source, equal weight with Brl% and HH%. Degrades
+    # gracefully: if Savant ever drops the column, the score falls back
+    # to the surviving components instead of breaking.
+    ev = get_percentile(savant_df, player_id, "exit_velocity")
+    parts = [p for p in [brl, hh, ev] if p is not None]
     return round(sum(parts) / len(parts)) if parts else None
 
 
