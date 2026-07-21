@@ -22,7 +22,7 @@ from engines.savant_leaderboard import load_percentile_ranks
 from engines.live_sync import sync_latest_button
 from engines.batter_trends import render_batter_trend
 from engines.bvp import render_bvp_card, render_zone_map, render_spray_chart
-from engines.edge import edge_components, pen_context
+from engines.edge import edge_components, pen_context, bvp_component
 from engines.team_logos import logo_for
 from engines.slam_engine import slam_from_profile
 from engines.top_plays import rank_batters, confidence_tier, matchup_tier
@@ -728,8 +728,26 @@ with content_col:
                 }
                 slam_cache = {name: slam_from_profile(p) for name, p in windowed_profile_cache.items()}
 
+                # BvP joins SLAM: the SAME documented tiers HR Edge uses
+                # (±15 / ±10 with PA floors — engines/edge.py). Base and
+                # adjustment are both kept so the Edge breakdown can show
+                # the movement, and the Matchup Edges tiers below inherit
+                # the ADJUSTED number — real career ownership of this
+                # starter now moves a bat between tiers.
+                _name_to_id = {_rr["name"]: _rr.get("id") for _rr in ranked}
+                slam_bvp_cache = {}
+                for _nm, _sr in slam_cache.items():
+                    _base = _sr.get("slam_score")
+                    _adj, _line = 0, None
+                    if _base is not None and pitcher_id and _name_to_id.get(_nm):
+                        _adj, _line = bvp_component(_name_to_id[_nm], pitcher_id)
+                    slam_bvp_cache[_nm] = {
+                        "final": (round(max(0.0, _base + _adj), 1) if _base is not None else None),
+                        "base": _base, "adj": _adj, "line": _line,
+                    }
+
                 sort_key_map = {
-                    "SLAM": lambda r: slam_cache[r["name"]]["slam_score"] or 0.0,
+                    "SLAM": lambda r: slam_bvp_cache[r["name"]]["final"] or 0.0,
                     "HR Edge": lambda r: _score_num(r.get("edge")),
                     "HR Score": lambda r: _score_num(r["hr_score"]),
                     "Hit Score": lambda r: _score_num(r["hit_score"]),
@@ -745,8 +763,10 @@ with content_col:
                 for r in filtered:
                     profile = windowed_profile_cache[r["name"]]
                     slam_result = slam_cache[r["name"]]
-                    slam = slam_result["slam_score"] if slam_result["slam_score"] is not None else 0.0
+                    _sb = slam_bvp_cache[r["name"]]
+                    slam = _sb["final"] if _sb["final"] is not None else 0.0
                     tier = matchup_tier(slam)
+                    r["slam_base"], r["slam_adj"] = _sb["base"], _sb["adj"]
                     conf_label, sample = confidence_tier(profile.get("BBE", 0))
 
                     hr_s, hit_s, k_s = r["hr_score"], r["hit_score"], r["k_score"]
@@ -833,7 +853,13 @@ with content_col:
                                     _parts.append(f'Zone 0 ({_r.get("zone_note")})')
                                 if _r.get("pen_note"):
                                     _parts.append(f'Pen {_r.get("pen_adj", 0):+d} ({_r.get("pen_note")})')
-                                st.caption(f'**{_r["name"]}** \u2014 HR Score {_r["hr_score"]} \u2192 '
+                                _slam_bit = ""
+                                if _r.get("slam_adj"):
+                                    _slam_bit = (f'SLAM {_r.get("slam_base")} \u2192 '
+                                                 f'{round(max(0.0, (_r.get("slam_base") or 0) + _r["slam_adj"]), 1)} '
+                                                 f'(BvP {_r["slam_adj"]:+d}) \u00b7 ')
+                                st.caption(f'**{_r["name"]}** \u2014 ' + _slam_bit +
+                                           f'HR Score {_r["hr_score"]} \u2192 '
                                            f'Edge {_r["edge"]} \u00b7 ' + " \u00b7 ".join(_parts))
 
                         # ---- Batter Trend: pick any batter in this lineup,
@@ -909,6 +935,7 @@ with content_col:
                             "Brl%": vs_profile.get("Brl %") if pitches_seen > 0 else None,
                             "HH%": vs_profile.get("HH %") if pitches_seen > 0 else None,
                             "Whiff%": vs_profile.get("Whiff %") if pitches_seen > 0 else None,
+                            "BvP (career)": r.get("bvp_line") or "\u2014",
                         })
                     matchup_df = pd.DataFrame(matchup_rows)
                     st.dataframe(
@@ -918,7 +945,9 @@ with content_col:
                     st.caption(
                         "\"Pitches Seen\" is the real sample size behind each row \u2014 a low number is a real, honest "
                         "small sample, not a hidden flaw. Blank cells mean this batter hasn't faced any of these "
-                        "specific pitch types in the selected window yet."
+                        "specific pitch types in the selected window yet. BvP (career) is his real career line vs "
+                        "THIS starter (MLB official vs-player split) \u2014 the same history that now moves SLAM and "
+                        "the Matchup Edges tiers, per the tiers documented in engines/edge.py."
                     )
 
         if table_rows:
