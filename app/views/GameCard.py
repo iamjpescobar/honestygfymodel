@@ -24,6 +24,7 @@ from engines.batter_trends import render_batter_trend
 from engines.bvp import render_bvp_card, render_zone_map, render_spray_chart
 from engines.edge import edge_components, pen_context, bvp_component
 from engines.team_logos import logo_for
+from engines.park_weather import get_park_forecast
 from engines.slam_engine import slam_from_profile
 from engines.top_plays import rank_batters, confidence_tier, matchup_tier
 from engines.team_abbreviations import team_abbr
@@ -208,7 +209,24 @@ with content_col:
     # WEATHER + PARK FACTOR \u2014 one compact row, not 4 separate cards
     # -----------------------------------------------------
     park = get_park_factor(game["home"])
-    temp_display = game["weather_temp"] if game["weather_temp"] else "\u2014"
+
+    # In-house weather desk: MLB's posted park weather is the source of
+    # truth the moment it exists (it carries field-relative wind like
+    # "Out To CF"). Until then — most of the day — fill the card with
+    # the REAL game-time forecast from the National Weather Service
+    # (public-domain US government data), marked with * as a forecast.
+    _fc = None
+    if not game.get("weather_temp") or not game.get("weather_wind"):
+        _fc = get_park_forecast(game.get("venue"), game.get("game_time"))
+    _cond_display = game["weather_condition"] or (_fc and _fc.get("short")) or "Not posted yet"
+    if game["weather_temp"]:
+        temp_display = game["weather_temp"]
+    elif _fc and _fc.get("temp") is not None:
+        temp_display = f'{_fc["temp"]}*'
+    else:
+        temp_display = "\u2014"
+    _wind_display = game["weather_wind"] or (
+        f'{_fc["wind"]}*' if _fc and _fc.get("wind") else "Not posted yet")
     park_display = f'{park["park_factor"]}' if park["verified"] else "Not verified"
 
     def _weather_icon(condition: str) -> str:
@@ -228,20 +246,28 @@ with content_col:
     st.markdown(
         f'<div class="pf-card" style="display:flex; justify-content:space-around; text-align:center; padding:10px 16px;">'
         f'<div><div class="pf-metric-label" style="color:{COLOR["gold"]};">Condition</div>'
-        f'<div style="font-size:20px; margin:2px 0;" class="lc-weather-icon">{_weather_icon(game["weather_condition"])}</div>'
-        f'<div style="font-size:13px; color:{COLOR["gold"]}; font-weight:600;">{game["weather_condition"] or "Not posted yet"}</div></div>'
+        f'<div style="font-size:20px; margin:2px 0;" class="lc-weather-icon">{_weather_icon(_cond_display)}</div>'
+        f'<div style="font-size:13px; color:{COLOR["gold"]}; font-weight:600;">{_cond_display}</div></div>'
         f'<div><div class="pf-metric-label" style="color:{COLOR["gold"]};">Temp</div>'
         f'<div style="font-size:20px; margin:2px 0;">\U0001F321\uFE0F</div>'
         f'<div style="font-size:13px; color:{COLOR["gold"]}; font-weight:600;">{temp_display}\u00b0F</div></div>'
         f'<div><div class="pf-metric-label" style="color:{COLOR["gold"]};">Wind</div>'
         f'<div style="font-size:20px; margin:2px 0;" class="lc-wind-icon">\U0001F4A8</div>'
-        f'<div style="font-size:13px; color:{COLOR["gold"]}; font-weight:600;">{game["weather_wind"] or "Not posted yet"}</div></div>'
+        f'<div style="font-size:13px; color:{COLOR["gold"]}; font-weight:600;">{_wind_display}</div></div>'
         f'<div><div class="pf-metric-label" style="color:{COLOR["gold"]};">Park Factor</div>'
         f'<div style="font-size:20px; margin:2px 0;">\U0001F3DF\uFE0F</div>'
         f'<div style="font-size:13px; color:{COLOR["gold"]}; font-weight:600;">{park_display}</div></div>'
         f'</div>',
         unsafe_allow_html=True,
     )
+    if _fc:
+        st.caption(
+            f"* Game-time forecast for {game.get('venue', 'this park')} "
+            f"(around {_fc.get('hour_local', '?')} local) \u00b7 precip chance {_fc.get('precip', 0)}% \u00b7 "
+            f"Source: National Weather Service \u2014 public-domain US government data, this app's own "
+            f"weather desk. Switches to MLB's official park weather (with field-relative wind) "
+            f"automatically once posted."
+        )
 
     # -----------------------------------------------------
     # PITCHER SELECTOR
