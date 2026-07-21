@@ -194,7 +194,94 @@ def render_zone_map(batter_id, batter_name, window_label: str = "L10") -> None:
 # ---------------------------------------------------------------
 # 3) Spray chart — real hc_x / hc_y landing points
 # ---------------------------------------------------------------
-def render_spray_chart(batter_id, batter_name, window_label: str = "L10") -> None:
+def _wind_widget(wind: str) -> None:
+    """Animated wind indicator for tonight's park, parsed from the same
+    real MLB weather string the Game Card header shows (e.g.
+    "8 mph, Out To CF"). CSS-animated arrows drift in the wind's
+    direction, speed-scaled. Directions are from the BATTER's view to
+    match the spray chart: Out = up, In = down, L/R = across."""
+    if not wind or "not posted" in str(wind).lower():
+        return
+    txt = str(wind)
+    mph = 0
+    m = None
+    import re as _re
+    m = _re.search(r"(\d+)\s*mph", txt, _re.I)
+    if m:
+        mph = int(m.group(1))
+    low = txt.lower()
+    angle = None
+    if "out to cf" in low: angle = 0
+    elif "out to lf" in low: angle = -35
+    elif "out to rf" in low: angle = 35
+    elif "in from cf" in low: angle = 180
+    elif "in from lf" in low: angle = 145
+    elif "in from rf" in low: angle = -145
+    elif "l to r" in low: angle = 90
+    elif "r to l" in low: angle = -90
+    if angle is None or mph <= 0:
+        st.caption(f"Wind tonight: {txt}")
+        return
+    # duration: stronger wind = faster drift (capped sane)
+    dur = max(0.8, round(4.0 - min(mph, 20) * 0.15, 2))
+    st.markdown(
+        f"""<div style="display:flex; align-items:center; gap:10px; margin-top:6px;">
+<div style="width:64px; height:64px; position:relative; overflow:hidden; border-radius:50%;
+     border:1px solid {COLOR['stat_high']}44; background:{COLOR['stat_high']}0D;
+     transform: rotate({angle}deg);">
+  <style>@keyframes lc_wind {{ 0% {{ transform: translateY(26px); opacity:0; }}
+    25% {{ opacity:1; }} 75% {{ opacity:1; }}
+    100% {{ transform: translateY(-26px); opacity:0; }} }}</style>
+  <div style="position:absolute; left:19px; top:14px; color:{COLOR['stat_high']};
+       font-size:15px; animation: lc_wind {dur}s linear infinite;">\u25b2</div>
+  <div style="position:absolute; left:31px; top:22px; color:{COLOR['stat_high']};
+       font-size:12px; animation: lc_wind {dur}s linear infinite {dur/3:.2f}s;">\u25b2</div>
+  <div style="position:absolute; left:41px; top:18px; color:{COLOR['stat_high']}; opacity:0.8;
+       font-size:13px; animation: lc_wind {dur}s linear infinite {2*dur/3:.2f}s;">\u25b2</div>
+</div>
+<div style="font-family:'JetBrains Mono',monospace; font-size:12px; color:{COLOR['text']};">
+  Wind tonight: <b style="color:{COLOR['stat_high']};">{txt}</b><br>
+  <span style="opacity:0.65; font-size:11px;">shown from the batter's view \u2014 up = out to center</span>
+</div></div>""",
+        unsafe_allow_html=True,
+    )
+
+
+def _field_layers(alt):
+    """Generic field geometry under the spray dots — foul lines,
+    infield diamond, and an outfield fence arc — for orientation only
+    (NOT the actual park's dimensions; parks differ and this chart
+    spans the batter's games in many of them)."""
+    import math
+    import pandas as pd_
+    fence = pd_.DataFrame([
+        {"x": 158 * math.sin(math.radians(a)), "y": 158 * math.cos(math.radians(a)), "seg": "fence"}
+        for a in range(-45, 46, 3)
+    ])
+    foul = pd_.DataFrame([
+        {"x": 0, "y": 0, "seg": "lf"}, {"x": -158 * 0.7071, "y": 158 * 0.7071, "seg": "lf"},
+        {"x": 0, "y": 0, "seg": "rf"}, {"x": 158 * 0.7071, "y": 158 * 0.7071, "seg": "rf"},
+    ])
+    diamond = pd_.DataFrame([
+        {"x": 0, "y": 0, "seg": "d"}, {"x": 25.5, "y": 25.5, "seg": "d"},
+        {"x": 0, "y": 51, "seg": "d"}, {"x": -25.5, "y": 25.5, "seg": "d"},
+        {"x": 0, "y": 0, "seg": "d"},
+    ])
+    line_style = dict(color="#3a4a55", strokeWidth=1.5)
+    layers = []
+    for src in (fence, foul, diamond):
+        layers.append(
+            alt.Chart(src).mark_line(**line_style).encode(
+                x=alt.X("x:Q", axis=None, scale=alt.Scale(domain=[-130, 170])),
+                y=alt.Y("y:Q", axis=None, scale=alt.Scale(domain=[-10, 210])),
+                detail="seg:N",
+            )
+        )
+    return layers
+
+
+def render_spray_chart(batter_id, batter_name, window_label: str = "L10",
+                       wind: str = None) -> None:
     import altair as alt
     try:
         df, _err = _get_batter_df(batter_id)
@@ -233,15 +320,19 @@ def render_spray_chart(batter_id, batter_name, window_label: str = "L10") -> Non
         return "Out"
     bb["Result"] = bb["events"].map(_bucket) if "events" in bb.columns else "Out"
 
-    chart = alt.Chart(bb).mark_circle(size=60, opacity=0.75).encode(
-        x=alt.X("x:Q", axis=None, scale=alt.Scale(domain=[-130, 130])),
+    dots = alt.Chart(bb).mark_circle(size=60, opacity=0.8).encode(
+        x=alt.X("x:Q", axis=None, scale=alt.Scale(domain=[-130, 170])),
         y=alt.Y("y:Q", axis=None, scale=alt.Scale(domain=[-10, 210])),
         color=alt.Color("Result:N",
                         scale=alt.Scale(domain=["HR", "Hit", "Out"],
                                         range=[COLOR["gold"], COLOR["stat_high"], "#8a3a40"]),
                         legend=alt.Legend(orient="bottom", title=None)),
         tooltip=[alt.Tooltip("Result:N")],
-    ).properties(height=260).configure_view(strokeOpacity=0)
+    )
+    chart = alt.layer(*_field_layers(alt), dots).properties(
+        height=280).configure_view(strokeOpacity=0)
     st.altair_chart(chart, use_container_width=True)
-    st.caption("Real Statcast landing coordinates \u2014 home plate at the bottom, left field on "
-               "the left. Gold = HR, blue = other hits, red = outs.")
+    _wind_widget(wind)
+    st.caption("Real Statcast landing coordinates over a generic field (orientation only \u2014 "
+               "not the actual park's dimensions; this window spans multiple parks). "
+               "Gold = HR, blue = other hits, red = outs.")

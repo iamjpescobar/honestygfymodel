@@ -39,8 +39,9 @@ with card("daily13"):
         f'Hit% = share of games with \u2265 1 hit across every game in this app\'s Statcast files '
         f'(full current season \u00b7 the deepest real history the pipeline carries) \u00b7 '
         f'bar to make the board: \u2265 {MIN_HIT_RATE:.0f}% and \u2265 {MIN_GAMES} games \u00b7 '
-        f'this is historical consistency, not tonight\'s probability \u2014 it ignores tonight\'s pitcher '
-        f'by design; cross it with the Game Card before acting on it.</div>',
+        f'this is historical consistency \u00d7 a capped BvP check vs tonight\'s starter '
+        f'(+4/-4 rate points for order only \u2014 8+ PA at .300+, or 10+ PA at .150-; displayed Hit% is always raw '
+        f'and the BvP line is on the row); cross it with the Game Card before acting on it.</div>',
         unsafe_allow_html=True,
     )
 
@@ -60,6 +61,7 @@ with card("daily13"):
                 "Hit%": f'{r["rate"]:.1f}',
                 "Active streak": str(r["streak"]),
                 "Today": r.get("today", "roster"),
+                "BvP vs tonight's starter": r.get("bvp", ""),
             }
             for r in rows
         ])

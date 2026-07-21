@@ -812,7 +812,8 @@ with content_col:
                                                 _bt_win or "L10")
                             with _dd2:
                                 render_spray_chart(_bt_ids[_bt_pick], _bt_pick,
-                                                   _bt_win or "L10")
+                                                   _bt_win or "L10",
+                                                   wind=game.get("weather_wind"))
 
         if table_rows:
             top_3_pitches = [pt for pt, usage in sorted(arsenal.items(), key=lambda x: -x[1])[:3]] if arsenal else []

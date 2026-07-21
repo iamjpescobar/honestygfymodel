@@ -16,6 +16,15 @@ The 13 highest qualifying rates make the board (games played breaks
 ties). If fewer than 13 hitters clear the bar, the board shows fewer —
 it does not pad with players below the minimum.
 
+BvP weight: after the consistency ranking, the top 25 qualifiers get
+their real career line vs tonight's OPPOSING PROBABLE checked (MLB
+official vs-player split, one cached call each). Documented, capped
+rank adjustment: +4 rate points when PA >= 8 and career AVG >= .300
+vs him; -4 when PA >= 10 and AVG <= .150. The displayed Hit% is
+always the raw, unadjusted rate — the adjustment moves ORDER only,
+and the BvP line is printed on the row so the why is visible. Rows
+whose starter isn't posted yet rank on consistency alone.
+
 Honesty contract: this is HISTORICAL consistency measured from real
 per-game outcomes. It is not a probability that a player gets a hit
 tonight, and it ignores tonight's pitcher entirely by design — it's a
@@ -121,6 +130,14 @@ def _daily13_json(date_str: str) -> str:
         except Exception:
             cutoff = None
 
+    # Map each team to tonight's OPPOSING probable (for the BvP check).
+    opp_pitcher = {}
+    for g in games:
+        if g.get("home_pitcher_id"):
+            opp_pitcher[g.get("away")] = (g["home_pitcher_id"], g.get("home_pitcher"))
+        if g.get("away_pitcher_id"):
+            opp_pitcher[g.get("home")] = (g["away_pitcher_id"], g.get("away_pitcher"))
+
     scanned, no_file, inactive = 0, 0, 0
     confirmed_teams = 0
     qualified = []
@@ -151,6 +168,8 @@ def _daily13_json(date_str: str) -> str:
                 continue
             qualified.append({
                 "name": p.get("name", "?"),
+                "id": p.get("id"),
+                "_team_full": team,
                 "team": team_abbr(team),
                 "gp": games_n,
                 "hit_gp": hit_games,
@@ -160,6 +179,34 @@ def _daily13_json(date_str: str) -> str:
             })
 
     qualified.sort(key=lambda r: (-r["rate"], -r["gp"]))
+
+    # BvP vs tonight's starter for the top 25 (see module docstring for
+    # the exact thresholds). adj_rate orders the board; displayed Hit%
+    # stays raw.
+    from engines.bvp import career_bvp
+    for r in qualified[:25]:
+        r["adj_rate"] = r["rate"]
+        opp = opp_pitcher.get(r.pop("_team_full", None))
+        if not opp:
+            r["bvp"] = "starter TBD"
+            continue
+        opp_pid, opp_name = opp
+        d = career_bvp(r["id"], opp_pid) if r.get("id") else None
+        if not d or not d.get("ab"):
+            r["bvp"] = f"no history vs {opp_name}"
+            continue
+        avg = d.get("avg")
+        avg_txt = f"{avg:.3f}" if avg is not None else "\u2014"
+        r["bvp"] = f'{d["h"]}-for-{d["ab"]} ({avg_txt}) vs {opp_name}'
+        if d["pa"] >= 8 and avg is not None and avg >= 0.300:
+            r["adj_rate"] = round(r["rate"] + 4, 1)
+        elif d["pa"] >= 10 and avg is not None and avg <= 0.150:
+            r["adj_rate"] = round(r["rate"] - 4, 1)
+    for r in qualified:
+        r.pop("_team_full", None)
+        r.setdefault("adj_rate", r["rate"])
+        r.setdefault("bvp", "")
+    qualified.sort(key=lambda r: (-r["adj_rate"], -r["rate"], -r["gp"]))
     through, built = _data_stamp()
     return json.dumps({
         "data_through": through,

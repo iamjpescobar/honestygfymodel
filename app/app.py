@@ -88,13 +88,11 @@ def build_mlb_pages(include_admin: bool):
         ("Daily 13", "views/Daily_13.py"),
         ("Pitchers to Target", "views/Pitchers_To_Target.py"),
         ("Player of the Day", "views/Player_Of_The_Day.py"),
-        ("Model", "views/Model.py"),
-        ("Pitcher Report", "views/1_Pitcher_Report.py"),
-        ("Pitcher Splits", "views/1_Pitcher_Splits.py"),
-        ("Pitch Mix Splits", "views/2_Pitch_Mix_Splits.py"),
-        ("Lineup Analysis", "views/2_Lineup_Analysis.py"),
-        ("Team Tools", "views/3_Team_Tools.py"),
-        ("KC Lineup Dashboard", "views/KC_Page.py"),
+        # Model / Pitcher Report / Pitcher Splits / Pitch Mix Splits /
+        # Lineup Analysis / Team Tools / KC Lineup Dashboard removed
+        # from the nav on purpose: unstable pages are worse than absent
+        # ones for a paid product. The files stay in views/ so any of
+        # them can be rehabbed and re-listed later.
     ]
 
     if include_admin:
