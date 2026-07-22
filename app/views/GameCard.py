@@ -17,12 +17,14 @@ from engines.headshots import get_headshot_url
 from engines.roster import get_live_team_roster, get_all_teams, get_confirmed_lineup, get_last_starting_lineup
 from engines.statcast_engine import (
     get_pitcher_id, get_pitcher_statcast, get_pitcher_advanced_splits, get_batter_profile_windowed, get_batter_vs_pitch_types
+, get_batter_iso_vs_hand
 )
 from engines.savant_leaderboard import load_percentile_ranks
 from engines.live_sync import sync_latest_button
 from engines.batter_trends import render_batter_trend
 from engines.bvp import render_bvp_card, render_zone_map, render_spray_chart
 from engines.edge import edge_components, pen_context, bvp_component
+from engines.pick_badges import compute_badges, render_badge_row
 from engines.team_logos import logo_for
 from engines.park_weather import get_park_forecast
 from engines.slam_engine import slam_from_profile
@@ -589,9 +591,13 @@ with content_col:
                         "builds the slate-wide bullpen baseline (~30s once, cached all day; "
                         "instant after)\u2026"):
             _pen_adj, _pen_note = pen_context(_pitcher_team, pitcher_id)
+            _p_throws = (pitcher_data or {}).get("p_throws") or (pitcher_data or {}).get("Throws")
             for _r in ranked:
                 _r.update(edge_components(_r.get("id"), pitcher_id,
                                           _r.get("hr_score"), _pen_adj, _pen_note))
+                if _p_throws in ("R", "L") and _r.get("id"):
+                    _r["iso_vs_hand"] = get_batter_iso_vs_hand(_r["id"], _p_throws)
+                    _r["opp_hand"] = f"{_p_throws}HP"
 
     def _score_sort_key(r, field):
         v = r.get(field)
@@ -864,6 +870,33 @@ with content_col:
                         st.caption("HR Score / Hit Score / K Score show N/A above because Baseball Savant's live percentile rankings aren't reachable right now (see warning above) \u2014 not because these players lack power or contact skill.")
                     else:
                         st.caption("HR Score / Hit Score are this app's own composite scores from real, live MLB percentile rankings (baseballsavant.mlb.com); HR Score now includes the Exit Velocity percentile. HR Edge = HR Score + the matchup layer (BvP \u00b115, Zone Fit \u00b115, Bullpen \u00b110 \u2014 engines/edge.py has every tier). Not calibrated predictive probabilities.")
+                        # Named qualification badges — the "why upside"
+                        # read, from thresholds documented in
+                        # engines/pick_badges.py. Top 5 by Edge only, so
+                        # it stays a highlight reel rather than a second
+                        # copy of the table.
+                        _badge_pool = sorted(
+                            [r for r in filtered if r.get("edge") is not None],
+                            key=lambda r: -(r.get("edge") or 0),
+                        )
+                        _any_badges = False
+                        for _br in _badge_pool[:5]:
+                            _bd, _why = compute_badges(
+                                _br, windowed_profile_cache.get(_br["name"], {}),
+                                pitcher_data, park.get("park_factor"),
+                                game.get("weather_wind"),
+                            )
+                            if _bd:
+                                if not _any_badges:
+                                    st.markdown(
+                                        f'<div class="pf-card-title" style="color:{COLOR["gold"]}; '
+                                        f'margin-top:10px;">Why these bats</div>',
+                                        unsafe_allow_html=True,
+                                    )
+                                    _any_badges = True
+                                render_badge_row(st, COLOR, _bd, _why, _br["name"],
+                                                 _br.get("hr_score"), _br.get("edge"))
+
                         with st.expander("\U0001F9EE Edge breakdown \u2014 why each bat moved"):
                             for _r in filtered:
                                 if _r.get("edge") is None:
@@ -961,11 +994,12 @@ with content_col:
                             "Brl%": vs_profile.get("Brl %") if pitches_seen > 0 else None,
                             "HH%": vs_profile.get("HH %") if pitches_seen > 0 else None,
                             "Whiff%": vs_profile.get("Whiff %") if pitches_seen > 0 else None,
+                            "Zone Fit": (f'{r["zone_adj"]:+d}' if r.get("zone_adj") else "\u2014"),
                             "BvP (career)": r.get("bvp_line") or "\u2014",
                         })
                     matchup_df = pd.DataFrame(matchup_rows)
                     st.dataframe(
-                        style_stat_table(matchup_df, favor_high=["Brl%", "HH%"], favor_low=["Whiff%"], gradient=True),
+                        style_stat_table(matchup_df, favor_high=["Brl%", "HH%", "Zone Fit"], favor_low=["Whiff%"], gradient=True),
                         width="stretch",
                     )
                     st.caption(

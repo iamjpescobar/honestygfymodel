@@ -138,6 +138,10 @@ def render_bvp_card(batter_id, batter_name, pitcher_id, pitcher_name) -> None:
 # ---------------------------------------------------------------
 # 2) Zone map — real xSLG on contact per Statcast zone 1-9
 # ---------------------------------------------------------------
+ZONE_HH_THRESHOLD = 45.0   # hard-hit% that marks a zone as a damage zone
+ZONE_HH_MIN_BBE = 10       # batted balls in a zone before the rate counts
+
+
 def render_zone_map(batter_id, batter_name, window_label: str = "L10") -> None:
     try:
         df, _err = _get_batter_df(batter_id)
@@ -157,6 +161,7 @@ def render_zone_map(batter_id, batter_name, window_label: str = "L10") -> None:
     )
     zones = pd.to_numeric(df["zone"], errors="coerce")
     xslg = pd.to_numeric(df.get("estimated_slg_using_speedangle"), errors="coerce")
+    ev = pd.to_numeric(df.get("launch_speed"), errors="coerce")
     is_bbe = df["type"] == "X" if "type" in df.columns else pd.Series(False, index=df.index)
 
     cells_html = []
@@ -176,10 +181,24 @@ def render_zone_map(batter_id, batter_name, window_label: str = "L10") -> None:
             v = float(zx.mean())
             col = (COLOR["stat_high"] if v >= 0.500
                    else COLOR["warn"] if v >= 0.350 else COLOR["error"])
+            # Zone hard-hit: contact QUALITY alongside outcome quality.
+            # Where hard-hit is high but xSLG is low, he's beating the
+            # ball into the ground in that zone — loud contact, bad
+            # launch. That gap is the useful signal, so it's flagged.
+            ev_z = ev[mask & is_bbe].dropna()
+            hh_txt = ""
+            if len(ev_z) >= ZONE_HH_MIN_BBE:
+                hh = float((ev_z >= 95).mean() * 100)
+                gap = hh >= ZONE_HH_THRESHOLD and v < 0.350
+                hh_col = COLOR["gold"] if hh >= ZONE_HH_THRESHOLD else COLOR["text"]
+                gap_mark = " \u26a0" if gap else ""
+                hh_txt = (f'<div style="font-size:9.5px; font-weight:700; color:{hh_col};">'
+                          f'{hh:.0f}% HH{gap_mark}</div>')
             row_html.append(
                 f'<td style="width:33%; padding:10px 4px; text-align:center; '
                 f'background:{col}26; border:1px solid {col}55; border-radius:6px;">'
                 f'<div style="font-size:13px; font-weight:800; color:{col};">{v:.3f}</div>'
+                f'{hh_txt}'
                 f'<div style="font-size:9px; color:{COLOR["text"]}; opacity:0.6;">{n} p</div></td>')
         cells_html.append("<tr>" + "".join(row_html) + "</tr>")
     st.markdown(
@@ -187,8 +206,13 @@ def render_zone_map(batter_id, batter_name, window_label: str = "L10") -> None:
         f'{"".join(cells_html)}</table>',
         unsafe_allow_html=True,
     )
-    st.caption("Zones 1-9 = the strike zone (top row is up). Blue = real damage on contact "
-               "there, red = weak. Cells under 15 pitches gray out \u2014 too small to color honestly.")
+    st.caption(
+        f"Zones 1-9 = the strike zone (top row is up). Top number is xSLG on contact \u2014 blue = real "
+        f"damage there, red = weak. Second number is hard-hit% (95+ mph) when the zone has "
+        f"{ZONE_HH_MIN_BBE}+ batted balls; gold marks {ZONE_HH_THRESHOLD:.0f}%+. A \u26a0 means loud "
+        f"contact but low xSLG \u2014 he's beating it into the ground there. Cells under 15 pitches gray "
+        f"out \u2014 too small to color honestly."
+    )
 
 
 # ---------------------------------------------------------------

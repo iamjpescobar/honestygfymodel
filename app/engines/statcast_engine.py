@@ -531,6 +531,35 @@ _AB_EVENTS = _HIT_EVENTS | {"field_out", "strikeout", "strikeout_double_play",
 
 
 @st.cache_data(ttl=3600, max_entries=8, show_spinner=False)
+@st.cache_data(ttl=3600, max_entries=64, show_spinner=False)
+def get_batter_iso_vs_hand(batter_id, throws: str) -> float:
+    """Batter's real ISO against pitchers of one handedness ("R"/"L"),
+    this season, from his own Statcast rows. ISO = SLG - BA computed
+    from the standard at-bat definition (_AB_EVENTS), so it matches
+    every other ISO on the site. Returns None when the split has fewer
+    than 40 at-bats — below that the rate is noise, not a profile."""
+    try:
+        df, _err = _get_batter_df(batter_id)
+    except Exception:
+        return None
+    if df is None or df.empty or "p_throws" not in df.columns or "events" not in df.columns:
+        return None
+    sub = df[df["p_throws"] == throws]
+    if sub.empty:
+        return None
+    ev = sub["events"].dropna()
+    ab = int(ev.isin(_AB_EVENTS).sum())
+    if ab < 40:
+        return None
+    singles = int((ev == "single").sum())
+    doubles = int((ev == "double").sum())
+    triples = int((ev == "triple").sum())
+    hrs = int((ev == "home_run").sum())
+    hits = singles + doubles + triples + hrs
+    tb = singles + 2 * doubles + 3 * triples + 4 * hrs
+    return round(tb / ab - hits / ab, 3)
+
+
 def get_pitcher_k_game_log_json(pitcher_id) -> str:
     """Game-by-game strikeout log for a pitcher, schedule order —
     powers the Strikeout Board trend viewer. Returns a JSON string
