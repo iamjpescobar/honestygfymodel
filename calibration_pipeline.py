@@ -58,6 +58,7 @@ ESPN_URL = ("https://site.api.espn.com/apis/common/v3/sports/basketball/wnba/"
 BOARDS = {
     "daily13": {"sport": "mlb", "stat": "hits", "threshold": 1},
     "hr_edge": {"sport": "mlb", "stat": "homeRuns", "threshold": 1},
+    "potd": {"sport": "mlb", "stat": "xbh", "threshold": 1},
     "wnba_props": {"sport": "wnba", "stat": "pts", "threshold": None},
     "wnba_defense": {"sport": "wnba", "stat": "pts", "threshold": None},
 }
@@ -107,8 +108,11 @@ def _mlb_line(pid, date_str):
         if sp.get("date") == date_str:
             stat = sp.get("stat", {}) or {}
             try:
-                return {"hits": int(stat.get("hits", 0)),
-                        "homeRuns": int(stat.get("homeRuns", 0))}
+                doubles = int(stat.get("doubles", 0))
+                triples = int(stat.get("triples", 0))
+                hrs = int(stat.get("homeRuns", 0))
+                return {"hits": int(stat.get("hits", 0)), "homeRuns": hrs,
+                        "xbh": doubles + triples + hrs}
             except Exception:
                 return None
     return None

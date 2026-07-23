@@ -20,6 +20,7 @@ How it works:
 What's graded per board:
   daily13       -> did the batter get >= 1 hit that day
   hr_edge       -> did the batter hit >= 1 home run that day
+  potd          -> did the batter record >= 1 extra-base hit
   wnba_props    -> did the player clear the line the board implied
   wnba_defense  -> same, for the defense-matchup top picks
 
@@ -64,6 +65,15 @@ BOARDS = {
                 "threshold": 1, "question": "got a hit"},
     "hr_edge": {"sport": "mlb", "label": "HR Edge (top 5)", "stat": "homeRuns",
                 "threshold": 1, "question": "hit a home run"},
+    # Player of the Day is a HOME RUN play, so it's graded on home
+    # runs. Grading it on hits would score it against a goal it isn't
+    # trying to achieve — a 0-for-4 with two hard-hit flyouts is a
+    # normal night for a power pick, not a model failure.
+    # Player of the Day is an EXTRA-BASE HIT play, so it's graded on
+    # doubles + triples + home runs. Grading it on hits or homers alone
+    # would score it against a goal it isn't trying to achieve.
+    "potd": {"sport": "mlb", "label": "Player of the Day", "stat": "xbh",
+             "threshold": 1, "question": "recorded an extra-base hit"},
     # WNBA boards grade against a per-pick LINE rather than a fixed
     # threshold — "did he clear the number this board implied" — so the
     # threshold here is a default the pick can override.
@@ -166,8 +176,16 @@ def _player_day_json(pid: int, date_str: str, season: int) -> str:
         if sp.get("date") == date_str:
             stat = sp.get("stat", {}) or {}
             try:
-                return json.dumps({"hits": int(stat.get("hits", 0)),
-                                   "homeRuns": int(stat.get("homeRuns", 0))})
+                doubles = int(stat.get("doubles", 0))
+                triples = int(stat.get("triples", 0))
+                hrs = int(stat.get("homeRuns", 0))
+                return json.dumps({
+                    "hits": int(stat.get("hits", 0)),
+                    "homeRuns": hrs,
+                    # extra-base hits: what the Player of the Day pick
+                    # is actually trying to produce
+                    "xbh": doubles + triples + hrs,
+                })
             except Exception:
                 return json.dumps(None)
     return json.dumps(None)
