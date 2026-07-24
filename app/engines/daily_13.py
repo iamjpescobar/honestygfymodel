@@ -67,6 +67,10 @@ W_CONTEXT = 0.25
 
 # ---- component floors ----
 BVP_MIN_PA = 8
+# How many top candidates get a BvP lookup. Wider than the 13-man
+# board so a bat can still climb in on career history, but far short
+# of the whole slate — each lookup is a network call.
+BVP_POOL = 30
 PEN_MIN_ARMS = 5
 PEN_MIN_IP = 40.0
 
@@ -108,7 +112,7 @@ def _hit_log(pid):
     return games_n, hit_games, streak, per_game[-1][0], [h for _d, h in per_game]
 
 
-@st.cache_data(ttl=21600, max_entries=32, show_spinner=False)
+@st.cache_data(ttl=21600, max_entries=60, show_spinner=False)
 def _pen_contact_json(team: str, starter_pid, date_str: str) -> str:
     """Opposing bullpen's pooled BA allowed — the late-innings half of
     a hit prop. Relievers only (roster pitchers minus tonight's
@@ -249,18 +253,15 @@ def _daily13_json(date_str: str) -> str:
                 # lower K% = more balls in play = better
                 matchup_parts.append(_scale(starter["k_pct"], 32.0, 14.0))
                 matchup_notes.append(f"{starter['k_pct']:.0f}% K")
+            # BvP is deliberately NOT fetched here. career_bvp is a
+            # network call to MLB, and this loop runs for every hitter
+            # on the slate (~400) — that was hundreds of sequential
+            # HTTPS round-trips on every cold load, which is what made
+            # this board crawl. Instead the base score is computed for
+            # everyone first, and BvP is applied in a second pass to
+            # only the top candidates, who are the only ones whose
+            # order it can actually change.
             bvp_line = None
-            if opp_pid:
-                from engines.bvp import career_bvp
-                d = career_bvp(p["id"], opp_pid)
-                if d and d.get("ab") and d.get("pa", 0) >= BVP_MIN_PA:
-                    avg = d.get("avg")
-                    if avg is not None:
-                        matchup_parts.append(_scale(avg, 0.150, 0.400))
-                        bvp_line = f'{d["h"]}-for-{d["ab"]} ({avg:.3f})'
-                        matchup_notes.append(f"BvP {bvp_line}")
-                elif d and d.get("ab"):
-                    bvp_line = f'{d["h"]}-for-{d["ab"]} (small)'
             matchup_parts = [m for m in matchup_parts if m is not None]
             matchup_score = (sum(matchup_parts) / len(matchup_parts)
                              if matchup_parts else 50.0)
@@ -305,9 +306,55 @@ def _daily13_json(date_str: str) -> str:
                 "context": round(context_score, 1),
                 "bvp": bvp_line or "",
                 "why": " \u00b7 ".join(matchup_notes + context_notes),
+                # carried for the BvP second pass, stripped before return
+                "_opp_pid": opp_pid,
+                "_matchup_parts": matchup_parts,
                 "today": "\u2713 lineup" if is_confirmed else "roster",
             })
 
+    qualified.sort(key=lambda r: (-r["tonight"], -r["rate"]))
+
+    # ---- BvP pass, top candidates only ----
+    # Career BvP can move a player's matchup component, so it is only
+    # worth fetching for players close enough to the cut for it to
+    # matter. BVP_POOL is comfortably wider than the board itself, so
+    # a bat can still climb in on BvP — but the cost is ~30 network
+    # calls instead of ~400.
+    from engines.bvp import career_bvp
+    for r in qualified[:BVP_POOL]:
+        opp_pid = r.pop("_opp_pid", None)
+        if not opp_pid or not r.get("id"):
+            continue
+        try:
+            d = career_bvp(r["id"], opp_pid)
+        except Exception:
+            continue
+        if not d or not d.get("ab"):
+            continue
+        avg = d.get("avg")
+        if d.get("pa", 0) >= BVP_MIN_PA and avg is not None:
+            r["bvp"] = f'{d["h"]}-for-{d["ab"]} ({avg:.3f})'
+            # Re-weight the matchup component with BvP included, using
+            # the same averaging the first pass used.
+            bvp_component = _scale(avg, 0.150, 0.400)
+            if bvp_component is not None and r.get("_matchup_parts"):
+                parts = r["_matchup_parts"] + [bvp_component]
+                r["matchup"] = round(sum(parts) / len(parts), 1)
+                r["tonight"] = round(min(100.0, (
+                    r["form"] * W_FORM + r["matchup"] * W_MATCHUP
+                    + r["context"] * W_CONTEXT
+                    + (L15_GATE_BOOST if r.get("locked") else 0)
+                )), 1)
+                r["why"] = (r.get("why") or "") + f' \u00b7 BvP {r["bvp"]}'
+        elif d.get("ab"):
+            r["bvp"] = f'{d["h"]}-for-{d["ab"]} (small)'
+
+    for r in qualified:
+        r.pop("_opp_pid", None)
+        r.pop("_matchup_parts", None)
+        r.setdefault("bvp", "")
+
+    # re-sort after the BvP pass, since it can change order
     qualified.sort(key=lambda r: (-r["tonight"], -r["rate"]))
     return json.dumps({
         "rows": qualified[:BOARD_SIZE],

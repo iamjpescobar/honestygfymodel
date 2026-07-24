@@ -43,7 +43,11 @@ _SWINGS = {"hit_into_play", "foul", "foul_tip", "swinging_strike", "swinging_str
 # ---------------------------------------------------------------
 # 1) Career BvP (official MLB vs-player split)
 # ---------------------------------------------------------------
-@st.cache_data(ttl=21600, max_entries=64, show_spinner=False)
+# One entry per (batter, opposing starter) pair. A full slate is
+# ~300 pairs, so 64 meant a 100% miss rate — and every miss is a
+# sequential HTTPS round-trip to MLB, which is what made the
+# Daily 13 crawl.
+@st.cache_data(ttl=21600, max_entries=600, show_spinner=False)
 def _career_bvp_json(batter_id: int, pitcher_id: int) -> str:
     try:
         resp = requests.get(

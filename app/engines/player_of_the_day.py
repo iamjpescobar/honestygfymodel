@@ -69,6 +69,12 @@ PITCHER_VULN_CHECKS = [
 _WNBA_GAMES = Path(__file__).resolve().parent.parent / "data" / "wnba" / "games.json"
 
 
+# How many top candidates get the full Edge treatment. Wider than the
+# single pick so matchup can still change who wins, but far short of
+# every hitter on the slate — each one costs a network call.
+EDGE_POOL = 25
+
+
 def _wind_hr_adj(wind_str):
     """(adj, note) — wind's effect on a home-run play, capped +/-5.
 
@@ -206,12 +212,16 @@ def get_mlb_player_of_the_day(window: str = "season"):
                 if xbh is None:
                     continue  # no real Savant sample — never crown a guess
 
-                # Matchup: the same Edge layer the Game Card ranks with
-                # (BvP / zone fit / bullpen), so both pages agree.
-                edge = edge_components(pid, opp_pitcher_id, xbh,
-                                       pen_adj, pen_note)
-                hr_edge = edge.get("edge")
-                base = hr_edge if hr_edge is not None else xbh
+                # The Edge layer (BvP / zone fit / bullpen) is NOT run
+                # here. edge_components makes a network call for BvP and
+                # does per-batter zone work, and this loop covers every
+                # hitter in every posted lineup (~270 on a full slate).
+                # Running it inline meant hundreds of sequential HTTPS
+                # round-trips before the page rendered anything. It is
+                # applied after this loop to the top candidates only.
+                edge = {}
+                hr_edge = None
+                base = xbh
 
                 # What this starter actually gives up in extra bases.
                 opp_splits = get_pitcher_advanced_splits(
@@ -242,6 +252,9 @@ def get_mlb_player_of_the_day(window: str = "season"):
                     "park_note": park_note,
                     "wind_adj": wind_adj, "wind_note": wind_note,
                     "xbh_score": xbh, "xbh_parts": xbh_parts,
+                    # carried for the Edge second pass, stripped after
+                    "_pen_adj": pen_adj, "_pen_note": pen_note,
+                    "_static_adj": pxbh_adj + park_adj + wind_adj,
                     "pxbh_adj": pxbh_adj, "pxbh_note": pxbh_note,
                     "pitcher_signals": signals, "pitcher_note": signals_note,
                     "lineup_note": lineup_note,
@@ -254,12 +267,41 @@ def get_mlb_player_of_the_day(window: str = "season"):
 
     candidates.sort(key=lambda c: -c["score"])
 
-    # NOTE: BvP is NOT applied here. The Edge layer above already
-    # includes it (±15, tiered on career SLG/AVG with PA floors), and
-    # a second adjustment on the same career line would double-count
-    # the identical evidence. The raw line is carried on the candidate
-    # as "bvp_line" so the page can show it.
+    # ---- Edge pass, top candidates only ----
+    # Only bats near the top can win the day, so only they need the
+    # expensive matchup layer (BvP is a network call; zone fit is
+    # per-batter work). EDGE_POOL stays wide enough that a strong BvP
+    # or zone-fit edge can still lift a candidate into the pick, while
+    # cutting the cost from ~270 lookups to ~25.
+    #
+    # BvP is applied ONLY inside edge_components — never a second time
+    # here — so the same career line can't be double-counted.
+    for c in candidates[:EDGE_POOL]:
+        opp_pid = c.get("opp_pitcher_id")
+        if not opp_pid or not c.get("id"):
+            continue
+        try:
+            e = edge_components(c["id"], opp_pid, c["xbh_score"],
+                                c.get("_pen_adj", 0), c.get("_pen_note"))
+        except Exception:
+            continue
+        if e.get("edge") is None:
+            continue
+        c["hr_edge"] = e["edge"]
+        c["bvp_adj"] = e.get("bvp_adj")
+        c["bvp_line"] = e.get("bvp_line")
+        c["zone_adj"] = e.get("zone_adj")
+        c["zone_note"] = e.get("zone_note")
+        c["pen_adj"] = e.get("pen_adj")
+        c["pen_note"] = e.get("pen_note")
+        c["score"] = round(e["edge"] + c.get("_static_adj", 0), 1)
 
+    for c in candidates:
+        c.pop("_pen_adj", None)
+        c.pop("_pen_note", None)
+        c.pop("_static_adj", None)
+
+    # re-sort: the Edge pass can reorder the top of the board
     candidates.sort(key=lambda c: -c["score"])
     return candidates[0], candidates, None
 

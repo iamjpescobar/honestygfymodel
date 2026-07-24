@@ -105,7 +105,7 @@ def bvp_component(batter_id, pitcher_id):
 # ------------------------------------------------------------------
 # 2) Zone fit
 # ------------------------------------------------------------------
-@st.cache_data(ttl=3600, max_entries=16, show_spinner=False)
+@st.cache_data(ttl=3600, max_entries=180, show_spinner=False)
 def _pitcher_zone_mix_json(pitcher_id) -> str:
     """{zone: share} over zones 1-9, or {} if under sample."""
     try:
@@ -123,7 +123,7 @@ def _pitcher_zone_mix_json(pitcher_id) -> str:
     return json.dumps({str(int(k)): round(v / total, 4) for k, v in counts.items()})
 
 
-@st.cache_data(ttl=3600, max_entries=32, show_spinner=False)
+@st.cache_data(ttl=3600, max_entries=450, show_spinner=False)
 def _batter_zone_dmg_json(batter_id) -> str:
     """{"zones": {zone: xSLG-on-contact}, "overall": xSLG-on-contact}
     with per-zone sample floors applied."""
@@ -248,7 +248,7 @@ def zone_fit_component(batter_id, pitcher_id):
 # ------------------------------------------------------------------
 # 3) Bullpen (slate-relative)
 # ------------------------------------------------------------------
-@st.cache_data(ttl=21600, max_entries=32, show_spinner=False)
+@st.cache_data(ttl=21600, max_entries=60, show_spinner=False)
 def _pen_profile_json(team: str, starter_pid, date_str: str) -> str:
     """Pooled pen HR/9 from the team's real relievers (roster pitchers
     minus tonight's starter), each from his own Statcast rows."""

@@ -144,7 +144,13 @@ def get_data_timestamp():
         return None
 
 
-@st.cache_data(ttl=7200, max_entries=10, show_spinner=False)
+# Sized for a FULL SLATE, not a single game card. The Daily 13
+# reads every hitter on the slate (~400 players), so a 10-entry
+# cache had a 100% miss rate: every call re-read a parquet from
+# disk. These frames are column-trimmed on ingest, so holding a
+# few hundred is affordable and turns the board from hundreds of
+# disk reads into one pass.
+@st.cache_data(ttl=7200, max_entries=450, show_spinner=False)
 def _get_batter_df(batter_id, start_date=DEFAULT_START_DATE, end_date=None):
     local = _read_local_parquet("batters", batter_id)
     if local is not None:
@@ -154,7 +160,9 @@ def _get_batter_df(batter_id, start_date=DEFAULT_START_DATE, end_date=None):
     return _pull_and_trim(statcast_batter, batter_id, start_date, end_date)
 
 
-@st.cache_data(ttl=7200, max_entries=4, show_spinner=False)
+# Every probable plus both bullpens across a 15-game slate is
+# roughly 150 arms; 4 guaranteed thrashing.
+@st.cache_data(ttl=7200, max_entries=180, show_spinner=False)
 def _get_pitcher_df(pitcher_id, start_date=DEFAULT_START_DATE, end_date=None):
     local = _read_local_parquet("pitchers", pitcher_id)
     if local is not None:
