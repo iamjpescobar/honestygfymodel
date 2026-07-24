@@ -23,6 +23,18 @@ from styles.kc_theme import COLOR
 _GREY = "#8fa3ad"
 _COLD = "#5aa9e6"
 
+# Compass bearing -> map angle (0 = up/North, clockwise). Used only for the
+# forecast-pending state: when MLB hasn't posted official field-relative wind
+# yet, the NWS forecast gives a compass direction (marked with *). We show it
+# as a dashed COMPASS rose (map-style, N=up) rather than a field arrow, because
+# a bearing can't honestly be mapped to "out to CF / in from LF" without the
+# park's orientation.
+_COMPASS = {
+    "n": 0, "nne": 22.5, "ne": 45, "ene": 67.5, "e": 90, "ese": 112.5,
+    "se": 135, "sse": 157.5, "s": 180, "ssw": 202.5, "sw": 225, "wsw": 247.5,
+    "w": 270, "wnw": 292.5, "nw": 315, "nnw": 337.5,
+}
+
 
 def weather_icon(condition: str) -> str:
     """Inline SVG for the sky condition — drawn rather than emoji so
@@ -94,18 +106,29 @@ def wind_arrow(wind_str: str) -> str:
     """An arrow that actually points where the ball will be pushed.
 
     MLB's field-relative wind string ("12 mph, Out To CF") is the
-    only source that can say this honestly — a compass forecast
-    like "SW 12 mph" cannot be mapped to the field without knowing
-    the park's orientation, so that case shows a neutral swirl
-    rather than a confidently wrong arrow.
+    only source that can say where the ball will be pushed — a compass
+    forecast like "SW 12 mph" cannot be mapped to the field without
+    knowing the park's orientation. So there are three states:
 
-    Angles are from the batter's point of view: up = out to center,
-    down = blowing in, left/right = crosswind. Speed drives the
-    animation, so a 20 mph wind visibly pulses faster than a 6 mph
-    breeze.
+      - FIELD ARROW  — official field-relative wind posted: a solid,
+        colored arrow pointing where the ball goes (gold = out/helps,
+        red = in/kills, blue = crosswind).
+      - COMPASS ROSE — only a forecast bearing so far (string ends in
+        *): a faint DASHED arrow pointing in the real-world compass
+        direction (map-style, N = up), so you can see the wind exists
+        and roughly where it's from without implying a field impact
+        we can't know yet.
+      - SWIRL        — dome, calm (0 mph), or nothing posted: a neutral
+        grey swirl.
+
+    Angles for the field arrow are from the batter's point of view:
+    up = out to center, down = blowing in, left/right = crosswind.
+    Speed drives the animation, so a 20 mph wind pulses faster than a
+    6 mph breeze.
     """
     w = (wind_str or "").lower()
-    
+    is_forecast = "*" in (wind_str or "")
+
     m = re.search(r"(\d+)\s*mph", w)
     mph = int(m.group(1)) if m else 0
 
@@ -127,8 +150,31 @@ def wind_arrow(wind_str: str) -> str:
     elif "r to l" in w:
         angle = -90
 
+    # ---- FORECAST-PENDING: compass bearing, no field mapping yet ----
+    # Only when we have a real speed and a parseable bearing, and MLB
+    # hasn't given us a field-relative string (angle is None). A dashed
+    # compass rose, deliberately NOT rotated to the field.
+    if angle is None and is_forecast and mph > 0:
+        cm = re.match(r"\s*([nsew]{1,3})\b", w)
+        cangle = _COMPASS.get(cm.group(1)) if cm else None
+        if cangle is not None:
+            dur = max(1.1, 2.8 - min(mph, 22) * 0.06)
+            return (
+                f'<svg width="30" height="30" viewBox="0 0 24 24" fill="none">'
+                f'<circle cx="12" cy="12" r="9.2" stroke="{_GREY}" '
+                f'stroke-width="0.8" opacity="0.28" stroke-dasharray="1.5 2"/>'
+                f'<g transform="rotate({cangle} 12 12)">'
+                f'<line x1="12" y1="18.5" x2="12" y2="6.5" stroke="{_GREY}" '
+                f'stroke-width="1.8" stroke-linecap="round" '
+                f'stroke-dasharray="2.2 2" opacity="0.8">'
+                f'<animate attributeName="opacity" values="0.4;0.85;0.4" '
+                f'dur="{dur}s" repeatCount="indefinite"/></line>'
+                f'<path d="M12 4l3.4 4H8.6z" fill="{_GREY}" opacity="0.8"/>'
+                f'</g></svg>'
+            )
+
     if angle is None or mph <= 0:
-        # honest neutral state: direction unknown or calm
+        # honest neutral state: dome, calm, or nothing posted
         return (
             '<svg width="30" height="30" viewBox="0 0 24 24" fill="none">'
             f'<path d="M4 9h11a2.5 2.5 0 1 0-2.5-2.5" stroke="{_GREY}" '
