@@ -127,10 +127,16 @@ def _fetch_todays_games_json(date_str: str) -> str:
     return _done(games, None)
 
 
+@st.cache_data(ttl=900, max_entries=32, show_spinner=False)
 def _fetch_weather_from_feed(game_pk):
     """Live game feed carries weather even when the schedule hydration
     doesn't. Best-effort — returns {} on any failure rather than raising,
-    since weather is a nice-to-have, not a blocker for the page."""
+    since weather is a nice-to-have, not a blocker for the page.
+
+    Cached per game_pk: on a cold slate this fires one HTTPS call per
+    game that lacks hydrated weather, and those responses only change
+    slowly (game-day conditions), so a 15-minute TTL keeps the fallback
+    from re-hitting the feed on every rebuild."""
     try:
         url = f"https://statsapi.mlb.com/api/v1.1/game/{game_pk}/feed/live"
         data = requests.get(url, timeout=10).json()

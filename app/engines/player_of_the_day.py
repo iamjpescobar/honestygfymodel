@@ -131,7 +131,7 @@ def _pitcher_vuln_signals(pitcher_id, batter_bats, window: str = "season"):
     return signals, None
 
 
-@st.cache_data(ttl=600, show_spinner=False)
+@st.cache_data(ttl=600, max_entries=8, show_spinner=False)
 def get_mlb_player_of_the_day(window: str = "season"):
     """
     Returns (pick, all_candidates, error).
@@ -306,7 +306,7 @@ def get_mlb_player_of_the_day(window: str = "season"):
     return candidates[0], candidates, None
 
 
-@st.cache_data(ttl=600, show_spinner=False)
+@st.cache_data(ttl=600, max_entries=8, show_spinner=False)
 def get_wnba_player_of_the_day(form_window: str = "l5"):
     """
     Same honesty contract, WNBA version — see module docstring. Returns

@@ -131,9 +131,9 @@ def wind_arrow(wind_str: str) -> str:
         # honest neutral state: direction unknown or calm
         return (
             '<svg width="30" height="30" viewBox="0 0 24 24" fill="none">'
-            f'<path d="M4 9h11a2.5 2.5 0 1 0-2.5-2.5" stroke=_GREY '
+            f'<path d="M4 9h11a2.5 2.5 0 1 0-2.5-2.5" stroke="{_GREY}" '
             'stroke-width="1.6" stroke-linecap="round"/>'
-            f'<path d="M4 14h8a2 2 0 1 1-2 2" stroke=_GREY '
+            f'<path d="M4 14h8a2 2 0 1 1-2 2" stroke="{_GREY}" '
             'stroke-width="1.6" stroke-linecap="round" opacity="0.75"/></svg>'
         )
 
@@ -178,7 +178,7 @@ def temp_icon(temp_text: str) -> str:
                COLOR["stat_high"] if t >= 55 else _COLD)
     return (
         '<svg width="30" height="30" viewBox="0 0 24 24" fill="none">'
-        f'<rect x="10" y="3.5" width="4" height="12" rx="2" stroke=_GREY '
+        f'<rect x="10" y="3.5" width="4" height="12" rx="2" stroke="{_GREY}" '
         'stroke-width="1.4"/>'
         f'<circle cx="12" cy="18" r="3.4" fill="{col}"/>'
         f'<rect x="11.2" y="{15.5 - fill_h:.1f}" width="1.6" height="{fill_h:.1f}" '
@@ -209,7 +209,7 @@ def park_icon(pf_text: str) -> str:
     large = 0
     return (
         '<svg width="30" height="30" viewBox="0 0 24 24" fill="none">'
-        '<path d="M4 16a8 8 0 0 1 16 0" stroke=_GREY stroke-width="1.6" '
+        f'<path d="M4 16a8 8 0 0 1 16 0" stroke="{_GREY}" stroke-width="1.6" '
         'stroke-linecap="round" opacity="0.35"/>'
         f'<path d="M4 16a8 8 0 0 1 {x - 4:.2f} {y - 16:.2f}" stroke="{col}" '
         f'stroke-width="2.2" stroke-linecap="round" fill="none"/>'

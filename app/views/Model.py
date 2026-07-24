@@ -38,7 +38,7 @@ render_account_sidebar()
 # every interaction, which is both slow and a memory spike.
 # ---------------------------------------------------------
 
-@st.cache_data(ttl=1800, show_spinner="Loading batting stats...")
+@st.cache_data(ttl=1800, max_entries=2, show_spinner="Loading batting stats...")
 def cached_batting_stats():
     return load_batting_stats()
 

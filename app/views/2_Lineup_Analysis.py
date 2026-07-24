@@ -18,7 +18,7 @@ render_account_sidebar()
 page_header("Lineup SLAM Index Analysis", "Full lineup breakdown vs today's probable pitchers")
 
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=3600, max_entries=2, show_spinner=False)
 def get_todays_games():
     today = datetime.today().strftime("%Y-%m-%d")
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={today}&hydrate=probablePitcher"
