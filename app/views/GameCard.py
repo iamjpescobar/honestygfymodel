@@ -835,7 +835,7 @@ with content_col:
                     )
                 with sort_col:
                     sort_choice = st.selectbox(
-                        "Sort by", ["SLAM", "HR Edge", "HR Score", "Hit Score", "Brl%", "HH%"], key="lineup_sort_by"
+                        "Sort by", ["SLAM", "HR Edge", "HR Score", "Hit Score", "xwOBA", "xSLG", "ISO", "Brl%", "HH%"], key="lineup_sort_by"
                     )
                 with window_col:
                     window_choice = st.selectbox(
@@ -872,6 +872,35 @@ with content_col:
                         stand=_side_for(r))
                     for r in filtered
                 }
+
+                # For switch hitters, also pull the OTHER side so the table
+                # can show both L and R as separate rows. _side_for gives
+                # tonight's side (opposite the pitcher's hand); this fetches
+                # the reverse. Keyed by name; only populated for S bats.
+                def _other_side(row):
+                    s = _side_for(row)
+                    if s == "L":
+                        return "R"
+                    if s == "R":
+                        return "L"
+                    # no probable posted (_p_throws unknown): show both sides
+                    # explicitly for switch hitters so neither is hidden
+                    return None
+                switch_other_cache = {}
+                for r in filtered:
+                    if (r.get("bats") or "").upper() != "S":
+                        continue
+                    _os = _other_side(r)
+                    if _os is None:
+                        # no probable: fetch BOTH sides, neither is "tonight's"
+                        switch_other_cache[r["name"]] = {
+                            "L": get_batter_profile_windowed(r.get("id"), window=window_key, unit="bbe", stand="L"),
+                            "R": get_batter_profile_windowed(r.get("id"), window=window_key, unit="bbe", stand="R"),
+                        }
+                    else:
+                        switch_other_cache[r["name"]] = {
+                            _os: get_batter_profile_windowed(r.get("id"), window=window_key, unit="bbe", stand=_os),
+                        }
                 slam_cache = {name: slam_from_profile(p) for name, p in windowed_profile_cache.items()}
 
                 # BvP joins SLAM: the SAME documented tiers HR Edge uses
@@ -897,6 +926,9 @@ with content_col:
                     "HR Edge": lambda r: _score_num(r.get("edge")),
                     "HR Score": lambda r: _score_num(r["hr_score"]),
                     "Hit Score": lambda r: _score_num(r["hit_score"]),
+                    "xwOBA": lambda r: windowed_profile_cache[r["name"]].get("xwOBA") or 0,
+                    "xSLG": lambda r: windowed_profile_cache[r["name"]].get("xSLG") or 0,
+                    "ISO": lambda r: windowed_profile_cache[r["name"]].get("ISO") or 0,
                     "Brl%": lambda r: windowed_profile_cache[r["name"]].get("Brl %", 0),
                     "HH%": lambda r: windowed_profile_cache[r["name"]].get("HH %", 0),
                 }
@@ -904,6 +936,43 @@ with content_col:
 
                 if not filtered:
                     st.info(f"No batters match that Bats filter for {opposing_team}.")
+
+                def _stat_row(name, bats_label, profile, *, matchup=None, slam=None,
+                              hr_edge=None, hr_score=None, hit_score=None,
+                              edge_cell=None, edge_label="", edge_tier="neutral",
+                              confidence=""):
+                    """One table row. Score/matchup fields are optional so a
+                    switch hitter's non-matchup side can show stats only (its
+                    HR/Hit scores would be for the wrong platoon side, so we
+                    blank them rather than print a misleading number)."""
+                    return {
+                        "Player": name,
+                        "Bats": bats_label,
+                        "Matchup": matchup if matchup is not None else "\u2014",
+                        "SLAM": round(slam, 1) if slam is not None else None,
+                        "BA": profile.get("BA", 0),
+                        "xwOBA": profile.get("xwOBA"),
+                        "xSLG": profile.get("xSLG"),
+                        "ISO": profile.get("ISO", 0),
+                        "HR/FB": profile.get("HR/FB"),
+                        "Brl%": profile.get("Brl %", 0),
+                        "HH%": profile.get("HH %", 0),
+                        "LD%": profile.get("LD %", 0),
+                        "FB%": profile.get("FB %", 0),
+                        "GB%": profile.get("GB %", 0),
+                        "SweetSpot%": profile.get("SweetSpot %", 0),
+                        "PullAir%": profile.get("PullAir %", 0),
+                        "PullBrl%": profile.get("PullBrl %", 0),
+                        "Blast%": profile.get("Blast %", 0),
+                        "SwStr%": profile.get("SwStr %", 0),
+                        "HR Edge": hr_edge,
+                        "HR Score": hr_score,
+                        "Hit Score": hit_score,
+                        "Edge": edge_cell if edge_cell is not None else edge_tag("\u2014", "neutral"),
+                        "EdgeLabel": edge_label,
+                        "EdgeTier": edge_tier,
+                        "Confidence": confidence,
+                    }
 
                 table_rows = []
                 for r in filtered:
@@ -930,30 +999,35 @@ with content_col:
                     else:
                         tag_label, tag_tier = "Neutral", "neutral"
 
-                    table_rows.append({
-                        "Player": r["name"],
-                        "Bats": (f'S\u2192{_side_for(r)}' if _side_for(r) else r["bats"]),
-                        "Matchup": tier,
-                        "SLAM": round(slam, 1),
-                        "BA": profile.get("BA", 0),
-                        "Brl%": profile.get("Brl %", 0),
-                        "HH%": profile.get("HH %", 0),
-                        "LD%": profile.get("LD %", 0),
-                        "FB%": profile.get("FB %", 0),
-                        "GB%": profile.get("GB %", 0),
-                        "SweetSpot%": profile.get("SweetSpot %", 0),
-                        "PullAir%": profile.get("PullAir %", 0),
-                        "PullBrl%": profile.get("PullBrl %", 0),
-                        "Blast%": profile.get("Blast %", 0),
-                        "SwStr%": profile.get("SwStr %", 0),
-                        "HR Edge": r.get("edge"),
-                        "HR Score": r["hr_score"],
-                        "Hit Score": r["hit_score"],
-                        "Edge": edge_tag(tag_label, tag_tier),
-                        "EdgeLabel": tag_label,
-                        "EdgeTier": tag_tier,
-                        "Confidence": f"{conf_label} \u2014 n={sample}",
-                    })
+                    _is_switch = (r.get("bats") or "").upper() == "S"
+                    _tonight = _side_for(r)  # L / R / None
+
+                    # Primary row: tonight's matchup side (or plain side for
+                    # non-switch). Carries the real scores/matchup.
+                    _primary_label = (f'S\u2192{_tonight}' if _tonight else r["bats"])
+                    table_rows.append(_stat_row(
+                        r["name"], _primary_label, profile,
+                        matchup=tier, slam=slam,
+                        hr_edge=r.get("edge"), hr_score=r["hr_score"], hit_score=r["hit_score"],
+                        edge_cell=edge_tag(tag_label, tag_tier),
+                        edge_label=tag_label, edge_tier=tag_tier,
+                        confidence=f"{conf_label} \u2014 n={sample}",
+                    ))
+
+                    # Switch hitter: add row(s) for the other side(s), stats
+                    # only. If a probable is posted we already showed tonight's
+                    # side above and add just the reverse; if not, _tonight is
+                    # None and we add both L and R explicitly.
+                    if _is_switch and r["name"] in switch_other_cache:
+                        for _sd, _prof in switch_other_cache[r["name"]].items():
+                            if _tonight and _sd == _tonight:
+                                continue  # already shown as the primary row
+                            _c_lbl, _c_n = confidence_tier(_prof.get("BBE", 0))
+                            table_rows.append(_stat_row(
+                                r["name"], f'S ({_sd})', _prof,
+                                confidence=f"{_c_lbl} \u2014 n={_c_n}",
+                                edge_label="split view", edge_tier="neutral",
+                            ))
 
                 display_df = pd.DataFrame(table_rows) if table_rows else None
                 if display_df is not None:
@@ -961,12 +1035,14 @@ with content_col:
 
                     styled = style_stat_table(
                         display_df.drop(columns=["Matchup", "Confidence", "EdgeLabel", "EdgeTier"]),
-                        favor_high=["SLAM", "BA", "Brl%", "HH%", "LD%", "FB%", "SweetSpot%", "PullAir%", "PullBrl%", "Blast%", "HR Edge", "HR Score", "Hit Score"],
+                        favor_high=["SLAM", "BA", "xwOBA", "xSLG", "ISO", "HR/FB", "Brl%", "HH%", "LD%", "FB%", "SweetSpot%", "PullAir%", "PullBrl%", "Blast%", "HR Edge", "HR Score", "Hit Score"],
                         favor_low=["GB%", "SwStr%"],
                         gradient=True,
                     )
                     styled = styled.format({
-                        "SLAM": "{:.1f}", "BA": "{:.3f}", "Brl%": "{:.1f}", "HH%": "{:.1f}", "LD%": "{:.1f}",
+                        "SLAM": "{:.1f}", "BA": "{:.3f}", "xwOBA": "{:.3f}", "xSLG": "{:.3f}",
+                        "ISO": "{:.3f}", "HR/FB": "{:.1f}",
+                        "Brl%": "{:.1f}", "HH%": "{:.1f}", "LD%": "{:.1f}",
                         "FB%": "{:.1f}", "GB%": "{:.1f}", "SweetSpot%": "{:.1f}", "PullAir%": "{:.1f}",
                         "PullBrl%": "{:.1f}", "Blast%": "{:.1f}", "SwStr%": "{:.1f}",
                         "HR Edge": "{:.0f}", "HR Score": "{:.0f}", "Hit Score": "{:.0f}",

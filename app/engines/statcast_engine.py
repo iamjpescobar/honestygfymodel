@@ -244,6 +244,7 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
         "Brl %": 0.0, "HH %": 0.0, "LD %": 0.0, "GB %": 0.0, "FB %": 0.0,
         "SweetSpot %": 0.0, "PullAir %": 0.0, "PullBrl %": 0.0, "Blast %": 0.0, "BBE": 0,
         "BA": 0.0, "AB": 0,
+        "SLG": 0.0, "ISO": 0.0,
         "HR/FB": None, "FB_count": 0,
     }
     if df.empty or "type" not in df.columns:
@@ -254,16 +255,28 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
     # the pitcher Splits table uses. On a batter's rows this is his BA;
     # on a pitcher's rows the identical figure is his BA ALLOWED.
     ba, ab = 0.0, 0
+    slg, iso = 0.0, 0.0
     if "events" in df.columns:
         _ev = df["events"].dropna()
         _hits = _ev.isin(_HIT_EVENTS).sum()
         ab = int(_ev.isin(_AB_EVENTS).sum())
         ba = round(_hits / ab, 3) if ab > 0 else 0.0
+        # SLG and ISO from the same PA outcomes: total bases weighted
+        # 1/2/3/4, then ISO = SLG - BA (extra bases per AB — the pure
+        # power number, and the one that matters for a prop where every
+        # extra-base hit stacks multiple legs).
+        if ab > 0:
+            _tb = (int((_ev == "single").sum())
+                   + 2 * int((_ev == "double").sum())
+                   + 3 * int((_ev == "triple").sum())
+                   + 4 * int((_ev == "home_run").sum()))
+            slg = round(_tb / ab, 3)
+            iso = round(slg - ba, 3)
 
     bbe_df = df[df["type"] == "X"].copy()
     bbe_count = len(bbe_df)
     if bbe_count == 0:
-        return {**empty, "BA": ba, "AB": ab}
+        return {**empty, "BA": ba, "AB": ab, "SLG": slg, "ISO": iso}
 
     ls = pd.to_numeric(bbe_df.get("launch_speed"), errors="coerce")
     la = pd.to_numeric(bbe_df.get("launch_angle"), errors="coerce")
@@ -344,6 +357,7 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
         "PullBrl %": round(pull_barrel / bbe_count * 100, 2),
         "Blast %": blast_pct,
         "BA": ba, "AB": ab,
+        "SLG": slg, "ISO": iso,
         "HR/FB": _hr_fb, "FB_count": _fb_n,
         "BBE": bbe_count,
     }

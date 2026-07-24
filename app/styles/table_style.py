@@ -108,10 +108,19 @@ def _magnitude_column(col: pd.Series, invert: bool, use_gradient: bool = False):
 
 def _bats_column(col: pd.Series):
     """Categorical handedness coloring — L/R/S each get a fixed,
-    distinct identity color, not a magnitude scale."""
+    distinct identity color, not a magnitude scale. Switch-hitter
+    labels that name a side (e.g. "S->L", "S (R)") are colored by the
+    side actually being batted from, so a switch hitter's two split
+    rows read in their platoon colors rather than falling back to grey."""
     styles = []
     for v in col:
-        c = _BATS_COLORS.get(str(v).strip().upper())
+        raw = str(v).strip().upper()
+        c = _BATS_COLORS.get(raw)
+        if not c:
+            # switch label naming a side: pick the last L/R after the S
+            if raw.startswith("S") and ("L" in raw[1:] or "R" in raw[1:]):
+                side = "L" if raw.rfind("L") > raw.rfind("R") else "R"
+                c = _BATS_COLORS.get(side)
         if c:
             styles.append(f"color: {c}; background-color: {BG}; font-weight: 700;")
         else:
