@@ -29,6 +29,9 @@ from engines.pick_badges import compute_badges, render_badge_row
 from engines.pitcher_weakspots import get_weak_spots, XSLG_HOT, XSLG_COLD
 from engines.calibration import log_picks as _log_picks
 from engines.team_logos import logo_for
+from engines.weather_icons import (
+    weather_icon, wind_arrow, temp_icon, park_icon,
+)
 from engines.park_weather import get_park_forecast
 from engines.slam_engine import slam_from_profile
 from engines.top_plays import rank_batters, confidence_tier, matchup_tier
@@ -234,33 +237,23 @@ with content_col:
         f'{_fc["wind"]}*' if _fc and _fc.get("wind") else "Not posted yet")
     park_display = f'{park["park_factor"]}' if park["verified"] else "Not verified"
 
-    def _weather_icon(condition: str) -> str:
-        c = (condition or "").lower()
-        if "rain" in c or "shower" in c:
-            return "\U0001F327\uFE0F"
-        if "storm" in c or "thunder" in c:
-            return "\u26C8\uFE0F"
-        if "cloud" in c or "overcast" in c:
-            return "\u2601\uFE0F"
-        if "clear" in c or "sunny" in c:
-            return "\u2600\uFE0F"
-        if "dome" in c or "roof" in c:
-            return "\U0001F3DF\uFE0F"
-        return "\U0001F324\uFE0F"
+
+
+
 
     st.markdown(
         f'<div class="pf-card" style="display:flex; justify-content:space-around; text-align:center; padding:10px 16px;">'
         f'<div><div class="pf-metric-label" style="color:{COLOR["gold"]};">Condition</div>'
-        f'<div style="font-size:20px; margin:2px 0;" class="lc-weather-icon">{_weather_icon(_cond_display)}</div>'
+        f'<div style="margin:2px 0; height:30px;" class="lc-weather-icon">{weather_icon(_cond_display)}</div>'
         f'<div style="font-size:13px; color:{COLOR["gold"]}; font-weight:600;">{_cond_display}</div></div>'
         f'<div><div class="pf-metric-label" style="color:{COLOR["gold"]};">Temp</div>'
-        f'<div style="font-size:20px; margin:2px 0;">\U0001F321\uFE0F</div>'
+        f'<div style="margin:2px 0; height:30px;">{temp_icon(temp_display)}</div>'
         f'<div style="font-size:13px; color:{COLOR["gold"]}; font-weight:600;">{temp_display}\u00b0F</div></div>'
         f'<div><div class="pf-metric-label" style="color:{COLOR["gold"]};">Wind</div>'
-        f'<div style="font-size:20px; margin:2px 0;" class="lc-wind-icon">\U0001F4A8</div>'
+        f'<div style="margin:2px 0; height:30px;" class="lc-wind-icon">{wind_arrow(_wind_display)}</div>'
         f'<div style="font-size:13px; color:{COLOR["gold"]}; font-weight:600;">{_wind_display}</div></div>'
         f'<div><div class="pf-metric-label" style="color:{COLOR["gold"]};">Park Factor</div>'
-        f'<div style="font-size:20px; margin:2px 0;">\U0001F3DF\uFE0F</div>'
+        f'<div style="margin:2px 0; height:30px;">{park_icon(park_display)}</div>'
         f'<div style="font-size:13px; color:{COLOR["gold"]}; font-weight:600;">{park_display}</div></div>'
         f'</div>',
         unsafe_allow_html=True,

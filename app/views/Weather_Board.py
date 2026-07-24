@@ -25,6 +25,7 @@ from styles.kc_theme import inject_kc_theme, footer, COLOR
 from engines.weather_engine import get_todays_games_with_weather
 from engines.park_weather import get_park_forecast, is_roofed
 from engines.team_logos import logo_for
+from engines.weather_icons import weather_icon, wind_arrow, temp_icon
 from engines.team_abbreviations import team_abbr
 from engines.live_sync import sync_latest_button
 
@@ -51,6 +52,14 @@ if not games:
     st.stop()
 
 
+def _small(svg: str) -> str:
+    """The shared icons are drawn at 30px for the Game Card's weather
+    strip; the Weather Board packs one row per game, so they render at
+    20px here. Scaling the SVG attributes keeps them crisp instead of
+    letting the browser resize a bitmap."""
+    return svg.replace('width="30" height="30"', 'width="20" height="20"')
+
+
 def _logo_img(team):
     u = logo_for(team)
     if u:
@@ -58,20 +67,53 @@ def _logo_img(team):
     return f'<b style="font-size:11px;">{team_abbr(team or "?")}</b>'
 
 
+def _drop_icon(col: str, filled: bool = True) -> str:
+    """A raindrop, drawn — sized to sit inline with the badge text."""
+    return (
+        '<svg width="11" height="11" viewBox="0 0 24 24" style="vertical-align:-1px;" '
+        'fill="none">'
+        f'<path d="M12 3.5c3.6 4.4 6 7.4 6 10a6 6 0 0 1-12 0c0-2.6 2.4-5.6 6-10z" '
+        f'fill="{col}" opacity="{"0.9" if filled else "0.25"}" stroke="{col}" '
+        'stroke-width="1.3"/></svg>'
+    )
+
+
+def _roof_icon(col: str) -> str:
+    """A covered stadium, drawn."""
+    return (
+        '<svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align:-1px;" '
+        'fill="none">'
+        f'<path d="M3 12a9 9 0 0 1 18 0" stroke="{col}" stroke-width="1.8" '
+        'stroke-linecap="round"/>'
+        f'<rect x="4" y="12" width="16" height="7" rx="1.5" stroke="{col}" '
+        'stroke-width="1.4" opacity="0.75"/></svg>'
+    )
+
+
 def _precip_badge(pct, roofed):
+    """Precipitation risk, with a drawn icon instead of an emoji.
+
+    Roofed parks are labelled rather than flagged: rain there closes a
+    roof, it does not postpone a game, so a red umbrella would be a
+    false alarm.
+    """
     if roofed:
-        return (f'<span style="padding:2px 8px; border-radius:4px; font-size:10.5px; font-weight:700; '
-                f'background:{COLOR["text"]}1A; color:{COLOR["text"]};">\U0001F3DF\uFE0F ROOF \u2014 weather protected</span>')
+        return (f'<span style="padding:2px 8px; border-radius:4px; font-size:10.5px; '
+                f'font-weight:700; background:{COLOR["text"]}1A; color:{COLOR["text"]};">'
+                f'{_roof_icon(COLOR["text"])} ROOF \u2014 weather protected</span>')
     if pct is None:
         return ""
     if pct >= 50:
-        col, label = COLOR["error"], f"\u2614 PPD RISK \u00b7 {pct}%"
+        col, label = COLOR["error"], f"PPD RISK \u00b7 {pct}%"
+        icon = _drop_icon(col, True)
     elif pct >= 25:
-        col, label = COLOR["warn"], f"\U0001F326\uFE0F MONITOR \u00b7 {pct}%"
+        col, label = COLOR["warn"], f"MONITOR \u00b7 {pct}%"
+        icon = _drop_icon(col, True)
     else:
-        col, label = COLOR["stat_high"], f"\u2713 {pct}% precip"
-    return (f'<span style="padding:2px 8px; border-radius:4px; font-size:10.5px; font-weight:700; '
-            f'background:{col}22; color:{col};">{label}</span>')
+        col, label = COLOR["stat_high"], f"{pct}% precip"
+        icon = _drop_icon(col, False)
+    return (f'<span style="padding:2px 8px; border-radius:4px; font-size:10.5px; '
+            f'font-weight:700; background:{col}22; color:{col};">{icon} {label}</span>')
 
 
 def _hr_weather(temp_val, wind_str, roofed):
@@ -150,6 +192,10 @@ with st.spinner("Pulling game-time forecasts for every park\u2026 (30-min cache 
             temp_txt = f'{fc["temp"]}\u00b0F*'
         else:
             temp_txt = "\u2014"
+        # The arrow can only claim a field direction from MLB's official
+        # field-relative string; a compass forecast ("SW 12 mph") gets a
+        # neutral swirl, which wind_arrow() handles.
+        _wind_raw = g.get("weather_wind") or (fc.get("wind") if fc else None)
         if g.get("weather_wind"):
             wind_txt = f'{g["weather_wind"]} <span style="opacity:0.6; font-size:9px;">(official)</span>'
         elif fc and fc.get("wind"):
@@ -172,9 +218,18 @@ with st.spinner("Pulling game-time forecasts for every park\u2026 (30-min cache 
             f'{_logo_img(g.get("home"))}</div>'
             f'<div style="flex:1.4; font-size:11px; color:{COLOR["text"]}; opacity:0.8;">{venue}<br>'
             f'<span style="color:{COLOR["gold"]}; font-weight:600;">{t_str}</span></div>'
-            f'<div style="flex:1; font-size:11.5px; color:{COLOR["text"]};">{cond_txt}</div>'
-            f'<div style="flex:0.6; font-size:12px; font-weight:700; color:{COLOR["stat_high"]};">{temp_txt}</div>'
-            f'<div style="flex:1.2; font-size:11.5px; color:{COLOR["text"]};">{wind_txt}</div>'
+            f'<div style="flex:1; font-size:11.5px; color:{COLOR["text"]}; '
+            f'display:flex; align-items:center; gap:6px;">'
+            f'<span style="flex-shrink:0;">{_small(weather_icon(cond_txt))}</span>'
+            f'<span>{cond_txt}</span></div>'
+            f'<div style="flex:0.7; font-size:12px; font-weight:700; '
+            f'color:{COLOR["stat_high"]}; display:flex; align-items:center; gap:5px;">'
+            f'<span style="flex-shrink:0;">{_small(temp_icon(temp_txt))}</span>'
+            f'<span>{temp_txt}</span></div>'
+            f'<div style="flex:1.3; font-size:11.5px; color:{COLOR["text"]}; '
+            f'display:flex; align-items:center; gap:6px;">'
+            f'<span style="flex-shrink:0;">{_small(wind_arrow(_wind_raw))}</span>'
+            f'<span>{wind_txt}</span></div>'
             f'<div style="flex:1.15; text-align:center;">'
             f'<span style="padding:2px 8px; border-radius:4px; font-size:10.5px; font-weight:800; '
             f'background:{_hr_col}22; color:{_hr_col};">{_hr_label}</span>'

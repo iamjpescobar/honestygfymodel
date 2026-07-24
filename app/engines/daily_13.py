@@ -84,9 +84,19 @@ def _data_stamp():
         return None, None
 
 
+@st.cache_data(ttl=21600, max_entries=500, show_spinner=False)
 def _hit_log(pid):
     """(games, hit_games, streak, last_date, per_game_hits) — per_game
-    is oldest-to-newest booleans so windows can be sliced."""
+    is oldest-to-newest booleans so windows can be sliced.
+
+    CACHED, and this is the single most important cache on the board.
+    It runs once per hitter on the slate (~400), and each call reads a
+    parquet and does a groupby over a full season of pitches — roughly
+    48ms each even with the file already in memory, so ~19 seconds of
+    pure recomputation every time the board rebuilt. The result depends
+    only on the player's completed game log, which changes once a day
+    when the pipeline republishes, so a 6-hour TTL is safe and makes
+    every rebuild after the first nearly instant."""
     df = _read_local_parquet("batters", pid)
     if df is None or df.empty:
         return None
@@ -149,7 +159,13 @@ def _scale(value, low, high):
     return max(0.0, min(100.0, v))
 
 
-@st.cache_data(ttl=1800, max_entries=4, show_spinner=False)
+# 2 hours, not 30 minutes. The board's inputs are the published game
+# logs (rebuilt once nightly) and today's lineups (which firm up over
+# the afternoon and are picked up by the roster cache's own shorter
+# TTL). A 30-minute TTL meant a full slate-wide rebuild four times an
+# hour for data that had not changed — the "loads from zero every
+# time" symptom. Sync latest still forces an immediate rebuild.
+@st.cache_data(ttl=7200, max_entries=4, show_spinner=False)
 def _daily13_json(date_str: str) -> str:
     games, games_error = get_todays_games_with_weather()
     if not games:
