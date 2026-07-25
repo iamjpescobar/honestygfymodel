@@ -417,6 +417,31 @@ def get_batter_statcast(batter_id):
 
 
 @st.cache_data(ttl=1800, max_entries=256, show_spinner=False)
+def _add_expected_stats(metrics: dict, frame) -> dict:
+    """Attach xSLG and xwOBA (Statcast's speed+angle expected stats) to
+    a metrics dict, averaged over the batted-ball rows of `frame`. Both
+    are None when the frame has no BBE or no measured expected values.
+    Shared by get_batter_profile_windowed and get_batter_vs_pitch_types
+    so the lineup table and the vs-pitch tables report the same numbers.
+    """
+    metrics["xSLG"] = None
+    metrics["xwOBA"] = None
+    cols = {"estimated_slg_using_speedangle", "estimated_woba_using_speedangle"}
+    if frame is None or frame.empty or not cols.issubset(frame.columns):
+        return metrics
+    bbe_only = frame[frame["type"] == "X"] if "type" in frame.columns else frame
+    if bbe_only.empty:
+        return metrics
+    xslg = pd.to_numeric(bbe_only["estimated_slg_using_speedangle"], errors="coerce").mean()
+    xwoba = pd.to_numeric(bbe_only["estimated_woba_using_speedangle"], errors="coerce").mean()
+    # pd.notna guards against both NaN and pandas' NA marker, which
+    # round() can't handle — happens when a window has BBE rows but no
+    # measured expected-stat values.
+    metrics["xSLG"] = round(float(xslg), 3) if pd.notna(xslg) else None
+    metrics["xwOBA"] = round(float(xwoba), 3) if pd.notna(xwoba) else None
+    return metrics
+
+
 def get_batter_vs_pitch_types(batter_id, pitch_types: tuple, window: str = "season", unit: str = "bbe"):
     """
     Real batter performance specifically against a given set of pitch
@@ -442,6 +467,7 @@ def get_batter_vs_pitch_types(batter_id, pitch_types: tuple, window: str = "seas
     metrics = _compute_batted_ball_metrics(matchup_df)
     metrics["Whiff %"] = _compute_whiff_pct(matchup_df)
     metrics["SwStr %"] = _compute_swstr_pct(matchup_df)
+    _add_expected_stats(metrics, matchup_df)
     metrics["_error"] = error
     metrics["_pitches_seen"] = len(matchup_df)
     metrics["_window_rows"] = len(windowed_df)
@@ -557,22 +583,7 @@ def get_batter_profile_windowed(batter_id, window: str = "season", unit: str = "
     metrics = _compute_batted_ball_metrics(windowed_df)
     metrics["Whiff %"] = _compute_whiff_pct(windowed_df)
     metrics["SwStr %"] = _compute_swstr_pct(windowed_df)
-    if not windowed_df.empty and {"estimated_slg_using_speedangle", "estimated_woba_using_speedangle"}.issubset(windowed_df.columns):
-        bbe_only = windowed_df[windowed_df["type"] == "X"] if "type" in windowed_df.columns else windowed_df
-        if not bbe_only.empty:
-            xslg = pd.to_numeric(bbe_only["estimated_slg_using_speedangle"], errors="coerce").mean()
-            xwoba = pd.to_numeric(bbe_only["estimated_woba_using_speedangle"], errors="coerce").mean()
-            # pd.notna guards against both NaN and pandas' NA marker, which
-            # round() can't handle — happens when a window has BBE rows but
-            # no measured expected-stat values.
-            metrics["xSLG"] = round(float(xslg), 3) if pd.notna(xslg) else None
-            metrics["xwOBA"] = round(float(xwoba), 3) if pd.notna(xwoba) else None
-        else:
-            metrics["xSLG"] = None
-            metrics["xwOBA"] = None
-    else:
-        metrics["xSLG"] = None
-        metrics["xwOBA"] = None
+    _add_expected_stats(metrics, windowed_df)
     metrics["_error"] = error
     metrics["_window_rows"] = len(windowed_df)
     return metrics

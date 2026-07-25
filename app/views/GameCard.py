@@ -839,10 +839,33 @@ with content_col:
                     )
                 with window_col:
                     window_choice = st.selectbox(
-                        "Window", ["Season", "Last 60 BBE", "Last 25 BBE", "Last 15 BBE", "Last 5 BBE"], key="lineup_window"
+                        "Window",
+                        [
+                            "Season",
+                            "Last 15 Games", "Last 10 Games", "Last 5 Games",
+                            "Last 60 PA", "Last 25 PA", "Last 15 PA",
+                            "Last 60 BBE", "Last 25 BBE", "Last 15 BBE", "Last 5 BBE",
+                        ],
+                        key="lineup_window",
                     )
-                window_map = {"Season": "season", "Last 60 BBE": "l60", "Last 25 BBE": "l25", "Last 15 BBE": "l15", "Last 5 BBE": "l5"}
-                window_key = window_map[window_choice]
+                # Each label maps to a (window, unit) pair. "unit" decides
+                # what "last N" counts: games played, plate appearances, or
+                # batted-ball events. Games/PA give a fuller, more stable
+                # recent-form read; BBE zooms in on contact quality only.
+                window_unit_map = {
+                    "Season": ("season", "bbe"),
+                    "Last 15 Games": ("l15", "games"),
+                    "Last 10 Games": ("l10", "games"),
+                    "Last 5 Games": ("l5", "games"),
+                    "Last 60 PA": ("l60", "pa"),
+                    "Last 25 PA": ("l25", "pa"),
+                    "Last 15 PA": ("l15", "pa"),
+                    "Last 60 BBE": ("l60", "bbe"),
+                    "Last 25 BBE": ("l25", "bbe"),
+                    "Last 15 BBE": ("l15", "bbe"),
+                    "Last 5 BBE": ("l5", "bbe"),
+                }
+                window_key, unit_key = window_unit_map[window_choice]
 
                 filtered = ranked if not bats_filter or bats_filter == "All" else [r for r in ranked if r["bats"] == bats_filter]
 
@@ -868,7 +891,7 @@ with content_col:
 
                 windowed_profile_cache = {
                     r["name"]: get_batter_profile_windowed(
-                        r.get("id"), window=window_key, unit="bbe",
+                        r.get("id"), window=window_key, unit=unit_key,
                         stand=_side_for(r))
                     for r in filtered
                 }
@@ -894,12 +917,12 @@ with content_col:
                     if _os is None:
                         # no probable: fetch BOTH sides, neither is "tonight's"
                         switch_other_cache[r["name"]] = {
-                            "L": get_batter_profile_windowed(r.get("id"), window=window_key, unit="bbe", stand="L"),
-                            "R": get_batter_profile_windowed(r.get("id"), window=window_key, unit="bbe", stand="R"),
+                            "L": get_batter_profile_windowed(r.get("id"), window=window_key, unit=unit_key, stand="L"),
+                            "R": get_batter_profile_windowed(r.get("id"), window=window_key, unit=unit_key, stand="R"),
                         }
                     else:
                         switch_other_cache[r["name"]] = {
-                            _os: get_batter_profile_windowed(r.get("id"), window=window_key, unit="bbe", stand=_os),
+                            _os: get_batter_profile_windowed(r.get("id"), window=window_key, unit=unit_key, stand=_os),
                         }
                 slam_cache = {name: slam_from_profile(p) for name, p in windowed_profile_cache.items()}
 
@@ -1252,12 +1275,14 @@ with content_col:
                 else:
                     matchup_rows = []
                     for r in filtered:
-                        vs_profile = get_batter_vs_pitch_types(r.get("id"), tuple(top_3_pitches), window=window_key, unit="bbe")
+                        vs_profile = get_batter_vs_pitch_types(r.get("id"), tuple(top_3_pitches), window=window_key, unit=unit_key)
                         pitches_seen = vs_profile.get("_pitches_seen", 0)
                         matchup_rows.append({
                             "Player": r["name"],
                             "Bats": r["bats"],
                             "Pitches Seen": pitches_seen,
+                            "xwOBA": vs_profile.get("xwOBA") if pitches_seen > 0 else None,
+                            "ISO": vs_profile.get("ISO") if pitches_seen > 0 else None,
                             "Brl%": vs_profile.get("Brl %") if pitches_seen > 0 else None,
                             "HH%": vs_profile.get("HH %") if pitches_seen > 0 else None,
                             "Whiff%": vs_profile.get("Whiff %") if pitches_seen > 0 else None,
@@ -1266,7 +1291,8 @@ with content_col:
                         })
                     matchup_df = pd.DataFrame(matchup_rows)
                     st.dataframe(
-                        style_stat_table(matchup_df, favor_high=["Brl%", "HH%", "Zone Fit"], favor_low=["Whiff%"], gradient=True),
+                        style_stat_table(matchup_df, favor_high=["xwOBA", "ISO", "Brl%", "HH%", "Zone Fit"], favor_low=["Whiff%"], gradient=True).format(
+                            {"xwOBA": "{:.3f}", "ISO": "{:.3f}", "Brl%": "{:.1f}", "HH%": "{:.1f}", "Whiff%": "{:.1f}"}, na_rep="\u2014"),
                         width="stretch",
                     )
                     st.caption(
@@ -1276,6 +1302,65 @@ with content_col:
                         "THIS starter (MLB official vs-player split) \u2014 the same history that now moves SLAM and "
                         "the Matchup Edges tiers, per the tiers documented in engines/edge.py."
                     )
+
+        if table_rows:
+            # Full per-pitch-category profile: how each hitter does against
+            # Fastballs / Breaking / Offspeed across the board (not just
+            # tonight's arsenal). Grouped into three families rather than
+            # every individual code, because a single hitter rarely has a
+            # usable sample against, say, sweepers alone in a recent window.
+            _PITCH_GROUPS = {
+                "Fastballs": ("FF", "FA", "SI", "FC"),
+                "Breaking": ("SL", "ST", "CU", "KC", "CS", "SV"),
+                "Offspeed": ("CH", "FS", "FO", "EP"),
+            }
+            with card("vs_pitch_family"):
+                st.markdown(
+                    f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Batter vs Pitch Type</div>'
+                    f'<div class="pf-card-subtitle">How one hitter performs against each pitch family \u2014 '
+                    f'same {window_choice} window. Pick a batter.</div>',
+                    unsafe_allow_html=True,
+                )
+                _names = [r["name"] for r in filtered]
+                if _names:
+                    _pick = st.selectbox("Batter", _names, key="vs_pitch_family_pick")
+                    _row = next((r for r in filtered if r["name"] == _pick), None)
+                    if _row is not None:
+                        fam_rows = []
+                        for fam_label, fam_codes in _PITCH_GROUPS.items():
+                            vp = get_batter_vs_pitch_types(
+                                _row.get("id"), fam_codes, window=window_key, unit=unit_key)
+                            seen = vp.get("_pitches_seen", 0)
+                            fam_rows.append({
+                                "Pitch Type": fam_label,
+                                "Pitches Seen": seen,
+                                "BA": vp.get("BA") if seen > 0 else None,
+                                "xwOBA": vp.get("xwOBA") if seen > 0 else None,
+                                "xSLG": vp.get("xSLG") if seen > 0 else None,
+                                "ISO": vp.get("ISO") if seen > 0 else None,
+                                "Brl%": vp.get("Brl %") if seen > 0 else None,
+                                "HH%": vp.get("HH %") if seen > 0 else None,
+                                "Whiff%": vp.get("Whiff %") if seen > 0 else None,
+                            })
+                        fam_df = pd.DataFrame(fam_rows)
+                        st.dataframe(
+                            style_stat_table(
+                                fam_df, favor_high=["BA", "xwOBA", "xSLG", "ISO", "Brl%", "HH%"],
+                                favor_low=["Whiff%"], gradient=True,
+                            ).format(
+                                {"BA": "{:.3f}", "xwOBA": "{:.3f}", "xSLG": "{:.3f}", "ISO": "{:.3f}",
+                                 "Brl%": "{:.1f}", "HH%": "{:.1f}", "Whiff%": "{:.1f}"},
+                                na_rep="\u2014",
+                            ),
+                            width="stretch",
+                        )
+                        st.caption(
+                            "Fastballs = 4-seam, sinker, cutter. Breaking = slider, sweeper, curve, "
+                            "knuckle-curve, slurve. Offspeed = changeup, splitter, forkball. "
+                            "\"Pitches Seen\" is the real sample \u2014 blank rows mean he hasn't faced "
+                            "that family in this window. A hitter strong vs one family and weak vs "
+                            "another is a matchup edge once you know what the starter throws most."
+                        )
 
         if table_rows:
             with card("matchup_edges"):
