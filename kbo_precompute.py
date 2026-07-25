@@ -249,6 +249,16 @@ def _val(row, col):
     return v
 
 
+def _clean_columns(df):
+    """koreabaseball.com appends sort-arrow glyphs (▼/▲) to sortable
+    column headers, so pandas reads "ERA▼" instead of "ERA" and the
+    column match below fails — the cause of the "0 pitchers/batters
+    fetched" bug. Strip trailing arrows and whitespace so headers match
+    their plain names. Returns the same df with cleaned column labels."""
+    df.columns = [re.sub(r"[\u25b2\u25bc\s]+$", "", str(c)).strip() for c in df.columns]
+    return df
+
+
 def _pick_table(page_tables, required_cols):
     """Finds the table whose columns are a superset of required_cols.
     Replaces an earlier "just take the biggest table on the page"
@@ -258,8 +268,12 @@ def _pick_table(page_tables, required_cols):
     the cause of a real bug (20 pitchers/batters fetched, 0 written,
     because the merged frame never actually had an ERA/OPS column).
     Returns None if no table matches, so the caller can log and skip
-    that section rather than silently use the wrong data."""
+    that section rather than silently use the wrong data.
+
+    Column headers are cleaned of sort-arrow glyphs first, so "ERA▼"
+    matches a required "ERA"."""
     for t in page_tables:
+        _clean_columns(t)
         cols = set(str(c) for c in t.columns)
         if required_cols <= cols:
             return t
@@ -396,6 +410,7 @@ def fetch_team_stats():
 
     h2h_matrix = bat1 = bat2 = pit1 = pit2 = None
     for t in tables:
+        _clean_columns(t)
         cols = set(str(c) for c in t.columns)
         if "TEAM" not in cols:
             continue
@@ -779,9 +794,6 @@ def main():
         print("KBO: none of the eng.koreabaseball.com sections parsed — markup "
               "may have changed since this was written; page will honestly "
               "omit these sections rather than guess.")
-    print("KBO: probable starters are not present in either source's static "
-          "HTML at fetch time, so starters continue to ship as TBD rather "
-          "than guessed.")
 
 
 if __name__ == "__main__":
