@@ -88,7 +88,7 @@ KBO_TEAM_CODE = {
 OUT = Path("build_data") / "data" / "kbo"
 
 GAME_LINE = re.compile(
-    r'<a[^>]*href="/games/\d+-([A-Za-z]+)-vs-([A-Za-z]+)-(\d{8})"[^>]*>(.*?)</a>',
+    r'<a[^>]*href="/games/(\d+)-([A-Za-z]+)-vs-([A-Za-z]+)-(\d{8})"[^>]*>(.*?)</a>',
     re.S,
 )
 # Real finished-game text, confirmed against actual CI log output:
@@ -137,9 +137,72 @@ def fetch(url):
     return r.content.decode("utf-8", errors="replace")
 
 
+def parse_starters(html):
+    """Extract away/home probable starters from a mykbostats game-detail
+    page. Names come already romanized (e.g. "So Hyeong-jun"). Returns
+    names, player ids, and the season W-L/ERA line for each side.
+    Anything the page doesn't state stays None — never guessed, matching
+    how the rest of this pipeline treats unknowns.
+
+    Structure (verified against a real game page): each side sits in a
+    <div class="away-starter"> / <div class="home-starter">. Inside are
+    two player-link anchors — the first wraps the photo <img>, the second
+    is the name. "Season:" is followed by two <abbr> values, W-L then ERA.
+    """
+    out = {
+        "away_starter": None, "home_starter": None,
+        "away_starter_id": None, "home_starter_id": None,
+        "away_starter_stats": None, "home_starter_stats": None,
+    }
+    for side, cls in (("away", "away-starter"), ("home", "home-starter")):
+        block = re.search(rf'<div class="{cls}">(.*?)</div>', html, re.S)
+        if not block:
+            continue
+        b = block.group(1)
+        for am in re.finditer(
+                r'<a class="player-link"[^>]*data-id="(\d+)"[^>]*>(.*?)</a>', b, re.S):
+            inner = am.group(2)
+            if "<img" in inner:
+                continue  # photo anchor, not the name
+            txt = re.sub(r"<[^>]+>", "", inner).strip()
+            if txt:
+                out[f"{side}_starter"] = txt
+                out[f"{side}_starter_id"] = am.group(1)
+                break
+        seas = re.search(
+            r'Season:.*?<abbr title="Wins - Losses">([\d-]+)</abbr>\s*,\s*'
+            r'<abbr title="ERA[^"]*">([\d.]+)</abbr>', b, re.S)
+        if seas:
+            try:
+                out[f"{side}_starter_stats"] = {"wl": seas.group(1), "era": float(seas.group(2))}
+            except ValueError:
+                pass
+    return out
+
+
+def fetch_starters_for_game(game_slug):
+    """Fetch one game-detail page and return its probable starters.
+    Best-effort: any failure returns an all-None dict so a single bad
+    game never blocks the slate. mykbostats announces KBO starters the
+    day before, so upcoming games usually have them."""
+    empty = {
+        "away_starter": None, "home_starter": None,
+        "away_starter_id": None, "home_starter_id": None,
+        "away_starter_stats": None, "home_starter_stats": None,
+    }
+    try:
+        r = requests.get(f"https://mykbostats.com/games/{game_slug}", headers=UA, timeout=25)
+        if r.status_code != 200:
+            return empty
+        return parse_starters(r.text)
+    except Exception as exc:
+        print(f"  KBO starter fetch failed for {game_slug}: {exc}")
+        return empty
+
+
 def parse_week(html, today_str, sample_holder):
     for m in GAME_LINE.finditer(html):
-        away_short, home_short, yyyymmdd, inner = m.groups()
+        game_id, away_short, home_short, yyyymmdd, inner = m.groups()
         gdate = f"{yyyymmdd[:4]}-{yyyymmdd[4:6]}-{yyyymmdd[6:]}"
 
         dt_utc = None
@@ -155,6 +218,8 @@ def parse_week(html, today_str, sample_holder):
         g = {
             "date": gdate,
             "away": _team(away_short), "home": _team(home_short),
+            "game_id": game_id,
+            "game_slug": f"{game_id}-{away_short}-vs-{home_short}-{yyyymmdd}",
             "stadium": re.sub(r"\s+", " ", _strip(venue.group(1))).strip() if venue else "TBD",
             "time_kst": dt_utc.astimezone(KST).strftime("%H:%M") if dt_utc else "TBD",
             "time_et": dt_utc.astimezone(EASTERN).strftime("%-I:%M %p") if dt_utc else "TBD",
@@ -546,6 +611,24 @@ def main():
         print("KBO: no finals parsed from scorelines — team stats/H2H from "
               "TeamStats.aspx (below) don't depend on this and should still ship.")
 
+    # Probable starters: the schedule listing doesn't carry them, but each
+    # game-detail page does. Fetch only UPCOMING games (today or later,
+    # not final) so we don't hammer the site for completed games. KBO
+    # posts starters the day before, so most upcoming games resolve; any
+    # that don't stay TBD. One extra request per upcoming game (~5-6/day).
+    upcoming = [g for g in all_games
+                if g["date"] >= today and g.get("status") != "final"
+                and g.get("game_slug")]
+    starter_hits = 0
+    for g in upcoming:
+        s = fetch_starters_for_game(g["game_slug"])
+        g.update(s)
+        if s.get("away_starter") or s.get("home_starter"):
+            starter_hits += 1
+        time.sleep(0.15)
+    print(f"KBO: fetched starters for {len(upcoming)} upcoming games; "
+          f"{starter_hits} had at least one probable posted")
+
     stats = team_form(finals) if finals else {}
 
     # Slate selection: today in Korea if it has games; otherwise the
@@ -590,9 +673,19 @@ def main():
         entry = {
             "away": g["away"], "home": g["home"], "stadium": g["stadium"],
             "time_kst": g["time_kst"], "time_et": g["time_et"],
-            "away_starter": "TBD", "home_starter": "TBD",
+            "away_starter": g.get("away_starter") or "TBD",
+            "home_starter": g.get("home_starter") or "TBD",
             "status": g["status"],
         }
+        # Real season line for each announced starter, straight from the
+        # game page (W-L + ERA). Absent when the starter is still TBD.
+        for side in ("away", "home"):
+            ss = g.get(f"{side}_starter_stats")
+            if ss:
+                entry[f"{side}_starter_stats"] = ss
+            sid = g.get(f"{side}_starter_id")
+            if sid:
+                entry[f"{side}_starter_id"] = sid
         for side in ("away", "home"):
             s = stats.get(g[side])
             if s:
