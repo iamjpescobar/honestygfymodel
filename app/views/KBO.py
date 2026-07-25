@@ -6,6 +6,8 @@ import streamlit as st
 from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, badge, footer, COLOR
 from auth import render_account_sidebar
 from engines.matchup_grades_intl import grade_kbo_matchup, render_matchup_grades_card
+from engines.kbo_k_projection import project_kbo_slate
+from styles.table_style import style_stat_table
 
 # NOTE: no st.set_page_config here — app.py already sets it once.
 
@@ -157,6 +159,55 @@ def _ou_badges(ou_trend, label):
             f'{label} O/U trend: {DOT.join(bits)}</div>')
 
 
+def _render_k_projections():
+    """Strikeout projections for the day's KBO starters — same formula
+    as the MLB Strikeout Board, fed by the official leaderboard + team
+    batting data. Renders nothing if there's no slate."""
+    _games, _gen, _slate = _load_games()
+    if not _games:
+        return
+    _pitchers_list, _ = _load_pitchers()
+    _pitchers = {p.get("name"): p for p in (_pitchers_list or []) if p.get("name")}
+    _team = _load_team_stats()
+    rows, warning = project_kbo_slate(_games, _pitchers, _team)
+    if not rows:
+        return
+    st.markdown(card_open(
+        "\u26be Strikeout Projections",
+        "proj K = (K/9 \u00f7 9) \u00d7 IP per start \u00d7 opponent K factor \u2014 "
+        "same model as the MLB board, off the official season leaderboard. "
+        "Opponent factor clamped \u00b115%. Not a sportsbook line."
+    ), unsafe_allow_html=True)
+
+    import pandas as _pd
+    projected = [r for r in rows if r.get("proj") is not None]
+    if projected:
+        df = _pd.DataFrame([{
+            "Pitcher": r["pitcher"],
+            "Team": r["team"],
+            "Opponent": r["opponent"],
+            "Proj K": r["proj"],
+            "K/9": r["k9"],
+            "IP/GS": r["ip_gs"],
+            "Opp K factor": r["factor"],
+        } for r in projected])
+        st.dataframe(
+            style_stat_table(
+                df, favor_high=["Proj K", "K/9", "Opp K factor"], gradient=True,
+            ).format({"Proj K": "{:.1f}", "K/9": "{:.2f}", "IP/GS": "{:.1f}",
+                      "Opp K factor": "{:.3f}"}, na_rep="\u2014"),
+            width="stretch", hide_index=True,
+        )
+    if warning:
+        st.caption(warning)
+    # Honest listing of starters we couldn't project and why.
+    unprojected = [r for r in rows if r.get("proj") is None]
+    if unprojected:
+        _bits = ", ".join(f'{r["pitcher"]} ({r["status"]})' for r in unprojected)
+        st.caption(f"Not projected yet \u2014 {_bits}")
+    st.markdown(card_close(), unsafe_allow_html=True)
+
+
 games, generated_at, slate_date = _load_games()
 
 # Date-boundary guard: KBO plays on Korea time (UTC+9). The file holds
@@ -227,7 +278,7 @@ if generated_at:
 
 _render_pitching_leaders()
 _render_batting_leaders()
-
+_render_k_projections()
 if not games and not _stale:
     st.info("No KBO games on today\'s schedule \u2014 likely a league off-day.")
 else:

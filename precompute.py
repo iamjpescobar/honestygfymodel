@@ -65,6 +65,16 @@ def fetch_season() -> pd.DataFrame:
     trimming each chunk immediately to keep memory in check."""
     today = date.today()
     chunks = []
+    # The expected-stat columns (xwOBA/xSLG) are the ones SLAM and the
+    # lineup table's xwOBA/xSLG columns depend on. pybaseball's bulk
+    # statcast() has, in some versions, returned a narrower column set
+    # than the per-player endpoints and omitted these — which silently
+    # shipped parquets without them, showing "None" xwOBA/xSLG and 0.0
+    # SLAM for every batter. Track whether we ever actually see them so
+    # the run can WARN loudly instead of failing silently.
+    _expected_cols = {"estimated_woba_using_speedangle",
+                      "estimated_slg_using_speedangle"}
+    _saw_expected = False
     for start, stop in week_ranges(SEASON_START, today):
         s, e = start.strftime("%Y-%m-%d"), stop.strftime("%Y-%m-%d")
         df = None
@@ -79,6 +89,9 @@ def fetch_season() -> pd.DataFrame:
             print(f"  chunk {s}..{e}: no data")
             continue
 
+        if _expected_cols.issubset(df.columns):
+            _saw_expected = True
+
         keep = [c for c in ENGINE_COLS + ID_COLS if c in df.columns]
         df = df[keep].copy()
         for c in df.select_dtypes(include="float64").columns:
@@ -88,6 +101,12 @@ def fetch_season() -> pd.DataFrame:
 
     if not chunks:
         raise SystemExit("No Statcast data fetched — aborting without writing anything.")
+
+    if not _saw_expected:
+        print("  *** WARNING: bulk statcast() never returned the expected-stat "
+              "columns (estimated_woba/slg_using_speedangle). xwOBA/xSLG will be "
+              "None and SLAM 0.0 for every batter. This is the cause of the "
+              "'Season shows 0' bug — the bulk endpoint is omitting them. ***")
     return pd.concat(chunks, ignore_index=True)
 
 

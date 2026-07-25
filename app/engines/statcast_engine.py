@@ -417,28 +417,78 @@ def get_batter_statcast(batter_id):
 
 
 @st.cache_data(ttl=1800, max_entries=256, show_spinner=False)
+def _real_woba_slg(frame):
+    """Fallback when Statcast's expected-stat columns aren't in the data
+    (some bulk statcast() pulls omit them). Computes REAL wOBA and SLG
+    from actual plate-appearance outcomes using the standard wOBA linear
+    weights, so the xwOBA/xSLG columns show a real number instead of
+    "None" (which was collapsing SLAM to 0.0 for every batter). These
+    are actuals, not expected values — slightly noisier, but real and
+    far better than a blank board. Returns (woba, slg) or (None, None).
+    """
+    if frame is None or frame.empty or "events" not in frame.columns:
+        return None, None
+    ev = frame["events"].dropna()
+    if ev.empty:
+        return None, None
+    # Standard wOBA weights (FanGraphs, stable year to year within ~0.01).
+    w = {"walk": 0.69, "hit_by_pitch": 0.72, "single": 0.89,
+         "double": 1.27, "triple": 1.62, "home_run": 2.10}
+    ab_events = {"single", "double", "triple", "home_run", "field_out",
+                 "strikeout", "grounded_into_double_play", "force_out",
+                 "field_error", "fielders_choice_out", "double_play",
+                 "strikeout_double_play"}
+    unintentional_bb = int((ev == "walk").sum())
+    hbp = int((ev == "hit_by_pitch").sum())
+    ab = int(ev.isin(ab_events).sum())
+    sf = int((ev == "sac_fly").sum())
+    pa_denom = ab + unintentional_bb + hbp + sf
+    woba = None
+    if pa_denom > 0:
+        num = sum(w.get(e, 0.0) for e in ev)
+        woba = round(num / pa_denom, 3)
+    slg = None
+    if ab > 0:
+        tb = (int((ev == "single").sum()) + 2 * int((ev == "double").sum())
+              + 3 * int((ev == "triple").sum()) + 4 * int((ev == "home_run").sum()))
+        slg = round(tb / ab, 3)
+    return woba, slg
+
+
 def _add_expected_stats(metrics: dict, frame) -> dict:
     """Attach xSLG and xwOBA (Statcast's speed+angle expected stats) to
     a metrics dict, averaged over the batted-ball rows of `frame`. Both
     are None when the frame has no BBE or no measured expected values.
     Shared by get_batter_profile_windowed and get_batter_vs_pitch_types
     so the lineup table and the vs-pitch tables report the same numbers.
+
+    When the expected-stat columns are absent (some bulk statcast()
+    pulls drop them), falls back to REAL wOBA/SLG from outcomes so the
+    columns still carry a meaningful number rather than None.
     """
     metrics["xSLG"] = None
     metrics["xwOBA"] = None
     cols = {"estimated_slg_using_speedangle", "estimated_woba_using_speedangle"}
-    if frame is None or frame.empty or not cols.issubset(frame.columns):
-        return metrics
-    bbe_only = frame[frame["type"] == "X"] if "type" in frame.columns else frame
-    if bbe_only.empty:
-        return metrics
-    xslg = pd.to_numeric(bbe_only["estimated_slg_using_speedangle"], errors="coerce").mean()
-    xwoba = pd.to_numeric(bbe_only["estimated_woba_using_speedangle"], errors="coerce").mean()
-    # pd.notna guards against both NaN and pandas' NA marker, which
-    # round() can't handle — happens when a window has BBE rows but no
-    # measured expected-stat values.
-    metrics["xSLG"] = round(float(xslg), 3) if pd.notna(xslg) else None
-    metrics["xwOBA"] = round(float(xwoba), 3) if pd.notna(xwoba) else None
+    if frame is not None and not frame.empty and cols.issubset(frame.columns):
+        bbe_only = frame[frame["type"] == "X"] if "type" in frame.columns else frame
+        if not bbe_only.empty:
+            xslg = pd.to_numeric(bbe_only["estimated_slg_using_speedangle"], errors="coerce").mean()
+            xwoba = pd.to_numeric(bbe_only["estimated_woba_using_speedangle"], errors="coerce").mean()
+            # pd.notna guards against both NaN and pandas' NA marker, which
+            # round() can't handle — happens when a window has BBE rows but no
+            # measured expected-stat values.
+            metrics["xSLG"] = round(float(xslg), 3) if pd.notna(xslg) else None
+            metrics["xwOBA"] = round(float(xwoba), 3) if pd.notna(xwoba) else None
+
+    # Fallback to real outcomes if the expected columns weren't present
+    # or produced nothing. Keeps xwOBA/xSLG populated (as actuals) so
+    # SLAM and the lineup columns never collapse to None/0.0 league-wide.
+    if metrics["xwOBA"] is None or metrics["xSLG"] is None:
+        r_woba, r_slg = _real_woba_slg(frame)
+        if metrics["xwOBA"] is None and r_woba is not None:
+            metrics["xwOBA"] = r_woba
+        if metrics["xSLG"] is None and r_slg is not None:
+            metrics["xSLG"] = r_slg
     return metrics
 
 

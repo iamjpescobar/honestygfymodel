@@ -43,6 +43,21 @@ def slam_from_profile(profile: dict) -> dict:
     xslg = profile.get("xSLG")
     xwoba = profile.get("xwOBA")
 
+    # Fallback: if the expected-stat columns weren't available for this
+    # window (e.g. a data pull missing estimated_slg/woba, which zeroed
+    # SLAM for every batter on the Season window), fall back to the
+    # REAL slugging line so SLAM still computes from actual outcomes
+    # rather than collapsing to nothing. xSLG is preferred when present
+    # because it's noise-adjusted, but real SLG is a valid stand-in and
+    # far better than a blank board. ISO isn't used as a direct anchor
+    # (different scale) but SLG carries the same power signal.
+    slg_fallback = profile.get("SLG")
+    if xslg is None and slg_fallback:
+        try:
+            xslg = float(slg_fallback)
+        except (TypeError, ValueError):
+            pass
+
     parts = [p for p in [xslg, xwoba] if p is not None]
     # xSLG is on a ~0-4+ scale, xwOBA on a ~0-1 scale — normalize both
     # to a 0-100ish display scale using real, published scale anchors

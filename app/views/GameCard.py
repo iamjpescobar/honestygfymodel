@@ -1002,8 +1002,14 @@ with content_col:
                     profile = windowed_profile_cache[r["name"]]
                     slam_result = slam_cache[r["name"]]
                     _sb = slam_bvp_cache[r["name"]]
-                    slam = _sb["final"] if _sb["final"] is not None else 0.0
-                    tier = matchup_tier(slam)
+                    # Keep a missing SLAM as None so the table shows "—",
+                    # not 0.0 — a real 0.0 would read as a genuinely awful
+                    # score and could make you fade a good hitter whose
+                    # expected stats simply weren't available in this
+                    # window. matchup_tier still needs a number, so it
+                    # gets 0.0 only for its own tiering, never displayed.
+                    slam = _sb["final"]
+                    tier = matchup_tier(slam if slam is not None else 0.0)
                     r["slam_base"], r["slam_adj"] = _sb["base"], _sb["adj"]
                     conf_label, sample = confidence_tier(profile.get("BBE", 0))
 
