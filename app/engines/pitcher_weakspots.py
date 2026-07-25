@@ -58,6 +58,11 @@ ZONE_MIN_PITCHES = 40
 ZONE_MIN_BBE = 12
 TTO_MIN_BBE = 60
 HALF_MIN_BBE = 50
+# One batting slot gets ~1/4 the sample of a half, so the floor is set
+# lower — but still high enough that a flagged "weak slot" is real and
+# not three good hitters he happened to face twice. Below this, the
+# slot's line is shown with its sample but never flagged/colored.
+SLOT_MIN_BBE = 18
 
 # league-ish reference points for coloring (xSLG on contact)
 XSLG_HOT = 0.550     # hitters are doing real damage here
@@ -74,14 +79,30 @@ _PITCH_NAMES = {
 
 
 def _xslg_of(sub):
-    """(xSLG on contact, batted-ball count) for a slice."""
-    if sub.empty or "estimated_slg_using_speedangle" not in sub.columns:
+    """(xSLG on contact, batted-ball count) for a slice.
+
+    Falls back to REAL SLG-on-contact from outcomes when Statcast's
+    estimated column isn't in the data (some bulk pulls drop it — the
+    same gap that zeroed SLAM). Keeps the weak-spot reads populated
+    with a real number instead of collapsing to empty."""
+    if sub.empty:
         return None, 0
     bbe = sub[sub["type"] == "X"] if "type" in sub.columns else sub
-    vals = pd.to_numeric(bbe["estimated_slg_using_speedangle"], errors="coerce").dropna()
-    if vals.empty:
+    if bbe.empty:
         return None, 0
-    return round(float(vals.mean()), 3), int(len(vals))
+    if "estimated_slg_using_speedangle" in bbe.columns:
+        vals = pd.to_numeric(bbe["estimated_slg_using_speedangle"], errors="coerce").dropna()
+        if not vals.empty:
+            return round(float(vals.mean()), 3), int(len(vals))
+    # Fallback: real total bases per batted ball in play, from events.
+    if "events" in bbe.columns:
+        ev = bbe["events"].dropna()
+        n = int(len(ev))
+        if n > 0:
+            tb = (int((ev == "single").sum()) + 2 * int((ev == "double").sum())
+                  + 3 * int((ev == "triple").sum()) + 4 * int((ev == "home_run").sum()))
+            return round(tb / n, 3), n
+    return None, 0
 
 
 @st.cache_data(ttl=3600, max_entries=16, show_spinner=False)
@@ -184,6 +205,34 @@ def weak_spots_json(pitcher_id, window: str = "season") -> str:
                 entry["reason"] = f"{bbe} batted balls \u2014 below the {HALF_MIN_BBE} floor"
             halves.append(entry)
     out["halves"] = halves
+
+    # ---- 5) per batting-order slot (1-9) ----
+    # The individual-slot version of (4). Deliberately guarded: a single
+    # slot has a modest sample, so a slot is only flagged as a real weak
+    # spot when it clears SLOT_MIN_BBE. Below that, the line is returned
+    # with its sample and a reason so the page shows it grayed rather
+    # than implying a weakness that's really just noise. This is what
+    # lets the Game Card align "which slots he's weak on" to the actual
+    # hitters batting there tonight.
+    slots_out = []
+    if {"game_pk", "at_bat_number"}.issubset(df.columns):
+        pa = df[["game_pk", "at_bat_number"]].drop_duplicates().sort_values(
+            ["game_pk", "at_bat_number"])
+        pa["seq"] = pa.groupby("game_pk").cumcount()
+        pa["slot"] = pa["seq"] % 9 + 1
+        merged = df.merge(pa[["game_pk", "at_bat_number", "slot"]],
+                          on=["game_pk", "at_bat_number"], how="left")
+        for slot_n in range(1, 10):
+            sub = merged[merged["slot"] == slot_n]
+            xslg, bbe = _xslg_of(sub)
+            entry = {"slot": slot_n, "bbe": bbe}
+            if bbe >= SLOT_MIN_BBE and xslg is not None:
+                entry["xslg"] = xslg
+            else:
+                entry["xslg"] = None
+                entry["reason"] = f"{bbe} batted balls \u2014 below the {SLOT_MIN_BBE} floor"
+            slots_out.append(entry)
+    out["slots"] = slots_out
 
     return json.dumps(out)
 

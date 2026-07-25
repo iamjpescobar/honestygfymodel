@@ -266,7 +266,6 @@ if games is None:
     st.markdown(card_close(), unsafe_allow_html=True)
     st.markdown(badge("MLB \u2014 live now", "good") + badge("KBO \u2014 in development", "accent"), unsafe_allow_html=True)
     _render_pitching_leaders()
-    _render_batting_leaders()
     footer()
     st.stop()
 
@@ -277,7 +276,6 @@ if generated_at:
     st.caption(f"Slate data as of {generated_at} KST \u2014 refreshed by the nightly pipeline.")
 
 _render_pitching_leaders()
-_render_batting_leaders()
 _render_k_projections()
 if not games and not _stale:
     st.info("No KBO games on today\'s schedule \u2014 likely a league off-day.")

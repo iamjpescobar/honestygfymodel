@@ -427,9 +427,35 @@ with content_col:
                     st.caption(
                         f"Top vs bottom of order \u2014 {_txt}. Shown for context only and "
                         f"deliberately not scored: a gap here mostly reflects that better hitters "
-                        f"bat at the top, not a repeatable weakness. Per-slot splits aren't built "
-                        f"at all for the same reason."
+                        f"bat at the top, not a repeatable weakness."
                     )
+
+                # Per batting-order slot (1-9) — the granular version, each
+                # slot flagged only above its sample floor. Aligned to
+                # tonight's actual hitters in the "vs this lineup" section
+                # below the lineup table.
+                _slots = _ws.get("slots", [])
+                if any(s.get("xslg") is not None for s in _slots):
+                    st.markdown(
+                        f'<div style="font-size:12px; font-weight:700; color:{COLOR["gold"]}; '
+                        f'margin-top:10px;">By batting-order slot</div>', unsafe_allow_html=True)
+                    _cells = "".join(
+                        f'<td style="text-align:center; padding:5px; border:1px solid '
+                        f'{COLOR["text"]}1E; border-radius:6px;">'
+                        f'<div style="font-size:10px; color:{COLOR["text"]}; opacity:0.6;">{s["slot"]}</div>'
+                        f'<div style="font-size:12px;">{_xslg_chip(s.get("xslg"))}</div>'
+                        f'<div style="font-size:8.5px; color:{COLOR["text"]}; opacity:0.45;">'
+                        f'{s["bbe"]}</div></td>'
+                        for s in _slots
+                    )
+                    st.markdown(
+                        f'<table style="width:100%; border-spacing:3px; '
+                        f'border-collapse:separate;"><tr>{_cells}</tr></table>',
+                        unsafe_allow_html=True)
+                    st.caption("Per-slot splits carry a real caveat \u2014 a slot's line partly "
+                               "reflects which hitters happened to bat there across his starts, "
+                               "not only his own skill. Slots below the sample floor show \u2014 "
+                               "and are never flagged. Read it alongside the lineup mapping below.")
 
     # -----------------------------------------------------
     # MATCHUP GRADES — transparent signal checklists, both starters
@@ -1087,7 +1113,96 @@ with content_col:
                     )
                     if not league_data_available:
                         st.caption("HR Score / Hit Score / K Score show N/A above because Baseball Savant's live percentile rankings aren't reachable right now (see warning above) \u2014 not because these players lack power or contact skill.")
-                    else:
+
+                    # -------------------------------------------------
+                    # WEAK SPOT vs THIS LINEUP — the alignment view:
+                    # tonight's starter's per-slot weakness mapped onto
+                    # the actual hitters batting those slots. This is the
+                    # bettable read: a real, well-sampled weak slot that
+                    # a dangerous hitter is sitting in tonight.
+                    # -------------------------------------------------
+                    if pitcher_id:
+                        _wsl = get_weak_spots(pitcher_id)
+                        _slot_map = {s["slot"]: s for s in _wsl.get("slots", [])}
+                        # batters is in real batting order; index+1 = slot.
+                        _order = [b for b in batters][:9]
+                        if _slot_map and _order:
+                            _align_rows = []
+                            for _i, _b in enumerate(_order, start=1):
+                                _s = _slot_map.get(_i, {})
+                                _xslg = _s.get("xslg")
+                                # weak = pitcher gets hit here AND it's a
+                                # real sample (xslg present means it cleared
+                                # the floor in the engine).
+                                _is_weak = _xslg is not None and _xslg >= XSLG_HOT
+                                _align_rows.append({
+                                    "slot": _i,
+                                    "name": _b.get("name", "\u2014"),
+                                    "bats": _b.get("bats", ""),
+                                    "xslg": _xslg,
+                                    "bbe": _s.get("bbe", 0),
+                                    "weak": _is_weak,
+                                })
+                            if any(r["xslg"] is not None for r in _align_rows):
+                                st.markdown(
+                                    f'<div class="pf-card-title" style="color:{COLOR["gold"]}; '
+                                    f'margin-top:12px;">Weak spot vs this lineup</div>'
+                                    f'<div class="pf-card-subtitle">{selected_pitcher_name}\u2019s xSLG '
+                                    f'allowed by batting slot, mapped to tonight\u2019s hitters. '
+                                    f'Green = a real, well-sampled slot where he gets hit and a '
+                                    f'live bat is sitting. Slots below the sample floor show \u2014.'
+                                    f'</div>',
+                                    unsafe_allow_html=True,
+                                )
+                                _hdr = (
+                                    f'<tr style="font-size:10px; color:{COLOR["text"]}; opacity:0.55;">'
+                                    f'<td style="padding:4px 8px;">#</td>'
+                                    f'<td style="padding:4px 8px;">Hitter</td>'
+                                    f'<td style="padding:4px 8px;">B</td>'
+                                    f'<td style="padding:4px 8px; text-align:right;">xSLG vs slot</td>'
+                                    f'<td style="padding:4px 8px; text-align:right;">n</td></tr>'
+                                )
+                                _body = ""
+                                for _r in _align_rows:
+                                    _bg = (f'background:{COLOR["stat_high"]}22;'
+                                           if _r["weak"] else "")
+                                    if _r["xslg"] is None:
+                                        _xcell = f'<span style="color:{COLOR["text"]}; opacity:0.4;">\u2014</span>'
+                                    else:
+                                        _c = (COLOR["error"] if _r["xslg"] >= XSLG_HOT
+                                              else COLOR["stat_high"] if _r["xslg"] <= XSLG_COLD
+                                              else COLOR["warn"])
+                                        _xcell = f'<span style="font-weight:800; color:{_c};">{_r["xslg"]:.3f}</span>'
+                                    _body += (
+                                        f'<tr style="{_bg} font-size:11.5px;">'
+                                        f'<td style="padding:4px 8px; color:{COLOR["text"]}; opacity:0.6;">{_r["slot"]}</td>'
+                                        f'<td style="padding:4px 8px; color:{COLOR["text"]}; font-weight:600;">{_r["name"]}'
+                                        + (' \U0001F3AF' if _r["weak"] else '') + '</td>'
+                                        f'<td style="padding:4px 8px; color:{COLOR["text"]}; opacity:0.6;">{_r["bats"]}</td>'
+                                        f'<td style="padding:4px 8px; text-align:right;">{_xcell}</td>'
+                                        f'<td style="padding:4px 8px; text-align:right; color:{COLOR["text"]}; opacity:0.45; font-size:10px;">{_r["bbe"]}</td>'
+                                        f'</tr>'
+                                    )
+                                st.markdown(
+                                    f'<table style="width:100%; border-collapse:collapse;">'
+                                    f'{_hdr}{_body}</table>',
+                                    unsafe_allow_html=True,
+                                )
+                                _weak_names = [r["name"] for r in _align_rows if r["weak"]]
+                                if _weak_names:
+                                    st.caption(
+                                        "\U0001F3AF Target spots tonight: " + ", ".join(_weak_names)
+                                        + " \u2014 real, well-sampled slots where this starter gets hit. "
+                                        "Still cross-check the hitter\u2019s own form above; this flags "
+                                        "the matchup, not a lock."
+                                    )
+                                else:
+                                    st.caption(
+                                        "No slot clears both the damage threshold and the sample "
+                                        "floor against this lineup \u2014 no standout target spot tonight."
+                                    )
+
+                    if league_data_available:
                         st.caption("HR Score / Hit Score are this app's own composite scores from real, live MLB percentile rankings (baseballsavant.mlb.com); HR Score now includes the Exit Velocity percentile. HR Edge = HR Score + the matchup layer (BvP \u00b115, Zone Fit \u00b115, Bullpen \u00b110 \u2014 engines/edge.py has every tier). Not calibrated predictive probabilities.")
                         # Named qualification badges — the "why upside"
                         # read, from thresholds documented in
