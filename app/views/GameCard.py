@@ -1338,20 +1338,31 @@ with content_col:
                                 st.caption(f'First-pitch swing rate: {_fp["reason"]}.')
 
                             _bt_stat = st.segmented_control(
-                                "Stat", ["Hits", "HR", "RBI", "H+R+RBI"],
+                                "Stat", ["Hits", "1B", "2B", "3B", "HR", "RBI",
+                                         "Runs", "Total Bases", "Walks",
+                                         "Strikeouts", "H+R+RBI"],
                                 default="Hits", key="bt_stat", label_visibility="collapsed",
                             )
+                            from datetime import datetime as _dtn
+                            _yr = _dtn.now().year
                             _bt_win = st.segmented_control(
-                                "Window", ["Season", "L25", "L10", "L5"],
-                                default="L10", key="bt_window", label_visibility="collapsed",
+                                "Window", [str(_yr), str(_yr - 1), "H2H", "L25", "L15", "L5"],
+                                default="L15", key="bt_window", label_visibility="collapsed",
                             )
                             # Line options follow the stat, and the key
                             # includes it so switching stats doesn't carry a
                             # stale line across (a 3.5 HR line is nonsense).
                             _BT_LINES = {
                                 "Hits": (["0.5", "1.5", "2.5"], "0.5"),
+                                "1B": (["0.5", "1.5"], "0.5"),
+                                "2B": (["0.5", "1.5"], "0.5"),
+                                "3B": (["0.5"], "0.5"),
                                 "HR": (["0.5", "1.5"], "0.5"),
                                 "RBI": (["0.5", "1.5", "2.5"], "0.5"),
+                                "Runs": (["0.5", "1.5"], "0.5"),
+                                "Total Bases": (["0.5", "1.5", "2.5", "3.5"], "1.5"),
+                                "Walks": (["0.5", "1.5"], "0.5"),
+                                "Strikeouts": (["0.5", "1.5", "2.5"], "0.5"),
                                 "H+R+RBI": (["1.5", "2.5", "3.5", "4.5"], "2.5"),
                             }
                             _bt_opts, _bt_dflt = _BT_LINES.get(_bt_stat or "Hits",
@@ -1361,10 +1372,14 @@ with content_col:
                                 key=f"bt_line_{_bt_stat or 'Hits'}",
                                 label_visibility="collapsed",
                             )
+                            # For H2H the opponent is the pitcher's team
+                            # (the team this lineup is facing tonight).
+                            _bt_opp_team = game["away"] if pitcher_choice.startswith(game["away_pitcher"]) else game["home"]
                             render_batter_trend(
                                 _bt_ids[_bt_pick], _bt_pick,
-                                _bt_stat or "Hits", _bt_win or "L10",
+                                _bt_stat or "Hits", _bt_win or "L15",
                                 line=float(_bt_line or _bt_dflt),
+                                opp_label=team_abbr(_bt_opp_team),
                             )
                             # Deep dive: career BvP vs tonight's selected
                             # pitcher, then zone map + spray chart on the

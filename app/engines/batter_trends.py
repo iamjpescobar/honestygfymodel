@@ -9,8 +9,9 @@ them — and this app does not derive what the data can't support. The
 official game log carries H, HR, RBI, and R per game, which also makes
 the H+R+RBI combo real.
 
-Stats: Hits, HR, RBI, H+R+RBI.
-Windows: Season / L25 / L10 / L5 (L10 is the default in the UI).
+Stats: Hits, 1B, 2B, 3B, HR, RBI, Runs, Total Bases, Walks, Strikeouts,
+H+R+RBI.
+Windows: 2026 / 2025 / H2H (vs tonight's opponent) / L25 / L15 / L5.
 
 Cached as JSON strings (always pickle-serializable), 30 minutes, on
 demand per batter — nothing is fetched until a batter is picked.
@@ -30,8 +31,15 @@ from engines.team_logos import logo_url_by_id
 EASTERN = ZoneInfo("America/New_York")
 _URL = "https://statsapi.mlb.com/api/v1/people/{pid}/stats"
 
-_STAT_KEY = {"Hits": "h", "HR": "hr", "RBI": "rbi", "H+R+RBI": "hrr"}
-_WIN_N = {"Season": None, "L25": 25, "L10": 10, "L5": 5}
+_STAT_KEY = {
+    "Hits": "h", "1B": "b1", "2B": "b2", "3B": "b3", "HR": "hr",
+    "RBI": "rbi", "Runs": "r", "Total Bases": "tb", "Walks": "bb",
+    "Strikeouts": "k", "H+R+RBI": "hrr",
+}
+# Count-style windows (last N games). Season/year and H2H are handled
+# separately because they change WHICH games are pulled, not just how
+# many of the loaded set to show.
+_WIN_N = {"L25": 25, "L15": 15, "L5": 5}
 
 
 @st.cache_data(ttl=1800, max_entries=32, show_spinner=False)
@@ -53,46 +61,102 @@ def _game_log_json(batter_id: int, season: int) -> str:
         stat = sp.get("stat", {}) or {}
         try:
             h = int(stat.get("hits", 0))
+            b2 = int(stat.get("doubles", 0))
+            b3 = int(stat.get("triples", 0))
             hr = int(stat.get("homeRuns", 0))
+            b1 = h - b2 - b3 - hr  # singles = hits minus extra-base hits
             rbi = int(stat.get("rbi", 0))
             r = int(stat.get("runs", 0))
             ab = int(stat.get("atBats", 0))
+            bb = int(stat.get("baseOnBalls", 0))
+            k = int(stat.get("strikeOuts", 0))
+            # Total bases: use the official field if present, else derive.
+            tb = stat.get("totalBases")
+            tb = int(tb) if tb is not None else (b1 + 2 * b2 + 3 * b3 + 4 * hr)
         except Exception:
             continue
+        if b1 < 0:  # guard against any odd box-score rounding
+            b1 = 0
         opp = (sp.get("opponent") or {})
         opp_label = opp.get("abbreviation") or opp.get("teamName") or opp.get("name") or ""
         games.append({"date": sp.get("date", ""), "opp": opp_label,
                       "opp_id": opp.get("id"),
-                      "h": h, "hr": hr, "rbi": rbi, "r": r, "ab": ab,
+                      "h": h, "b1": b1, "b2": b2, "b3": b3, "hr": hr,
+                      "rbi": rbi, "r": r, "ab": ab, "bb": bb, "k": k, "tb": tb,
                       "hrr": h + r + rbi})
     games.sort(key=lambda g: g["date"])
     return json.dumps({"games": games, "error": None})
 
 
 def render_batter_trend(batter_id, name, stat_label: str = "Hits",
-                        window_label: str = "L10", line: float = 0.5) -> None:
+                        window_label: str = "L15", line: float = 0.5,
+                        opp_id=None, opp_label: str = "") -> None:
     """Window chips (cleared/total per window vs the chosen line) +
-    labeled bar chart for the chosen window, + honest summary line."""
-    season = datetime.now(EASTERN).year
-    try:
-        payload = json.loads(_game_log_json(int(batter_id), season))
-    except Exception as e:
-        st.warning(f"Couldn't load the game log ({e}).")
-        return
-    games, err = payload.get("games") or [], payload.get("error")
-    if err:
-        st.warning(err)
-        return
+    labeled bar chart for the chosen window, + honest summary line.
+
+    Windows:
+      2026 / 2025  — that full season's game log
+      H2H          — this hitter's games vs tonight's opponent (opp_id),
+                     across the seasons loaded; a real but often small
+                     sample, so it's shown with its game count and never
+                     padded
+      L25 / L15 / L5 — the last N games of the current season
+    """
+    this_year = datetime.now(EASTERN).year
+    prev_year = this_year - 1
+
+    def _load(season):
+        try:
+            return json.loads(_game_log_json(int(batter_id), season)).get("games") or []
+        except Exception:
+            return []
+
+    # Decide which season(s) to pull for the chosen window.
+    if window_label == str(prev_year):
+        games = _load(prev_year)
+    elif window_label == "H2H":
+        # Pull both seasons so H2H isn't limited to this year's meetings.
+        games = _load(this_year) + _load(prev_year)
+        games.sort(key=lambda g: g["date"])
+    else:
+        games = _load(this_year)
+
     if not games:
-        st.caption("No official game log for this batter yet this season.")
+        st.caption("No official game log for this batter in that window yet.")
         return
 
     key = _STAT_KEY.get(stat_label, "h")
+
+    # Slice to the window.
+    if window_label == "H2H":
+        if not opp_label:
+            st.caption("No opponent set for a head-to-head view.")
+            return
+        # Match on the opponent's abbreviation/name (the game log stores
+        # both an opp_id and an abbreviation; matching on the text label
+        # avoids a separate team-ID lookup and is robust to either side).
+        _t = opp_label.strip().lower()
+        sub = [g for g in games
+               if _t and (_t == str(g.get("opp", "")).strip().lower()
+                          or (opp_id is not None and g.get("opp_id") == opp_id))]
+        if not sub:
+            st.caption(
+                f"No games on record for {name} vs "
+                f"{opp_label} in {prev_year}\u2013{this_year}."
+            )
+            return
+    elif window_label in _WIN_N:
+        sub = games[-_WIN_N[window_label]:]
+    else:
+        # a full-year window (2026 / 2025) — show every game that season
+        sub = games
+
+    # Window chips run off the SAME loaded games, using the windows that
+    # make sense for the current view (last-N chips always apply).
     all_vals = [g[key] for g in games]
-    window_hit_chips(all_vals, line, window_label,
-                     windows=("Season", "L25", "L10", "L5"))
-    n = _WIN_N.get(window_label)
-    sub = games if n is None else games[-n:]
+    window_hit_chips(all_vals, line, window_label if window_label in _WIN_N else "L15",
+                     windows=("L25", "L15", "L5"))
+
     vals = [g[key] for g in sub]
 
     # Short x labels (dates only — the opponent shows as a LOGO under
@@ -108,10 +172,11 @@ def render_batter_trend(batter_id, name, stat_label: str = "Hits",
     render_trend_bars(labels, vals, stat_label, line, logos=logos)
 
     total_games = len(vals)
-    avg = sum(vals) / total_games
-    last5 = [g[key] for g in games[-5:]]
+    avg = sum(vals) / total_games if total_games else 0.0
+    last5 = [g[key] for g in sub[-5:]]
+    _win_desc = (f"H2H vs {opp_label}" if window_label == "H2H" else window_label)
     st.caption(
-        f"{name} \u00b7 {window_label}: {total_games} games \u00b7 "
+        f"{name} \u00b7 {_win_desc}: {total_games} games \u00b7 "
         f"avg {avg:.2f} {stat_label}/game \u00b7 line {line} \u00b7 "
         f"last 5: {', '.join(str(v) for v in last5)} \u00b7 "
         f"teal bars cleared the line, red didn't \u00b7 "
