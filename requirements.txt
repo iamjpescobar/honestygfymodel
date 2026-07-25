@@ -1,10 +1,11 @@
 streamlit==1.59.2
 pandas==2.2.3
+numpy
+altair
 pybaseball
 requests
 beautifulsoup4
 streamlit-authenticator
 PyYAML
 pyarrow
-psutil
 lxml

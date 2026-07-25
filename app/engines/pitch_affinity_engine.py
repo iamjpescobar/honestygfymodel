@@ -1,4 +1,3 @@
-import numpy as np
 
 def compute_pitch_affinity_multiplier(batter_profile: dict, pitcher_arsenal: dict):
     """

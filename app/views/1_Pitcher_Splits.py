@@ -7,7 +7,6 @@ from auth import render_account_sidebar
 from engines.statcast_engine import (
     get_pitcher_id,
     get_pitcher_statcast,
-    build_pitch_arsenal
 )
 
 inject_kc_theme()

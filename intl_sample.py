@@ -8,7 +8,6 @@ going in: ESPN's public scoreboard API is open; stats.wnba.com likely
 blocks datacenter IPs like its NBA sibling. Reconnaissance only.
 """
 
-import json
 import requests
 
 UA = {

@@ -14,7 +14,6 @@ from engines.wnba_props import (
     build_props, STATS, MIN_GP, MIN_MPG, MIN_LOG,
     W_CONSISTENCY, W_FORM, W_MATCHUP, W_PACE,
 )
-from engines.wnba_logos import logo_url_by_id
 from engines.live_sync import sync_latest_button
 from engines.calibration import log_picks, grade_pending, summary
 

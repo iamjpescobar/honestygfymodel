@@ -5,7 +5,6 @@ on today's MLB slate, sorted highest projection first.
 Runs inside app.py's loader (no st.set_page_config here). The formula
 and all inputs are shown on the page — see engines/k_projection.py.
 """
-import json
 
 import pandas as pd
 import streamlit as st

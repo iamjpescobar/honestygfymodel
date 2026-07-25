@@ -33,7 +33,6 @@ Floors: 8 games played, 15 minutes per game, and 10 games of log
 history. Below any of those a player is listed unrated with the
 reason rather than ranked on noise.
 """
-import statistics
 
 MIN_GP = 8
 MIN_MPG = 15.0

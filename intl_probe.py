@@ -13,7 +13,6 @@ Safe rules:
 """
 
 from __future__ import annotations
-import sys
 import requests
 
 UA = {

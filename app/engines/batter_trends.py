@@ -20,11 +20,9 @@ import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-import pandas as pd
 import requests
 import streamlit as st
 
-from styles.kc_theme import COLOR
 from engines.trend_chart import window_hit_chips, render_trend_bars
 from engines.team_logos import logo_url_by_id
 

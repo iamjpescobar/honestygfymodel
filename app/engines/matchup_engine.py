@@ -1,4 +1,3 @@
-import numpy as np
 
 def compute_matchup_multiplier(batter_profile: dict, pitcher_profile: dict):
     """

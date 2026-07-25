@@ -5,7 +5,7 @@ from datetime import datetime
 import altair as alt
 
 from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, COLOR, footer
-from styles.table_style import style_stat_table, plain_dark_table
+from styles.table_style import style_stat_table
 from auth import render_account_sidebar
 from engines.roster import get_live_team_roster
 from engines.batter_stats import load_batting_stats, get_batter_profile

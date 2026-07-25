@@ -7,7 +7,7 @@ EASTERN = ZoneInfo("America/New_York")
 
 from styles.kc_theme import (
     inject_kc_theme, badge, card, footer, COLOR,
-    sport_switcher, pitch_color, pitch_name, edge_tag
+    pitch_color, pitch_name, edge_tag
 )
 from styles.table_style import style_stat_table, plain_dark_table
 
@@ -16,7 +16,7 @@ from engines.park_factors import get_park_factor
 from engines.headshots import get_headshot_url
 from engines.roster import get_live_team_roster, get_all_teams, get_confirmed_lineup, get_last_starting_lineup
 from engines.statcast_engine import (
-    get_pitcher_id, get_pitcher_statcast, get_pitcher_advanced_splits, get_batter_profile_windowed, get_batter_vs_pitch_types,
+    get_pitcher_statcast, get_pitcher_advanced_splits, get_batter_profile_windowed, get_batter_vs_pitch_types,
     get_first_pitch_swing
 , get_batter_iso_vs_hand
 )
