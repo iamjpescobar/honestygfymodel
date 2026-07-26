@@ -256,7 +256,12 @@ def grade_pending(max_days: int = 14) -> int:
             season = int(date_str[:4])
             all_done = True
             for pick in entry.get("picks", []):
-                if pick.get("result") is not None or not pick.get("id"):
+                if pick.get("result") is not None:
+                    continue
+                if not pick.get("id"):
+                    # no player id to look up — nothing we can ever grade
+                    # here, so don't let it hold the day open forever.
+                    pick["result"] = "dnp"
                     continue
                 try:
                     if cfg.get("sport") == "wnba":
@@ -266,28 +271,77 @@ def grade_pending(max_days: int = 14) -> int:
                 except Exception:
                     box = None
                 if box is None:
-                    # didn't play, or the log isn't available — mark it
-                    # DNP rather than counting it as a miss
+                    # No box-score line yet. This is the important case:
+                    # official logs for a completed slate can post hours
+                    # late, so a None here usually means "not ready yet",
+                    # NOT "the player didn't play". Leave the pick
+                    # UNGRADED (result stays None) and keep the day open
+                    # so the next run retries it. Previously this marked
+                    # the pick "dnp" and set the whole day graded=True,
+                    # which permanently froze it before the box scores
+                    # ever posted — the cause of days going ungraded.
+                    all_done = False
+                    continue
+                stat_key = pick.get("stat") or cfg["stat"]
+                target = pick.get("line")
+                if target is None:
+                    target = cfg["threshold"]
+                value = box.get(stat_key)
+                if value is None:
+                    # We DID get the player's line for that day, and the
+                    # graded stat simply isn't in it — that's a real DNP
+                    # for this stat, safe to finalize.
                     pick["result"] = "dnp"
+                    graded_n += 1
                 else:
-                    stat_key = pick.get("stat") or cfg["stat"]
-                    target = pick.get("line")
-                    if target is None:
-                        target = cfg["threshold"]
-                    value = box.get(stat_key)
-                    if value is None:
-                        pick["result"] = "dnp"
-                    else:
-                        # a "line" of 15.5 means the pick needed MORE
-                        # than 15.5; an integer threshold means >=
-                        cleared = (value > target if isinstance(target, float)
-                                   and target % 1 else value >= target)
-                        pick["result"] = "hit" if cleared else "miss"
-                        graded_n += 1
+                    # a "line" of 15.5 means the pick needed MORE
+                    # than 15.5; an integer threshold means >=
+                    cleared = (value > target if isinstance(target, float)
+                               and target % 1 else value >= target)
+                    pick["result"] = "hit" if cleared else "miss"
+                    graded_n += 1
             entry["graded"] = all_done
     if graded_n:
         _save(data)
     return graded_n
+
+
+def reopen_recent_days(days_back: int = 5) -> int:
+    """One-time recovery for days frozen by the old grading bug, which
+    marked a day graded=True (and its picks "dnp") before the official
+    box scores had posted, so they were never revisited.
+
+    Reopens every day within the last `days_back` days (but strictly
+    before today) by clearing its graded flag and resetting any pick
+    that was left "dnp" back to ungraded, so the next grade_pending()
+    re-checks them against box scores that have since posted. Real
+    hit/miss results are left untouched — only stuck DNPs are cleared,
+    so a genuine miss is never turned into a win. Returns the number of
+    picks reopened. Call grade_pending() right after.
+    """
+    data = _load()
+    today = datetime.now(EASTERN).strftime("%Y-%m-%d")
+    cutoff = (datetime.now(EASTERN) - timedelta(days=days_back)).strftime("%Y-%m-%d")
+    reopened = 0
+    for board, days in data.items():
+        if board not in BOARDS:
+            continue
+        for date_str, entry in days.items():
+            if date_str >= today or date_str < cutoff:
+                continue
+            touched = False
+            for pick in entry.get("picks", []):
+                # Only reset picks that have an id to look up and were
+                # left as "dnp" — those are the ones the bug stranded.
+                if pick.get("id") and pick.get("result") == "dnp":
+                    pick["result"] = None
+                    reopened += 1
+                    touched = True
+            if touched or entry.get("graded"):
+                entry["graded"] = False
+    if reopened:
+        _save(data)
+    return reopened
 
 
 def summary():

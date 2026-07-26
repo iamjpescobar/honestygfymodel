@@ -671,7 +671,16 @@ def _compute_pitch_type_breakdown(df: pd.DataFrame) -> dict:
     return breakdown
 
 
+@st.cache_data(ttl=3600, max_entries=200, show_spinner=False)
 def get_pitcher_statcast(pitcher_id):
+    """Full pitcher metric bundle (batted-ball, whiff/swstr/zone-contact,
+    HR/BBE, arsenal + per-pitch breakdown). CACHED: called on the Game
+    Card and several pitcher views, and it re-derives every metric from
+    the (already-cached) dataframe. Without this cache that recompute
+    ran on every Streamlit rerun — every click, filter, and toggle on
+    the page. The return is a plain pickle-safe dict keyed on pitcher_id
+    and deterministic, so caching is free correctness; max_entries
+    covers a full slate's starters and bullpens."""
     df, error = _get_pitcher_df(pitcher_id)
 
     metrics = _compute_batted_ball_metrics(df)

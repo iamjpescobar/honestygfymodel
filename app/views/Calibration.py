@@ -25,7 +25,7 @@ import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
 from auth import require_admin, render_account_sidebar
-from engines.calibration import summary, grade_pending, BOARDS, _load, _LOG_PATH
+from engines.calibration import summary, grade_pending, reopen_recent_days, BOARDS, _load, _LOG_PATH
 
 inject_kc_theme()
 render_account_sidebar()
@@ -56,6 +56,22 @@ if st.button("\u27f3 Grade pending picks now", key="cal_grade"):
         n = grade_pending()
     st.success(f"Graded {n} pick(s).")
     st.rerun()
+
+with st.expander("Recover ungraded days"):
+    st.caption(
+        "If recent days show as graded but stuck on DNP (an older bug froze "
+        "days before box scores posted), this reopens the last few days and "
+        "re-checks them against the official box scores, which have since "
+        "posted. Only stuck DNPs are cleared \u2014 real hits and misses are "
+        "left as they are."
+    )
+    _rd = st.slider("Days back to reopen", 1, 10, 5, key="cal_reopen_days")
+    if st.button("Reopen & re-grade", key="cal_reopen"):
+        with st.spinner("Reopening recent days and re-grading\u2026"):
+            _r = reopen_recent_days(_rd)
+            _g = grade_pending()
+        st.success(f"Reopened {_r} pick(s); newly graded {_g}.")
+        st.rerun()
 
 data = _load()
 sums = summary()
