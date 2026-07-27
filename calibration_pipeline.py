@@ -174,8 +174,29 @@ def grade(record):
                         else _mlb_line(pid, date_str))
                 time.sleep(0.12)   # be polite to the public APIs
                 if line is None:
-                    # didn't play, or no log available — not a miss
-                    pick["result"] = "dnp"
+                    # NO BOX-SCORE LINE YET — leave this pick UNGRADED.
+                    #
+                    # This used to set result="dnp", which combined with
+                    # the entry["graded"] = all(result is not None) line
+                    # below to freeze the whole day permanently: the
+                    # `if pick.get("result") in ("hit","miss","dnp")`
+                    # skip at the top of this loop then meant no later
+                    # run ever revisited it. A single slow-posting game
+                    # log — or one timed-out request in this sequential
+                    # loop — buried the entire day's picks as DNPs that
+                    # could never be recovered. That is the cause of the
+                    # ungraded days.
+                    #
+                    # app/engines/calibration.py was already fixed for
+                    # exactly this; the pipeline (which is the SOURCE OF
+                    # TRUTH for published history) never got the fix, so
+                    # it kept re-poisoning the record the app reads back.
+                    #
+                    # None here means "not ready yet" far more often than
+                    # it means "didn't play", so we leave it open and let
+                    # the next run retry. Days genuinely never played
+                    # fall off via MAX_GRADE_DAYS instead of being
+                    # mislabeled.
                     continue
                 stat_key = pick.get("stat") or cfg["stat"]
                 target = pick.get("line")
@@ -192,6 +213,41 @@ def grade(record):
             entry["graded"] = all(
                 p.get("result") is not None for p in entry.get("picks", []))
     return graded
+
+
+def reopen_stuck(record, days_back: int = 10) -> int:
+    """Recover days that the freeze bug above already poisoned.
+
+    Any pick inside the recent window that was left "dnp" while having a
+    real player id is suspect: the bug wrote "dnp" whenever a box score
+    hadn't posted, so a stuck "dnp" is far more likely to be an unposted
+    log than a genuine scratch. Reset those to ungraded and clear the
+    day's graded flag so grade() re-checks them against logs that have
+    since posted.
+
+    Deliberately conservative: real "hit"/"miss" results are never
+    touched, so a genuine miss can't be laundered into a win. Runs every
+    time — it's idempotent, and once a day grades cleanly there's
+    nothing left for it to reopen.
+    """
+    today = datetime.now(EASTERN).strftime("%Y-%m-%d")
+    cutoff = (datetime.now(EASTERN) - timedelta(days=days_back)).strftime("%Y-%m-%d")
+    reopened = 0
+    for board, days in record.items():
+        if board not in BOARDS:
+            continue
+        for date_str, entry in days.items():
+            if date_str >= today or date_str < cutoff:
+                continue
+            touched = False
+            for pick in entry.get("picks", []):
+                if pick.get("id") and pick.get("result") == "dnp":
+                    pick["result"] = None
+                    reopened += 1
+                    touched = True
+            if touched or entry.get("graded"):
+                entry["graded"] = False
+    return reopened
 
 
 def prune(record):
@@ -229,6 +285,11 @@ def main():
     if not record:
         print("Calibration: no picks recorded yet — writing an empty record "
               "so the app has something valid to read.")
+    reopened = reopen_stuck(record)
+    if reopened:
+        print(f"Calibration: reopened {reopened} pick(s) stranded as DNP by the "
+              f"freeze bug — re-grading them against box scores that have "
+              f"since posted.")
     graded = grade(record)
     record = prune(record)
 

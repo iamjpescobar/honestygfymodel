@@ -57,7 +57,19 @@ EASTERN = ZoneInfo("America/New_York")
 # pipeline run, and the durable record always comes back from the
 # archive.
 _DATA_DIR = Path(__file__).resolve().parents[1] / "data"
-_LOG_PATH = _DATA_DIR / "calibration.json"
+# The app's OWN pick log. This MUST NOT be the same file as the
+# published record below.
+#
+# It used to be: _LOG_PATH and _published_path() both resolved to
+# app/data/calibration.json, the identical file. Two consequences,
+# both bad. (1) _load() read the same file twice and its "merge
+# published history with today's local picks" logic was a no-op.
+# (2) fetch_data.py extracts the nightly archive straight over
+# app/data/, so every deploy overwrote the app's logged picks with the
+# archive copy — and the deploy hook fires up to three times a day.
+# Picks logged during a slate were destroyed before anything could
+# grade them.
+_LOG_PATH = _DATA_DIR / "calibration_local.json"
 _URL = "https://statsapi.mlb.com/api/v1/people/{pid}/stats"
 
 BOARDS = {
@@ -91,10 +103,13 @@ def _published_path():
     precompute.py packs build_data/data as "data", and fetch_data.py
     extracts that into app/, so the pipeline's
     build_data/data/calibration.json arrives here as
-    app/data/calibration.json — the same file the app writes its own
-    picks to. _load() merges them with graded entries winning, which
-    is exactly the behaviour we want: the published record restores
-    history, and today's local picks sit alongside it."""
+    app/data/calibration.json. The app treats this as READ-ONLY and
+    keeps its own picks in calibration_local.json alongside it — see
+    the _LOG_PATH note above for why sharing one file broke both the
+    merge and the picks themselves. _load() merges the two, with the
+    more-graded entry winning per day: published history is restored,
+    and today's local picks sit alongside it without either clobbering
+    the other."""
     return _DATA_DIR / "calibration.json"
 
 
