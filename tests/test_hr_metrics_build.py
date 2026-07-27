@@ -44,12 +44,63 @@ def bat(bid, n, ev, la, hc_x, barrel, hrs):
         "events": ["home_run"]*hrs + ["field_out"]*(n-hrs),
     })
 
+def non_bbe(bid, n):
+    """Strikeouts, walks, and called pitches — the majority of real rows.
+
+    Every batted-ball column is NaN here. This is what broke the nightly
+    run: launch_speed_angle is NaN on all of these, and with a NULLABLE
+    dtype the comparison `== 6` yields pd.NA rather than False. NA
+    survives `&`, so the integer cast blew up with "cannot convert NA to
+    integer". A synthetic frame of clean batted balls never reproduces
+    it — this block is the whole point of the test.
+    """
+    return pd.DataFrame({
+        "batter": bid, "type": ["S"]*n, "bb_type": [None]*n, "stand": "R",
+        "launch_speed": np.nan, "launch_angle": np.nan,
+        "launch_speed_angle": np.nan,
+        "hc_x": np.nan, "hc_y": np.nan, "bat_speed": np.nan,
+        "events": [None]*(n-1) + ["strikeout"],
+    })
+
+def untracked(bid, n):
+    """Batted balls with NO tracking data — the exact production case.
+
+    This is the row that broke the nightly run, and it's subtle: type=="X"
+    (it IS a batted ball) while launch_speed_angle is missing. Bunts,
+    weak contact, and tracking dropouts all produce it.
+
+    Why it matters: with a nullable dtype, `launch_speed_angle == 6`
+    gives pd.NA here, and `is_bbe & NA` is `True & NA` = NA. The NA
+    SURVIVES the `&` and blows up the integer cast. On a non-batted-ball
+    row the same NA is harmless, because `False & NA` is False — which
+    is why a frame of clean batted balls plus clean strikeouts passes
+    even against the broken code. It has to be a batted ball WITH
+    missing tracking to reproduce.
+    """
+    return pd.DataFrame({
+        "batter": bid, "type": ["X"]*n, "bb_type": ["ground_ball"]*n,
+        "stand": "R", "launch_speed": np.nan, "launch_angle": np.nan,
+        "launch_speed_angle": np.nan, "hc_x": np.nan, "hc_y": np.nan,
+        "bat_speed": np.nan, "events": ["field_out"]*n,
+    })
+
 SLUG, FLAT = 101, 102
 # SLUG: barrels, launches into the 20-40 window, pulls (hc_x < 125.42).
 # FLAT: same exit velocity, but 12 degrees — outside the HR window.
 league = pd.concat([bat(SLUG, 40, 103.0, 28.0, 90.0, True, 10),
-                    bat(FLAT, 40, 103.0, 12.0, 160.0, False, 0)],
+                    non_bbe(SLUG, 25), untracked(SLUG, 5),
+                    bat(FLAT, 40, 103.0, 12.0, 160.0, False, 0),
+                    non_bbe(FLAT, 25), untracked(FLAT, 5)],
                    ignore_index=True)
+
+# Force the NULLABLE dtypes real Statcast data arrives with. Plain
+# float64 silently turns NA into NaN and hides the bug; Int8/Float64
+# propagate pd.NA through the mask exactly like production does.
+league["launch_speed_angle"] = league["launch_speed_angle"].astype("Int8")
+league["launch_speed"] = league["launch_speed"].astype("Float64")
+league["launch_angle"] = league["launch_angle"].astype("Float64")
+league["hc_x"] = league["hc_x"].astype("Float64")
+league["hc_y"] = league["hc_y"].astype("Float64")
 
 assert precompute.build_xhr_table(league)
 assert precompute.build_hr_metrics(league), "build_hr_metrics returned False"
@@ -58,17 +109,22 @@ print("PASS: build_hr_metrics runs (this is the NameError guard)")
 out = pd.read_parquet(tmp / "hr_metrics.parquet").set_index("batter")
 assert set(out.index) == {SLUG, FLAT}, out.index.tolist()
 
-assert out.at[SLUG, "hr_window_pct"] == 100.0, out.at[SLUG, "hr_window_pct"]
+# 40 of 45 batted balls in the window (the 5 untracked ones aren't).
+assert abs(out.at[SLUG, "hr_window_pct"] - 40/45*100) < 0.01, out.at[SLUG, "hr_window_pct"]
 assert out.at[FLAT, "hr_window_pct"] == 0.0, out.at[FLAT, "hr_window_pct"]
 print("PASS: 28-deg flies count in the HR window, 12-deg liners do not")
 
-assert out.at[SLUG, "pull_air_pct"] == 100.0, out.at[SLUG, "pull_air_pct"]
+assert abs(out.at[SLUG, "pull_air_pct"] - 40/45*100) < 0.01, out.at[SLUG, "pull_air_pct"]
 assert out.at[FLAT, "pull_air_pct"] == 0.0, out.at[FLAT, "pull_air_pct"]
 print("PASS: spray angle resolves pull vs oppo the same way the engine does")
 
-assert out.at[SLUG, "brl_per_pa"] == 100.0
+# 40 barrels over 41 plate appearances (40 in play + 1 strikeout).
+# The strikeout row MUST land in the denominator — that's the whole
+# reason Brl/PA is used instead of Brl%.
+assert out.at[SLUG, "pa"] == 46, out.at[SLUG, "pa"]   # 40 in play + 1 K + 5 untracked
+assert abs(out.at[SLUG, "brl_per_pa"] - 40/46*100) < 0.01, out.at[SLUG, "brl_per_pa"]
 assert out.at[FLAT, "brl_per_pa"] == 0.0
-print("PASS: Brl/PA computed off plate appearances")
+print(f"PASS: Brl/PA {out.at[SLUG,'brl_per_pa']:.1f}% — strikeouts in the denominator")
 
 for col in ("brl_per_pa_pct", "hr_window_pct_pct", "pull_air_pct_pct",
             "ev90_pct", "hr_intent_pct", "xhr_gap_pct"):

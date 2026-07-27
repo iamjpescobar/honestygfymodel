@@ -149,6 +149,23 @@ def save_player_files(season_df: pd.DataFrame) -> dict:
     return counts
 
 
+def _mask(series) -> pd.Series:
+    """Force a boolean mask to plain numpy bool with NA treated as False.
+
+    Statcast columns arrive with nullable dtypes (Int8/Float64) and real
+    missing values — launch_speed_angle is NaN on every row that isn't a
+    batted ball, which is most of them. A comparison against a nullable
+    column yields a NULLABLE boolean carrying pd.NA, and pd.NA survives
+    `&`, so the result can't be cast: "ValueError: cannot convert NA to
+    integer". That killed the nightly run at the barrel mask.
+
+    NA here always means "this row is not that kind of event", which is
+    exactly False, so collapsing it is correct rather than merely
+    convenient.
+    """
+    return pd.Series(series, copy=False).fillna(False).astype(bool)
+
+
 # ------------------------------------------------------------
 # xHR LOOKUP TABLE
 # ------------------------------------------------------------
@@ -189,10 +206,10 @@ def build_xhr_table(season_df: pd.DataFrame) -> bool:
         print("  xHR table skipped — missing launch_speed/launch_angle/events.")
         return False
 
-    bbe = season_df[season_df["type"] == "X"].copy()
+    bbe = season_df[_mask(season_df["type"] == "X")].copy()
     ev = pd.to_numeric(bbe["launch_speed"], errors="coerce")
     la = pd.to_numeric(bbe["launch_angle"], errors="coerce")
-    ok = (ev.between(XHR_MIN_EV, XHR_MAX_EV) & la.between(XHR_MIN_LA, XHR_MAX_LA))
+    ok = _mask(ev.between(XHR_MIN_EV, XHR_MAX_EV) & la.between(XHR_MIN_LA, XHR_MAX_LA))
     bbe, ev, la = bbe[ok], ev[ok], la[ok]
     if bbe.empty:
         print("  xHR table skipped — no batted balls in the tracked region.")
@@ -201,7 +218,7 @@ def build_xhr_table(season_df: pd.DataFrame) -> bool:
     grid = pd.DataFrame({
         "ev_bin": (ev // EV_BIN * EV_BIN).astype("float32"),
         "la_bin": (la // LA_BIN * LA_BIN).astype("float32"),
-        "is_hr": (bbe["events"].astype(str) == "home_run").astype("int8"),
+        "is_hr": _mask(bbe["events"].astype(str) == "home_run").astype("int8"),
     })
     agg = grid.groupby(["ev_bin", "la_bin"], observed=True)["is_hr"].agg(["sum", "count"])
     agg = agg[agg["count"] >= XHR_MIN_BUCKET_N]
@@ -248,23 +265,27 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
     df = season_df.copy()
     ev = pd.to_numeric(df["launch_speed"], errors="coerce")
     la = pd.to_numeric(df["launch_angle"], errors="coerce")
-    is_bbe = df["type"] == "X"
-    is_pa = df["events"].notna()
+    # Every mask below goes through _mask(): these columns are nullable
+    # and mostly missing, and an NA leaking into a mask breaks the
+    # integer cast further down.
+    is_bbe = _mask(df["type"] == "X")
+    is_pa = _mask(df["events"].notna())
 
-    # Barrel: Statcast's own launch_speed_angle == 6.
-    is_barrel = pd.to_numeric(df.get("launch_speed_angle"), errors="coerce") == 6
+    # Barrel: Statcast's own launch_speed_angle == 6. NaN on every
+    # non-batted-ball row, which is the majority of the file.
+    is_barrel = _mask(pd.to_numeric(df.get("launch_speed_angle"), errors="coerce") == 6)
     # HR window: launch angle 20-40. See _HR_LA_MIN in statcast_engine —
     # NOT the 8-32 sweet-spot band, which starts at a line drive.
-    in_window = is_bbe & la.between(20.0, 40.0)
+    in_window = _mask(is_bbe & la.between(20.0, 40.0))
     # Pulled fly ball, using the identical spray-angle convention as
     # statcast_engine._spray_angle so the two never disagree.
     if {"hc_x", "hc_y", "stand"}.issubset(df.columns):
         ang = np.degrees(np.arctan2(
             pd.to_numeric(df["hc_x"], errors="coerce") - 125.42,
             198.27 - pd.to_numeric(df["hc_y"], errors="coerce")))
-        pulled = (((df["stand"] == "R") & (ang < 0)) |
-                  ((df["stand"] == "L") & (ang > 0)))
-        is_pull_air = is_bbe & (df.get("bb_type") == "fly_ball") & pulled
+        pulled = _mask((_mask(df["stand"] == "R") & _mask(ang < 0)) |
+                       (_mask(df["stand"] == "L") & _mask(ang > 0)))
+        is_pull_air = _mask(is_bbe & _mask(df.get("bb_type") == "fly_ball") & pulled)
     else:
         is_pull_air = pd.Series(False, index=df.index)
 
@@ -275,7 +296,7 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
         "barrel": (is_bbe & is_barrel).astype("int32"),
         "window": in_window.astype("int32"),
         "pullair": is_pull_air.astype("int32"),
-        "hr": (df["events"].astype(str) == "home_run").astype("int32"),
+        "hr": _mask(df["events"].astype(str) == "home_run").astype("int32"),
         "ev": ev.where(is_bbe),
         "bat_speed": pd.to_numeric(df.get("bat_speed"), errors="coerce"),
     })
