@@ -53,7 +53,7 @@ from engines.xbh_engine import (
     xbh_skill, pitcher_xbh_adj, park_xbh_adj, wind_xbh_adj,
 )
 from engines.roster import get_confirmed_lineup, get_last_starting_lineup
-from engines.savant_leaderboard import load_percentile_ranks
+from engines.savant_leaderboard import load_percentile_ranks, get_hr_metrics
 from engines.top_plays import hr_score, hit_score, k_score
 from engines.statcast_engine import get_pitcher_advanced_splits
 
@@ -147,6 +147,9 @@ def get_mlb_player_of_the_day(window: str = "season"):
         return None, [], "No MLB games on today's schedule."
 
     savant_df, savant_error = load_percentile_ranks()
+    # Loaded once for the whole board, same as the Savant leaderboard.
+    # None until the nightly table exists; hr_score degrades cleanly.
+    _hr_metrics_df = get_hr_metrics()
     if savant_df is None or savant_df.empty:
         return None, [], f"Baseball Savant percentile data isn't reachable right now ({savant_error})."
 
@@ -186,7 +189,7 @@ def get_mlb_player_of_the_day(window: str = "season"):
                 pid = b.get("id")
                 if not pid:
                     continue
-                hr = hr_score(pid, savant_df)
+                hr = hr_score(pid, savant_df, hr_df=_hr_metrics_df)
                 hit = hit_score(pid, savant_df)
                 if hr is None:
                     continue  # not enough real Savant sample yet — never crown a guess

@@ -36,6 +36,7 @@ score. See engines/top_plays.k_score.
 import streamlit as st
 import pandas as pd
 from datetime import date
+from pathlib import Path
 from pybaseball import statcast_batter_percentile_ranks
 
 
@@ -77,5 +78,46 @@ def get_percentile(df: pd.DataFrame, player_id, column: str):
     if isinstance(val, pd.Series):  # duplicate index guard, take first
         val = val.iloc[0]
     if pd.isna(val):
+        return None
+    return float(val)
+
+
+# ------------------------------------------------------------
+# LEAGUE-WIDE HR METRICS LOOKUP
+# ------------------------------------------------------------
+# Reads the table precompute.build_hr_metrics ships nightly. Same access
+# shape as the Savant percentile leaderboard above — one cached load,
+# then O(1) lookups — so scoring a full slate costs no per-player pulls.
+#
+# Every *_pct column is already a 0-100 league percentile, on the same
+# scale as the Savant percentiles, so callers can blend them directly.
+#
+# Returns None (never 0) when the table is absent or the batter didn't
+# clear the sample floor. The table only appears after a nightly run
+# that includes it, so hr_score MUST keep working without it.
+_HR_METRICS_PATH = Path(__file__).resolve().parents[1] / "data" / "hr_metrics.parquet"
+
+
+@st.cache_data(ttl=21600, max_entries=1, show_spinner=False)
+def get_hr_metrics():
+    """DataFrame indexed by batter id, or None when unavailable."""
+    if not _HR_METRICS_PATH.exists():
+        return None
+    try:
+        df = pd.read_parquet(_HR_METRICS_PATH)
+        return df.set_index("batter")
+    except Exception:
+        return None
+
+
+def get_hr_metric(hr_df, player_id, column):
+    """One metric for one batter, or None if we can't measure him."""
+    if hr_df is None or player_id is None or column not in hr_df.columns:
+        return None
+    try:
+        val = hr_df.at[int(player_id), column]
+    except (KeyError, ValueError, TypeError):
+        return None
+    if val is None or (isinstance(val, float) and pd.isna(val)):
         return None
     return float(val)

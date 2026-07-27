@@ -217,6 +217,125 @@ def build_xhr_table(season_df: pd.DataFrame) -> bool:
     return True
 
 
+# ------------------------------------------------------------
+# LEAGUE-WIDE HR METRICS
+# ------------------------------------------------------------
+# Computes the HR metric layer for EVERY batter in one vectorised pass
+# and ships it as a lookup table, exactly like the Savant percentile
+# leaderboard the app already uses.
+#
+# Why here and not in the app: _compute_batted_ball_metrics works on
+# ONE player's dataframe. Calling it per batter to rank a slate would
+# mean hundreds of per-player Statcast pulls on every page load. The
+# nightly bulk pull already holds every batted ball in the league, so
+# doing it once here costs a single groupby and the app gets an O(1)
+# dictionary lookup instead.
+#
+# Everything is converted to a 0-100 LEAGUE PERCENTILE before shipping,
+# so it lands on the same scale as the Savant percentiles hr_score
+# already blends, and no downstream weight has to know the raw units.
+HRM_MIN_PA = 50          # below this a rate is noise, not a signal
+HRM_MIN_BBE = 30
+
+
+def build_hr_metrics(season_df: pd.DataFrame) -> bool:
+    need = {"batter", "launch_speed", "launch_angle", "events", "type"}
+    if not need.issubset(season_df.columns):
+        print("  HR metrics skipped — missing required columns.")
+        return False
+
+    df = season_df.copy()
+    ev = pd.to_numeric(df["launch_speed"], errors="coerce")
+    la = pd.to_numeric(df["launch_angle"], errors="coerce")
+    is_bbe = df["type"] == "X"
+    is_pa = df["events"].notna()
+
+    # Barrel: Statcast's own launch_speed_angle == 6.
+    is_barrel = pd.to_numeric(df.get("launch_speed_angle"), errors="coerce") == 6
+    # HR window: launch angle 20-40. See _HR_LA_MIN in statcast_engine —
+    # NOT the 8-32 sweet-spot band, which starts at a line drive.
+    in_window = is_bbe & la.between(20.0, 40.0)
+    # Pulled fly ball, using the identical spray-angle convention as
+    # statcast_engine._spray_angle so the two never disagree.
+    if {"hc_x", "hc_y", "stand"}.issubset(df.columns):
+        ang = np.degrees(np.arctan2(
+            pd.to_numeric(df["hc_x"], errors="coerce") - 125.42,
+            198.27 - pd.to_numeric(df["hc_y"], errors="coerce")))
+        pulled = (((df["stand"] == "R") & (ang < 0)) |
+                  ((df["stand"] == "L") & (ang > 0)))
+        is_pull_air = is_bbe & (df.get("bb_type") == "fly_ball") & pulled
+    else:
+        is_pull_air = pd.Series(False, index=df.index)
+
+    work = pd.DataFrame({
+        "batter": df["batter"],
+        "pa": is_pa.astype("int32"),
+        "bbe": is_bbe.astype("int32"),
+        "barrel": (is_bbe & is_barrel).astype("int32"),
+        "window": in_window.astype("int32"),
+        "pullair": is_pull_air.astype("int32"),
+        "hr": (df["events"].astype(str) == "home_run").astype("int32"),
+        "ev": ev.where(is_bbe),
+        "bat_speed": pd.to_numeric(df.get("bat_speed"), errors="coerce"),
+    })
+    g = work.groupby("batter", observed=True)
+    out = g[["pa", "bbe", "barrel", "window", "pullair", "hr"]].sum()
+    out["ev90"] = g["ev"].quantile(0.90)
+    out["max_ev"] = g["ev"].max()
+    out["bat_speed"] = g["bat_speed"].mean()
+    out = out[(out["pa"] >= HRM_MIN_PA) & (out["bbe"] >= HRM_MIN_BBE)]
+    if out.empty:
+        print("  HR metrics skipped — no batter cleared the sample floor.")
+        return False
+
+    out["brl_per_pa"] = out["barrel"] / out["pa"] * 100
+    out["hr_window_pct"] = out["window"] / out["bbe"] * 100
+    out["pull_air_pct"] = out["pullair"] / out["bbe"] * 100
+
+    # HR Intent — same three process inputs and the same league anchors
+    # as statcast_engine, averaged over whatever is measurable.
+    intent = [
+        (out["bat_speed"] / 71.0 * 50.0).clip(upper=100),
+        (out["hr_window_pct"] / 30.0 * 50.0).clip(upper=100),
+        (out["pull_air_pct"] / 18.0 * 50.0).clip(upper=100),
+    ]
+    stacked = pd.concat(intent, axis=1)
+    out["hr_intent"] = stacked.mean(axis=1, skipna=True)
+
+    # xHR from the same empirical grid, so the app and the build agree.
+    xhr_path = DATA_DIR / "xhr_table.parquet"
+    if xhr_path.exists():
+        tbl = pd.read_parquet(xhr_path)
+        key = pd.DataFrame({
+            "batter": df["batter"],
+            "ev_bin": (ev // 2.0 * 2.0),
+            "la_bin": (la // 2.0 * 2.0),
+        })[is_bbe.values]
+        merged = key.merge(tbl, on=["ev_bin", "la_bin"], how="left")
+        merged["hr_prob"] = merged["hr_prob"].fillna(0.0)
+        out["xhr"] = merged.groupby("batter", observed=True)["hr_prob"].sum()
+        out["xhr"] = out["xhr"].fillna(0.0)
+        # THE regression signal: trajectories that deserved to leave and
+        # didn't. Positive = owed home runs.
+        out["xhr_gap"] = out["xhr"] - out["hr"]
+    else:
+        out["xhr"] = np.nan
+        out["xhr_gap"] = np.nan
+
+    # Rank to 0-100 league percentiles, matching the Savant scale.
+    for col in ("brl_per_pa", "hr_window_pct", "pull_air_pct",
+                "ev90", "hr_intent", "xhr_gap"):
+        out[col + "_pct"] = out[col].rank(pct=True) * 100.0
+
+    out = out.reset_index()
+    out["batter"] = out["batter"].astype("int64")
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    out.to_parquet(DATA_DIR / "hr_metrics.parquet", index=False)
+    print(f"  HR metrics: {len(out):,} qualified batters "
+          f"(>= {HRM_MIN_PA} PA, {HRM_MIN_BBE} BBE)")
+    return True
+
+
 def fetch_fangraphs() -> bool:
     """Fetches the real FanGraphs batting leaderboard (same call the app
     makes) from GitHub's servers — which FanGraphs does not block, unlike
@@ -248,6 +367,9 @@ def main():
     print("Building xHR probability table...")
     xhr_ok = build_xhr_table(season_df)
 
+    print("Building league-wide HR metrics...")
+    hrm_ok = build_hr_metrics(season_df)
+
     print("Fetching FanGraphs leaderboard...")
     fangraphs_ok = fetch_fangraphs()
 
@@ -261,6 +383,7 @@ def main():
         "source": "Baseball Savant via pybaseball bulk statcast()",
         "fangraphs_included": fangraphs_ok,
         "xhr_table_included": xhr_ok,
+        "hr_metrics_included": hrm_ok,
     }
     (DATA_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2))
     print("Manifest:", json.dumps(manifest, indent=2))
