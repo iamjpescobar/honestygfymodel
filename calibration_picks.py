@@ -35,17 +35,18 @@ too early — no lineup exists then. So this runs separately, several
 times across the afternoon and evening, and is idempotent: the first run
 that finds a real board records it, later runs leave it alone.
 
-WHAT IT DOES NOT DO
--------------------
-hr_edge is NOT logged here. Those picks are built inside GameCard.py
-from ONE selected game (gc_selected_game_idx) against one opposing team,
-so the existing hr_edge record is "the top 5 bats from whichever game
-card was last open" rather than the top 5 of the slate. Reproducing that
-headlessly would mean picking a game arbitrarily and recording it as if
-it were the board. Logging nothing is more honest than logging something
-that measures a different question than it claims to. Fixing it means
-lifting the ranking out of the view into an engine, which is a separate
-change.
+BOARDS LOGGED
+-------------
+daily13, potd, and hr_edge.
+
+hr_edge was previously skipped: its picks were built inside
+GameCard.py from ONE selected game against one opposing team, so the
+record was "the top 5 bats from whichever game card was last open"
+rather than the top 5 of the slate. engines/hr_edge_board.py now
+computes it across every game, so it can be logged honestly. It is
+restricted to CONFIRMED lineups — a pick made off a projected lineup
+isn't the pick the site would have shown, and grading it would
+measure a claim the model never made.
 """
 import json
 import os
@@ -107,7 +108,24 @@ def _rows_potd():
              "team": pick.get("team")}]
 
 
-BUILDERS = {"daily13": _rows_daily13, "potd": _rows_potd}
+def _rows_hr_edge():
+    """Slate's top 5 by HR Edge, or [] if no confirmed lineups yet.
+
+    Loggable now because engines/hr_edge_board.py computes the board
+    across every game instead of inside a single game card.
+
+    confirmed_only=True on purpose. A pick built off a projected lineup
+    is not the pick the site would have shown, and grading it would
+    measure a claim the model never made.
+    """
+    from engines.hr_edge_board import top_hr_edge
+    rows, _meta = top_hr_edge(n=5, confirmed_only=True)
+    return [{"id": r.get("id"), "name": r.get("name"), "team": r.get("team")}
+            for r in rows if r.get("id")]
+
+
+BUILDERS = {"daily13": _rows_daily13, "potd": _rows_potd,
+            "hr_edge": _rows_hr_edge}
 
 
 def main() -> int:
