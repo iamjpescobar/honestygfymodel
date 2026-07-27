@@ -43,6 +43,9 @@ ENGINE_COLS = [
     # platoon split stays dead on the precomputed path even after
     # _KEEP_COLS is fixed.
     "pitch_type", "stand", "p_throws",
+    # Park attribution for the HR park-factor build. Must match
+    # _KEEP_COLS or tests/test_columns.py fails.
+    "home_team",
     "bb_type", "launch_speed", "launch_angle", "launch_speed_angle",
     "hc_x", "hc_y",
     "bat_speed", "release_speed",
@@ -358,6 +361,80 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
     return True
 
 
+# ------------------------------------------------------------
+# HR PARK FACTORS, BY BATTER HANDEDNESS
+# ------------------------------------------------------------
+# Measured from this season's own batted balls, not imported.
+#
+# WHY NOT engines/park_factors.py: that table is the OVERALL, wOBA-based
+# park factor — "how much offense in general" — and its own docstring
+# says so. Home runs don't follow overall offense, and the two hands
+# don't follow each other.
+#
+# Fenway is the clearest case. It rates ~102 for offense, which reads
+# mildly friendly. But the Green Monster is 310 feet away and 37 feet
+# TALL, so for a right-handed pull hitter it converts home runs into
+# doubles — great for offense, actively bad for homers — while right
+# field is deep. Yankee Stadium is the mirror image: 314 to the
+# right-field pole hands left-handed pull power a boost righties never
+# see. One number per park cannot express either.
+#
+# Method: HR per batted ball, per (park, batter hand), indexed against
+# the league rate for that hand. 100 = neutral, 120 = 20% more home runs
+# than average for that hand. Indexing WITHIN hand matters — lefties and
+# righties don't homer at the same base rate, and comparing across them
+# would smuggle that difference in as a park effect.
+#
+# This is a raw venue rate, not a park factor in the strict sabermetric
+# sense (no home/road split to control for which hitters play there
+# most). Coors will read high partly because Rockies hitters bat there
+# and are built for it. Treated as a bounded adjustment rather than a
+# multiplier, that bias is acceptable; it would not be if this were
+# multiplied into a projection.
+PARK_MIN_BBE = 300        # per park-hand cell; below this it's noise
+
+
+def build_park_hr_factors(season_df: pd.DataFrame) -> bool:
+    need = {"home_team", "stand", "events", "type"}
+    if not need.issubset(season_df.columns):
+        print("  Park HR factors skipped — missing home_team/stand.")
+        return False
+
+    bbe = season_df[_mask(season_df["type"] == "X")]
+    if bbe.empty:
+        print("  Park HR factors skipped — no batted balls.")
+        return False
+
+    work = pd.DataFrame({
+        "park": bbe["home_team"].astype(str),
+        "hand": bbe["stand"].astype(str),
+        "hr": _mask(bbe["events"].astype(str) == "home_run").astype("int32"),
+    })
+    work = work[work["hand"].isin(["R", "L"])]
+
+    g = work.groupby(["park", "hand"], observed=True)["hr"].agg(["sum", "count"])
+    g = g[g["count"] >= PARK_MIN_BBE]
+    if g.empty:
+        print("  Park HR factors skipped — no park-hand cell cleared the floor.")
+        return False
+    g["hr_rate"] = g["sum"] / g["count"]
+
+    # League baseline PER HAND, so the index isolates the park.
+    league = work.groupby("hand", observed=True)["hr"].mean()
+    g = g.reset_index()
+    g["league_rate"] = g["hand"].map(league)
+    g["hr_index"] = (g["hr_rate"] / g["league_rate"] * 100).round(1)
+
+    out = g[["park", "hand", "hr_index", "count"]]
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    out.to_parquet(DATA_DIR / "park_hr_factors.parquet", index=False)
+    spread = out.groupby("park")["hr_index"].apply(lambda x: x.max() - x.min())
+    widest = spread.idxmax() if len(spread) else None
+    print(f"  Park HR factors: {len(out)} park-hand cells"
+          + (f"; widest L/R split at {widest} ({spread.max():.0f} pts)" if widest else ""))
+    return True
+
+
 def fetch_fangraphs() -> bool:
     """Fetches the real FanGraphs batting leaderboard (same call the app
     makes) from GitHub's servers — which FanGraphs does not block, unlike
@@ -392,6 +469,9 @@ def main():
     print("Building league-wide HR metrics...")
     hrm_ok = build_hr_metrics(season_df)
 
+    print("Building HR park factors by handedness...")
+    park_ok = build_park_hr_factors(season_df)
+
     print("Fetching FanGraphs leaderboard...")
     fangraphs_ok = fetch_fangraphs()
 
@@ -406,6 +486,7 @@ def main():
         "fangraphs_included": fangraphs_ok,
         "xhr_table_included": xhr_ok,
         "hr_metrics_included": hrm_ok,
+        "park_hr_factors_included": park_ok,
     }
     (DATA_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2))
     print("Manifest:", json.dumps(manifest, indent=2))

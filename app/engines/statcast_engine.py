@@ -80,6 +80,10 @@ _KEEP_COLS = [
     # dead the whole time. It's also the prerequisite for any real
     # platoon-split work in the scoring rework.
     "pitch_type", "stand", "p_throws",
+    # home_team identifies the PARK a batted ball was hit in. Required to
+    # measure HR park factors from the data itself instead of hardcoding
+    # a table of numbers nobody can verify.
+    "home_team",
     # batted ball
     "bb_type", "launch_speed", "launch_angle", "launch_speed_angle",
     "hc_x", "hc_y",
