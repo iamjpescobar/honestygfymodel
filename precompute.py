@@ -37,7 +37,11 @@ SEASON_START = date(2026, 3, 1)
 ENGINE_COLS = [
     "game_date", "game_pk", "at_bat_number", "pitch_number",
     "type", "events", "description", "zone",
-    "pitch_type", "stand",
+    # p_throws: pitcher handedness. Must be here too — if the nightly
+    # parquets don't carry it, the engine can't recover it, and the
+    # platoon split stays dead on the precomputed path even after
+    # _KEEP_COLS is fixed.
+    "pitch_type", "stand", "p_throws",
     "bb_type", "launch_speed", "launch_angle", "launch_speed_angle",
     "hc_x", "hc_y",
     "bat_speed", "release_speed",

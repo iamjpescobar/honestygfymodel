@@ -38,7 +38,15 @@ _KEEP_COLS = [
     # outcomes
     "type", "events", "description", "zone",
     # pitch + batter handedness
-    "pitch_type", "stand",
+    # p_throws is the PITCHER's throwing hand, recorded on every row.
+    # It was missing from this list, which meant _trim_and_downcast
+    # dropped it on both the parquet path and the live path — so
+    # get_batter_iso_vs_hand() below hit its `"p_throws" not in
+    # df.columns` guard on EVERY call and returned None for every
+    # batter, league-wide, silently. The Game Card's platoon column was
+    # dead the whole time. It's also the prerequisite for any real
+    # platoon-split work in the scoring rework.
+    "pitch_type", "stand", "p_throws",
     # batted ball
     "bb_type", "launch_speed", "launch_angle", "launch_speed_angle",
     "hc_x", "hc_y",
