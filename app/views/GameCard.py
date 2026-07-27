@@ -862,7 +862,16 @@ with content_col:
                             favor_low=["Brl% Allowed", "HH% Allowed", "FB% Allowed",
                                        "HRWindow% Allowed", "EV90 Allowed",
                                        "HR Allowed", "xHR Allowed"],
-                            gradient=True),
+                            gradient=True).format({
+                            "Brl% Allowed": "{:.1f}", "HH% Allowed": "{:.1f}",
+                            "FB% Allowed": "{:.1f}", "HRWindow% Allowed": "{:.1f}",
+                            "EV90 Allowed": "{:.1f}",
+                            # Counting stat — no decimals.
+                            "HR Allowed": "{:.0f}",
+                            # Expected values carry one decimal because a
+                            # fractional expectation is the point.
+                            "xHR Allowed": "{:.1f}", "xHR Gap": "{:+.1f}",
+                        }, na_rep="N/A"),
                         width="stretch",
                     )
                     st.caption(
@@ -1178,12 +1187,24 @@ with content_col:
                         favor_low=["GB%", "SwStr%"],
                         gradient=True,
                     )
+                    # EVERY numeric column needs an entry here. Anything
+                    # missing falls through to style_stat_table's global
+                    # .format(precision=2), which is why the new columns
+                    # first rendered as 104.00 and 91.70 while their
+                    # neighbours showed 104.0 and 91.7.
                     styled = styled.format({
                         "SLAM": "{:.1f}", "BA": "{:.3f}", "xwOBA": "{:.3f}", "xSLG": "{:.3f}",
                         "ISO": "{:.3f}", "HR/FB": "{:.1f}",
                         "Brl%": "{:.1f}", "HH%": "{:.1f}", "LD%": "{:.1f}",
                         "FB%": "{:.1f}", "GB%": "{:.1f}", "SweetSpot%": "{:.1f}", "PullAir%": "{:.1f}",
                         "PullBrl%": "{:.1f}", "Blast%": "{:.1f}", "SwStr%": "{:.1f}",
+                        # Rates: one decimal, matching Brl%/HH% beside them.
+                        "Brl/PA": "{:.1f}", "HRWindow%": "{:.1f}",
+                        # Exit velocities read as mph — one decimal is how
+                        # Statcast publishes them.
+                        "EV90": "{:.1f}", "MaxEV": "{:.1f}",
+                        # 0-100 composite, formatted like HR/Hit Score.
+                        "HRIntent": "{:.0f}",
                         "HR Edge": "{:.0f}", "HR Score": "{:.0f}", "Hit Score": "{:.0f}",
                     }, na_rep="N/A")
                     st.dataframe(

@@ -68,3 +68,32 @@ fav = re.search(r'favor_high=\["SLAM".*?\],', gc, re.S).group(0)
 for col in ("Brl/PA", "EV90", "HRWindow%", "HRIntent"):
     assert col in fav, f'"{col}" missing from the lineup favor_high list'
 print("PASS: new lineup columns are styled")
+
+# --- Formatting -------------------------------------------------------
+# style_stat_table applies a global .format(precision=2). Any column
+# without an explicit format string falls through to it and renders with
+# the wrong number of decimals next to its neighbours — 104.00 beside
+# 104.0. These assert every displayed numeric column is covered.
+lineup_fmt = re.search(r'styled = styled\.format\(\{(.*?)\}, na_rep=', gc, re.S).group(1)
+formatted = set(re.findall(r'"([^"]+)":', lineup_fmt))
+
+row = re.search(r'return \{\s*\n\s*"Player".*?\n\s{20}\}', gc, re.S).group(0)
+declared = re.findall(r'"([^"]+)":', row)
+NON_NUMERIC = {"Player", "Bats", "Matchup", "Edge", "EdgeLabel", "EdgeTier", "Confidence"}
+missing = [c for c in declared if c not in NON_NUMERIC and c not in formatted]
+assert not missing, f"numeric lineup columns with no format string: {missing}"
+print(f"PASS: all {len(formatted)} numeric lineup columns have explicit formats")
+
+for col in ("Brl/PA", "EV90", "MaxEV", "HRWindow%", "HRIntent"):
+    assert col in formatted, f'"{col}" would render at the global precision'
+print("PASS: the five new batter columns are formatted like their neighbours")
+
+vuln_fmt = re.search(r'gradient=True\)\.format\(\{(.*?)\}, na_rep=', gc, re.S).group(1)
+vuln_formatted = set(re.findall(r'"([^"]+)":', vuln_fmt))
+vuln_cols = set(re.findall(r'"([^"]+)": pitcher_data\.get', gc))
+missing_v = [c for c in vuln_cols if c not in vuln_formatted]
+assert not missing_v, f"vulnerability columns with no format: {missing_v}"
+print(f"PASS: all {len(vuln_cols)} HR vulnerability columns are formatted")
+
+assert '"xHR Gap": "{:+.1f}"' in gc, "xHR Gap should show its sign — the sign IS the signal"
+print("PASS: xHR Gap renders signed (+/-), since direction is the whole read")
