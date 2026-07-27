@@ -825,6 +825,55 @@ with content_col:
                         width="stretch",
                     )
             st.caption("Computed by this app directly from raw Statcast pitch data \u2014 see get_pitcher_advanced_splits() for exact definitions.")
+
+            # -------------------------------------------------
+            # HR VULNERABILITY (ALLOWED)
+            #
+            # These have been computed on every pitcher all along and
+            # displayed nowhere: _compute_batted_ball_metrics runs on the
+            # pitcher's OWN rows inside get_pitcher_statcast, so Brl %,
+            # HH %, FB %, HRWindow % and EV90 there already describe the
+            # contact hitters made AGAINST him. The pitcher half of the
+            # HR model was invisible despite the numbers existing.
+            #
+            # Every value here is bad-for-the-pitcher when high, so the
+            # whole card is favor_low — the opposite of the STATS card
+            # above, where the same names mean the pitcher's own output.
+            # -------------------------------------------------
+            _hv = {
+                "Brl% Allowed": pitcher_data.get("Brl % Allowed"),
+                "HH% Allowed": pitcher_data.get("HH % Allowed"),
+                "FB% Allowed": pitcher_data.get("FB % Allowed"),
+                "HRWindow% Allowed": pitcher_data.get("HRWindow % Allowed"),
+                "EV90 Allowed": pitcher_data.get("EV90 Allowed"),
+                "HR Allowed": pitcher_data.get("HR Allowed"),
+                "xHR Allowed": pitcher_data.get("xHR Allowed"),
+                "xHR Gap": pitcher_data.get("xHR Gap Allowed"),
+            }
+            if any(v is not None for v in _hv.values()):
+                with card("hr_vuln_table"):
+                    st.markdown(
+                        f'<div class="pf-card-title" style="color:{COLOR["gold"]};">'
+                        f'HR VULNERABILITY (ALLOWED)</div>', unsafe_allow_html=True)
+                    _hv_df = pd.DataFrame([_hv], index=["Season"])
+                    st.dataframe(
+                        style_stat_table(
+                            _hv_df,
+                            favor_low=["Brl% Allowed", "HH% Allowed", "FB% Allowed",
+                                       "HRWindow% Allowed", "EV90 Allowed",
+                                       "HR Allowed", "xHR Allowed"],
+                            gradient=True),
+                        width="stretch",
+                    )
+                    st.caption(
+                        "Contact allowed, from this pitcher's own Statcast rows. "
+                        "HRWindow% Allowed is launch angle 20-40 \u2014 the home-run "
+                        "band, not the 8-32 sweet spot. xHR Gap = expected home runs "
+                        "allowed minus actual: a POSITIVE gap means he's been giving "
+                        "up home-run trajectories that stayed in the park, and that "
+                        "luck tends to run out. Park-neutral, so tonight's venue is "
+                        "not baked in."
+                    )
         else:
             st.info("No split data available for this pitcher yet.")
 
@@ -861,7 +910,10 @@ with content_col:
                     )
                 with sort_col:
                     sort_choice = st.selectbox(
-                        "Sort by", ["SLAM", "HR Edge", "HR Score", "Hit Score", "xwOBA", "xSLG", "ISO", "Brl%", "HH%"], key="lineup_sort_by"
+                        "Sort by", ["SLAM", "HR Edge", "HR Score", "Hit Score",
+                                    "xwOBA", "xSLG", "ISO", "Brl%", "Brl/PA",
+                                    "HH%", "EV90", "HRWindow%", "HRIntent"],
+                        key="lineup_sort_by"
                     )
                 with window_col:
                     window_choice = st.selectbox(
@@ -979,7 +1031,17 @@ with content_col:
                     "xSLG": lambda r: windowed_profile_cache[r["name"]].get("xSLG") or 0,
                     "ISO": lambda r: windowed_profile_cache[r["name"]].get("ISO") or 0,
                     "Brl%": lambda r: windowed_profile_cache[r["name"]].get("Brl %", 0),
+                    # The new HR axes are sortable too — Brl/PA and
+                    # HRWindow% are the two most useful ways to reorder
+                    # this board for a home-run read, and neither was
+                    # reachable before. `or 0` because these are None
+                    # (not 0) for bats we can't measure, and None breaks
+                    # the sort.
+                    "Brl/PA": lambda r: windowed_profile_cache[r["name"]].get("Brl/PA") or 0,
                     "HH%": lambda r: windowed_profile_cache[r["name"]].get("HH %", 0),
+                    "EV90": lambda r: windowed_profile_cache[r["name"]].get("EV90") or 0,
+                    "HRWindow%": lambda r: windowed_profile_cache[r["name"]].get("HRWindow %") or 0,
+                    "HRIntent": lambda r: windowed_profile_cache[r["name"]].get("HRIntent") or 0,
                 }
                 filtered = sorted(filtered, key=sort_key_map[sort_choice], reverse=True)
 
@@ -1005,14 +1067,36 @@ with content_col:
                         "ISO": profile.get("ISO", 0),
                         "HR/FB": profile.get("HR/FB"),
                         "Brl%": profile.get("Brl %", 0),
+                        # Barrels per PLATE APPEARANCE, next to the
+                        # per-batted-ball rate. The gap between the two
+                        # IS the read: a bat with a high Brl% and a low
+                        # Brl/PA barrels well but doesn't put enough
+                        # balls in play to cash it in.
+                        "Brl/PA": profile.get("Brl/PA"),
                         "HH%": profile.get("HH %", 0),
+                        # 90th-percentile exit velocity — the scored
+                        # power ceiling. Max EV sits beside it for
+                        # interest only; it's a sample of one.
+                        "EV90": profile.get("EV90"),
+                        "MaxEV": profile.get("MaxEV"),
                         "LD%": profile.get("LD %", 0),
                         "FB%": profile.get("FB %", 0),
                         "GB%": profile.get("GB %", 0),
                         "SweetSpot%": profile.get("SweetSpot %", 0),
+                        # Launch angle 20-40 — the HOME RUN band, which
+                        # is NOT SweetSpot% (8-32, built for overall
+                        # production and starting at a line drive). Both
+                        # are shown because they answer different
+                        # questions and the difference is informative.
+                        "HRWindow%": profile.get("HRWindow %"),
                         "PullAir%": profile.get("PullAir %", 0),
                         "PullBrl%": profile.get("PullBrl %", 0),
                         "Blast%": profile.get("Blast %", 0),
+                        # Process, not outcome: bat speed + swing plane +
+                        # pull tendency. Every other column here is
+                        # downstream of results, so they all sag together
+                        # when a power bat goes cold. This one doesn't.
+                        "HRIntent": profile.get("HRIntent"),
                         "SwStr%": profile.get("SwStr %", 0),
                         "HR Edge": hr_edge,
                         "HR Score": hr_score,
@@ -1090,7 +1174,7 @@ with content_col:
 
                     styled = style_stat_table(
                         display_df.drop(columns=["Matchup", "Confidence", "EdgeLabel", "EdgeTier"]),
-                        favor_high=["SLAM", "BA", "xwOBA", "xSLG", "ISO", "HR/FB", "Brl%", "HH%", "LD%", "FB%", "SweetSpot%", "PullAir%", "PullBrl%", "Blast%", "HR Edge", "HR Score", "Hit Score"],
+                        favor_high=["SLAM", "BA", "xwOBA", "xSLG", "ISO", "HR/FB", "Brl%", "Brl/PA", "HH%", "EV90", "MaxEV", "LD%", "FB%", "SweetSpot%", "HRWindow%", "PullAir%", "PullBrl%", "Blast%", "HRIntent", "HR Edge", "HR Score", "Hit Score"],
                         favor_low=["GB%", "SwStr%"],
                         gradient=True,
                     )
