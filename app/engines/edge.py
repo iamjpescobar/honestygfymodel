@@ -316,17 +316,45 @@ def pen_context(pitcher_team: str, starter_pid):
 # ------------------------------------------------------------------
 # Composition
 # ------------------------------------------------------------------
-def edge_components(batter_id, pitcher_id, base_score, pen_adj, pen_note):
+def edge_components(batter_id, pitcher_id, base_score, pen_adj, pen_note,
+                    *, home_team=None, bats=None, temp=None, roof_closed=False):
     """Attachable dict for a lineup row. edge is None when the skill
     score is None (no Savant sample) — matchup can't rescue a bat we
-    can't rate."""
+    can't rate.
+
+    CONTEXT (home_team / bats / temp) is optional and keyword-only so
+    existing callers keep working unchanged and simply get no context
+    adjustment rather than a wrong one.
+
+    `bats` must be the EFFECTIVE hand for tonight — the side a switch
+    hitter will actually bat from against this pitcher, not "S". The
+    caller owns that resolution because only it knows the pitcher's
+    throwing hand. Passing "S" yields no park adjustment rather than a
+    coin-flip guess, which matters most for exactly the hitters whose
+    park splits differ most.
+
+    Park is deliberately NOT in HR Score: the xHR grid behind the skill
+    number pools all 30 parks so a hitter's rating doesn't change when he
+    travels. Tonight's building belongs here, in the matchup layer,
+    beside BvP and bullpen — putting it in both would count it twice.
+    """
     b_adj, b_line = bvp_component(batter_id, pitcher_id)
     z_adj, z_note = zone_fit_component(batter_id, pitcher_id)
-    total = b_adj + z_adj + pen_adj
+    ctx_adj, ctx_notes = 0.0, []
+    if home_team or temp:
+        # Imported here rather than at module scope: hr_context reads a
+        # nightly parquet through streamlit's cache, and edge.py is
+        # imported by non-Streamlit paths (calibration_picks.py) where a
+        # hard dependency would be an unnecessary import cost.
+        from engines.hr_context import context_hr_adj
+        ctx_adj, ctx_notes = context_hr_adj(home_team, bats, temp,
+                                            roof_closed=roof_closed)
+    total = b_adj + z_adj + pen_adj + ctx_adj
     edge = None
     if base_score is not None:
         edge = int(max(0, min(100, round(base_score + total))))
-    return {"edge": edge, "mx": total,
+    return {"edge": edge, "mx": round(total, 1),
             "bvp_adj": b_adj, "bvp_line": b_line,
             "zone_adj": z_adj, "zone_note": z_note,
-            "pen_adj": pen_adj, "pen_note": pen_note}
+            "pen_adj": pen_adj, "pen_note": pen_note,
+            "ctx_adj": ctx_adj, "ctx_notes": ctx_notes}

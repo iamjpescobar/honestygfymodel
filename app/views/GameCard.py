@@ -715,9 +715,32 @@ with content_col:
                         "builds the slate-wide bullpen baseline (~30s once, cached all day; "
                         "instant after)\u2026"):
             _pen_adj, _pen_note = pen_context(_pitcher_team, pitcher_id)
+            # Tonight's park, keyed by Statcast's team code — that's what
+            # build_park_hr_factors groups on. game["home"] is the full
+            # club name, so it has to be abbreviated here or every lookup
+            # would silently miss and return no adjustment.
+            _park_abbr = team_abbr(game["home"])
+            _temp = game.get("weather_temp")
             for _r in ranked:
+                # EFFECTIVE hand for tonight. Park splits by hand are
+                # large, so handing edge_components a raw "S" would apply
+                # the wrong split to exactly the hitters it matters most
+                # for. A switch hitter bats opposite the pitcher's throwing
+                # hand; everyone else bats their own side.
+                #
+                # Resolved inline rather than via _side_for(), which does
+                # the same thing but is defined further down in the lineup
+                # table block and is NOT in scope here.
+                _b = (_r.get("bats") or "").upper()
+                if _b == "S":
+                    _eff_bats = "L" if _p_throws == "R" else "R" if _p_throws == "L" else None
+                else:
+                    _eff_bats = _b
                 _r.update(edge_components(_r.get("id"), pitcher_id,
-                                          _r.get("hr_score"), _pen_adj, _pen_note))
+                                          _r.get("hr_score"), _pen_adj, _pen_note,
+                                          home_team=_park_abbr,
+                                          bats=_eff_bats,
+                                          temp=_temp))
                 if _p_throws in ("R", "L") and _r.get("id"):
                     _r["iso_vs_hand"] = get_batter_iso_vs_hand(_r["id"], _p_throws)
                     _r["opp_hand"] = f"{_p_throws}HP"
