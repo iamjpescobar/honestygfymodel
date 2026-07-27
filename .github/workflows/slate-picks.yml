@@ -1,0 +1,69 @@
+name: Slate Picks (calibration)
+
+# Records the day's board picks so calibration no longer depends on
+# someone opening the site. See calibration_picks.py for the full why.
+#
+# TIMING: MLB posts confirmed lineups 1-3 hours before first pitch, so
+# the 6 AM nightly data job is far too early to see a real board. These
+# runs straddle the slate instead:
+#   17:00 UTC = 1:00 PM ET  - day games
+#   21:00 UTC = 5:00 PM ET  - most evening lineups are posted
+#   23:00 UTC = 7:00 PM ET  - late/West Coast starts
+# The script is idempotent, so the first run that finds a real board
+# records it and the later ones leave it alone.
+on:
+  schedule:
+    - cron: "0 17 * * *"
+    - cron: "0 21 * * *"
+    - cron: "0 23 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write        # commits the pick record back to the repo
+
+# Never let two runs race each other into a commit conflict.
+concurrency:
+  group: slate-picks
+  cancel-in-progress: false
+
+jobs:
+  log-picks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # streamlit is required: the board engines are decorated with
+      # @st.cache_data. The decorators work fine outside a Streamlit
+      # runtime, but the import has to resolve.
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # The engines read the precomputed parquets the nightly job
+      # publishes. Without this they'd fall back to live per-player
+      # Statcast pulls, which would be slow and would not match what the
+      # site shows.
+      - name: Fetch nightly data archive
+        run: python app/fetch_data.py
+
+      - name: Log today's picks
+        run: python calibration_picks.py
+
+      - name: Commit the pick record
+        run: |
+          if git diff --quiet -- data/calibration.json; then
+            echo "No new picks to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/calibration.json
+          git commit -m "chore: log slate picks for calibration [skip ci]"
+          # Another scheduled run may have pushed since checkout; rebase
+          # rather than fail, so a race costs a retry and not a day.
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

@@ -296,6 +296,24 @@ def main():
     RECORD_PATH.parent.mkdir(parents=True, exist_ok=True)
     RECORD_PATH.write_text(json.dumps(record, indent=2))
 
+    # ALSO write back to the repo-committed copy, and commit it in the
+    # workflow. Without this, grades evaporate every night: RECORD_PATH
+    # lives under build_data/, which is rebuilt from scratch on each CI
+    # runner and only ever leaves as a release asset. _load_existing()
+    # reads local paths only, so tomorrow's run would start from
+    # data/calibration.json — which calibration_picks.py fills with
+    # UNGRADED picks — and every result graded tonight would be gone.
+    #
+    # Writing both makes the loop closed and durable:
+    #   slate-picks.yml  -> commits today's picks to data/calibration.json
+    #   nightly pipeline -> grades them, writes back here AND to the
+    #                       archive the app reads
+    # The repo copy is the persistent record; the archive is the app's
+    # read-only view of it.
+    REPO_RECORD = Path(__file__).resolve().parent / "data" / "calibration.json"
+    REPO_RECORD.parent.mkdir(parents=True, exist_ok=True)
+    REPO_RECORD.write_text(json.dumps(record, indent=2))
+
     summary = summarize(record)
     print(f"Calibration: graded {graded} pick(s) this run.")
     for board, s in summary.items():
@@ -304,7 +322,7 @@ def main():
                   + (f", {s['dnp']} DNP" if s["dnp"] else ""))
         else:
             print(f"  {board}: nothing graded yet")
-    print(f"Calibration: record written to {RECORD_PATH}")
+    print(f"Calibration: record written to {RECORD_PATH} and {REPO_RECORD}")
     return 0
 
 
