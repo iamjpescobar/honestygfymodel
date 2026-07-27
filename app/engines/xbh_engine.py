@@ -117,12 +117,19 @@ def xbh_skill(pid, savant_df):
 
     parts = {"xSLG": xslg, "Barrel%": brl, "HardHit%": hh, "ExitVelo": ev}
 
-    # K penalty: percentile is "how much he strikes out" (high = more),
-    # so above-average K costs and below-average helps. Scaled by its
-    # weight and capped at +/- 10 points of the final score.
+    # K adjustment. Savant's k_percent percentile is GOODNESS-oriented
+    # like every other percentile it publishes: 100 = strikes out LESS
+    # than the whole league. This block used to read it as "how much he
+    # strikes out (high = more)" and subtract it from neutral, which
+    # penalized the best contact hitters in baseball and rewarded the
+    # most strikeout-prone ones — the same inversion that put Arraez at
+    # the top of Strikeout Targets (see engines/top_plays.k_score).
+    #
+    # Now: above-neutral percentile (good contact) HELPS, below-neutral
+    # (strikeout-prone) COSTS. Same weight, same +/-10 cap.
     k_adj = 0.0
     if kp is not None:
-        k_adj = max(-10.0, min(10.0, (K_NEUTRAL - float(kp)) * W_K * 2))
+        k_adj = max(-10.0, min(10.0, (float(kp) - K_NEUTRAL) * W_K * 2))
         parts["K%"] = kp
 
     score = max(0.0, min(100.0, base + k_adj))

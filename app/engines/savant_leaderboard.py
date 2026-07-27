@@ -15,13 +15,23 @@ real raw stat, not a percentile. The two are easy to confuse since
 both use a column literally named "brl_percent" — this file only uses
 the percentile-ranks endpoint, on purpose.
 
-IMPORTANT — whiff_percent and k_percent here are percentile RANKS of
-the raw stat itself, not "percentile of goodness": a LOW number means
-the batter whiffs/strikes out LESS than most of the league (good), a
-HIGH number means more than most (bad). Confirmed via real data —
-Aaron Judge (elite contact hitter) shows whiff_percent=10.0. Used
-directly for K Score with no inversion needed; that already matches
-this app's "higher K Score = more strikeout-prone" convention.
+IMPORTANT — every percentile this endpoint returns is a PERCENTILE OF
+GOODNESS, including the ones built on stats where a low raw value is
+the good outcome (whiff_percent, k_percent, chase_percent). Savant
+orients them all so that 100 is the best in the league. For a batter,
+whiff_percent = 100 means he whiffs LESS than everyone, not more.
+
+This block previously asserted the exact opposite, citing Aaron Judge's
+whiff_percent = 10.0 as proof that "low = whiffs less". The number was
+right; the premise was wrong. Judge is one of the highest-whiff hitters
+in baseball, so a 10 on a scale where 100 is best is precisely correct.
+That mistake propagated into K Score and the xBH engine's K penalty and
+inverted both — Luis Arraez, the toughest strikeout in the league, was
+ranking FIRST on the Strikeout Targets board.
+
+Anything here derived from a lower-is-better stat therefore has to be
+inverted (100 - percentile) before it can feed a "higher = worse"
+score. See engines/top_plays.k_score.
 """
 import streamlit as st
 import pandas as pd

@@ -78,14 +78,34 @@ def hit_score(player_id, savant_df):
 
 def k_score(player_id, savant_df):
     """
-    Real MLB-computed Whiff% percentile, used directly — no inversion
-    needed. Confirmed against real live data before this was built:
-    Aaron Judge (elite contact hitter) shows whiff_percent=10.0, i.e. a
-    LOW number already means he whiffs less than most of the league.
-    That matches this app's "higher K Score = more strikeout-prone"
-    convention with no adjustment required.
+    Strikeout risk, 0-100, where HIGHER = MORE strikeout-prone.
+
+    INVERTED from Savant's raw percentile ON PURPOSE. Baseball Savant
+    orients EVERY percentile so that higher is better, including stats
+    where a lower raw value is the good outcome — whiff%, chase%, K%.
+    So whiff_percent = 100 means the batter whiffs LESS than the entire
+    league, not more.
+
+    This used to return the percentile straight through, justified by a
+    comment reading "Aaron Judge (elite contact hitter) shows
+    whiff_percent=10.0". The 10.0 was real; the premise was not. Judge
+    is one of the highest-whiff hitters in baseball, and 10.0 is exactly
+    what that looks like on a scale where 100 is best. Reading it as
+    "low = whiffs less" flipped the whole stat.
+
+    The visible symptom: Luis Arraez, the hardest man in the league to
+    strike out, sits near the 100th percentile — and therefore went
+    straight to the TOP of the Strikeout Targets board. The list was
+    ranking the league's best contact hitters as its best strikeout
+    plays, i.e. exactly backwards, every single day.
+
+    100 - percentile puts it back on this app's convention. Still None
+    (never 0) when Savant has no sample for the player.
     """
-    return get_percentile(savant_df, player_id, "whiff_percent")
+    pct = get_percentile(savant_df, player_id, "whiff_percent")
+    if pct is None:
+        return None
+    return round(100.0 - float(pct))
 
 
 def confidence_tier(sample_size: int) -> tuple:
