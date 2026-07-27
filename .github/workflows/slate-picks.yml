@@ -55,7 +55,16 @@ jobs:
 
       - name: Commit the pick record
         run: |
-          if git diff --quiet -- data/calibration.json; then
+          # git status --porcelain, NOT git diff.
+          #
+          # git diff only compares TRACKED files. data/calibration.json
+          # did not exist in the repo yet, so on every run it was a new
+          # UNTRACKED file, git diff reported no changes, and this step
+          # exited 0 with "No new picks to commit" — while the log line
+          # directly above it said the picks had just been written.
+          # Silent, green, and the reason the record never grew past the
+          # one day that came from a page view.
+          if [ -z "$(git status --porcelain -- data/calibration.json)" ]; then
             echo "No new picks to commit."
             exit 0
           fi

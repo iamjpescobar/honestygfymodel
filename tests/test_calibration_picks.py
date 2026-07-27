@@ -87,3 +87,38 @@ cp.BUILDERS = {"daily13": lambda: [], "potd": lambda: []}
 assert cp.main() == 0
 assert not cp.RECORD_PATH.exists()
 print("PASS: an empty slate writes nothing and still exits clean")
+
+# --- 8. get_daily_13 returns a (rows, meta) TUPLE ---------------------
+# _rows_daily13 assumed a bare list, so each element was handed to
+# r.get() and every run died with "AttributeError: 'list' object has no
+# attribute 'get'". The board never logged once.
+import types
+mod = types.ModuleType("engines.daily_13")
+mod.get_daily_13 = lambda: ([{"id": 1, "name": "A", "team": "NYY"},
+                             {"id": 2, "name": "B", "team": "BOS"}],
+                            {"scanned": 50})
+sys.modules["engines.daily_13"] = mod
+rows = cp._rows_daily13()
+assert len(rows) == 2 and rows[0]["name"] == "A", rows
+print("PASS: (rows, meta) tuple unpacked correctly")
+
+mod.get_daily_13 = lambda: ([], {"warning": "cache error"})
+assert cp._rows_daily13() == []
+print("PASS: empty board with a warning yields no picks, no crash")
+
+mod.get_daily_13 = lambda: [{"id": 3, "name": "C", "team": "SF"}]
+assert len(cp._rows_daily13()) == 1
+print("PASS: bare-list return still handled (shape-tolerant)")
+
+mod.get_daily_13 = lambda: ([["not", "a", "dict"], {"id": 4, "name": "D"}], {})
+assert len(cp._rows_daily13()) == 1, "non-dict rows should be skipped, not crash"
+print("PASS: malformed rows skipped rather than crashing the board")
+
+# --- 9. The workflow guard must detect an UNTRACKED file --------------
+for wf in ("slate-picks", "nightly-data"):
+    y = open(f".github/workflows/{wf}.yml").read()
+    assert "git status --porcelain -- data/calibration.json" in y, \
+        f"{wf}.yml must use git status, not git diff"
+    assert "git diff --quiet -- data/calibration.json" not in y, \
+        f"{wf}.yml still uses git diff, which ignores untracked files"
+print("PASS: both workflows detect a first-time (untracked) record file")

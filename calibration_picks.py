@@ -78,11 +78,20 @@ def _load() -> dict:
 
 
 def _rows_daily13():
-    """Today's Daily 13 board, or [] if it can't be built."""
+    """Today's Daily 13 board, or [] if it can't be built.
+
+    get_daily_13() returns a (rows, meta) TUPLE, not a bare list — its
+    docstring says so and I assumed a list anyway. Unpacking it as a list
+    handed each element to r.get(), which failed with
+    "AttributeError: 'list' object has no attribute 'get'" and cost the
+    board every run.
+    """
     from engines.daily_13 import get_daily_13
-    rows = get_daily_13() or []
+    result = get_daily_13()
+    rows = result[0] if isinstance(result, tuple) else result
+    rows = rows or []
     return [{"id": r.get("id"), "name": r.get("name"), "team": r.get("team")}
-            for r in rows if r.get("id")]
+            for r in rows if isinstance(r, dict) and r.get("id")]
 
 
 def _rows_potd():

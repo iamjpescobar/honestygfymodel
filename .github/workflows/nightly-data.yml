@@ -72,7 +72,10 @@ jobs:
       # in calibration_pipeline.py.
       - name: Commit graded calibration record
         run: |
-          if git diff --quiet -- data/calibration.json; then
+          # See the note in slate-picks.yml: git diff ignores untracked
+          # files, so a first-time data/calibration.json reports clean
+          # and the graded record is never committed.
+          if [ -z "$(git status --porcelain -- data/calibration.json)" ]; then
             echo "No calibration changes to commit."
             exit 0
           fi
