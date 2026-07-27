@@ -891,6 +891,40 @@ def get_pitcher_statcast(pitcher_id):
     else:
         metrics["HR/BBE"] = 0.0
 
+    # ------------------------------------------------------------
+    # HR VULNERABILITY ALLOWED
+    #
+    # _compute_batted_ball_metrics above already ran on this PITCHER's
+    # rows, which means Brl %, HH %, FB %, HRWindow % and EV90 in
+    # `metrics` are ALREADY "allowed" figures — they describe the contact
+    # hitters made against him. They were computed and then never
+    # surfaced anywhere, so the pitcher side of the HR model was invisible
+    # despite the numbers existing.
+    #
+    # Aliased here under explicit "Allowed" names so no view has to know
+    # that a batter-shaped metric means something different on this side
+    # of the ball. Same values, honest labels.
+    for src, dst in (("Brl %", "Brl % Allowed"),
+                     ("HH %", "HH % Allowed"),
+                     ("FB %", "FB % Allowed"),
+                     ("HRWindow %", "HRWindow % Allowed"),
+                     ("EV90", "EV90 Allowed")):
+        if src in metrics:
+            metrics[dst] = metrics[src]
+
+    # xHR ALLOWED — the same empirical trajectory grid used for hitters,
+    # run on the contact he gave up. xHR-allowed minus HR-allowed is the
+    # regression signal from the pitcher's side: a pitcher well UNDER his
+    # xHR allowed has been surrendering home-run trajectories that
+    # happened to stay in the park, and that luck tends to run out.
+    xhr_allowed, hr_allowed = compute_xhr(df)
+    metrics["xHR Allowed"] = xhr_allowed
+    metrics["HR Allowed"] = hr_allowed
+    metrics["xHR Gap Allowed"] = (
+        round(xhr_allowed - hr_allowed, 1)
+        if xhr_allowed is not None and hr_allowed is not None else None
+    )
+
     if not df.empty and "pitch_type" in df.columns:
         arsenal = df["pitch_type"].dropna().value_counts(normalize=True) * 100
         metrics["Pitch Arsenal"] = {k: round(v, 2) for k, v in arsenal.items() if v > 0}

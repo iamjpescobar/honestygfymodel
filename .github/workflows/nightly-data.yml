@@ -24,6 +24,26 @@ jobs:
       - name: Install dependencies
         run: pip install pybaseball pandas pyarrow requests lxml
 
+      # Runs BEFORE the fetch on purpose. The Statcast pull takes ~15
+      # minutes and half a million pitches, and twice now a defect in
+      # precompute.py has crashed the run only AFTER all of that work
+      # completed — once on a missing numpy import, once on pd.NA
+      # surviving a boolean mask. Both were catchable in seconds.
+      #
+      # Fails the job immediately, so a broken build never burns the
+      # fetch and never publishes a bad archive.
+      - name: Run tests
+        run: |
+          failed=0
+          for t in tests/*.py; do
+            echo "--- $t"
+            python "$t" || failed=1
+          done
+          if [ "$failed" -ne 0 ]; then
+            echo "::error::Tests failed - refusing to fetch data or publish an archive."
+            exit 1
+          fi
+
       - name: Fetch NPB slate (real npb.jp data)
         run: python npb_precompute.py || echo "NPB fetch failed - continuing without it"
 
