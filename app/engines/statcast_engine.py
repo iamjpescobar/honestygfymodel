@@ -32,6 +32,39 @@ def _today_str():
 # report (or score) below this many fly balls in the window.
 _HRFB_MIN_FB = 25
 
+# ------------------------------------------------------------
+# HOME-RUN LAUNCH WINDOW
+#
+# NOT the 8-32 "sweet spot" band. Sweet spot is MLB's definition for
+# overall PRODUCTION (wOBA) and it starts at 8 degrees, which is a line
+# drive — those essentially never leave the yard. Using it in a home-run
+# model rewards contact hitters who don't hit homers.
+#
+# 20-40 is the home-run band: ~94% of MLB home runs land in it. The
+# absolute physical floor is nearer 16 (the lowest Statcast has ever
+# tracked is a 13.5-degree Stanton shot), but homers down there need
+# 110+ mph to happen at all — so a 16-degree floor mostly admits line
+# drives that only leave when exit velocity is elite, and exit velocity
+# is ALREADY measured by Brl%/HH%/EV90. Widening the floor would just
+# re-count power through an angle stat.
+#
+# Held at 20, this metric measures ONE thing cleanly: does his swing
+# plane put the ball in the home-run window, independent of how hard he
+# hits it. That is real information next to barrel rate, which requires
+# both at once.
+_HR_LA_MIN = 20
+_HR_LA_MAX = 40
+
+# 90th-percentile exit velocity replaces Max EV as the scored power
+# ceiling. Max EV is a sample of ONE — the single hardest ball he hit
+# all season, one lucky swing away from being wrong, and it never
+# regresses. EV90 is built from the top ~10% of his batted balls, so
+# it measures the same raw-power ceiling off dozens of observations and
+# stabilizes in a fraction of the sample. Max EV is still computed and
+# returned for DISPLAY (it is a genuinely interesting number), it just
+# does not feed any score.
+_EV_PERCENTILE = 90
+
 _KEEP_COLS = [
     # identity / ordering (recency windows need these)
     "game_date", "game_pk", "at_bat_number", "pitch_number",
@@ -139,6 +172,73 @@ def _read_local_parquet(kind: str, player_id):
         return _trim_and_downcast(pd.read_parquet(path))
     except Exception:
         return None
+
+
+# ------------------------------------------------------------
+# xHR — expected home runs from batted-ball trajectory
+# ------------------------------------------------------------
+# Reads the empirical HR-probability grid the nightly pipeline builds
+# from the league's own batted balls (see build_xhr_table in
+# precompute.py). Each of a player's batted balls is looked up by its
+# exit-velocity/launch-angle bucket and contributes that bucket's real
+# home-run rate; the sum is his xHR.
+#
+# The number that matters is xHR MINUS actual HR. A hitter under his
+# xHR has been hitting home-run trajectories that aren't leaving —
+# unfriendly parks, dead air, warning-track outs — and that gap tends
+# to close. On a pitcher's own rows the identical calculation gives
+# xHR ALLOWED, which is the same regression signal from the other side.
+#
+# Park-neutral by construction: the grid pools all 30 parks, so tonight's
+# venue belongs in the matchup layer and is not baked in here.
+#
+# Returns (None, None) when the table isn't present — an app running on
+# live pulls before the first pipeline run shows "not available" rather
+# than a fabricated zero.
+_EV_BIN, _LA_BIN = 2.0, 2.0
+
+
+@st.cache_data(ttl=21600, max_entries=1, show_spinner=False)
+def _xhr_table():
+    """{(ev_bin, la_bin): hr_prob} or None when unavailable."""
+    path = _DATA_DIR / "xhr_table.parquet"
+    if not path.exists():
+        return None
+    try:
+        t = pd.read_parquet(path)
+        return {(float(r.ev_bin), float(r.la_bin)): float(r.hr_prob)
+                for r in t.itertuples(index=False)}
+    except Exception:
+        return None
+
+
+def compute_xhr(df: pd.DataFrame):
+    """(xHR, actual HR) for these rows, or (None, None) if unavailable.
+
+    Works unchanged on a batter's rows (his xHR) and a pitcher's rows
+    (his xHR allowed) — same trajectories, same grid, opposite side of
+    the ball.
+    """
+    table = _xhr_table()
+    if not table or df is None or df.empty:
+        return None, None
+    if not {"launch_speed", "launch_angle", "type"}.issubset(df.columns):
+        return None, None
+    bbe = df[df["type"] == "X"]
+    if bbe.empty:
+        return None, None
+    ev = pd.to_numeric(bbe["launch_speed"], errors="coerce")
+    la = pd.to_numeric(bbe["launch_angle"], errors="coerce")
+    ok = ev.notna() & la.notna()
+    if not ok.any():
+        return None, None
+    # Same flooring the table was built with, so a ball lands in the
+    # bucket it was counted in. Trajectories outside the tracked region
+    # contribute 0 — correctly, since none of them are home runs.
+    keys = zip((ev[ok] // _EV_BIN * _EV_BIN), (la[ok] // _LA_BIN * _LA_BIN))
+    xhr = sum(table.get((float(e), float(l)), 0.0) for e, l in keys)
+    actual = int((bbe["events"] == "home_run").sum()) if "events" in bbe.columns else None
+    return round(xhr, 1), actual
 
 
 def get_data_timestamp():
@@ -251,6 +351,10 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
     empty = {
         "Brl %": 0.0, "HH %": 0.0, "LD %": 0.0, "GB %": 0.0, "FB %": 0.0,
         "SweetSpot %": 0.0, "PullAir %": 0.0, "PullBrl %": 0.0, "Blast %": 0.0, "BBE": 0,
+        # HR-specific additions. None (not 0.0) where a real zero would
+        # be a lie about a player we simply can't measure yet.
+        "HRWindow %": 0.0, "EV90": None, "MaxEV": None,
+        "Brl/PA": 0.0, "PA": 0, "HRIntent": None,
         "BA": 0.0, "AB": 0,
         "SLG": 0.0, "ISO": 0.0,
         "HR/FB": None, "FB_count": 0,
@@ -298,8 +402,27 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
         is_barrel = (ls >= 98) & (la >= 26) & (la <= 30)
     barrels = is_barrel.sum()
 
-    # Sweet Spot % — MLB's own definition: launch angle 8-32 degrees
+    # Sweet Spot % — MLB's own definition: launch angle 8-32 degrees.
+    # KEPT AS-IS on purpose: it's a real published stat and the lineup
+    # table displays it. It is NOT the home-run band — see _HR_LA_MIN.
     sweet_spot = la.between(8, 32).sum()
+
+    # HR Window % — share of batted balls launched into the home-run
+    # band (see _HR_LA_MIN/_HR_LA_MAX). Angle only, no velocity term:
+    # that independence from the power axis is the entire point.
+    hr_window = la.between(_HR_LA_MIN, _HR_LA_MAX).sum()
+
+    # EV90 (scored) and Max EV (display only). Both from the same
+    # measured exit velocities; see _EV_PERCENTILE for why the score
+    # uses the percentile and not the max.
+    _ev_clean = ls.dropna()
+    ev90 = round(float(np.percentile(_ev_clean, _EV_PERCENTILE)), 1) if len(_ev_clean) else None
+    # NAME COLLISION HAZARD: the Blast% block further down used to bind
+    # a local also called `max_ev` (the squared-up formula's theoretical
+    # ceiling, a Series, not a scalar) and it runs AFTER this line — so
+    # the displayed Max EV silently became that Series. Both names are
+    # now explicit. Don't reintroduce a bare `max_ev` in this function.
+    max_ev_actual = round(float(_ev_clean.max()), 1) if len(_ev_clean) else None
 
     bb_type = bbe_df.get("bb_type", pd.Series(dtype=str))
     # HR/FB — of his fly balls, how many left the yard. Uses Statcast's
@@ -349,13 +472,78 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
         c_pitch_speed = pd.to_numeric(contact_df.get("release_speed"), errors="coerce")
         tracked = c_bs.notna() & c_pitch_speed.notna() & c_ls.notna()
         if tracked.sum() > 0:
-            max_ev = (c_bs[tracked] * 1.23) + (c_pitch_speed[tracked] * 0.2116)
-            squared_up_pct = (c_ls[tracked] / max_ev) * 100
+            # The theoretical maximum EV this swing could have produced —
+            # the denominator of squared-up%. Renamed from `max_ev`,
+            # which collided with the real measured Max EV above.
+            squared_up_ceiling = (c_bs[tracked] * 1.23) + (c_pitch_speed[tracked] * 0.2116)
+            squared_up_pct = (c_ls[tracked] / squared_up_ceiling) * 100
             is_blast = (squared_up_pct + c_bs[tracked]) >= 164
             blast_pct = round(is_blast.sum() / tracked.sum() * 100, 2)
 
+    # ------------------------------------------------------------
+    # HR INTENT — is this hitter TRYING to hit the ball out?
+    #
+    # Deliberately built from process, not results. Every other power
+    # metric here (Brl%, HH%, HR/FB, xSLG) is downstream of whether the
+    # ball actually got crushed, so they all sag together when a good
+    # power hitter goes cold. Intent asks a different question: is the
+    # swing itself still a home-run swing? Three inputs, none of which
+    # is an outcome:
+    #
+    #   bat speed   - how fast he's swinging (2024+ Statcast bat
+    #                 tracking; league average sits near 71 mph, elite
+    #                 near 75). A hitter shortening up to make contact
+    #                 shows up here before it shows up in his results.
+    #   HR window % - swing plane. Is he getting the ball into the
+    #                 20-40 band at all?
+    #   PullAir %   - home runs are overwhelmingly PULLED in the air.
+    #                 A hitter going the other way in the air is not
+    #                 hunting a homer, however hard he hits it.
+    #
+    # Each is scaled to 0-100 against a real league anchor and averaged
+    # over whichever components are actually measurable. Returns None
+    # rather than a fabricated number when none of them are — an
+    # untracked bat is not a zero-intent bat.
+    #
+    # Bat speed is unavailable before 2024 and on some rows, so the
+    # component simply drops out when absent instead of zeroing the
+    # composite.
+    _INTENT_BATSPEED_ANCHOR = 71.0   # league-average bat speed -> 50
+    _INTENT_HRWINDOW_ANCHOR = 30.0   # ~30% of BBE in the band -> 50
+    _INTENT_PULLAIR_ANCHOR = 18.0    # ~18% pulled air -> 50
+    _intent_parts = []
+    if "bat_speed" in df.columns:
+        _bs = pd.to_numeric(df["bat_speed"], errors="coerce").dropna()
+        if len(_bs) >= 25:
+            _intent_parts.append(min(100.0, float(_bs.mean()) / _INTENT_BATSPEED_ANCHOR * 50.0))
+    _hrw_pct = hr_window / bbe_count * 100
+    _intent_parts.append(min(100.0, _hrw_pct / _INTENT_HRWINDOW_ANCHOR * 50.0))
+    if pull_air:
+        _pa_pct = pull_air / bbe_count * 100
+        _intent_parts.append(min(100.0, _pa_pct / _INTENT_PULLAIR_ANCHOR * 50.0))
+    hr_intent = round(sum(_intent_parts) / len(_intent_parts), 1) if _intent_parts else None
+
+    # Barrels per PLATE APPEARANCE, not per batted ball.
+    #
+    # Brl% (per BBE) answers "when he connects, how good is it" and
+    # flatters a hitter who barrels 15% of his contact while striking
+    # out 35% of the time — that bat produces far fewer home runs than
+    # the rate implies. Brl/PA folds contact rate and plate discipline
+    # in automatically, which is why it's the better home-run input.
+    #
+    # PA denominator = every row carrying a terminal event, which is
+    # exactly one per plate appearance in Statcast's pitch-level data.
+    pa_count = int(df["events"].notna().sum()) if "events" in df.columns else 0
+    brl_per_pa = round(barrels / pa_count * 100, 2) if pa_count > 0 else 0.0
+
     return {
         "Brl %": round(barrels / bbe_count * 100, 2),
+        "HRWindow %": round(hr_window / bbe_count * 100, 2),
+        "EV90": ev90,
+        "MaxEV": max_ev_actual,
+        "Brl/PA": brl_per_pa,
+        "PA": pa_count,
+        "HRIntent": hr_intent,
         "HH %": round(hh / bbe_count * 100, 2),
         "LD %": round(ld / bbe_count * 100, 2),
         "GB %": round(gb / bbe_count * 100, 2),

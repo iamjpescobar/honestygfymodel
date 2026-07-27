@@ -148,6 +148,75 @@ def save_player_files(season_df: pd.DataFrame) -> dict:
     return counts
 
 
+# ------------------------------------------------------------
+# xHR LOOKUP TABLE
+# ------------------------------------------------------------
+# Expected home runs, built from THIS season's own league-wide batted
+# balls rather than an imported constant or a hand-tuned formula.
+#
+# The method: bucket every batted ball in the league by exit velocity
+# and launch angle, and record what share of the balls in each bucket
+# actually became home runs. That empirical rate IS the home-run
+# probability of a batted ball with that trajectory, measured rather
+# than modelled. A player's xHR is then just the sum of those
+# probabilities over his own batted balls.
+#
+# What that buys: xHR minus actual HR is a real luck gap. A hitter
+# well under his xHR has been putting home-run trajectories in play and
+# not being paid for them — bad park draws, dead air, warning-track
+# outs — and that gap tends to close. That's the regression signal, and
+# it's where mispriced bats live.
+#
+# It is deliberately PARK-NEUTRAL: the rate is pooled across all 30
+# parks, so xHR answers "how often does this trajectory leave an average
+# yard." Tonight's specific park belongs in the matchup layer, not baked
+# into the hitter's own skill number, or the two would double-count.
+#
+# Buckets are 2 mph x 2 degrees, restricted to the region where home
+# runs actually occur. Buckets with too few batted balls to support a
+# rate are dropped rather than published as noise.
+EV_BIN, LA_BIN = 2.0, 2.0
+XHR_MIN_EV, XHR_MAX_EV = 80.0, 122.0
+XHR_MIN_LA, XHR_MAX_LA = 8.0, 50.0
+XHR_MIN_BUCKET_N = 15
+
+
+def build_xhr_table(season_df: pd.DataFrame) -> bool:
+    """Writes the empirical HR-probability grid used for xHR."""
+    need = {"launch_speed", "launch_angle", "events", "type"}
+    if not need.issubset(season_df.columns):
+        print("  xHR table skipped — missing launch_speed/launch_angle/events.")
+        return False
+
+    bbe = season_df[season_df["type"] == "X"].copy()
+    ev = pd.to_numeric(bbe["launch_speed"], errors="coerce")
+    la = pd.to_numeric(bbe["launch_angle"], errors="coerce")
+    ok = (ev.between(XHR_MIN_EV, XHR_MAX_EV) & la.between(XHR_MIN_LA, XHR_MAX_LA))
+    bbe, ev, la = bbe[ok], ev[ok], la[ok]
+    if bbe.empty:
+        print("  xHR table skipped — no batted balls in the tracked region.")
+        return False
+
+    grid = pd.DataFrame({
+        "ev_bin": (ev // EV_BIN * EV_BIN).astype("float32"),
+        "la_bin": (la // LA_BIN * LA_BIN).astype("float32"),
+        "is_hr": (bbe["events"].astype(str) == "home_run").astype("int8"),
+    })
+    agg = grid.groupby(["ev_bin", "la_bin"], observed=True)["is_hr"].agg(["sum", "count"])
+    agg = agg[agg["count"] >= XHR_MIN_BUCKET_N]
+    if agg.empty:
+        print("  xHR table skipped — no bucket cleared the sample floor.")
+        return False
+    agg["hr_prob"] = (agg["sum"] / agg["count"]).astype("float32")
+
+    out = agg.reset_index()[["ev_bin", "la_bin", "hr_prob"]]
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    out.to_parquet(DATA_DIR / "xhr_table.parquet", index=False)
+    print(f"  xHR table: {len(out):,} buckets from {len(bbe):,} batted balls "
+          f"({int(grid['is_hr'].sum()):,} home runs)")
+    return True
+
+
 def fetch_fangraphs() -> bool:
     """Fetches the real FanGraphs batting leaderboard (same call the app
     makes) from GitHub's servers — which FanGraphs does not block, unlike
@@ -176,6 +245,9 @@ def main():
     print("Splitting per player...")
     counts = save_player_files(season_df)
 
+    print("Building xHR probability table...")
+    xhr_ok = build_xhr_table(season_df)
+
     print("Fetching FanGraphs leaderboard...")
     fangraphs_ok = fetch_fangraphs()
 
@@ -188,6 +260,7 @@ def main():
         "n_pitchers": counts["pitchers"],
         "source": "Baseball Savant via pybaseball bulk statcast()",
         "fangraphs_included": fangraphs_ok,
+        "xhr_table_included": xhr_ok,
     }
     (DATA_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2))
     print("Manifest:", json.dumps(manifest, indent=2))
