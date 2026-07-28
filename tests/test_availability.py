@@ -132,6 +132,56 @@ for mod, name in (("engines.wnba_props", "props"),
                   ("engines.wnba_defense", "defense")):
     m = __import__(mod, fromlist=["availability"])
     assert m.availability is availability, f"{name} carries its own copy"
-assert "from engines.wnba_props import availability" in w
+# Check the IMPORT SOURCE, not one literal line — WNBA.py's import
+# became multi-line when likely_starters was added, and pinning the exact
+# text broke against unchanged behaviour.
+assert "from engines.wnba_props import" in w and "availability as _availability" in w
 assert "from engines.wnba_props import availability" in pod_src
 print("PASS: props, defense, POTD and the slate view share one rule")
+
+# --- likely starters --------------------------------------------------
+from engines.wnba_props import likely_starters, _recent_minutes, STARTERS_PER_TEAM
+
+def mk(pid, mins_recent, days_ago=1, season_min=None):
+    """A player whose LAST 5 games ran `mins_recent` minutes."""
+    log = [{"date": (TODAY - timedelta(days=days_ago + i * 2)).isoformat(),
+            "min": mins_recent} for i in range(5)]
+    return {"pid": pid, "min": season_min if season_min is not None else mins_recent,
+            "log": list(reversed(log))}
+
+roster = [mk(i, m) for i, m in enumerate([32, 30, 28, 26, 24, 12, 9, 6], start=1)]
+s = likely_starters(roster, today=TODAY)
+assert s == {1, 2, 3, 4, 5}, s
+print(f"PASS: top {STARTERS_PER_TEAM} by recent minutes identified as starters")
+
+# RECENT minutes, not season. A player promoted two weeks ago carries a
+# low season average and would be ranked as a bench player by any
+# season-total measure — the same mistake that let absent players through.
+promoted = mk(99, 33, season_min=8.0)
+s2 = likely_starters(roster[:4] + [promoted], today=TODAY)
+assert 99 in s2, "a recently promoted starter was missed by season minutes"
+print("PASS: recent promotion is caught (recent minutes beat season average)")
+
+# An absent former starter must not hold a starting spot.
+out_star = {"pid": 77, "min": 34.0,
+            "log": [{"date": (TODAY - timedelta(days=30)).isoformat(), "min": 34.0}]}
+s3 = likely_starters(roster[:4] + [out_star], today=TODAY)
+assert 77 not in s3, "a 30-day-absent player was still listed as a starter"
+print("PASS: an absent former starter doesn't hold the spot")
+
+assert likely_starters([], today=TODAY) == set()
+assert likely_starters([{"pid": 5, "log": []}], today=TODAY) == set()
+print("PASS: unreadable minutes -> empty set (unknown, not 'nobody starts')")
+
+# --- the Status column must survive rendering -------------------------
+w = open("app/views/WNBA.py").read()
+assert '_TEXT_COLS' in w, "Status/Role must be excluded from numeric coercion"
+assert '"Status", "Role"' in w
+i_text = w.index("_TEXT_COLS = ")
+i_num = w.index("num_cols = [c for c in df.columns")
+assert i_text < i_num, "text columns must be excluded before num_cols is built"
+print("PASS: Status and Role excluded from numeric coercion (they'd blank to em-dash)")
+
+assert '"Role": ("OUT" if not _ok' in w, "Role column missing"
+assert '_order = {"START": 0' in w, "rows not ordered by role"
+print("PASS: starters sort first, bench next, unavailable last")

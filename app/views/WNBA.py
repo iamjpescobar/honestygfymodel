@@ -42,7 +42,8 @@ page_header("WNBA Analytics", "Live season coverage — game & prop research", e
 # Shared availability rule — the same one the Props, Defense and Player
 # of the Day boards use, so one page can't disagree with another about
 # who is playing.
-from engines.wnba_props import availability as _availability
+from engines.wnba_props import (availability as _availability,
+                                likely_starters as _likely_starters)
 
 
 def _load_games():
@@ -444,6 +445,11 @@ def _render_slate():
                                 unsafe_allow_html=True,
                             )
                             rows = []
+                            # Derived from RECENT minutes among available
+                            # players — the WNBA feed publishes no starter
+                            # flag. See likely_starters for why recent and
+                            # not season minutes.
+                            _starters = _likely_starters(plist)
                             for p in plist:
                                 pos = p.get("pos") or ""
                                 # Flag, don't hide. This is the full slate
@@ -459,8 +465,16 @@ def _render_slate():
                                 pname = f'{p.get("name")} \u00b7 {pos}' if pos else p.get("name")
                                 if not _ok:
                                     pname = f'\u26a0 {pname}'
+                                _pid = p.get("pid") or p.get("id")
+                                _is_starter = _pid in _starters if _starters else False
                                 row = {
                                     "Player": pname,
+                                    # Blank rather than "BENCH" when the
+                                    # inference couldn't run at all —
+                                    # unknown shouldn't read as demoted.
+                                    "Role": ("OUT" if not _ok
+                                             else "START" if _is_starter
+                                             else ("BENCH" if _starters else "")),
                                     "Status": (f'OUT {_days}d' if (not _ok and _days)
                                                else ("OUT" if not _ok else "")),
                                     "GP": p.get("gp"), "MIN": p.get("min"),
@@ -481,8 +495,23 @@ def _render_slate():
                                 if label == "Threes":
                                     row["3P%"] = p.get("tp_pct")
                                 rows.append(row)
+                            # Starters first, then bench, then unavailable —
+                            # and within each group by minutes. The table was
+                            # in roster order, which put tonight's best bets
+                            # anywhere on the list.
+                            _order = {"START": 0, "": 1, "BENCH": 1, "OUT": 2}
+                            rows.sort(key=lambda r: (_order.get(r.get("Role"), 1),
+                                                     -(r.get("MIN") or 0)))
                             df = pd.DataFrame(rows)
-                            num_cols = [c for c in df.columns if c != "Player"]
+                            # "Status" is TEXT ("OUT 30d"). It was in this
+                            # list, so pd.to_numeric turned it into NaN and
+                            # the em-dash pass below printed it as "—" —
+                            # the availability flag was computed correctly
+                            # and then destroyed one line later. The warning
+                            # glyph on the name survived only because it
+                            # rides in the Player column.
+                            _TEXT_COLS = ("Player", "Status", "Role")
+                            num_cols = [c for c in df.columns if c not in _TEXT_COLS]
                             for c in num_cols:
                                 df[c] = pd.to_numeric(df[c], errors="coerce")
                             # Render every stat as fixed-format TEXT so

@@ -368,3 +368,58 @@ def _build_props(games, stat_label="Points", window="l10"):
 
     rows.sort(key=lambda r: -r["score"])
     return rows, unrated
+
+
+# ------------------------------------------------------------
+# LIKELY STARTERS
+# ------------------------------------------------------------
+# The WNBA feed publishes no starter flag, and unlike MLB there's no
+# confirmed lineup posted hours before tip. So this is derived, and the
+# derivation has to be honest about what it is: a very strong inference,
+# not an announcement.
+#
+# RECENT minutes, not season minutes. That distinction is the whole
+# point. A player promoted into the starting five two weeks ago still
+# carries a low season average and would be ranked as a bench player by
+# any season-total measure — the same class of mistake that had absent
+# players clearing every filter. Recent minutes describe the role she
+# holds now.
+#
+# Only AVAILABLE players are considered. A starter who has been out three
+# weeks is not tonight's starter, and leaving her in would push the woman
+# who actually replaced her down to sixth.
+STARTER_LOOKBACK = 5     # games
+STARTERS_PER_TEAM = 5
+
+
+def _recent_minutes(player, lookback=STARTER_LOOKBACK):
+    """Mean minutes over her last `lookback` appearances, or None."""
+    log = player.get("log") or []
+    mins = [g.get("min") for g in log[-lookback:] if g.get("min") is not None]
+    if not mins:
+        return None
+    return sum(mins) / len(mins)
+
+
+def likely_starters(players, today=None):
+    """Set of pids most likely to start for this team tonight.
+
+    Returns an EMPTY SET when minutes can't be read for anyone, so callers
+    treat it as "unknown" and show everyone rather than hiding a whole
+    roster behind a failed inference.
+    """
+    ranked = []
+    for p in players or []:
+        ok, _why, _days = availability(p, today=today)
+        if not ok:
+            continue
+        mins = _recent_minutes(p)
+        if mins is None:
+            continue
+        pid = p.get("pid") or p.get("id")
+        if pid is not None:
+            ranked.append((mins, pid))
+    if not ranked:
+        return set()
+    ranked.sort(reverse=True)
+    return {pid for _m, pid in ranked[:STARTERS_PER_TEAM]}
