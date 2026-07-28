@@ -8,7 +8,7 @@
           "team": "PIT",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "682928",
@@ -16,7 +16,7 @@
           "team": "WSH",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "694671",
@@ -24,7 +24,7 @@
           "team": "TEX",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "672515",
@@ -32,7 +32,7 @@
           "team": "ARI",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "691023",
@@ -40,7 +40,7 @@
           "team": "STL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "641355",
@@ -64,7 +64,7 @@
           "team": "TEX",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "655316",
@@ -72,7 +72,7 @@
           "team": "BOS",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "663968",
@@ -80,7 +80,7 @@
           "team": "PIT",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "691176",
@@ -88,7 +88,7 @@
           "team": "NYY",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "677594",
@@ -96,7 +96,7 @@
           "team": "SEA",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "669707",
@@ -104,7 +104,7 @@
           "team": "PIT",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
       "graded": false,
@@ -120,10 +120,10 @@
           "team": "Washington Nationals",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   }
