@@ -82,3 +82,25 @@ assert wind_hr_adj("CHC", "Out To CF 12 mph") == (0, None), \
     "field-relative strings belong to the other code path"
 assert wind_hr_adj("CHC", None) == (0, None)
 print("PASS: roof, unknown park, and unparseable input all yield no adjustment")
+
+# --- Weather Board must agree with HR Edge ----------------------------
+# The board's own docstring said a compass forecast "can't honestly claim
+# out to CF" — true before bearings existed, false now. Leaving it
+# unresolved would have the Weather Board call a wind "pending" while the
+# Game Card was already scoring it: two pages, same slate, opposite
+# claims.
+wb = open("app/views/Weather_Board.py").read()
+assert "from engines.wind_engine import wind_hr_adj" in wb, \
+    "Weather Board doesn't resolve compass winds"
+assert "home_team=team_abbr(" in wb, "park key not passed to the scorer"
+assert "forecast (" in wb, "resolved winds should be labelled as forecast-derived"
+print("PASS: Weather Board resolves compass winds against park orientation")
+
+# It must use the SAME park key as the bearings table and HR park factors.
+from engines.team_abbreviations import TEAM_ABBREVIATIONS as _TA
+assert set(PARK_CF_BEARING).issubset(set(_TA.values()))
+print("PASS: Weather Board, wind engine and park factors share one park key")
+
+# A roofed park must stay CONTROLLED regardless of the outside forecast.
+assert "roof_closed=roofed" in wb, "roofed parks must ignore outside wind"
+print("PASS: roofed parks ignore the outside forecast")

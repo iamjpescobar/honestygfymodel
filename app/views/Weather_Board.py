@@ -116,7 +116,7 @@ def _precip_badge(pct, roofed):
             f'font-weight:700; background:{col}22; color:{col};">{icon} {label}</span>')
 
 
-def _hr_weather(temp_val, wind_str, roofed):
+def _hr_weather(temp_val, wind_str, roofed, home_team=None):
     """(label, color, reasons) — HR-friendliness of the AIR, from two
     real inputs with documented tiers:
       TEMP (any source):  >=85F +2 · 78-84 +1 · 60-69 -1 · <60 -2
@@ -158,8 +158,47 @@ def _hr_weather(temp_val, wind_str, roofed):
         score -= pts; reasons.append(f"wind in {mph}mph (-{pts})")
     elif w and ("l to r" in w or "r to l" in w):
         reasons.append("crosswind (0)")
-    elif not w or "not posted" in w:
-        reasons.append("wind pending official")
+    else:
+        # COMPASS FORECAST — now resolvable.
+        #
+        # This branch used to say "wind pending official" and score zero,
+        # on the stated grounds that a compass reading can't be mapped to
+        # the field without knowing the park's orientation. That was true
+        # when it was written. It isn't any more: engines/wind_engine
+        # carries the real home-plate-to-centre-field bearing for 29
+        # parks, so "SW 12 mph" at Wrigley resolves to blowing out and
+        # the same wind at Comerica to blowing in.
+        #
+        # Leaving it unresolved would also put this page in direct
+        # disagreement with HR Edge, which already applies that wind —
+        # the Weather Board would call it "pending" while the Game Card
+        # was scoring it.
+        #
+        # Scored on the same tiers as the official string, and labelled
+        # "forecast" so the reader knows it came from a compass reading
+        # rather than MLB's field-relative post.
+        _resolved = False
+        if home_team:
+            try:
+                from engines.wind_engine import wind_hr_adj
+                adj, note = wind_hr_adj(home_team, wind_str, roof_closed=roofed)
+            except Exception:
+                adj, note = 0, None
+            if note and mph >= 5:
+                pts = 3 if mph >= 12 else (2 if mph >= 8 else 1)
+                if adj > 0:
+                    score += pts
+                    reasons.append(f"wind out {mph}mph, forecast (+{pts})")
+                    _resolved = True
+                elif adj < 0:
+                    score -= pts
+                    reasons.append(f"wind in {mph}mph, forecast (-{pts})")
+                    _resolved = True
+            elif adj == 0 and note is None and wind_str:
+                reasons.append("crosswind, forecast (0)")
+                _resolved = True
+        if not _resolved and (not w or "not posted" in w):
+            reasons.append("wind pending official")
     if score >= 3:
         return "🔥 HR FRIENDLY", COLOR["gold"], reasons
     if score >= 1:
@@ -206,7 +245,12 @@ with st.spinner("Pulling game-time forecasts for every park\u2026 (30-min cache 
         precip = fc.get("precip") if fc else None
 
         _raw_temp = g.get("weather_temp") or (fc.get("temp") if fc else None)
-        _hr_label, _hr_col, _hr_why = _hr_weather(_raw_temp, g.get("weather_wind"), roofed)
+        # Park abbreviation so a compass wind can be resolved against
+        # this stadium's real orientation — same key wind_engine and the
+        # HR park factors use, so all three agree.
+        _hr_label, _hr_col, _hr_why = _hr_weather(
+            _raw_temp, g.get("weather_wind"), roofed,
+            home_team=team_abbr(g.get("home") or ""))
         _why_txt = " \u00b7 ".join(_hr_why)
 
         rows_html.append(
