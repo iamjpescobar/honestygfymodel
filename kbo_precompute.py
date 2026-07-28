@@ -317,6 +317,12 @@ def fetch_pitcher_stats():
             "era": _val(row, "ERA"), "games": _val(row, "G"),
             "wins": _val(row, "W"), "losses": _val(row, "L"),
             "saves": _val(row, "SV"), "holds": _val(row, "HLD"),
+            # GS = games STARTED. Captured if the leaderboard publishes
+            # it, None if not. project_kbo_slate was dividing innings by
+            # G (total appearances) and calling the result "IP per game
+            # started" — identical for a pure starter, badly wrong for a
+            # swingman who also relieves.
+            "games_started": _val(row, "GS"),
             "innings_pitched": _val(row, "IP"), "strikeouts": _val(row, "SO"),
             "walks": _val(row, "BB"), "whip": _val(row, "WHIP"),
             "quality_starts": _val(row, "QS"),

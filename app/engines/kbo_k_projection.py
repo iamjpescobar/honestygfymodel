@@ -148,7 +148,34 @@ def project_kbo_slate(games, pitchers, team_stats):
                 continue
 
             k9 = so / ip * 9.0
-            ip_per_start = ip / games_n
+
+            # INNINGS PER START, not per appearance.
+            #
+            # This was ip / games_n, where games_n is total games PITCHED.
+            # For a pure starter those are the same number. For a swingman
+            # — say 10 starts and 15 relief outings — dividing 100 IP by
+            # 25 appearances gives 4.0 IP "per start" when his actual
+            # starts run near 6. The projection is innings x K rate, so
+            # the strikeout number came out roughly a third light, and the
+            # column was labelled ip_gs ("per game started"), which made
+            # the wrong number look like the right one.
+            #
+            # Use GS when the leaderboard publishes it. When it doesn't,
+            # fall back to appearances but SAY SO in the status, rather
+            # than printing a diluted number under an honest-looking label.
+            gs = _num(sp.get("games_started"))
+            relief_apps = (_num(sp.get("saves")) or 0) + (_num(sp.get("holds")) or 0)
+            ip_basis_note = None
+            if gs and gs > 0:
+                ip_per_start = ip / gs
+            else:
+                ip_per_start = ip / games_n
+                if relief_apps > 0:
+                    # Positive evidence of relief work with no GS column:
+                    # the innings figure is diluted and we can't correct it.
+                    ip_basis_note = (f"IP/start estimated from {int(games_n)} "
+                                     f"appearances (no GS published; "
+                                     f"{int(relief_apps)} relief outings on file)")
 
             factor = 1.0
             opp_k = k_rates.get(opp) if k_rates else None
@@ -161,6 +188,8 @@ def project_kbo_slate(games, pitchers, team_stats):
                 "opp_k": round(opp_k, 3) if opp_k is not None else None,
                 "factor": round(factor, 3),
                 "proj": round((k9 / 9.0) * ip_per_start * factor, 1),
+                "status": ip_basis_note,
+                "ip_basis": "GS" if (gs and gs > 0) else "appearances",
             })
             rows.append(row)
 

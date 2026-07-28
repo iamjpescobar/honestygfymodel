@@ -29,6 +29,10 @@ st.markdown(
 sync_latest_button(key="sync_wnba_def", include_data_package=True)
 
 
+# CACHED. Streamlit re-runs this whole script on every widget
+# interaction, so without this the slate JSON was parsed from disk on
+# each click. The file only changes when the nightly build publishes.
+@st.cache_data(ttl=900, show_spinner=False)
 def _load_games():
     try:
         payload = json.loads(_GAMES.read_text())
@@ -53,7 +57,10 @@ _win_label = st.segmented_control(
     key="wdef_win", label_visibility="collapsed",
 ) or "L10"
 
-rows, unrated = build_board(games, _stat, _win_opts[_win_label])
+# generated_at comes from the data build itself — the most honest cache
+# key available, since it changes precisely when the numbers do.
+rows, unrated = build_board(games, _stat, _win_opts[_win_label],
+                            cache_key=str(generated_at))
 
 with card("wdef"):
     st.markdown(

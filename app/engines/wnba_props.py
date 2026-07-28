@@ -34,9 +34,41 @@ history. Below any of those a player is listed unrated with the
 reason rather than ranked on noise.
 """
 
+import streamlit as st
+from datetime import datetime, timedelta, timezone
+
 MIN_GP = 8
 MIN_MPG = 15.0
 MIN_LOG = 10
+
+# ------------------------------------------------------------
+# AVAILABILITY
+#
+# Every filter above is a SEASON TOTAL, and none of them knows what day
+# it is. A player who appeared in 20 games through June and then missed
+# the last 14 still reports gp=20, mpg=28, and 20 games of log — she
+# clears every threshold and gets ranked on month-old numbers, against
+# tonight's defense, as though she were playing.
+#
+# That is not a thin edge case. It is the single worst failure this page
+# can have: a confident, well-formed prop on a player who is not in the
+# building. Every other number on the row is correct, which is exactly
+# what makes it dangerous.
+#
+# There is no injury feed here, and inventing one would mean trusting a
+# scrape nobody verified. But the game log already answers the question
+# directly: if a player has not appeared in a game recently, she is not
+# available, whatever the reason. Measured, not guessed.
+#
+# STALE_DAYS is deliberately generous. The WNBA plays roughly every 2-3
+# days, so a healthy rotation player appears within a few days; 8 days
+# clears an All-Star break or a scheduled rest without flagging anyone,
+# while still catching a genuine multi-week absence.
+STALE_DAYS = 8
+# Below this many minutes in her most recent appearance, she was on a
+# minutes restriction or in garbage time — her season line no longer
+# describes what she is being asked to do.
+MIN_LAST_MIN = 8.0
 
 W_CONSISTENCY = 0.35
 W_FORM = 0.25
@@ -106,7 +138,96 @@ def _floor_rate(values, line):
     return sum(1 for v in values if v >= floor) / len(values) * 100.0
 
 
-def build_props(games, stat_label="Points", window="l10"):
+def _parse_log_date(value):
+    """A date from a game-log entry, or None.
+
+    Accepts ISO ("2026-07-27"), ISO datetimes, and the "2026-07-27T00:00:00Z"
+    shape MLB-style feeds emit. Returns None rather than guessing on
+    anything else — an unparseable date must not read as "played today".
+    """
+    if not value:
+        return None
+    text = str(value).strip()
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    for parse in (
+        lambda t: datetime.fromisoformat(t),
+        lambda t: datetime.strptime(t[:10], "%Y-%m-%d"),
+    ):
+        try:
+            dt = parse(text)
+            return dt.date()
+        except (ValueError, TypeError):
+            continue
+    return None
+
+
+def availability(player, today=None):
+    """(ok, reason, days_since) — has this player actually been playing?
+
+    The one question every season-total filter fails to ask. Returns
+    ok=True when her most recent logged appearance is recent enough and
+    substantial enough to believe her season line still applies.
+
+    Deliberately fails OPEN when the log carries no usable dates: with no
+    dates there is no evidence of absence, and silently dropping every
+    player because a feed changed shape would be a worse bug than the one
+    this fixes. It fails CLOSED — marking her unavailable — only on
+    positive evidence: a real date that is too old, or a real last
+    appearance too short to be a normal shift.
+    """
+    log = player.get("log") or []
+    if not log:
+        return False, "no game log", None
+
+    dates = [(_parse_log_date(gl.get("date")), gl) for gl in log]
+    dated = [(d, gl) for d, gl in dates if d is not None]
+    if not dated:
+        # No parseable dates anywhere — no evidence either way.
+        return True, None, None
+
+    today = today or datetime.now(timezone.utc).date()
+    last_date, last_game = max(dated, key=lambda pair: pair[0])
+    days = (today - last_date).days
+
+    if days > STALE_DAYS:
+        return False, f"hasn't played in {days} days (last game {last_date})", days
+
+    last_min = last_game.get("min")
+    if last_min is not None and last_min < MIN_LAST_MIN:
+        return (False,
+                f"only {last_min:.0f} min in her last game \u2014 restricted or "
+                f"out of the rotation", days)
+
+    return True, None, days
+
+
+@st.cache_data(ttl=1800, max_entries=24, show_spinner=False)
+def _build_props_cached(_games, stat_label, window, cache_key):
+    return _build_props(_games, stat_label, window)
+
+
+def build_props(games, stat_label="Points", window="l10", cache_key=None):
+    """(rows, unrated) — every qualifying player ranked for this stat.
+
+    CACHED, because Streamlit re-runs the whole page script on every
+    widget interaction. Without this, tapping the Stat selector re-ranked
+    every player on the slate from scratch — the reason these pages took
+    so long to respond.
+
+    `_games` is underscore-prefixed so Streamlit skips hashing it: it's a
+    large list of nested dicts and hashing it would cost more than the
+    work being cached. `cache_key` carries the data build's timestamp
+    instead, which is what actually determines whether the result is
+    stale. Callers that pass no key fall back to uncached behaviour
+    rather than silently serving one slate's board for another's.
+    """
+    if cache_key is None:
+        return _build_props(games, stat_label, window)
+    return _build_props_cached(games, stat_label, window, cache_key)
+
+
+def _build_props(games, stat_label="Points", window="l10"):
     """(rows, unrated) — every qualifying player ranked for this stat."""
     cfg = STATS.get(stat_label, STATS["Points"])
     key, def_key = cfg["key"], cfg["def_key"]
@@ -140,6 +261,16 @@ def build_props(games, stat_label="Points", window="l10"):
                     continue
                 base = {"player": name, "pos": p.get("pos") or "?",
                         "team": g.get(side, "?"), "opp": opp_name}
+                # AVAILABILITY FIRST. Checked before any season-total
+                # threshold, because those all pass for a player who
+                # stopped playing a month ago — see the note by
+                # STALE_DAYS. Cheapest check and the one that matters
+                # most, so it goes first.
+                ok, why, days = availability(p)
+                if not ok:
+                    unrated.append({**base, "reason": why})
+                    continue
+
                 gp = p.get("gp") or 0
                 mpg = p.get("min") or 0
 

@@ -39,25 +39,42 @@ def _load(path, key):
         return None, None
 
 
+# CACHED. Streamlit re-runs this whole script on every widget
+# interaction, so without this the slate JSON was parsed from disk on
+# each click. The file only changes when the nightly build publishes.
+@st.cache_data(ttl=900, show_spinner=False)
 def _load_games():
     try:
         payload = json.loads(_KBO_GAMES.read_text())
         return (payload.get("games", []), payload.get("generated_at_kst"),
                 payload.get("slate_date_kst"))
     except Exception:
-        return None, None
+        # THREE values, not two. The success path returns a 3-tuple and
+        # this returned 2, so any failure to read the slate file — missing,
+        # truncated, mid-write — crashed the caller with "not enough
+        # values to unpack" instead of degrading into the empty-slate
+        # message the page already has.
+        return None, None, None
 
 
+# CACHED. Streamlit re-runs this whole script on every widget
+# interaction, so without this the slate JSON was parsed from disk on
+# each click. The file only changes when the nightly build publishes.
+@st.cache_data(ttl=900, show_spinner=False)
 def _load_pitchers():
     pitchers, gen = _load(_KBO_PITCHERS, "pitchers")
     return pitchers or [], gen
 
 
+# CACHED — see _load_games above.
+@st.cache_data(ttl=900, show_spinner=False)
 def _load_batters():
     batters, gen = _load(_KBO_BATTERS, "batters")
     return batters or [], gen
 
 
+# CACHED — see _load_games above.
+@st.cache_data(ttl=900, show_spinner=False)
 def _load_team_stats():
     try:
         payload = json.loads(_KBO_TEAM_STATS.read_text())

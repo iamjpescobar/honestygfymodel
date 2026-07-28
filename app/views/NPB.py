@@ -20,6 +20,10 @@ _NPB_GAMES = Path(__file__).resolve().parent.parent / "data" / "npb" / "games.js
 page_header("NPB Analytics", "Nippon Professional Baseball — game-level markets", eyebrow="IN ACTIVE DEVELOPMENT")
 
 
+# CACHED. Streamlit re-runs this whole script on every widget
+# interaction, so without this the slate JSON was parsed from disk on
+# each click. The file only changes when the nightly build publishes.
+@st.cache_data(ttl=900, show_spinner=False)
 def _load_games():
     """Reads the NPB slate produced by the nightly pipeline. Returns
     (games, generated_at) or (None, None) when the engine hasn't shipped

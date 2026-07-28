@@ -32,6 +32,10 @@ st.markdown(
 sync_latest_button(key="sync_wnba_props", include_data_package=True)
 
 
+# CACHED. Streamlit re-runs this whole script on every widget
+# interaction, so without this the slate JSON was parsed from disk on
+# each click. The file only changes when the nightly build publishes.
+@st.cache_data(ttl=900, show_spinner=False)
 def _load_games():
     try:
         return json.loads(_GAMES.read_text()).get("games", [])
@@ -55,7 +59,12 @@ _win_label = st.segmented_control(
     key="wprops_win", label_visibility="collapsed",
 ) or "L10"
 
-rows, unrated = build_props(games, _stat, _win_opts[_win_label])
+# Cache key = the slate file's mtime. Changes exactly when the nightly
+# build publishes new data, and never otherwise — so switching stat or
+# window is instant while a fresh build still invalidates correctly.
+_build_key = str(_GAMES.stat().st_mtime) if _GAMES.exists() else "none"
+rows, unrated = build_props(games, _stat, _win_opts[_win_label],
+                            cache_key=_build_key)
 
 with card("wprops"):
     st.markdown(
