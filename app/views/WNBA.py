@@ -39,6 +39,12 @@ _SB_URL = "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scorebo
 page_header("WNBA Analytics", "Live season coverage — game & prop research", eyebrow="LIVE")
 
 
+# Shared availability rule — the same one the Props, Defense and Player
+# of the Day boards use, so one page can't disagree with another about
+# who is playing.
+from engines.wnba_props import availability as _availability
+
+
 def _load_games():
     try:
         payload = json.loads(_WNBA_GAMES.read_text())
@@ -440,9 +446,23 @@ def _render_slate():
                             rows = []
                             for p in plist:
                                 pos = p.get("pos") or ""
+                                # Flag, don't hide. This is the full slate
+                                # roster rather than a pick list, so a
+                                # player who hasn't appeared recently is
+                                # still worth seeing — but her Season/L5/L10
+                                # numbers describe a month ago, and without
+                                # a marker they read as current form.
+                                # Boards that actually PICK players
+                                # (Props, Defense, Player of the Day) drop
+                                # her outright; this one labels her.
+                                _ok, _why, _days = _availability(p)
                                 pname = f'{p.get("name")} \u00b7 {pos}' if pos else p.get("name")
+                                if not _ok:
+                                    pname = f'\u26a0 {pname}'
                                 row = {
                                     "Player": pname,
+                                    "Status": (f'OUT {_days}d' if (not _ok and _days)
+                                               else ("OUT" if not _ok else "")),
                                     "GP": p.get("gp"), "MIN": p.get("min"),
                                     "Season": p.get(season_k),
                                     "L5": p.get(l5_k), "L10": p.get(l10_k),

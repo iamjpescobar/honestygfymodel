@@ -324,6 +324,11 @@ def get_wnba_player_of_the_day(form_window: str = "l5"):
     if not games:
         return None, [], "No WNBA games on today's slate."
 
+    # Imported here rather than at module scope: player_of_the_day is
+    # imported by the MLB paths too, and they have no reason to pull in
+    # the WNBA engines.
+    from engines.wnba_props import availability as _wnba_availability
+
 
     # Slate-average points allowed, for the opponent-defense factor.
     _pa_vals = []
@@ -339,6 +344,26 @@ def get_wnba_player_of_the_day(form_window: str = "l5"):
             team_name = g.get(side, "")
             plist = g.get(f"{side}_players") or []
             for p in plist:
+                # AVAILABILITY FIRST — and it matters more here than
+                # anywhere else on the site.
+                #
+                # gp < 5 is a SEASON total. A player who appeared 20 times
+                # through June and then missed the last month still reports
+                # gp=20 and stays eligible to be crowned Player of the Day.
+                #
+                # Worse, the ranking below is l5_pra — her last FIVE games.
+                # For someone who stopped playing, those five are from a
+                # month ago, and they are frequently her hottest stretch,
+                # the one right before she got hurt. So the omission didn't
+                # merely allow absent players through; it actively FAVOURED
+                # the ones who were producing when they went down.
+                #
+                # This board is also logged for calibration, so every such
+                # pick was an automatic miss recorded against the model.
+                ok, why, _days = _wnba_availability(p)
+                if not ok:
+                    continue
+
                 gp = p.get("gp") or 0
                 if gp < 5:
                     continue  # real games played, but too small a sample to crown
@@ -370,7 +395,8 @@ def get_wnba_player_of_the_day(form_window: str = "l5"):
                 })
 
     if not candidates:
-        msg = "No eligible real candidates today — need at least 5 real games played this season."
+        msg = ("No eligible real candidates today — need at least 5 real games "
+               "played this season, and a recent appearance.")
         if form_window in ("l15", "l25"):
             msg += " (L15/L25 form appears after the next nightly data build.)"
         return None, [], msg

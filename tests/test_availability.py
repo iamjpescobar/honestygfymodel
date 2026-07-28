@@ -17,6 +17,13 @@ def _c(**kw):
     def d(f): return f
     return d
 st.cache_data = _c; sys.modules["streamlit"] = st
+# player_of_the_day pulls in the MLB engines on import; stub the
+# dependency so this test exercises the WNBA path without it.
+pb = types.ModuleType("pybaseball")
+for _n in ("statcast_batter", "statcast_pitcher", "playerid_lookup",
+           "statcast_batter_percentile_ranks", "statcast"):
+    setattr(pb, _n, lambda *a, **k: None)
+sys.modules["pybaseball"] = pb
 sys.path.insert(0, "app")
 
 from engines.wnba_props import availability, STALE_DAYS, MIN_LAST_MIN, _parse_log_date
@@ -93,3 +100,38 @@ body = src[src.index("for p in g.get(f\"{side}_players\")"):]
 i_avail, i_gp = body.index("availability(p)"), body.index("gp < MIN_GP")
 assert i_avail < i_gp, "availability must be checked before season totals"
 print("PASS: availability is the first filter, ahead of every season total")
+
+# --- WNBA Player of the Day -------------------------------------------
+# The worst instance: this board only checked gp < 5 (a season total) AND
+# ranks by l5_pra — her last five games. For someone who stopped playing,
+# those five are from a month ago and are often her hottest stretch, the
+# one right before she went down. So the omission didn't merely let absent
+# players through, it FAVOURED the ones producing when they got hurt.
+pod_src = open("app/engines/player_of_the_day.py").read()
+seg = pod_src[pod_src.index("def get_wnba_player_of_the_day"):]
+assert "_wnba_availability(p)" in seg, "WNBA POTD doesn't check availability"
+# Match the CODE line, not the prose — the explanatory comment above the
+# check also contains "gp < 5", and an earlier version of this assertion
+# found the comment first and failed against correct code.
+i_av = seg.index("_wnba_availability(p)")
+i_gp = seg.index("                if gp < 5:")
+assert i_av < i_gp, "availability must be checked before the season-total floor"
+print("PASS: WNBA Player of the Day checks availability before gp < 5")
+
+# --- WNBA slate tables flag rather than hide --------------------------
+w = open("app/views/WNBA.py").read()
+assert "_availability(p)" in w, "slate tables don't check availability"
+assert '"Status"' in w, "slate tables need a status column"
+assert "OUT" in w
+print("PASS: slate tables FLAG unavailable players (roster view, not a pick list)")
+
+# One rule, four consumers — a page disagreeing with another about who is
+# playing is how this bug comes back.
+import engines.player_of_the_day as pod
+for mod, name in (("engines.wnba_props", "props"),
+                  ("engines.wnba_defense", "defense")):
+    m = __import__(mod, fromlist=["availability"])
+    assert m.availability is availability, f"{name} carries its own copy"
+assert "from engines.wnba_props import availability" in w
+assert "from engines.wnba_props import availability" in pod_src
+print("PASS: props, defense, POTD and the slate view share one rule")

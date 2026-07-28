@@ -66,3 +66,35 @@ for view in ("WNBA_Props.py", "WNBA_Defense.py"):
     s = open(f"app/views/{view}").read()
     assert "cache_key=" in s, f"{view} doesn't pass a cache key — caching is inert"
 print("PASS: both WNBA boards pass a cache key (caching is live, not inert)")
+
+# --- NPB: an ambiguous surname is a MISS, not a coin flip -------------
+# The schedule page announces starters by family name only, and this
+# returned the FIRST match on the team. Japanese surnames repeat heavily
+# — a roster with two Tanakas is ordinary — so the page printed one
+# pitcher's ERA/IP/K under the other's name: no error, no flag, a wrong
+# line that looked exactly like a right one.
+sys.path.insert(0, ".")
+import npb_precompute as npb
+
+STATS = {
+    "田中\u3000将大": {"team": "Giants", "era": "2.10", "strikeouts": "150"},
+    "田中\u3000健二": {"team": "Giants", "era": "5.80", "strikeouts": "40"},
+    "山本\u3000由伸": {"team": "Tigers", "era": "1.90", "strikeouts": "180"},
+}
+
+unique = npb.find_pitcher_stats(STATS, "山本", "Tigers")
+assert unique and unique["era"] == "1.90", unique
+print("PASS: a unique surname resolves to the right pitcher")
+
+ambiguous = npb.find_pitcher_stats(STATS, "田中", "Giants")
+assert ambiguous is None, (
+    f"two Tanakas on one roster returned {ambiguous} — surname alone can't "
+    f"identify him, so this must return nothing rather than a coin flip")
+print("PASS: two same-surname pitchers on a team -> no line, not a guess")
+
+assert npb.find_pitcher_stats(STATS, "山本", "Giants") is None, \
+    "must never match across teams"
+assert npb.find_pitcher_stats(STATS, "佐藤", "Giants") is None
+assert npb.find_pitcher_stats(STATS, "", "Giants") is None
+assert npb.find_pitcher_stats({}, "山本", "Tigers") is None
+print("PASS: cross-team, unknown, and empty inputs all return None")

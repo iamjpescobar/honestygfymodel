@@ -171,14 +171,36 @@ def fetch_pitcher_stats() -> dict:
 def find_pitcher_stats(pitcher_stats: dict, surname: str, team: str):
     """Match a schedule-page starter (surname only) to their full stat
     line, scoped to the team they play for. Returns None if no real match
-    is found — never guesses across teams or fabricates a line."""
+    is found — never guesses across teams or fabricates a line.
+
+    AMBIGUITY IS A MISS, NOT A COIN FLIP.
+
+    The schedule page announces starters by family name only, and this
+    used to return the FIRST match on the team. Japanese surnames repeat
+    heavily — Tanaka, Suzuki, Sato, Yamamoto — and a single NPB roster
+    carrying two pitchers with the same family name is ordinary, not
+    exotic. When that happened the page printed one pitcher's ERA, IP and
+    strikeouts under the other's name: no error, no flag, a completely
+    wrong line that looked exactly like a right one.
+
+    Now every match on the team is collected. Exactly one is a real
+    answer. Two or more means the surname alone cannot identify him, so
+    this returns None and the page shows no line rather than a plausible
+    wrong one — the same rule the rest of the site follows for data it
+    cannot stand behind.
+    """
     if not surname or not pitcher_stats:
         return None
-    for full_name, info in pitcher_stats.items():
-        if info.get("team") != team:
-            continue
-        if full_name == surname or full_name.split('\u3000')[0] == surname:
-            return info
+    matches = [
+        info for full_name, info in pitcher_stats.items()
+        if info.get("team") == team
+        and (full_name == surname or full_name.split('\u3000')[0] == surname)
+    ]
+    if len(matches) == 1:
+        return matches[0]
+    if len(matches) > 1:
+        print(f"  NPB: '{surname}' matches {len(matches)} pitchers on {team} "
+              f"— surname alone can't identify him, showing no line.")
     return None
 
 
