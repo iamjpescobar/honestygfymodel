@@ -97,3 +97,40 @@ print(f"PASS: all {len(vuln_cols)} HR vulnerability columns are formatted")
 
 assert '"xHR Gap": "{:+.1f}"' in gc, "xHR Gap should show its sign — the sign IS the signal"
 print("PASS: xHR Gap renders signed (+/-), since direction is the whole read")
+
+# --- HR Edge Board view ------------------------------------------------
+# Same class of silent breakage as the Game Card: a view that can't be
+# imported headlessly, where a bad theme key or an unformatted column
+# only shows up when a user opens the page.
+import sys as _sys, types as _types
+_st = _types.ModuleType("streamlit")
+def _c(**kw):
+    def d(f): return f
+    return d
+_st.cache_data = _c
+_sys.modules.setdefault("streamlit", _st)
+_sys.path.insert(0, "app")
+from styles.kc_theme import COLOR as _COLOR
+
+hb = open("app/views/HR_Edge_Board.py").read()
+
+bad_keys = [k for k in set(re.findall(r'COLOR\["(\w+)"\]', hb)) if k not in _COLOR]
+assert not bad_keys, f"HR Edge Board uses nonexistent theme keys (KeyError on load): {bad_keys}"
+print("PASS: HR Edge Board theme keys all resolve")
+
+hb_fmt = re.search(r'\)\.format\(\{(.*?)\}, na_rep=', hb, re.S).group(1)
+hb_formatted = set(re.findall(r'"([^"]+)":', hb_fmt))
+hb_cols = set(re.findall(r'"([^"]+)": r\.get', hb))
+NUMERIC = {"HR Edge", "HR Score", "Matchup", "Context"}
+missing_hb = [c for c in NUMERIC if c not in hb_formatted]
+assert not missing_hb, f"unformatted numeric columns: {missing_hb}"
+print(f"PASS: all {len(NUMERIC)} numeric HR Edge Board columns are formatted")
+
+assert '"Matchup": "{:+.1f}"' in hb and '"Context": "{:+.1f}"' in hb, \
+    "adjustment columns should be signed — direction is the read"
+print("PASS: Matchup and Context render signed")
+
+# The page must be reachable, or it's dead code.
+app = open("app/app.py").read()
+assert '"views/HR_Edge_Board.py"' in app, "HR Edge Board is not registered in app.py"
+print("PASS: HR Edge Board is registered in the nav")

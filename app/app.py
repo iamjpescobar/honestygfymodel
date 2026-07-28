@@ -84,6 +84,10 @@ with _strip_col:
 def build_mlb_pages(include_admin: bool):
     pages = [
         ("Game Card", "views/GameCard.py"),
+        # Slate-wide HR Edge. The Game Card shows one game's version of
+        # the same number; this ranks every bat on the slate, and it is
+        # the exact list the calibration logger records.
+        ("HR Edge", "views/HR_Edge_Board.py"),
         ("Strikeout Board", "views/Strikeout_Board.py"),
         ("Daily 13", "views/Daily_13.py"),
         ("Pitchers to Target", "views/Pitchers_To_Target.py"),
