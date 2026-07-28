@@ -732,7 +732,13 @@ with content_col:
         # missing-fields bug AND the accented-name matching failures
         # in one move, since there's no name string involved at all.
         profile = get_batter_profile_windowed(b.get("id"), window="season", unit="bbe")
-        batter_profiles.append({"name": b["name"], "bats": b.get("bats") or "?", "id": b.get("id"), "profile": profile})
+        # battingOrder carried through so the opportunity factor and the
+        # 1-9 display order both have it. Present only on CONFIRMED
+        # lineups — the fallback path has no batting order, and the slot
+        # adjustment correctly sits out there rather than inventing one.
+        batter_profiles.append({"name": b["name"], "bats": b.get("bats") or "?",
+                                "id": b.get("id"), "profile": profile,
+                                "battingOrder": b.get("battingOrder")})
 
     ranked = rank_batters(batter_profiles, savant_df) if batter_profiles else []
 
@@ -788,6 +794,7 @@ with content_col:
                                           bats=_eff_bats,
                                           temp=_temp, wind=_wind,
                                           arsenal=_arsenal,
+                                          batting_order=_r.get("battingOrder"),
                                           batter_vs_pitch=_batter_pitch_profile(
                                               _r.get("id"), _top_pitches)
                                           if _top_pitches and _r.get("id") else None))
@@ -992,9 +999,16 @@ with content_col:
                     )
                 with sort_col:
                     sort_choice = st.selectbox(
-                        "Sort by", ["SLAM", "HR Edge", "HR Score", "Hit Score",
-                                    "xwOBA", "xSLG", "ISO", "Brl%", "Brl/PA",
-                                    "HH%", "EV90", "HRWindow%", "HRIntent"],
+                        # "Batting Order" first and default: when MLB has
+                        # posted a real lineup, the natural way to read it
+                        # is 1 through 9. Ranking by score buried the
+                        # leadoff hitter in the middle of the table and
+                        # made the card harder to scan against the actual
+                        # lineup card. Every analytic sort is still one
+                        # click away.
+                        "Sort by", ["Batting Order", "SLAM", "HR Edge", "HR Score",
+                                    "Hit Score", "xwOBA", "xSLG", "ISO", "Brl%",
+                                    "Brl/PA", "HH%", "EV90", "HRWindow%", "HRIntent"],
                         key="lineup_sort_by"
                     )
                 with window_col:
@@ -1105,6 +1119,12 @@ with content_col:
                     }
 
                 sort_key_map = {
+                    # 1 through 9 as MLB posted it. Rows without a batting
+                    # order (the unconfirmed-lineup fallback) sort last
+                    # rather than jumping to the top, since 0 would
+                    # otherwise read as "bats first".
+                    "Batting Order": lambda r: -((r.get("battingOrder") or 9999) // 100
+                                                 if r.get("battingOrder") else 9999),
                     "SLAM": lambda r: slam_bvp_cache[r["name"]]["final"] or 0.0,
                     "HR Edge": lambda r: _score_num(r.get("edge")),
                     "HR Score": lambda r: _score_num(r["hr_score"]),
@@ -1133,7 +1153,7 @@ with content_col:
                 def _stat_row(name, bats_label, profile, *, matchup=None, slam=None,
                               hr_edge=None, hr_score=None, hit_score=None,
                               edge_cell=None, edge_label="", edge_tier="neutral",
-                              confidence=""):
+                              confidence="", batting_order=None):
                     """One table row. Score/matchup fields are optional so a
                     switch hitter's non-matchup side can show stats only (its
                     HR/Hit scores would be for the wrong platoon side, so we
@@ -1148,6 +1168,9 @@ with content_col:
                         "xSLG": profile.get("xSLG"),
                         "ISO": profile.get("ISO", 0),
                         "HR/FB": profile.get("HR/FB"),
+                        # 1-9 as posted. Blank on the unconfirmed-lineup
+                        # fallback, which genuinely has no batting order.
+                        "Ord": (batting_order // 100) if batting_order else None,
                         "Brl%": profile.get("Brl %", 0),
                         # Barrels per PLATE APPEARANCE, next to the
                         # per-batted-ball rate. The gap between the two
@@ -1233,6 +1256,7 @@ with content_col:
                         edge_cell=edge_tag(tag_label, tag_tier),
                         edge_label=tag_label, edge_tier=tag_tier,
                         confidence=f"{conf_label} \u2014 n={sample}",
+                        batting_order=r.get("battingOrder"),
                     ))
 
                     # Switch hitter: add row(s) for the other side(s), stats
@@ -1248,6 +1272,7 @@ with content_col:
                                 r["name"], f'S ({_sd})', _prof,
                                 confidence=f"{_c_lbl} \u2014 n={_c_n}",
                                 edge_label="split view", edge_tier="neutral",
+                                batting_order=r.get("battingOrder"),
                             ))
 
                 display_df = pd.DataFrame(table_rows) if table_rows else None
@@ -1266,6 +1291,7 @@ with content_col:
                     # first rendered as 104.00 and 91.70 while their
                     # neighbours showed 104.0 and 91.7.
                     styled = styled.format({
+                        "Ord": "{:.0f}",
                         "SLAM": "{:.1f}", "BA": "{:.3f}", "xwOBA": "{:.3f}", "xSLG": "{:.3f}",
                         "ISO": "{:.3f}", "HR/FB": "{:.1f}",
                         "Brl%": "{:.1f}", "HH%": "{:.1f}", "LD%": "{:.1f}",

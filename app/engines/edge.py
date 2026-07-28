@@ -318,7 +318,8 @@ def pen_context(pitcher_team: str, starter_pid):
 # ------------------------------------------------------------------
 def edge_components(batter_id, pitcher_id, base_score, pen_adj, pen_note,
                     *, home_team=None, bats=None, temp=None, roof_closed=False,
-                    wind=None, arsenal=None, batter_vs_pitch=None):
+                    wind=None, arsenal=None, batter_vs_pitch=None,
+                    batting_order=None):
     """Attachable dict for a lineup row. edge is None when the skill
     score is None (no Savant sample) — matchup can't rescue a bat we
     can't rate.
@@ -367,7 +368,20 @@ def edge_components(batter_id, pitcher_id, base_score, pen_adj, pen_note,
         pm_adj, pm_note = pitch_matchup_adj(batter_id, arsenal,
                                             batter_vs_pitch=batter_vs_pitch)
 
-    total = b_adj + z_adj + pen_adj + ctx_adj + pm_adj
+    # LINEUP SLOT — opportunity, not skill.
+    #
+    # Every other component here asks how good this bat is. This one asks
+    # how many times he gets to swing, which is the difference between
+    # ranking hitters and predicting home runs. Sits out entirely when the
+    # lineup isn't confirmed, since an unposted lineup has no batting
+    # order to read.
+    slot_adj, slot_note = 0.0, None
+    if batting_order is not None:
+        from engines.lineup_slot import slot_opportunity_adj, league_pa_per_game
+        slot_adj, slot_note = slot_opportunity_adj(batting_order,
+                                                   league_pa_per_game())
+
+    total = b_adj + z_adj + pen_adj + ctx_adj + pm_adj + slot_adj
     edge = None
     if base_score is not None:
         edge = int(max(0, min(100, round(base_score + total))))
@@ -376,4 +390,5 @@ def edge_components(batter_id, pitcher_id, base_score, pen_adj, pen_note,
             "zone_adj": z_adj, "zone_note": z_note,
             "pen_adj": pen_adj, "pen_note": pen_note,
             "ctx_adj": ctx_adj, "ctx_notes": ctx_notes,
-            "pitch_adj": pm_adj, "pitch_note": pm_note}
+            "pitch_adj": pm_adj, "pitch_note": pm_note,
+            "slot_adj": slot_adj, "slot_note": slot_note}

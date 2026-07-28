@@ -536,6 +536,55 @@ def build_pitch_type_hr(season_df: pd.DataFrame) -> bool:
     return True
 
 
+# ------------------------------------------------------------
+# PLATE APPEARANCES PER TEAM-GAME
+# ------------------------------------------------------------
+# The input behind lineup-slot opportunity, MEASURED rather than assumed.
+#
+# Every metric on this site describes how good a swing is. None of them
+# describes how many times a hitter gets to take it — and a leadoff bat
+# comes up meaningfully more often than a 9-hole bat. Home run
+# probability scales almost linearly with plate appearances, so ignoring
+# that means correctly ranking a 9-hole hitter above a leadoff hitter on
+# skill while being wrong about who is likelier to go deep tonight.
+#
+# Rather than hardcode a table of "expected PA by slot", this measures
+# the one real quantity the arithmetic needs: how many plate appearances
+# a team actually gets in a game. Slot expectations then follow exactly —
+# with T plate appearances spread over nine slots, slot i gets
+# ceil((T - i + 1) / 9), because the order simply wraps. No constants, no
+# estimates; the number tracks whatever the league is really doing, and
+# a low-scoring era or a rules change moves it on its own.
+#
+# A PA is one at_bat_number within one game_pk for one batting side.
+def build_pa_per_game(season_df: pd.DataFrame):
+    """League mean plate appearances per team-game, or None."""
+    need = {"game_pk", "at_bat_number", "home_team", "events"}
+    if not need.issubset(season_df.columns):
+        print("  PA/game skipped — missing game_pk/at_bat_number.")
+        return None
+
+    df = season_df[_mask(season_df["events"].notna())]
+    if df.empty:
+        print("  PA/game skipped — no terminal events.")
+        return None
+
+    # One row per completed plate appearance.
+    pa = df.drop_duplicates(subset=["game_pk", "at_bat_number"])
+    # Two batting sides per game, so team-games = games x 2.
+    games = pa["game_pk"].nunique()
+    if not games:
+        return None
+    per_team_game = len(pa) / (games * 2.0)
+    if not (25.0 < per_team_game < 60.0):
+        # Outside this band the calculation is wrong, not the league.
+        print(f"  PA/game skipped — implausible value {per_team_game:.1f}.")
+        return None
+    print(f"  PA per team-game: {per_team_game:.2f} "
+          f"(from {len(pa):,} PA across {games:,} games)")
+    return round(per_team_game, 2)
+
+
 def fetch_fangraphs() -> bool:
     """Fetches the real FanGraphs batting leaderboard (same call the app
     makes) from GitHub's servers — which FanGraphs does not block, unlike
@@ -570,6 +619,9 @@ def main():
     print("Building league-wide HR metrics...")
     hrm_ok = build_hr_metrics(season_df)
 
+    print("Measuring plate appearances per team-game...")
+    pa_per_game = build_pa_per_game(season_df)
+
     print("Building HR park factors by handedness...")
     park_ok = build_park_hr_factors(season_df)
 
@@ -592,6 +644,8 @@ def main():
         "hr_metrics_included": hrm_ok,
         "park_hr_factors_included": park_ok,
         "pitch_type_hr_included": pt_ok,
+        # Measured, not assumed — see build_pa_per_game.
+        "pa_per_team_game": pa_per_game,
     }
     (DATA_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2))
     print("Manifest:", json.dumps(manifest, indent=2))
