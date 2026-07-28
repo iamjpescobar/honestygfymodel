@@ -83,7 +83,20 @@ def _lineup_for(game_pk, side, team_name):
     lineup, ok = get_confirmed_lineup(game_pk, side)
     if ok and lineup:
         return [p for p in lineup if not p.get("is_pitcher")], True
-    last = get_last_starting_lineup(team_name) or []
+
+    # get_last_starting_lineup returns a THREE-tuple
+    # (lineup, game_date, confirmed) — not a bare list. Unpacking it as
+    # one iterated over the tuple itself and handed the list to .get(),
+    # crashing the page with "AttributeError: 'list' object has no
+    # attribute 'get'".
+    #
+    # `last_ok` means "a real posted lineup was found for that PAST
+    # game", which is not the same as today's lineup being confirmed —
+    # so this always reports False upward. The caller needs to know this
+    # board rests on yesterday's card.
+    last, _game_date, last_ok = get_last_starting_lineup(team_name)
+    if not last_ok or not last:
+        return [], False
     return [p for p in last if not p.get("is_pitcher")], False
 
 

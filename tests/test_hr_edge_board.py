@@ -46,7 +46,8 @@ board.load_percentile_ranks = lambda: (pd.DataFrame(), None)
 board.get_confirmed_lineup = lambda pk, side: (
     [{"name": f"{side}{pk}-{i}", "id": pk * 100 + i * 10 + (0 if side == "away" else 5),
       "bats": "S" if i == 0 else "R", "is_pitcher": False} for i in range(3)], True)
-board.get_last_starting_lineup = lambda t: []
+# REAL shape: (lineup, game_date, confirmed) — a 3-tuple, not a list.
+board.get_last_starting_lineup = lambda t: ([], None, False)
 board.get_batter_profile_windowed = lambda pid, **kw: {"Brl %": 10.0}
 board.get_pitcher_statcast = lambda pid: {"p_throws": "R"}
 board.pen_context = lambda team, pid: (0, None)
@@ -100,8 +101,9 @@ board.edge_components = fake_edge
 
 # --- confirmed_only ----------------------------------------------------
 board.get_confirmed_lineup = lambda pk, side: ([], False)
-board.get_last_starting_lineup = lambda t: [
-    {"name": "Fallback", "id": 999, "bats": "R", "is_pitcher": False}]
+board.get_last_starting_lineup = lambda t: (
+    [{"name": "Fallback", "id": 999, "bats": "R", "is_pitcher": False}],
+    "2026-07-26", True)
 rows3, meta3 = board.get_hr_edge_board(_date_str="x", confirmed_only=True)
 assert rows3 == [] and meta3["skipped"], "projected lineups leaked into a confirmed-only board"
 print("PASS: confirmed_only excludes projected lineups and records why")
@@ -115,3 +117,24 @@ board.get_todays_games_with_weather = lambda: ([], "no slate")
 rows5, meta5 = board.get_hr_edge_board(_date_str="x")
 assert rows5 == [] and meta5["error"]
 print("PASS: empty slate returns cleanly with an error note")
+
+# --- fallback path uses the real 3-tuple shape ------------------------
+# This is what crashed the live page: get_last_starting_lineup returns
+# (lineup, game_date, confirmed) and was unpacked as a bare list.
+board.get_todays_games_with_weather = lambda: (GAMES, None)
+board.get_confirmed_lineup = lambda pk, side: ([], False)
+board.get_last_starting_lineup = lambda t: (
+    [{"name": f"{t}-1", "id": 777, "bats": "R", "is_pitcher": False},
+     {"name": f"{t}-P", "id": 778, "bats": "R", "is_pitcher": True}],
+    "2026-07-26", True)
+rows6, _ = board.get_hr_edge_board(_date_str="x", confirmed_only=False)
+assert rows6, "fallback lineup produced no rows"
+assert all(r["confirmed"] is False for r in rows6)
+assert not any("-P" in (r.get("name") or "") for r in rows6), "pitcher leaked into the board"
+print(f"PASS: fallback 3-tuple unpacks, pitchers filtered out ({len(rows6)} bats)")
+
+# No completed game to fall back to -> empty, not a crash.
+board.get_last_starting_lineup = lambda t: ([], None, False)
+rows7, meta7 = board.get_hr_edge_board(_date_str="x", confirmed_only=False)
+assert rows7 == [] and meta7["skipped"]
+print("PASS: no fallback lineup available -> empty board, reason recorded")
