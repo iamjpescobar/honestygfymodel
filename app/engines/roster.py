@@ -139,6 +139,7 @@ def get_live_team_roster(team_name: str):
         return []
 
     roster_by_pid = {}  # active entries win on overlap; 40Man fills in the rest
+    active_pids = set()  # who is on the ACTIVE 26 right now
     for roster_type in ("40Man", "active"):  # loaded in this order so active overwrites 40Man on overlap
         roster_url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster"
         try:
@@ -153,6 +154,13 @@ def get_live_team_roster(team_name: str):
             pid = player.get("person", {}).get("id")
             if pid is not None:
                 roster_by_pid[pid] = player
+                if roster_type == "active":
+                    # AVAILABILITY, free. This call already happens; we
+                    # were simply throwing away which players came back
+                    # from it. On the 40-man but NOT the active 26 means
+                    # IL, optioned, or restricted — not playing tonight.
+                    # MLB's own roster state, not a scrape or an inference.
+                    active_pids.add(pid)
 
     if not roster_by_pid:
         return []
@@ -162,6 +170,7 @@ def get_live_team_roster(team_name: str):
 
     for player in roster_by_pid.values():
         pid = str(player["person"]["id"])
+        is_active = player["person"]["id"] in active_pids
         full_name = player["person"]["fullName"]
         position_code = player.get("position", {}).get("abbreviation", "?")
         position_type = player.get("position", {}).get("type", "Unknown")  # "Pitcher" or "Hitter" etc.
@@ -181,7 +190,10 @@ def get_live_team_roster(team_name: str):
             "position": position_code,
             "is_pitcher": is_pitcher,
             "bats": bats,     # None means "unknown, real lookup failed" — not a guess
-            "throws": throws
+            "throws": throws,
+            # True = on the active 26 today. False = on the 40-man but
+            # not active, i.e. IL / optioned / restricted.
+            "active": is_active,
         })
 
     # Rare fallback: hydrate didn't come through for a handful of players
@@ -281,3 +293,32 @@ def get_pitchers(team_name: str):
 def get_position_players(team_name: str):
     """Convenience filter: only real position players (non-pitchers) on the roster."""
     return [p for p in get_live_team_roster(team_name) if not p["is_pitcher"]]
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def get_active_player_ids(team_name: str):
+    """Set of player ids on this team's ACTIVE roster right now.
+
+    Exists because a stale lineup is invisible. get_last_starting_lineup
+    searches back FOURTEEN days for the most recent completed game, and
+    the Game Card falls back to it whenever today's lineup hasn't been
+    posted — which is exactly the window you'd be looking at the page in,
+    the morning before lineups drop.
+
+    A player who went on the IL nine days ago is still sitting in that
+    lineup. He gets an HR Score, a matchup, park and wind adjustments,
+    the whole row — every number correct except whether he is playing.
+    Same failure as the WNBA boards had, on the other side of the site.
+
+    Costs nothing extra: get_live_team_roster already requests the active
+    roster, so this is data that was being fetched and discarded.
+
+    Returns an EMPTY SET when the roster can't be read, and callers must
+    treat empty as "unknown" rather than "nobody is active" — failing
+    open beats blanking a lineup because one request timed out.
+    """
+    try:
+        roster = get_live_team_roster(team_name) or []
+    except Exception:
+        return set()
+    return {str(p.get("id")) for p in roster if p.get("active") and p.get("id")}

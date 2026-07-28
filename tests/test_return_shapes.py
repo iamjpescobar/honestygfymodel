@@ -54,11 +54,16 @@ m = re.search(r"(\w+(?:, \w+)*)\s*=\s*get_confirmed_lineup\(", board)
 assert len(m.group(1).split(",")) == 2
 print("PASS: hr_edge_board unpacks get_confirmed_lineup as 2")
 
-# A fallback lineup is never today's confirmed lineup.
+# A fallback lineup is never today's confirmed lineup — check the
+# BEHAVIOUR, not one literal line. An earlier version of this assertion
+# pinned the exact source text and broke the moment that block gained
+# active-roster filtering, even though the contract was unchanged.
 fb = board[board.index("last, _game_date, last_ok"):]
-fb = fb[:fb.index("\n\n")] if "\n\n" in fb else fb
-assert "return [p for p in last if not p.get(\"is_pitcher\")], False" in board, \
-    "fallback lineup must report confirmed=False"
+fb = fb[:fb.index("\n\n@")] if "\n\n@" in fb else fb
+returns = re.findall(r"return ([^\n]+)", fb)
+assert returns, "no returns found in the fallback path"
+assert all(r.strip().endswith("False") for r in returns), (
+    f"every fallback return must report confirmed=False, got: {returns}")
 print("PASS: fallback lineup always reports confirmed=False")
 
 # The view must unpack the board's 2-tuple too.

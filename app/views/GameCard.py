@@ -15,7 +15,7 @@ from engines.weather_engine import get_todays_games_with_weather
 from engines.park_factors import get_park_factor
 from engines.pitch_matchup import batter_pitch_profile as _batter_pitch_profile
 from engines.headshots import get_headshot_url
-from engines.roster import get_live_team_roster, get_all_teams, get_confirmed_lineup, get_last_starting_lineup
+from engines.roster import get_live_team_roster, get_active_player_ids, get_all_teams, get_confirmed_lineup, get_last_starting_lineup
 from engines.statcast_engine import (
     get_pitcher_statcast, get_pitcher_advanced_splits, get_batter_profile_windowed, get_batter_vs_pitch_types,
     get_first_pitch_swing
@@ -655,13 +655,49 @@ with content_col:
         # in that arbitrary first 9, while bench/depth players did.
         last_lineup, last_game_date, last_confirmed = get_last_starting_lineup(opposing_team)
         if last_confirmed:
-            batters = [p for p in last_lineup if not p["is_pitcher"]]
+            _raw = [p for p in last_lineup if not p["is_pitcher"]]
+
+            # DROP ANYONE NO LONGER ON THE ACTIVE ROSTER.
+            #
+            # get_last_starting_lineup searches back FOURTEEN days for the
+            # most recent completed game, and this fallback is what you're
+            # looking at every morning before lineups post. A player who
+            # went on the IL nine days ago is still sitting in that
+            # lineup — and he'd be scored like anyone else: HR Score,
+            # matchup, park, wind, the whole row. Every number correct
+            # except whether he's playing.
+            #
+            # Active-roster membership is MLB's own state and is already
+            # being fetched by get_live_team_roster, so this costs nothing.
+            # An EMPTY set means the roster call failed, which is unknown,
+            # not "nobody is active" — in that case show the lineup as-is
+            # rather than blanking the page over one timed-out request.
+            _active = get_active_player_ids(opposing_team)
+            _dropped = []
+            if _active:
+                batters = []
+                for _p in _raw:
+                    if str(_p.get("id")) in _active:
+                        batters.append(_p)
+                    else:
+                        _dropped.append(_p.get("name"))
+            else:
+                batters = _raw
+
             st.info(
                 f"MLB hasn't posted {opposing_team}'s confirmed starting lineup yet "
                 f"(usually posted 1\u20133 hours before first pitch) \u2014 showing their real "
                 f"starting 9 from their last game ({last_game_date}) instead. This will switch "
                 f"to today's confirmed batting order automatically once MLB posts it."
             )
+            if _dropped:
+                st.warning(
+                    f"Removed from that lineup: {', '.join(_dropped)} \u2014 no longer on "
+                    f"{opposing_team}'s active roster (IL, optioned, or restricted). "
+                    f"They played on {last_game_date} but aren't available today, so "
+                    f"scoring them here would be a real-looking number on someone "
+                    f"who isn't in the building."
+                )
         else:
             # Fallback #2: no completed game in the last 14 days to pull a
             # real lineup from (e.g. after a long break) — show the full

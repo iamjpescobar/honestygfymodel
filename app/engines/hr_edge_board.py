@@ -43,7 +43,8 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from engines.weather_engine import get_todays_games_with_weather
-from engines.roster import get_confirmed_lineup, get_last_starting_lineup
+from engines.roster import (get_confirmed_lineup, get_last_starting_lineup,
+                            get_active_player_ids)
 from engines.savant_leaderboard import load_percentile_ranks
 from engines.statcast_engine import get_batter_profile_windowed, get_pitcher_statcast
 from engines.top_plays import rank_batters
@@ -97,7 +98,16 @@ def _lineup_for(game_pk, side, team_name):
     last, _game_date, last_ok = get_last_starting_lineup(team_name)
     if not last_ok or not last:
         return [], False
-    return [p for p in last if not p.get("is_pitcher")], False
+    batters = [p for p in last if not p.get("is_pitcher")]
+
+    # That lineup can be up to FOURTEEN days old, so anyone who has since
+    # gone on the IL is still in it. Drop them against MLB's own active
+    # roster. An empty set means the roster call failed — unknown, not
+    # "nobody is active" — so fail open rather than emptying the board.
+    active = get_active_player_ids(team_name)
+    if active:
+        batters = [p for p in batters if str(p.get("id")) in active]
+    return batters, False
 
 
 @st.cache_data(ttl=1800, max_entries=4, show_spinner=False)
