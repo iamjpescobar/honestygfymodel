@@ -27,7 +27,6 @@ from engines.bvp import render_bvp_card, render_zone_map, render_spray_chart
 from engines.edge import edge_components, pen_context, bvp_component
 from engines.pick_badges import compute_badges, render_badge_row
 from engines.pitcher_weakspots import get_weak_spots, XSLG_HOT, XSLG_COLD
-from engines.calibration import log_picks as _log_picks
 from engines.team_logos import logo_for
 from engines.weather_icons import (
     weather_icon, wind_arrow, temp_icon, park_icon,
@@ -1341,16 +1340,28 @@ with content_col:
                             [r for r in filtered if r.get("edge") is not None],
                             key=lambda r: -(r.get("edge") or 0),
                         )
-                        # log the top HR Edge bats for calibration
-                        if _badge_pool:
-                            try:
-                                _log_picks("hr_edge", [
-                                    {"id": r.get("id"), "name": r.get("name"),
-                                     "team": team_abbr(opposing_team)}
-                                    for r in _badge_pool[:5]
-                                ])
-                            except Exception:
-                                pass
+                        # DELIBERATELY NOT LOGGING hr_edge HERE ANY MORE.
+                        #
+                        # This used to write the top 5 bats from THIS ONE
+                        # GAME to the "hr_edge" calibration board every
+                        # time a game card rendered. calibration_picks.py
+                        # now writes the SLATE-WIDE top 5 to that same
+                        # board key from CI.
+                        #
+                        # Two writers, one key, same date. Opening a game
+                        # card overwrote the real slate board with one
+                        # game's bats — and neither is graded early in
+                        # the day, so which one survived the merge was
+                        # effectively arbitrary. The hr_edge record would
+                        # have been sometimes the model's actual board and
+                        # sometimes whichever matchup you happened to
+                        # click, with no way to tell them apart after the
+                        # fact. That silently invalidates the exact
+                        # measurement the slate board was built to make
+                        # honest.
+                        #
+                        # engines/hr_edge_board.py owns this board now.
+                        # Browsing the site can no longer alter the record.
 
                         _any_badges = False
                         for _br in _badge_pool[:5]:

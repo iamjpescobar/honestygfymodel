@@ -160,6 +160,25 @@ def log_picks(board: str, rows, date_str: str = None) -> bool:
     date_str = date_str or datetime.now(EASTERN).strftime("%Y-%m-%d")
     data = _load()
     data.setdefault(board, {})
+
+    # ACTUALLY idempotent now. The docstring above always claimed this,
+    # but the write below was unconditional: every render of a board
+    # replaced that date's entry wholesale, resetting every "result" to
+    # None and "graded" to False.
+    #
+    # Two consequences. Re-opening a page after grading wiped the grades
+    # for that day. And with calibration_picks.py logging the same boards
+    # from CI, whichever wrote last won — so the record could be the
+    # model's real board or a thinner pre-lineup version depending on
+    # when someone happened to load the page.
+    #
+    # First writer for a date wins. That is the honest rule: picks are
+    # meant to be locked in BEFORE the games, so a later, better-informed
+    # version of the same board is not the pick that was made.
+    existing = data[board].get(date_str)
+    if existing and existing.get("picks"):
+        return True
+
     data[board][date_str] = {
         "picks": [{"id": r.get("id"), "name": r.get("name"),
                    "team": r.get("team"),

@@ -19,10 +19,17 @@ pure home-run number.
 2024-2026 rolling window, "Both" handedness split, as shown on
 Savant's own page at the time this was gathered.
 
-Athletics/Sutter Health Park is the one team missing a real number —
-it fell off the bottom of the screenshots gathered and was never
-independently re-verified, so it stays honestly unverified rather
-than guessed.
+Athletics/Sutter Health Park is missing a real number — it fell off the
+bottom of the screenshots gathered and was never independently
+re-verified, so it stays honestly unverified rather than guessed.
+
+Tampa Bay is ALSO unverified, for a subtler reason: its real Savant
+number blends three different buildings (see the inline note). A rolling
+multi-season factor silently breaks whenever a club changes venue, which
+happened twice in this window — the Rays to Steinbrenner Field and back,
+and the Athletics to Sacramento. Any future venue move needs the same
+treatment: the number stays real, but it stops describing the park it is
+labelled with, and only verified=False stops it being used.
 """
 
 PARK_FACTORS = {
@@ -49,7 +56,27 @@ PARK_FACTORS = {
     "Chicago White Sox": {"venue": "Rate Field", "park_factor": 98, "verified": True},
     "St. Louis Cardinals": {"venue": "Busch Stadium", "park_factor": 97, "verified": True},
     "Milwaukee Brewers": {"venue": "American Family Field", "park_factor": 97, "verified": True},
-    "Tampa Bay Rays": {"venue": "Tropicana Field", "park_factor": 97, "verified": True},
+    # NOT VERIFIED, and the number below is real but describes THREE
+    # different buildings blended together.
+    #
+    # The factor is a 2024-2026 rolling window. Hurricane Milton tore the
+    # roof off Tropicana Field in October 2024, so the Rays played their
+    # ENTIRE 2025 home schedule outdoors at George M. Steinbrenner Field
+    # — a 11,206-seat minor league park — and only returned to a
+    # renovated Trop on April 6, 2026. A rolling factor across that span
+    # averages the old dome, an open-air spring-training field, and the
+    # rebuilt dome into one number and labels it "Tropicana Field."
+    #
+    # It is a real Savant figure, which is exactly why this is dangerous:
+    # nothing about it looks wrong. verified=False so every downstream
+    # consumer skips it rather than applying a number that describes a
+    # stadium the Rays no longer play in. Restore it once a clean
+    # post-renovation sample exists.
+    #
+    # The HR park factors built nightly by precompute.build_park_hr_factors
+    # do NOT have this problem — they measure the current season's own
+    # batted balls, so they describe the building actually in use.
+    "Tampa Bay Rays": {"venue": "Tropicana Field", "park_factor": 97, "verified": False},
     "San Diego Padres": {"venue": "Petco Park", "park_factor": 97, "verified": True},
     "San Francisco Giants": {"venue": "Oracle Park", "park_factor": 97, "verified": True},
     "Chicago Cubs": {"venue": "Wrigley Field", "park_factor": 96, "verified": True},
