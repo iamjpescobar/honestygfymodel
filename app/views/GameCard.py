@@ -13,6 +13,7 @@ from styles.table_style import style_stat_table, plain_dark_table
 
 from engines.weather_engine import get_todays_games_with_weather
 from engines.park_factors import get_park_factor
+from engines.pitch_matchup import batter_pitch_profile as _batter_pitch_profile
 from engines.headshots import get_headshot_url
 from engines.roster import get_live_team_roster, get_all_teams, get_confirmed_lineup, get_last_starting_lineup
 from engines.statcast_engine import (
@@ -723,6 +724,13 @@ with content_col:
             # Compass forecasts ("SW 12 mph") are now usable: wind_engine
             # resolves them against this park's real orientation.
             _wind = game.get("weather_wind")
+            # Full pitch-type interaction here: a Game Card is ~18
+            # hitters, so per-pitch profiles are affordable. Limited to
+            # the pitcher's top 3 offerings — beyond that usage is too
+            # low to carry signal and the slices stop being free.
+            _arsenal = (pitcher_data or {}).get("Pitch Arsenal") or {}
+            _top_pitches = tuple(
+                p for p, _u in sorted(_arsenal.items(), key=lambda kv: -kv[1])[:3])
             for _r in ranked:
                 # EFFECTIVE hand for tonight. Park splits by hand are
                 # large, so handing edge_components a raw "S" would apply
@@ -742,7 +750,11 @@ with content_col:
                                           _r.get("hr_score"), _pen_adj, _pen_note,
                                           home_team=_park_abbr,
                                           bats=_eff_bats,
-                                          temp=_temp, wind=_wind))
+                                          temp=_temp, wind=_wind,
+                                          arsenal=_arsenal,
+                                          batter_vs_pitch=_batter_pitch_profile(
+                                              _r.get("id"), _top_pitches)
+                                          if _top_pitches and _r.get("id") else None))
                 if _p_throws in ("R", "L") and _r.get("id"):
                     _r["iso_vs_hand"] = get_batter_iso_vs_hand(_r["id"], _p_throws)
                     _r["opp_hand"] = f"{_p_throws}HP"

@@ -510,16 +510,24 @@ def build_pitch_type_hr(season_df: pd.DataFrame) -> bool:
     work = pd.DataFrame({
         "pitch_type": bbe["pitch_type"].astype(str),
         "hr": _mask(bbe["events"].astype(str) == "home_run").astype("int32"),
+        # League BARREL rate per pitch type, alongside the HR rate. This
+        # is the baseline a hitter's own per-pitch barrel rate gets
+        # regressed toward — measured here rather than assumed, so no
+        # constant has to be carried in the app.
+        "brl": _mask(pd.to_numeric(bbe.get("launch_speed_angle"),
+                                   errors="coerce") == 6).astype("int32"),
     })
     work = work[work["pitch_type"].notna() & (work["pitch_type"] != "nan")]
-    g = work.groupby("pitch_type", observed=True)["hr"].agg(["sum", "count"])
+    g = work.groupby("pitch_type", observed=True).agg(
+        hr_sum=("hr", "sum"), brl_sum=("brl", "sum"), count=("hr", "count"))
     g = g[g["count"] >= PITCH_TYPE_MIN_BBE]
     if g.empty:
         print("  Pitch-type HR rates skipped — no pitch cleared the floor.")
         return False
-    g["hr_rate"] = g["sum"] / g["count"]
+    g["hr_rate"] = g["hr_sum"] / g["count"]
+    g["brl_rate"] = g["brl_sum"] / g["count"]
 
-    out = g.reset_index()[["pitch_type", "hr_rate", "count"]]
+    out = g.reset_index()[["pitch_type", "hr_rate", "brl_rate", "count"]]
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     out.to_parquet(DATA_DIR / "pitch_type_hr.parquet", index=False)
     top = out.sort_values("hr_rate", ascending=False).iloc[0]

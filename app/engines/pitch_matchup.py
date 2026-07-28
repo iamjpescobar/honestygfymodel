@@ -51,12 +51,17 @@ PITCH_MATCH_CAP = 8.0
 
 @st.cache_data(ttl=21600, max_entries=1, show_spinner=False)
 def _league_pitch_hr():
-    """{pitch_type: league HR-per-batted-ball} or None if unavailable."""
+    """{pitch_type: (hr_rate, barrel_rate)} or None if unavailable.
+
+    Both measured league-wide by the nightly build, so nothing in this
+    module carries an assumed constant.
+    """
     if not _LEAGUE_PATH.exists():
         return None
     try:
         t = pd.read_parquet(_LEAGUE_PATH)
-        return {str(r.pitch_type): float(r.hr_rate) for r in t.itertuples(index=False)}
+        return {str(r.pitch_type): (float(r.hr_rate), float(r.brl_rate))
+                for r in t.itertuples(index=False)}
     except Exception:
         return None
 
@@ -82,13 +87,14 @@ def pitch_matchup_adj(batter_id, arsenal, batter_vs_pitch=None):
     if not total_usage:
         return 0, None
 
-    league_overall = sum(league.values()) / len(league)
+    league_overall = sum(v[0] for v in league.values()) / len(league)
     expected, covered = 0.0, 0.0
 
     for pitch, usage in arsenal.items():
-        rate = league.get(str(pitch))
-        if rate is None or not usage:
+        entry = league.get(str(pitch))
+        if entry is None or not usage:
             continue
+        rate, league_brl = entry
         share = usage / total_usage
 
         # Hitter's own damage on this pitch, regressed hard toward league.
@@ -97,10 +103,12 @@ def pitch_matchup_adj(batter_id, arsenal, batter_vs_pitch=None):
             hv = batter_vs_pitch.get(str(pitch)) or {}
             bbe = hv.get("bbe") or 0
             barrels = hv.get("barrels") or 0
-            if bbe > 0:
-                league_brl = hv.get("league_brl", 0.065)   # measured, passed in
+            # league_brl comes from the nightly table above — measured,
+            # per pitch type. There is no assumed constant here; if the
+            # table can't supply one the hitter term simply drops out.
+            if bbe > 0 and league_brl > 0:
                 own = (barrels + K_HITTER_PITCH * league_brl) / (bbe + K_HITTER_PITCH)
-                mult = own / league_brl if league_brl else 1.0
+                mult = own / league_brl
 
         expected += share * rate * mult
         covered += share
@@ -121,3 +129,34 @@ def pitch_matchup_adj(batter_id, arsenal, batter_vs_pitch=None):
         return 0, None
     word = "homer-prone mix" if adj > 0 else "mix suppresses HR"
     return adj, f"{word} ({adj:+.1f}, {covered*100:.0f}% of arsenal read)"
+
+
+def batter_pitch_profile(batter_id, pitch_types, window="season"):
+    """{pitch_type: {"barrels": n, "bbe": n}} for this hitter.
+
+    One call per pitch type, because get_batter_vs_pitch_types aggregates
+    across whatever set it's given — passing all three at once would
+    return a blended number and lose the per-pitch detail that IS the
+    matchup.
+
+    Cost note: three cached calls per batter. Fine for a Game Card's ~18
+    hitters; deliberately NOT used on the slate-wide board, where ~270
+    batters would mean ~800 slices per render. That board uses the
+    mix-only form instead, which is still real information — some
+    arsenals are more homer-prone than others regardless of who's batting.
+    """
+    from engines.statcast_engine import get_batter_vs_pitch_types
+    out = {}
+    for pt in (pitch_types or []):
+        try:
+            prof = get_batter_vs_pitch_types(batter_id, (pt,), window=window)
+        except Exception:
+            continue
+        bbe = prof.get("BBE") or 0
+        if not bbe:
+            continue
+        # Brl % is a percentage of batted balls; recover the count so the
+        # regression works on real events rather than on a rate.
+        barrels = round((prof.get("Brl %") or 0.0) / 100.0 * bbe)
+        out[str(pt)] = {"barrels": barrels, "bbe": bbe}
+    return out

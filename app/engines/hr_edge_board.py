@@ -155,6 +155,14 @@ def get_hr_edge_board(_date_str=None, confirmed_only=True):
 
             pdata = get_pitcher_statcast(opp_id) or {}
             p_throws = pdata.get("p_throws") or pdata.get("Throws")
+            # Mix-only on this board: batter_vs_pitch is deliberately
+            # omitted. Fetching per-pitch profiles for every hitter on
+            # the slate would mean hundreds of extra dataframe slices per
+            # render. The arsenal term alone is still real information.
+            # Key is "Pitch Arsenal" — {pitch_type: usage_percent}. Not
+            # "arsenal"; that guess would have returned {} for every
+            # pitcher and produced a silent zero rather than an error.
+            arsenal = pdata.get("Pitch Arsenal") or {}
 
             profiles = [{
                 "name": b["name"], "bats": b.get("bats") or "?", "id": b.get("id"),
@@ -172,7 +180,7 @@ def get_hr_edge_board(_date_str=None, confirmed_only=True):
                     r.get("id"), opp_id, r.get("hr_score"), pen_adj, pen_note,
                     home_team=park,
                     bats=_effective_hand(r.get("bats"), p_throws),
-                    temp=temp, wind=wind,
+                    temp=temp, wind=wind, arsenal=arsenal,
                 ))
                 r["team"] = batting_team
                 r["opponent"] = pitcher_team

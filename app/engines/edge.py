@@ -318,7 +318,7 @@ def pen_context(pitcher_team: str, starter_pid):
 # ------------------------------------------------------------------
 def edge_components(batter_id, pitcher_id, base_score, pen_adj, pen_note,
                     *, home_team=None, bats=None, temp=None, roof_closed=False,
-                    wind=None):
+                    wind=None, arsenal=None, batter_vs_pitch=None):
     """Attachable dict for a lineup row. edge is None when the skill
     score is None (no Savant sample) — matchup can't rescue a bat we
     can't rate.
@@ -351,7 +351,23 @@ def edge_components(batter_id, pitcher_id, base_score, pen_adj, pen_note,
         ctx_adj, ctx_notes = context_hr_adj(home_team, bats, temp,
                                             roof_closed=roof_closed,
                                             wind_str=wind)
-    total = b_adj + z_adj + pen_adj + ctx_adj
+    # PITCH-TYPE MATCHUP. Never uses the pitcher's own HR rate per pitch
+    # type — that's ~2 events over ~250 sliders. Uses his MIX (stable,
+    # and his choice) against measured league rates, optionally weighted
+    # by this hitter's damage on those pitches.
+    #
+    # batter_vs_pitch is optional by design. With it, the full
+    # interaction. Without it, the mix term alone — still real (some
+    # arsenals are more homer-prone than others) and cheap enough for a
+    # slate-wide board, where fetching per-pitch profiles for ~270
+    # batters would not be.
+    pm_adj, pm_note = 0.0, None
+    if arsenal:
+        from engines.pitch_matchup import pitch_matchup_adj
+        pm_adj, pm_note = pitch_matchup_adj(batter_id, arsenal,
+                                            batter_vs_pitch=batter_vs_pitch)
+
+    total = b_adj + z_adj + pen_adj + ctx_adj + pm_adj
     edge = None
     if base_score is not None:
         edge = int(max(0, min(100, round(base_score + total))))
@@ -359,4 +375,5 @@ def edge_components(batter_id, pitcher_id, base_score, pen_adj, pen_note,
             "bvp_adj": b_adj, "bvp_line": b_line,
             "zone_adj": z_adj, "zone_note": z_note,
             "pen_adj": pen_adj, "pen_note": pen_note,
-            "ctx_adj": ctx_adj, "ctx_notes": ctx_notes}
+            "ctx_adj": ctx_adj, "ctx_notes": ctx_notes,
+            "pitch_adj": pm_adj, "pitch_note": pm_note}
