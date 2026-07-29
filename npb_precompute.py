@@ -26,6 +26,10 @@ import requests
 JST = ZoneInfo("Asia/Tokyo")
 EASTERN = ZoneInfo("America/New_York")
 SEASON_FIRST_MONTH = 3   # NPB opens late March
+# One place for the season year. It was hardcoded inside the leaderboard
+# URLs; the English name pages have to request the SAME year or the
+# positional pairing would map one season's leaderboard onto another's.
+SEASON_YEAR = 2026
 
 UA = {
     "User-Agent": ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -66,6 +70,99 @@ PIT_TEAM_ABBR = {
     "日": "Nippon-Ham Fighters", "オ": "Orix Buffaloes",
     "ロ": "Lotte Marines", "楽": "Rakuten Eagles",
 }
+
+
+# ------------------------------------------------------------
+# JAPANESE -> ENGLISH PLAYER NAMES
+# ------------------------------------------------------------
+# Team names were already English (see _en_team). Player names were not:
+# announced starters and the pitcher leaderboard both key on the kanji
+# npb.jp prints, so every pitcher on the NPB page read as Japanese.
+#
+# THIS IS NOT DONE BY TRANSLITERATION, DELIBERATELY.
+#
+# Kanji readings are ambiguous for names in a way they aren't for
+# ordinary words: the same characters are read differently by different
+# people, and there is no rule that resolves it. 大谷 is Ohtani, but the
+# same first character is "dai", "oo", or "hiro" depending on the person.
+# Generating a reading would produce a confident, wrong, real-looking
+# name — exactly the failure this codebase exists to avoid.
+#
+# So the mapping is FETCHED, not derived. npb.jp publishes the same
+# leaderboards under /bis/eng/, romanised by the league itself. Rows are
+# in identical order in both versions, so pairing them by position gives
+# a real Japanese->English map with no guessing anywhere.
+#
+# When the English page can't be read, names stay in Japanese and the log
+# says so. Japanese names are correct; invented romanisations are not.
+_EN_STATS = ("https://npb.jp/bis/eng/{yr}/stats/pit_c.html",
+             "https://npb.jp/bis/eng/{yr}/stats/pit_p.html")
+_JP_STATS = ("https://npb.jp/bis/{yr}/stats/pit_c.html",
+             "https://npb.jp/bis/{yr}/stats/pit_p.html")
+
+
+def _get_html(url):
+    """Fetch a page as text. Raises on failure so callers can log it."""
+    r = requests.get(url, headers=UA, timeout=25)
+    r.raise_for_status()
+    r.encoding = r.apparent_encoding or "utf-8"
+    return r.text
+
+
+def build_name_map(year):
+    """{japanese_name: english_name} from npb.jp's own English pages.
+
+    Empty dict when the English pages are unavailable — callers then keep
+    the Japanese names, which are at least correct.
+    """
+    mapping = {}
+    for jp_url, en_url in zip(_JP_STATS, _EN_STATS):
+        try:
+            jp_rows = _leader_names(_get_html(jp_url.format(yr=year)))
+            en_rows = _leader_names(_get_html(en_url.format(yr=year)))
+        except Exception as exc:
+            print(f"  [names] English leaderboard unavailable ({exc}); "
+                  f"keeping Japanese names.")
+            continue
+        if not jp_rows or not en_rows:
+            continue
+        if len(jp_rows) != len(en_rows):
+            # Row counts must match or positional pairing is meaningless
+            # and would silently attach the wrong English name.
+            print(f"  [names] row count mismatch "
+                  f"(jp={len(jp_rows)}, en={len(en_rows)}) — skipping this "
+                  f"page rather than pairing rows that may not correspond.")
+            continue
+        for jp, en in zip(jp_rows, en_rows):
+            if jp and en and jp != en:
+                mapping[jp] = en
+    print(f"  [names] {len(mapping)} pitcher names mapped to English."
+          if mapping else
+          "  [names] no English names available; NPB will display Japanese.")
+    return mapping
+
+
+def _leader_names(html):
+    """Ordered player names from one leaderboard page."""
+    rows = re.findall(r"<tr[^>]*>(.*?)</tr>", html, re.S)
+    names = []
+    for row in rows:
+        cells = re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)
+        if len(cells) < 3:
+            continue
+        nm = _strip(re.sub(r"<[^>]+>", "", cells[1]))
+        # Trim the trailing "(神)" team marker the Japanese page carries.
+        nm = re.sub(r"\s*[(（][^)）]*[)）]\s*$", "", nm).strip()
+        if nm:
+            names.append(nm)
+    return names
+
+
+def en_name(name, name_map):
+    """English name when we have a real one, otherwise unchanged."""
+    if not name:
+        return name
+    return (name_map or {}).get(name.strip(), name)
 
 
 def _avg(values):
@@ -118,8 +215,8 @@ def fetch_pitcher_stats() -> dict:
     itself must still ship even if pitcher stats can't be fetched.
     """
     stats = {}
-    for url in ("https://npb.jp/bis/2026/stats/pit_c.html",
-                "https://npb.jp/bis/2026/stats/pit_p.html"):
+    for url in (f"https://npb.jp/bis/{SEASON_YEAR}/stats/pit_c.html",
+                f"https://npb.jp/bis/{SEASON_YEAR}/stats/pit_p.html"):
         try:
             r = requests.get(url, headers=UA, timeout=25)
             html = r.content.decode("utf-8", errors="replace") if r.status_code == 200 else None
@@ -347,6 +444,10 @@ def main():
 
     try:
         pitcher_stats = fetch_pitcher_stats()
+        # Japanese -> English, fetched from npb.jp's own English pages.
+        # Empty when unavailable; names then stay Japanese, which is
+        # correct, rather than being transliterated into a guess.
+        name_map = build_name_map(SEASON_YEAR)
     except Exception as e:
         pitcher_stats = {}
         print(f"NPB: pitcher-stats fetch failed ({e}) — starters will ship without ERA/W-L/K")
@@ -380,7 +481,18 @@ def main():
             sp_surname = g.get(f"{side}_sp")
             sp_stats = find_pitcher_stats(pitcher_stats, sp_surname, g[side])
             if sp_stats:
+                # English name where the league publishes one. The MATCH
+                # above still runs on the Japanese surname, because that's
+                # what both the schedule and the leaderboard print — only
+                # the displayed name is translated, so a missing mapping
+                # costs a name in English, never a wrong pairing.
+                sp_stats = {**sp_stats,
+                            "name_en": en_name(sp_stats.get("name"), name_map)}
                 entry[f"{side}_starter_stats"] = sp_stats
+            # Announced starter, in English when we have it.
+            if sp_surname:
+                entry[f"{side}_sp"] = sp_surname
+                entry[f"{side}_sp_en"] = en_name(sp_surname, name_map)
         print(f'  [verify-starters] {g["away"]} @ {g["home"]}: '
               f'home_sp={g.get("home_sp")!r} away_sp={g.get("away_sp")!r} raw={g.get("sp_raw")!r} '
               f'home_stats={"yes" if entry.get("home_starter_stats") else "no"} '

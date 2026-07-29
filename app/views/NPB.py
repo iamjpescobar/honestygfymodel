@@ -178,7 +178,12 @@ else:
             sp = g.get(f"{side}_starter_stats")
             if not sp:
                 continue
-            name = g.get(f"{side}_starter", "")
+            # English where npb.jp publishes it, Japanese otherwise. A
+            # correct Japanese name beats an invented romanisation — see
+            # build_name_map in npb_precompute for why these are fetched
+            # rather than transliterated.
+            name = (sp.get("name_en") or g.get(f"{side}_sp_en")
+                    or g.get(f"{side}_starter", "") or g.get(f"{side}_sp", ""))
             bits = []
             if sp.get("era"):
                 bits.append(f'ERA {sp["era"]}')

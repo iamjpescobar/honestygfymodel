@@ -326,8 +326,13 @@ else:
         for g in (games or []) for sd in ("home", "away")
         if g.get(f"{sd}_rs_pg") is not None
     })
+    # _load_pitchers() rather than `pitchers`: that name is a LOCAL
+    # inside the pitcher-tab function further up, not a module-level
+    # binding, so referencing it here was a NameError on every page load.
+    # The loader is cached, so calling it again costs nothing.
+    _kbo_pitchers, _ = _load_pitchers()
     _eras = []
-    for _sp in (pitchers or []):
+    for _sp in (_kbo_pitchers or []):
         try:
             _eras.append(float(_sp.get("era")))
         except (TypeError, ValueError):
@@ -424,8 +429,8 @@ else:
             {"rs_pg": g.get("away_rs_pg"), "ra_pg": g.get("away_ra_pg")},
             _LEAGUE_RS,
             league_era=_LEAGUE_ERA,
-            home_starter_era=_kbo_starter_era(g, "home", pitchers),
-            away_starter_era=_kbo_starter_era(g, "away", pitchers),
+            home_starter_era=_kbo_starter_era(g, "home", _kbo_pitchers),
+            away_starter_era=_kbo_starter_era(g, "away", _kbo_pitchers),
         )
         if _tot is not None:
             _sp_note = (" \u00b7 starters applied"
