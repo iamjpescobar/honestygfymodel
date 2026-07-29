@@ -291,7 +291,11 @@ def find_pitcher_stats(pitcher_stats: dict, surname: str, team: str):
     matches = [
         info for full_name, info in pitcher_stats.items()
         if info.get("team") == team
-        and (full_name == surname or full_name.split('\u3000')[0] == surname)
+        # Split on the ideographic space OR a regular one. npb.jp uses
+        # the ideographic form, but a single page switching separator
+        # would silently stop every starter matching — cheap to cover.
+        and (full_name == surname
+             or re.split(r"[\u3000\s]", full_name)[0] == surname)
     ]
     if len(matches) == 1:
         return matches[0]

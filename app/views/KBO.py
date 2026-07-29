@@ -311,13 +311,20 @@ else:
         nm = (gm.get(f"{side}_starter") or "").strip()
         if not nm or nm.upper() == "TBD":
             return None
-        for sp in pitchers or []:
-            if (sp.get("name") or "").strip() == nm:
-                try:
-                    return float(sp.get("era"))
-                except (TypeError, ValueError):
-                    return None
-        return None
+        # Same normalisation the strikeout board uses. Exact comparison
+        # failed on every KBO starter — the schedule writes "James Naile"
+        # while the leaderboard writes "NAILE James", and Korean names
+        # arrive hyphenated on one page and spaced on the other. Without
+        # this the run total silently never applied a starter.
+        from engines.kbo_k_projection import _name_key
+        want = _name_key(nm)
+        hits = [sp for sp in (pitchers or []) if _name_key(sp.get("name")) == want]
+        if len(hits) != 1:
+            return None          # ambiguous or absent -> no adjustment
+        try:
+            return float(hits[0].get("era"))
+        except (TypeError, ValueError):
+            return None
 
     # Measured from the teams on this slate, not assumed. None means the
     # projection sits out rather than resting on a guessed baseline.

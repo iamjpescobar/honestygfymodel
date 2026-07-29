@@ -86,6 +86,52 @@ def _team_k_rates(team_batting):
     return rates, league_avg, basis
 
 
+def _name_key(name):
+    """Order-, case- and punctuation-insensitive key for a Korean name.
+
+    The schedule page and the leaderboard write the same pitcher three
+    different ways, and an exact dict lookup matched none of them:
+
+        schedule                leaderboard
+        James Naile             NAILE James        (order + case)
+        Koo Chang-mo            KOO Chang Mo       (hyphen vs space)
+        Choi Min-seok           CHOI Min Seok      (both)
+
+    So every KBO starter came back "not on the season pitching
+    leaderboard yet" while sitting on the leaderboard directly above,
+    and no strikeout projection was ever produced for a real game.
+
+    Normalising to a SORTED SET of lowercased tokens makes all three
+    forms identical: {james, naile} either way round, and Chang-mo
+    splits to {chang, mo} exactly like Chang Mo.
+    """
+    if not name:
+        return ()
+    cleaned = re.sub(r"[^\w\s]", " ", str(name)).lower()
+    return tuple(sorted(t for t in cleaned.split() if t))
+
+
+def _find_pitcher(pitchers, name):
+    """Leaderboard entry for this starter, or None.
+
+    Exact key first (cheapest and unambiguous), then the normalised form.
+    A normalised key matching MORE than one pitcher is treated as no
+    match: two men whose names differ only by word order can't be told
+    apart this way, and attaching one's ERA to the other would be worse
+    than showing nothing — the same rule NPB uses for duplicate surnames.
+    """
+    if not name:
+        return None
+    direct = pitchers.get(name)
+    if direct:
+        return direct
+    key = _name_key(name)
+    if not key:
+        return None
+    hits = [v for k, v in pitchers.items() if _name_key(k) == key]
+    return hits[0] if len(hits) == 1 else None
+
+
 def project_kbo_slate(games, pitchers, team_stats):
     """Return (rows, warning) for the KBO slate.
 
@@ -128,7 +174,7 @@ def project_kbo_slate(games, pitchers, team_stats):
                 rows.append(row)
                 continue
 
-            sp = pitchers.get(name)
+            sp = _find_pitcher(pitchers, name)
             if not sp:
                 row["status"] = "Starter not on the season pitching leaderboard yet"
                 rows.append(row)
