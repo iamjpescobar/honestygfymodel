@@ -47,6 +47,12 @@ from engines.wnba_props import (availability as _availability,
                                 league_reference_date as _ref_date)
 
 
+# CACHED. This is the biggest page on the site and its slate JSON was
+# being re-read and re-parsed from disk on EVERY widget interaction —
+# Streamlit re-runs the whole script each time you touch a control. The
+# other views were cached in an earlier pass and this one was missed.
+# The file only changes when the nightly build publishes.
+@st.cache_data(ttl=900, show_spinner=False)
 def _load_games():
     try:
         payload = json.loads(_WNBA_GAMES.read_text())
