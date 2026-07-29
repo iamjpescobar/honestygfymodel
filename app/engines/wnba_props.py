@@ -162,6 +162,37 @@ def _parse_log_date(value):
     return None
 
 
+def league_reference_date(games, fallback=None):
+    """The most recent game date anywhere in this payload, or None.
+
+    THE REFERENCE POINT FOR "RECENTLY".
+
+    availability() originally measured against wall-clock today, which is
+    only correct if the data is current. It often isn't: the nightly
+    workflow runs the WNBA fetch as
+    `python wnba_precompute.py || echo "WNBA fetch failed - continuing"`,
+    so a broken fetch ships a stale slate rather than failing the build.
+    After a few such days EVERY player's last logged game is 8+ days old
+    and the entire league is flagged out — a data outage rendered as a
+    league-wide injury report.
+
+    Anchoring to the newest date the dataset itself contains fixes that.
+    If the feed is current the two are the same day and nothing changes.
+    If the feed is stale, players are judged against what this data
+    actually knows, so a genuine 3-week absence still stands out while a
+    fetch outage stops masquerading as one.
+    """
+    latest = None
+    for g in games or []:
+        for side in ("home", "away"):
+            for p in g.get(f"{side}_players") or []:
+                for gl in p.get("log") or []:
+                    d = _parse_log_date(gl.get("date"))
+                    if d and (latest is None or d > latest):
+                        latest = d
+    return latest or fallback
+
+
 def availability(player, today=None):
     """(ok, reason, days_since) — has this player actually been playing?
 
@@ -228,6 +259,8 @@ def build_props(games, stat_label="Points", window="l10", cache_key=None):
 
 
 def _build_props(games, stat_label="Points", window="l10"):
+    # Judge "recently" against the data's own newest game, not the clock.
+    _ref = league_reference_date(games)
     """(rows, unrated) — every qualifying player ranked for this stat."""
     cfg = STATS.get(stat_label, STATS["Points"])
     key, def_key = cfg["key"], cfg["def_key"]
@@ -266,7 +299,7 @@ def _build_props(games, stat_label="Points", window="l10"):
                 # stopped playing a month ago — see the note by
                 # STALE_DAYS. Cheapest check and the one that matters
                 # most, so it goes first.
-                ok, why, days = availability(p)
+                ok, why, days = availability(p, today=_ref)
                 if not ok:
                     unrated.append({**base, "reason": why})
                     continue

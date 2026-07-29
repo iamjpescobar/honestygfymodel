@@ -32,7 +32,7 @@ MIN_PLAYER_GP = 5
 
 # Shared with wnba_props so both boards apply the identical rule — two
 # copies of an availability policy is how they drift apart.
-from engines.wnba_props import availability
+from engines.wnba_props import availability, league_reference_date
 
 
 def _league_average(games, stat_key):
@@ -67,6 +67,9 @@ def build_board(games, stat_label="Points", window="l10", cache_key=None):
 
 
 def _build_board(games, stat_label="Points", window="l10"):
+    # See league_reference_date: a stale feed must not read as a
+    # league-wide injury report.
+    _ref = league_reference_date(games)
     """(rows, unrated) ranked by matchup edge for the chosen stat."""
     stat_key = _STATS.get(stat_label, "pts")
     league = _league_average(games, stat_key)
@@ -95,7 +98,7 @@ def _build_board(games, stat_label="Points", window="l10"):
                 # here doesn't just show a bad row: it logs a pick that
                 # can never hit and drags the graded rate down for a
                 # reason that has nothing to do with the model.
-                ok, why, _days = availability(p)
+                ok, why, _days = availability(p, today=_ref)
                 if not ok:
                     unrated.append({**base, "reason": why})
                     continue

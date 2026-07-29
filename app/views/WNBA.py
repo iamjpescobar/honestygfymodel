@@ -43,7 +43,8 @@ page_header("WNBA Analytics", "Live season coverage — game & prop research", e
 # of the Day boards use, so one page can't disagree with another about
 # who is playing.
 from engines.wnba_props import (availability as _availability,
-                                likely_starters as _likely_starters)
+                                likely_starters as _likely_starters,
+                                league_reference_date as _ref_date)
 
 
 def _load_games():
@@ -96,6 +97,23 @@ def _live_overrides():
 
 
 games, generated_at = _load_games()
+
+# Reference point for "has she played recently". Anchored to the newest
+# game in the data rather than the wall clock, because the nightly WNBA
+# fetch is allowed to fail without failing the build — so a stale slate
+# would otherwise flag every player in the league as absent. See
+# engines.wnba_props.league_reference_date.
+_REF = _ref_date(games)
+if _REF:
+    from datetime import date as _date
+    _stale_days = (_date.today() - _REF).days
+    if _stale_days > 3:
+        st.warning(
+            f"This WNBA data is {_stale_days} days old \u2014 the most recent game "
+            f"in it is {_REF}. Availability below is judged against that date, "
+            f"not today, so nobody is falsely marked out; but the numbers are "
+            f"not current. The nightly fetch may be failing."
+        )
 
 if games is None:
     st.markdown(card_open("\U0001F3C0 WNBA engine is being connected"), unsafe_allow_html=True)
@@ -449,7 +467,7 @@ def _render_slate():
                             # players — the WNBA feed publishes no starter
                             # flag. See likely_starters for why recent and
                             # not season minutes.
-                            _starters = _likely_starters(plist)
+                            _starters = _likely_starters(plist, today=_REF)
                             for p in plist:
                                 pos = p.get("pos") or ""
                                 # Flag, don't hide. This is the full slate
@@ -461,7 +479,7 @@ def _render_slate():
                                 # Boards that actually PICK players
                                 # (Props, Defense, Player of the Day) drop
                                 # her outright; this one labels her.
-                                _ok, _why, _days = _availability(p)
+                                _ok, _why, _days = _availability(p, today=_REF)
                                 pname = f'{p.get("name")} \u00b7 {pos}' if pos else p.get("name")
                                 if not _ok:
                                     pname = f'\u26a0 {pname}'

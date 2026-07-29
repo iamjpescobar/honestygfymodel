@@ -303,7 +303,18 @@ with content_col:
         with col_head:
             if pitcher_id:
                 st.image(get_headshot_url(pitcher_id), width=80)
-            st.markdown(f'<span style="font-weight:700; color:{COLOR["gold"]};">{selected_pitcher_name}</span>', unsafe_allow_html=True)
+            # Throwing hand, shown next to the name. It drives the whole
+            # platoon side of the model — which side a switch hitter bats
+            # from, the batter-vs-hand splits, the park factor that then
+            # applies — and it appeared nowhere on the site.
+            _hand = (pitcher_data or {}).get("p_throws")
+            _hand_tag = (
+                f'<span style="font-family:\'JetBrains Mono\',monospace; '
+                f'font-size:11px; color:{COLOR["text_muted"]}; margin-left:6px;">'
+                f'{_hand}HP</span>' if _hand in ("R", "L") else "")
+            st.markdown(f'<span style="font-weight:700; color:{COLOR["gold"]};">'
+                        f'{selected_pitcher_name}</span>{_hand_tag}',
+                        unsafe_allow_html=True)
             _baa = pitcher_data.get("BA") if pitcher_data else None
             if _baa is not None and (pitcher_data.get("AB") or 0) > 0:
                 st.markdown(
@@ -1161,6 +1172,12 @@ with content_col:
                     return {
                         "Player": name,
                         "Bats": bats_label,
+                        # 1-9 as posted, sitting with the other identity
+                        # columns rather than mid-table between HR/FB and
+                        # Brl%, where it interrupted the run of rate
+                        # stats. Blank on the unconfirmed-lineup fallback,
+                        # which genuinely has no batting order.
+                        "Ord": (batting_order // 100) if batting_order else None,
                         "Matchup": matchup if matchup is not None else "\u2014",
                         "SLAM": round(slam, 1) if slam is not None else None,
                         "BA": profile.get("BA", 0),
@@ -1168,9 +1185,6 @@ with content_col:
                         "xSLG": profile.get("xSLG"),
                         "ISO": profile.get("ISO", 0),
                         "HR/FB": profile.get("HR/FB"),
-                        # 1-9 as posted. Blank on the unconfirmed-lineup
-                        # fallback, which genuinely has no batting order.
-                        "Ord": (batting_order // 100) if batting_order else None,
                         "Brl%": profile.get("Brl %", 0),
                         # Barrels per PLATE APPEARANCE, next to the
                         # per-batted-ball rate. The gap between the two

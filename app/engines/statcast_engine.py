@@ -929,6 +929,20 @@ def get_pitcher_statcast(pitcher_id):
         if xhr_allowed is not None and hr_allowed is not None else None
     )
 
+    # THROWING HAND. Present on every row of his own data and never
+    # surfaced, so pitcher_data.get("p_throws") returned None everywhere —
+    # which meant the Game Card's switch-hitter resolution silently sat
+    # out for every switch hitter (no effective side, so no park split),
+    # and handedness appeared nowhere on the site at all.
+    #
+    # Taken as the most common value rather than the first row: a stray
+    # mislabelled pitch shouldn't flip a pitcher's hand.
+    if not df.empty and "p_throws" in df.columns:
+        _hands = df["p_throws"].dropna()
+        metrics["p_throws"] = str(_hands.mode().iloc[0]) if not _hands.empty else None
+    else:
+        metrics["p_throws"] = None
+
     if not df.empty and "pitch_type" in df.columns:
         arsenal = df["pitch_type"].dropna().value_counts(normalize=True) * 100
         metrics["Pitch Arsenal"] = {k: round(v, 2) for k, v in arsenal.items() if v > 0}

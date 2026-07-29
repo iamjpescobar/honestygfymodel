@@ -35,7 +35,7 @@ EASTERN = ZoneInfo("America/New_York")
 _URL = "https://statsapi.mlb.com/api/v1/people/{pid}/stats"
 
 _STAT_KEY = {"Strikeouts": "k", "Earned Runs": "er", "Hits Allowed": "ha",
-             "Walks": "bb", "Innings": "ip"}
+             "Walks": "bb", "Innings": "ip", "Pitches Thrown": "pitches"}
 _WIN_N = {"Season": None, "L25": 25, "L10": 10, "L5": 5}
 
 
@@ -73,10 +73,27 @@ def _game_log_json(batter_id: int, season: int) -> str:
             ip = 0.0
         opp = (sp.get("opponent") or {})
         opp_label = opp.get("abbreviation") or opp.get("teamName") or opp.get("name") or ""
+        # PITCH COUNT. MLB publishes it as numberOfPitches on the same
+        # game-log entry, so it costs nothing extra to carry.
+        #
+        # Worth having for the same reason the KBO innings bug mattered:
+        # it tells you whether a starter is being stretched out or kept on
+        # a leash, which decides how deep he goes and therefore how many
+        # times a lineup sees him — the single biggest driver of a third
+        # time through the order. A 65-pitch outing and a 105-pitch outing
+        # are different pitchers for prop purposes even at identical
+        # strikeout totals.
+        #
+        # None (not 0) when absent: a genuine bullpen game and a missing
+        # field must not look alike.
+        try:
+            pitches = int(stat.get("numberOfPitches"))
+        except (TypeError, ValueError):
+            pitches = None
         games.append({"date": sp.get("date", ""), "opp": opp_label,
                       "opp_id": opp.get("id"),
                       "k": k, "er": er, "ha": ha, "bb": bb,
-                      "ip": round(ip, 1)})
+                      "ip": round(ip, 1), "pitches": pitches})
     games.sort(key=lambda g: g["date"])
     return json.dumps({"games": games, "error": None})
 
@@ -100,6 +117,13 @@ def render_pitcher_trend(pitcher_id, name, stat_label: str = "Strikeouts",
         return
 
     key = _STAT_KEY.get(stat_label, "k")
+    # Pitch count can be genuinely absent on older or partial entries, so
+    # drop those games rather than charting a fabricated zero.
+    if key == "pitches":
+        games = [g for g in games if g.get("pitches") is not None]
+        if not games:
+            st.caption("No pitch-count data on this pitcher's game log yet.")
+            return
     all_vals = [g[key] for g in games]
     window_hit_chips(all_vals, line, window_label,
                      windows=("Season", "L25", "L10", "L5"))

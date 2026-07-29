@@ -327,7 +327,11 @@ def get_wnba_player_of_the_day(form_window: str = "l5"):
     # Imported here rather than at module scope: player_of_the_day is
     # imported by the MLB paths too, and they have no reason to pull in
     # the WNBA engines.
-    from engines.wnba_props import availability as _wnba_availability
+    from engines.wnba_props import (availability as _wnba_availability,
+                                    league_reference_date as _wnba_ref)
+    # Anchored to the data's newest game — a stale feed must not read as
+    # every player being injured. See league_reference_date.
+    _ref = _wnba_ref(games)
 
 
     # Slate-average points allowed, for the opponent-defense factor.
@@ -360,7 +364,7 @@ def get_wnba_player_of_the_day(form_window: str = "l5"):
                 #
                 # This board is also logged for calibration, so every such
                 # pick was an automatic miss recorded against the model.
-                ok, why, _days = _wnba_availability(p)
+                ok, why, _days = _wnba_availability(p, today=_ref)
                 if not ok:
                     continue
 

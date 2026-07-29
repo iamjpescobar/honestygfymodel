@@ -97,7 +97,10 @@ print("PASS: props and defense boards share one availability rule")
 # --- and it must run BEFORE the season-total filters ---------------------
 src = open("app/engines/wnba_props.py").read()
 body = src[src.index("for p in g.get(f\"{side}_players\")"):]
-i_avail, i_gp = body.index("availability(p)"), body.index("gp < MIN_GP")
+# Match the CALL, not its exact arguments — availability(p) became
+# availability(p, today=_ref) when reference-date anchoring was added,
+# and pinning the old text broke against unchanged behaviour.
+i_avail, i_gp = body.index("availability(p"), body.index("gp < MIN_GP")
 assert i_avail < i_gp, "availability must be checked before season totals"
 print("PASS: availability is the first filter, ahead of every season total")
 
@@ -109,18 +112,18 @@ print("PASS: availability is the first filter, ahead of every season total")
 # players through, it FAVOURED the ones producing when they got hurt.
 pod_src = open("app/engines/player_of_the_day.py").read()
 seg = pod_src[pod_src.index("def get_wnba_player_of_the_day"):]
-assert "_wnba_availability(p)" in seg, "WNBA POTD doesn't check availability"
+assert "_wnba_availability(p" in seg, "WNBA POTD doesn't check availability"
 # Match the CODE line, not the prose — the explanatory comment above the
 # check also contains "gp < 5", and an earlier version of this assertion
 # found the comment first and failed against correct code.
-i_av = seg.index("_wnba_availability(p)")
+i_av = seg.index("_wnba_availability(p")
 i_gp = seg.index("                if gp < 5:")
 assert i_av < i_gp, "availability must be checked before the season-total floor"
 print("PASS: WNBA Player of the Day checks availability before gp < 5")
 
 # --- WNBA slate tables flag rather than hide --------------------------
 w = open("app/views/WNBA.py").read()
-assert "_availability(p)" in w, "slate tables don't check availability"
+assert "_availability(p" in w, "slate tables don't check availability"
 assert '"Status"' in w, "slate tables need a status column"
 assert "OUT" in w
 print("PASS: slate tables FLAG unavailable players (roster view, not a pick list)")
@@ -136,7 +139,10 @@ for mod, name in (("engines.wnba_props", "props"),
 # became multi-line when likely_starters was added, and pinning the exact
 # text broke against unchanged behaviour.
 assert "from engines.wnba_props import" in w and "availability as _availability" in w
-assert "from engines.wnba_props import availability" in pod_src
+# player_of_the_day's import also became multi-line when reference-date
+# anchoring was added. Check the binding, not the exact import text.
+assert "from engines.wnba_props import" in pod_src
+assert "availability as _wnba_availability" in pod_src
 print("PASS: props, defense, POTD and the slate view share one rule")
 
 # --- likely starters --------------------------------------------------

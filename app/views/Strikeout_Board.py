@@ -118,7 +118,8 @@ else:
             if _pick in _by_name:
                 _r = _by_name[_pick]
                 _t_stat = st.segmented_control(
-                    "Stat", ["Strikeouts", "Earned Runs", "Hits Allowed", "Walks", "Innings"],
+                    "Stat", ["Strikeouts", "Earned Runs", "Hits Allowed", "Walks",
+                             "Innings", "Pitches Thrown"],
                     default="Strikeouts", key="kb_trend_stat", label_visibility="collapsed",
                 ) or "Strikeouts"
                 _t_win = st.segmented_control(
