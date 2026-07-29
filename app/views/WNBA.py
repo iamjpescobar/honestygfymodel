@@ -107,12 +107,27 @@ _REF = _ref_date(games)
 if _REF:
     from datetime import date as _date
     _stale_days = (_date.today() - _REF).days
-    if _stale_days > 3:
-        st.warning(
-            f"This WNBA data is {_stale_days} days old \u2014 the most recent game "
-            f"in it is {_REF}. Availability below is judged against that date, "
-            f"not today, so nobody is falsely marked out; but the numbers are "
-            f"not current. The nightly fetch may be failing."
+    # 10 days, not 3, and the wording no longer blames the fetch.
+    #
+    # The first version fired at 3 days and said "the nightly fetch may be
+    # failing" — which it announced during the All-Star break (Jul 23-27,
+    # last game Jul 22), when the fetch was working perfectly and the
+    # league simply wasn't playing. A confident wrong diagnosis is worse
+    # than no message.
+    #
+    # The league schedules real gaps: All-Star in late July, and the FIBA
+    # World Cup break Aug 31 - Sep 16, which is roughly SIXTEEN days. Any
+    # threshold below that will cry wolf every September. 10 days clears
+    # All-Star, and during FIBA this states the gap as a fact without
+    # asserting a cause.
+    if _stale_days > 10:
+        st.info(
+            f"No WNBA games in this data since {_REF} ({_stale_days} days). "
+            f"That's expected during a scheduled league break \u2014 All-Star in "
+            f"late July, the FIBA World Cup break Aug 31 \u2013 Sep 16 \u2014 and can "
+            f"also mean the nightly fetch hasn't run. Availability below is "
+            f"judged against {_REF} rather than today, so nobody is falsely "
+            f"marked out either way."
         )
 
 if games is None:

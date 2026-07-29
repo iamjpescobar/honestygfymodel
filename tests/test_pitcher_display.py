@@ -82,5 +82,47 @@ print("PASS: no dates anywhere -> None (callers fall back to the clock)")
 
 w = open("app/views/WNBA.py").read()
 assert "_REF = _ref_date(games)" in w
-assert "days old" in w, "user should be told when the data itself is stale"
+# Wording changed when the warning stopped blaming the fetch — check
+# that a gap notice EXISTS, not its exact phrasing.
+assert "_stale_days" in w, "user should be told when the data itself is stale"
 print("PASS: WNBA page warns when its own data is stale")
+
+# --- league breaks must not read as absence or as a broken fetch ------
+# The 2026 All-Star break was Jul 23-27 (last game Jul 22) and the FIBA
+# World Cup break runs Aug 31 - Sep 16, about SIXTEEN days. Both are
+# normal. The first version of the staleness warning fired at 3 days and
+# blamed the nightly fetch — announcing a failure during All-Star while
+# the fetch was working fine.
+ALLSTAR_LAST = date(2026, 7, 22)
+DURING_BREAK = date(2026, 7, 28)
+
+break_players = [{"log": [{"date": ALLSTAR_LAST.isoformat(), "min": 30.0}]}
+                 for _ in range(5)]
+games_break = [{"home_players": break_players, "away_players": break_players}]
+ref = league_reference_date(games_break)
+assert ref == ALLSTAR_LAST
+
+# Anchored to the data, every one of them is available...
+assert all(availability(p, today=ref)[0] for p in break_players)
+print("PASS: All-Star break (6-day gap) flags nobody")
+
+# ...and the same holds across the far longer FIBA break, because the
+# reference date moves with the whole league.
+FIBA_LAST = date(2026, 8, 30)
+fiba_players = [{"log": [{"date": FIBA_LAST.isoformat(), "min": 30.0}]}
+                for _ in range(5)]
+fiba_ref = league_reference_date(
+    [{"home_players": fiba_players, "away_players": fiba_players}])
+assert all(availability(p, today=fiba_ref)[0] for p in fiba_players)
+print("PASS: 16-day FIBA break flags nobody (anchoring is what makes 8 days safe)")
+
+# A player genuinely out BEFORE a break is still caught during it.
+hurt = {"log": [{"date": (FIBA_LAST - timedelta(days=20)).isoformat(), "min": 28.0}]}
+assert availability(hurt, today=fiba_ref)[0] is False
+print("PASS: a real absence is still caught across a league break")
+
+w = open("app/views/WNBA.py").read()
+assert "_stale_days > 10" in w, "threshold must clear the All-Star break"
+assert "may be failing" not in w, "must not assert a cause it can't know"
+assert "scheduled league break" in w and "FIBA" in w
+print("PASS: staleness notice states the gap without blaming the fetch")

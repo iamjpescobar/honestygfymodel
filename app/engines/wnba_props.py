@@ -65,6 +65,13 @@ MIN_LOG = 10
 # clears an All-Star break or a scheduled rest without flagging anyone,
 # while still catching a genuine multi-week absence.
 STALE_DAYS = 8
+# NOTE on breaks: 8 days is measured against the DATA's newest game (see
+# league_reference_date), never the wall clock, which is what makes this
+# survive a league shutdown. During the FIBA World Cup break — Aug 31 to
+# Sep 16, about sixteen days — every player's last game is equally old,
+# so the reference date moves with them and nobody is flagged. Anchoring
+# is what makes an 8-day threshold safe across a 16-day break; without
+# it, no threshold short enough to be useful would survive September.
 # Below this many minutes in her most recent appearance, she was on a
 # minutes restriction or in garbage time — her season line no longer
 # describes what she is being asked to do.
