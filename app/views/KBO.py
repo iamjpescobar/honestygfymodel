@@ -297,6 +297,43 @@ _render_k_projections()
 if not games and not _stale:
     st.info("No KBO games on today\'s schedule \u2014 likely a league off-day.")
 else:
+    from engines.run_total import (project_total as _project_total,
+                                   league_run_average as _league_avg)
+
+    def _kbo_starter_era(gm, side, pitchers):
+        """Announced starter's ERA from the real pitcher leaderboard.
+
+        Matched by name against the same list the Strikeout board uses.
+        Returns None when the starter isn't posted or isn't on the
+        leaderboard — the projection then leaves the starter term out
+        rather than inventing an ERA.
+        """
+        nm = (gm.get(f"{side}_starter") or "").strip()
+        if not nm or nm.upper() == "TBD":
+            return None
+        for sp in pitchers or []:
+            if (sp.get("name") or "").strip() == nm:
+                try:
+                    return float(sp.get("era"))
+                except (TypeError, ValueError):
+                    return None
+        return None
+
+    # Measured from the teams on this slate, not assumed. None means the
+    # projection sits out rather than resting on a guessed baseline.
+    _LEAGUE_RS = _league_avg({
+        g.get(sd): {"rs_pg": g.get(f"{sd}_rs_pg")}
+        for g in (games or []) for sd in ("home", "away")
+        if g.get(f"{sd}_rs_pg") is not None
+    })
+    _eras = []
+    for _sp in (pitchers or []):
+        try:
+            _eras.append(float(_sp.get("era")))
+        except (TypeError, ValueError):
+            pass
+    _LEAGUE_ERA = round(sum(_eras) / len(_eras), 2) if _eras else None
+
     def _team_line(g, side):
         name = g.get(side, "TBD")
         bits = []
@@ -377,6 +414,30 @@ else:
                 # Scoreline crawl parsed nothing, but official stats still exist.
                 stats_html += _stat_row(g.get(side, "TBD"), "")
                 stats_html += _official_team_stats(g, side)
+
+        # PROJECTED RUN TOTAL. Arithmetic on measured run rates, with the
+        # announced starters applied where their ERA is published. NOT a
+        # moneyline — see engines/run_total for why a win probability
+        # needs fitted history that doesn't exist yet.
+        _tot, _det = _project_total(
+            {"rs_pg": g.get("home_rs_pg"), "ra_pg": g.get("home_ra_pg")},
+            {"rs_pg": g.get("away_rs_pg"), "ra_pg": g.get("away_ra_pg")},
+            _LEAGUE_RS,
+            league_era=_LEAGUE_ERA,
+            home_starter_era=_kbo_starter_era(g, "home", pitchers),
+            away_starter_era=_kbo_starter_era(g, "away", pitchers),
+        )
+        if _tot is not None:
+            _sp_note = (" \u00b7 starters applied"
+                        if (_det.get("home_starter_adj") or _det.get("away_starter_adj"))
+                        else "")
+            stats_html += (
+                f'<div style="font-size:12.5px; margin-top:6px; '
+                f'display:flex; justify-content:space-between; gap:12px;">'
+                f'<span style="font-weight:700; color:{COLOR["text"]};">PROJECTED TOTAL</span>'
+                f'<span style="font-family:\'JetBrains Mono\',monospace; color:{COLOR["gold"]};">'
+                f'{_tot} runs \u00b7 {g.get("away","")} {_det["away_exp"]} / '
+                f'{g.get("home","")} {_det["home_exp"]}{_sp_note}</span></div>')
 
         if g.get("h2h_official"):
             stats_html += (f'<div style="font-size:11.5px; color:{COLOR["gold"]}; '

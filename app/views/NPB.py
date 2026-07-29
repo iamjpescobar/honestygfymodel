@@ -103,6 +103,36 @@ if generated_at:
 if not games and not _stale:
     st.info("No NPB games on today\'s schedule \u2014 likely a league off-day.")
 else:
+    from engines.run_total import project_total as _project_total, league_run_average
+    
+    # League baselines, measured from the teams on file rather than assumed.
+    # Recomputed per render but trivial — a dict comprehension over ~12 teams.
+    def _league_baselines(games):
+        teams = {}
+        for gm in games or []:
+            for sd in ("home", "away"):
+                if gm.get(f"{sd}_rs_pg") is not None:
+                    teams[gm.get(sd)] = {"rs_pg": gm.get(f"{sd}_rs_pg")}
+        return league_run_average(teams)
+    
+    
+    def _starter_era(gm, side):
+        """Announced starter's ERA, or None. Never a guess."""
+        sp = gm.get(f"{side}_starter_stats") or {}
+        try:
+            return float(sp.get("era"))
+        except (TypeError, ValueError):
+            return None
+    
+
+    # Measured once per render from the teams actually on this slate.
+    # None when there isn't enough data yet, which makes project_total
+    # return None and the block simply not render — better than a total
+    # built on an assumed league average.
+    _LEAGUE_RS = _league_baselines(games)
+    _LEAGUE_ERA = None   # NPB team ERA isn't on the slate payload; the
+                         # starter term sits out rather than being guessed.
+
     def _team_line(g, side):
         """One team's real season line — only renders fields the data
         actually contains."""
@@ -174,6 +204,32 @@ else:
                 f'text-align:right;">{joined}</span></div>',
                 unsafe_allow_html=True,
             )
+
+
+        # PROJECTED RUN TOTAL — arithmetic on measured run rates, shown
+        # with its parts so it reads as a derivation rather than a price.
+        # Deliberately NOT a moneyline: see engines/run_total for why a
+        # win probability needs fitted history this site doesn't have yet.
+        _tot, _det = _project_total(
+            {"rs_pg": g.get("home_rs_pg"), "ra_pg": g.get("home_ra_pg")},
+            {"rs_pg": g.get("away_rs_pg"), "ra_pg": g.get("away_ra_pg")},
+            _LEAGUE_RS,
+            league_era=_LEAGUE_ERA,
+            home_starter_era=_starter_era(g, "home"),
+            away_starter_era=_starter_era(g, "away"),
+        )
+        if _tot is not None:
+            _sp_note = ""
+            if _det.get("home_starter_adj") or _det.get("away_starter_adj"):
+                _sp_note = " (starters applied)"
+            st.markdown(
+                f'<div style="display:flex; justify-content:space-between; gap:12px; '
+                f'font-size:12.5px; margin-top:6px;">'
+                f'<span style="font-weight:700; color:{COLOR["text"]};">PROJECTED TOTAL</span>'
+                f'<span style="font-family:\'JetBrains Mono\',monospace; color:{COLOR["gold"]};">'
+                f'{_tot} runs \u00b7 {g.get("away","")} {_det["away_exp"]} / '
+                f'{g.get("home","")} {_det["home_exp"]}{_sp_note}</span></div>',
+                unsafe_allow_html=True)
 
         stats_html = _team_line(g, "away") + _team_line(g, "home")
         if g.get("h2h"):
