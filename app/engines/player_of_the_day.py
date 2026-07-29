@@ -396,6 +396,28 @@ def get_wnba_player_of_the_day(form_window: str = "l5"):
                     "form_ppg": p.get(f"{form_window}_ppg"),
                     "form_rpg": p.get(f"{form_window}_rpg"),
                     "form_apg": p.get(f"{form_window}_apg"),
+                    # PROJECTED LINE FOR TONIGHT.
+                    #
+                    # Recent form times the SAME opponent-defense factor
+                    # already applied to adj_pra above — not a second
+                    # model, just the existing adjustment carried through
+                    # to each stat so the parts add up to the whole.
+                    #
+                    # Both inputs are measured: recent form is her own box
+                    # scores, and the factor is what this opponent
+                    # actually allows per game versus the slate average,
+                    # capped at +/-10% so one leaky defense can't run away
+                    # with it.
+                    #
+                    # None where the underlying average is None — a
+                    # projection built on a missing stat would be a made-up
+                    # number wearing a decimal point.
+                    "proj_pts": (round(p.get(f"{form_window}_ppg") * factor, 1)
+                                 if p.get(f"{form_window}_ppg") is not None else None),
+                    "proj_reb": (round(p.get(f"{form_window}_rpg") * factor, 1)
+                                 if p.get(f"{form_window}_rpg") is not None else None),
+                    "proj_ast": (round(p.get(f"{form_window}_apg") * factor, 1)
+                                 if p.get(f"{form_window}_apg") is not None else None),
                 })
 
     if not candidates:

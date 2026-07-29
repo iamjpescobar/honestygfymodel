@@ -172,6 +172,45 @@ if games:
         pc2.metric(f"{_fw_label} RPG", wnba_pick["form_rpg"] if wnba_pick["form_rpg"] is not None else "N/A")
         pc3.metric(f"{_fw_label} APG", wnba_pick["form_apg"] if wnba_pick["form_apg"] is not None else "N/A")
         pc4.metric("Season PRA", wnba_pick["season_pra"])
+
+        # PROJECTED LINE FOR TONIGHT, shown beside the recent averages
+        # it's built from so the adjustment is visible rather than
+        # implied. The delta on each metric IS the opponent-defense
+        # factor made legible: a positive delta means this matchup helps
+        # her, negative means it doesn't.
+        _pp, _pr, _pa = (wnba_pick.get("proj_pts"), wnba_pick.get("proj_reb"),
+                         wnba_pick.get("proj_ast"))
+        if any(v is not None for v in (_pp, _pr, _pa)):
+            st.markdown(
+                f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:11px; '
+                f'color:{COLOR["text_muted"]}; margin-top:10px; margin-bottom:2px;">'
+                f'PROJECTED TONIGHT</div>', unsafe_allow_html=True)
+            j1, j2, j3, j4 = st.columns(4)
+            def _proj(col, label, proj, base):
+                if proj is None:
+                    col.metric(label, "N/A")
+                    return
+                # delta vs her own recent form, so the matchup effect is
+                # the number you actually read.
+                d = round(proj - base, 1) if base is not None else None
+                col.metric(label, proj, delta=(f"{d:+.1f}" if d else None))
+            _proj(j1, "PTS", _pp, wnba_pick.get("form_ppg"))
+            _proj(j2, "REB", _pr, wnba_pick.get("form_reb") or wnba_pick.get("form_rpg"))
+            _proj(j3, "AST", _pa, wnba_pick.get("form_apg"))
+            j4.metric("PRA", wnba_pick.get("adj_pra"),
+                      delta=(f'{round(wnba_pick["adj_pra"] - wnba_pick["form_pra"], 1):+.1f}'
+                             if wnba_pick.get("adj_pra") is not None
+                             and wnba_pick.get("form_pra") is not None
+                             and round(wnba_pick["adj_pra"] - wnba_pick["form_pra"], 1) else None))
+            st.caption(
+                f'Projection = her real last-{_fw_label[1:]}-game averages \u00d7 the same '
+                f'{wnba_pick.get("def_factor", 1.0)}\u00d7 opponent-defense factor used to rank '
+                f'her. Both inputs are measured, not modelled \u2014 but this is an '
+                f'estimate, not a forecast with a track record: the Calibration '
+                f'page grades whether she records an extra-base-equivalent, not '
+                f'whether she hits these numbers.'
+            )
+
         st.caption(
             f'Real games played this season: {wnba_pick["gp"]} \u2014 ranked by real last-{_fw_label[1:]}-game PRA '
             f'(points+rebounds+assists) \u00d7 opponent-defense factor '
