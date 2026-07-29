@@ -88,7 +88,11 @@ for col in ("Brl/PA", "EV90", "MaxEV", "HRWindow%", "HRIntent"):
     assert col in formatted, f'"{col}" would render at the global precision'
 print("PASS: the five new batter columns are formatted like their neighbours")
 
-vuln_fmt = re.search(r'gradient=True\)\.format\(\{(.*?)\}, na_rep=', gc, re.S).group(1)
+# Scope the search to the vulnerability card. The targets tables now
+# also use gradient=True).format(...), so an unanchored search matched
+# the first one instead and reported the wrong block as unformatted.
+_vuln_seg = gc[gc.index("HR VULNERABILITY (ALLOWED)"):]
+vuln_fmt = re.search(r'gradient=True\)\.format\(\{(.*?)\}, na_rep=', _vuln_seg, re.S).group(1)
 vuln_formatted = set(re.findall(r'"([^"]+)":', vuln_fmt))
 vuln_cols = set(re.findall(r'"([^"]+)": pitcher_data\.get', gc))
 missing_v = [c for c in vuln_cols if c not in vuln_formatted]
@@ -134,3 +138,29 @@ print("PASS: Matchup and Context render signed")
 app = open("app/app.py").read()
 assert '"views/HR_Edge_Board.py"' in app, "HR Edge Board is not registered in app.py"
 print("PASS: HR Edge Board is registered in the nav")
+
+# --- unmeasurable scores must read N/A, never 0 -----------------------
+# When Baseball Savant is unreachable, every HR/Hit/K Score is None. The
+# targets tables were passing those through _score_num, which substitutes
+# 0 — so a hitter nobody could measure rendered as the worst on the board,
+# while the warning banner directly above promised "N/A" and the Stack
+# Pick card beside them correctly showed N/A. Three parts of one screen
+# disagreeing, with the wrong one being the most prominent.
+tt = gc[gc.index("def _targets_table"):]
+tt = tt[:tt.index("top_row1, top_row2")]
+assert "_score_num(" not in tt, (
+    "_targets_table must not substitute 0 — its own docstring says that's "
+    "only safe when N/A text appears alongside, and here the number IS the "
+    "only signal")
+assert "label: r[sort_field]" in tt, "None must survive into the frame as NaN"
+print("PASS: targets tables keep None rather than substituting 0")
+
+for lbl in ("HR Score", "Hit Score", "K Score"):
+    assert f'.format({{"{lbl}": "{{:.0f}}"}}, na_rep="N/A")' in gc, \
+        f"{lbl} table doesn't render NaN as N/A"
+print("PASS: all three targets tables render unmeasurable scores as N/A")
+
+# _score_num itself is still fine where a real numeric is required
+# (progress bars), so long as N/A text sits beside it.
+assert "def _score_num" in gc and "def _score_display" in gc
+print("PASS: _score_num retained for genuinely numeric contexts")

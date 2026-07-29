@@ -842,9 +842,25 @@ with content_col:
             st.caption("Scores below will show as N/A \u2014 see warning above.")
 
         def _targets_table(sort_field, label):
+            """Rows for one targets card.
+
+            Keeps None as None rather than passing through _score_num.
+            _score_num's own docstring justifies substituting 0 on the
+            grounds that it is "always paired with the N/A text elsewhere
+            so it's never the only signal" — but in THIS table the number
+            is the only signal. When Savant is unreachable every score
+            rendered as a hard 0, which reads as "this hitter is the worst
+            in the league" rather than "we couldn't measure him". The
+            warning banner above even promised N/A while the table said 0.
+
+            None becomes NaN in the frame and the styler renders it as
+            N/A, matching both the banner and the Stack Pick card beside
+            it — which was already correct.
+            """
             rows = []
             for r in sorted(ranked, key=lambda x: _score_sort_key(x, sort_field))[:5]:
-                rows.append({"Player": r["name"], "Bats": r["bats"], label: _score_num(r[sort_field])})
+                rows.append({"Player": r["name"], "Bats": r["bats"],
+                             label: r[sort_field]})
             return pd.DataFrame(rows)
 
         top_row1, top_row2 = st.columns(2)
@@ -852,19 +868,19 @@ with content_col:
             with card("hr_targets"):
                 st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Top HR Targets</div>', unsafe_allow_html=True)
                 hr_df = _targets_table("hr_score", "HR Score")
-                st.dataframe(style_stat_table(hr_df, favor_high=["HR Score"], gradient=True), width="stretch")
+                st.dataframe(style_stat_table(hr_df, favor_high=["HR Score"], gradient=True).format({"HR Score": "{:.0f}"}, na_rep="N/A"), width="stretch")
         with top_row2:
             with card("hit_targets"):
                 st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Best Hit Targets</div>', unsafe_allow_html=True)
                 hit_df = _targets_table("hit_score", "Hit Score")
-                st.dataframe(style_stat_table(hit_df, favor_high=["Hit Score"], gradient=True), width="stretch")
+                st.dataframe(style_stat_table(hit_df, favor_high=["Hit Score"], gradient=True).format({"Hit Score": "{:.0f}"}, na_rep="N/A"), width="stretch")
 
         bot_row1, bot_row2 = st.columns(2)
         with bot_row1:
             with card("k_targets"):
                 st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Strikeout Targets</div>', unsafe_allow_html=True)
                 k_df = _targets_table("k_score", "K Score")
-                st.dataframe(style_stat_table(k_df, favor_high=["K Score"], gradient=True), width="stretch")
+                st.dataframe(style_stat_table(k_df, favor_high=["K Score"], gradient=True).format({"K Score": "{:.0f}"}, na_rep="N/A"), width="stretch")
         with bot_row2:
             hr_vals = [r["hr_score"] for r in ranked if r["hr_score"] is not None]
             hit_vals = [r["hit_score"] for r in ranked if r["hit_score"] is not None]
