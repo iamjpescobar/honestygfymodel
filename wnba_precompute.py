@@ -599,8 +599,29 @@ def main():
                 g[f"{side}_form"] = t["form"]
 
             opponent = g[opp_side]
-            picks = [p for p in by_team.get(g[side], []) if p["gp"] >= 3][:9]
-            row_keys = ("name", "pos", "gp", "min",
+            # EVERYONE WHO COULD PLAY, not the top 9 scorers.
+            #
+            # The cap was 9, applied at build time, sorted by scoring and
+            # therefore BEFORE anyone knew who was available. Three
+            # injured players ate three of the nine slots and the rotation
+            # players who actually replace them were cut from the file
+            # entirely — so the page couldn't show them no matter what the
+            # app did. A WNBA roster is 11-12, and a slate needs the whole
+            # thing: the sixth option matters most on exactly the nights
+            # the starters are out.
+            #
+            # gp >= 3 still filters out players with no usable sample.
+            picks = [p for p in by_team.get(g[side], []) if p["gp"] >= 3][:15]
+            # "pid" FIRST, and it was missing entirely.
+            #
+            # Without it every slate row was anonymous, which broke three
+            # things silently: likely_starters had no id to key on and
+            # always returned an empty set (so the Role column stayed
+            # blank for everyone), the app couldn't match ESPN's per-game
+            # availability back to a player, and wnba_defense logged its
+            # calibration picks as {"id": None} — meaning that board's
+            # record could never be graded against a box score at all.
+            row_keys = ("pid", "name", "pos", "gp", "min",
                         "ppg", "l5_ppg", "l10_ppg",
                         "rpg", "l5_rpg", "l10_rpg",
                         "apg", "l5_apg", "l10_apg",

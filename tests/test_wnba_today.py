@@ -87,3 +87,35 @@ got = wp.fetch_game_availability("123")
 assert got["7"]["out"] is True and got["9"]["starter"] is True
 assert got["9"]["out"] is False, "being on the game roster means available"
 print("PASS: injuries and announced lineups both parsed correctly")
+
+# --- slate rows must carry a player id --------------------------------
+# Without pid every row was anonymous. likely_starters had nothing to key
+# on and always returned an empty set (blank Role column for everyone),
+# the app couldn't match ESPN's per-game availability back to a player,
+# and wnba_defense logged calibration picks as {"id": None} — that board's
+# record could never be graded against a box score.
+build = open("wnba_precompute.py").read()
+row_keys = build[build.index("row_keys = ("):build.index("h2h_keys")]
+assert '"pid"' in row_keys, "slate rows must carry pid"
+print("PASS: slate rows carry pid (Role, ESPN matching and grading all need it)")
+
+# Anonymous rows must not silently produce an empty starter set.
+anon = [{"name": f"P{i}", "log": [{"date": "2026-07-27", "min": 30.0}]}
+        for i in range(8)]
+assert likely_starters(anon, today=TODAY) == set()
+identified = [{**r, "pid": i} for i, r in enumerate(anon)]
+assert len(likely_starters(identified, today=TODAY)) == 5
+print("PASS: with pid present, starters resolve; without, the set is empty")
+
+# --- the whole roster, not the top 9 scorers --------------------------
+# The cap was applied at BUILD time, sorted by scoring, before anyone
+# knew who was available — so injured stars consumed slots and their
+# replacements were cut from the file entirely. The sixth option matters
+# most on exactly the nights the starters are out.
+import re
+cap = re.search(r'if p\["gp"\] >= 3\]\[:(\d+)\]', build)
+assert cap, "roster cap not found"
+assert int(cap.group(1)) >= 12, (
+    f"cap is {cap.group(1)}; a WNBA roster is 11-12 and three players out "
+    f"leaves too few to fill a board")
+print(f"PASS: slate keeps up to {cap.group(1)} players per team (full roster)")
