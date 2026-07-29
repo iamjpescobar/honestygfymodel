@@ -505,11 +505,17 @@ def _render_slate():
                                     # Blank rather than "BENCH" when the
                                     # inference couldn't run at all —
                                     # unknown shouldn't read as demoted.
+                                    # ESPN's own wording when it has one
+                                    # ("Out", "Day-To-Day"), otherwise the
+                                    # inferred label. A real status beats a
+                                    # guess, and saying which is which
+                                    # keeps the two distinguishable.
+                                    "Status": (p.get("today_status")
+                                               or (f'OUT {_days}d' if (not _ok and _days)
+                                                   else ("OUT" if not _ok else ""))),
                                     "Role": ("OUT" if not _ok
                                              else "START" if _is_starter
                                              else ("BENCH" if _starters else "")),
-                                    "Status": (f'OUT {_days}d' if (not _ok and _days)
-                                               else ("OUT" if not _ok else "")),
                                     "GP": p.get("gp"), "MIN": p.get("min"),
                                     "Season": p.get(season_k),
                                     "L5": p.get(l5_k), "L10": p.get(l10_k),

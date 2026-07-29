@@ -188,6 +188,84 @@ def _num(s):
         return None
 
 
+# ------------------------------------------------------------
+# TODAY'S AVAILABILITY — from ESPN's own game summary
+# ------------------------------------------------------------
+# THE THING GAME LOGS CANNOT TELL YOU.
+#
+# Everything else in this file is a record of the PAST. Availability was
+# being inferred from it — "she hasn't appeared in 9 days, so she's
+# probably out" — which is backwards-looking by construction and can
+# never answer "is she playing TONIGHT". A player returning today looks
+# absent; a player who played yesterday and was ruled out this morning
+# looks fine. Both are wrong, and no amount of cleverness on game logs
+# fixes either, because the information simply isn't in there.
+#
+# ESPN's summary endpoint carries it directly, and this file already
+# calls that endpoint for box scores (see parse_boxscore), so the shape
+# and the auth story are both known-good:
+#
+#   injuries[]  per team, per athlete, with a status ("Out",
+#               "Day-To-Day", "Questionable", "Active")
+#   rosters[]   per team, each entry carrying starter true/false once
+#               lineups are announced
+#
+# Written defensively on purpose. This is an undocumented endpoint whose
+# shape can change without notice, so every field is probed rather than
+# assumed, and the result is EMPTY rather than wrong when anything is
+# unrecognisable — an empty result makes the app fall back to the old
+# inference, which is worse but not misleading. The counts are printed so
+# a silent shape change shows up in the workflow log instead of quietly
+# degrading every board.
+_OUT_STATUSES = {"out", "injured", "suspended", "not with team", "inactive"}
+
+
+def fetch_game_availability(event_id, debug=False):
+    """{pid: {"status", "out", "starter"}} for one game, or {} on failure."""
+    try:
+        data = get_json(f"{BASE}/summary?event={event_id}")
+    except Exception as exc:
+        print(f"  [avail] event {event_id}: summary fetch failed ({exc})")
+        return {}
+
+    out = {}
+
+    # --- injury report ------------------------------------------------
+    for team_block in data.get("injuries") or []:
+        for item in team_block.get("injuries") or []:
+            ath = item.get("athlete") or {}
+            pid = str(ath.get("id") or "")
+            if not pid:
+                continue
+            status = (item.get("status")
+                      or (item.get("type") or {}).get("description")
+                      or (item.get("type") or {}).get("name") or "")
+            entry = out.setdefault(pid, {})
+            entry["status"] = str(status)
+            entry["out"] = str(status).strip().lower() in _OUT_STATUSES
+
+    # --- announced lineups --------------------------------------------
+    for team_block in data.get("rosters") or []:
+        for item in team_block.get("roster") or []:
+            ath = item.get("athlete") or {}
+            pid = str(ath.get("id") or "")
+            if not pid:
+                continue
+            entry = out.setdefault(pid, {})
+            if "starter" in item:
+                entry["starter"] = bool(item.get("starter"))
+            # Being listed on a game roster is itself evidence she is
+            # available, unless the injury block already said otherwise.
+            entry.setdefault("out", False)
+
+    if debug or out:
+        n_out = sum(1 for v in out.values() if v.get("out"))
+        n_start = sum(1 for v in out.values() if v.get("starter"))
+        print(f"  [avail] event {event_id}: {len(out)} players, "
+              f"{n_out} out, {n_start} announced starters")
+    return out
+
+
 def parse_boxscore(event_id, game_date, logs, debug=False):
     data = get_json(f"{BASE}/summary?event={event_id}")
     blocks = (data.get("boxscore") or {}).get("players", []) or []
@@ -447,7 +525,14 @@ def main():
     today = now_et.strftime("%Y-%m-%d")
 
     sb = get_json(f"{BASE}/scoreboard?dates={today.replace('-', '')}")
-    todays = [g for _, _, _, g in parse_scoreboard_events(sb)]
+    # Keep the event id ON the game. parse_scoreboard_events yields it
+    # separately, so it was being discarded here — and without it there's
+    # no way to ask ESPN for tonight's injury report and lineups for this
+    # specific game.
+    todays = []
+    for _eid, _st, _done, g in parse_scoreboard_events(sb):
+        g["event_id"] = _eid
+        todays.append(g)
     print(f"WNBA: slate for {today} ET — {len(todays)} games")
 
     logs, finals = {}, []
@@ -494,6 +579,13 @@ def main():
         plist.sort(key=lambda p: -(p["ppg"] or 0))
 
     for g in todays:
+        # TODAY'S availability, straight from ESPN's summary for THIS
+        # game — the only source here that knows about tonight rather
+        # than last week. See fetch_game_availability.
+        _avail = fetch_game_availability(g.get("event_id")) if g.get("event_id") else {}
+        if _avail:
+            g["availability_source"] = "espn_summary"
+
         for side, opp_side in (("away", "home"), ("home", "away")):
             t = teams.get(g[side])
             if t:
@@ -533,6 +625,14 @@ def main():
                 hh = player_h2h(logs, p["pid"], opponent) or {}
                 for k in h2h_keys:
                     row[k] = hh.get(k)
+                # Attach tonight's real status when ESPN has it. These
+                # are AUTHORITATIVE and the app prefers them over the
+                # game-log inference; absent, the keys stay None and the
+                # old behaviour applies unchanged.
+                a = _avail.get(str(p.get("pid"))) or {}
+                row["today_status"] = a.get("status")
+                row["today_out"] = a.get("out")
+                row["today_starter"] = a.get("starter")
                 rows.append(row)
             if rows:
                 g[f"{side}_players"] = rows

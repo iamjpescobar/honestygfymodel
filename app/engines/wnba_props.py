@@ -214,6 +214,26 @@ def availability(player, today=None):
     positive evidence: a real date that is too old, or a real last
     appearance too short to be a normal shift.
     """
+    # ESPN'S OWN STATUS FOR TONIGHT WINS, ALWAYS.
+    #
+    # Everything below this block infers availability from past game
+    # logs, which cannot answer "is she playing tonight" — a player
+    # returning today reads as absent, and one ruled out this morning
+    # reads as fine. When wnba_precompute has attached ESPN's actual
+    # injury report for this game (today_out / today_status), that is a
+    # statement about tonight and it settles the question outright.
+    #
+    # Only trusted when the key is genuinely present: None means the
+    # fetch didn't run or the endpoint changed shape, which is different
+    # from "she is available" and must fall through to the inference
+    # rather than silently clearing everyone.
+    today_out = player.get("today_out")
+    if today_out is True:
+        status = player.get("today_status") or "out"
+        return False, f"ruled {status.lower()} for tonight (ESPN)", 0
+    if today_out is False:
+        return True, None, 0
+
     log = player.get("log") or []
     if not log:
         return False, "no game log", None
@@ -442,12 +462,21 @@ def _recent_minutes(player, lookback=STARTER_LOOKBACK):
 
 
 def likely_starters(players, today=None):
+    """See below — announced lineups override the minutes inference."""
     """Set of pids most likely to start for this team tonight.
 
     Returns an EMPTY SET when minutes can't be read for anyone, so callers
     treat it as "unknown" and show everyone rather than hiding a whole
     roster behind a failed inference.
     """
+    # ANNOUNCED lineups win. When ESPN has posted who's starting, use it
+    # rather than guessing from minutes — the inference exists only for
+    # the hours before that's published.
+    announced = {p.get("pid") or p.get("id")
+                 for p in players or [] if p.get("today_starter") is True}
+    if announced:
+        return announced
+
     ranked = []
     for p in players or []:
         ok, _why, _days = availability(p, today=today)
