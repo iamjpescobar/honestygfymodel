@@ -233,3 +233,90 @@ def style_stat_table(df: pd.DataFrame, favor_high=None, favor_low=None, gradient
             styler = styler.apply(lambda c: _magnitude_column(c, invert=True, use_gradient=gradient), subset=[col])
 
     return styler
+
+# ----------------------------------------------------------------------
+# HTML table rendering — for small reference tables on small screens.
+#
+# st.dataframe draws on a CANVAS (see app/.streamlit/config.toml), which
+# means CSS cannot touch it: no responsive column widths, no font
+# scaling, and no working sticky column. Its frozen index also smears
+# during momentum scrolling in iOS Safari.
+#
+# For a 3-row splits table none of st.dataframe's features earn their
+# keep — there is nothing to sort and nothing to resize — so these render
+# as real HTML instead, where CSS does the work. The first column sticks
+# while the rest scroll, so the row label stays on screen.
+#
+# The big lineup table deliberately does NOT use this: sorting is the
+# whole point there, and that only exists in st.dataframe.
+# ----------------------------------------------------------------------
+_HTML_TABLE_CSS = f"""
+<style>
+.lc-tbl-wrap {{
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 6px;
+}}
+.lc-tbl-wrap table {{
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}}
+.lc-tbl-wrap th, .lc-tbl-wrap td {{
+  padding: 6px 10px;
+  text-align: right;
+  white-space: nowrap;
+  background-color: {BG};
+}}
+.lc-tbl-wrap thead th {{
+  color: {COLOR['gold']};
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 10.5px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}}
+/* First column carries the row label (Split / Season). Sticky so it
+   stays put while the stats scroll under it — this is the whole reason
+   these tables are HTML and not st.dataframe. */
+.lc-tbl-wrap td:first-child, .lc-tbl-wrap th:first-child {{
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  text-align: left;
+  font-weight: 700;
+  color: {COLOR['text']};
+  box-shadow: 1px 0 0 0 {COLOR['stat_high']}33;
+}}
+.lc-tbl-wrap thead th:first-child {{ z-index: 4; }}
+
+/* Phones: tighter padding and smaller type so more columns fit before
+   any scrolling is needed. Desktop keeps the roomier sizing above. */
+@media (max-width: 900px) {{
+  .lc-tbl-wrap table {{ font-size: 11.5px; }}
+  .lc-tbl-wrap th, .lc-tbl-wrap td {{ padding: 4px 6px; }}
+  .lc-tbl-wrap thead th {{ font-size: 9.5px; }}
+}}
+</style>
+"""
+
+
+def render_html_table(styler, key: str = ""):
+    """Render a pandas Styler as real HTML with a sticky first column.
+
+    Use for SMALL reference tables where the row label matters more than
+    sorting. Pass a Styler whose row label is already a real COLUMN, not
+    an index — _base_styler calls .hide(axis="index"), so anything left
+    in the index is dropped before it ever reaches here.
+    """
+    import streamlit as st
+
+    if not st.session_state.get("_lc_html_tbl_css"):
+        st.markdown(_HTML_TABLE_CSS, unsafe_allow_html=True)
+        st.session_state["_lc_html_tbl_css"] = True
+
+    html = styler.to_html(table_uuid=f"lc{key}") if hasattr(styler, "to_html") else str(styler)
+    st.markdown(f'<div class="lc-tbl-wrap">{html}</div>', unsafe_allow_html=True)
