@@ -937,6 +937,17 @@ with content_col:
         rows = {k: v for k, v in rows.items() if v is not None}
 
         if rows:
+            # .T makes the DICT KEYS the index: "Overall", "vs RHB",
+            # "vs LHB". That index IS the data — it's the only thing
+            # saying which platoon side each row describes, and this table
+            # is where you read what a pitcher allows to lefties vs
+            # righties.
+            #
+            # DO NOT pass hide_index=True to the two st.dataframe calls
+            # below. It was added here in a pass that hid the throwaway
+            # RangeIndex on the other tables, and it silently deleted the
+            # split labels — three unlabelled rows of numbers with no way
+            # to tell which hand they belonged to.
             full_df = pd.DataFrame(rows).T
             stats_cols = ["IP", "BA", "SLG", "ISO", "WHIP", "HR", "HR/9"]
             strikes_cols = ["BB%", "Whiff%", "K%", "Putaway%", "SwStr%", "K/9", "1stPS%", "Meatball%"]
@@ -946,14 +957,14 @@ with content_col:
                     st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">STATS</div>', unsafe_allow_html=True)
                     st.dataframe(
                         style_stat_table(full_df[stats_cols], favor_high=["BA", "SLG", "ISO", "HR", "HR/9"], favor_low=["WHIP"], gradient=True),
-                        width="stretch", hide_index=True,
+                        width="stretch",
                     )
             with g2:
                 with card("strikes_table"):
                     st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">STRIKES</div>', unsafe_allow_html=True)
                     st.dataframe(
                         style_stat_table(full_df[strikes_cols], favor_low=["BB%", "Whiff%", "K%", "Putaway%", "SwStr%", "K/9", "Meatball%"], favor_high=["1stPS%"], gradient=True),
-                        width="stretch", hide_index=True,
+                        width="stretch",
                     )
             st.caption("Computed by this app directly from raw Statcast pitch data \u2014 see get_pitcher_advanced_splits() for exact definitions.")
 
@@ -1003,7 +1014,7 @@ with content_col:
                             # fractional expectation is the point.
                             "xHR Allowed": "{:.1f}", "xHR Gap": "{:+.1f}",
                         }, na_rep="N/A"),
-                        width="stretch", hide_index=True,
+                        width="stretch",
                     )
                     st.caption(
                         "Contact allowed, from this pitcher's own Statcast rows. "
