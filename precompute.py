@@ -115,7 +115,31 @@ def fetch_season() -> pd.DataFrame:
               "columns (estimated_woba/slg_using_speedangle). xwOBA/xSLG will be "
               "None and SLAM 0.0 for every batter. This is the cause of the "
               "'Season shows 0' bug — the bulk endpoint is omitting them. ***")
-    return pd.concat(chunks, ignore_index=True)
+
+    out = pd.concat(chunks, ignore_index=True)
+
+    # HARD ABORT if the barrel column is gone. This one cannot be a
+    # warning, because unlike the expected stats above it fails SILENTLY
+    # AS A PLAUSIBLE VALUE rather than as None. The barrel masks below
+    # read df.get("launch_speed_angle"), DataFrame.get returns None for a
+    # missing column, and pd.to_numeric(None, errors="coerce") == 6 does
+    # not raise — it evaluates to a scalar False that broadcasts to every
+    # row. Result: zero barrels for the entire league, written out as a
+    # real 0.0. Nothing downstream can detect it, and Brl/PA is the
+    # primary input to top_plays' POWER axis (45% of the score), so the
+    # board would keep publishing confident rankings driven by an
+    # all-zeros column. Publishing nothing is strictly better.
+    if "launch_speed_angle" not in out.columns:
+        raise SystemExit(
+            "ABORTING: bulk statcast() did not return 'launch_speed_angle'.\n"
+            "  Barrels come from Statcast's own launch_speed_angle == 6 bucket.\n"
+            "  Without it every batter would be written with ZERO barrels — a\n"
+            "  plausible-looking value that silently drives HR Score's POWER\n"
+            "  axis to nothing. Refusing to build an archive.\n"
+            "  Check for a pybaseball release that changed the bulk column set;\n"
+            "  requirements.txt pins the version known to return it."
+        )
+    return out
 
 
 def save_player_files(season_df: pd.DataFrame) -> dict:
@@ -165,7 +189,22 @@ def _mask(series) -> pd.Series:
     NA here always means "this row is not that kind of event", which is
     exactly False, so collapsing it is correct rather than merely
     convenient.
+
+    Raises on a SCALAR input. df.get("missing_col") returns None, and
+    pd.to_numeric(None, errors="coerce") == 6 quietly evaluates to a
+    scalar numpy False rather than raising. Passed through here it would
+    broadcast to every row and read as "no row qualifies" — zero barrels
+    league-wide, written out as a real 0.0. A comparison that was supposed
+    to be per-row collapsing to one value is always a bug, never a
+    legitimate mask, so it stops here instead of reaching the parquet.
     """
+    if np.isscalar(series) or isinstance(series, (bool, np.bool_)):
+        raise TypeError(
+            f"_mask() got scalar {series!r} instead of a per-row Series. This "
+            f"means a source column was MISSING: DataFrame.get returned None "
+            f"and the comparison collapsed to a single value. Broadcasting it "
+            f"would silently mark every row False."
+        )
     return pd.Series(series, copy=False).fillna(False).astype(bool)
 
 
