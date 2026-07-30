@@ -66,6 +66,25 @@ BOARDS = {
 MAX_GRADE_DAYS = 21     # don't chase results older than this
 RETENTION_DAYS = 120    # keep roughly a season of history
 
+# When a pick has NO box-score line, that means one of two things and
+# the API can't tell us which: the official log hasn't posted yet, or
+# the player genuinely didn't play (scratched, benched, sent down).
+#
+# Treating "no line" as not-ready-yet is right for a few hours and wrong
+# forever after. It left days permanently open: a benched player never
+# gets a line, so `all(result is not None)` never became True, the day
+# was re-fetched on every run for MAX_GRADE_DAYS, and then aged out of
+# the grading window still ungraded — its real hits and misses sitting
+# in the file, counted by summarize() while the day itself never closed.
+#
+# MLB and ESPN both publish official logs within hours of a final. Three
+# days is far past any plausible delay, so past that point "no line"
+# means the player did not play, and we finalize it as a genuine DNP.
+# DNPs are reported separately and excluded from the hit-rate
+# denominator, so this never flatters or penalises the model — it just
+# stops the day hanging open forever.
+FINALIZE_AFTER_DAYS = 3
+
 
 def _load_existing():
     """Merge every record we can find, newest value winning per day."""
@@ -153,6 +172,11 @@ def grade(record):
     """Fill in outcomes for past-dated picks. Returns count graded."""
     today = datetime.now(EASTERN).strftime("%Y-%m-%d")
     cutoff = (datetime.now(EASTERN) - timedelta(days=MAX_GRADE_DAYS)).strftime("%Y-%m-%d")
+    # Dates strictly older than this have had ample time for official
+    # logs to post, so a missing line is a real DNP rather than a
+    # not-ready-yet. See FINALIZE_AFTER_DAYS.
+    finalize_before = (datetime.now(EASTERN)
+                       - timedelta(days=FINALIZE_AFTER_DAYS)).strftime("%Y-%m-%d")
     graded = 0
 
     for board, days in record.items():
@@ -193,10 +217,13 @@ def grade(record):
                     # it kept re-poisoning the record the app reads back.
                     #
                     # None here means "not ready yet" far more often than
-                    # it means "didn't play", so we leave it open and let
-                    # the next run retry. Days genuinely never played
-                    # fall off via MAX_GRADE_DAYS instead of being
-                    # mislabeled.
+                    # it means "didn't play" — but only for the first few
+                    # days. Past FINALIZE_AFTER_DAYS the logs have long
+                    # since posted, so a still-missing line is a real
+                    # DNP and we close it rather than leaving the day
+                    # open forever. See the constant for the full why.
+                    if date_str < finalize_before:
+                        pick["result"] = "dnp"
                     continue
                 stat_key = pick.get("stat") or cfg["stat"]
                 target = pick.get("line")
@@ -215,20 +242,26 @@ def grade(record):
     return graded
 
 
-def reopen_stuck(record, days_back: int = 10) -> int:
-    """Recover days that the freeze bug above already poisoned.
+def reopen_stuck(record, days_back: int = FINALIZE_AFTER_DAYS) -> int:
+    """Reopen picks that were closed as "dnp" before their box score had
+    a fair chance to post.
 
-    Any pick inside the recent window that was left "dnp" while having a
-    real player id is suspect: the bug wrote "dnp" whenever a box score
-    hadn't posted, so a stuck "dnp" is far more likely to be an unposted
-    log than a genuine scratch. Reset those to ungraded and clear the
-    day's graded flag so grade() re-checks them against logs that have
-    since posted.
+    SCOPE MATTERS HERE. This used to reopen every "dnp" in the last 10
+    days on every run. Now that grade() deliberately finalizes a missing
+    line as a genuine DNP after FINALIZE_AFTER_DAYS, a 10-day window
+    would reopen those same legitimate DNPs on the very next run, grade()
+    would re-close them, and the two would fight forever — one HTTP
+    request plus a 0.12s sleep per pick per run, permanently. The WNBA
+    boards were the worst case: their pipeline threshold is None, so
+    every pick without an explicit line closes as DNP immediately.
 
-    Deliberately conservative: real "hit"/"miss" results are never
-    touched, so a genuine miss can't be laundered into a win. Runs every
-    time — it's idempotent, and once a day grades cleanly there's
-    nothing left for it to reopen.
+    So the window is exactly the pending window. Inside it, a "dnp" is
+    suspect (that's where the old freeze bug wrote them, and where a
+    log may simply not have posted yet) and gets another look. Outside
+    it, a "dnp" is grade()'s considered verdict and is left alone.
+
+    Deliberately conservative either way: real "hit"/"miss" results are
+    never touched, so a genuine miss can't be laundered into a win.
     """
     today = datetime.now(EASTERN).strftime("%Y-%m-%d")
     cutoff = (datetime.now(EASTERN) - timedelta(days=days_back)).strftime("%Y-%m-%d")
