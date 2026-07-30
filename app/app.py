@@ -22,6 +22,7 @@ This file:
   page without authenticating. views/ is invisible to that convention.
 """
 import runpy
+import traceback
 from pathlib import Path
 import os
 
@@ -147,7 +148,21 @@ def load_page_module(rel_path: str):
     try:
         runpy.run_path(str(page_path), run_name="__main__")
     except Exception as e:
-        st.exception(e)
+        # st.exception() rendered the whole traceback — absolute file
+        # paths, internal module names, local variables — straight into
+        # the page for whoever happened to be looking. That's a paying
+        # subscriber's screen, not a dev console.
+        #
+        # The traceback still goes to stderr, so it lands in the Render
+        # logs either way, and admins still see it inline.
+        traceback.print_exc()
+        if st.session_state.get("lc_role") == "admin":
+            st.exception(e)
+        else:
+            st.error(
+                "Something went wrong loading this page. It's been logged — "
+                "try another page from the menu, or refresh in a moment."
+            )
 
 # -------------------------
 # Minimal responsive CSS injection
@@ -251,6 +266,100 @@ def render_glossary():
 
 
 # -------------------------
+# The unified right sidebar.
+#
+# Extracted into a function because it used to be inline inside the
+# `if selected_sport == "MLB"` branch — which meant the account card,
+# the Glossary, the admin section and, critically, the Sign out button
+# existed ONLY on MLB pages. Switch to KBO, NPB, WNBA, NBA, NFL or NHL
+# and there was no way to log out at all: the only other logout is the
+# one auth.render_account_sidebar() draws into st.sidebar, which this
+# app hides with `display: none !important`. A subscriber who changed
+# sport was stuck until they cleared their cookie.
+#
+# nav_titles/active_page are MLB-only (that's the page nav); everything
+# else renders for every sport.
+# -------------------------
+def render_right_sidebar(nav_titles=None, active_page=None, show_glossary=False):
+    st.markdown('<div class="right-sidebar">', unsafe_allow_html=True)
+
+    # Account card — who's signed in and their role
+    name = st.session_state.get("name", "")
+    role = st.session_state.get("lc_role", "subscriber")
+    role_badge_color = COLOR["stat_high"] if role == "admin" else COLOR["warn"]
+    st.markdown(
+        f'<div class="pf-card" style="padding:12px 14px; margin-bottom:10px;">'
+        f'<div style="font-size:13px; font-weight:700; color:{COLOR["text"]};">{name}</div>'
+        f'<div style="display:inline-block; margin-top:6px; padding:3px 10px; border-radius:4px; '
+        f'background:{role_badge_color}22; color:{role_badge_color}; font-size:10.5px; font-weight:700; '
+        f'text-transform:uppercase; letter-spacing:0.05em;">{role}</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    if nav_titles:
+        # Page navigation — always visible (was hidden inside the "Menu"
+        # dropdown before). Same key as the old radio so nothing else
+        # reading lc_nav_radio breaks.
+        #
+        # Accent-rail restyle: pure CSS over the same st.radio — circles
+        # hidden, each option becomes a full-width row, the active row
+        # gets a teal left rail + tint (matches the section-tag / badge
+        # language in kc_theme). If a future Streamlit version changes
+        # that DOM, the nav gracefully degrades to plain radios.
+        _rail = COLOR["stat_high"]
+        _hover = COLOR["text"]
+        st.markdown(
+            "<style>"
+            "div[role='radiogroup'][aria-label='Navigation'] label > div > :not(:has(p)):not(p) {"
+            "  display: none !important; }"
+            "div[role='radiogroup'][aria-label='Navigation'] label *::before,"
+            "div[role='radiogroup'][aria-label='Navigation'] label *::after {"
+            "  display: none !important; }"
+            "div[role='radiogroup'][aria-label='Navigation'] label {"
+            "  display: flex !important; align-items: center !important;"
+            "  width: 100% !important; padding: 8px 12px !important; margin: 0 !important;"
+            "  border-left: 2px solid transparent !important; border-radius: 0 !important;"
+            "  cursor: pointer; transition: background 0.15s; }"
+            "div[role='radiogroup'][aria-label='Navigation'] label:hover {"
+            f"  background: {_hover}0D !important; }}"
+            "div[role='radiogroup'][aria-label='Navigation'] label[data-selected='true'] {"
+            f"  background: {_rail}1A !important; border-left-color: {_rail} !important; }}"
+            "div[role='radiogroup'][aria-label='Navigation'] label[data-selected='true'] p {"
+            f"  color: {_rail} !important; font-weight: 600 !important; }}"
+            "</style>",
+            unsafe_allow_html=True,
+        )
+        selected = st.radio(
+            "Navigation",
+            nav_titles,
+            index=nav_titles.index(active_page) if active_page in nav_titles else 0,
+            key="lc_nav_radio",
+            label_visibility="collapsed",
+        )
+        st.session_state["lc_active_page"] = selected
+
+    # Glossary — carried over from the Game Card's old sidebar. Every
+    # term in it is baseball, so it only shows on MLB.
+    if show_glossary:
+        render_glossary()
+
+    # Sign out — the native left sidebar (where logout used to live) is
+    # hidden, so subscribers need it here, on every sport.
+    authenticator = st.session_state.get("lc_authenticator")
+    if authenticator is not None:
+        authenticator.logout("Sign out", "main", key="lc_sidebar_logout")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # Admin-only controls: render only for admins and in a separate section
+    if user_is_admin:
+        st.markdown('<div class="admin-sidebar">', unsafe_allow_html=True)
+        st.markdown("### Admin Controls")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+
+# -------------------------
 # Render UI
 # -------------------------
 if selected_sport == "MLB":
@@ -284,103 +393,50 @@ if selected_sport == "MLB":
     # expander (top right) and the Game Card's old in-page sidebar. The
     # Glossary is the one piece carried over from that old sidebar.
     with right_col:
-        st.markdown('<div class="right-sidebar">', unsafe_allow_html=True)
-
-        # Account card — who's signed in and their role
-        name = st.session_state.get("name", "")
-        role = st.session_state.get("lc_role", "subscriber")
-        role_badge_color = COLOR["stat_high"] if role == "admin" else COLOR["warn"]
-        st.markdown(
-            f'<div class="pf-card" style="padding:12px 14px; margin-bottom:10px;">'
-            f'<div style="font-size:13px; font-weight:700; color:{COLOR["text"]};">{name}</div>'
-            f'<div style="display:inline-block; margin-top:6px; padding:3px 10px; border-radius:4px; '
-            f'background:{role_badge_color}22; color:{role_badge_color}; font-size:10.5px; font-weight:700; '
-            f'text-transform:uppercase; letter-spacing:0.05em;">{role}</div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-
-        # Page navigation — always visible (was hidden inside the "Menu"
-        # dropdown before). Same key as the old radio so nothing else
-        # reading lc_nav_radio breaks.
-        #
-        # Accent-rail restyle: pure CSS over the same st.radio — circles
-        # hidden, each option becomes a full-width row, the active row
-        # gets a teal left rail + tint (matches the section-tag / badge
-        # language in kc_theme). Targets Streamlit's .st-key-lc_nav_radio
-        # wrapper and :has(input:checked); if a future Streamlit version
-        # changes that DOM, the nav gracefully degrades to plain radios.
-        _rail = COLOR["stat_high"]
-        _hover = COLOR["text"]
-        st.markdown(
-            "<style>"
-            "div[role='radiogroup'][aria-label='Navigation'] label > div > :not(:has(p)):not(p) {"
-            "  display: none !important; }"
-            "div[role='radiogroup'][aria-label='Navigation'] label *::before,"
-            "div[role='radiogroup'][aria-label='Navigation'] label *::after {"
-            "  display: none !important; }"
-            "div[role='radiogroup'][aria-label='Navigation'] label {"
-            "  display: flex !important; align-items: center !important;"
-            "  width: 100% !important; padding: 8px 12px !important; margin: 0 !important;"
-            "  border-left: 2px solid transparent !important; border-radius: 0 !important;"
-            "  cursor: pointer; transition: background 0.15s; }"
-            "div[role='radiogroup'][aria-label='Navigation'] label:hover {"
-            f"  background: {_hover}0D !important; }}"
-            "div[role='radiogroup'][aria-label='Navigation'] label[data-selected='true'] {"
-            f"  background: {_rail}1A !important; border-left-color: {_rail} !important; }}"
-            "div[role='radiogroup'][aria-label='Navigation'] label[data-selected='true'] p {"
-            f"  color: {_rail} !important; font-weight: 600 !important; }}"
-            "</style>",
-            unsafe_allow_html=True,
-        )
-        selected = st.radio(
-            "Navigation",
-            menu_titles,
-            index=menu_titles.index(active_page) if active_page in menu_titles else 0,
-            key="lc_nav_radio",
-            label_visibility="collapsed",
-        )
-        st.session_state["lc_active_page"] = selected
-
-        # Glossary — carried over from the Game Card's old sidebar
-        render_glossary()
-
-        # Sign out — the native left sidebar (where logout used to live)
-        # is hidden/shimmed, so subscribers need it here.
-        authenticator = st.session_state.get("lc_authenticator")
-        if authenticator is not None:
-            authenticator.logout("Sign out", "main", key="lc_sidebar_logout")
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # Admin-only controls: render only for admins and in a separate section
-        if user_is_admin:
-            st.markdown('<div class="admin-sidebar">', unsafe_allow_html=True)
-            st.markdown("### Admin Controls")
-            # Admin widgets (only visible to admins)
-            # Example:
-            # st.checkbox("Show debug logs", key="admin_debug")
-            st.markdown("</div>", unsafe_allow_html=True)
-        else:
-            st.empty()
+        render_right_sidebar(nav_titles=menu_titles,
+                             active_page=active_page,
+                             show_glossary=True)
 
 else:
     # Non-MLB sports load their own page modules. Sports with several
     # pages get a nav row above the content; single-page sports load
     # straight through exactly as before.
-    _subpages = SPORT_SUBPAGES.get(selected_sport)
-    if _subpages:
-        _titles = [t for t, _p in _subpages]
-        _key = f"lc_sub_{selected_sport}"
-        # Read the widget key first so a click takes effect on the same
-        # rerun (same one-click fix the main nav uses).
-        _active = st.session_state.get(_key, _titles[0])
-        _choice = st.radio(
-            f"{selected_sport} pages", _titles,
-            index=_titles.index(_active) if _active in _titles else 0,
-            key=_key, horizontal=True, label_visibility="collapsed",
-        )
-        _path = dict(_subpages).get(_choice or _titles[0], _subpages[0][1])
-        load_page_module(_path)
-    else:
-        load_page_module(SPORT_PAGES[selected_sport])
+    #
+    # Same two-column layout as MLB so the account card and Sign out are
+    # present here too — see render_right_sidebar. The page nav stays as
+    # the horizontal row above the content (these sports have two or
+    # three pages, not a dozen), so no nav_titles are passed.
+    _main_col, _right_col = st.columns([8, 2])
+
+    with _main_col:
+        _subpages = SPORT_SUBPAGES.get(selected_sport)
+        if _subpages:
+            _titles = [t for t, _p in _subpages]
+            _key = f"lc_sub_{selected_sport}"
+            # Read the widget key first so a click takes effect on the
+            # same rerun (same one-click fix the main nav uses).
+            _active = st.session_state.get(_key, _titles[0])
+            _choice = st.radio(
+                f"{selected_sport} pages", _titles,
+                index=_titles.index(_active) if _active in _titles else 0,
+                key=_key, horizontal=True, label_visibility="collapsed",
+            )
+            _path = dict(_subpages).get(_choice or _titles[0], _subpages[0][1])
+            load_page_module(_path)
+        else:
+            # .get(), not [selected_sport]. selected_sport comes from
+            # session state, which outlives a deploy: if a sport is ever
+            # renamed or removed, a returning subscriber's stale cookie
+            # raised a bare KeyError here and rendered a blank page with
+            # no way back. Fall back to the default sport instead.
+            _path = SPORT_PAGES.get(selected_sport)
+            if _path:
+                load_page_module(_path)
+            else:
+                st.warning(
+                    f"{selected_sport} isn't available any more. "
+                    f"Pick another sport above."
+                )
+
+    with _right_col:
+        render_right_sidebar()
