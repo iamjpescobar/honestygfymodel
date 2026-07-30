@@ -228,7 +228,7 @@
           "team": "BOS",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "665161",
@@ -236,7 +236,7 @@
           "team": "HOU",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "691016",
@@ -244,7 +244,7 @@
           "team": "ATH",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "678882",
@@ -252,7 +252,7 @@
           "team": "BOS",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "676391",
@@ -260,7 +260,7 @@
           "team": "TOR",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "680777",
@@ -276,7 +276,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "641355",
@@ -292,7 +292,7 @@
           "team": "SD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "650859",
@@ -300,7 +300,7 @@
           "team": "SD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "693304",
@@ -308,7 +308,7 @@
           "team": "PIT",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "663968",
@@ -324,7 +324,7 @@
           "team": "DET",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
       "graded": false,
@@ -368,10 +368,10 @@
           "team": "Houston Astros",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -430,7 +430,7 @@
           "team": "Pittsburgh Pirates",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "672960",
@@ -438,7 +438,7 @@
           "team": "Toronto Blue Jays",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "695578",
@@ -446,7 +446,7 @@
           "team": "Washington Nationals",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "624413",
@@ -454,7 +454,7 @@
           "team": "Baltimore Orioles",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "621566",
@@ -462,10 +462,10 @@
           "team": "Atlanta Braves",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   }
