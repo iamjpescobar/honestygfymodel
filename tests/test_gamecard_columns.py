@@ -58,7 +58,11 @@ print("PASS: pitcher card reads 6 Allowed aliases, all engine-produced")
 
 # Allowed metrics are BAD when high — the card must be favor_low.
 vuln = gc[gc.index("HR VULNERABILITY (ALLOWED)"):]
-vuln = vuln[:vuln.index("width=\"stretch\"")]
+# Terminator is the render_html_table key, not width="stretch": this card
+# moved off st.dataframe so its label column could be sticky. Slicing on a
+# marker the block no longer contains ran past into the lineup table and
+# picked up ITS favor_high, which is a false alarm, not a real regression.
+vuln = vuln[:vuln.index('key="hr_vuln"')]
 assert "favor_low=" in vuln and "favor_high=" not in vuln, \
     "allowed contact coloured as if high were good for the pitcher"
 print("PASS: HR vulnerability card colours high-as-bad")
