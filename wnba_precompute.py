@@ -746,7 +746,7 @@ def main():
             # returning star stayed invisible).
             _roster = _team_rosters.get(g.get(f"{side}_id")) or {}
 
-            picks, _seen = [], set()
+            picks = []
             for pid, info in _roster.items():
                 p = _stats_by_pid.get(pid)
                 if p is None:
@@ -756,7 +756,6 @@ def main():
                     p = {"pid": pid, "name": info["name"], "pos": info.get("pos") or "",
                          "team": _team_name, "gp": 0, "log": []}
                 picks.append(p)
-                _seen.add(pid)
 
             # FALLBACK, not a supplement. Only when the roster endpoint
             # gave us nothing do we fall back to box-score history, so a
