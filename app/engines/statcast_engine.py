@@ -362,6 +362,8 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
         "BA": 0.0, "AB": 0,
         "SLG": 0.0, "ISO": 0.0,
         "HR/FB": None, "FB_count": 0,
+        # No batted balls at all, so nothing about barrels was measured.
+        "_barrel_measured": False,
     }
     if df.empty or "type" not in df.columns:
         return empty
@@ -399,12 +401,36 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
 
     hh = (ls >= 95).sum()
 
+    # BARRELS ARE MEASURED, NEVER DERIVED.
+    #
+    # Statcast's own launch_speed_angle == 6 is the only thing that counts
+    # as a barrel here. When that column is absent we report None, not an
+    # estimate — a barrel is MLB's classification of a batted ball, and a
+    # number we computed ourselves is not that number no matter how
+    # closely the formula matches.
+    #
+    # History, so nobody reintroduces it: this used to fall back to a flat
+    # 26-30 degree band at every exit velocity. That was doubly wrong — a
+    # real barrel band WIDENS as EV rises (98 -> 26-30, up to 8-50 at
+    # 116), so the flat version also systematically undercounted, and
+    # Brl%/Brl/PA feed HR Score, so the error reached the board. Fixing
+    # the band would have made the estimate accurate but still an
+    # estimate.
+    #
+    # precompute.py already does exactly this (see its `== 6` masks): the
+    # nightly parquets keep launch_speed_angle in ENGINE_COLS/_KEEP_COLS,
+    # so on the normal path the real bucket is always there and this
+    # never returns None. Downstream is built for it either way —
+    # top_plays renormalises over measurable axes, so a missing barrel
+    # rate lowers no score.
     if "launch_speed_angle" in bbe_df.columns:
-        is_barrel = bbe_df["launch_speed_angle"] == 6
+        is_barrel = pd.to_numeric(bbe_df["launch_speed_angle"], errors="coerce") == 6
+        barrels = int(is_barrel.sum())
+        _barrel_measured = True
     else:
-        # Approximation if Statcast's own barrel bucket isn't present
-        is_barrel = (ls >= 98) & (la >= 26) & (la <= 30)
-    barrels = is_barrel.sum()
+        is_barrel = pd.Series(False, index=bbe_df.index)
+        barrels = None
+        _barrel_measured = False
 
     # Sweet Spot % — MLB's own definition: launch angle 8-32 degrees.
     # KEPT AS-IS on purpose: it's a real published stat and the lineup
@@ -446,7 +472,10 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
     fb = (bb_type == "fly_ball").sum()
 
     pull_air = 0
-    pull_barrel = 0
+    # None, not 0, when barrels couldn't be measured — a pulled barrel is
+    # a barrel first, so if we can't identify barrels we can't count these
+    # either, and 0.0 would read as a real "never pulls a barrel".
+    pull_barrel = 0 if _barrel_measured else None
     if {"hc_x", "hc_y", "stand"}.issubset(bbe_df.columns):
         angle = _spray_angle(pd.to_numeric(bbe_df["hc_x"], errors="coerce"),
                               pd.to_numeric(bbe_df["hc_y"], errors="coerce"))
@@ -455,7 +484,8 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
         pulled_lhh = (bbe_df["stand"] == "L") & (angle > 0)
         is_pulled = pulled_rhh | pulled_lhh
         pull_air = (is_fb & is_pulled).sum()
-        pull_barrel = (is_barrel & is_pulled).sum()
+        if _barrel_measured:
+            pull_barrel = int((is_barrel & is_pulled).sum())
 
     # Blast % — real MLB formula: squared-up% = EV / ((bat_speed*1.23) + (pitch_speed*0.2116));
     # a swing is a "blast" when (squared_up% * 100) + bat_speed >= 164.
@@ -538,10 +568,11 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
     # PA denominator = every row carrying a terminal event, which is
     # exactly one per plate appearance in Statcast's pitch-level data.
     pa_count = int(df["events"].notna().sum()) if "events" in df.columns else 0
-    brl_per_pa = round(barrels / pa_count * 100, 2) if pa_count > 0 else 0.0
+    brl_per_pa = (round(barrels / pa_count * 100, 2)
+                  if barrels is not None and pa_count > 0 else None)
 
     return {
-        "Brl %": round(barrels / bbe_count * 100, 2),
+        "Brl %": round(barrels / bbe_count * 100, 2) if barrels is not None else None,
         "HRWindow %": round(hr_window / bbe_count * 100, 2),
         "EV90": ev90,
         "MaxEV": max_ev_actual,
@@ -554,51 +585,72 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
         "FB %": round(fb / bbe_count * 100, 2),
         "SweetSpot %": round(sweet_spot / bbe_count * 100, 2),
         "PullAir %": round(pull_air / bbe_count * 100, 2),
-        "PullBrl %": round(pull_barrel / bbe_count * 100, 2),
+        "PullBrl %": (round(pull_barrel / bbe_count * 100, 2)
+                      if pull_barrel is not None else None),
         "Blast %": blast_pct,
         "BA": ba, "AB": ab,
         "SLG": slg, "ISO": iso,
         "HR/FB": _hr_fb, "FB_count": _fb_n,
         "BBE": bbe_count,
+        # Provenance, not a stat: True when Brl%/Brl/PA/PullBrl% came from
+        # Statcast's own launch_speed_angle bucket. False means the column
+        # was absent and those three are None — nothing was estimated.
+        "_barrel_measured": _barrel_measured,
     }
 
 
-def _compute_swstr_pct(df: pd.DataFrame) -> float:
-    """SwStr % = swinging strikes / ALL PITCHES SEEN. Different
+# ONE definition of a whiff and ONE definition of a swing, shared by
+# every rate below. These used to disagree with each other: SwStr%
+# counted only "swinging_strike" while Whiff% counted "swinging_strike"
+# AND "swinging_strike_blocked", and zone-contact left blocked whiffs
+# out of its swing denominator entirely — which understated SwStr% and
+# inflated zone contact% for exactly the pitchers who generate the most
+# swings in the dirt. A blocked swinging strike is a swing and a miss;
+# there is no version of these stats where it isn't.
+_WHIFF_DESC = ("swinging_strike", "swinging_strike_blocked")
+_CONTACT_DESC = ("hit_into_play", "foul", "foul_tip")
+_SWING_DESC = _CONTACT_DESC + _WHIFF_DESC
+
+
+def _compute_swstr_pct(df: pd.DataFrame):
+    """SwStr % = swings and misses / ALL PITCHES SEEN. Different
     denominator than Whiff % (below) — don't conflate the two, they
-    answer different questions."""
+    answer different questions.
+
+    Returns None, not 0.0, when there are no pitches to measure. A real
+    0.00 here reads as "never misses a swing", which is elite — showing
+    that for a player we have no data on is the exact kind of invented
+    number this app isn't allowed to display. Every table that renders
+    it formats with na_rep, so None shows as N/A.
+    """
     if df.empty or "description" not in df.columns:
-        return 0.0
-    return round((df["description"] == "swinging_strike").mean() * 100, 2)
+        return None
+    return round(df["description"].isin(_WHIFF_DESC).mean() * 100, 2)
 
 
-def _compute_whiff_pct(df: pd.DataFrame) -> float:
-    """Whiff % = swinging strikes / SWINGS ONLY (swings = contact +
-    swinging strikes). This was previously computed with the wrong
-    denominator (all pitches, which is actually SwStr%) — fixed to use
-    the real definition."""
+def _compute_whiff_pct(df: pd.DataFrame):
+    """Whiff % = swings and misses / SWINGS ONLY. Returns None when the
+    player took no swings — see _compute_swstr_pct on why not 0.0."""
     if df.empty or "description" not in df.columns:
-        return 0.0
-    swing_desc = ["hit_into_play", "foul", "foul_tip", "swinging_strike", "swinging_strike_blocked"]
-    swings = df["description"].isin(swing_desc)
-    total_swings = swings.sum()
+        return None
+    total_swings = df["description"].isin(_SWING_DESC).sum()
     if total_swings == 0:
-        return 0.0
-    whiffs = df["description"].isin(["swinging_strike", "swinging_strike_blocked"]).sum()
+        return None
+    whiffs = df["description"].isin(_WHIFF_DESC).sum()
     return round(whiffs / total_swings * 100, 2)
 
 
-def _compute_zone_contact_pct(df: pd.DataFrame) -> float:
+def _compute_zone_contact_pct(df: pd.DataFrame):
+    """Contact on swings at pitches in the strike zone (zones 1-9).
+    Returns None when there were no in-zone swings."""
     if df.empty or "zone" not in df.columns or "description" not in df.columns:
-        return 0.0
+        return None
     in_zone = pd.to_numeric(df["zone"], errors="coerce").between(1, 9)
-    contact_desc = ["hit_into_play", "foul", "foul_tip"]
-    swing_desc = contact_desc + ["swinging_strike"]
-    swings_in_zone = df["description"].isin(swing_desc) & in_zone
-    contact_in_zone = df["description"].isin(contact_desc) & in_zone
+    swings_in_zone = df["description"].isin(_SWING_DESC) & in_zone
+    contact_in_zone = df["description"].isin(_CONTACT_DESC) & in_zone
     total_swings = swings_in_zone.sum()
     if total_swings == 0:
-        return 0.0
+        return None
     return round(contact_in_zone.sum() / total_swings * 100, 2)
 
 
@@ -616,55 +668,46 @@ def get_batter_statcast(batter_id):
     return metrics
 
 
-@st.cache_data(ttl=1800, max_entries=256, show_spinner=False)
-def _real_woba_slg(frame):
-    """Fallback when Statcast's expected-stat columns aren't in the data
-    (some bulk statcast() pulls omit them). Computes REAL wOBA and SLG
-    from actual plate-appearance outcomes using the standard wOBA linear
-    weights, so the xwOBA/xSLG columns show a real number instead of
-    "None" (which was collapsing SLAM to 0.0 for every batter). These
-    are actuals, not expected values — slightly noisier, but real and
-    far better than a blank board. Returns (woba, slg) or (None, None).
-    """
-    if frame is None or frame.empty or "events" not in frame.columns:
-        return None, None
-    ev = frame["events"].dropna()
-    if ev.empty:
-        return None, None
-    # Standard wOBA weights (FanGraphs, stable year to year within ~0.01).
-    w = {"walk": 0.69, "hit_by_pitch": 0.72, "single": 0.89,
-         "double": 1.27, "triple": 1.62, "home_run": 2.10}
-    ab_events = {"single", "double", "triple", "home_run", "field_out",
-                 "strikeout", "grounded_into_double_play", "force_out",
-                 "field_error", "fielders_choice_out", "double_play",
-                 "strikeout_double_play"}
-    unintentional_bb = int((ev == "walk").sum())
-    hbp = int((ev == "hit_by_pitch").sum())
-    ab = int(ev.isin(ab_events).sum())
-    sf = int((ev == "sac_fly").sum())
-    pa_denom = ab + unintentional_bb + hbp + sf
-    woba = None
-    if pa_denom > 0:
-        num = sum(w.get(e, 0.0) for e in ev)
-        woba = round(num / pa_denom, 3)
-    slg = None
-    if ab > 0:
-        tb = (int((ev == "single").sum()) + 2 * int((ev == "double").sum())
-              + 3 * int((ev == "triple").sum()) + 4 * int((ev == "home_run").sum()))
-        slg = round(tb / ab, 3)
-    return woba, slg
+# _real_woba_slg() was REMOVED along with the actual-for-expected
+# fallback in _add_expected_stats. It computed real wOBA/SLG from plate
+# appearance outcomes purely to backfill the xwOBA/xSLG columns — a
+# different statistic under an "x" label. Real SLG and ISO are already
+# returned by _compute_batted_ball_metrics under their own correct
+# names, so nothing it produced is missing from the tables.
 
 
 def _add_expected_stats(metrics: dict, frame) -> dict:
-    """Attach xSLG and xwOBA (Statcast's speed+angle expected stats) to
-    a metrics dict, averaged over the batted-ball rows of `frame`. Both
-    are None when the frame has no BBE or no measured expected values.
+    """Attach xSLG and xwOBA (Statcast's speed+angle expected stats) to a
+    metrics dict, averaged over the batted-ball rows of `frame`. Both are
+    None when the frame has no BBE or no measured expected values.
     Shared by get_batter_profile_windowed and get_batter_vs_pitch_types
     so the lineup table and the vs-pitch tables report the same numbers.
 
-    When the expected-stat columns are absent (some bulk statcast()
-    pulls drop them), falls back to REAL wOBA/SLG from outcomes so the
-    columns still carry a meaningful number rather than None.
+    THESE COLUMNS CARRY MLB'S EXPECTED STATS OR NOTHING.
+
+    There used to be a fallback here: when the expected-stat columns were
+    absent, it filled xwOBA/xSLG with REAL wOBA/SLG computed from
+    outcomes, so the columns "still carry a meaningful number". Those
+    numbers were real, but they are a DIFFERENT STATISTIC — expected
+    stats strip out defence, park and luck; actuals contain all three.
+    Presenting an actual under an "x" header tells the user they're
+    looking at something they aren't, which is the one thing this app
+    promises never to do.
+
+    Nothing is lost by removing it:
+      - real SLG and ISO are already returned by
+        _compute_batted_ball_metrics and already displayed, correctly
+        labelled, in the same tables;
+      - SLAM does NOT depend on this fallback. slam_engine has its own
+        documented xSLG -> real SLG substitution, disclosed inside SLAM's
+        own definition where it belongs (SLAM is a composite score, not a
+        Savant stat), so the board still computes when the columns are
+        missing.
+
+    If these come back None across the board, the cause is upstream:
+    bulk statcast() dropping estimated_woba/slg_using_speedangle.
+    precompute.py already warns loudly about exactly that — fix it there
+    rather than papering over it here.
     """
     metrics["xSLG"] = None
     metrics["xwOBA"] = None
@@ -679,19 +722,10 @@ def _add_expected_stats(metrics: dict, frame) -> dict:
             # measured expected-stat values.
             metrics["xSLG"] = round(float(xslg), 3) if pd.notna(xslg) else None
             metrics["xwOBA"] = round(float(xwoba), 3) if pd.notna(xwoba) else None
-
-    # Fallback to real outcomes if the expected columns weren't present
-    # or produced nothing. Keeps xwOBA/xSLG populated (as actuals) so
-    # SLAM and the lineup columns never collapse to None/0.0 league-wide.
-    if metrics["xwOBA"] is None or metrics["xSLG"] is None:
-        r_woba, r_slg = _real_woba_slg(frame)
-        if metrics["xwOBA"] is None and r_woba is not None:
-            metrics["xwOBA"] = r_woba
-        if metrics["xSLG"] is None and r_slg is not None:
-            metrics["xSLG"] = r_slg
     return metrics
 
 
+@st.cache_data(ttl=1800, max_entries=384, show_spinner=False)
 def get_batter_vs_pitch_types(batter_id, pitch_types: tuple, window: str = "season", unit: str = "bbe"):
     """
     Real batter performance specifically against a given set of pitch
@@ -704,6 +738,17 @@ def get_batter_vs_pitch_types(batter_id, pitch_types: tuple, window: str = "seas
     already asks a lot of a small recent-window sample, and narrowing
     it further by pitch type on top would leave a real, honest "not
     enough data" far more often than it would a usable number.
+
+    CACHED for the same reason get_pitcher_statcast is: the underlying
+    dataframe pull was already cached, but this re-derived every metric
+    on top of it on EVERY Streamlit rerun — every click and toggle on
+    the Game Card — once per batter in the lineup, and
+    pitch_matchup.py calls it in a loop, once per pitch type per batter.
+    All four arguments are hashable scalars/tuples, so the key is cheap
+    and correct — never cache a function whose only argument is a
+    DataFrame, and never "fix" that by underscore-prefixing the arg: with
+    no hashable arguments left, every caller collides on one cache entry
+    and every batter gets the first batter's numbers.
     """
     from engines.recency_windows import apply_window
     df, error = _get_batter_df(batter_id)

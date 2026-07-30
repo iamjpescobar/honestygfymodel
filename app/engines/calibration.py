@@ -72,6 +72,14 @@ _DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 _LOG_PATH = _DATA_DIR / "calibration_local.json"
 _URL = "https://statsapi.mlb.com/api/v1/people/{pid}/stats"
 
+# Days after which a pick with no box-score line is treated as a real
+# DNP rather than a log that hasn't posted yet. MUST match
+# calibration_pipeline.FINALIZE_AFTER_DAYS: the pipeline owns published
+# history, and if the two grade the same pick differently the merge in
+# _load() would flip results depending on which record won. See the long
+# note on the constant in calibration_pipeline.py.
+FINALIZE_AFTER_DAYS = 3
+
 BOARDS = {
     "daily13": {"sport": "mlb", "label": "Daily 13", "stat": "hits",
                 "threshold": 1, "question": "got a hit"},
@@ -143,10 +151,42 @@ def _graded_n(entry):
 
 def _save(data):
     """Write to the LOCAL pick log only. The published record is
-    read-only from the app's perspective — the pipeline owns it."""
+    read-only from the app's perspective — the pipeline owns it.
+
+    `data` is whatever _load() returned, which is the published record
+    MERGED with local picks. Writing it back verbatim copied the entire
+    published history into calibration_local.json — every day the
+    pipeline had ever graded. Two problems. The local file grew without
+    bound, and because _load() breaks ties with `>=` and reads local
+    second, a local copy carrying the same graded count as the published
+    one would win the merge: the app's disposable file shadowing the
+    pipeline's source of truth.
+
+    So subtract the published record before writing. Only days the
+    published record does not already hold, or holds with FEWER grades,
+    stay in the local log — which is exactly what "the app's own picks,
+    until the pipeline picks them up" means.
+    """
     try:
+        published = {}
+        try:
+            published = json.loads(_published_path().read_text()) or {}
+        except Exception:
+            published = {}
+
+        local_only = {}
+        for board, days in (data or {}).items():
+            if not isinstance(days, dict):
+                continue
+            pub_days = (published.get(board) or {}) if isinstance(published, dict) else {}
+            for day, entry in days.items():
+                pub = pub_days.get(day)
+                if pub is not None and _graded_n(pub) >= _graded_n(entry):
+                    continue  # the pipeline already has this day, as good or better
+                local_only.setdefault(board, {})[day] = entry
+
         _LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-        _LOG_PATH.write_text(json.dumps(data, indent=2))
+        _LOG_PATH.write_text(json.dumps(local_only, indent=2))
         return True
     except Exception:
         return False
@@ -279,6 +319,8 @@ def grade_pending(max_days: int = 14) -> int:
     data = _load()
     today = datetime.now(EASTERN).strftime("%Y-%m-%d")
     cutoff = (datetime.now(EASTERN) - timedelta(days=max_days)).strftime("%Y-%m-%d")
+    finalize_before = (datetime.now(EASTERN)
+                       - timedelta(days=FINALIZE_AFTER_DAYS)).strftime("%Y-%m-%d")
     graded_n = 0
     for board, days in data.items():
         cfg = BOARDS.get(board)
@@ -305,16 +347,28 @@ def grade_pending(max_days: int = 14) -> int:
                 except Exception:
                     box = None
                 if box is None:
-                    # No box-score line yet. This is the important case:
-                    # official logs for a completed slate can post hours
-                    # late, so a None here usually means "not ready yet",
-                    # NOT "the player didn't play". Leave the pick
-                    # UNGRADED (result stays None) and keep the day open
-                    # so the next run retries it. Previously this marked
-                    # the pick "dnp" and set the whole day graded=True,
-                    # which permanently froze it before the box scores
-                    # ever posted — the cause of days going ungraded.
-                    all_done = False
+                    # No box-score line yet. Official logs for a
+                    # completed slate can post hours late, so a None here
+                    # usually means "not ready yet", NOT "the player
+                    # didn't play". Leave the pick UNGRADED and keep the
+                    # day open so the next run retries it. Previously
+                    # this marked the pick "dnp" and set the whole day
+                    # graded=True, which froze it before the box scores
+                    # ever posted — the original cause of ungraded days.
+                    #
+                    # But "not ready yet" expires. Past
+                    # FINALIZE_AFTER_DAYS the logs have long since
+                    # posted, so a still-missing line is a genuine DNP;
+                    # close it, or a single benched player keeps the day
+                    # open forever. Kept in lockstep with
+                    # calibration_pipeline.FINALIZE_AFTER_DAYS — the
+                    # pipeline is the source of truth for published
+                    # history and the two must not disagree.
+                    if date_str < finalize_before:
+                        pick["result"] = "dnp"
+                        graded_n += 1
+                    else:
+                        all_done = False
                     continue
                 stat_key = pick.get("stat") or cfg["stat"]
                 target = pick.get("line")
@@ -340,7 +394,7 @@ def grade_pending(max_days: int = 14) -> int:
     return graded_n
 
 
-def reopen_recent_days(days_back: int = 5) -> int:
+def reopen_recent_days(days_back: int = FINALIZE_AFTER_DAYS) -> int:
     """One-time recovery for days frozen by the old grading bug, which
     marked a day graded=True (and its picks "dnp") before the official
     box scores had posted, so they were never revisited.
@@ -352,6 +406,13 @@ def reopen_recent_days(days_back: int = 5) -> int:
     hit/miss results are left untouched — only stuck DNPs are cleared,
     so a genuine miss is never turned into a win. Returns the number of
     picks reopened. Call grade_pending() right after.
+
+    The window defaults to FINALIZE_AFTER_DAYS, not an arbitrary 5.
+    grade_pending() now deliberately closes a missing line as a real DNP
+    once that many days have passed, so reopening anything older would
+    just undo a considered verdict and hand it straight back to be
+    re-closed — a loop, one HTTP request per pick per run. Inside the
+    window a DNP is still suspect; outside it, it stands.
     """
     data = _load()
     today = datetime.now(EASTERN).strftime("%Y-%m-%d")
