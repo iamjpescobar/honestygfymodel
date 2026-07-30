@@ -340,9 +340,20 @@ def render_html_table(styler, key: str = ""):
     """
     import streamlit as st
 
-    if not st.session_state.get("_lc_html_tbl_css"):
-        st.markdown(_HTML_TABLE_CSS, unsafe_allow_html=True)
-        st.session_state["_lc_html_tbl_css"] = True
+    # CSS is emitted on EVERY call, deliberately — do not "optimise" this
+    # with a session_state once-only guard.
+    #
+    # Streamlit rebuilds the whole DOM on every rerun. A once-only flag
+    # survives in session_state but the <style> tag it guarded does NOT
+    # survive in the page, so from the second rerun onward these tables
+    # render with no CSS at all: no overflow container, no sticky column,
+    # default table layout spilling out of its card and colliding with the
+    # table beside it. It looks correct on first load and breaks the
+    # moment you touch any filter, which is exactly how it shipped.
+    #
+    # Repeating a small <style> block is cheap and idempotent; the browser
+    # just applies the same rules again.
+    st.markdown(_HTML_TABLE_CSS, unsafe_allow_html=True)
 
     html = styler.to_html(table_uuid=f"lc{key}") if hasattr(styler, "to_html") else str(styler)
     st.markdown(f'<div class="lc-tbl-wrap">{html}</div>', unsafe_allow_html=True)
