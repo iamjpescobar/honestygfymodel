@@ -32,6 +32,7 @@ import streamlit as st
 from engines.weather_engine import get_todays_games_with_weather
 from engines.statcast_engine import (
     get_pitcher_advanced_splits, _get_pitcher_df, _compute_batted_ball_metrics,
+    hand_tag,
 )
 from engines.recency_windows import apply_window
 from engines.team_abbreviations import team_abbr
@@ -57,7 +58,10 @@ def _targets_json(date_str: str, basis: str = "season") -> str:
         for side, opp_side in (("away", "home"), ("home", "away")):
             name = g.get(f"{side}_pitcher") or "TBD"
             pid = g.get(f"{side}_pitcher_id")
-            base = {"matchup": matchup, "pitcher": name,
+            # See k_projection: hand on the name, not a new column.
+            _ht = hand_tag(pid)
+            base = {"matchup": matchup,
+                    "pitcher": f"{name} ({_ht})" if _ht else name,
                     "team": team_abbr(g.get(side, "?")),
                     "opp": team_abbr(g.get(opp_side, "?"))}
             if not pid:
