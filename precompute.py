@@ -650,16 +650,24 @@ def main():
     (DATA_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2))
     print("Manifest:", json.dumps(manifest, indent=2))
 
-    # Calibration lives inside the archive so the record survives every
-    # redeploy — see calibration_pipeline.py for the full rationale.
-    print("Grading calibration picks...")
-    try:
-        import calibration_pipeline
-        calibration_pipeline.main()
-    except Exception as e:
-        print(f"Calibration step failed ({e}) — continuing without it. "
-              f"The archive will simply carry the previous record.")
-
+    # Calibration is NOT graded here any more.
+    #
+    # It used to be, as `import calibration_pipeline; main()` wrapped in
+    # `except Exception: print(...)`. Two ways that lost days of grading,
+    # both silent and both leaving the CI job green:
+    #
+    #   1. The except swallowed every failure. A broken grader printed
+    #      one line into a log nobody reads and the run still succeeded.
+    #   2. This line sits at the END of a ~15-minute, half-a-million-pitch
+    #      Statcast fetch. Any failure upstream of here — a Savant
+    #      timeout, a pybaseball change, an OOM — meant grading never ran
+    #      AT ALL that day, even though grading needs nothing from the
+    #      fetch but a list of picks and MLB's box scores.
+    #
+    # It is now its own step in nightly-data.yml, running BEFORE the
+    # fetch and failing the job loudly if it breaks. build_data/ is never
+    # wiped, so the record it writes to build_data/data/calibration.json
+    # is still sitting there for the tar below to pack into the archive.
     print("Packaging archive...")
     with tarfile.open(ARCHIVE, "w:gz") as tar:
         tar.add(OUT_ROOT / "data", arcname="data")
