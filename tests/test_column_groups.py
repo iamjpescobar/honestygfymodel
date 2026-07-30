@@ -108,3 +108,47 @@ assert "@media (max-width: 900px)" in _css, (
     "mobile sizing gone — desktop-sized padding on a phone is what made these "
     "tables unusable in the first place")
 print("PASS: mobile media query retained, desktop sizing untouched")
+
+
+# ----------------------------------------------------------------------
+# The table CSS must be emitted on EVERY render, not once per session.
+#
+# This shipped broken. render_html_table guarded the <style> block with a
+# session_state flag, but Streamlit rebuilds the DOM on every rerun: the
+# flag survives, the style tag does not. So the tables looked right on
+# first load and lost ALL their CSS the moment any filter was touched —
+# no scroll container, no sticky column, default layout spilling out of
+# the card and colliding with the table next to it.
+# ----------------------------------------------------------------------
+import sys as _sys
+import types as _types
+
+_st = _types.ModuleType("streamlit")
+_st.session_state = {}
+_emitted = []
+_st.markdown = lambda h, **k: _emitted.append(h)
+_st.cache_data = lambda **kw: (lambda f: f)
+_sys.modules["streamlit"] = _st
+_sys.path.insert(0, "app")
+from styles.table_style import style_stat_table, render_html_table  # noqa: E402
+
+_t = pd.DataFrame([{"Split": "Overall", "BB%": 13.2},
+                   {"Split": "vs RHB", "BB%": 10.5}])
+
+# Three renders sharing one session_state — an initial load followed by
+# two reruns, which is what changing a filter produces.
+for _run in (1, 2, 3):
+    _emitted.clear()
+    render_html_table(style_stat_table(_t, favor_low=["BB%"], gradient=True), key="t")
+    _joined = "".join(_emitted)
+    assert "lc-tbl-wrap {" in _joined, (
+        f"render {_run} emitted no CSS. A once-per-session guard leaves every "
+        f"rerun after the first with unstyled tables that overflow their card "
+        f"and paint over the neighbouring one")
+    assert "overflow-x: auto" in _joined and "position: sticky" in _joined
+print("PASS: table CSS is re-emitted on every rerun, not once per session")
+
+assert "_lc_html_tbl_css" not in TS, (
+    "the once-only session flag is back — it makes the tables break on the "
+    "first filter change, which is how this bug originally shipped")
+print("PASS: no once-only CSS guard present")
