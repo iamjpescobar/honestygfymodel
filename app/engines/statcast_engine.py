@@ -1029,6 +1029,41 @@ _AB_EVENTS = _HIT_EVENTS | {"field_out", "strikeout", "strikeout_double_play",
                             "force_out", "fielders_choice_out", "field_error"}
 
 
+@st.cache_data(ttl=3600, max_entries=512, show_spinner=False)
+def get_pitcher_hand(pitcher_id):
+    """Throwing hand for one pitcher: "L", "R", or None.
+
+    Split out of get_pitcher_statcast so any board can label a pitcher
+    without paying for the full metric computation. Handedness drives the
+    entire platoon side of the model — which side a switch hitter bats
+    from, the batter-vs-hand splits, the park factor that then applies —
+    yet it appeared in exactly one place on the site, next to the selected
+    pitcher's name on the Game Card. Every other board named a pitcher
+    with no indication of which way he throws.
+
+    Reads the same cached dataframe get_pitcher_statcast uses, so calling
+    it for both probables on every game costs one dict lookup after the
+    first fetch. Most common value rather than the first row: a stray
+    mislabelled pitch shouldn't flip a pitcher's hand.
+    """
+    if not pitcher_id:
+        return None
+    try:
+        df = _get_pitcher_df(pitcher_id)
+    except Exception:
+        return None
+    if df is None or df.empty or "p_throws" not in df.columns:
+        return None
+    hands = df["p_throws"].dropna()
+    return str(hands.mode().iloc[0]) if not hands.empty else None
+
+
+def hand_tag(pitcher_id):
+    """"LHP" / "RHP" / "" — ready to append to a displayed name."""
+    h = get_pitcher_hand(pitcher_id)
+    return f"{h}HP" if h in ("L", "R") else ""
+
+
 @st.cache_data(ttl=3600, max_entries=64, show_spinner=False)
 def get_batter_iso_vs_hand(batter_id, throws: str) -> float:
     """Batter's real ISO against pitchers of one handedness ("R"/"L"),
