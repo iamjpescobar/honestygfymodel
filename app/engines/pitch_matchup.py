@@ -157,6 +157,14 @@ def batter_pitch_profile(batter_id, pitch_types, window="season"):
             continue
         # Brl % is a percentage of batted balls; recover the count so the
         # regression works on real events rather than on a rate.
-        barrels = round((prof.get("Brl %") or 0.0) / 100.0 * bbe)
-        out[str(pt)] = {"barrels": barrels, "bbe": bbe}
+        #
+        # `or 0.0` would be wrong here. Brl % is None when barrels could
+        # not be MEASURED (no launch_speed_angle), and coercing that to 0
+        # states "0 barrels in N batted balls" — a claim about real events
+        # that nothing supports, fed into a regression as though it were
+        # observed. Skip the pitch type instead: unknown is not zero.
+        brl_pct = prof.get("Brl %")
+        if brl_pct is None:
+            continue
+        out[str(pt)] = {"barrels": round(brl_pct / 100.0 * bbe), "bbe": bbe}
     return out
