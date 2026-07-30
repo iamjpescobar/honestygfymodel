@@ -4,13 +4,11 @@ from styles.kc_theme import (
     inject_kc_theme, page_header, card_open, card_close, badge,
     edge_tag, status_banner, footer, data_timestamp,
 )
-from auth import render_account_sidebar
 from engines.player_of_the_day import get_mlb_player_of_the_day
 from engines.live_sync import sync_latest_button
 from engines.calibration import log_picks, grade_pending, summary
 
 inject_kc_theme()
-render_account_sidebar()
 
 page_header(
     "MLB Player of the Day",

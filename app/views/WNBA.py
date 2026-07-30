@@ -7,7 +7,6 @@ import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, badge, footer, COLOR
 from styles.table_style import style_stat_table
-from auth import render_account_sidebar
 from engines.matchup_grades_intl import grade_wnba_matchup, render_matchup_grades_card
 
 # NOTE: no st.set_page_config here — app.py already sets it once.
@@ -31,7 +30,6 @@ st.markdown(
     "</style>",
     unsafe_allow_html=True,
 )
-render_account_sidebar()
 
 _WNBA_GAMES = Path(__file__).resolve().parent.parent / "data" / "wnba" / "games.json"
 _SB_URL = "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard"

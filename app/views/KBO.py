@@ -4,7 +4,6 @@ from pathlib import Path
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, badge, footer, COLOR
-from auth import render_account_sidebar
 from engines.matchup_grades_intl import grade_kbo_matchup, render_matchup_grades_card
 from engines.kbo_k_projection import project_kbo_slate
 from styles.table_style import style_stat_table
@@ -15,7 +14,6 @@ from engines.live_sync import sync_latest_button
 
 inject_kc_theme()
 sync_latest_button(key="sync_kbo", include_data_package=True)
-render_account_sidebar()
 
 _KBO_GAMES = Path(__file__).resolve().parent.parent / "data" / "kbo" / "games.json"
 _KBO_PITCHERS = Path(__file__).resolve().parent.parent / "data" / "kbo" / "pitchers.json"

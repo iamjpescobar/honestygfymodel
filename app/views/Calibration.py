@@ -24,11 +24,10 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from auth import require_admin, render_account_sidebar
+from auth import require_admin
 from engines.calibration import summary, grade_pending, reopen_recent_days, BOARDS, _load, _LOG_PATH
 
 inject_kc_theme()
-render_account_sidebar()
 require_admin()
 
 st.markdown(

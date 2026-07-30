@@ -1159,7 +1159,12 @@ with content_col:
                     "xwOBA": lambda r: windowed_profile_cache[r["name"]].get("xwOBA") or 0,
                     "xSLG": lambda r: windowed_profile_cache[r["name"]].get("xSLG") or 0,
                     "ISO": lambda r: windowed_profile_cache[r["name"]].get("ISO") or 0,
-                    "Brl%": lambda r: windowed_profile_cache[r["name"]].get("Brl %", 0),
+                    # `or 0`, not a .get default: the key now EXISTS with
+                    # a None value when barrels weren't measurable, so a
+                    # default never fires and sorted() would raise
+                    # TypeError comparing None to float — taking out the
+                    # whole lineup table. Same reasoning as Brl/PA below.
+                    "Brl%": lambda r: windowed_profile_cache[r["name"]].get("Brl %") or 0,
                     # The new HR axes are sortable too — Brl/PA and
                     # HRWindow% are the two most useful ways to reorder
                     # this board for a home-run read, and neither was
@@ -1167,7 +1172,11 @@ with content_col:
                     # (not 0) for bats we can't measure, and None breaks
                     # the sort.
                     "Brl/PA": lambda r: windowed_profile_cache[r["name"]].get("Brl/PA") or 0,
-                    "HH%": lambda r: windowed_profile_cache[r["name"]].get("HH %", 0),
+                    # `or 0` for consistency with every other key here.
+                    # HH% is not currently nullable, but a .get default is
+                    # the wrong guard for a sort key regardless — it can't
+                    # protect against a present-but-None value.
+                    "HH%": lambda r: windowed_profile_cache[r["name"]].get("HH %") or 0,
                     "EV90": lambda r: windowed_profile_cache[r["name"]].get("EV90") or 0,
                     "HRWindow%": lambda r: windowed_profile_cache[r["name"]].get("HRWindow %") or 0,
                     "HRIntent": lambda r: windowed_profile_cache[r["name"]].get("HRIntent") or 0,
@@ -1201,7 +1210,7 @@ with content_col:
                         "xSLG": profile.get("xSLG"),
                         "ISO": profile.get("ISO", 0),
                         "HR/FB": profile.get("HR/FB"),
-                        "Brl%": profile.get("Brl %", 0),
+                        "Brl%": profile.get("Brl %"),
                         # Barrels per PLATE APPEARANCE, next to the
                         # per-batted-ball rate. The gap between the two
                         # IS the read: a bat with a high Brl% and a low
@@ -1225,14 +1234,18 @@ with content_col:
                         # questions and the difference is informative.
                         "HRWindow%": profile.get("HRWindow %"),
                         "PullAir%": profile.get("PullAir %", 0),
-                        "PullBrl%": profile.get("PullBrl %", 0),
+                        "PullBrl%": profile.get("PullBrl %"),
                         "Blast%": profile.get("Blast %", 0),
                         # Process, not outcome: bat speed + swing plane +
                         # pull tendency. Every other column here is
                         # downstream of results, so they all sag together
                         # when a power bat goes cold. This one doesn't.
                         "HRIntent": profile.get("HRIntent"),
-                        "SwStr%": profile.get("SwStr %", 0),
+                        # No ", 0" default: a missing SwStr% is not a
+                        # 0.00 SwStr%, and 0.00 in this column reads as
+                        # the best possible value. na_rep on the
+                        # formatter below renders None as N/A.
+                        "SwStr%": profile.get("SwStr %"),
                         "HR Edge": hr_edge,
                         "HR Score": hr_score,
                         "Hit Score": hit_score,

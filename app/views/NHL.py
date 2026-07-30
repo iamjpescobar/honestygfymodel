@@ -1,13 +1,11 @@
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, badge, footer, COLOR
-from auth import render_account_sidebar
 
 # NOTE: no st.set_page_config here — app.py already sets it once for the
 # whole app, and these pages render inside that same run.
 
 inject_kc_theme()
-render_account_sidebar()
 
 page_header("NHL Analytics", "In development — built on real data or not at all", eyebrow="COMING SOON")
 

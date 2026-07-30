@@ -1,11 +1,10 @@
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close
-from auth import render_account_sidebar, require_admin
+from auth import require_admin
 from engines.roster import get_live_team_roster
 
 inject_kc_theme()
-render_account_sidebar()
 
 # Belt-and-suspenders: app.py only adds this page to the nav for admins,
 # but gate it here too in case that ever changes.
