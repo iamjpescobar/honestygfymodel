@@ -37,6 +37,66 @@ st.set_page_config(
     layout="wide"
 )
 
+# -------------------------
+# Home-screen / standalone mobile tags
+#
+# Streamlit exposes no API for adding <head> tags: page_icon sets only the
+# browser-tab favicon, st.markdown strips <link> and <meta>, and
+# components.html runs in an iframe that cannot reach the parent document.
+# So the tags are written directly into Streamlit's own index.html.
+#
+# This is a workaround, not a supported interface. It edits a file inside
+# site-packages, which is rebuilt on every deploy here, so the patch is
+# reapplied on each boot and disappears cleanly if it is ever removed.
+# Everything is wrapped so that ANY failure — missing file, read-only
+# filesystem, a Streamlit release that restructures index.html — leaves the
+# app running exactly as before. A cosmetic icon must never take the site
+# down.
+#
+# Note it takes effect from the NEXT page load: the browser has already
+# fetched index.html by the time this script first runs, and may cache it.
+# After deploying, refresh once, then re-add to the home screen.
+# -------------------------
+def _install_mobile_head_tags():
+    import base64
+    import streamlit as _st
+
+    icon_path = Path(__file__).parent / "static" / "loscappers-icon-180.png"
+    index_path = Path(_st.__file__).parent / "static" / "index.html"
+    marker = "<!--lc-mobile-tags-->"
+
+    if not icon_path.exists() or not index_path.exists():
+        return
+    html = index_path.read_text(encoding="utf-8")
+    if marker in html:
+        return  # already patched this boot
+
+    b64 = base64.b64encode(icon_path.read_bytes()).decode("ascii")
+    tags = (
+        f'{marker}'
+        f'<link rel="apple-touch-icon" href="data:image/png;base64,{b64}">'
+        f'<link rel="icon" type="image/png" href="data:image/png;base64,{b64}">'
+        # Launches without Safari's address bar and toolbar from the home
+        # screen. Ordinary browser visits are unaffected.
+        f'<meta name="apple-mobile-web-app-capable" content="yes">'
+        f'<meta name="mobile-web-app-capable" content="yes">'
+        # Status bar matches COLOR["bg"] instead of sitting on white.
+        f'<meta name="apple-mobile-web-app-status-bar-style" content="black">'
+        f'<meta name="theme-color" content="#0a0d10">'
+        # Short label under the icon, rather than a truncated page title.
+        f'<meta name="apple-mobile-web-app-title" content="Los Cappers">'
+        f'<meta name="application-name" content="Los Cappers">'
+    )
+    index_path.write_text(html.replace("</head>", tags + "</head>", 1), encoding="utf-8")
+
+
+try:
+    _install_mobile_head_tags()
+except Exception:
+    # Deliberately silent and non-fatal — see the note above.
+    pass
+
+
 inject_kc_theme()
 require_login()  # blocks with a themed login screen until authenticated
 
