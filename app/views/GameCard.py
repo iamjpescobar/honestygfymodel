@@ -19,7 +19,7 @@ from engines.roster import get_live_team_roster, get_active_player_ids, get_all_
 from engines.statcast_engine import (
     get_pitcher_statcast, get_pitcher_advanced_splits, get_batter_profile_windowed, get_batter_vs_pitch_types,
     get_first_pitch_swing
-, get_batter_iso_vs_hand
+, get_batter_iso_vs_hand, hand_tag
 )
 from engines.savant_leaderboard import load_percentile_ranks
 from engines.live_sync import sync_latest_button
@@ -270,10 +270,34 @@ with content_col:
     # -----------------------------------------------------
     # PITCHER SELECTOR
     # -----------------------------------------------------
-    pitcher_options = [f"{game['away_pitcher']} ({game['away']})", f"{game['home_pitcher']} ({game['home']})"]
+    # Handedness in the SELECTOR, not just after you've picked. Which way
+    # a starter throws is often the reason you'd pick one side of the
+    # matchup to look at, so having to select him first to find out had it
+    # backwards. Both ids are resolved here anyway and get_pitcher_hand is
+    # cached, so labelling both costs nothing.
+    #
+    # The name stays FIRST in each label: the startswith() checks below
+    # match on game['away_pitcher'] / game['home_pitcher'], so anything
+    # appended is safe but a prefix would break the selection.
+    _away_ht = hand_tag(game.get("away_pitcher_id"))
+    _home_ht = hand_tag(game.get("home_pitcher_id"))
+    pitcher_options = [
+        f"{game['away_pitcher']} ({game['away']}{', ' + _away_ht if _away_ht else ''})",
+        f"{game['home_pitcher']} ({game['home']}{', ' + _home_ht if _home_ht else ''})",
+    ]
     st.markdown(f'<div style="font-size:14px; font-weight:600; color:{COLOR["magenta_purple"]}; margin-bottom:4px;">Select Pitcher</div>', unsafe_allow_html=True)
     pitcher_choice = st.segmented_control(
-        "Select Pitcher", pitcher_options, default=pitcher_options[0], key=f"pitcher_choice_{st.session_state['gc_selected_game_idx']}",
+        "Select Pitcher", pitcher_options, default=pitcher_options[0],
+        # Key includes the option labels. The labels can CHANGE mid-session:
+        # hand_tag returns "" until the pitcher's dataframe is cached, then
+        # "LHP"/"RHP" on a later rerun. With a fixed key, session state
+        # would still hold the old label — a value no longer in the options
+        # list — which Streamlit either errors on or silently resets.
+        # Folding the labels into the key means a label change starts a
+        # fresh widget that simply defaults to the away pitcher, exactly as
+        # a first visit does.
+        key=f"pitcher_choice_{st.session_state['gc_selected_game_idx']}_"
+            f"{abs(hash(tuple(pitcher_options))) % 10**8}",
         label_visibility="collapsed",
     )
     if not pitcher_choice:
