@@ -58,7 +58,6 @@ st.set_page_config(
 # After deploying, refresh once, then re-add to the home screen.
 # -------------------------
 def _install_mobile_head_tags():
-    import base64
     import streamlit as _st
 
     icon_path = Path(__file__).parent / "static" / "loscappers-icon-180.png"
@@ -71,11 +70,21 @@ def _install_mobile_head_tags():
     if marker in html:
         return  # already patched this boot
 
-    b64 = base64.b64encode(icon_path.read_bytes()).decode("ascii")
+    # A REAL URL, not a data: URI.
+    #
+    # The first version of this embedded the PNG as base64 straight into
+    # the tag. That renders fine in a browser tab but iOS Safari IGNORES
+    # a data: URI for apple-touch-icon — it silently falls back to the
+    # letter tile, which is exactly what it did. The icon has to be
+    # fetchable, so app/.streamlit/config.toml turns on Streamlit's
+    # static serving and this points at the served path.
+    icon_url = "/app/static/loscappers-icon-180.png"
     tags = (
         f'{marker}'
-        f'<link rel="apple-touch-icon" href="data:image/png;base64,{b64}">'
-        f'<link rel="icon" type="image/png" href="data:image/png;base64,{b64}">'
+        f'<link rel="apple-touch-icon" href="{icon_url}">'
+        f'<link rel="apple-touch-icon" sizes="180x180" href="{icon_url}">'
+        f'<link rel="icon" type="image/png" href="{icon_url}">'
+        f'<link rel="manifest" href="/app/static/manifest.json">'
         # Launches without Safari's address bar and toolbar from the home
         # screen. Ordinary browser visits are unaffected.
         f'<meta name="apple-mobile-web-app-capable" content="yes">'
