@@ -1049,7 +1049,9 @@ def get_pitcher_hand(pitcher_id):
     if not pitcher_id:
         return None
     try:
-        df = _get_pitcher_df(pitcher_id)
+        # _get_pitcher_df returns a (df, error) TUPLE, not a DataFrame —
+        # every other caller in this file unpacks it the same way.
+        df, _err = _get_pitcher_df(pitcher_id)
     except Exception:
         return None
     if df is None or df.empty or "p_throws" not in df.columns:
