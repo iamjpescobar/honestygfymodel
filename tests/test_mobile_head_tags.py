@@ -62,15 +62,37 @@ after = (tmp / "static" / "index.html").read_text()
 assert after == before, (
     "index.html changed on a repeat run — the app reruns constantly, so a "
     "non-idempotent patch would grow the document without bound")
-assert after.count("apple-touch-icon") == 1
+# Two apple-touch-icon links are emitted on purpose (a bare one and a
+# sizes="180x180" one); what matters is that repeat runs don't add more.
+assert after.count("lc-mobile-tags") == 1
 print("PASS: repeat runs leave the document untouched")
 
-# --- 3. the embedded icon is the real file ---------------------------
-b64 = after.split('apple-touch-icon" href="data:image/png;base64,')[1].split('"')[0]
-raw = base64.b64decode(b64)
-assert raw[:8] == b"\x89PNG\r\n\x1a\n", "embedded payload is not a PNG"
-assert raw == ICON.read_bytes(), "embedded bytes differ from the icon on disk"
-print("PASS: embedded data URI decodes to the exact icon file")
+# --- 3. the icon is a SERVED URL, never a data: URI -------------------
+# iOS Safari ignores a data: URI in apple-touch-icon and silently falls
+# back to a letter tile — which is exactly what the first version did.
+assert 'href="/app/static/loscappers-icon-180.png"' in after, (
+    "apple-touch-icon must point at the static-served path")
+assert "data:image/png;base64" not in after, (
+    "a data: URI is ignored by iOS for apple-touch-icon — the icon has to "
+    "be fetchable at a real URL")
+print("PASS: icon is referenced by URL, not an inline data URI")
+
+# That URL only resolves if Streamlit's static serving is switched on.
+cfg = (ROOT / "app" / ".streamlit" / "config.toml").read_text()
+assert "enableStaticServing = true" in cfg, (
+    "enableStaticServing is off, so /app/static/... 404s and the icon "
+    "silently never loads")
+print("PASS: static serving is enabled, so the URL resolves")
+
+# And the manifest must reference a file that exists.
+import json
+mf = json.loads((ROOT / "app" / "static" / "manifest.json").read_text())
+for entry in mf["icons"]:
+    src = entry["src"]
+    assert src.startswith("/app/static/"), f"{src} won't resolve under Streamlit"
+    assert (ROOT / "app" / src.split("/app/", 1)[1]).exists(), (
+        f"manifest points at {src}, which does not exist in the repo")
+print("PASS: manifest icons resolve to files that exist")
 
 # --- 4. every failure path is silent ---------------------------------
 (tmp / "static" / "index.html").unlink()
