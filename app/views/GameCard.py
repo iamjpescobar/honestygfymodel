@@ -868,19 +868,19 @@ with content_col:
             with card("hr_targets"):
                 st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Top HR Targets</div>', unsafe_allow_html=True)
                 hr_df = _targets_table("hr_score", "HR Score")
-                st.dataframe(style_stat_table(hr_df, favor_high=["HR Score"], gradient=True).format({"HR Score": "{:.0f}"}, na_rep="N/A"), width="stretch")
+                st.dataframe(style_stat_table(hr_df, favor_high=["HR Score"], gradient=True).format({"HR Score": "{:.0f}"}, na_rep="N/A"), width="stretch", hide_index=True)
         with top_row2:
             with card("hit_targets"):
                 st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Best Hit Targets</div>', unsafe_allow_html=True)
                 hit_df = _targets_table("hit_score", "Hit Score")
-                st.dataframe(style_stat_table(hit_df, favor_high=["Hit Score"], gradient=True).format({"Hit Score": "{:.0f}"}, na_rep="N/A"), width="stretch")
+                st.dataframe(style_stat_table(hit_df, favor_high=["Hit Score"], gradient=True).format({"Hit Score": "{:.0f}"}, na_rep="N/A"), width="stretch", hide_index=True)
 
         bot_row1, bot_row2 = st.columns(2)
         with bot_row1:
             with card("k_targets"):
                 st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Strikeout Targets</div>', unsafe_allow_html=True)
                 k_df = _targets_table("k_score", "K Score")
-                st.dataframe(style_stat_table(k_df, favor_high=["K Score"], gradient=True).format({"K Score": "{:.0f}"}, na_rep="N/A"), width="stretch")
+                st.dataframe(style_stat_table(k_df, favor_high=["K Score"], gradient=True).format({"K Score": "{:.0f}"}, na_rep="N/A"), width="stretch", hide_index=True)
         with bot_row2:
             hr_vals = [r["hr_score"] for r in ranked if r["hr_score"] is not None]
             hit_vals = [r["hit_score"] for r in ranked if r["hit_score"] is not None]
@@ -922,14 +922,14 @@ with content_col:
                     st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">STATS</div>', unsafe_allow_html=True)
                     st.dataframe(
                         style_stat_table(full_df[stats_cols], favor_high=["BA", "SLG", "ISO", "HR", "HR/9"], favor_low=["WHIP"], gradient=True),
-                        width="stretch",
+                        width="stretch", hide_index=True,
                     )
             with g2:
                 with card("strikes_table"):
                     st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">STRIKES</div>', unsafe_allow_html=True)
                     st.dataframe(
                         style_stat_table(full_df[strikes_cols], favor_low=["BB%", "Whiff%", "K%", "Putaway%", "SwStr%", "K/9", "Meatball%"], favor_high=["1stPS%"], gradient=True),
-                        width="stretch",
+                        width="stretch", hide_index=True,
                     )
             st.caption("Computed by this app directly from raw Statcast pitch data \u2014 see get_pitcher_advanced_splits() for exact definitions.")
 
@@ -979,7 +979,7 @@ with content_col:
                             # fractional expectation is the point.
                             "xHR Allowed": "{:.1f}", "xHR Gap": "{:+.1f}",
                         }, na_rep="N/A"),
-                        width="stretch",
+                        width="stretch", hide_index=True,
                     )
                     st.caption(
                         "Contact allowed, from this pitcher's own Statcast rows. "
@@ -1351,7 +1351,7 @@ with content_col:
                     }, na_rep="N/A")
                     st.dataframe(
                         styled,
-                        width="stretch",
+                        width="stretch", hide_index=True,
                         column_config={
                             "HR Edge": st.column_config.ProgressColumn("HR Edge", min_value=0, max_value=100, format="%d", color=COLOR["gold"]),
                             "HR Score": st.column_config.ProgressColumn("HR Score", min_value=0, max_value=100, format="%d", color=COLOR["stat_high"]),
@@ -1688,7 +1688,7 @@ with content_col:
                     st.dataframe(
                         style_stat_table(matchup_df, favor_high=["xwOBA", "ISO", "Brl%", "HH%", "Zone Fit"], favor_low=["Whiff%"], gradient=True).format(
                             {"xwOBA": "{:.3f}", "ISO": "{:.3f}", "Brl%": "{:.1f}", "HH%": "{:.1f}", "Whiff%": "{:.1f}"}, na_rep="\u2014"),
-                        width="stretch",
+                        width="stretch", hide_index=True,
                     )
                     st.caption(
                         "\"Pitches Seen\" is the real sample size behind each row \u2014 a low number is a real, honest "
@@ -1747,7 +1747,7 @@ with content_col:
                                  "Brl%": "{:.1f}", "HH%": "{:.1f}", "Whiff%": "{:.1f}"},
                                 na_rep="\u2014",
                             ),
-                            width="stretch",
+                            width="stretch", hide_index=True,
                         )
                         st.caption(
                             "Fastballs = 4-seam, sinker, cutter. Breaking = slider, sweeper, curve, "
@@ -1779,7 +1779,7 @@ with content_col:
                         {"Player": r["Player"], "Bats": r["Bats"], "Detail": r["EdgeLabel"], "Confidence": r["Confidence"]}
                         for r in tier_rows
                     ])
-                    st.dataframe(plain_dark_table(tier_df), width="stretch", height=min(250, 40 + 35 * len(tier_rows)))
+                    st.dataframe(plain_dark_table(tier_df), width="stretch", hide_index=True, height=min(250, 40 + 35 * len(tier_rows)))
 
         tab_arsenal, tab_scout = st.tabs(["Pitch Arsenal", "\U0001F52D Scout Report"])
         with tab_arsenal:
@@ -1861,7 +1861,7 @@ with content_col:
                         if hitters:
                             hitters_df = pd.DataFrame(hitters)[["name", "position", "bats", "throws"]]
                             hitters_df.columns = ["Name", "Pos", "Bats", "Throws"]
-                            st.dataframe(plain_dark_table(hitters_df), width="stretch", height=min(370, 40 + 35 * len(hitters)))
+                            st.dataframe(plain_dark_table(hitters_df), width="stretch", hide_index=True, height=min(370, 40 + 35 * len(hitters)))
                         else:
                             st.caption("No position players found.")
 
@@ -1870,7 +1870,7 @@ with content_col:
                         if pitchers:
                             pitchers_df = pd.DataFrame(pitchers)[["name", "position", "bats", "throws"]]
                             pitchers_df.columns = ["Name", "Pos", "Bats", "Throws"]
-                            st.dataframe(plain_dark_table(pitchers_df), width="stretch", height=min(370, 40 + 35 * len(pitchers)))
+                            st.dataframe(plain_dark_table(pitchers_df), width="stretch", hide_index=True, height=min(370, 40 + 35 * len(pitchers)))
                         else:
                             st.caption("No pitchers found.")
                 else:
