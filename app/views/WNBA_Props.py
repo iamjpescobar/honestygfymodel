@@ -141,7 +141,12 @@ with card("wprops"):
 
 if unrated:
     with st.expander(f"\u26a0\ufe0f Not rated ({len(unrated)})"):
-        for u in unrated[:40]:
+        # No [:40] slice. The whole point of this list is that a player
+        # who isn't ranked still gets NAMED with a reason — truncating it
+        # recreated the exact problem it exists to solve, silently hiding
+        # players on a busy slate. The expander is collapsed by default,
+        # so length costs nothing.
+        for u in unrated:
             st.caption(f'{u["player"]} ({u.get("pos", "?")}, {u.get("team", "?")}): {u["reason"]}')
 
 footer()
