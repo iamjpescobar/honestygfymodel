@@ -34,7 +34,7 @@ import streamlit as st
 
 from engines.weather_engine import get_todays_games_with_weather
 from engines.statcast_engine import (
-    get_pitcher_advanced_splits, get_pitcher_k_game_log_json,
+    get_pitcher_advanced_splits, get_pitcher_k_game_log_json, hand_tag,
 )
 from engines.team_abbreviations import team_abbr
 
@@ -134,9 +134,15 @@ def _slate_projections_json(date_str: str, basis: str = "season") -> str:
             pid = g.get(f"{side}_pitcher_id")
             team = g.get(side, "?")
             opp = g.get(opp_side, "?")
+            # Throwing hand appended to the NAME rather than given its own
+            # column: these boards are already column-dense and read on
+            # phones, and the hand is only ever useful next to the pitcher
+            # it belongs to. hand_tag is cached and returns "" when the
+            # hand is unknown, so a missing probable just shows the name.
+            _ht = hand_tag(pid)
             row = {
                 "matchup": matchup,
-                "pitcher": name,
+                "pitcher": f"{name} ({_ht})" if _ht else name,
                 "pid": pid,
                 "team": team_abbr(team),
                 "opp": team_abbr(opp),
