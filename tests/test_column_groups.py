@@ -68,3 +68,43 @@ print("PASS: missing columns are skipped, not invented as NaN")
 assert 'key="lineup_col_group"' in SRC, "selector needs a stable key to persist"
 assert 'default="All"' in SRC
 print("PASS: selector defaults to All and persists")
+
+
+# ----------------------------------------------------------------------
+# The HTML tables must SCROLL inside their card, never overflow it.
+#
+# These render two-up in st.columns. A flex item defaults to
+# min-width:auto, so it refuses to shrink below its content width and
+# overflow-x:auto never engages — the table spills out of its card and
+# paints on top of the neighbouring one, producing overlapping digits
+# where the two collide. Every property below is what prevents that.
+# ----------------------------------------------------------------------
+TS = (Path(__file__).resolve().parent.parent / "app" / "styles" / "table_style.py").read_text()
+_css = TS[TS.index("_HTML_TABLE_CSS"):TS.index("def render_html_table")]
+
+for prop, why in [
+    ("min-width: 0",
+     "the wrapper can't shrink below content width, so it overflows the card "
+     "instead of scrolling"),
+    ("max-width: 100%",
+     "the wrapper is free to grow past its card and overlap the next column"),
+    ('stColumn"]:has(.lc-tbl-wrap)',
+     "Streamlit's own column wrapper is a flex item with the same "
+     "min-width:auto default — without it the wrapper constraint never applies"),
+    ("width: max-content",
+     "forcing width:100% makes columns compress instead of scrolling"),
+    ("overflow-x: auto",
+     "no scroll container at all"),
+]:
+    assert prop in _css, f"{prop} missing from the HTML table CSS — {why}"
+print("PASS: table overflow is contained and scrolls inside its card")
+
+assert "!important" in _css[_css.index("td:first-child"):], (
+    "the sticky label cell needs an opaque background: gradient-filled cells "
+    "scroll UNDERNEATH it and would bleed through a transparent one")
+print("PASS: sticky label column is opaque over scrolling cells")
+
+assert "@media (max-width: 900px)" in _css, (
+    "mobile sizing gone — desktop-sized padding on a phone is what made these "
+    "tables unusable in the first place")
+print("PASS: mobile media query retained, desktop sizing untouched")
