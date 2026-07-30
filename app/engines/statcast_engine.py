@@ -1115,6 +1115,7 @@ def get_pitcher_k_game_log_json(pitcher_id) -> str:
     return _json.dumps(entries)
 
 
+@st.cache_data(ttl=1800, max_entries=384, show_spinner=False)
 def get_pitcher_advanced_splits(pitcher_id, side: str = None, window: str = "season") -> dict:
     """
     Computes BA/SLG/ISO/WHIP/HR/HR9/BB%/K%/Whiff%/SwStr%/K9/Putaway%/
@@ -1126,6 +1127,18 @@ def get_pitcher_advanced_splits(pitcher_id, side: str = None, window: str = "sea
     "l10"/"l5" — the pitcher's last N GAMES (i.e. starts/appearances),
     sliced by engines/recency_windows before anything is computed, so
     every stat (including IP and _games) honestly reflects the window.
+
+    CACHED, same reasoning as get_pitcher_statcast and
+    get_batter_vs_pitch_types: the underlying dataframe pull was already
+    cached, but every metric below was re-derived on top of it on EVERY
+    Streamlit rerun — every click, filter and toggle. The Game Card calls
+    it three times per pitcher (overall, vs RHB, vs LHB), and both
+    k_projection and pitchers_to_target call it inside a loop over every
+    pitcher on the slate, so a full board re-ran the whole computation
+    dozens of times for data that had not changed.
+
+    All three arguments are hashable scalars and the return is a plain
+    dict, so the key is cheap and the value pickles cleanly.
 
     Definitions used:
       BA        = hits / at-bats (at-bats = PAs with a batted-ball or
