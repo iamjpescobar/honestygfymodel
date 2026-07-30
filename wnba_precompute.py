@@ -137,6 +137,14 @@ def parse_scoreboard_events(payload):
         g = {
             "away": (away.get("team") or {}).get("displayName", "TBD"),
             "home": (home.get("team") or {}).get("displayName", "TBD"),
+            # ESPN's numeric team ids. Kept because the SUMMARY endpoint's
+            # "rosters" block is empty for the WNBA feed — verified in a
+            # nightly log: "0 announced starters" on every game, with only
+            # the handful of injury-report entries present. So the only
+            # way to learn who is actually on a team is the dedicated
+            # /teams/{id}/roster endpoint, which needs these ids.
+            "away_id": str((away.get("team") or {}).get("id") or ""),
+            "home_id": str((home.get("team") or {}).get("id") or ""),
             "away_color": (away.get("team") or {}).get("color"),
             "home_color": (home.get("team") or {}).get("color"),
             "arena": (comp.get("venue") or {}).get("fullName", ""),
@@ -218,6 +226,62 @@ def _num(s):
 # a silent shape change shows up in the workflow log instead of quietly
 # degrading every board.
 _OUT_STATUSES = {"out", "injured", "suspended", "not with team", "inactive"}
+
+
+def fetch_team_roster(team_id, debug=False):
+    """{pid: {"name", "pos"}} — every player on a team's roster.
+
+    WHY THIS EXISTS. The summary endpoint's "rosters" block is empty for
+    the WNBA feed. A nightly log showed "0 announced starters" on all
+    three games, with only 4-7 entries per event, and those were the
+    injury report. So availability data alone can never tell us who is on
+    a team; it only tells us who is hurt.
+
+    That mattered because every other list of players was derived from
+    BOX SCORES, which by definition contain only players who have already
+    played. A star who has been out — or who is early in a return — has no
+    box-score rows, so she existed nowhere in the pipeline and no filter
+    change could bring her back. This endpoint is the roster itself,
+    independent of whether anyone has played a minute.
+
+    Returns {} on any failure, and every caller treats that as "unknown"
+    and falls back to box-score history, so a bad response degrades to
+    the old behaviour rather than emptying a slate.
+    """
+    if not team_id:
+        return {}
+    try:
+        data = get_json(f"{BASE}/teams/{team_id}/roster")
+    except Exception as exc:
+        print(f"  [roster] team {team_id}: fetch failed ({exc})")
+        return {}
+
+    # ESPN returns athletes either as a flat list or grouped into
+    # position buckets ({"position": "guard", "items": [...]}) depending
+    # on sport and endpoint version. Handle both rather than betting on
+    # one shape.
+    raw = data.get("athletes") or []
+    flat = []
+    for a in raw:
+        if isinstance(a, dict) and isinstance(a.get("items"), list):
+            flat.extend(a["items"])
+        else:
+            flat.append(a)
+
+    out = {}
+    for ath in flat:
+        if not isinstance(ath, dict):
+            continue
+        pid = str(ath.get("id") or "")
+        name = ath.get("displayName") or ath.get("fullName") or ath.get("shortName")
+        if not pid or not name:
+            continue
+        pos = ((ath.get("position") or {}).get("abbreviation")
+               if isinstance(ath.get("position"), dict) else "") or ""
+        out[pid] = {"name": name, "pos": pos}
+
+    print(f"  [roster] team {team_id}: {len(out)} players")
+    return out
 
 
 def fetch_game_availability(event_id, debug=False):
@@ -604,6 +668,23 @@ def main():
     for plist in by_team.values():
         plist.sort(key=lambda p: -(p["ppg"] or 0))
 
+    # Team rosters, fetched ONCE per team rather than once per game — a
+    # team appears in only one game a night, but this also keeps the
+    # request count to one per team even if that ever changes.
+    _team_rosters = {}
+    for g in todays:
+        for side in ("away", "home"):
+            tid = g.get(f"{side}_id")
+            if tid and tid not in _team_rosters:
+                _team_rosters[tid] = fetch_team_roster(tid)
+    _roster_total = sum(len(v) for v in _team_rosters.values())
+    print(f"WNBA: fetched {len(_team_rosters)} team rosters, "
+          f"{_roster_total} players total")
+    if not _roster_total:
+        print("  *** WARNING: no team rosters returned. Slates will fall back "
+              "to box-score history, which cannot include a player who has "
+              "not appeared yet. ***")
+
     for g in todays:
         # TODAY'S availability, straight from ESPN's summary for THIS
         # game — the only source here that knows about tonight rather
@@ -658,33 +739,31 @@ def main():
             _stats_by_pid = {str(p["pid"]): p for p in by_team.get(g[side], [])}
             _team_name = g.get(side)
 
-            _roster_pids = [
-                pid for pid, a in _avail.items()
-                if a.get("rostered") and a.get("team") == _team_name
-            ]
+            # THE ROSTER ENDPOINT IS THE SOURCE OF TRUTH for who is on
+            # this team. Not the summary block (empty for WNBA — see
+            # fetch_team_roster) and not box-score history (contains only
+            # players who have already played, which is precisely how a
+            # returning star stayed invisible).
+            _roster = _team_rosters.get(g.get(f"{side}_id")) or {}
 
             picks, _seen = [], set()
-            for pid in _roster_pids:
+            for pid, info in _roster.items():
                 p = _stats_by_pid.get(pid)
                 if p is None:
-                    # On the roster, no season log. Name and position come
-                    # from the roster block; every stat stays None so the
-                    # app renders "—" rather than inventing a number.
-                    a = _avail.get(pid) or {}
-                    if not a.get("name"):
-                        continue
-                    p = {"pid": pid, "name": a["name"], "pos": a.get("pos") or "",
+                    # On the roster, no box-score history. Name and
+                    # position come from the roster; every stat stays None
+                    # so the app renders "—" rather than inventing one.
+                    p = {"pid": pid, "name": info["name"], "pos": info.get("pos") or "",
                          "team": _team_name, "gp": 0, "log": []}
                 picks.append(p)
                 _seen.add(pid)
 
-            # FALLBACK, not a supplement. Only when ESPN published no
-            # roster for this team — pre-game, the block is sometimes
-            # absent — do we fall back to season stats, so a missing
-            # roster can never empty the slate. When a roster DOES exist
-            # it is the whole answer: adding stats-only players on top
-            # would put last month's waived and traded names back on
-            # tonight's card, which is the noise this is meant to avoid.
+            # FALLBACK, not a supplement. Only when the roster endpoint
+            # gave us nothing do we fall back to box-score history, so a
+            # failed fetch degrades to the old behaviour instead of
+            # emptying the slate. When a roster DOES exist it is the whole
+            # answer: adding stats-only players on top would put waived and
+            # traded names back on tonight's card.
             if not picks:
                 picks = [p for p in _stats_by_pid.values()
                          if (p.get("gp") or 0) >= 3]
