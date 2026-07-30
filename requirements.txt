@@ -1,31 +1,30 @@
-# EVERY LINE HERE SHOULD CARRY AN == PIN.
+# EVERY LINE HERE CARRIES AN == PIN.
 #
-# The unpinned ones below are resolved fresh on every CI run and every
-# Render deploy, which means the data on the site can change without a
-# single commit to this repo. pybaseball is the dangerous one: it scrapes
-# Baseball Savant, so a new release can silently change column names,
-# drop the estimated_* expected-stat columns, or alter dtypes — and this
-# app is built entirely on those columns. That failure mode looks like
-# "the numbers went weird last night", with nothing in git to explain it.
+# Pinned from the CI run that verified the pipeline end to end
+# (nightly-data, 2026-07-30). These are the exact versions that
+# successfully fetched real Savant data, graded calibration, and built
+# the archive.
 #
-# TO PIN THEM: the nightly workflow now runs `pip freeze` in a step
-# called "Record resolved dependency versions". Take the versions it
-# prints for the packages below, paste them in as ==, and confirm the
-# test suite still passes. Do that from the CI output rather than a local
-# machine, so the pins match the platform that actually builds the data.
+# pybaseball is the one that matters most: it scrapes Baseball Savant, so
+# a new release can silently rename or drop the columns this app is built
+# on — estimated_woba/slg_using_speedangle and launch_speed_angle. That
+# failure mode looks like "the numbers went weird last night" with
+# nothing in git to explain it. 2.2.7 is confirmed working.
 #
-# Pinned:
+# TO UPGRADE ANYTHING: bump one pin at a time, let the nightly run, and
+# check the "Run tests" step plus the xSLG/Brl% columns on a Game Card.
+# The nightly "Record resolved dependency versions" step prints the
+# resolved set on every run if you need to re-derive these.
+
 streamlit==1.59.2
 pandas==2.2.3
-
-# NOT YET PINNED — see the note above. Ordered roughly by how much
-# damage a surprise release could do.
-pybaseball
-pyarrow
-numpy
-lxml
-beautifulsoup4
-requests
-streamlit-authenticator
-PyYAML
-altair
+numpy==2.4.6
+pyarrow==24.0.0
+pybaseball==2.2.7
+lxml==6.1.1
+beautifulsoup4==4.15.0
+soupsieve==2.9.1
+requests==2.34.2
+streamlit-authenticator==0.4.2
+PyYAML==6.0.3
+altair==6.2.2
