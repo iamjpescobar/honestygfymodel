@@ -21,8 +21,24 @@ jobs:
         with:
           python-version: "3.11"
 
+      # Installs from requirements.txt, same as slate-picks.yml and same
+      # as production. This step used to be a hand-written
+      # `pip install pybaseball pandas pyarrow requests lxml` — a
+      # DIFFERENT and unpinned set from the one the app actually runs, so
+      # the nightly job could build an archive with a pandas that
+      # production never sees. The whole point of the "Run tests" gate
+      # below is to catch breakage before the 15-minute fetch, and it
+      # can't do that while it's testing against different versions.
       - name: Install dependencies
-        run: pip install pybaseball pandas pyarrow requests lxml
+        run: pip install -r requirements.txt
+
+      # Prints the resolved versions into the run log. Anything in
+      # requirements.txt without a pin is resolved fresh here every
+      # night, so when a run breaks for no apparent reason this is the
+      # record of what actually changed underneath it. Use this output to
+      # fill in the missing pins (see requirements.txt).
+      - name: Record resolved dependency versions
+        run: pip freeze
 
       # Runs BEFORE the fetch on purpose. The Statcast pull takes ~15
       # minutes and half a million pitches, and twice now a defect in
@@ -44,6 +60,42 @@ jobs:
             exit 1
           fi
 
+      # Grading runs BEFORE the Statcast fetch and as its OWN step.
+      #
+      # It used to be a line at the bottom of precompute.py wrapped in a
+      # bare except, which meant (a) any failure was swallowed silently
+      # with the job still green, and (b) any crash during the ~15-minute
+      # fetch meant grading never ran at all that day. Grading needs
+      # nothing from the fetch — just the logged picks and MLB's box
+      # scores — so it has no business being downstream of it.
+      #
+      # No `|| echo` here on purpose. Unlike the international slates,
+      # which are genuinely optional, a broken grader is exactly the kind
+      # of thing that must go red instead of quietly skipping days.
+      # build_data/ is never wiped, so the record written here is still
+      # present for precompute.py to pack into the archive below.
+      - name: Grade calibration picks
+        run: python calibration_pipeline.py
+
+      # Committed immediately, before the fetch can fail the job. The
+      # graded record is the one artifact here that cannot be
+      # regenerated — if it isn't committed it's gone.
+      - name: Commit graded calibration record
+        run: |
+          # git status --porcelain, NOT git diff: git diff ignores
+          # untracked files, so a first-time data/calibration.json
+          # reports clean and the graded record is never committed.
+          if [ -z "$(git status --porcelain -- data/calibration.json)" ]; then
+            echo "No calibration changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/calibration.json
+          git commit -m "chore: grade calibration picks [skip ci]"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
       - name: Fetch NPB slate (real npb.jp data)
         run: python npb_precompute.py || echo "NPB fetch failed - continuing without it"
 
@@ -64,27 +116,6 @@ jobs:
           gh release create nightly-data statcast_data.tar.gz \
             -t "Nightly Statcast Data" \
             -n "Auto-generated nightly. Real Baseball Savant pitch data + NPB slate from npb.jp. See manifest.json inside for fetch timestamp."
-
-      # The graded record must survive to tomorrow. build_data/ is
-      # rebuilt from scratch on every runner and only leaves as a
-      # release asset, so without this commit every result graded
-      # tonight would be gone by the next run — see the REPO_RECORD note
-      # in calibration_pipeline.py.
-      - name: Commit graded calibration record
-        run: |
-          # See the note in slate-picks.yml: git diff ignores untracked
-          # files, so a first-time data/calibration.json reports clean
-          # and the graded record is never committed.
-          if [ -z "$(git status --porcelain -- data/calibration.json)" ]; then
-            echo "No calibration changes to commit."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/calibration.json
-          git commit -m "chore: grade calibration picks [skip ci]"
-          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - name: Trigger Render deploy
         env:
