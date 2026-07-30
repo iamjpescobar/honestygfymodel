@@ -221,7 +221,16 @@ _OUT_STATUSES = {"out", "injured", "suspended", "not with team", "inactive"}
 
 
 def fetch_game_availability(event_id, debug=False):
-    """{pid: {"status", "out", "starter"}} for one game, or {} on failure."""
+    """{pid: {"status", "out", "starter", "name", "pos"}} for one game, or {} on failure.
+
+    name/pos are captured here because this is ESPN's OWN roster for this
+    specific game — the authoritative answer to "who is on this team
+    tonight". The slate builder needs it to show a player who is on the
+    roster but has little or no game log: a star returning from injury
+    has no season stats to rank on, so every stats-derived list drops her,
+    and she vanished from the site while every other research site listed
+    her. Carrying the name here is what lets her be shown at all.
+    """
     try:
         data = get_json(f"{BASE}/summary?event={event_id}")
     except Exception as exc:
@@ -229,6 +238,15 @@ def fetch_game_availability(event_id, debug=False):
         return {}
 
     out = {}
+
+    def _remember(ath, entry):
+        """Keep the display name and position off the athlete block."""
+        nm = ath.get("displayName") or ath.get("shortName")
+        if nm and not entry.get("name"):
+            entry["name"] = nm
+        pos = (ath.get("position") or {}).get("abbreviation")
+        if pos and not entry.get("pos"):
+            entry["pos"] = pos
 
     # --- injury report ------------------------------------------------
     for team_block in data.get("injuries") or []:
@@ -243,9 +261,11 @@ def fetch_game_availability(event_id, debug=False):
             entry = out.setdefault(pid, {})
             entry["status"] = str(status)
             entry["out"] = str(status).strip().lower() in _OUT_STATUSES
+            _remember(ath, entry)
 
     # --- announced lineups --------------------------------------------
     for team_block in data.get("rosters") or []:
+        _tname = ((team_block.get("team") or {}).get("displayName") or "")
         for item in team_block.get("roster") or []:
             ath = item.get("athlete") or {}
             pid = str(ath.get("id") or "")
@@ -257,6 +277,12 @@ def fetch_game_availability(event_id, debug=False):
             # Being listed on a game roster is itself evidence she is
             # available, unless the injury block already said otherwise.
             entry.setdefault("out", False)
+            _remember(ath, entry)
+            # Which side she's on tonight, so the slate builder can place
+            # a roster-only player on the correct team.
+            if _tname:
+                entry["team"] = _tname
+            entry["rostered"] = True
 
     if debug or out:
         n_out = sum(1 for v in out.values() if v.get("out"))
@@ -599,19 +625,72 @@ def main():
                 g[f"{side}_form"] = t["form"]
 
             opponent = g[opp_side]
-            # EVERYONE WHO COULD PLAY, not the top 9 scorers.
+            # TONIGHT'S ROSTER DECIDES WHO APPEARS — not a scoring rank.
             #
-            # The cap was 9, applied at build time, sorted by scoring and
-            # therefore BEFORE anyone knew who was available. Three
-            # injured players ate three of the nine slots and the rotation
-            # players who actually replace them were cut from the file
-            # entirely — so the page couldn't show them no matter what the
-            # app did. A WNBA roster is 11-12, and a slate needs the whole
-            # thing: the sixth option matters most on exactly the nights
-            # the starters are out.
+            # This was `[p for p in by_team[...] if p["gp"] >= 3][:15]`,
+            # sorted by season ppg. Three separate ways that hid real
+            # players, all of them at BUILD time, so no page could show
+            # them or say why no matter what the app did:
             #
-            # gp >= 3 still filters out players with no usable sample.
-            picks = [p for p in by_team.get(g[side], []) if p["gp"] >= 3][:15]
+            #   1. The [:15] cap was applied to every player who logged a
+            #      minute for the team all season — waived players, 10-day
+            #      contracts, hardship signings — so a full-season roster
+            #      routinely ran past 15 and cut genuine rotation players.
+            #   2. It ranked by POINTS, so a low-scoring starter playing 30
+            #      minutes a night lost her slot to a bench scorer. The
+            #      comment that used to sit here flagged exactly this
+            #      "sorted before anyone knew who was available" problem
+            #      when the cap was 9, and then kept the ppg sort.
+            #   3. gp >= 3 erased anyone with fewer than three games —
+            #      which is every star returning from a long injury. She
+            #      has no season sample to rank on, so a stats-derived
+            #      list can never contain her, and the site showed nothing
+            #      while every other research site listed her.
+            #
+            # So: start from ESPN's own roster for THIS game, which is the
+            # authoritative "who is on this team tonight", and attach
+            # whatever season stats exist. A player with no log still gets
+            # a row with None stats — visible, correctly named, honestly
+            # empty — rather than being deleted. Anyone with a real sample
+            # who is not on tonight's roster block (ESPN sometimes omits
+            # it pre-game) is kept too, so a missing roster block can never
+            # empty the slate.
+            _stats_by_pid = {str(p["pid"]): p for p in by_team.get(g[side], [])}
+            _team_name = g.get(side)
+
+            _roster_pids = [
+                pid for pid, a in _avail.items()
+                if a.get("rostered") and a.get("team") == _team_name
+            ]
+
+            picks, _seen = [], set()
+            for pid in _roster_pids:
+                p = _stats_by_pid.get(pid)
+                if p is None:
+                    # On the roster, no season log. Name and position come
+                    # from the roster block; every stat stays None so the
+                    # app renders "—" rather than inventing a number.
+                    a = _avail.get(pid) or {}
+                    if not a.get("name"):
+                        continue
+                    p = {"pid": pid, "name": a["name"], "pos": a.get("pos") or "",
+                         "team": _team_name, "gp": 0, "log": []}
+                picks.append(p)
+                _seen.add(pid)
+
+            # FALLBACK, not a supplement. Only when ESPN published no
+            # roster for this team — pre-game, the block is sometimes
+            # absent — do we fall back to season stats, so a missing
+            # roster can never empty the slate. When a roster DOES exist
+            # it is the whole answer: adding stats-only players on top
+            # would put last month's waived and traded names back on
+            # tonight's card, which is the noise this is meant to avoid.
+            if not picks:
+                picks = [p for p in _stats_by_pid.values()
+                         if (p.get("gp") or 0) >= 3]
+
+            # Minutes, not points — who actually plays tonight.
+            picks.sort(key=lambda p: -((p.get("min") or 0)))
             # "pid" FIRST, and it was missing entirely.
             #
             # Without it every slate row was anonymous, which broke three
