@@ -189,13 +189,26 @@ def inject_minimal_css():
        (page content first, then account card / nav / glossary / sign
        out below it). :has() scopes this to exactly those two blocks;
        columns inside pages (weather strip, pitcher pills, carousels)
-       are untouched. */
+       are untouched.
+
+       .right-sidebar is the load-bearing selector here. The other two
+       key off radio aria-labels, which only exist on MLB — the
+       Navigation radio is rendered ONLY when render_right_sidebar gets
+       nav_titles, and non-MLB sports pass none. So when the sidebar was
+       extended to every sport, KBO/NPB/WNBA/NBA/NFL/NHL matched neither
+       selector and kept the desktop 8/2 split on a phone, squeezing
+       page content into 80% width. render_right_sidebar always emits
+       .right-sidebar, on every sport, which is why the rule hangs off
+       that instead. */
     @media (max-width: 900px) {
+      div[data-testid="stHorizontalBlock"]:has(.right-sidebar),
       div[data-testid="stHorizontalBlock"]:has([aria-label="Navigation"]),
       div[data-testid="stHorizontalBlock"]:has([aria-label="Sport"]) {
         flex-direction: column !important;
         gap: 0.75rem !important;
       }
+      div[data-testid="stHorizontalBlock"]:has(.right-sidebar) > div[data-testid="stColumn"],
+      div[data-testid="stHorizontalBlock"]:has(.right-sidebar) > div[data-testid="column"],
       div[data-testid="stHorizontalBlock"]:has([aria-label="Navigation"]) > div[data-testid="stColumn"],
       div[data-testid="stHorizontalBlock"]:has([aria-label="Sport"]) > div[data-testid="stColumn"],
       div[data-testid="stHorizontalBlock"]:has([aria-label="Navigation"]) > div[data-testid="column"],
