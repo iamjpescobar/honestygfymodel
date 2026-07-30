@@ -1,11 +1,31 @@
+# EVERY LINE HERE SHOULD CARRY AN == PIN.
+#
+# The unpinned ones below are resolved fresh on every CI run and every
+# Render deploy, which means the data on the site can change without a
+# single commit to this repo. pybaseball is the dangerous one: it scrapes
+# Baseball Savant, so a new release can silently change column names,
+# drop the estimated_* expected-stat columns, or alter dtypes — and this
+# app is built entirely on those columns. That failure mode looks like
+# "the numbers went weird last night", with nothing in git to explain it.
+#
+# TO PIN THEM: the nightly workflow now runs `pip freeze` in a step
+# called "Record resolved dependency versions". Take the versions it
+# prints for the packages below, paste them in as ==, and confirm the
+# test suite still passes. Do that from the CI output rather than a local
+# machine, so the pins match the platform that actually builds the data.
+#
+# Pinned:
 streamlit==1.59.2
 pandas==2.2.3
-numpy
-altair
+
+# NOT YET PINNED — see the note above. Ordered roughly by how much
+# damage a surprise release could do.
 pybaseball
-requests
+pyarrow
+numpy
+lxml
 beautifulsoup4
+requests
 streamlit-authenticator
 PyYAML
-pyarrow
-lxml
+altair
