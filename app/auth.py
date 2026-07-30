@@ -18,7 +18,7 @@ import streamlit as st
 import yaml
 import streamlit_authenticator as stauth
 
-from styles.kc_theme import COLOR, card_open, card_close
+from styles.kc_theme import card_open, card_close
 
 # auth_config.yaml is gitignored on purpose — see auth_config.example.yaml
 # for the template. LC_AUTH_CONFIG_PATH lets you point at a Render "Secret
@@ -116,22 +116,16 @@ def require_admin():
         st.stop()
 
 
-def render_account_sidebar():
-    """Shows who's signed in, their role, and a logout button. Call once
-    per page, typically right after inject_kc_theme()."""
-    authenticator = st.session_state.get("lc_authenticator")
-    name = st.session_state.get("name", "")
-    role = st.session_state.get("lc_role", "subscriber")
-
-    with st.sidebar:
-        st.markdown(
-            f"""
-            <div style="padding:10px 0 4px 0; border-top:1px solid {COLOR['border']}; margin-top:10px;">
-                <div style="font-size:12.5px; font-weight:600; color:{COLOR['text']};">{name}</div>
-                <div style="font-size:10.5px; color:{COLOR['accent']}; text-transform:uppercase; letter-spacing:0.06em;">{role}</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        if authenticator is not None:
-            authenticator.logout("Sign out", "sidebar")
+# render_account_sidebar() was REMOVED.
+#
+# It drew an account card and a "Sign out" button into st.sidebar —
+# which app.py hides with `[data-testid="stSidebar"] { display: none
+# !important; }`. So on the nine views that called it, it rendered a
+# logout button nobody could see or click, on every single rerun, and
+# left non-MLB sports with no reachable sign-out at all.
+#
+# The account card and Sign out now live in app.py's
+# render_right_sidebar(), which renders in the visible right column
+# for every sport. Do not reintroduce a second logout widget here:
+# two authenticator.logout() calls in one run is how you get
+# duplicate-widget errors.
