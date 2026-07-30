@@ -1,13 +1,13 @@
-# Streamlit's own theme config \u2014 separate from app/styles/kc_theme.py's
+# Streamlit's own theme config — separate from app/styles/kc_theme.py's
 # CSS injection. Some native widget internals (notably the dataframe
 # grid, which is canvas-rendered, not plain HTML/CSS) pull their base
 # colors from THIS file directly, bypassing our CSS entirely. Without
 # this file, Streamlit defaults to a light theme underneath everything
-# \u2014 which is exactly the kind of "light chrome that won't go away no
+# — which is exactly the kind of "light chrome that won't go away no
 # matter what CSS I write" leak this was built to eliminate.
 #
 # Values here are pulled directly from app/styles/kc_theme.py's COLOR
-# dict so the two stay in sync \u2014 if the palette changes there, update
+# dict so the two stay in sync — if the palette changes there, update
 # this file to match.
 
 [theme]
@@ -19,7 +19,7 @@ textColor = "#e6edf0"
 font = "monospace"
 
 # Makes the dataframe's internal cell/row gridlines blend into the same
-# black background instead of drawing visible separator lines \u2014 this
+# black background instead of drawing visible separator lines — this
 # is canvas-rendered chrome, same as backgroundColor above, so it can
 # only be controlled here, not via CSS.
 dataframeBorderColor = "#0a0d10"
@@ -30,3 +30,12 @@ dataframeHeaderBackgroundColor = "#0a0d10"
 # gate and CSS run, and exposed every page pre-login).
 [client]
 showSidebarNavigation = false
+
+# Serves files from app/static/ at the URL path /app/static/<file>.
+#
+# Required for the home-screen icon: iOS Safari IGNORES a data: URI in
+# apple-touch-icon and falls back to a letter tile, so the icon has to be
+# reachable at a real URL. This is the only way to get one out of
+# Streamlit without putting a proxy in front of it.
+[server]
+enableStaticServing = true
