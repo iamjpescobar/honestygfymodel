@@ -252,15 +252,37 @@ def style_stat_table(df: pd.DataFrame, favor_high=None, favor_low=None, gradient
 # ----------------------------------------------------------------------
 _HTML_TABLE_CSS = f"""
 <style>
+/* min-width:0 and max-width:100% are load-bearing, not tidy-up.
+   A flex/grid item defaults to min-width:auto, which means it REFUSES to
+   shrink below its content width — so overflow-x:auto never engages, the
+   table spills straight out of its card, and on a two-column layout it
+   paints on top of the neighbouring table. That produced overlapping
+   digits where the two collided. Forcing the wrapper to be allowed to
+   shrink is what turns the overflow into a scroll. */
 .lc-tbl-wrap {{
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   border-radius: 6px;
+  min-width: 0;
+  max-width: 100%;
+}}
+/* Streamlit's own column wrappers are flex items too, and have the same
+   min-width:auto default — without this the constraint above never gets
+   a chance to apply. Scoped to columns that actually contain one of
+   these tables so nothing else on the page is affected. */
+div[data-testid="stColumn"]:has(.lc-tbl-wrap),
+div[data-testid="column"]:has(.lc-tbl-wrap) {{
+  min-width: 0;
+  overflow: hidden;
 }}
 .lc-tbl-wrap table {{
   border-collapse: separate;
   border-spacing: 0;
-  width: 100%;
+  /* max-content so columns keep their natural width and the wrapper
+     scrolls; min-width:100% so a narrow table still fills the card
+     rather than sitting in a stub at the left. */
+  width: max-content;
+  min-width: 100%;
   font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
 }}
@@ -282,10 +304,14 @@ _HTML_TABLE_CSS = f"""
 /* First column carries the row label (Split / Season). Sticky so it
    stays put while the stats scroll under it — this is the whole reason
    these tables are HTML and not st.dataframe. */
+/* Opaque background is required: the cells that scroll UNDER this one
+   carry their own gradient fills, and a transparent sticky cell would
+   let them bleed through as it passes. */
 .lc-tbl-wrap td:first-child, .lc-tbl-wrap th:first-child {{
   position: sticky;
   left: 0;
   z-index: 3;
+  background-color: {BG} !important;
   text-align: left;
   font-weight: 700;
   color: {COLOR['text']};
