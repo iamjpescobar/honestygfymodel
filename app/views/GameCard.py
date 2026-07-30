@@ -9,7 +9,7 @@ from styles.kc_theme import (
     inject_kc_theme, badge, card, footer, COLOR,
     pitch_color, pitch_name, edge_tag
 )
-from styles.table_style import style_stat_table, plain_dark_table
+from styles.table_style import style_stat_table, plain_dark_table, render_html_table
 
 from engines.weather_engine import get_todays_games_with_weather
 from engines.park_factors import get_park_factor
@@ -941,33 +941,37 @@ with content_col:
 
         if rows:
             # .T makes the DICT KEYS the index: "Overall", "vs RHB",
-            # "vs LHB". That index IS the data — it's the only thing
-            # saying which platoon side each row describes, and this table
-            # is where you read what a pitcher allows to lefties vs
-            # righties.
+            # "vs LHB". That label IS the data — it's the only thing
+            # saying which platoon side each row describes, and this is
+            # where you read what a pitcher allows to lefties vs righties.
             #
-            # DO NOT pass hide_index=True to the two st.dataframe calls
-            # below. It was added here in a pass that hid the throwaway
-            # RangeIndex on the other tables, and it silently deleted the
-            # split labels — three unlabelled rows of numbers with no way
-            # to tell which hand they belonged to.
-            full_df = pd.DataFrame(rows).T
-            stats_cols = ["IP", "BA", "SLG", "ISO", "WHIP", "HR", "HR/9"]
-            strikes_cols = ["BB%", "Whiff%", "K%", "Putaway%", "SwStr%", "K/9", "1stPS%", "Meatball%"]
+            # reset_index() turns it into a real "Split" COLUMN, which it
+            # has to be: _base_styler calls .hide(axis="index"), so
+            # anything left in the index is dropped before rendering.
+            # That is why the labels disappeared — and why toggling
+            # st.dataframe's hide_index did nothing to bring them back.
+            #
+            # Rendered as HTML rather than st.dataframe so the Split
+            # column can be genuinely sticky while the stats scroll under
+            # it. st.dataframe is canvas-drawn and CSS cannot reach it.
+            full_df = pd.DataFrame(rows).T.reset_index().rename(
+                columns={"index": "Split"})
+            stats_cols = ["Split", "IP", "BA", "SLG", "ISO", "WHIP", "HR", "HR/9"]
+            strikes_cols = ["Split", "BB%", "Whiff%", "K%", "Putaway%", "SwStr%", "K/9", "1stPS%", "Meatball%"]
             g1, g2 = st.columns(2)
             with g1:
                 with card("stats_table"):
                     st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">STATS</div>', unsafe_allow_html=True)
-                    st.dataframe(
+                    render_html_table(
                         style_stat_table(full_df[stats_cols], favor_high=["BA", "SLG", "ISO", "HR", "HR/9"], favor_low=["WHIP"], gradient=True),
-                        width="stretch",
+                        key="splits_stats",
                     )
             with g2:
                 with card("strikes_table"):
                     st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">STRIKES</div>', unsafe_allow_html=True)
-                    st.dataframe(
+                    render_html_table(
                         style_stat_table(full_df[strikes_cols], favor_low=["BB%", "Whiff%", "K%", "Putaway%", "SwStr%", "K/9", "Meatball%"], favor_high=["1stPS%"], gradient=True),
-                        width="stretch",
+                        key="splits_strikes",
                     )
             st.caption("Computed by this app directly from raw Statcast pitch data \u2014 see get_pitcher_advanced_splits() for exact definitions.")
 
@@ -1000,8 +1004,11 @@ with content_col:
                     st.markdown(
                         f'<div class="pf-card-title" style="color:{COLOR["gold"]};">'
                         f'HR VULNERABILITY (ALLOWED)</div>', unsafe_allow_html=True)
-                    _hv_df = pd.DataFrame([_hv], index=["Season"])
-                    st.dataframe(
+                    # "Season" as a real column, not an index — see the
+                    # splits note above: _base_styler hides the index, so
+                    # an index-only label never renders.
+                    _hv_df = pd.DataFrame([{"Span": "Season", **_hv}])
+                    render_html_table(
                         style_stat_table(
                             _hv_df,
                             favor_low=["Brl% Allowed", "HH% Allowed", "FB% Allowed",
@@ -1017,7 +1024,7 @@ with content_col:
                             # fractional expectation is the point.
                             "xHR Allowed": "{:.1f}", "xHR Gap": "{:+.1f}",
                         }, na_rep="N/A"),
-                        width="stretch",
+                        key="hr_vuln",
                     )
                     st.caption(
                         "Contact allowed, from this pitcher's own Statcast rows. "
@@ -1360,8 +1367,56 @@ with content_col:
                 if display_df is not None:
                     edge_col = display_df.pop("Edge")
 
+                    # COLUMN GROUPS — 27 columns is unusable on a phone.
+                    #
+                    # Not a mobile-only hack: Streamlit can't detect screen
+                    # size server-side, and a CSS approach can't work here
+                    # because st.dataframe draws on a canvas. So it's a
+                    # user choice that works the same everywhere, and it
+                    # DEFAULTS TO ALL — desktop behaviour is byte-identical
+                    # unless someone picks a narrower set. The choice
+                    # persists in session state, so picking "Power" once on
+                    # a phone keeps it across reruns.
+                    #
+                    # Player/Bats/Ord lead every group: they're what tells
+                    # you whose row you're reading, and losing that while
+                    # scrolling sideways was the other half of the problem.
+                    _ident = ["Player", "Bats", "Ord"]
+                    _groups = {
+                        "All": None,
+                        "Power": _ident + ["HR Edge", "HR Score", "Brl%", "Brl/PA",
+                                           "EV90", "MaxEV", "HRWindow%", "HRIntent",
+                                           "PullAir%", "PullBrl%", "Blast%"],
+                        "Contact": _ident + ["Hit Score", "SLAM", "BA", "xwOBA", "xSLG",
+                                             "ISO", "HH%", "LD%", "FB%", "GB%",
+                                             "SweetSpot%"],
+                        "Quick": _ident + ["HR Edge", "HR Score", "Hit Score", "SLAM",
+                                           "xwOBA", "Brl/PA", "HH%"],
+                    }
+                    _grp = st.segmented_control(
+                        "Columns", list(_groups),
+                        default="All", key="lineup_col_group",
+                        label_visibility="collapsed",
+                    ) or "All"
+
+                    _table_df = display_df.drop(
+                        columns=["Matchup", "Confidence", "EdgeLabel", "EdgeTier"])
+                    _keep = _groups.get(_grp)
+                    if _keep:
+                        # Intersect rather than reindex: a column can be
+                        # absent (no Statcast rows for anyone in the
+                        # lineup), and asking for a missing one would
+                        # produce an all-NaN column that looks like real
+                        # missing data instead of a column we never had.
+                        _table_df = _table_df[[c for c in _keep if c in _table_df.columns]]
+
+                    try:
+                        _pin_cfg = {"Player": st.column_config.Column("Player", pinned=True)}
+                    except TypeError:
+                        _pin_cfg = {}
+
                     styled = style_stat_table(
-                        display_df.drop(columns=["Matchup", "Confidence", "EdgeLabel", "EdgeTier"]),
+                        _table_df,
                         favor_high=["SLAM", "BA", "xwOBA", "xSLG", "ISO", "HR/FB", "Brl%", "Brl/PA", "HH%", "EV90", "MaxEV", "LD%", "FB%", "SweetSpot%", "HRWindow%", "PullAir%", "PullBrl%", "Blast%", "HRIntent", "HR Edge", "HR Score", "Hit Score"],
                         favor_low=["GB%", "SwStr%"],
                         gradient=True,
@@ -1391,6 +1446,14 @@ with content_col:
                         styled,
                         width="stretch", hide_index=True,
                         column_config={
+                            # Pinned so the name stays on screen while the
+                            # stats scroll sideways — on a phone you'd
+                            # otherwise be reading an anonymous row of
+                            # numbers. Wrapped because pinned= is a newer
+                            # column_config option and has a reported quirk
+                            # alongside hide_index; if it isn't supported
+                            # the table still renders, just unpinned.
+                            **_pin_cfg,
                             "HR Edge": st.column_config.ProgressColumn("HR Edge", min_value=0, max_value=100, format="%d", color=COLOR["gold"]),
                             "HR Score": st.column_config.ProgressColumn("HR Score", min_value=0, max_value=100, format="%d", color=COLOR["stat_high"]),
                             "Hit Score": st.column_config.ProgressColumn("Hit Score", min_value=0, max_value=100, format="%d", color=COLOR["warn"]),
