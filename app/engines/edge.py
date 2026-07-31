@@ -60,6 +60,7 @@ import streamlit as st
 from engines.bvp import career_bvp
 from engines.statcast_engine import (
     _get_batter_df, _get_pitcher_df, get_pitcher_advanced_splits,
+    get_pitcher_role, get_pitcher_hand, get_batter_iso_vs_hand,
 )
 from engines.weather_engine import get_todays_games_with_weather
 from engines.roster import get_live_team_roster
@@ -250,14 +251,40 @@ def zone_fit_component(batter_id, pitcher_id):
 # ------------------------------------------------------------------
 @st.cache_data(ttl=21600, max_entries=60, show_spinner=False)
 def _pen_profile_json(team: str, starter_pid, date_str: str) -> str:
-    """Pooled pen HR/9 from the team's real relievers (roster pitchers
-    minus tonight's starter), each from his own Statcast rows."""
-    arms, hr_total, ip_total = 0, 0, 0.0
+    """Pooled pen HR/9 from the team's ACTUAL RELIEVERS, plus the
+    handedness mix of those innings.
+
+    This used to be "every roster pitcher except tonight's starter",
+    which quietly included the other four men in the rotation. A starter
+    carries five or six times a reliever's innings, so pooling HR and IP
+    let the rotation dominate the result — the number labelled "bullpen
+    HR/9" was mostly other starters' HR/9, and it was the same for every
+    hitter in the lineup.
+
+    get_pitcher_role() separates them from at_bat_number, so this is now
+    genuinely the arms that finish the game. Pitchers whose role can't be
+    determined are EXCLUDED rather than guessed at: a misclassified
+    starter would drag the pooled rate straight back toward the rotation.
+
+    Also returns lhp_ip_share — the fraction of pen innings thrown by
+    lefties. That's what makes the adjustment batter-specific downstream:
+    a lefty bat facing an all-right-handed pen is a real edge that a
+    single team-level number cannot express.
+    """
+    arms, hr_total, ip_total, lhp_ip = 0, 0, 0.0, 0.0
+    skipped_unknown = 0
     roster = get_live_team_roster(team) or []
     for p in roster:
         if not p.get("is_pitcher") or not p.get("id"):
             continue
         if starter_pid and p["id"] == starter_pid:
+            continue
+        role = get_pitcher_role(p["id"])
+        if role != "RP":
+            # "SP" is the rotation; None means not enough outings to
+            # judge. Neither belongs in a bullpen average.
+            if role is None:
+                skipped_unknown += 1
             continue
         sp = get_pitcher_advanced_splits(p["id"])
         ip = float(sp.get("IP") or 0.0)
@@ -266,10 +293,15 @@ def _pen_profile_json(team: str, starter_pid, date_str: str) -> str:
         arms += 1
         hr_total += int(sp.get("HR") or 0)
         ip_total += ip
+        if get_pitcher_hand(p["id"]) == "L":
+            lhp_ip += ip
     if arms < _PEN_MIN_ARMS or ip_total < _PEN_MIN_IP:
-        return json.dumps({"hr9": None, "arms": arms, "ip": round(ip_total, 1)})
+        return json.dumps({"hr9": None, "arms": arms, "ip": round(ip_total, 1),
+                           "lhp_ip_share": None, "unknown_role": skipped_unknown})
     return json.dumps({"hr9": round(hr_total * 9.0 / ip_total, 2),
-                       "arms": arms, "ip": round(ip_total, 1)})
+                       "arms": arms, "ip": round(ip_total, 1),
+                       "lhp_ip_share": round(lhp_ip / ip_total, 3),
+                       "unknown_role": skipped_unknown})
 
 
 @st.cache_data(ttl=21600, max_entries=4, show_spinner=False)
@@ -294,9 +326,29 @@ def _slate_pen_avg_json(date_str: str) -> str:
                        "n": len(vals)})
 
 
-def pen_context(pitcher_team: str, starter_pid):
-    """(adj, note) for a lineup facing this team's pen tonight.
-    +10 per full HR/9 above the slate-average pen, linear, ±10."""
+def pen_context(pitcher_team: str, starter_pid, batter_id=None):
+    """(adj, note) for a hitter facing this team's pen tonight.
+
+    Two parts:
+
+      TEAM  — how homer-prone this pen is against the slate-average pen.
+              +10 per full HR/9 above it, linear.
+      HITTER— how this particular batter hits the HAND the pen actually
+              throws with. Optional: pass batter_id to get it.
+
+    The second part is the point. Research done on the starter expires
+    the moment he's pulled, and roughly a third of a hitter's plate
+    appearances come after that. A single team-level number applied
+    identically to all nine hitters can't tell you that the lefty batting
+    third will see an all-right-handed pen in the 7th while the righty
+    behind him won't care. Blending the batter's own platoon split
+    against the pen's handedness mix is what carries your matchup work
+    into the late innings instead of ending it in the 6th.
+
+    Falls back to exactly the old team-only behaviour when batter_id is
+    absent or the batter has no usable platoon sample — the adjustment
+    degrades, it doesn't invent.
+    """
     date_str = datetime.now(EASTERN).strftime("%Y-%m-%d")
     try:
         prof = json.loads(_pen_profile_json(pitcher_team, starter_pid, date_str))
@@ -305,12 +357,35 @@ def pen_context(pitcher_team: str, starter_pid):
         return 0, None
     hr9, avg = prof.get("hr9"), base.get("avg")
     if hr9 is None:
-        return 0, f"pen sample too small ({prof.get('arms', 0)} arms, {prof.get('ip', 0)} IP)"
+        return 0, (f"pen sample too small ({prof.get('arms', 0)} relievers, "
+                   f"{prof.get('ip', 0)} IP)")
     if avg is None:
         return 0, f"pen HR/9 {hr9} (slate baseline unavailable)"
-    adj = int(max(-PEN_CAP, min(PEN_CAP, round((hr9 - avg) * 10))))
-    return adj, (f"pen HR/9 {hr9} vs slate-average pen {avg} "
-                 f"({prof['arms']} arms, {prof['ip']} IP)")
+
+    team_adj = (hr9 - avg) * 10.0
+    note = (f"pen HR/9 {hr9} vs slate-average pen {avg} "
+            f"({prof['arms']} relievers, {prof['ip']} IP)")
+
+    share = prof.get("lhp_ip_share")
+    if batter_id and share is not None:
+        iso_l = get_batter_iso_vs_hand(batter_id, "L")
+        iso_r = get_batter_iso_vs_hand(batter_id, "R")
+        if iso_l is not None and iso_r is not None:
+            # ISO the batter can expect from the pen's actual hand mix,
+            # against his own overall ISO across both hands. A pen that
+            # is 85% right-handed barely moves a hitter with no platoon
+            # split and moves a strong-split hitter a lot.
+            mixed = share * iso_l + (1 - share) * iso_r
+            neutral = (iso_l + iso_r) / 2.0
+            if neutral > 0:
+                # ±40% ISO swing maps to the full cap; clamped so a tiny
+                # platoon sample can't dominate the team signal.
+                platoon = max(-1.0, min(1.0, (mixed - neutral) / (0.40 * neutral)))
+                team_adj += platoon * PEN_CAP * 0.5
+                note += (f" · pen is {round(share * 100)}% LHP, batter ISO "
+                         f"{mixed:.3f} vs that mix ({neutral:.3f} neutral)")
+
+    return int(max(-PEN_CAP, min(PEN_CAP, round(team_adj)))), note
 
 
 # ------------------------------------------------------------------
