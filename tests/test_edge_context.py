@@ -77,7 +77,7 @@ print("PASS: edge stays 0-100 and stays None when skill is unrateable")
 # The call site must resolve switch hitters, and must not call the
 # out-of-scope _side_for() helper.
 gc = open("app/views/GameCard.py").read()
-block = gc[gc.index("_pen_adj, _pen_note = pen_context"):]
+block = gc[gc.index("pen_context(_pitcher_team, pitcher_id)"):]
 block = block[:block.index("_r[\"iso_vs_hand\"]")]
 assert "_side_for(_r)" not in block, "_side_for is defined later — NameError"
 assert '_b == "S"' in block, "call site doesn't resolve switch hitters"
