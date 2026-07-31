@@ -179,10 +179,13 @@ def get_mlb_player_of_the_day(window: str = "season"):
             park_factor = park_info.get("park_factor")
             wind_str = g.get("weather_wind")
             pitcher_team = g.get("home") if side == "away" else g.get("away")
-            try:
-                pen_adj, pen_note = pen_context(pitcher_team, opp_pitcher_id)
-            except Exception:
-                pen_adj, pen_note = 0, None
+            def _pen_for(_bid):
+                """Per-batter pen context — see pen_context. Caches
+                underneath make repeat calls cheap."""
+                try:
+                    return pen_context(pitcher_team, opp_pitcher_id, batter_id=_bid)
+                except Exception:
+                    return 0, None
 
             batters = [p for p in lineup if not p.get("is_pitcher")]
             for b in batters:
@@ -255,8 +258,11 @@ def get_mlb_player_of_the_day(window: str = "season"):
                     "park_note": park_note,
                     "wind_adj": wind_adj, "wind_note": wind_note,
                     "xbh_score": xbh, "xbh_parts": xbh_parts,
-                    # carried for the Edge second pass, stripped after
-                    "_pen_adj": pen_adj, "_pen_note": pen_note,
+                    # carried for the Edge second pass, stripped after.
+                    # Resolved per batter (see _pen_for) so the pen part
+                    # reflects this hitter's platoon split, not one flat
+                    # number for the whole lineup.
+                    **dict(zip(("_pen_adj", "_pen_note"), _pen_for(pid))),
                     "_static_adj": pxbh_adj + park_adj + wind_adj,
                     "pxbh_adj": pxbh_adj, "pxbh_note": pxbh_note,
                     "pitcher_signals": signals, "pitcher_note": signals_note,
