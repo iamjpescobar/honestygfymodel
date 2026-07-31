@@ -56,7 +56,7 @@ print("PASS: KBO loads its own pitcher list rather than borrowing a local")
 
 # And the earlier one, so it can't come back either.
 gc = open("app/views/GameCard.py").read()
-edge_block = gc[gc.index("_pen_adj, _pen_note = pen_context"):]
+edge_block = gc[gc.index("pen_context(_pitcher_team, pitcher_id)"):]
 edge_block = edge_block[:edge_block.index("_r[\"iso_vs_hand\"]")]
 assert "_side_for(_r)" not in edge_block, (
     "_side_for is defined further down; calling it here was a NameError")
