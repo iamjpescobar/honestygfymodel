@@ -183,9 +183,14 @@ def get_hr_edge_board(_date_str=None, confirmed_only=True):
                 continue
 
             pitcher_team = game.get("home") if side == "away" else game.get("away")
-            pen_adj, pen_note = pen_context(pitcher_team, opp_id)
-
             for r in ranked:
+                # Per batter, not per game: the pen adjustment now folds
+                # in how THIS hitter does against the hand the pen
+                # actually throws. The team profile and slate baseline
+                # underneath are both cached, so this is a dict lookup
+                # after the first batter.
+                pen_adj, pen_note = pen_context(pitcher_team, opp_id,
+                                                batter_id=r.get("id"))
                 r.update(edge_components(
                     r.get("id"), opp_id, r.get("hr_score"), pen_adj, pen_note,
                     home_team=park,
