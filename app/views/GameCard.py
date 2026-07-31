@@ -794,7 +794,13 @@ with content_col:
         with st.spinner("Computing matchup edges \u2014 the first lineup of the day also "
                         "builds the slate-wide bullpen baseline (~30s once, cached all day; "
                         "instant after)\u2026"):
-            _pen_adj, _pen_note = pen_context(_pitcher_team, pitcher_id)
+            # Warm-up call only — the RESULT is discarded. Its job is to
+            # build the slate-wide pen baseline behind the spinner above,
+            # which takes ~30s on the first game of the day. The values
+            # that actually reach the board are resolved per batter
+            # further down, since the pen adjustment now depends on each
+            # hitter's platoon split.
+            pen_context(_pitcher_team, pitcher_id)
             # Tonight's park, keyed by Statcast's team code — that's what
             # build_park_hr_factors groups on. game["home"] is the full
             # club name, so it has to be abbreviated here or every lookup
@@ -826,8 +832,13 @@ with content_col:
                     _eff_bats = "L" if _p_throws == "R" else "R" if _p_throws == "L" else None
                 else:
                     _eff_bats = _b
+                # Per batter: the pen adjustment now includes how this
+                # hitter handles the hand the pen actually throws, so the
+                # matchup read doesn't expire when the starter is pulled.
+                _pa, _pn = pen_context(_pitcher_team, pitcher_id,
+                                       batter_id=_r.get("id"))
                 _r.update(edge_components(_r.get("id"), pitcher_id,
-                                          _r.get("hr_score"), _pen_adj, _pen_note,
+                                          _r.get("hr_score"), _pa, _pn,
                                           home_team=_park_abbr,
                                           bats=_eff_bats,
                                           temp=_temp, wind=_wind,
