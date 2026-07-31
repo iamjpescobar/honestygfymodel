@@ -1060,6 +1060,45 @@ def get_pitcher_hand(pitcher_id):
     return str(hands.mode().iloc[0]) if not hands.empty else None
 
 
+@st.cache_data(ttl=3600, max_entries=512, show_spinner=False)
+def get_pitcher_role(pitcher_id):
+    """Classify a pitcher as "SP" or "RP" from his own pitch data.
+
+    Statcast has no role flag and this app doesn't keep `inning`, but it
+    does keep game_pk and at_bat_number — and at_bat_number is the
+    sequential plate appearance within a game. A starter's first PA of an
+    outing is number 1 or 2; a reliever entering in the 7th picks up
+    somewhere north of 20. So the MEDIAN of (first at_bat_number he faced
+    in each game) separates the two cleanly, without a new data source.
+
+    Median rather than mean: one spot start or one opener appearance
+    shouldn't reclassify a pitcher, and the median ignores those.
+
+    Returns "SP", "RP", or None when there isn't enough to judge. None is
+    deliberate — callers treat it as "don't know" and exclude, rather
+    than guessing a role and polluting a pooled average.
+    """
+    if not pitcher_id:
+        return None
+    try:
+        df, _err = _get_pitcher_df(pitcher_id)
+    except Exception:
+        return None
+    if df is None or df.empty:
+        return None
+    if not {"game_pk", "at_bat_number"}.issubset(df.columns):
+        return None
+
+    firsts = (df.groupby("game_pk")["at_bat_number"].min()).dropna()
+    if len(firsts) < 3:          # too few outings to be confident
+        return None
+    med = float(firsts.median())
+    # A starter faces the top of the order immediately. Anything past the
+    # first time through the order (9 batters) is someone who came in
+    # after the game was under way.
+    return "SP" if med <= 9 else "RP"
+
+
 def hand_tag(pitcher_id):
     """"LHP" / "RHP" / "" — ready to append to a displayed name."""
     h = get_pitcher_hand(pitcher_id)
