@@ -50,7 +50,10 @@ board.get_confirmed_lineup = lambda pk, side: (
 board.get_last_starting_lineup = lambda t: ([], None, False)
 board.get_batter_profile_windowed = lambda pid, **kw: {"Brl %": 10.0}
 board.get_pitcher_statcast = lambda pid: {"p_throws": "R"}
-board.pen_context = lambda team, pid: (0, None)
+# Mirrors the real signature — pen_context takes an optional
+# batter_id now, and a stub that omits it would fail with a
+# TypeError that looks like a board bug rather than a stale stub.
+board.pen_context = lambda team, pid, batter_id=None: (0, None)
 
 seen_pitchers = []
 def fake_rank(profiles, savant):
