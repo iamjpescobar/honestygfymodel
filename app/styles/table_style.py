@@ -400,3 +400,58 @@ def score_bar(color_key: str = "gold"):
             f'</div>'
         )
     return _fmt
+
+
+def team_logo_cell():
+    """Formatter: team abbreviation with its logo beside it.
+
+    Same trick as score_bar — a Styler formatter returning markup, which
+    pandas does not escape. This is why logos are possible at all now:
+    st.column_config.ImageColumn only works inside st.dataframe, and
+    these tables moved to HTML to escape drag-to-reorder.
+
+    Keeps the TEXT next to the logo rather than replacing it. A logo
+    alone is unreadable for anyone who doesn't know all thirty marks by
+    sight, and it breaks entirely if the image fails to load.
+    """
+    from engines.team_logos import logo_for_any
+
+    def _fmt(v):
+        if not v or (isinstance(v, float) and pd.isna(v)):
+            return "\u2014"
+        url = logo_for_any(str(v))
+        if not url:
+            # No logo resolved — show the abbreviation alone rather than
+            # a broken image icon.
+            return str(v)
+        return (f'<img src="{url}" style="height:15px; vertical-align:-3px; '
+                f'margin-right:5px;">{v}')
+    return _fmt
+
+
+def bats_chip():
+    """Formatter: L / R / S as a coloured chip.
+
+    Handedness drives most of the platoon logic in this app, and it was
+    rendering as a bare letter that reads as just another character in a
+    dense row. A chip makes the split scannable down a lineup.
+
+    Colours follow the existing palette: teal for lefties, amber for
+    righties, gold for switch hitters — chosen so the two common values
+    are the two most distinguishable hues in the theme, not so that
+    either reads as "good".
+    """
+    tone = {"L": COLOR["stat_high"], "R": COLOR["warn"], "S": COLOR["gold"]}
+
+    def _fmt(v):
+        if not v or (isinstance(v, float) and pd.isna(v)):
+            return "\u2014"
+        k = str(v).strip().upper()[:1]
+        c = tone.get(k)
+        if not c:
+            return str(v)
+        return (f'<span style="display:inline-block; min-width:17px; '
+                f'text-align:center; padding:1px 5px; border-radius:3px; '
+                f'background:{c}26; color:{c}; font-weight:700; '
+                f'font-size:11px;">{k}</span>')
+    return _fmt
