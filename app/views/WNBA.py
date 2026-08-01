@@ -6,7 +6,7 @@ import requests
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, badge, footer, COLOR
-from styles.table_style import style_stat_table
+from styles.table_style import style_stat_table, render_html_table
 from engines.matchup_grades_intl import grade_wnba_matchup, render_matchup_grades_card
 
 # NOTE: no st.set_page_config here — app.py already sets it once.
@@ -624,8 +624,18 @@ def _render_slate():
                                                 "vs OPP", "FG%", "3P%"],
                                 gradient=True,
                             )
-                            st.dataframe(styled, width="stretch",
-                                         height=40 + 36 * len(df))
+                            # hide_index: this df is built from a plain
+                            # list (line 587), so its index is a throwaway
+                            # 0,1,2 RangeIndex — but st.dataframe PINS the
+                            # index column, and a frozen column smears
+                            # against momentum scrolling in iOS Safari
+                            # while the stats scroll under it. The MLB
+                            # tables were fixed for this; the WNBA lineup
+                            # table was missed. Player name already
+                            # identifies the row, so the number adds
+                            # nothing but the scrolling artifact.
+                            render_html_table(styled,
+                                key="wnba_636")
                             note = TAB_NOTES.get(label)
                             if note:
                                 st.caption(note)
