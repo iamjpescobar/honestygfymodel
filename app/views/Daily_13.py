@@ -10,7 +10,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table
+from styles.table_style import style_stat_table, render_html_table
 from engines.daily_13 import (
     get_daily_13, MIN_HIT_RATE, MIN_GAMES, BOARD_SIZE,
     W_FORM, W_MATCHUP, W_CONTEXT, L15_GATE_HITS, L15_GATE_GAMES,
@@ -65,7 +65,8 @@ with card("daily13"):
                 # Oldest -> newest, full block = hit. Placed before the
                 # L15/L5 counts so the shape reads first and the numbers
                 # confirm it.
-                "Form10": r.get("spark", ""),
+                # Header says what the dots mean, so no legend is needed.
+                "Last 10": r.get("spark", ""),
                 "L15": r.get("l15", "\u2014"),
                 "L5": r.get("l5", "\u2014"),
                 "Season": f'{r["rate"]:.1f}',
@@ -77,15 +78,14 @@ with card("daily13"):
             }
             for r in rows
         ])
-        st.dataframe(
+        render_html_table(
             style_stat_table(
                 df,
                 favor_high=["Tonight", "Form", "Matchup", "Context", "Season", "Streak"],
-                gradient=True,
-            ),
-            width="stretch",
-            height=min(56 + 35 * len(df), 560),
-        )
+                gradient=True
+            )
+        ,
+            key="daily_13_80")
         # Calibration: record tonight's board, grade past days, and
         # show the running record. This is what turns "the board looks
         # right" into a measured hit rate.
