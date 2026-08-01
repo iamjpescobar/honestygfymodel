@@ -16,7 +16,16 @@ primaryColor = "#00E5FF"
 backgroundColor = "#0a0d10"
 secondaryBackgroundColor = "#12161a"
 textColor = "#e6edf0"
-font = "monospace"
+# sans-serif, NOT monospace.
+#
+# This one line was overriding Streamlit's base font for the whole app,
+# which is why every heading, caption and control rendered in a terminal
+# face while kc_theme.py was already loading Inter and explicitly asking
+# for it (see the html/body rule there). Monospace is right for NUMBERS —
+# columns of digits only line up in a fixed-width face — and kc_theme
+# still forces it on tables and code. It is wrong for prose, and it was
+# the single biggest reason the app read as dated.
+font = "sans-serif"
 
 # Makes the dataframe's internal cell/row gridlines blend into the same
 # black background instead of drawing visible separator lines — this
