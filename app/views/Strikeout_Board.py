@@ -10,7 +10,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table, render_html_table, team_logo_cell
+from styles.table_style import style_stat_table, render_html_table, team_logo_cell, sort_control
 from engines.k_projection import get_slate_k_projections
 from engines.pitcher_trends import render_pitcher_trend
 from engines.live_sync import sync_latest_button
@@ -86,6 +86,11 @@ else:
             # HTML rather than st.dataframe — the grid has drag-to-reorder
             # built in with no way to disable it (streamlit#11222), so a
             # scroll gesture on a phone scatters the columns.
+            # Sorting, put back explicitly: moving off st.dataframe
+            # removed click-to-sort along with drag-to-reorder. Sorts
+            # on a numeric read of the column, so pre-formatted
+            # strings order as numbers and blanks fall to the bottom.
+            df = sort_control(df, "kboard", default="Proj K")
             render_html_table(
                 style_stat_table(
                     df,
