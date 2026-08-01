@@ -64,18 +64,41 @@ _BG_RGB = tuple(int(BG.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4))
 _TEXT_RGB = tuple(int(COLOR["text"].lstrip("#")[i:i + 2], 16) for i in (0, 2, 4))
 
 
-def _gradient_fill(t: float, bold: bool = False) -> str:
-    """Real colored BACKGROUND fill, not just text color. Text color is
-    always dark (BG) — kept flat rather than auto-switching to white,
-    per design: every number in a gradient-filled cell reads as dark
-    text on the colored fill, consistently across red/amber/cyan."""
-    r, g, b = _gradient_rgb(t)
-    opacity = 0.35 + 0.40 * t
+# Only the ENDS of the range get a filled cell.
+#
+# Every cell used to be filled, which is what made the tables look muddy:
+# a mid-range value got a tan/brown wash, so two thirds of the grid was
+# noise competing with the values that actually matter. Nothing stood out
+# because everything was shouting.
+#
+# Now the middle band is left plain and only the tails are painted. The
+# eye lands on the genuine highs and lows immediately, and the table reads
+# as data with signal in it rather than a heatmap of sludge.
+_QUIET_LO, _QUIET_HI = 0.30, 0.70
 
-    weight = 700 if bold else 600
+
+def _gradient_fill(t: float, bold: bool = False) -> str:
+    """Cell style for a normalised value in [0, 1].
+
+    Tails are filled and coloured. The middle band gets TEXT colour only —
+    a soft tint that still leans warm or cool, so direction is readable,
+    without laying a block of colour behind an unremarkable number.
+    """
+    r, g, b = _gradient_rgb(t)
+
+    if _QUIET_LO <= t <= _QUIET_HI:
+        # Unremarkable value: no fill. Slightly dimmed so the painted
+        # tails carry the contrast.
+        return f"color: rgba({r},{g},{b},0.95); font-weight: 500;"
+
+    # Tail: how far past the quiet band this sits, 0 -> 1.
+    edge = (t - _QUIET_HI) / (1 - _QUIET_HI) if t > _QUIET_HI \
+        else (_QUIET_LO - t) / _QUIET_LO
+    opacity = 0.22 + 0.50 * edge
+    weight = 700 if edge >= 0.55 else 600
     return (
         f"background-color: rgba({r},{g},{b},{opacity:.2f}); "
-        f"color: {BG}; font-weight: {weight}; border-radius: 3px;"
+        f"color: {BG}; font-weight: {weight}; border-radius: 4px;"
     )
 
 
@@ -135,7 +158,11 @@ def _player_name_column(col: pd.Series):
     index-level styling which doesn't reliably show up. Covers both
     'Player' and 'Name' headers so nothing gets missed."""
     c = COLOR["player_name"]
-    return [f"color: {c}; background-color: {BG}; font-weight: 700;" for _ in col]
+    # Left-aligned with a touch of letter-spacing: the name column is the
+    # only text column in a table of right-aligned numbers, and aligning
+    # it left is what makes a lineup scannable top-to-bottom.
+    return [f"color: {c}; background-color: {BG}; font-weight: 650; "
+            f"text-align: left; letter-spacing: 0.01em;" for _ in col]
 
 
 def _pitch_type_column(col: pd.Series):
@@ -314,9 +341,12 @@ div[data-testid="column"]:has(.lc-tbl-wrap) {{
   transition: background 0.12s ease;
 }}
 .lc-tbl-wrap tbody tr:hover td {{
-  /* Row highlight on hover — makes a wide table trackable across its
-     full width without a ruler. */
-  background-color: {COLOR["surface"]} !important;
+  /* A LIFT, not a background swap.
+     This used to set background-color: surface, which is DARKER than the
+     gradient fills — so hovering a row blacked it out instead of
+     highlighting it. box-shadow layers over whatever fill the cell has,
+     so every row lifts the same way regardless of its colour. */
+  box-shadow: inset 0 0 0 999px rgba(255,255,255,0.045);
 }}
 .lc-tbl-wrap tbody tr:last-child td {{ border-bottom: none; }}
 .lc-tbl-wrap thead th {{
