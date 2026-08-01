@@ -664,15 +664,13 @@ with content_col:
                                     f'margin-top:10px;">{opp_label} vs this arsenal ({bp_names})</div>',
                                     unsafe_allow_html=True,
                                 )
-                                st.dataframe(
+                                render_html_table(
                                     style_stat_table(
                                         pd.DataFrame(bp_rows).set_index("Player"),
                                         favor_high=["BA", "Brl %", "HH %"],
                                         favor_low=["Whiff %", "SwStr %"],
                                         gradient=True,
-                                    ),
-                                    width="stretch",
-                                )
+                                    ), key="gc_666")
                                 st.caption(
                                     f"Season numbers vs those pitch types only \u2014 blue rows are the "
                                     f"batters who punish this stuff, red rows are the ones it beats. "
@@ -916,19 +914,19 @@ with content_col:
             with card("hr_targets"):
                 st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Top HR Targets</div>', unsafe_allow_html=True)
                 hr_df = _targets_table("hr_score", "HR Score")
-                st.dataframe(style_stat_table(hr_df, favor_high=["HR Score"], gradient=True).format({"HR Score": "{:.0f}"}, na_rep="N/A"), width="stretch", hide_index=True)
+                render_html_table(style_stat_table(hr_df, favor_high=["HR Score"], gradient=True).format({"HR Score": "{:.0f}"}, na_rep="N/A"), key="gc_918")
         with top_row2:
             with card("hit_targets"):
                 st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Best Hit Targets</div>', unsafe_allow_html=True)
                 hit_df = _targets_table("hit_score", "Hit Score")
-                st.dataframe(style_stat_table(hit_df, favor_high=["Hit Score"], gradient=True).format({"Hit Score": "{:.0f}"}, na_rep="N/A"), width="stretch", hide_index=True)
+                render_html_table(style_stat_table(hit_df, favor_high=["Hit Score"], gradient=True).format({"Hit Score": "{:.0f}"}, na_rep="N/A"), key="gc_923")
 
         bot_row1, bot_row2 = st.columns(2)
         with bot_row1:
             with card("k_targets"):
                 st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Strikeout Targets</div>', unsafe_allow_html=True)
                 k_df = _targets_table("k_score", "K Score")
-                st.dataframe(style_stat_table(k_df, favor_high=["K Score"], gradient=True).format({"K Score": "{:.0f}"}, na_rep="N/A"), width="stretch", hide_index=True)
+                render_html_table(style_stat_table(k_df, favor_high=["K Score"], gradient=True).format({"K Score": "{:.0f}"}, na_rep="N/A"), key="gc_930")
         with bot_row2:
             hr_vals = [r["hr_score"] for r in ranked if r["hr_score"] is not None]
             hit_vals = [r["hit_score"] for r in ranked if r["hit_score"] is not None]
@@ -1807,11 +1805,9 @@ with content_col:
                             "BvP (career)": r.get("bvp_line") or "\u2014",
                         })
                     matchup_df = pd.DataFrame(matchup_rows)
-                    st.dataframe(
+                    render_html_table(
                         style_stat_table(matchup_df, favor_high=["xwOBA", "ISO", "Brl%", "HH%", "Zone Fit"], favor_low=["Whiff%"], gradient=True).format(
-                            {"xwOBA": "{:.3f}", "ISO": "{:.3f}", "Brl%": "{:.1f}", "HH%": "{:.1f}", "Whiff%": "{:.1f}"}, na_rep="\u2014"),
-                        width="stretch", hide_index=True,
-                    )
+                            {"xwOBA": "{:.3f}", "ISO": "{:.3f}", "Brl%": "{:.1f}", "HH%": "{:.1f}", "Whiff%": "{:.1f}"}, na_rep="\u2014"), key="gc_1809")
                     st.caption(
                         "\"Pitches Seen\" is the real sample size behind each row \u2014 a low number is a real, honest "
                         "small sample, not a hidden flaw. Blank cells mean this batter hasn't faced any of these "
@@ -1860,7 +1856,7 @@ with content_col:
                                 "Whiff%": vp.get("Whiff %") if seen > 0 else None,
                             })
                         fam_df = pd.DataFrame(fam_rows)
-                        st.dataframe(
+                        render_html_table(
                             style_stat_table(
                                 fam_df, favor_high=["BA", "xwOBA", "xSLG", "ISO", "Brl%", "HH%"],
                                 favor_low=["Whiff%"], gradient=True,
@@ -1868,9 +1864,7 @@ with content_col:
                                 {"BA": "{:.3f}", "xwOBA": "{:.3f}", "xSLG": "{:.3f}", "ISO": "{:.3f}",
                                  "Brl%": "{:.1f}", "HH%": "{:.1f}", "Whiff%": "{:.1f}"},
                                 na_rep="\u2014",
-                            ),
-                            width="stretch", hide_index=True,
-                        )
+                            ), key="gc_1862")
                         st.caption(
                             "Fastballs = 4-seam, sinker, cutter. Breaking = slider, sweeper, curve, "
                             "knuckle-curve, slurve. Offspeed = changeup, splitter, forkball. "
@@ -1901,7 +1895,7 @@ with content_col:
                         {"Player": r["Player"], "Bats": r["Bats"], "Detail": r["EdgeLabel"], "Confidence": r["Confidence"]}
                         for r in tier_rows
                     ])
-                    st.dataframe(plain_dark_table(tier_df), width="stretch", hide_index=True, height=min(250, 40 + 35 * len(tier_rows)))
+                    render_html_table(plain_dark_table(tier_df), key="gc_1903")
 
         tab_arsenal, tab_scout = st.tabs(["Pitch Arsenal", "\U0001F52D Scout Report"])
         with tab_arsenal:
@@ -1983,7 +1977,7 @@ with content_col:
                         if hitters:
                             hitters_df = pd.DataFrame(hitters)[["name", "position", "bats", "throws"]]
                             hitters_df.columns = ["Name", "Pos", "Bats", "Throws"]
-                            st.dataframe(plain_dark_table(hitters_df), width="stretch", hide_index=True, height=min(370, 40 + 35 * len(hitters)))
+                            render_html_table(plain_dark_table(hitters_df), key="gc_1985")
                         else:
                             st.caption("No position players found.")
 
@@ -1992,7 +1986,7 @@ with content_col:
                         if pitchers:
                             pitchers_df = pd.DataFrame(pitchers)[["name", "position", "bats", "throws"]]
                             pitchers_df.columns = ["Name", "Pos", "Bats", "Throws"]
-                            st.dataframe(plain_dark_table(pitchers_df), width="stretch", hide_index=True, height=min(370, 40 + 35 * len(pitchers)))
+                            render_html_table(plain_dark_table(pitchers_df), key="gc_1994")
                         else:
                             st.caption("No pitchers found.")
                 else:
