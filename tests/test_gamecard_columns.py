@@ -160,7 +160,14 @@ assert "label: r[sort_field]" in tt, "None must survive into the frame as NaN"
 print("PASS: targets tables keep None rather than substituting 0")
 
 for lbl in ("HR Score", "Hit Score", "K Score"):
-    assert f'.format({{"{lbl}": "{{:.0f}}"}}, na_rep="N/A")' in gc, \
+    # These moved from a literal "{:.0f}" to score_bar(), which draws the
+    # value as a filled bar. The REQUIREMENT is unchanged and is what
+    # this checks: an unmeasurable score must render as N/A, never as an
+    # empty bar — a zero-width bar reads as a real score of zero, which
+    # is the worst possible rendering of "we don't know".
+    assert f'"{lbl}": score_bar(' in gc, \
+        f"{lbl} table no longer renders its score as a bar"
+    assert f'{{"{lbl}": score_bar' in gc and 'na_rep="N/A"' in gc, \
         f"{lbl} table doesn't render NaN as N/A"
 print("PASS: all three targets tables render unmeasurable scores as N/A")
 
