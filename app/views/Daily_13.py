@@ -62,6 +62,10 @@ with card("daily13"):
                 "Team": r["team"],
                 "Opp": r.get("opp", "\u2014"),
                 "Tonight": f'{r["tonight"]:.1f}',
+                # Oldest -> newest, full block = hit. Placed before the
+                # L15/L5 counts so the shape reads first and the numbers
+                # confirm it.
+                "Form10": r.get("spark", ""),
                 "L15": r.get("l15", "\u2014"),
                 "L5": r.get("l5", "\u2014"),
                 "Season": f'{r["rate"]:.1f}',
