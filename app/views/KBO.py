@@ -6,7 +6,7 @@ import streamlit as st
 from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, badge, footer, COLOR
 from engines.matchup_grades_intl import grade_kbo_matchup, render_matchup_grades_card
 from engines.kbo_k_projection import project_kbo_slate
-from styles.table_style import style_stat_table
+from styles.table_style import style_stat_table, render_html_table
 
 # NOTE: no st.set_page_config here — app.py already sets it once.
 
@@ -206,13 +206,13 @@ def _render_k_projections():
             "IP/GS": r["ip_gs"],
             "Opp K factor": r["factor"],
         } for r in projected])
-        st.dataframe(
+        render_html_table(
             style_stat_table(
-                df, favor_high=["Proj K", "K/9", "Opp K factor"], gradient=True,
+                df, favor_high=["Proj K", "K/9", "Opp K factor"], gradient=True
             ).format({"Proj K": "{:.1f}", "K/9": "{:.2f}", "IP/GS": "{:.1f}",
-                      "Opp K factor": "{:.3f}"}, na_rep="\u2014"),
-            width="stretch", hide_index=True,
-        )
+                      "Opp K factor": "{:.3f}"}, na_rep="\u2014")
+        ,
+            key="kbo_208")
     if warning:
         st.caption(warning)
     # Honest listing of starters we couldn't project and why.
