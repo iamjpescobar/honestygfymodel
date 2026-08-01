@@ -138,6 +138,10 @@ for board, cfg in BOARDS.items():
     if not days:
         continue
     with st.expander(f'{cfg.get("label", board)} \u2014 {len(days)} day(s) logged'):
+        # Trend first: direction matters more than the cumulative total,
+        # and a table of numbers can't show it.
+        render_calibration_trend(days, sums.get(board, {}).get("baseline"),
+                                 cfg.get("label", board))
         _s = sums.get(board, {})
         _b, _why = _s.get("baseline"), BASELINE_NOTES.get(board, "")
         if _b is not None:
