@@ -11,7 +11,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table
+from styles.table_style import style_stat_table, render_html_table
 from engines.without_player import (
     without_player, team_players, MIN_WITHOUT, MIN_TEAMMATE_GP,
 )
@@ -139,15 +139,14 @@ with card("without"):
             }
             for r in rows
         ])
-        st.dataframe(
+        render_html_table(
             style_stat_table(
                 df,
                 favor_high=["\u0394 PRA", "\u0394 MIN", "PRA w/o", "PTS w/o"],
-                gradient=True,
-            ),
-            width="stretch",
-            height=min(56 + 35 * len(df), 700),
-        )
+                gradient=True
+            )
+        ,
+            key="without_player_141")
         st.caption(
             "\u0394 columns are without-minus-with. Positive means he produces more when "
             "that player sits \u2014 usually a minutes and usage change, which is why "
