@@ -25,23 +25,24 @@ CYAN_RGB = tuple(int(CYAN.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4))
 _MIN_OPACITY = 0.45
 _MAX_OPACITY = 1.0
 
-# A DIVERGING scale with a neutral centre — low is red, high is cyan, and
-# the middle is nothing.
+# The original three-anchor palette: red (low) -> amber (mid) -> cyan
+# (high). The HUES were never the problem — how they were applied was.
 #
-# The old ramp ran red -> AMBER -> cyan. Interpolating through amber
-# dragged every mid-range value into brown and olive, which is what made
-# the tables look like mud: the midpoint was the most visually assertive
-# part of the scale while being the least interesting data. Worse, brown
-# sits between red and amber in hue, so "slightly below average" and
-# "average" and "slightly above" were three shades of the same sludge and
-# genuinely could not be told apart.
+# What made the old tables look muddy: every cell got a low-opacity wash
+# of an interpolated colour, and a washed-out tint of anything on a dark
+# background turns grey-brown. Two thirds of the grid was sludge, so
+# nothing separated.
 #
-# A diverging scale needs a colourless centre. Passing through the page
-# background means the midpoint literally recedes, and the distance from
-# centre — in either direction — is what carries meaning. Two hues, one
-# neutral, no third colour to muddy the blend.
+# Fixed by execution, not by changing colours:
+#   - fills are more saturated and less washed out, so a colour reads as
+#     that colour instead of as brown
+#   - the mid band is a soft TINT rather than a heavy block, so amber
+#     stays amber instead of muddying into its neighbours
+#   - cells are pill-shaped with a subtle vertical gradient, the same
+#     treatment as the score bars, so they read as deliberate rather than
+#     as a flat wash
 _GRAD_LOW = tuple(int(COLOR["error"].lstrip("#")[i:i + 2], 16) for i in (0, 2, 4))
-_GRAD_MID = tuple(int(COLOR["surface_raised"].lstrip("#")[i:i + 2], 16) for i in (0, 2, 4))
+_GRAD_MID = tuple(int(COLOR["warn"].lstrip("#")[i:i + 2], 16) for i in (0, 2, 4))
 _GRAD_HIGH = CYAN_RGB
 
 # Handedness — categorical, not magnitude-based, so these are a fixed
@@ -89,37 +90,49 @@ _TEXT_RGB = tuple(int(COLOR["text"].lstrip("#")[i:i + 2], 16) for i in (0, 2, 4)
 # Now the middle band is left plain and only the tails are painted. The
 # eye lands on the genuine highs and lows immediately, and the table reads
 # as data with signal in it rather than a heatmap of sludge.
-_QUIET_LO, _QUIET_HI = 0.38, 0.62
+_QUIET_LO, _QUIET_HI = 0.42, 0.58
 
 
 def _gradient_fill(t: float, bold: bool = False) -> str:
     """Cell style for a normalised value in [0, 1].
 
-    Tails are filled and coloured. The middle band gets TEXT colour only —
-    a soft tint that still leans warm or cool, so direction is readable,
-    without laying a block of colour behind an unremarkable number.
+    Modernised in three ways, none of which change the palette:
+
+      SATURATION  fills sit at 0.30-0.85 alpha instead of a flat wash.
+                  A washed-out tint of any hue on a dark background goes
+                  grey-brown — that, not the colour choice, is what made
+                  the old grid look like sludge.
+      SHAPE       pill-shaped cells with a soft vertical gradient, the
+                  same treatment as the score bars, so the two read as
+                  one design language instead of two.
+      RESTRAINT   values sitting near the middle of a column get a light
+                  tint rather than a solid block. Everything shouting
+                  meant nothing stood out.
     """
     r, g, b = _gradient_rgb(t)
 
     if _QUIET_LO <= t <= _QUIET_HI:
-        # Unremarkable value: no fill, and MUTED TEXT rather than the ramp
-        # colour. Near the centre the ramp is nearly the page background,
-        # so colouring the text with it would render an average number
-        # almost invisible. Grey keeps it readable while making clear it
-        # isn't a standout.
-        return f"color: {COLOR['text_muted']}; font-weight: 500;"
+        # Middle of the pack: a whisper of the ramp colour behind muted
+        # text. Enough to see it belongs to the scale, not enough to
+        # compete with the values that matter.
+        return (
+            f"background-color: rgba({r},{g},{b},0.10); "
+            f"color: {COLOR['text']}; font-weight: 500; border-radius: 5px;"
+        )
 
-    # Tail: how far past the quiet band this sits, 0 -> 1.
+    # How far past the quiet band, 0 -> 1.
     edge = (t - _QUIET_HI) / (1 - _QUIET_HI) if t > _QUIET_HI \
         else (_QUIET_LO - t) / _QUIET_LO
-    # Ramps hard so the extremes are unmistakable. A shallow curve was
-    # part of why the old tables read flat — the best and worst values in
-    # a column looked much like the ones just inside them.
-    opacity = 0.30 + 0.55 * (edge ** 0.8)
+    top = 0.30 + 0.55 * (edge ** 0.75)
+    bottom = max(0.0, top - 0.13)
     weight = 700 if edge >= 0.5 else 600
+    # Dark text once the fill is strong enough to carry it; light text
+    # while the fill is still faint, or the number disappears.
+    ink = BG if top >= 0.52 else COLOR["text"]
     return (
-        f"background-color: rgba({r},{g},{b},{opacity:.2f}); "
-        f"color: {BG}; font-weight: {weight}; border-radius: 4px;"
+        f"background-image: linear-gradient(180deg, "
+        f"rgba({r},{g},{b},{top:.2f}) 0%, rgba({r},{g},{b},{bottom:.2f}) 100%); "
+        f"color: {ink}; font-weight: {weight}; border-radius: 5px;"
     )
 
 
