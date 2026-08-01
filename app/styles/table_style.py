@@ -107,13 +107,24 @@ _TEXT_RGB = tuple(int(COLOR["text"].lstrip("#")[i:i + 2], 16) for i in (0, 2, 4)
 # tier, and a wide middle. The middle band is deliberately COLOURLESS —
 # "average" should read as the absence of a signal, which also means it
 # can never be confused with the band either side of it.
+# Every tier now carries a fill — including average, which used to be
+# blank. Five hues, and all TEN pairings measure at least 133 apart in
+# RGB distance, so no two tiers can be mistaken for each other whether
+# they sit side by side or not.
+#
+# Why "below" is violet: once average is teal, good is gold and elite is
+# cyan, the warm end is fully occupied by poor (red) and good (gold).
+# Anything warm for "below" lands between them — orange measured 56 from
+# red and 50 from gold, well inside the range where colours read alike.
+# Violet is the only hue left that clears every other tier, and it reads
+# as "off the pace" without implying the alarm that red does.
 _TIERS = [
     # (upper bound of normalised value, hex, label)
-    (0.15, COLOR["error"],     "poor"),
-    (0.40, COLOR["warn"],      "below"),
-    (0.60, None,               "average"),   # None = no fill
-    (0.85, COLOR["stat_mid"],  "good"),
-    (1.01, COLOR["stat_high"], "elite"),
+    (0.15, "#D6304A",          "poor"),      # red
+    (0.40, "#9B6BC7",          "below"),     # violet
+    (0.60, COLOR["stat_mid"],  "average"),   # teal
+    (0.85, "#E8B33C",          "good"),      # gold
+    (1.01, COLOR["stat_high"], "elite"),     # cyan
 ]
 
 
@@ -130,16 +141,19 @@ def _gradient_fill(t: float, bold: bool = False) -> str:
     hex_colour, label = _tier_for(t)
 
     if hex_colour is None:
-        # Average: no fill, plain readable text. The absence IS the
-        # signal, and it makes the four coloured tiers unmistakable.
+        # No tier colour configured — plain text rather than an
+        # arbitrary fill. Not reachable with the current _TIERS, but the
+        # branch keeps a None entry safe if a tier is ever blanked again.
         return f"color: {COLOR['text']}; font-weight: 500;"
 
     r, g, b = (int(hex_colour.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4))
     # One opacity per tier, not a sliding scale — a slide would
     # reintroduce the very blending this replaces. The outer tiers sit
     # stronger so elite and poor carry the most weight.
+    # Strength by distance from the middle, so the extremes still carry
+    # the most weight even though every tier is now filled.
     strong = label in ("elite", "poor")
-    top = 0.72 if strong else 0.42
+    top = 0.72 if strong else (0.30 if label == "average" else 0.46)
     bottom = top - 0.12
     return (
         f"background-image: linear-gradient(180deg, "
