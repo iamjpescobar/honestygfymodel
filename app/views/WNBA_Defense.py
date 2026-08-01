@@ -9,7 +9,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table
+from styles.table_style import style_stat_table, render_html_table
 from engines.wnba_defense import build_board, MIN_PLAYER_GP
 from engines.live_sync import sync_latest_button
 from engines.calibration import log_picks, grade_pending, summary
@@ -92,15 +92,14 @@ with card("wdef"):
             }
             for r in rows[:25]
         ])
-        st.dataframe(
+        render_html_table(
             style_stat_table(
                 df,
                 favor_high=["Edge", "Softness", "Opp allows", f"{_win_label} {_stat[:3]}"],
-                gradient=True,
-            ),
-            width="stretch",
-            height=min(56 + 35 * len(df), 900),
-        )
+                gradient=True
+            )
+        ,
+            key="wnba_defense_94")
         # Calibration: the defense board's top picks are graded against
         # each player's own recent form as the line — i.e. "did the soft
         # matchup actually produce more than his usual?"
