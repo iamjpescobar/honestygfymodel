@@ -90,49 +90,62 @@ _TEXT_RGB = tuple(int(COLOR["text"].lstrip("#")[i:i + 2], 16) for i in (0, 2, 4)
 # Now the middle band is left plain and only the tails are painted. The
 # eye lands on the genuine highs and lows immediately, and the table reads
 # as data with signal in it rather than a heatmap of sludge.
-_QUIET_LO, _QUIET_HI = 0.42, 0.58
+# FIVE DISCRETE TIERS, not a continuous ramp.
+#
+# A blended gradient guarantees the problem: "below average" and
+# "average" are adjacent on the scale, so they are adjacent in hue, so
+# they look alike. No amount of tuning fixes that — it is what
+# interpolation MEANS. Every intermediate value is a mix of its
+# neighbours.
+#
+# Discrete bands remove the failure entirely. Five states, each with a
+# hue that shares nothing with the band beside it, so a cell's tier is
+# readable on its own without comparing it to the rest of the column.
+#
+# Cut points are percentile positions within the column, chosen to match
+# how people already talk about grades: a small elite tier, a small poor
+# tier, and a wide middle. The middle band is deliberately COLOURLESS —
+# "average" should read as the absence of a signal, which also means it
+# can never be confused with the band either side of it.
+_TIERS = [
+    # (upper bound of normalised value, hex, label)
+    (0.15, COLOR["error"],     "poor"),
+    (0.40, COLOR["warn"],      "below"),
+    (0.60, None,               "average"),   # None = no fill
+    (0.85, COLOR["stat_mid"],  "good"),
+    (1.01, COLOR["stat_high"], "elite"),
+]
+
+
+def _tier_for(t: float):
+    """(hex_or_None, label) for a normalised value in [0, 1]."""
+    for upper, hex_colour, label in _TIERS:
+        if t < upper:
+            return hex_colour, label
+    return _TIERS[-1][1], _TIERS[-1][2]
 
 
 def _gradient_fill(t: float, bold: bool = False) -> str:
-    """Cell style for a normalised value in [0, 1].
+    """Cell style for a normalised value in [0, 1]. See _TIERS."""
+    hex_colour, label = _tier_for(t)
 
-    Modernised in three ways, none of which change the palette:
+    if hex_colour is None:
+        # Average: no fill, plain readable text. The absence IS the
+        # signal, and it makes the four coloured tiers unmistakable.
+        return f"color: {COLOR['text']}; font-weight: 500;"
 
-      SATURATION  fills sit at 0.30-0.85 alpha instead of a flat wash.
-                  A washed-out tint of any hue on a dark background goes
-                  grey-brown — that, not the colour choice, is what made
-                  the old grid look like sludge.
-      SHAPE       pill-shaped cells with a soft vertical gradient, the
-                  same treatment as the score bars, so the two read as
-                  one design language instead of two.
-      RESTRAINT   values sitting near the middle of a column get a light
-                  tint rather than a solid block. Everything shouting
-                  meant nothing stood out.
-    """
-    r, g, b = _gradient_rgb(t)
-
-    if _QUIET_LO <= t <= _QUIET_HI:
-        # Middle of the pack: a whisper of the ramp colour behind muted
-        # text. Enough to see it belongs to the scale, not enough to
-        # compete with the values that matter.
-        return (
-            f"background-color: rgba({r},{g},{b},0.10); "
-            f"color: {COLOR['text']}; font-weight: 500; border-radius: 5px;"
-        )
-
-    # How far past the quiet band, 0 -> 1.
-    edge = (t - _QUIET_HI) / (1 - _QUIET_HI) if t > _QUIET_HI \
-        else (_QUIET_LO - t) / _QUIET_LO
-    top = 0.30 + 0.55 * (edge ** 0.75)
-    bottom = max(0.0, top - 0.13)
-    weight = 700 if edge >= 0.5 else 600
-    # Dark text once the fill is strong enough to carry it; light text
-    # while the fill is still faint, or the number disappears.
-    ink = BG if top >= 0.52 else COLOR["text"]
+    r, g, b = (int(hex_colour.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4))
+    # One opacity per tier, not a sliding scale — a slide would
+    # reintroduce the very blending this replaces. The outer tiers sit
+    # stronger so elite and poor carry the most weight.
+    strong = label in ("elite", "poor")
+    top = 0.72 if strong else 0.42
+    bottom = top - 0.12
     return (
         f"background-image: linear-gradient(180deg, "
         f"rgba({r},{g},{b},{top:.2f}) 0%, rgba({r},{g},{b},{bottom:.2f}) 100%); "
-        f"color: {ink}; font-weight: {weight}; border-radius: 5px;"
+        f"color: {BG if strong else COLOR['text']}; "
+        f"font-weight: {700 if strong else 600}; border-radius: 5px;"
     )
 
 
