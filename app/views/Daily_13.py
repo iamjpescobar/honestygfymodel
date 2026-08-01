@@ -12,7 +12,7 @@ import streamlit as st
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
 from styles.table_style import (style_stat_table, render_html_table,
                                 team_logo_cell, player_cell, form_dots,
-                                sort_control)
+                                sort_control, score_bar)
 from engines.daily_13 import (
     get_daily_13, MIN_HIT_RATE, MIN_GAMES, BOARD_SIZE,
     W_FORM, W_MATCHUP, W_CONTEXT, L15_GATE_HITS, L15_GATE_GAMES,
@@ -104,6 +104,11 @@ with card("daily13"):
                 # Locked bats get a HOT badge on the same baseline as the
                 # name, rather than an emoji that shifts the row.
                 "Player": player_cell({r["name"] for r in rows if r.get("locked")}),
+                # Same bar as the HR boards. "Tonight" is this board's
+                # 0-100 ranked score, so it reads the same way. score_bar
+                # takes the pre-formatted string fine — float("83.4")
+                # parses, and the em-dash path returns N/A.
+                "Tonight": score_bar("stat_high"),
                 # Hits in the positive colour, misses receding — the run
                 # of identical grey dots read as debris.
                 "Last 10": form_dots(),
