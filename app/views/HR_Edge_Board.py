@@ -14,7 +14,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table, render_html_table
+from styles.table_style import style_stat_table, render_html_table, team_logo_cell, score_bar
 from engines.hr_edge_board import get_hr_edge_board
 from engines.live_sync import sync_latest_button
 
@@ -95,8 +95,13 @@ else:
             # Explicit formats for every numeric column — style_stat_table
             # applies a global precision=2, and anything unlisted falls
             # through to it and renders out of step with its neighbours.
-            "HR Edge": "{:.0f}", "HR Score": "{:.0f}",
+            # Filled bars rather than bare numbers, same as the Game Card
+            # lineup — these are the two columns the board is ranked on.
+            "HR Edge": score_bar("gold"), "HR Score": score_bar("stat_high"),
             "Matchup": "{:+.1f}", "Context": "{:+.1f}",
+            # Logo beside the abbreviation; text stays so the column
+            # still reads if an image fails to load.
+            "Team": team_logo_cell(),
         }, na_rep="N/A")
         render_html_table(styled,
             key="hr_edge_board_100")
