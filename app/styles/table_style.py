@@ -515,3 +515,51 @@ def form_dots(hit_char="\u25cf", miss_char="\u00b7"):
                 f'style="letter-spacing:2.5px; font-size:13px;">'
                 + "".join(out) + '</span>')
     return _fmt
+
+
+def sort_control(df, key: str, default: str = None, numeric_only: bool = True):
+    """Dropdown that sorts a frame highest-to-lowest by a chosen column.
+
+    Moving the tables to HTML removed st.dataframe's click-to-sort along
+    with its drag-to-reorder. The drag was the thing worth losing;
+    sorting was not, so this puts it back explicitly.
+
+    Handles the awkward part: several boards build their cells as
+    ALREADY-FORMATTED STRINGS ("0.214", "2.08", "—"), so a plain
+    sort_values would order them as text and put "9.9" above "10.1".
+    Sorting runs on a numeric coercion of the column, with unparseable
+    values (the em-dash placeholders) pushed to the bottom where a
+    missing value belongs rather than the top.
+
+    Returns the sorted frame. `key` must be unique per table.
+    """
+    import streamlit as st
+
+    cols = list(df.columns)
+    if numeric_only:
+        # A column qualifies if most of its values parse as numbers —
+        # covers both real floats and pre-formatted numeric strings.
+        num = []
+        for c in cols:
+            vals = pd.to_numeric(df[c].astype(str).str.replace("%", "", regex=False),
+                                 errors="coerce")
+            if vals.notna().mean() >= 0.6:
+                num.append(c)
+        cols = num
+    if not cols:
+        return df
+
+    choice = st.selectbox(
+        "Sort by", ["(board order)"] + cols,
+        index=(cols.index(default) + 1) if default in cols else 0,
+        key=f"sort_{key}", label_visibility="collapsed",
+    )
+    if not choice or choice == "(board order)":
+        return df
+
+    order = pd.to_numeric(df[choice].astype(str).str.replace("%", "", regex=False),
+                          errors="coerce")
+    # na_position="last": an em-dash means "no data", and a board that
+    # sorts unknowns to the top is worse than one that doesn't sort.
+    return df.assign(_lc_sort=order).sort_values(
+        "_lc_sort", ascending=False, na_position="last").drop(columns="_lc_sort")
