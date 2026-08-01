@@ -8,7 +8,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table
+from styles.table_style import style_stat_table, render_html_table
 from engines.pitchers_to_target import get_pitchers_to_target
 from engines.live_sync import sync_latest_button
 
@@ -69,15 +69,20 @@ with card("targets"):
                 "Meatball%": f'{r["meatball"]:.1f}' if r["meatball"] is not None else "\u2014",
             }
             for r in rows
-        ]).set_index("Pitcher")
-        st.dataframe(
+        ])
+        # Pitcher stays a COLUMN: render_html_table hides the index (see
+        # _base_styler), so an indexed name would disappear entirely.
+        df = df[["Pitcher"] + [c for c in df.columns if c != "Pitcher"]]
+        # HTML rather than st.dataframe — the grid has drag-to-reorder
+        # built in with no way to disable it (streamlit#11222), so a
+        # scroll gesture on a phone scatters the columns.
+        render_html_table(
             style_stat_table(
                 df,
                 favor_high=["HR", "HR/9", "ISO", "SLG", "Brl%", "HH%", "FB%", "Meatball%"],
                 gradient=True,
             ),
-            width="stretch",
-            height=min(56 + 35 * len(df), 900),
+            key="pitchers_to_target",
         )
         st.caption(
             "IP estimated from Statcast out events (same basis as the Splits table). "
