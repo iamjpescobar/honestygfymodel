@@ -100,3 +100,48 @@ assert r["hit_rate"] == 25.0 and r["units"] > 0, (
     f"rate alone drove the verdict, this winning board would read as a "
     f"disaster")
 print(f"PASS: 25% at +400 is correctly profitable ({r['units']:+.2f} units)")
+
+
+# ----------------------------------------------------------------------
+# Entered odds must SURVIVE being saved.
+#
+# _save() drops any day the published record already holds with an equal
+# grade count — correct for keeping the local log from accumulating the
+# whole published history, but it silently threw away every hand-entered
+# price: set_odds returned True, the number vanished on the next read,
+# and the profit columns stayed empty with nothing reporting an error.
+# The pipeline never writes odds, so local is the ONLY place they live.
+# ----------------------------------------------------------------------
+import json as _json
+import pathlib as _pathlib
+import tempfile as _tempfile
+
+from engines import calibration as _cal  # noqa: E402
+
+_tmp = _pathlib.Path(_tempfile.mkdtemp())
+_cal._LOG_PATH = _tmp / "local.json"
+_cal._published_path = lambda: _tmp / "pub.json"
+(_tmp / "pub.json").write_text(_json.dumps({
+    "daily13": {"2026-07-30": {"picks": [
+        {"id": "1", "name": "A", "result": "hit"},
+        {"id": "2", "name": "B", "result": "miss"},
+        {"id": "3", "name": "C", "result": "hit"}], "graded": True}}}))
+
+for _pid, _o in (("1", -150), ("2", -150), ("3", -150)):
+    assert _cal.set_odds("daily13", "2026-07-30", _pid, _o), f"set_odds failed for {_pid}"
+
+_picks = _cal._load()["daily13"]["2026-07-30"]["picks"]
+assert [p.get("odds") for p in _picks] == [-150, -150, -150], (
+    f"odds did not persist: {[p.get('odds') for p in _picks]}. A price that "
+    f"reports saved and then vanishes is worse than no feature at all — the "
+    f"profit columns stay blank and nothing says why")
+print("PASS: hand-entered odds survive a save/load round trip")
+
+_r = _profit_summary(_picks)
+assert _r["priced"] == 3 and _r["units"] > 0 and _r["breakeven"] == 60.0
+print(f"PASS: profit computes from stored odds ({_r['units']:+.2f} units)")
+
+assert [p["result"] for p in _picks] == ["hit", "miss", "hit"], (
+    "editing odds changed a grade — pricing a pick must never reopen or "
+    "alter its result")
+print("PASS: editing odds never touches a graded result")
