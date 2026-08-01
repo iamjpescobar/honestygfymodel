@@ -89,11 +89,19 @@ with card("daily13"):
         grade_pending()
         _cal = summary().get("daily13", {})
         if _cal.get("total"):
-            st.caption(
-                f'Tracked record \u2014 this board\'s picks {_cal["question"]} '
-                f'{_cal["hits"]}/{_cal["total"]} ({_cal["rate"]}%) over the graded period'
-                + (f' \u00b7 {_cal["dnp"]} did not play (excluded)' if _cal.get("dnp") else "")
-            )
+            # The baseline and verdict ride along with the rate ON PURPOSE.
+            # A bare "65%" reads as a strong result when the league-average
+            # starter does about the same, and people size real bets off
+            # this line.
+            _base = _cal.get("baseline")
+            _cap = (f'Tracked record \u2014 this board\'s picks {_cal["question"]} '
+                    f'{_cal["hits"]}/{_cal["total"]} ({_cal["rate"]}%) over the graded period')
+            if _base is not None:
+                _cap += (f' \u00b7 league baseline {_base:.1f}% '
+                         f'({_cal["edge"]:+.1f}) \u00b7 {_cal["verdict"]}')
+            if _cal.get("dnp"):
+                _cap += f' \u00b7 {_cal["dnp"]} did not play (excluded)'
+            st.caption(_cap)
         else:
             st.caption("Tracked record \u2014 tonight's picks are logged; results appear "
                        "here once the games are final.")
