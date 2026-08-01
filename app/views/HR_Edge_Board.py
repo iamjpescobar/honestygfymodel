@@ -14,7 +14,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table, render_html_table, team_logo_cell, score_bar, sort_control
+from styles.table_style import style_stat_table, render_html_table, team_logo_cell, score_bar, sort_control, tier_legend
 from engines.hr_edge_board import get_hr_edge_board
 from engines.live_sync import sync_latest_button
 
@@ -115,6 +115,10 @@ else:
             # still reads if an image fails to load.
             "Team": team_logo_cell(),
         }, na_rep="N/A")
+        # Colour key sits WITH the table. Five filled tiers look
+        # authoritative whether or not anyone knows what they mean,
+        # and which direction is "good" flips between boards.
+        tier_legend(favor_note="Higher is better \u2014 colour is the bat\u2019s grade in that column.")
         render_html_table(styled,
             key="hr_edge_board_100")
 
