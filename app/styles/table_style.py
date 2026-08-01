@@ -455,3 +455,58 @@ def bats_chip():
                 f'background:{c}26; color:{c}; font-weight:700; '
                 f'font-size:11px;">{k}</span>')
     return _fmt
+
+
+def player_cell(locked_names=None):
+    """Formatter: player name, with a HOT badge when the bat is locked in.
+
+    The lock used to be a raw emoji prepended to the name. Emoji render
+    at a different size and baseline than the monospace face around them,
+    so every locked row sat a pixel or two off and the name column looked
+    ragged — and an emoji carries no meaning to someone who hasn't read
+    the legend.
+
+    A text badge stays on the same baseline and says what it means.
+    """
+    locked = set(locked_names or ())
+
+    def _fmt(v):
+        if not v:
+            return "\u2014"
+        name = str(v)
+        if name not in locked:
+            return name
+        return (
+            f'{name}<span style="display:inline-block; margin-left:6px; '
+            f'padding:1px 5px; border-radius:3px; background:{COLOR["gold"]}26; '
+            f'color:{COLOR["gold"]}; font-size:9.5px; font-weight:800; '
+            f'letter-spacing:0.04em; vertical-align:1px;">HOT</span>'
+        )
+    return _fmt
+
+
+def form_dots(hit_char="\u25cf", miss_char="\u00b7"):
+    """Formatter: a run of hit/miss marks, spaced and colour-coded.
+
+    The bare string of dots read as debris — evenly grey, no spacing, no
+    indication which end was recent. Hits take the positive colour, misses
+    recede into the muted one, and letter-spacing separates them so the
+    pattern of gaps is legible at a glance. Newest is on the RIGHT, which
+    the tooltip states rather than leaving to guesswork.
+    """
+    def _fmt(v):
+        if not v:
+            return "\u2014"
+        out = []
+        for ch in str(v):
+            if ch == hit_char:
+                out.append(f'<span style="color:{COLOR["stat_high"]};">{ch}</span>')
+            elif ch == miss_char:
+                out.append(f'<span style="color:{COLOR["stat_mid_text"]}; '
+                           f'opacity:0.55;">{ch}</span>')
+            else:
+                out.append(ch)
+        return (f'<span title="oldest on the left, most recent on the right" '
+                f'style="letter-spacing:2.5px; font-size:13px;">'
+                + "".join(out) + '</span>')
+    return _fmt
