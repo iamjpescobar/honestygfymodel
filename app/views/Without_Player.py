@@ -69,7 +69,24 @@ with col_b:
     labels = {f"{name} ({gp} G)": pid for pid, name, gp in roster}
     pick = st.selectbox("Player out", list(labels.keys()), key="wo_player")
 
-rows, meta = without_player(logs, team, labels[pick])
+# labels.get(), not labels[pick].
+#
+# Both selectboxes persist their choice under a fixed key, but the PLAYER
+# list is rebuilt from whichever TEAM is selected. Switch teams and the
+# remembered player is no longer a key in `labels`, so `labels[pick]`
+# raised a bare KeyError and took the page down — intermittently, because
+# it only happens when the stored name doesn't exist on the new roster.
+_pid = labels.get(pick)
+if _pid is None:
+    # Fall back to the first player on the new roster rather than
+    # erroring: the widget will re-sync on the next rerun.
+    _pid = next(iter(labels.values()), None)
+if _pid is None:
+    st.info("No players available for this team.")
+    footer()
+    st.stop()
+
+rows, meta = without_player(logs, team, _pid)
 
 with card("without"):
     st.markdown(
