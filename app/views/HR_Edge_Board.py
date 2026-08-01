@@ -95,7 +95,13 @@ else:
         df = sort_control(df, "hredge", default="HR Edge")
         styled = style_stat_table(
             df,
-            favor_high=["HR Edge", "HR Score", "Matchup", "Context"],
+            # HR Edge / HR Score deliberately NOT here: score_bar draws
+            # the value, and a gradient cell BEHIND the bar is a second
+            # encoding of the same number. The blue cell fought the bar
+            # and destroyed the track, which is the thing that makes bar
+            # length readable. Same reason they were removed from the
+            # Game Card lineup.
+            favor_high=["Matchup", "Context"],
             gradient=True,
         ).format({
             # Explicit formats for every numeric column — style_stat_table
