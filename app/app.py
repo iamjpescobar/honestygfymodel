@@ -161,6 +161,10 @@ def build_mlb_pages(include_admin: bool):
         ("Strikeout Board", "views/Strikeout_Board.py"),
         ("Daily 13", "views/Daily_13.py"),
         ("Pitchers to Target", "views/Pitchers_To_Target.py"),
+        # Sits next to the starter-facing pages on purpose: it answers
+        # what happens AFTER the starter leaves, which is where roughly a
+        # third of a hitter's plate appearances actually occur.
+        ("Bullpen Board", "views/Bullpen_Board.py"),
         ("Weather Board", "views/Weather_Board.py"),
         ("Player of the Day", "views/Player_Of_The_Day.py"),
         # Model / Pitcher Report / Pitcher Splits / Pitch Mix Splits /
