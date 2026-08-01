@@ -14,7 +14,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table
+from styles.table_style import style_stat_table, render_html_table
 from engines.hr_edge_board import get_hr_edge_board
 from engines.live_sync import sync_latest_button
 
@@ -98,7 +98,8 @@ else:
             "HR Edge": "{:.0f}", "HR Score": "{:.0f}",
             "Matchup": "{:+.1f}", "Context": "{:+.1f}",
         }, na_rep="N/A")
-        st.dataframe(styled, width="stretch")
+        render_html_table(styled,
+            key="hr_edge_board_100")
 
         _conf = sum(1 for r in rows if r.get("confirmed"))
         st.caption(
