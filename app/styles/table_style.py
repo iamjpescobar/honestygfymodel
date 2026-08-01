@@ -384,13 +384,19 @@ def score_bar(color_key: str = "gold"):
             pct = max(0.0, min(100.0, float(v)))
         except (TypeError, ValueError):
             return "N/A"
+        # Full cell width, not a 46px stub: at min-width the fill was a
+        # few pixels wide and length carried no information. The track
+        # behind it makes the empty portion visible too, so you can read
+        # the proportion rather than guessing at a floating blob.
         return (
-            f'<div style="position:relative; min-width:46px; height:17px; '
-            f'line-height:17px;">'
+            f'<div style="position:relative; width:100%; min-width:58px; '
+            f'height:18px; line-height:18px; border-radius:3px; '
+            f'background:{COLOR["stat_mid_dim"]};">'
             f'<div style="position:absolute; left:0; top:0; bottom:0; '
-            f'width:{pct:.0f}%; background:{fill}; opacity:0.32; '
+            f'width:{pct:.0f}%; background:{fill}; opacity:0.55; '
             f'border-radius:3px;"></div>'
-            f'<span style="position:relative; font-weight:700;">{pct:.0f}</span>'
+            f'<span style="position:relative; font-weight:700; '
+            f'padding-right:5px;">{pct:.0f}</span>'
             f'</div>'
         )
     return _fmt
