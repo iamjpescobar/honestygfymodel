@@ -232,6 +232,14 @@ def log_picks(board: str, rows, date_str: str = None) -> bool:
                    # optional per-pick grading target; falls back to the
                    # board default when absent
                    "stat": r.get("stat"), "line": r.get("line"),
+                   # American odds for this pick, e.g. -180 or +320.
+                   # Optional and usually absent at log time: nothing
+                   # here has a sportsbook feed, so this is filled in by
+                   # the user on the Calibration page with the price they
+                   # ACTUALLY got. That is better data than a scraped
+                   # consensus would be, and it is the only thing that
+                   # turns a hit rate into a profit figure.
+                   "odds": r.get("odds"),
                    "result": None}
                   for r in rows if r.get("id")],
         "graded": False,
@@ -481,6 +489,12 @@ def summary():
         # Reporting the rate without the baseline beside it is how a tool
         # like this manufactures false confidence, and people bet real
         # money on that.
+        # Profit across every graded pick that carries a price. Separate
+        # from the hit rate on purpose — they answer different questions,
+        # and the hit rate is the one that misleads.
+        _all_picks = [pk for entry in days.values() for pk in entry.get("picks", [])]
+        profit = _profit_summary(_all_picks)
+
         base = _baseline_for(cfg.get("baseline_stat"))
         edge = round(rate - base, 1) if (rate is not None and base is not None) else None
         out[board] = {
@@ -495,6 +509,7 @@ def summary():
             # almost always "too early to tell", and saying so is the
             # whole point.
             "verdict": _edge_verdict(hits, total, base),
+            "profit": profit,
         }
     return out
 
@@ -518,6 +533,156 @@ def _baseline_for(stat):
         return None
     v = _baselines().get(stat)
     return float(v) if isinstance(v, (int, float)) else None
+
+
+def set_odds(board: str, date_str: str, pid, odds) -> bool:
+    """Attach the price you actually got to one already-logged pick.
+
+    Written separately from log_picks because odds are not known when a
+    pick is made — the board is built in the morning and priced when you
+    bet it. Nothing here has a sportsbook feed, and inventing a consensus
+    price would defeat the purpose: what matters for YOUR profit is the
+    number YOU took.
+
+    Editing odds never touches `result`. A graded pick keeps its grade;
+    only the price changes, so back-filling prices on old picks is safe
+    and does not reopen anything.
+    """
+    data = _load()
+    entry = (data.get(board) or {}).get(date_str)
+    if not entry:
+        return False
+    hit = False
+    for pk in entry.get("picks", []):
+        if str(pk.get("id")) == str(pid):
+            try:
+                pk["odds"] = int(odds) if odds not in (None, "", 0) else None
+            except (TypeError, ValueError):
+                return False
+            hit = True
+    return _save(data) if hit else False
+
+
+def american_to_decimal(odds):
+    """American odds -> decimal payout multiplier. None if unusable.
+
+    -180 means risk 180 to win 100, so a winning unit returns 1.556.
+    +320 means risk 100 to win 320, so it returns 4.20.
+    """
+    try:
+        o = float(odds)
+    except (TypeError, ValueError):
+        return None
+    if o == 0:
+        return None
+    return 1.0 + (100.0 / abs(o) if o < 0 else o / 100.0)
+
+
+def implied_pct(odds):
+    """What the BOOK thinks the chance is, from its price, as a percent.
+
+    Includes the vig, so these sum to more than 100% across a market.
+    That's fine for the purpose here: the book's price is the bar a pick
+    has to clear, vig included, because the vig is a cost you actually
+    pay.
+    """
+    try:
+        o = float(odds)
+    except (TypeError, ValueError):
+        return None
+    if o == 0:
+        return None
+    return round((abs(o) / (abs(o) + 100) if o < 0 else 100 / (o + 100)) * 100, 1)
+
+
+def price_edge(model_pct, odds):
+    """model probability MINUS the book's implied probability.
+
+    THIS is the number that decides whether a pick is worth betting, and
+    a board ranked on model score alone will systematically miss it.
+
+    A -380 hits prop is already priced at 79.2%. To be a good bet, the
+    model has to believe MORE than 79.2% — higher than almost any hitter
+    reaches. A -170 pick is priced at 63.0%, so a model reading of 68% is
+    a genuine 5-point edge. Ranked by raw score the -380 favourite looks
+    like the better pick every time, while actually being the one with
+    the least room in it. That is exactly how a strong-looking board
+    loses money.
+
+    Returns None when either input is missing — no odds means no edge can
+    be computed, and guessing one would defeat the purpose.
+    """
+    imp = implied_pct(odds)
+    if imp is None or model_pct is None:
+        return None
+    try:
+        return round(float(model_pct) - imp, 1)
+    except (TypeError, ValueError):
+        return None
+
+
+def breakeven_pct(odds):
+    """The hit rate a price REQUIRES just to break even, as a percent.
+
+    This is the number that decides whether a board is worth betting, and
+    it is the one nobody looks at. A 65% hit rate sounds excellent and
+    loses money all season at -200, which needs 66.7%. Reporting a rate
+    without its break-even is how a tool like this quietly costs someone
+    money while showing them a good-looking number.
+    """
+    dec = american_to_decimal(odds)
+    if dec is None or dec <= 1:
+        return None
+    return round(100.0 / dec, 1)
+
+
+def _profit_summary(picks):
+    """Units won/lost across graded picks that carry a price.
+
+    Flat 1 unit risked per pick — the only assumption here, and stated
+    plainly rather than buried, because we do not know what anyone
+    actually staked.
+
+    Picks with no odds are EXCLUDED rather than assumed to be even money.
+    Assuming a price would manufacture a profit figure out of nothing,
+    which is worse than reporting that fewer picks have prices attached.
+    DNPs are excluded too: a scratched player is a returned stake, not a
+    loss.
+    """
+    staked = 0.0
+    returned = 0.0
+    priced = 0
+    wins = 0
+    be_sum = 0.0
+    for p in picks:
+        res = p.get("result")
+        if res not in ("hit", "miss"):
+            continue
+        dec = american_to_decimal(p.get("odds"))
+        if dec is None:
+            continue
+        priced += 1
+        staked += 1.0
+        be = breakeven_pct(p.get("odds"))
+        if be is not None:
+            be_sum += be
+        if res == "hit":
+            returned += dec
+            wins += 1
+    if not priced:
+        return {"priced": 0}
+    profit = returned - staked
+    return {
+        "priced": priced,
+        "wins": wins,
+        "units": round(profit, 2),
+        "roi": round(profit / staked * 100, 1),
+        "hit_rate": round(wins / priced * 100, 1),
+        # Average price faced, expressed as the rate needed to break even.
+        # Beat this and the board made money; sit under it and it didn't,
+        # however good the raw hit rate looks.
+        "breakeven": round(be_sum / priced, 1),
+    }
 
 
 def _edge_verdict(hits, total, base):
