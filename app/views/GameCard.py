@@ -96,6 +96,16 @@ with content_col:
     st.session_state.setdefault("gc_page", 0)
     st.session_state.setdefault("gc_selected_game_idx", 0)
     st.session_state["gc_page"] = min(st.session_state["gc_page"], total_pages - 1)
+    # Clamp the SELECTED GAME too, not just the page.
+    #
+    # This index survives reruns, but `games` does not stay the same
+    # length: the slate shrinks as games go final and rebuilds shorter on
+    # the next data refresh. Someone sitting on game 8 of a 9-game slate
+    # would come back to a 6-game slate and hit an IndexError on the two
+    # lookups below — a hard crash on page load, and an intermittent one,
+    # since it depends entirely on which game you last looked at.
+    st.session_state["gc_selected_game_idx"] = min(
+        st.session_state["gc_selected_game_idx"], len(games) - 1)
 
     nav_prev, nav_pills, nav_next = st.columns([0.6, 8, 0.6])
     with nav_prev:
