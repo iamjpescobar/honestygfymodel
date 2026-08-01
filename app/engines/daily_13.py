@@ -330,6 +330,17 @@ def _daily13_json(date_str: str) -> str:
                 "rate": round(rate, 1),
                 "l15": f"{l15_hits}/{len(l15)}",
                 "l5": f"{l5_hits}/{len(l5)}",
+                # Last 10 games as a compact block sparkline. Full block
+                # = hit, low block = no hit, oldest on the left. A "9/10"
+                # cell can't distinguish a bat that has hit in nine
+                # straight from one that went cold four games ago, and on
+                # a 13-row board that difference is the read.
+                #
+                # Unicode blocks rather than an image or HTML: this
+                # renders identically in a dataframe cell on mobile and
+                # desktop, with no fetch and nothing to lay out.
+                "spark": "".join("\u2588" if h else "\u2581"
+                                 for h in per_game[-10:]),
                 "streak": streak,
                 "locked": locked,
                 "tonight": round(min(100.0, tonight), 1),
