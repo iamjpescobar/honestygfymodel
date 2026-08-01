@@ -260,6 +260,13 @@ _HTML_TABLE_CSS = f"""
    digits where the two collided. Forcing the wrapper to be allowed to
    shrink is what turns the overflow into a scroll. */
 .lc-tbl-wrap {{
+  /* No drag-select. Dragging across an HTML table paints the browser's
+     selection highlight over the cells — the black band that appears
+     when you click or swipe a row. Nobody copies text out of these, and
+     on a touchscreen a scroll gesture becomes a selection, so the
+     highlight fires constantly. */
+  -webkit-user-select: none;
+  user-select: none;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   border-radius: 6px;
