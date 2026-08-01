@@ -8,7 +8,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table, render_html_table, team_logo_cell
+from styles.table_style import style_stat_table, render_html_table, team_logo_cell, sort_control
 from engines.pitchers_to_target import get_pitchers_to_target
 from engines.live_sync import sync_latest_button
 
@@ -76,21 +76,23 @@ with card("targets"):
         # HTML rather than st.dataframe — the grid has drag-to-reorder
         # built in with no way to disable it (streamlit#11222), so a
         # scroll gesture on a phone scatters the columns.
+        # Sorting, put back explicitly: moving off st.dataframe
+        # removed click-to-sort along with drag-to-reorder. Sorts
+        # on a numeric read of the column, so pre-formatted
+        # strings order as numbers and blanks fall to the bottom.
+        df = sort_control(df, "p2t", default="HR/9")
         render_html_table(
             style_stat_table(
                 df,
                 favor_high=["HR", "HR/9", "ISO", "SLG", "Brl%", "HH%", "FB%", "Meatball%"],
                 gradient=True,
-            # Numeric formats restated: Styler.format REPLACES the
-            # formatter set, so adding the logo columns alone dropped
-            # every number to raw float repr ("0.214000" not "0.214").
-            ).format({
-                "Team": team_logo_cell(), "Opp": team_logo_cell(),
-                "IP": "{:.1f}", "HR": "{:.0f}", "HR/9": "{:.2f}",
-                "ISO": "{:.3f}", "SLG": "{:.3f}",
-                "Brl%": "{:.1f}", "HH%": "{:.1f}", "FB%": "{:.1f}",
-                "Meatball%": "{:.1f}",
-            }, na_rep="N/A"),
+            # ONLY the logo formatters here. Every numeric column in this
+            # frame is built as an ALREADY-FORMATTED STRING above
+            # (f'{r["iso"]:.3f}'), so applying "{:.3f}" to it raised
+            # ValueError: Unknown format code 'f' for object of type
+            # 'str'. Nothing needed restating — unlike the Strikeout
+            # Board, whose frame holds real floats.
+            ).format({"Team": team_logo_cell(), "Opp": team_logo_cell()}),
             key="pitchers_to_target",
         )
         st.caption(
