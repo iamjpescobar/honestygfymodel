@@ -11,7 +11,8 @@ import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
 from styles.table_style import (style_stat_table, render_html_table,
-                                team_logo_cell, player_cell, form_dots)
+                                team_logo_cell, player_cell, form_dots,
+                                sort_control)
 from engines.daily_13 import (
     get_daily_13, MIN_HIT_RATE, MIN_GAMES, BOARD_SIZE,
     W_FORM, W_MATCHUP, W_CONTEXT, L15_GATE_HITS, L15_GATE_GAMES,
@@ -83,6 +84,11 @@ with card("daily13"):
             }
             for r in rows
         ])
+        # Sorting, put back explicitly: moving off st.dataframe
+        # removed click-to-sort along with drag-to-reorder. Sorts
+        # on a numeric read of the column, so pre-formatted
+        # strings order as numbers and blanks fall to the bottom.
+        df = sort_control(df, "daily13", default="Tonight")
         render_html_table(
             style_stat_table(
                 df,
