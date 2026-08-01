@@ -253,22 +253,34 @@ def inject_kc_theme():
         /* Real container-based cards (see card() in this file) \u2014 matches
            any st.container(key="card_...") so every card gets this
            styling with no per-card CSS needed. */
+        /* THIS is the rule that actually draws every card on the page.
+           card() returns a Streamlit container keyed st-key-card_*, so
+           .pf-card above only covers the handful of raw-HTML cards —
+           restyling that one alone changed nothing visible.
+
+           No border, no 3px top bar. The old card was outlined in teal
+           with a bright bar across the top, which drew a hard rectangle
+           around every panel and made the page read as a grid of boxes.
+           Separation now comes from a slightly lifted surface and a
+           shadow, so panels read as depth rather than as frames. */
         div[class*="st-key-card_"] {{
-            background: linear-gradient(160deg, {COLOR["stat_high_dim"]}, {COLOR["surface"]} 70%) !important;
-            border: 1px solid {COLOR["stat_high_border"]} !important;
-            border-top: 3px solid {COLOR["stat_high"]} !important;
-            border-radius: 8px !important;
-            padding: 14px 16px !important;
-            margin-bottom: 10px !important;
+            background: linear-gradient(165deg, {COLOR["surface_raised"]} 0%, {COLOR["surface"]} 100%) !important;
+            border: none !important;
+            border-radius: 14px !important;
+            padding: 18px 20px !important;
+            margin-bottom: 14px !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.4),
+                        0 10px 30px -14px rgba(0,0,0,0.55) !important;
         }}
 
         /* Glossary gets its own accent — real bloody red instead of the
            page's default cyan, so it reads as a distinct reference
            section rather than another stat card. */
         div[class*="st-key-card_glossary"] {{
-            background: linear-gradient(160deg, {COLOR["error_dim"]}, {COLOR["surface"]} 70%) !important;
-            border: 1px solid {COLOR["error_border"]} !important;
-            border-top: 3px solid {COLOR["error"]} !important;
+            /* Still distinct from a stat card, but by TINT rather than by
+               an outline — same reasoning as the rule above. */
+            background: linear-gradient(165deg, {COLOR["error_dim"]}, {COLOR["surface"]} 70%) !important;
+            border: none !important;
         }}
 
         .pf-card {{
