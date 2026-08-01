@@ -1,3 +1,4 @@
+
 """Bullpen Board — who finishes the game, and what they allow.
 
 Every other page on this site reads the starter. This one reads the arms
@@ -40,7 +41,16 @@ st.caption(
 
 sync_latest_button(key="sync_bullpen", include_data_package=True)
 
-games = get_todays_games_with_weather() or []
+# (games, error) TUPLE, not a bare list — every other caller in the app
+# unpacks it the same way. Binding the tuple to `games` made `g` the list
+# itself on the first loop pass, hence "'list' object has no attribute
+# 'get'".
+games, games_error = get_todays_games_with_weather()
+if games_error and not games:
+    st.warning(f"Couldn't load today's slate: {games_error}")
+    footer()
+    st.stop()
+games = games or []
 if not games:
     st.info("No games on the board yet — press ⟳ Sync latest to pull today's slate.")
     footer()
