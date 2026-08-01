@@ -10,7 +10,7 @@ from styles.kc_theme import (
     pitch_color, pitch_name, edge_tag
 )
 from styles.table_style import (style_stat_table, plain_dark_table,
-                                render_html_table, score_bar)
+                                render_html_table, score_bar, bats_chip)
 
 from engines.weather_engine import get_todays_games_with_weather
 from engines.park_factors import get_park_factor
@@ -1470,6 +1470,11 @@ with content_col:
                         # moved off st.dataframe. score_bar returns markup
                         # and pandas doesn't escape formatter output, so
                         # the bar renders where the number used to.
+                        # Handedness as a chip, not a bare letter. Most of
+                        # the platoon logic in this app turns on this
+                        # column, and an L or R sitting in a dense row of
+                        # numbers reads as just another character.
+                        "Bats": bats_chip(),
                         "HR Edge": score_bar("gold"),
                         "HR Score": score_bar("stat_high"),
                         "Hit Score": score_bar("warn"),
