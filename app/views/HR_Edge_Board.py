@@ -14,7 +14,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table, render_html_table, team_logo_cell, score_bar
+from styles.table_style import style_stat_table, render_html_table, team_logo_cell, score_bar, sort_control
 from engines.hr_edge_board import get_hr_edge_board
 from engines.live_sync import sync_latest_button
 
@@ -87,6 +87,12 @@ else:
             })
 
         df = pd.DataFrame(table).set_index("#")
+        # Sort BEFORE the styler is built. style_stat_table computes its
+        # gradients from the frame it is handed, so sorting afterwards
+        # reordered nothing — the styled object already held the old
+        # order. Moving off st.dataframe removed click-to-sort along with
+        # drag-to-reorder; this puts sorting back.
+        df = sort_control(df, "hredge", default="HR Edge")
         styled = style_stat_table(
             df,
             favor_high=["HR Edge", "HR Score", "Matchup", "Context"],
