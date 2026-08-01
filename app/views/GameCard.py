@@ -9,7 +9,8 @@ from styles.kc_theme import (
     inject_kc_theme, badge, card, footer, COLOR,
     pitch_color, pitch_name, edge_tag
 )
-from styles.table_style import style_stat_table, plain_dark_table, render_html_table
+from styles.table_style import (style_stat_table, plain_dark_table,
+                                render_html_table, score_bar)
 
 from engines.weather_engine import get_todays_games_with_weather
 from engines.park_factors import get_park_factor
@@ -1429,11 +1430,9 @@ with content_col:
                         # missing data instead of a column we never had.
                         _table_df = _table_df[[c for c in _keep if c in _table_df.columns]]
 
-                    try:
-                        _pin_cfg = {"Player": st.column_config.Column("Player", pinned=True)}
-                    except TypeError:
-                        _pin_cfg = {}
-
+                    # (The st.column_config pinned-Player block that used to
+                    # sit here went with the st.dataframe call below —
+                    # render_html_table pins the first column in CSS.)
                     styled = style_stat_table(
                         _table_df,
                         favor_high=["SLAM", "BA", "xwOBA", "xSLG", "ISO", "HR/FB", "Brl%", "Brl/PA", "HH%", "EV90", "MaxEV", "LD%", "FB%", "SweetSpot%", "HRWindow%", "PullAir%", "PullBrl%", "Blast%", "HRIntent", "HR Edge", "HR Score", "Hit Score"],
@@ -1459,25 +1458,34 @@ with content_col:
                         "EV90": "{:.1f}", "MaxEV": "{:.1f}",
                         # 0-100 composite, formatted like HR/Hit Score.
                         "HRIntent": "{:.0f}",
-                        "HR Edge": "{:.0f}", "HR Score": "{:.0f}", "Hit Score": "{:.0f}",
+                        # Inline filled bars, same three columns that used
+                        # st.column_config.ProgressColumn before this table
+                        # moved off st.dataframe. score_bar returns markup
+                        # and pandas doesn't escape formatter output, so
+                        # the bar renders where the number used to.
+                        "HR Edge": score_bar("gold"),
+                        "HR Score": score_bar("stat_high"),
+                        "Hit Score": score_bar("warn"),
                     }, na_rep="N/A")
-                    st.dataframe(
-                        styled,
-                        width="stretch", hide_index=True,
-                        column_config={
-                            # Pinned so the name stays on screen while the
-                            # stats scroll sideways — on a phone you'd
-                            # otherwise be reading an anonymous row of
-                            # numbers. Wrapped because pinned= is a newer
-                            # column_config option and has a reported quirk
-                            # alongside hide_index; if it isn't supported
-                            # the table still renders, just unpinned.
-                            **_pin_cfg,
-                            "HR Edge": st.column_config.ProgressColumn("HR Edge", min_value=0, max_value=100, format="%d", color=COLOR["gold"]),
-                            "HR Score": st.column_config.ProgressColumn("HR Score", min_value=0, max_value=100, format="%d", color=COLOR["stat_high"]),
-                            "Hit Score": st.column_config.ProgressColumn("Hit Score", min_value=0, max_value=100, format="%d", color=COLOR["warn"]),
-                        },
-                    )
+                    # LAST TABLE OFF st.dataframe.
+                    #
+                    # This one held out longest because its HR Edge / HR
+                    # Score / Hit Score columns used
+                    # st.column_config.ProgressColumn for inline bars. But
+                    # Streamlit's grid has drag-to-reorder built in with no
+                    # way to switch it off (streamlit#11222), so on a phone
+                    # a scroll gesture scattered the columns of the single
+                    # table people spend the most time in.
+                    #
+                    # The bars did NOT have to be sacrificed: score_bar()
+                    # in table_style renders the same filled bar as markup
+                    # in the cell, so this is a straight win over the
+                    # widget rather than a trade.
+                    #
+                    # The first column stays put either way:
+                    # render_html_table makes it sticky in CSS, which works
+                    # on touch where the grid's pinning did not.
+                    render_html_table(styled, key="gc_lineup")
                     if not league_data_available:
                         st.caption("HR Score / Hit Score / K Score show N/A above because Baseball Savant's live percentile rankings aren't reachable right now (see warning above) \u2014 not because these players lack power or contact skill.")
 
