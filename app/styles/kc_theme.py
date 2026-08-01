@@ -39,7 +39,15 @@ COLOR = {
     # reserved for the heatmap's good/mid/bad meaning. These are pure
     # identity signals, not value judgments, so a player's name or
     # handedness always reads as "information" rather than "score."
-    "player_name":   "#9C7BFF",   # violet
+    # Near-white, not violet.
+    #
+    # The name is the row's ANCHOR — it's what you scan down to find
+    # someone, and it should be the most legible thing in the row.
+    # #9C7BFF competed with the heatmap for attention while being harder
+    # to read than plain text, and a wall of violet names was the loudest
+    # thing on a page whose point is the numbers. Weight and size make it
+    # the anchor now; colour is reserved for values that mean something.
+    "player_name":   "#F0F4F7",
     "bats_l":        "#5CCEFF",   # sky blue
     "bats_r":        "#FF8A65",   # warm coral — replaces the too-dark slate grey
     "bats_s":        "#B8860B",   # dark goldenrod (metallic gold)
