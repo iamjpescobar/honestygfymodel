@@ -8,7 +8,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table, render_html_table, team_logo_cell, sort_control
+from styles.table_style import style_stat_table, render_html_table, team_logo_cell, sort_control, tier_legend
 from engines.pitchers_to_target import get_pitchers_to_target
 from engines.live_sync import sync_latest_button
 
@@ -81,6 +81,10 @@ with card("targets"):
         # on a numeric read of the column, so pre-formatted
         # strings order as numbers and blanks fall to the bottom.
         df = sort_control(df, "p2t", default="HR/9")
+        # Colour key sits WITH the table. Five filled tiers look
+        # authoritative whether or not anyone knows what they mean,
+        # and which direction is "good" flips between boards.
+        tier_legend(favor_note="Colour reads from the BATTER\u2019s side: gold and cyan are the arms to target.")
         render_html_table(
             style_stat_table(
                 df,
