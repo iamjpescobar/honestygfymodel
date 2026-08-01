@@ -499,7 +499,12 @@ def score_bar(color_key: str = "gold"):
     bar reads as a real score of zero, which is the worst possible
     reading of "we don't know".
     """
-    fill = COLOR.get(color_key, COLOR["gold"])
+    # color_key is now only a FALLBACK. The bar takes its colour from the
+    # value's tier, so a 92 and a 24 in the same column no longer share a
+    # hue and differ only by length — the colour says the grade and the
+    # length says the amount. Same five tiers as the cells, so gold means
+    # "good" everywhere on the site.
+    fallback = COLOR.get(color_key, COLOR["gold"])
 
     def _fmt(v):
         if v is None or (isinstance(v, float) and pd.isna(v)):
@@ -508,6 +513,7 @@ def score_bar(color_key: str = "gold"):
             pct = max(0.0, min(100.0, float(v)))
         except (TypeError, ValueError):
             return "N/A"
+        fill = tier_color_for(pct)
         # A real bar, not a flat block of colour.
         #
         # Three pieces, and each one does a job:
@@ -709,3 +715,63 @@ def sort_control(df, key: str, default: str = None, numeric_only: bool = True):
     # sorts unknowns to the top is worse than one that doesn't sort.
     return df.assign(_lc_sort=order).sort_values(
         "_lc_sort", ascending=False, na_position="last").drop(columns="_lc_sort")
+
+
+def tier_legend(caption: str = "", favor_note: str = "") -> None:
+    """Render the five-tier colour key.
+
+    Colour without a key is a guess. Five filled tiers look authoritative
+    whether or not anyone knows what they mean, and someone betting money
+    off this page should never have to infer whether gold is good.
+
+    `favor_note` says WHICH DIRECTION is good for this table — it flips
+    between boards (a high Brl% is good for a batter and bad for the
+    pitcher allowing it), and that is exactly the misreading this exists
+    to prevent.
+    """
+    import streamlit as st
+
+    swatches = []
+    for _upper, hex_colour, label in _TIERS:
+        if hex_colour is None:
+            continue
+        swatches.append(
+            f'<span style="display:inline-flex; align-items:center; gap:5px; '
+            f'margin-right:14px;">'
+            f'<span style="width:11px; height:11px; border-radius:3px; '
+            f'background:{hex_colour}; opacity:0.85; display:inline-block;"></span>'
+            f'<span style="color:{COLOR["text_muted"]}; font-size:10.5px; '
+            f'letter-spacing:0.03em;">{label}</span></span>'
+        )
+    note = ""
+    if favor_note:
+        note = (f'<div style="color:{COLOR["text_faint"]}; font-size:10px; '
+                f'margin-top:3px;">{favor_note}</div>')
+    extra = ""
+    if caption:
+        extra = (f'<div style="color:{COLOR["text_faint"]}; font-size:10px; '
+                 f'margin-top:2px;">{caption}</div>')
+    st.markdown(
+        f'<div style="margin:6px 0 12px 0;">{"".join(swatches)}{note}{extra}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def tier_color_for(value, lo=None, hi=None) -> str:
+    """Tier hex for a raw 0-100 score — used to colour bars by GRADE.
+
+    Bars used to take a fixed colour per column, so an elite score and a
+    poor one in the same column were the same hue and only length
+    separated them. Reading the tier colour off the value makes the bars
+    speak the same language as the cells: gold means good everywhere on
+    the site, not just in one table.
+    """
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return COLOR["text_muted"]
+    lo = 0.0 if lo is None else float(lo)
+    hi = 100.0 if hi is None else float(hi)
+    t = 0.0 if hi <= lo else max(0.0, min(1.0, (v - lo) / (hi - lo)))
+    hex_colour, _label = _tier_for(t)
+    return hex_colour or COLOR["text_muted"]
