@@ -8,7 +8,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table, render_html_table
+from styles.table_style import style_stat_table, render_html_table, team_logo_cell
 from engines.pitchers_to_target import get_pitchers_to_target
 from engines.live_sync import sync_latest_button
 
@@ -81,7 +81,7 @@ with card("targets"):
                 df,
                 favor_high=["HR", "HR/9", "ISO", "SLG", "Brl%", "HH%", "FB%", "Meatball%"],
                 gradient=True,
-            ),
+            ).format({"Team": team_logo_cell(), "Opp": team_logo_cell()}),
             key="pitchers_to_target",
         )
         st.caption(
