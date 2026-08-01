@@ -424,8 +424,13 @@ def team_logo_cell():
             # No logo resolved — show the abbreviation alone rather than
             # a broken image icon.
             return str(v)
-        return (f'<img src="{url}" style="height:15px; vertical-align:-3px; '
-                f'margin-right:5px;">{v}')
+        # Logo ONLY when one resolves — the mark is the identifier and the
+        # abbreviation beside it was pure duplication, eating width that
+        # matters on a phone. title= keeps the name reachable on hover and
+        # for screen readers. When no logo resolves the text is still
+        # returned above, so the column never renders empty.
+        return (f'<img src="{url}" title="{v}" alt="{v}" '
+                f'style="height:19px; vertical-align:-4px;">')
     return _fmt
 
 
