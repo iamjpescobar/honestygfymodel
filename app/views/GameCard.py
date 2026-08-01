@@ -1435,7 +1435,14 @@ with content_col:
                     # render_html_table pins the first column in CSS.)
                     styled = style_stat_table(
                         _table_df,
-                        favor_high=["SLAM", "BA", "xwOBA", "xSLG", "ISO", "HR/FB", "Brl%", "Brl/PA", "HH%", "EV90", "MaxEV", "LD%", "FB%", "SweetSpot%", "HRWindow%", "PullAir%", "PullBrl%", "Blast%", "HRIntent", "HR Edge", "HR Score", "Hit Score"],
+                        favor_high=["SLAM", "BA", "xwOBA", "xSLG", "ISO", "HR/FB", "Brl%", "Brl/PA", "HH%", "EV90", "MaxEV", "LD%", "FB%", "SweetSpot%", "HRWindow%", "PullAir%", "PullBrl%", "Blast%", "HRIntent"],
+                        # HR Edge / HR Score / Hit Score are deliberately
+                        # NOT in favor_high: score_bar already encodes each
+                        # one as a filled bar, and a gradient cell behind
+                        # the bar is a SECOND encoding of the same number.
+                        # The two colours fought each other and the result
+                        # read as mud — neither the bar length nor the cell
+                        # shade was legible.
                         favor_low=["GB%", "SwStr%"],
                         gradient=True,
                     )
