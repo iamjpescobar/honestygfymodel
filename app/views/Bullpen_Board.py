@@ -1,4 +1,3 @@
-
 """Bullpen Board — who finishes the game, and what they allow.
 
 Every other page on this site reads the starter. This one reads the arms
