@@ -10,7 +10,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table
+from styles.table_style import style_stat_table, render_html_table
 from engines.k_projection import get_slate_k_projections
 from engines.pitcher_trends import render_pitcher_trend
 from engines.live_sync import sync_latest_button
@@ -79,15 +79,20 @@ else:
                     "Proj K": r["proj"],
                 }
                 for r in projected
-            ]).sort_values("Proj K", ascending=False).set_index("Pitcher")
-            st.dataframe(
+            ]).sort_values("Proj K", ascending=False)
+            # Pitcher stays a COLUMN, not an index: render_html_table hides
+            # the index (see _base_styler), so an indexed name would vanish.
+            df = df[["Pitcher"] + [c for c in df.columns if c != "Pitcher"]]
+            # HTML rather than st.dataframe — the grid has drag-to-reorder
+            # built in with no way to disable it (streamlit#11222), so a
+            # scroll gesture on a phone scatters the columns.
+            render_html_table(
                 style_stat_table(
                     df,
                     favor_high=["Proj K", "K/9", "Opp K%", "L5 avg"],
                     gradient=True,
                 ),
-                width="stretch",
-                height=min(56 + 35 * len(df), 900),
+                key="k_board",
             )
             st.caption(
                 "IP/GS is estimated from Statcast out events (same basis as the Splits table \u2014 "
