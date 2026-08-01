@@ -25,14 +25,14 @@ COLOR = {
     "accent":        "#34d7c8",   # signal cyan — heat, active states, primary data
     "accent_dim":    "rgba(52, 215, 200, 0.14)",
     "accent_border": "rgba(52, 215, 200, 0.45)",
-    "cold":          "#4a6b8a",   # unfavorable / low value
-    "cold_dim":      "rgba(74, 107, 138, 0.16)",
-    "cold_border":   "rgba(74, 107, 138, 0.45)",
-    "warn":          "#E9A94B",
-    "warn_dim":      "rgba(233, 169, 75, 0.14)",
-    "warn_border":   "rgba(233, 169, 75, 0.4)",
-    "error":         "#D64545",
-    "error_dim":     "rgba(214, 69, 69, 0.14)",
+    "cold":          "#5B8FC7",   # brighter steel blue (was #4a6b8a, washed out)
+    "cold_dim":      "rgba(91, 143, 199, 0.16)",
+    "cold_border":   "rgba(91, 143, 199, 0.45)",
+    "warn":          "#F2B544",   # amber, lifted (was a muddy #E9A94B)
+    "warn_dim":      "rgba(242, 181, 68, 0.14)",
+    "warn_border":   "rgba(242, 181, 68, 0.4)",
+    "error":         "#F2555A",   # cleaner red (was #D64545, read as brick)
+    "error_dim":     "rgba(242, 85, 90, 0.14)",
     "error_border":  "rgba(214, 69, 69, 0.4)",
     # Identity colors — player names and handedness. Deliberately NOT
     # part of the red/amber/blue heatmap scale, since those are
@@ -272,12 +272,20 @@ def inject_kc_theme():
         }}
 
         .pf-card {{
-            background: linear-gradient(160deg, {COLOR["stat_high_dim"]}, {COLOR["surface"]} 70%);
-            border: 1px solid {COLOR["stat_high_border"]};
-            border-top: 3px solid {COLOR["stat_high"]};
-            border-radius: 8px;
-            padding: 14px 16px;
-            margin-bottom: 10px;
+            /* Soft raised surface, not a boxed frame.
+               The old card had a 1px teal border AND a 3px teal bar
+               across the top, which drew a hard rectangle around every
+               panel and made the page read as a stack of boxes. Depth
+               now comes from a lifted background and a shadow — the same
+               language as the score bars — so the panel reads as a
+               surface rather than an outline. */
+            background: linear-gradient(165deg, {COLOR["surface_raised"]} 0%, {COLOR["surface"]} 100%);
+            border: 1px solid {COLOR["border_soft"]};
+            border-radius: 12px;
+            padding: 16px 18px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.35),
+                        0 8px 24px -12px rgba(0,0,0,0.5);
         }}
         .pf-card-title {{
             font-weight: 700;
