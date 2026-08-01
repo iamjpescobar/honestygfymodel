@@ -59,6 +59,11 @@ BOARDS = {
     "daily13": {"sport": "mlb", "stat": "hits", "threshold": 1},
     "hr_edge": {"sport": "mlb", "stat": "homeRuns", "threshold": 1},
     "potd": {"sport": "mlb", "stat": "xbh", "threshold": 1},
+    # Pitcher strikeouts. sport "mlb_pitching" routes to a different
+    # Stats API stat GROUP — asking for group=hitting on a pitcher
+    # returns his at-bats, not his Ks. threshold None because each pick
+    # carries its own projected line to clear.
+    "k_board": {"sport": "mlb_pitching", "stat": "strikeOuts", "threshold": None},
     "wnba_props": {"sport": "wnba", "stat": "pts", "threshold": None},
     "wnba_defense": {"sport": "wnba", "stat": "pts", "threshold": None},
 }
@@ -137,6 +142,37 @@ def _mlb_line(pid, date_str):
     return None
 
 
+def _mlb_pitching_line(pid, date_str):
+    """That pitcher's line for one date, or None if he didn't appear.
+
+    Separate from _mlb_line because the Stats API splits hitting and
+    pitching into different stat GROUPS — asking for group=hitting on a
+    pitcher returns his (meaningless) at-bats, not his strikeouts. The
+    Strikeout Board projects Ks for every probable starter and nothing
+    ever checked those projections against what actually happened, so
+    the board had no accountability at all.
+    """
+    season = int(date_str[:4])
+    try:
+        resp = requests.get(MLB_URL.format(pid=pid),
+                            params={"stats": "gameLog", "group": "pitching",
+                                    "season": season},
+                            timeout=15)
+        resp.raise_for_status()
+        stats = resp.json().get("stats") or []
+        splits = (stats[0].get("splits") if stats else []) or []
+    except Exception:
+        return None
+    for sp in splits:
+        if sp.get("date") == date_str:
+            stat = sp.get("stat", {}) or {}
+            try:
+                return {"strikeOuts": int(stat.get("strikeOuts", 0))}
+            except Exception:
+                return None
+    return None
+
+
 def _wnba_line(pid, date_str):
     try:
         resp = requests.get(ESPN_URL.format(pid=pid), timeout=15)
@@ -194,8 +230,12 @@ def grade(record):
                 if not pid:
                     pick["result"] = "dnp"
                     continue
-                line = (_wnba_line(pid, date_str) if cfg["sport"] == "wnba"
-                        else _mlb_line(pid, date_str))
+                if cfg["sport"] == "wnba":
+                    line = _wnba_line(pid, date_str)
+                elif cfg["sport"] == "mlb_pitching":
+                    line = _mlb_pitching_line(pid, date_str)
+                else:
+                    line = _mlb_line(pid, date_str)
                 time.sleep(0.12)   # be polite to the public APIs
                 if line is None:
                     # NO BOX-SCORE LINE YET — leave this pick UNGRADED.
