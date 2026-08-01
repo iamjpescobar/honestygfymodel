@@ -10,7 +10,8 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table, render_html_table
+from styles.table_style import (style_stat_table, render_html_table,
+                                team_logo_cell)
 from engines.daily_13 import (
     get_daily_13, MIN_HIT_RATE, MIN_GAMES, BOARD_SIZE,
     W_FORM, W_MATCHUP, W_CONTEXT, L15_GATE_HITS, L15_GATE_GAMES,
@@ -83,7 +84,11 @@ with card("daily13"):
                 df,
                 favor_high=["Tonight", "Form", "Matchup", "Context", "Season", "Streak"],
                 gradient=True
-            )
+            # Logos beside the abbreviations. Only possible since this
+            # table moved to HTML — st.column_config.ImageColumn works
+            # only inside st.dataframe. Text stays next to the mark so
+            # the column still reads if an image fails to load.
+            ).format({"Team": team_logo_cell(), "Opp": team_logo_cell()})
         ,
             key="daily_13_80")
         # Calibration: record tonight's board, grade past days, and
