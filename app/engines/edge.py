@@ -279,6 +279,19 @@ def _pen_profile_json(team: str, starter_pid, date_str: str) -> str:
             continue
         if starter_pid and p["id"] == starter_pid:
             continue
+        # ACTIVE 26 ONLY. get_live_team_roster deliberately returns the
+        # union of the active roster and the 40-man, so IL and optioned
+        # players still resolve elsewhere in the app. But a 40-man carries
+        # around twenty pitchers, so pooling all of them produced a
+        # "bullpen" of twelve-plus arms — real relievers, but including
+        # ones in Triple-A or on the IL who cannot pitch tonight. Their
+        # innings still moved the average.
+        #
+        # p["active"] is False for exactly those. Missing key is treated
+        # as active so an older cached roster shape degrades to the
+        # previous behaviour rather than emptying the pen.
+        if p.get("active") is False:
+            continue
         role = get_pitcher_role(p["id"])
         if role != "RP":
             # "SP" is the rotation; None means not enough outings to
