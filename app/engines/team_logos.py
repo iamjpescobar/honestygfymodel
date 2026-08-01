@@ -43,3 +43,30 @@ def logo_url_by_id(tid):
 def logo_for(name):
     """Logo URL for a full team name, or None if unresolvable."""
     return logo_url_by_id(team_id(name))
+
+
+def logo_for_any(name):
+    """Logo URL from EITHER a full team name or an abbreviation.
+
+    logo_for() maps full names only, because that's what the schedule
+    feed returns. But the boards store abbreviations — Daily 13 keeps
+    "ARI", not "Arizona Diamondbacks" — so calling logo_for() with a
+    board's value silently returned None and no logo ever appeared.
+
+    Reverses TEAM_ABBREVIATIONS to resolve the short form. Still returns
+    None when nothing matches, so a caller renders text rather than a
+    broken image.
+    """
+    if not name:
+        return None
+    direct = logo_for(name)
+    if direct:
+        return direct
+    try:
+        from engines.team_abbreviations import TEAM_ABBREVIATIONS
+        for full, abbr in TEAM_ABBREVIATIONS.items():
+            if abbr == name:
+                return logo_for(full)
+    except Exception:
+        pass
+    return None
