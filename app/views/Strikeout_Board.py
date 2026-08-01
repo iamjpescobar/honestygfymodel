@@ -10,7 +10,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table, render_html_table
+from styles.table_style import style_stat_table, render_html_table, team_logo_cell
 from engines.k_projection import get_slate_k_projections
 from engines.pitcher_trends import render_pitcher_trend
 from engines.live_sync import sync_latest_button
@@ -91,7 +91,7 @@ else:
                     df,
                     favor_high=["Proj K", "K/9", "Opp K%", "L5 avg"],
                     gradient=True,
-                ),
+                ).format({"Team": team_logo_cell(), "Opp": team_logo_cell()}),
                 key="k_board",
             )
             st.caption(
