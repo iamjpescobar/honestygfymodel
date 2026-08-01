@@ -339,7 +339,13 @@ def _daily13_json(date_str: str) -> str:
                 # Unicode blocks rather than an image or HTML: this
                 # renders identically in a dataframe cell on mobile and
                 # desktop, with no fetch and nothing to lay out.
-                "spark": "".join("\u2588" if h else "\u2581"
+                # Filled dot = hit, small dot = no hit, oldest on the
+                # left. Block characters were tried first and read as a
+                # wall of piano keys in a monospace column — the misses
+                # were as visually heavy as the hits, so the shape didn't
+                # come through at all. A dot recedes and lets the pattern
+                # of gaps do the work.
+                "spark": "".join("\u25cf" if h else "\u00b7"
                                  for h in per_game[-10:]),
                 "streak": streak,
                 "locked": locked,
