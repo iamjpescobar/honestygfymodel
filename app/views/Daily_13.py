@@ -11,7 +11,7 @@ import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
 from styles.table_style import (style_stat_table, render_html_table,
-                                team_logo_cell)
+                                team_logo_cell, player_cell, form_dots)
 from engines.daily_13 import (
     get_daily_13, MIN_HIT_RATE, MIN_GAMES, BOARD_SIZE,
     W_FORM, W_MATCHUP, W_CONTEXT, L15_GATE_HITS, L15_GATE_GAMES,
@@ -59,7 +59,11 @@ with card("daily13"):
     else:
         df = pd.DataFrame([
             {
-                "Player": ("\U0001F512 " if r.get("locked") else "") + r["name"],
+                # Emoji removed: it rendered at a different size and
+                # baseline than the monospace face, so every locked row
+                # sat slightly off and the column looked ragged. The HOT
+                # badge is applied by player_cell() below instead.
+                "Player": r["name"],
                 "Team": r["team"],
                 "Opp": r.get("opp", "\u2014"),
                 "Tonight": f'{r["tonight"]:.1f}',
@@ -88,7 +92,16 @@ with card("daily13"):
             # table moved to HTML — st.column_config.ImageColumn works
             # only inside st.dataframe. Text stays next to the mark so
             # the column still reads if an image fails to load.
-            ).format({"Team": team_logo_cell(), "Opp": team_logo_cell()})
+            ).format({
+                "Team": team_logo_cell(),
+                "Opp": team_logo_cell(),
+                # Locked bats get a HOT badge on the same baseline as the
+                # name, rather than an emoji that shifts the row.
+                "Player": player_cell({r["name"] for r in rows if r.get("locked")}),
+                # Hits in the positive colour, misses receding — the run
+                # of identical grey dots read as debris.
+                "Last 10": form_dots(),
+            })
         ,
             key="daily_13_80")
         # Calibration: record tonight's board, grade past days, and
