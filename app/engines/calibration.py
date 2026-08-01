@@ -82,9 +82,15 @@ FINALIZE_AFTER_DAYS = 3
 
 BOARDS = {
     "daily13": {"sport": "mlb", "label": "Daily 13", "stat": "hits",
-                "threshold": 1, "question": "got a hit"},
+                "threshold": 1, "question": "got a hit",
+                # Which measured league rate this board must BEAT to be
+                # worth anything. Without it, "65% got a hit" reads as a
+                # strong result when the league-average starter does
+                # roughly the same — see build_baselines in precompute.py.
+                "baseline_stat": "hits"},
     "hr_edge": {"sport": "mlb", "label": "HR Edge (top 5)", "stat": "homeRuns",
-                "threshold": 1, "question": "hit a home run"},
+                "threshold": 1, "question": "hit a home run",
+                "baseline_stat": "homeRuns"},
     # Player of the Day is a HOME RUN play, so it's graded on home
     # runs. Grading it on hits would score it against a goal it isn't
     # trying to achieve — a 0-for-4 with two hard-hit flyouts is a
@@ -93,7 +99,8 @@ BOARDS = {
     # doubles + triples + home runs. Grading it on hits or homers alone
     # would score it against a goal it isn't trying to achieve.
     "potd": {"sport": "mlb", "label": "Player of the Day", "stat": "xbh",
-             "threshold": 1, "question": "recorded an extra-base hit"},
+             "threshold": 1, "question": "recorded an extra-base hit",
+             "baseline_stat": "xbh"},
     # WNBA boards grade against a per-pick LINE rather than a fixed
     # threshold — "did he clear the number this board implied" — so the
     # threshold here is a default the pick can override.
@@ -463,10 +470,80 @@ def summary():
             misses += day_miss
             dnp += day_dnp
         total = hits + misses
+        rate = round(hits / total * 100, 1) if total else None
+
+        # BASELINE COMPARISON — the number that decides whether any of
+        # this is worth anything.
+        #
+        # A hit rate on its own is not evidence of skill. The
+        # league-average starter gets a hit about two nights in three, so
+        # a board reporting "65% got a hit" may be doing nothing at all.
+        # Reporting the rate without the baseline beside it is how a tool
+        # like this manufactures false confidence, and people bet real
+        # money on that.
+        base = _baseline_for(cfg.get("baseline_stat"))
+        edge = round(rate - base, 1) if (rate is not None and base is not None) else None
         out[board] = {
             "label": cfg["label"], "question": cfg["question"],
             "hits": hits, "total": total, "dnp": dnp,
-            "rate": round(hits / total * 100, 1) if total else None,
+            "rate": rate,
             "days": dates,
+            "baseline": base,
+            "edge": edge,
+            # Is the gap real, or is the sample just small? See
+            # _edge_verdict — with a few dozen picks the honest answer is
+            # almost always "too early to tell", and saying so is the
+            # whole point.
+            "verdict": _edge_verdict(hits, total, base),
         }
     return out
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def _baselines():
+    """League baselines measured by precompute.build_baselines.
+
+    Returns {} when the nightly hasn't shipped them yet — callers then
+    show no comparison rather than inventing one.
+    """
+    try:
+        path = _DATA_DIR / "statcast" / "baselines.json"
+        return json.loads(path.read_text()) or {}
+    except Exception:
+        return {}
+
+
+def _baseline_for(stat):
+    if not stat:
+        return None
+    v = _baselines().get(stat)
+    return float(v) if isinstance(v, (int, float)) else None
+
+
+def _edge_verdict(hits, total, base):
+    """Plain-language read on whether a board is beating its baseline.
+
+    Deliberately conservative. With 15 or 40 picks the honest answer is
+    "not enough data yet", and this says so instead of dressing up noise
+    as an edge — a board looking good on 20 picks is the single easiest
+    way for this tool to cost someone money.
+
+    Uses a normal approximation to the binomial: if the observed rate is
+    within two standard errors of the baseline, it is not distinguishable
+    from chance, and we say exactly that.
+    """
+    if not total or base is None:
+        return "not enough graded picks yet"
+    p0 = base / 100.0
+    se = (p0 * (1 - p0) / total) ** 0.5
+    if se == 0:
+        return "not enough graded picks yet"
+    z = (hits / total - p0) / se
+    # Sample so small that even a large gap proves nothing.
+    if total < 30:
+        return f"only {total} graded picks — far too few to judge"
+    if z > 2:
+        return "beating the league baseline (unlikely to be luck)"
+    if z < -2:
+        return "below the league baseline"
+    return "no measurable edge over the baseline yet"
