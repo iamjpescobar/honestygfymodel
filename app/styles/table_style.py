@@ -357,3 +357,40 @@ def render_html_table(styler, key: str = ""):
 
     html = styler.to_html(table_uuid=f"lc{key}") if hasattr(styler, "to_html") else str(styler)
     st.markdown(f'<div class="lc-tbl-wrap">{html}</div>', unsafe_allow_html=True)
+
+
+def score_bar(color_key: str = "gold"):
+    """Formatter that renders a 0-100 score as an inline filled bar.
+
+    Replaces st.column_config.ProgressColumn, which only exists inside
+    st.dataframe — and st.dataframe brings drag-to-reorder columns with
+    no way to disable it (streamlit#11222), which on a phone turns any
+    scroll into a column shuffle. The bars were the only reason the
+    lineup table was still on that widget.
+
+    Returns a function suitable for Styler.format(). pandas does not
+    escape formatter output, so the returned markup renders as markup.
+
+    Missing values render as "N/A", never as a zero-width bar: an empty
+    bar reads as a real score of zero, which is the worst possible
+    reading of "we don't know".
+    """
+    fill = COLOR.get(color_key, COLOR["gold"])
+
+    def _fmt(v):
+        if v is None or (isinstance(v, float) and pd.isna(v)):
+            return "N/A"
+        try:
+            pct = max(0.0, min(100.0, float(v)))
+        except (TypeError, ValueError):
+            return "N/A"
+        return (
+            f'<div style="position:relative; min-width:46px; height:17px; '
+            f'line-height:17px;">'
+            f'<div style="position:absolute; left:0; top:0; bottom:0; '
+            f'width:{pct:.0f}%; background:{fill}; opacity:0.32; '
+            f'border-radius:3px;"></div>'
+            f'<span style="position:relative; font-weight:700;">{pct:.0f}</span>'
+            f'</div>'
+        )
+    return _fmt
