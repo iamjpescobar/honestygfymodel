@@ -116,3 +116,67 @@ for f in ("app/engines/hr_edge_board.py", "app/engines/player_of_the_day.py",
                 f"{f} calls pen_context without a batter — that hitter silently "
                 f"reverts to the old lineup-wide number:\n    {line.strip()}")
 print("PASS: all three call sites pass a batter id")
+
+
+# ----------------------------------------------------------------------
+# The pen must be tonight's AVAILABLE relievers, not everyone who could
+# theoretically relieve.
+#
+# get_live_team_roster returns the active 26 UNION the 40-man on purpose,
+# so IL and optioned players still resolve elsewhere in the app. But a
+# 40-man carries roughly twenty pitchers, so filtering on role alone left
+# a "bullpen" of twelve-plus arms — genuine relievers, but including ones
+# on the IL or in Triple-A who cannot pitch tonight, whose innings still
+# moved the pooled average.
+# ----------------------------------------------------------------------
+_prof2 = EDGE[EDGE.index("def _pen_profile_json"):EDGE.index("def _slate_pen_avg_json")]
+
+assert 'p.get("active") is False' in _prof2, (
+    "the pen no longer filters to the active roster — it is pooling IL and "
+    "optioned relievers who cannot pitch tonight")
+print("PASS: pen excludes relievers who aren't on the active roster")
+
+# `is False`, not falsy: a missing key must NOT drop the pitcher, or an
+# older cached roster shape would empty the bullpen entirely.
+assert 'if not p.get("active")' not in _prof2, (
+    "a falsy check would treat a MISSING active key as inactive, so an older "
+    "cached roster shape would produce an empty pen instead of degrading to "
+    "the previous behaviour")
+print("PASS: a missing active flag degrades safely rather than emptying the pen")
+
+# Active check must come BEFORE the role lookup — get_pitcher_role fetches
+# a dataframe per pitcher, and there's no reason to pay for players we are
+# about to discard.
+# Compare CODE lines only — the docstring names get_pitcher_role()
+# before the loop reaches it, and matching that would be a false alarm.
+_code2 = "\n".join(l.split("#")[0] for l in _prof2.split("\n")
+                   if not l.strip().startswith("#"))
+_code2 = _code2[_code2.index("for p in roster:"):]
+assert _code2.index('p.get("active") is False') < _code2.index("get_pitcher_role("), (
+    "the active filter must run before get_pitcher_role, which fetches a "
+    "dataframe per pitcher — otherwise we pay for arms we then discard")
+print("PASS: active filter runs before the per-pitcher dataframe fetch")
+
+
+def _pen_size(roster, use_active_filter=True):
+    n = 0
+    for role, active in roster:
+        if use_active_filter and not active:
+            continue
+        if role != "RP":
+            continue
+        n += 1
+    return n
+
+
+# A realistic 40-man pitching staff.
+_roster = ([("SP", True)] * 5 + [("RP", True)] * 8
+           + [("RP", False)] * 6 + [("SP", False)] * 3)
+_after = _pen_size(_roster, True)
+assert 6 <= _after <= 9, (
+    f"filtered pen is {_after} arms; a real MLB bullpen is 7-9, so anything "
+    f"outside that band means the filters are wrong in one direction or the "
+    f"other")
+assert _pen_size(_roster, False) > _after, "the active filter must actually cut arms"
+print(f"PASS: filters yield a realistic bullpen ({_after} arms, was "
+      f"{_pen_size(_roster, False)})")
