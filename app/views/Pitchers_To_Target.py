@@ -81,7 +81,16 @@ with card("targets"):
                 df,
                 favor_high=["HR", "HR/9", "ISO", "SLG", "Brl%", "HH%", "FB%", "Meatball%"],
                 gradient=True,
-            ).format({"Team": team_logo_cell(), "Opp": team_logo_cell()}),
+            # Numeric formats restated: Styler.format REPLACES the
+            # formatter set, so adding the logo columns alone dropped
+            # every number to raw float repr ("0.214000" not "0.214").
+            ).format({
+                "Team": team_logo_cell(), "Opp": team_logo_cell(),
+                "IP": "{:.1f}", "HR": "{:.0f}", "HR/9": "{:.2f}",
+                "ISO": "{:.3f}", "SLG": "{:.3f}",
+                "Brl%": "{:.1f}", "HH%": "{:.1f}", "FB%": "{:.1f}",
+                "Meatball%": "{:.1f}",
+            }, na_rep="N/A"),
             key="pitchers_to_target",
         )
         st.caption(
