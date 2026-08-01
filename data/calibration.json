@@ -549,6 +549,116 @@
       ],
       "graded": false,
       "source": "ci"
+    },
+    "2026-08-01": {
+      "picks": [
+        {
+          "id": "686948",
+          "name": "Drake Baldwin",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "680757",
+          "name": "Steven Kwan",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "693304",
+          "name": "Nick Gonzales",
+          "team": "PIT",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664983",
+          "name": "Jake McCarthy",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664034",
+          "name": "Ty France",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686469",
+          "name": "Vinnie Pasquantino",
+          "team": "KC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "679845",
+          "name": "Nick Loftin",
+          "team": "KC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "680777",
+          "name": "Ryan Jeffers",
+          "team": "MIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "521692",
+          "name": "Salvador Perez",
+          "team": "KC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "647304",
+          "name": "Josh Naylor",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "592663",
+          "name": "J.T. Realmuto",
+          "team": "PHI",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701678",
+          "name": "Hao-Yu Lee",
+          "team": "DET",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663968",
+          "name": "Jake Mangum",
+          "team": "PIT",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -620,6 +730,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-01": {
+      "picks": [
+        {
+          "id": "695506",
+          "name": "Jac Caglianone",
+          "team": "Kansas City Royals",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -806,6 +930,142 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    }
+  },
+  "wnba_props": {
+    "2026-08-01": {
+      "picks": [
+        {
+          "id": "4066533",
+          "name": "S. Ionescu",
+          "team": "New York Liberty",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "4594786",
+          "name": "S. Taylor",
+          "team": "Chicago Sky",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "3149391",
+          "name": "A. Wilson",
+          "team": "Las Vegas Aces",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "2998938",
+          "name": "K. Copper",
+          "team": "Phoenix Mercury",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "2529137",
+          "name": "N. Cloud",
+          "team": "Chicago Sky",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "2998928",
+          "name": "B. Stewart",
+          "team": "New York Liberty",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "869",
+          "name": "D. Bonner",
+          "team": "Phoenix Mercury",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "3919496",
+          "name": "V. Ayayi",
+          "team": "Phoenix Mercury",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "2529122",
+          "name": "C. Gray",
+          "team": "Las Vegas Aces",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "2987869",
+          "name": "J. Loyd",
+          "team": "Las Vegas Aces",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    }
+  },
+  "wnba_defense": {
+    "2026-08-01": {
+      "picks": [
+        {
+          "id": "4398776",
+          "name": "N. Smith",
+          "team": "Las Vegas Aces",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "2998938",
+          "name": "K. Copper",
+          "team": "Phoenix Mercury",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "3149391",
+          "name": "A. Wilson",
+          "team": "Las Vegas Aces",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "4066533",
+          "name": "S. Ionescu",
+          "team": "New York Liberty",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "5274110",
+          "name": "M. Akoa Makani",
+          "team": "Phoenix Mercury",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
