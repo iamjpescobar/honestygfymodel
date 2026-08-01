@@ -384,19 +384,35 @@ def score_bar(color_key: str = "gold"):
             pct = max(0.0, min(100.0, float(v)))
         except (TypeError, ValueError):
             return "N/A"
-        # Full cell width, not a 46px stub: at min-width the fill was a
-        # few pixels wide and length carried no information. The track
-        # behind it makes the empty portion visible too, so you can read
-        # the proportion rather than guessing at a floating blob.
+        # A real bar, not a flat block of colour.
+        #
+        # Three pieces, and each one does a job:
+        #   TRACK   an inset dark channel with a hairline border, so the
+        #           empty portion is visible and the bar has a defined
+        #           length to be read against. A floating fill with no
+        #           track gives the eye nothing to measure from.
+        #   FILL    a gradient along the bar rather than one flat tone.
+        #           Flat fills of two similar scores look identical at a
+        #           glance; a gradient gives the length itself a shape.
+        #   CAP     a bright 2px leading edge. This is what makes the
+        #           value readable without looking at the number — the
+        #           eye lands on the cap position, and it separates a 78
+        #           from an 82 far better than fill colour alone.
         return (
-            f'<div style="position:relative; width:100%; min-width:58px; '
-            f'height:18px; line-height:18px; border-radius:3px; '
-            f'background:{COLOR["stat_mid_dim"]};">'
+            f'<div style="position:relative; width:100%; min-width:62px; '
+            f'height:19px; line-height:19px; border-radius:4px; '
+            f'background:{COLOR["bg"]}; '
+            f'box-shadow:inset 0 0 0 1px {COLOR["stat_mid_dim"]}; '
+            f'overflow:hidden;">'
             f'<div style="position:absolute; left:0; top:0; bottom:0; '
-            f'width:{pct:.0f}%; background:{fill}; opacity:0.55; '
-            f'border-radius:3px;"></div>'
+            f'width:{pct:.0f}%; border-radius:3px; '
+            f'background:linear-gradient(90deg, {fill}44 0%, {fill}8C 100%);'
+            f'"></div>'
+            f'<div style="position:absolute; top:1px; bottom:1px; '
+            f'left:calc({pct:.0f}% - 2px); width:2px; background:{fill}; '
+            f'border-radius:1px;"></div>'
             f'<span style="position:relative; font-weight:700; '
-            f'padding-right:5px;">{pct:.0f}</span>'
+            f'padding-left:7px;">{pct:.0f}</span>'
             f'</div>'
         )
     return _fmt
