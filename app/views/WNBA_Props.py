@@ -102,7 +102,9 @@ with card("wprops"):
         render_html_table(
             style_stat_table(
                 df,
-                favor_high=["Score", "Form", "Matchup", "Pace"],
+                # "Score" removed — it gets a bar. A gradient behind a
+                # bar is a second encoding of the same number.
+                favor_high=["Form", "Matchup", "Pace"],
                 gradient=True
             ).format({"Score": score_bar("stat_high")})
         ,
