@@ -193,7 +193,29 @@ def _rows_wnba_defense():
             for r in (rows or [])[:5] if r.get("id")]
 
 
+def _rows_k_board():
+    """Tonight's top 5 strikeout projections, or [].
+
+    The Strikeout Board projected Ks for every probable starter and
+    NOTHING ever checked those projections against what actually
+    happened — no logged picks, no grading, no record. A board that makes
+    a number every day and is never scored is the easiest place for a
+    model to be quietly wrong for months.
+
+    Each pick carries its own projected line, so grading asks the honest
+    question: did he clear the number this board published?
+    """
+    from engines.k_projection import get_slate_k_projections
+    rows = get_slate_k_projections("season") or []
+    ranked = sorted((r for r in rows if r.get("pid") and r.get("proj")),
+                    key=lambda r: -(r.get("proj") or 0))[:5]
+    return [{"id": r.get("pid"), "name": r.get("pitcher"), "team": r.get("team"),
+             "stat": "strikeOuts", "line": r.get("proj")}
+            for r in ranked]
+
+
 BUILDERS = {"daily13": _rows_daily13, "potd": _rows_potd,
+            "k_board": _rows_k_board,
             "hr_edge": _rows_hr_edge, "wnba_props": _rows_wnba_props,
             "wnba_defense": _rows_wnba_defense}
 
