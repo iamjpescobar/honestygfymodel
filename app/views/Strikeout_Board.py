@@ -91,7 +91,16 @@ else:
                     df,
                     favor_high=["Proj K", "K/9", "Opp K%", "L5 avg"],
                     gradient=True,
-                ).format({"Team": team_logo_cell(), "Opp": team_logo_cell()}),
+                # The numeric formats have to be RESTATED here. Styler.format
+                # replaces the formatter set, so adding the logo columns
+                # alone dropped every number back to raw float repr —
+                # "10.370000" instead of "10.37".
+                ).format({
+                    "Team": team_logo_cell(), "Opp": team_logo_cell(),
+                    "IP/GS": "{:.1f}", "K/9": "{:.2f}",
+                    "Opp K%": "{:.1f}", "L5 avg": "{:.1f}",
+                    "Proj K": "{:.1f}",
+                }, na_rep="N/A"),
                 key="k_board",
             )
             st.caption(
