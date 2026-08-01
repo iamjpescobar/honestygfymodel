@@ -101,10 +101,15 @@ if not pen:
 
 # ---------------------------------------------------------------- totals
 _tot = pen_totals(pen)
+# logo_for returns a URL STRING, not markup. Interpolating it bare printed
+# the raw https://... next to the team name instead of showing the logo.
+_logo_url = logo_for(team)
+_logo_img = (f'<img src="{_logo_url}" style="height:22px; '
+             f'vertical-align:-4px; margin-right:8px;">') if _logo_url else ""
 with card("pen_totals"):
     st.markdown(
         f'<div class="pf-card-title" style="color:{COLOR["gold"]};">'
-        f'{logo_for(team) or ""} {team} bullpen — {_tot.get("arms", 0)} available arms'
+        f'{_logo_img}{team} bullpen — {_tot.get("arms", 0)} available arms'
         f'</div>',
         unsafe_allow_html=True,
     )
