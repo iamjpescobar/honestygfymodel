@@ -9,7 +9,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table
+from styles.table_style import style_stat_table, render_html_table
 from engines.wnba_props import (
     build_props, STATS, MIN_GP, MIN_MPG, MIN_LOG,
     W_CONSISTENCY, W_FORM, W_MATCHUP, W_PACE,
@@ -99,15 +99,14 @@ with card("wprops"):
             }
             for r in top
         ])
-        st.dataframe(
+        render_html_table(
             style_stat_table(
                 df,
                 favor_high=["Score", "Form", "Matchup", "Pace"],
-                gradient=True,
-            ),
-            width="stretch",
-            height=min(56 + 35 * len(df), 800),
-        )
+                gradient=True
+            )
+        ,
+            key="wnba_props_101")
 
         # Calibration: log tonight's top picks and show the record.
         try:
