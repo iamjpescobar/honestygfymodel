@@ -196,7 +196,24 @@ def _save(data):
             for day, entry in days.items():
                 pub = pub_days.get(day)
                 if pub is not None and _graded_n(pub) >= _graded_n(entry):
-                    continue  # the pipeline already has this day, as good or better
+                    # The pipeline already has this day graded as well or
+                    # better — EXCEPT if we hold odds it doesn't.
+                    #
+                    # Odds are entered by hand here and the pipeline never
+                    # writes them, so dropping the day on grade-count
+                    # alone silently threw every price away the moment it
+                    # was typed: set_odds returned True, the number
+                    # vanished, and the profit columns stayed empty with
+                    # no error anywhere.
+                    _pub_odds = {str(x.get("id")): x.get("odds")
+                                 for x in (pub.get("picks") or [])}
+                    _has_new_odds = any(
+                        x.get("odds") is not None
+                        and _pub_odds.get(str(x.get("id"))) != x.get("odds")
+                        for x in (entry.get("picks") or [])
+                    )
+                    if not _has_new_odds:
+                        continue
                 local_only.setdefault(board, {})[day] = entry
 
         _LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
