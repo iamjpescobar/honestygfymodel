@@ -25,7 +25,8 @@ import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
 from auth import require_admin
-from engines.calibration import summary, grade_pending, reopen_recent_days, BOARDS, _load, _LOG_PATH
+from engines.calibration import (summary, grade_pending, reopen_recent_days,
+                                 set_odds, BOARDS, _load, _LOG_PATH)
 
 inject_kc_theme()
 require_admin()
@@ -113,6 +114,16 @@ with card("cal_summary"):
             # nothing: matching the baseline means the board added zero.
             "Edge": (f'{s["edge"]:+.1f}' if s.get("edge") is not None else "\u2014"),
             "Verdict": s.get("verdict", "\u2014"),
+            # Profit answers a DIFFERENT question than hit rate, and it's
+            # the one that decides whether a board was worth betting.
+            # 65% loses money all season at -200 and prints at -150.
+            "Units": (f'{s["profit"]["units"]:+.2f}'
+                      if s.get("profit", {}).get("priced") else "\u2014"),
+            "ROI": (f'{s["profit"]["roi"]:+.1f}%'
+                    if s.get("profit", {}).get("priced") else "\u2014"),
+            "Break-even": (f'{s["profit"]["breakeven"]:.1f}%'
+                           if s.get("profit", {}).get("priced") else "\u2014"),
+            "Priced": s.get("profit", {}).get("priced", 0),
             "DNP": s.get("dnp", 0),
             "Days logged": len(data.get(board, {})),
         })
@@ -169,6 +180,34 @@ for board, cfg in BOARDS.items():
                          + ("\u2026" if len(picks) > 6 else ""),
             })
         st.dataframe(pd.DataFrame(detail), width="stretch", hide_index=True)
+
+        # ---- price entry -------------------------------------------
+        # Typed in, not fetched. Nothing here has a sportsbook feed, and
+        # a scraped consensus would be the wrong number anyway: profit
+        # depends on the price YOU took, not on a market average.
+        st.caption(
+            "Enter the American odds you actually got (e.g. -180 or +320). "
+            "Picks left at 0 are EXCLUDED from the profit figures rather "
+            "than assumed to be even money — an assumed price would invent "
+            "a profit that never happened."
+        )
+        _day = st.selectbox(
+            "Day to price", sorted(days.keys(), reverse=True),
+            key=f"odds_day_{board}", label_visibility="collapsed",
+        )
+        for _pk in (days.get(_day, {}).get("picks", []) or []):
+            _c1, _c2 = st.columns([3, 1])
+            with _c1:
+                st.caption(f'{_pk.get("name", "?")} · {_pk.get("result") or "pending"}')
+            with _c2:
+                _cur = int(_pk["odds"]) if _pk.get("odds") else 0
+                _new = st.number_input(
+                    "odds", value=_cur, step=5, format="%d",
+                    key=f'odds_{board}_{_day}_{_pk.get("id")}',
+                    label_visibility="collapsed",
+                )
+                if _new != _cur:
+                    set_odds(board, _day, _pk.get("id"), _new or None)
 
 with card("cal_storage"):
     st.markdown(
