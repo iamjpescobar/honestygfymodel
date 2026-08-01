@@ -287,16 +287,42 @@ div[data-testid="column"]:has(.lc-tbl-wrap) {{
   font-size: 13px;
 }}
 .lc-tbl-wrap th, .lc-tbl-wrap td {{
-  padding: 6px 10px;
+  /* Roomier rows and a hairline separator instead of hard-edged blocks.
+     The flat, tightly-packed grid was the other half of the dated look —
+     the score bars read as modern because they have depth and breathing
+     room, and the cells around them had neither. */
+  padding: 9px 12px;
   text-align: right;
   white-space: nowrap;
   background-color: {BG};
+  border-bottom: 1px solid {COLOR["border"]}55;
 }}
+/* Numbers in monospace so columns of digits line up; everything else
+   inherits the sans face. This is the split the app always intended —
+   see the note in .streamlit/config.toml. */
+.lc-tbl-wrap td {{
+  font-variant-numeric: tabular-nums;
+}}
+.lc-tbl-wrap tbody tr {{
+  transition: background 0.12s ease;
+}}
+.lc-tbl-wrap tbody tr:hover td {{
+  /* Row highlight on hover — makes a wide table trackable across its
+     full width without a ruler. */
+  background-color: {COLOR["surface"]} !important;
+}}
+.lc-tbl-wrap tbody tr:last-child td {{ border-bottom: none; }}
 .lc-tbl-wrap thead th {{
-  color: {COLOR['gold']};
-  font-weight: 700;
+  color: {COLOR['text_muted']};
+  font-weight: 600;
   text-transform: uppercase;
-  font-size: 10.5px;
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  padding-bottom: 7px;
+  /* Muted grey rather than bright gold. A header row shouting in gold
+     competes with the data for attention; the data should win. The
+     underline does the separating instead of the colour. */
+  border-bottom: 1px solid {COLOR["border"]};
   position: sticky;
   top: 0;
   z-index: 2;
