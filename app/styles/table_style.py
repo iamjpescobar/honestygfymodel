@@ -411,8 +411,14 @@ def score_bar(color_key: str = "gold"):
             f'<div style="position:absolute; top:1px; bottom:1px; '
             f'left:calc({pct:.0f}% - 2px); width:2px; background:{fill}; '
             f'border-radius:1px;"></div>'
-            f'<span style="position:relative; font-weight:700; '
-            f'padding-left:7px;">{pct:.0f}</span>'
+            # Number sits on the RIGHT with its own padding. Left-aligned
+            # it sat underneath the fill and the leading cap sliced
+            # through the digits — a 91 rendered as "9|". Right-aligned it
+            # is always clear of the cap except at a full 100, where the
+            # cap is at the cell edge anyway.
+            f'<span style="position:relative; float:right; font-weight:700; '
+            f'padding-right:7px; text-shadow:0 1px 2px {COLOR["bg"]};">'
+            f'{pct:.0f}</span>'
             f'</div>'
         )
     return _fmt
