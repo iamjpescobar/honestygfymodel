@@ -45,6 +45,30 @@ def logo_for(name):
     return logo_url_by_id(team_id(name))
 
 
+@st.cache_data(ttl=86400, max_entries=1, show_spinner=False)
+def _abbr_to_logo_json() -> str:
+    """One prebuilt {abbreviation: logo_url} map.
+
+    Built ONCE per day instead of per lookup. The first version of
+    logo_for_any walked TEAM_ABBREVIATIONS calling logo_for() on each
+    entry until it found a match, and every one of those calls ran
+    json.loads() over the whole team map. A thirty-row table with two
+    team columns therefore did hundreds of JSON parses on every rerun —
+    every filter change, every scroll-triggered rerender.
+    """
+    try:
+        from engines.team_abbreviations import TEAM_ABBREVIATIONS
+        ids = json.loads(_team_ids_json())
+    except Exception:
+        return json.dumps({})
+    out = {}
+    for full, abbr in TEAM_ABBREVIATIONS.items():
+        url = logo_url_by_id(ids.get(full))
+        if url:
+            out[abbr] = url
+    return json.dumps(out)
+
+
 def logo_for_any(name):
     """Logo URL from EITHER a full team name or an abbreviation.
 
@@ -63,10 +87,7 @@ def logo_for_any(name):
     if direct:
         return direct
     try:
-        from engines.team_abbreviations import TEAM_ABBREVIATIONS
-        for full, abbr in TEAM_ABBREVIATIONS.items():
-            if abbr == name:
-                return logo_for(full)
+        # One cached dict lookup, not a loop of JSON parses.
+        return json.loads(_abbr_to_logo_json()).get(name)
     except Exception:
-        pass
-    return None
+        return None
