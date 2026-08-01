@@ -92,7 +92,10 @@ with card("daily13"):
         render_html_table(
             style_stat_table(
                 df,
-                favor_high=["Tonight", "Form", "Matchup", "Context", "Season", "Streak"],
+                # "Tonight" removed — it gets a bar (see .format below).
+                # A gradient behind a bar is a second encoding of the
+                # same number and it destroys the bar's track.
+                favor_high=["Form", "Matchup", "Context", "Season", "Streak"],
                 gradient=True
             # Logos beside the abbreviations. Only possible since this
             # table moved to HTML — st.column_config.ImageColumn works
