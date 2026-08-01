@@ -106,13 +106,20 @@ try:
     grade_pending()
     _cal = summary().get("potd", {})
     if _cal.get("total"):
-        st.caption(
-            f'Tracked record \u2014 this pick {_cal["question"]} '
-            f'{_cal["hits"]}/{_cal["total"]} ({_cal["rate"]}%) over the graded period'
-            + (f' \u00b7 {_cal["dnp"]} did not play (excluded)' if _cal.get("dnp") else "")
-            + ". League-wide, a given hitter homers in roughly 1 game in 8, so a "
-              "sustained rate above that is the bar this pick is trying to clear."
-        )
+        # The old copy here asserted "roughly 1 game in 8" for a HOME RUN
+        # — wrong twice over. The true rate is closer to 1 in 20, and this
+        # board is graded on EXTRA-BASE HITS, not homers, so it quoted an
+        # inflated bar for the wrong statistic. The baseline is now
+        # measured nightly from league Statcast data instead of asserted.
+        _base = _cal.get("baseline")
+        _cap = (f'Tracked record \u2014 this pick {_cal["question"]} '
+                f'{_cal["hits"]}/{_cal["total"]} ({_cal["rate"]}%) over the graded period')
+        if _base is not None:
+            _cap += (f' \u00b7 league baseline {_base:.1f}% '
+                     f'({_cal["edge"]:+.1f}) \u00b7 {_cal["verdict"]}')
+        if _cal.get("dnp"):
+            _cap += f' \u00b7 {_cal["dnp"]} did not play (excluded)'
+        st.caption(_cap)
     else:
         st.caption("Tracked record \u2014 tonight's pick is logged; home-run results "
                    "appear here once the games are final.")
