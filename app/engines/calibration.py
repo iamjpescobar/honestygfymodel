@@ -101,6 +101,13 @@ BOARDS = {
     "potd": {"sport": "mlb", "label": "Player of the Day", "stat": "xbh",
              "threshold": 1, "question": "recorded an extra-base hit",
              "baseline_stat": "xbh"},
+    # No baseline_stat: this board is graded against ITS OWN published
+    # projection, not a league rate. "Did he beat the number we printed"
+    # has no league-average equivalent, and inventing one would be worse
+    # than showing none.
+    "k_board": {"sport": "mlb_pitching", "label": "Strikeout Board (top 5)",
+                "stat": "strikeOuts", "threshold": None,
+                "question": "cleared this board's projected strikeouts"},
     # WNBA boards grade against a per-pick LINE rather than a fixed
     # threshold — "did he clear the number this board implied" — so the
     # threshold here is a default the pick can override.
