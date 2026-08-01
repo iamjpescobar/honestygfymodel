@@ -9,7 +9,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table, render_html_table
+from styles.table_style import style_stat_table, render_html_table, score_bar
 from engines.wnba_props import (
     build_props, STATS, MIN_GP, MIN_MPG, MIN_LOG,
     W_CONSISTENCY, W_FORM, W_MATCHUP, W_PACE,
@@ -104,7 +104,7 @@ with card("wprops"):
                 df,
                 favor_high=["Score", "Form", "Matchup", "Pace"],
                 gradient=True
-            )
+            ).format({"Score": score_bar("stat_high")})
         ,
             key="wnba_props_101")
 
