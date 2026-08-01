@@ -298,6 +298,71 @@ HRM_MIN_PA = 50          # below this a rate is noise, not a signal
 HRM_MIN_BBE = 30
 
 
+def build_baselines(season_df: pd.DataFrame) -> bool:
+    """Measure what a RANDOM starting hitter does, league-wide.
+
+    WHY THIS EXISTS. A board that reports "65% got a hit" tells you
+    nothing on its own, because the league-average starter also gets a
+    hit most nights. Without the baseline beside it, a number that merely
+    matches chance reads as a winning model — which is the most expensive
+    kind of false confidence a tool like this can create.
+
+    Every rate here is MEASURED from the same league-wide pitch data the
+    picks are built from. Nothing is asserted, assumed, or copied from a
+    reference site: if the number moves, it moved because the league
+    moved.
+
+    Definition, kept deliberately strict: a "player-game" is one batter
+    in one game with at least one plate appearance that reached a
+    terminal event. That's the same population the boards pick from, so
+    the comparison is like-for-like. It is NOT every batter on the roster
+    and not pinch-hit cameos with a single PA — including those would
+    depress the baseline and flatter every board.
+    """
+    need = {"batter", "game_pk", "events"}
+    if not need.issubset(season_df.columns):
+        print("  Baselines skipped — missing required columns.")
+        return False
+
+    df = season_df[season_df["events"].notna()].copy()
+    if df.empty:
+        print("  Baselines skipped — no terminal events in the pull.")
+        return False
+
+    ev = df["events"].astype(str)
+    df["_hit"] = ev.isin(["single", "double", "triple", "home_run"])
+    df["_hr"] = ev.eq("home_run")
+    df["_xbh"] = ev.isin(["double", "triple", "home_run"])
+
+    g = df.groupby(["batter", "game_pk"]).agg(
+        pa=("events", "size"), hit=("_hit", "max"),
+        hr=("_hr", "max"), xbh=("_xbh", "max"))
+
+    # 3+ PA ≈ someone who actually started. A 1-PA pinch hitter is not
+    # the population any board picks from, and counting them would drag
+    # every baseline down and make the boards look better than they are.
+    starters = g[g["pa"] >= 3]
+    if len(starters) < 500:
+        print(f"  Baselines skipped — only {len(starters)} player-games.")
+        return False
+
+    out = {
+        "hits": round(float(starters["hit"].mean()) * 100, 1),
+        "homeRuns": round(float(starters["hr"].mean()) * 100, 1),
+        "xbh": round(float(starters["xbh"].mean()) * 100, 1),
+        "player_games": int(len(starters)),
+        "min_pa": 3,
+        "note": ("Share of league player-games (3+ PA) with at least one of "
+                 "each outcome, measured from this season's own Statcast "
+                 "pitch data."),
+    }
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    (DATA_DIR / "baselines.json").write_text(json.dumps(out, indent=2))
+    print(f"  Baselines: hit {out['hits']}% · HR {out['homeRuns']}% · "
+          f"XBH {out['xbh']}% over {out['player_games']:,} player-games")
+    return True
+
+
 def build_hr_metrics(season_df: pd.DataFrame) -> bool:
     need = {"batter", "launch_speed", "launch_angle", "events", "type"}
     if not need.issubset(season_df.columns):
@@ -654,6 +719,9 @@ def main():
 
     print("Building xHR probability table...")
     xhr_ok = build_xhr_table(season_df)
+
+    print("Measuring league baselines (what a random starter does)...")
+    build_baselines(season_df)
 
     print("Building league-wide HR metrics...")
     hrm_ok = build_hr_metrics(season_df)
