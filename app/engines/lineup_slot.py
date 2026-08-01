@@ -134,3 +134,31 @@ def league_pa_per_game():
         return json.loads(path.read_text()).get("pa_per_team_game")
     except Exception:
         return None
+
+def pen_exposure(slot, pa_per_team_game, starter_ip):
+    """Share of this slot's plate appearances that come against the PEN.
+
+    The whole reason the bullpen matters differently by lineup position.
+    A starter who averages 5.1 IP leaves roughly 3.2 innings to the pen,
+    and the top of the order turns over more often in those innings than
+    the bottom does — so the leadoff hitter carries meaningfully more pen
+    exposure than the 8-hole, and a pen adjustment applied equally to
+    both is wrong for both.
+
+    Returns a fraction in [0, 1], or None when either input is missing.
+    None means the caller sits the adjustment out rather than applying a
+    fabricated one — same rule as expected_pa above.
+
+    Deliberately simple: PAs are assumed to arrive at a steady rate
+    through the game, so the pen's share of innings is the pen's share of
+    plate appearances. That is an approximation, and it is the only one
+    here; everything it consumes is measured.
+    """
+    pa = expected_pa(slot, pa_per_team_game)
+    if pa is None or not starter_ip or starter_ip <= 0:
+        return None
+    game_ip = 9.0
+    pen_ip = max(0.0, game_ip - float(starter_ip))
+    if pen_ip <= 0:
+        return 0.0
+    return round(min(1.0, pen_ip / game_ip), 3)
