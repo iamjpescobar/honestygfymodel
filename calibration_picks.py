@@ -124,8 +124,78 @@ def _rows_hr_edge():
             for r in rows if r.get("id")]
 
 
+def _wnba_games():
+    """Tonight's WNBA slate, read from the same file the views read.
+
+    fetch_data.py unpacks the nightly archive into app/, so the slate
+    lands at app/data/wnba/games.json — and slate-picks.yml runs that
+    fetch BEFORE this script, so the file is current by the time either
+    builder below asks for it.
+    """
+    path = (Path(__file__).resolve().parent
+            / "app" / "data" / "wnba" / "games.json")
+    try:
+        return json.loads(path.read_text()).get("games", []) or []
+    except Exception as exc:
+        print(f"wnba: no slate to read ({exc})")
+        return []
+
+
+def _rows_wnba_props():
+    """Tonight's top 10 WNBA prop picks, or [] if there's no slate.
+
+    WHY THIS EXISTS. wnba_props was logged from ONE place — inside
+    app/views/WNBA_Props.py, which only runs when a human opens that
+    page. So the board was never calibrated: on any night nobody browsed
+    it, the picks that board would have made vanished unrecorded, and the
+    record showed no wnba_props entries at all. That is exactly the "no
+    visitor, no picks" problem this whole file exists to solve for the
+    MLB boards; WNBA just never got a builder.
+
+    Deliberately mirrors the view's DEFAULTS (Points, L10 window, top 10)
+    so what gets logged is what the board would actually have shown. A
+    different stat or window here would grade a claim the site never
+    made.
+
+    Reads the nightly slate straight off disk, the same file the view
+    reads, so this needs no Streamlit session.
+    """
+    games = _wnba_games()
+    if not games:
+        return []
+
+    from engines.wnba_props import build_props, STATS
+    # "Points" and "l10" are the view's defaults — keep them in step.
+    rows, _unrated = build_props(games, "Points", "l10")
+    stat_key = STATS["Points"]["key"]
+    return [{"id": r.get("id"), "name": r.get("player"), "team": r.get("team"),
+             "stat": stat_key, "line": r.get("line")}
+            for r in (rows or [])[:10] if r.get("id")]
+
+
+def _rows_wnba_defense():
+    """Tonight's top 5 WNBA defense-matchup picks, or [].
+
+    Same story as _rows_wnba_props: logged only from
+    app/views/WNBA_Defense.py, so it calibrated only on nights someone
+    happened to open that page. Mirrors the view's defaults (Points,
+    L10, top 5) and its line field (`form`) so the logged pick is the
+    pick the board would have shown.
+    """
+    games = _wnba_games()
+    if not games:
+        return []
+
+    from engines.wnba_defense import build_board
+    rows, _unrated = build_board(games, "Points", "l10")
+    return [{"id": r.get("id"), "name": r.get("player"), "team": r.get("team"),
+             "stat": "pts", "line": r.get("form")}
+            for r in (rows or [])[:5] if r.get("id")]
+
+
 BUILDERS = {"daily13": _rows_daily13, "potd": _rows_potd,
-            "hr_edge": _rows_hr_edge}
+            "hr_edge": _rows_hr_edge, "wnba_props": _rows_wnba_props,
+            "wnba_defense": _rows_wnba_defense}
 
 
 def main() -> int:
