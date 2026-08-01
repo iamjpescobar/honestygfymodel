@@ -108,3 +108,31 @@ for rule, why in [
         f"the edge module's pen exactly, or the page and the score will "
         f"disagree about who is even in the bullpen")
 print("PASS: eligibility rules match the edge module's bullpen")
+
+
+# ----------------------------------------------------------------------
+# get_todays_games_with_weather returns a (games, error) TUPLE.
+#
+# This shipped broken twice in this codebase now — once as
+# `df = _get_pitcher_df(pid)` and once here as
+# `games = get_todays_games_with_weather()`. Binding the pair to a single
+# name makes the first loop element the LIST itself, and the page dies on
+# load with "'list' object has no attribute 'get'". Every other caller
+# unpacks it; a new one that doesn't is a page that never renders.
+# ----------------------------------------------------------------------
+import re
+
+for _v in (ROOT / "app" / "views").glob("*.py"):
+    _src = _v.read_text()
+    for _i, _line in enumerate(_src.split("\n"), 1):
+        if "get_todays_games_with_weather(" not in _line:
+            continue
+        if _line.strip().startswith(("#", "from", "import")):
+            continue
+        # Must destructure into two names.
+        assert re.search(r"\w+\s*,\s*\w+\s*=\s*get_todays_games_with_weather\(", _line), (
+            f"{_v.name}:{_i} does not unpack the (games, error) tuple:\n"
+            f"    {_line.strip()}\n"
+            f"  Binding the pair to one name makes each 'game' the whole list, "
+            f"and the page dies on load.")
+print("PASS: every view unpacks the (games, error) tuple correctly")
