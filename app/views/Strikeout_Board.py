@@ -10,7 +10,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table, render_html_table, team_logo_cell, sort_control
+from styles.table_style import style_stat_table, render_html_table, team_logo_cell, sort_control, tier_legend
 from engines.k_projection import get_slate_k_projections
 from engines.pitcher_trends import render_pitcher_trend
 from engines.live_sync import sync_latest_button
@@ -91,6 +91,10 @@ else:
             # on a numeric read of the column, so pre-formatted
             # strings order as numbers and blanks fall to the bottom.
             df = sort_control(df, "kboard", default="Proj K")
+            # Colour key sits WITH the table. Five filled tiers look
+            # authoritative whether or not anyone knows what they mean,
+            # and which direction is "good" flips between boards.
+            tier_legend(favor_note="Higher is better for the PITCHER \u2014 these are strikeout upside.")
             render_html_table(
                 style_stat_table(
                     df,
