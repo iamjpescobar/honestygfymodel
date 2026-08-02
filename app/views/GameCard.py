@@ -11,7 +11,7 @@ from styles.kc_theme import (
 )
 from styles.table_style import (style_stat_table, plain_dark_table,
                                 render_html_table, score_bar, bats_chip,
-                                tier_legend)
+                                tier_legend, style_vs_league)
 
 from engines.weather_engine import get_todays_games_with_weather
 from engines.park_factors import get_park_factor
@@ -1051,12 +1051,21 @@ with content_col:
                     # an index-only label never renders.
                     _hv_df = pd.DataFrame([{"Span": "Season", **_hv}])
                     render_html_table(
-                        style_stat_table(
-                            _hv_df,
-                            favor_low=["Brl% Allowed", "HH% Allowed", "FB% Allowed",
-                                       "HRWindow% Allowed", "EV90 Allowed",
-                                       "HR Allowed", "xHR Allowed"],
-                            gradient=True).format({
+                        # Graded against the LEAGUE, not within the row.
+                        #
+                        # style_stat_table ranks a column against the other
+                        # rows in the same table — and this table has one
+                        # row, so every cell came out the same flat shade.
+                        # style_vs_league compares each value to where it
+                        # sits among all qualified pitchers (deciles built
+                        # nightly by build_pitcher_allowed_percentiles).
+                        #
+                        # No favor_low: this card is read from the BATTER's
+                        # side, so a pitcher allowing MORE hard contact
+                        # than the league grades as the better target.
+                        # Columns the league file doesn't cover render
+                        # plain rather than falsely graded.
+                        style_vs_league(_hv_df).format({
                             "Brl% Allowed": "{:.1f}", "HH% Allowed": "{:.1f}",
                             "FB% Allowed": "{:.1f}", "HRWindow% Allowed": "{:.1f}",
                             "EV90 Allowed": "{:.1f}",
