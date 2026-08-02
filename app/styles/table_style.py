@@ -286,7 +286,18 @@ def _base_styler(df: pd.DataFrame):
         "font-size": "13.5px",
         "background-color": BG,
         "color": COLOR["text"],
-    }).format(precision=2).hide(axis="index")
+    # na_rep IS NOT OPTIONAL HERE.
+    #
+    # The engines return None (never a fabricated 0) for anything they
+    # couldn't measure. Without na_rep, pandas renders that None as the
+    # literal string "nan" in the cell — which looks like a bug to a
+    # subscriber and, worse, invites someone to "fix" it by putting the
+    # zero defaults back. An em dash says "not measured" in the same
+    # visual language the rest of the app already uses.
+    #
+    # Callers that pass their own .format(..., na_rep=...) override this,
+    # which is fine — they use "N/A" for the same purpose.
+    }).format(precision=2, na_rep="\u2014").hide(axis="index")
 
     for name_col in ("Player", "Name"):
         if name_col in df.columns:
