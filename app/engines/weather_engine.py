@@ -10,6 +10,7 @@ your Codespace — if a field comes back empty, MLB simply may not have
 posted weather for that game yet (common for games more than a day out).
 """
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 import streamlit as st
@@ -94,16 +95,33 @@ def _fetch_todays_games_json(date_str: str) -> str:
 
     games = []
     try:
+        # WEATHER FALLBACK, FETCHED IN PARALLEL.
+        #
+        # Schedule hydration often omits weather early in the day, and
+        # the fallback is one live-feed request PER GAME. Fired
+        # sequentially inside this loop, a 15-game slate meant up to 15
+        # round trips back to back before the Game Card could paint —
+        # each with its own 10s timeout, so one slow response held up
+        # every game behind it.
+        #
+        # They're independent reads, so they go out together. Threads
+        # here only run `requests` — no Streamlit calls, which would
+        # need a script context they don't have.
+        _need_feed = [
+            _clean_int(g.get("gamePk")) for g in games_list
+            if not (isinstance(g.get("weather"), dict) and g.get("weather"))
+            and _clean_int(g.get("gamePk"))
+        ]
+        _feed_weather = _fetch_weather_batch(_need_feed)
+
         for g in games_list:
             game_pk = _clean_int(g.get("gamePk"))
             weather = g.get("weather") or {}
             if not isinstance(weather, dict):
                 weather = {}
 
-            # Schedule hydration doesn't always carry weather — fall back to
-            # the live game feed, which reliably does once MLB posts it.
             if not weather and game_pk:
-                weather = _fetch_weather_from_feed(game_pk)
+                weather = _feed_weather.get(game_pk) or {}
                 if not isinstance(weather, dict):
                     weather = {}
 
@@ -127,19 +145,42 @@ def _fetch_todays_games_json(date_str: str) -> str:
     return _done(games, None)
 
 
-@st.cache_data(ttl=900, max_entries=32, show_spinner=False)
-def _fetch_weather_from_feed(game_pk):
-    """Live game feed carries weather even when the schedule hydration
-    doesn't. Best-effort — returns {} on any failure rather than raising,
+def _fetch_one_weather(game_pk):
+    """Live feed weather for one game. Best-effort: {} on any failure,
     since weather is a nice-to-have, not a blocker for the page.
 
-    Cached per game_pk: on a cold slate this fires one HTTPS call per
-    game that lacks hydrated weather, and those responses only change
-    slowly (game-day conditions), so a 15-minute TTL keeps the fallback
-    from re-hitting the feed on every rebuild."""
+    Deliberately NOT st.cache_data-decorated any more: it's called from
+    worker threads, which have no Streamlit script context, and the
+    caching now lives one level up on _fetch_todays_games_json (keyed by
+    date, 15-minute TTL) which covers the whole slate in one entry.
+    """
     try:
         url = f"https://statsapi.mlb.com/api/v1.1/game/{game_pk}/feed/live"
         data = requests.get(url, timeout=10).json()
         return data.get("gameData", {}).get("weather", {}) or {}
     except Exception:
         return {}
+
+
+def _fetch_weather_batch(game_pks):
+    """{game_pk: weather_dict} for every game that needs the fallback,
+    fetched concurrently. Returns {} for anything that failed.
+
+    Capped at 8 workers: a full slate is ~15 games and these all hit the
+    same MLB host, so there's nothing to gain from opening one socket per
+    game and a polite ceiling avoids looking like a burst of scraping.
+    """
+    if not game_pks:
+        return {}
+    out = {}
+    try:
+        with ThreadPoolExecutor(max_workers=min(8, len(game_pks))) as pool:
+            futures = {pool.submit(_fetch_one_weather, pk): pk for pk in game_pks}
+            for fut in as_completed(futures):
+                out[futures[fut]] = fut.result()
+    except Exception:
+        # Thread pool unavailable for any reason — fall back to serial
+        # fetching rather than dropping weather entirely.
+        for pk in game_pks:
+            out[pk] = _fetch_one_weather(pk)
+    return out
