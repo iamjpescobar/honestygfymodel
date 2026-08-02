@@ -188,3 +188,40 @@ print("PASS: all three targets tables render unmeasurable scores as N/A")
 # (progress bars), so long as N/A text sits beside it.
 assert "def _score_num" in gc and "def _score_display" in gc
 print("PASS: _score_num retained for genuinely numeric contexts")
+
+
+# ----------------------------------------------------------------------
+# The league-percentile keys must match the card's column headers EXACTLY.
+#
+# They are matched by string. precompute first wrote "Brl % Allowed" while
+# the card renders "Brl% Allowed" — one space — so every metric except
+# EV90 (the only name without a %) failed to match and rendered ungraded.
+# The card looked deliberately uncoloured rather than broken, which is the
+# worst kind of failure: nothing errors and nobody notices.
+# ----------------------------------------------------------------------
+from pathlib import Path as _P
+_ROOT = _P(__file__).resolve().parent.parent
+_PRE = (_ROOT / "precompute.py").read_text()
+_pct_fn = _PRE[_PRE.index("def build_pitcher_allowed_percentiles"):
+               _PRE.index("def build_pitcher_roles")]
+
+for _col in ("Brl% Allowed", "HH% Allowed", "FB% Allowed",
+             "HRWindow% Allowed", "EV90 Allowed"):
+    assert f'"{_col}"' in _pct_fn, (
+        f"precompute does not emit a percentile keyed exactly "
+        f"'{_col}' — the card looks that string up verbatim, so any "
+        f"difference leaves the column silently ungraded")
+    assert f'"{_col}"' in gc, (
+        f"the HR vulnerability card no longer renders a column named "
+        f"exactly '{_col}', so its percentile will never be found")
+print("PASS: percentile keys match the card's column names exactly")
+
+# And the card must hide its index — style_vs_league builds its own
+# Styler rather than going through _base_styler, where every other table
+# hides it. Without this a throwaway "0" renders as a first column.
+_TS = (_ROOT / "app" / "styles" / "table_style.py").read_text()
+_svl = _TS[_TS.index("def style_vs_league"):]
+assert 'hide(axis="index")' in _svl[:2000], (
+    "style_vs_league doesn't hide the index, so the HR vulnerability card "
+    "renders a meaningless '0' column")
+print("PASS: the league-graded card hides its throwaway index")
