@@ -28,7 +28,31 @@ SLAM_WINDOWS = [
 
 # HR/FB scoring anchors — shared with engines/top_plays.py so both
 # scores treat the stat identically.
-_LEAGUE_HRFB = 11.5
+# HR/FB scoring anchor — MEASURED, not asserted.
+#
+# This was a hardcoded 11.5. Close to reality, but typed in rather than
+# measured, so it silently went stale as the league moved and nothing in
+# the app could tell. precompute.build_baselines now measures HR per FLY
+# BALL across the whole league each night and ships it in baselines.json.
+#
+# The literal survives only as a fallback for a build that predates the
+# measurement, so the score never breaks — it just uses the old anchor
+# until the next nightly, and says so in the docstring rather than
+# pretending the number is measured.
+_LEAGUE_HRFB_FALLBACK = 11.5
+
+
+def _league_hrfb() -> float:
+    """League HR/FB percent from the nightly build, else the fallback."""
+    try:
+        import json as _j
+        from pathlib import Path as _P
+        _p = (_P(__file__).resolve().parent.parent
+              / "data" / "statcast" / "baselines.json")
+        v = (_j.loads(_p.read_text()) or {}).get("hrPerFlyBall")
+        return float(v) if v else _LEAGUE_HRFB_FALLBACK
+    except Exception:
+        return _LEAGUE_HRFB_FALLBACK
 _HRFB_WEIGHT = 0.15
 
 
@@ -77,7 +101,7 @@ def slam_from_profile(profile: dict) -> dict:
         # thin sample never moves SLAM.
         hrfb = profile.get("HR/FB")
         if slam_score is not None and hrfb is not None:
-            hrfb_scaled = max(0.0, min(100.0, hrfb / _LEAGUE_HRFB * 50.0))
+            hrfb_scaled = max(0.0, min(100.0, hrfb / _league_hrfb() * 50.0))
             slam_score = round(slam_score * (1 - _HRFB_WEIGHT)
                                + hrfb_scaled * _HRFB_WEIGHT, 1)
 
