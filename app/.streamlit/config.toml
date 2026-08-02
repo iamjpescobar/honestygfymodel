@@ -12,7 +12,12 @@
 
 [theme]
 base = "dark"
-primaryColor = "#00E5FF"
+# Must equal COLOR["accent"] in app/styles/kc_theme.py. This had drifted:
+# it still held the old #00E5FF after the accent moved to #34d7c8, so
+# canvas-rendered widget chrome drew a different cyan than every CSS-styled
+# element beside it. #00E5FF now survives only as the changeup colour in
+# PITCH_COLORS, which is unrelated.
+primaryColor = "#34d7c8"
 backgroundColor = "#0a0d10"
 secondaryBackgroundColor = "#12161a"
 textColor = "#e6edf0"
