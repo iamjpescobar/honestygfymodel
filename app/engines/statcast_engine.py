@@ -966,9 +966,11 @@ def get_pitcher_statcast(pitcher_id):
     bbe = metrics["BBE"]
     if not df.empty and "events" in df.columns:
         hr_count = (df["events"] == "home_run").sum()
-        metrics["HR/BBE"] = round(hr_count / bbe, 3) if bbe > 0 else 0.0
+        # None, not 0.0, with no batted balls to divide by: a 0.000
+        # HR/BBE is the best possible value in this column.
+        metrics["HR/BBE"] = round(hr_count / bbe, 3) if bbe > 0 else None
     else:
-        metrics["HR/BBE"] = 0.0
+        metrics["HR/BBE"] = None
 
     # ------------------------------------------------------------
     # HR VULNERABILITY ALLOWED
@@ -1309,8 +1311,8 @@ def get_pitcher_advanced_splits(pitcher_id, side: str = None, window: str = "sea
 
     swings = df["description"].isin(swings_desc).sum() if "description" in df.columns else 0
     whiffs = df["description"].isin(swinging_strike_desc).sum() if "description" in df.columns else 0
-    whiff_pct = round(whiffs / swings * 100, 1) if swings > 0 else 0.0
-    swstr_pct = round(whiffs / total_pitches * 100, 1) if total_pitches > 0 else 0.0
+    whiff_pct = round(whiffs / swings * 100, 1) if swings > 0 else None
+    swstr_pct = round(whiffs / total_pitches * 100, 1) if total_pitches > 0 else None
 
     # Per-plate-appearance aggregation (last pitch of each PA carries the event)
     pa_events = pd.Series(dtype=object)
@@ -1333,25 +1335,43 @@ def get_pitcher_advanced_splits(pitcher_id, side: str = None, window: str = "sea
         + (pa_events == "home_run").sum() * 4
     )
 
-    ba = round(hits / at_bats, 3) if at_bats > 0 else 0.0
-    slg = round(total_bases / at_bats, 3) if at_bats > 0 else 0.0
-    iso = round(slg - ba, 3)
+    # SAME RULE AS THE EMPTY STATE ABOVE, applied to the computed path.
+    #
+    # These branches fire for a pitcher who HAS rows but no denominator:
+    # no recorded outs (a reliever who's allowed a hit and a walk and
+    # nothing else yet), no official at-bats, no plate appearances. The
+    # `else 0.0` made all of those read as elite.
+    #
+    # This one is not merely cosmetic. engines/matchup_grades compares
+    # the two starters on WHIP, HR/9, K% and SLG-against — and a 0.00
+    # WHIP with a 0.00 HR/9 BEATS EVERY REAL PITCHER ALIVE on three of
+    # the four checks. A starter with a thin or missing sample would
+    # sweep the moneyline signals and hand his team a lean built on
+    # nothing. val() in that engine already returns None for a
+    # non-numeric value and skips the check, which is exactly the
+    # behaviour we want — it just never got the chance, because 0.0 is
+    # perfectly numeric.
+    ba = round(hits / at_bats, 3) if at_bats > 0 else None
+    slg = round(total_bases / at_bats, 3) if at_bats > 0 else None
+    iso = round(slg - ba, 3) if (ba is not None and slg is not None) else None
 
     innings_pitched = outs / 3 if outs > 0 else 0.0
-    whip = round((walks + hits) / innings_pitched, 2) if innings_pitched > 0 else 0.0
-    hr9 = round(home_runs * 9 / innings_pitched, 2) if innings_pitched > 0 else 0.0
-    k9 = round(strikeouts * 9 / innings_pitched, 2) if innings_pitched > 0 else 0.0
+    whip = round((walks + hits) / innings_pitched, 2) if innings_pitched > 0 else None
+    hr9 = round(home_runs * 9 / innings_pitched, 2) if innings_pitched > 0 else None
+    k9 = round(strikeouts * 9 / innings_pitched, 2) if innings_pitched > 0 else None
 
-    bb_pct = round(walks / pa_count * 100, 1) if pa_count > 0 else 0.0
-    k_pct = round(strikeouts / pa_count * 100, 1) if pa_count > 0 else 0.0
+    bb_pct = round(walks / pa_count * 100, 1) if pa_count > 0 else None
+    k_pct = round(strikeouts / pa_count * 100, 1) if pa_count > 0 else None
 
-    putaway_pct = 0.0
+    # None, not 0.0: no two-strike pitches (or no count columns) means
+    # unmeasured, and a 0% putaway rate is a real, terrible number.
+    putaway_pct = None
     if {"balls", "strikes", "description"}.issubset(df.columns):
         two_strike_pitches = df[pd.to_numeric(df["strikes"], errors="coerce") == 2]
         if len(two_strike_pitches) > 0:
             putaway_pct = round(strikeouts / len(two_strike_pitches) * 100, 1)
 
-    first_pitch_strike_pct = 0.0
+    first_pitch_strike_pct = None
     if "pitch_number" in df.columns and "description" in df.columns:
         first_pitches = df[pd.to_numeric(df["pitch_number"], errors="coerce") == 1]
         if len(first_pitches) > 0:
@@ -1360,12 +1380,12 @@ def get_pitcher_advanced_splits(pitcher_id, side: str = None, window: str = "sea
             fp_strikes = first_pitches["description"].isin(strike_desc).sum()
             first_pitch_strike_pct = round(fp_strikes / len(first_pitches) * 100, 1)
 
-    meatball_pct = 0.0
+    meatball_pct = None
     if {"plate_x", "plate_z"}.issubset(df.columns):
         px = pd.to_numeric(df["plate_x"], errors="coerce")
         pz = pd.to_numeric(df["plate_z"], errors="coerce")
         in_heart = (px.abs() < 0.83) & (pz.between(1.5, 3.5))
-        meatball_pct = round(in_heart.sum() / total_pitches * 100, 1) if total_pitches > 0 else 0.0
+        meatball_pct = round(in_heart.sum() / total_pitches * 100, 1) if total_pitches > 0 else None
 
     return {
         # Estimated IP (out events / 3) — the same figure WHIP/HR9/K9
