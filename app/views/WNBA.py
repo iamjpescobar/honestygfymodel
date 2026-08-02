@@ -497,7 +497,10 @@ def _render_slate():
                             _b = str(gl.get("date") or "")[5:]
                             _seen[_b] = _seen.get(_b, 0) + 1
                             _lbls.append(_b if _seen[_b] == 1 else f"{_b} ({_seen[_b]})")
-                            _logos.append(logo_url_by_id(gl.get("opp_id")))
+                            # Prefer ESPN's own URL; the id-built path
+                            # 404s for some teams and rendered a "?".
+                            _logos.append(gl.get("opp_logo")
+                                          or logo_url_by_id(gl.get("opp_id")))
                         _vals = [_stat_of(gl) for gl in _sub]
                         render_trend_bars(_lbls, _vals, _pt_stat, _pt_line,
                                           logos=_logos)
