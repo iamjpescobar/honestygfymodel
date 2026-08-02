@@ -94,7 +94,15 @@ def require_login():
     Blocks with a themed login screen until the visitor authenticates, then
     stores their role in session_state for the rest of the run.
     """
-    authenticator = _get_authenticator()
+    # CALLED FOR ITS SIDE EFFECT — do not delete because the variable
+    # looks unused (pyflakes flags it; it is wrong here).
+    #
+    # _get_authenticator() is what populates st.session_state
+    # "lc_authenticator" and "lc_credentials". app.py's
+    # render_right_sidebar reads the first to draw the Sign out button,
+    # and the role lookup below reads the second. Remove this line and
+    # every subscriber loses the only reachable way to log out.
+    _get_authenticator()
 
     if st.session_state.get("authentication_status") is not True:
         _login_screen()
