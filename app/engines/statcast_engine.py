@@ -1048,9 +1048,12 @@ def get_pitcher_hand(pitcher_id):
     """
     if not pitcher_id:
         return None
+
+
     try:
-        # _get_pitcher_df returns a (df, error) TUPLE, not a DataFrame —
-        # every other caller in this file unpacks it the same way.
+        # Fallback for a pitcher the nightly hasn't seen — a call-up, or
+        # a build that hasn't run yet. _get_pitcher_df returns a
+        # (df, error) TUPLE, not a DataFrame.
         df, _err = _get_pitcher_df(pitcher_id)
     except Exception:
         return None
@@ -1058,6 +1061,26 @@ def get_pitcher_hand(pitcher_id):
         return None
     hands = df["p_throws"].dropna()
     return str(hands.mode().iloc[0]) if not hands.empty else None
+
+
+@st.cache_data(ttl=21600, max_entries=1, show_spinner=False)
+def _roles_lookup() -> dict:
+    """{pitcher_id: "SP"|"RP"} from the nightly build, or {}.
+
+    Empty when the archive predates this feature, which sends every
+    lookup down the live path — correct, just slower.
+    """
+    try:
+        # _DATA_DIR is already .../data/statcast — no second "statcast".
+        path = _DATA_DIR / "pitcher_roles.json"
+        # _json, not json: this module imports `json as _json`. Using the
+        # wrong name raised NameError, which the except below swallowed —
+        # the lookup returned {} on every call and every pitcher quietly
+        # took the slow path. Exactly the failure this was meant to fix,
+        # hidden by its own fallback.
+        return _json.loads(path.read_text()) or {}
+    except Exception:
+        return {}
 
 
 @st.cache_data(ttl=3600, max_entries=512, show_spinner=False)
@@ -1080,6 +1103,18 @@ def get_pitcher_role(pitcher_id):
     """
     if not pitcher_id:
         return None
+
+    # Precomputed table first. The nightly build derives every pitcher's
+    # role in one groupby over the whole league (see
+    # precompute.build_pitcher_roles), so this is a dict lookup.
+    #
+    # It matters because the slate-wide bullpen baseline asks for the role
+    # of every pitcher on every roster in the slate. Doing that live meant
+    # loading a few hundred full-season dataframes before the first MLB
+    # page could render.
+    _pre = _roles_lookup().get(str(pitcher_id))
+    if _pre:
+        return _pre
     try:
         df, _err = _get_pitcher_df(pitcher_id)
     except Exception:
