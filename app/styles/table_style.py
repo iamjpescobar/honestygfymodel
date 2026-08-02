@@ -14,7 +14,22 @@ systems layered on top:
    which stays legible across the whole red -> amber -> cyan range
    since the fill is always applied at a light-enough opacity.
 """
+import json as _tbl_json
+from pathlib import Path
+
 import pandas as pd
+
+
+def _st_cache_1h():
+    """st.cache_data if Streamlit is importable, else a no-op.
+
+    Keeps this module importable from tests without a Streamlit runtime."""
+    try:
+        import streamlit as _st
+        return _st.cache_data(ttl=3600, max_entries=1, show_spinner=False)
+    except Exception:
+        return lambda f: f
+
 
 from .kc_theme import COLOR, pitch_color_by_name
 
@@ -800,3 +815,55 @@ def wnba_logo_cell(id_by_name: dict):
         return (f'<img src="{url}" title="{v}" alt="{v}" '
                 f'style="height:19px; vertical-align:-4px;">')
     return _fmt
+
+
+@_st_cache_1h()
+def _allowed_percentiles() -> dict:
+    """League decile cut points for contact allowed, from the nightly."""
+    try:
+        path = (Path(__file__).resolve().parent.parent
+                / "data" / "statcast" / "pitcher_allowed_pct.json")
+        return _tbl_json.loads(path.read_text()) or {}
+    except Exception:
+        return {}
+
+
+def style_vs_league(df, favor_low=None):
+    """Style a ONE-ROW table by comparing each value to the whole league.
+
+    A single row has nothing to rank within, which is why the HR
+    Vulnerability card rendered one flat colour for every cell. The
+    comparison that answers "is this bad?" is against OTHER PITCHERS, and
+    precompute.build_pitcher_allowed_percentiles ships exactly that.
+
+    `favor_low` lists columns where a LOW value is good for the pitcher.
+    On this card the reader is a bettor looking at the BATTER's side, so
+    the caller passes the direction it wants and the tiers follow.
+
+    Falls back to plain text for any column the league file doesn't
+    cover — an ungraded number beats a fabricated grade.
+    """
+    pct = _allowed_percentiles().get("deciles", {})
+    low = set(favor_low or ())
+
+    def _style_row(row):
+        out = []
+        for col, val in row.items():
+            cuts = pct.get(str(col))
+            if not cuts or val is None or (isinstance(val, float) and pd.isna(val)):
+                out.append("")
+                continue
+            try:
+                v = float(val)
+            except (TypeError, ValueError):
+                out.append("")
+                continue
+            # Where this pitcher sits in the league, 0-1.
+            above = sum(1 for c in cuts if v >= c)
+            t = max(0.0, min(1.0, (above - 1) / (len(cuts) - 1)))
+            if col in low:
+                t = 1.0 - t
+            out.append(_gradient_fill(t))
+        return out
+
+    return df.style.apply(_style_row, axis=1)
