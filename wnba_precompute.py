@@ -364,6 +364,22 @@ def parse_boxscore(event_id, game_date, logs, debug=False):
     # here is what lets the trend chart show opponent LOGOS instead of
     # long team names, matching the MLB charts.
     ids = [(b.get("team") or {}).get("id") for b in blocks]
+    # ESPN's OWN logo URL, captured rather than constructed.
+    #
+    # wnba_logos builds a path from the team id, and that path does not
+    # exist for every team — those games rendered a broken-image "?" under
+    # the bar instead of a mark. The team block already carries the exact
+    # URL ESPN serves, so using it removes the guesswork entirely.
+    _logos = []
+    for b in blocks:
+        t = b.get("team") or {}
+        u = t.get("logo")
+        if not u:
+            for cand in (t.get("logos") or []):
+                if isinstance(cand, dict) and cand.get("href"):
+                    u = cand["href"]
+                    break
+        _logos.append(u)
     for i, team_block in enumerate(blocks):
         team_name = names[i]
         opp_name = names[1 - i] if len(names) == 2 else ""
@@ -387,7 +403,10 @@ def parse_boxscore(event_id, game_date, logs, debug=False):
                 if not athlete.get("id") or len(stats) <= max(idx.values(), default=0):
                     continue
                 line = {"date": game_date, "team": team_name, "opp": opp_name,
-                        "opp_id": opp_id}
+                        "opp_id": opp_id,
+                        # Real URL from ESPN; the view prefers this and
+                        # falls back to the id-built path.
+                        "opp_logo": (_logos[1 - i] if len(_logos) == 2 else None)}
                 for k, i2 in idx.items():
                     line[k.lower()] = _num(stats[i2])
                 def _made_att(i, mk, ak):
@@ -567,6 +586,7 @@ def player_summaries(logs):
             "log": [
                 {"date": gl.get("date"), "opp": gl.get("opp"),
                  "opp_id": gl.get("opp_id"),
+                 "opp_logo": gl.get("opp_logo"),
                  "pts": gl.get("pts"), "reb": gl.get("reb"),
                  "ast": gl.get("ast"), "tpm": gl.get("tpm"),
                  "stl": gl.get("stl"), "blk": gl.get("blk"),
