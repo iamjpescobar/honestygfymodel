@@ -91,10 +91,6 @@ BOARDS = {
     "hr_edge": {"sport": "mlb", "label": "HR Edge (top 5)", "stat": "homeRuns",
                 "threshold": 1, "question": "hit a home run",
                 "baseline_stat": "homeRuns"},
-    # Player of the Day is a HOME RUN play, so it's graded on home
-    # runs. Grading it on hits would score it against a goal it isn't
-    # trying to achieve — a 0-for-4 with two hard-hit flyouts is a
-    # normal night for a power pick, not a model failure.
     # Player of the Day is an EXTRA-BASE HIT play, so it's graded on
     # doubles + triples + home runs. Grading it on hits or homers alone
     # would score it against a goal it isn't trying to achieve.
@@ -109,12 +105,24 @@ BOARDS = {
                 "stat": "strikeOuts", "threshold": None,
                 "question": "cleared this board's projected strikeouts"},
     # WNBA boards grade against a per-pick LINE rather than a fixed
-    # threshold — "did he clear the number this board implied" — so the
-    # threshold here is a default the pick can override.
+    # threshold — "did he clear the number this board implied".
+    #
+    # threshold is None, matching calibration_pipeline.BOARDS exactly.
+    # It used to be 15 here and None there, so the same pick graded
+    # differently depending on which file evaluated it — and the
+    # pipeline is the source of truth for published history, so the
+    # app was the one showing the wrong answer.
+    #
+    # None rather than 15 on purpose. A pick that arrives without a line
+    # is a pick this board never actually published a number for, and
+    # scoring it against an invented 15 would grade a claim the site
+    # never made. It closes as DNP instead, which is excluded from the
+    # hit-rate denominator and so neither flatters nor penalises the
+    # model. Same standard as everything else here: no placeholders.
     "wnba_props": {"sport": "wnba", "label": "WNBA Props", "stat": "pts",
-                   "threshold": 15, "question": "cleared its line"},
+                   "threshold": None, "question": "cleared its line"},
     "wnba_defense": {"sport": "wnba", "label": "WNBA Defense Matchup (top 5)",
-                     "stat": "pts", "threshold": 15,
+                     "stat": "pts", "threshold": None,
                      "question": "cleared its line"},
 }
 
@@ -414,10 +422,22 @@ def grade_pending(max_days: int = 14) -> int:
                 if target is None:
                     target = cfg["threshold"]
                 value = box.get(stat_key)
-                if value is None:
+                if value is None or target is None:
                     # We DID get the player's line for that day, and the
                     # graded stat simply isn't in it — that's a real DNP
                     # for this stat, safe to finalize.
+                    #
+                    # `target is None` is the same guard
+                    # calibration_pipeline.grade() has always had, and
+                    # this function was missing. On a board whose
+                    # threshold is None (every board that grades against
+                    # its own published number), a pick that arrived
+                    # without a line reached the comparison below and
+                    # evaluated `value >= None` — TypeError, not a bad
+                    # grade. It never fired only because the WNBA
+                    # thresholds here were a hardcoded 15 that the
+                    # pipeline didn't share; removing that invented
+                    # number exposes the missing guard.
                     pick["result"] = "dnp"
                     graded_n += 1
                 else:
