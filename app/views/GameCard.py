@@ -1301,10 +1301,21 @@ with content_col:
                         "Ord": (batting_order // 100) if batting_order else None,
                         "Matchup": matchup if matchup is not None else "\u2014",
                         "SLAM": round(slam, 1) if slam is not None else None,
-                        "BA": profile.get("BA", 0),
+                        # NO ", 0" DEFAULTS ANYWHERE IN THIS ROW.
+                        #
+                        # A missing BA is not a .000 BA, a missing HH% is
+                        # not a 0.0 HH%. The engine now returns None for
+                        # anything it couldn't measure (see
+                        # _compute_batted_ball_metrics), and na_rep="N/A"
+                        # on the formatter below renders that honestly.
+                        # A zero-default here would have quietly undone
+                        # that at the last step — this table has no PA
+                        # column, so a fabricated 0.0 is indistinguishable
+                        # from a measured one.
+                        "BA": profile.get("BA"),
                         "xwOBA": profile.get("xwOBA"),
                         "xSLG": profile.get("xSLG"),
-                        "ISO": profile.get("ISO", 0),
+                        "ISO": profile.get("ISO"),
                         "HR/FB": profile.get("HR/FB"),
                         "Brl%": profile.get("Brl %"),
                         # Barrels per PLATE APPEARANCE, next to the
@@ -1313,25 +1324,25 @@ with content_col:
                         # Brl/PA barrels well but doesn't put enough
                         # balls in play to cash it in.
                         "Brl/PA": profile.get("Brl/PA"),
-                        "HH%": profile.get("HH %", 0),
+                        "HH%": profile.get("HH %"),
                         # 90th-percentile exit velocity — the scored
                         # power ceiling. Max EV sits beside it for
                         # interest only; it's a sample of one.
                         "EV90": profile.get("EV90"),
                         "MaxEV": profile.get("MaxEV"),
-                        "LD%": profile.get("LD %", 0),
-                        "FB%": profile.get("FB %", 0),
-                        "GB%": profile.get("GB %", 0),
-                        "SweetSpot%": profile.get("SweetSpot %", 0),
+                        "LD%": profile.get("LD %"),
+                        "FB%": profile.get("FB %"),
+                        "GB%": profile.get("GB %"),
+                        "SweetSpot%": profile.get("SweetSpot %"),
                         # Launch angle 20-40 — the HOME RUN band, which
                         # is NOT SweetSpot% (8-32, built for overall
                         # production and starting at a line drive). Both
                         # are shown because they answer different
                         # questions and the difference is informative.
                         "HRWindow%": profile.get("HRWindow %"),
-                        "PullAir%": profile.get("PullAir %", 0),
+                        "PullAir%": profile.get("PullAir %"),
                         "PullBrl%": profile.get("PullBrl %"),
-                        "Blast%": profile.get("Blast %", 0),
+                        "Blast%": profile.get("Blast %"),
                         # Process, not outcome: bat speed + swing plane +
                         # pull tendency. Every other column here is
                         # downstream of results, so they all sag together
