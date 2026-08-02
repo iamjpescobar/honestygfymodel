@@ -530,7 +530,7 @@ def score_bar(color_key: str = "gold"):
     # hue and differ only by length — the colour says the grade and the
     # length says the amount. Same five tiers as the cells, so gold means
     # "good" everywhere on the site.
-    fallback = COLOR.get(color_key, COLOR["gold"])
+    # (No assignment needed — color_key is consulted per value in _fmt.)
 
     def _fmt(v):
         if v is None or (isinstance(v, float) and pd.isna(v)):
