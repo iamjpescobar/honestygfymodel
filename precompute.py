@@ -346,10 +346,31 @@ def build_baselines(season_df: pd.DataFrame) -> bool:
         print(f"  Baselines skipped — only {len(starters)} player-games.")
         return False
 
+    # League HR/FB — the last asserted constant in the scoring engines.
+    #
+    # slam_engine and top_plays both scaled a batter's HR/FB against a
+    # hardcoded 11.5. That number is close to reality, but it was typed in
+    # rather than measured, so it silently went stale as the league moved
+    # and nothing in the app could tell. Every other anchor on this site
+    # is measured; this was the last one that wasn't.
+    #
+    # Definition: home runs divided by FLY BALLS, league-wide. Fly balls
+    # only — the standard denominator. Returns None if bb_type is absent,
+    # and the engines keep their literal fallback in that case rather than
+    # scoring against nothing.
+    _hr_fb = None
+    if "bb_type" in season_df.columns:
+        _bb = season_df[season_df["type"] == "X"]
+        _fb_n = int((_bb["bb_type"].astype(str) == "fly_ball").sum())
+        if _fb_n >= 1000:      # a season has tens of thousands; guard a partial pull
+            _hr_n = int((_bb["events"].astype(str) == "home_run").sum())
+            _hr_fb = round(_hr_n / _fb_n * 100, 2)
+
     out = {
         "hits": round(float(starters["hit"].mean()) * 100, 1),
         "homeRuns": round(float(starters["hr"].mean()) * 100, 1),
         "xbh": round(float(starters["xbh"].mean()) * 100, 1),
+        "hrPerFlyBall": _hr_fb,
         "player_games": int(len(starters)),
         "min_pa": 3,
         "note": ("Share of league player-games (3+ PA) with at least one of "
@@ -360,6 +381,9 @@ def build_baselines(season_df: pd.DataFrame) -> bool:
     (DATA_DIR / "baselines.json").write_text(json.dumps(out, indent=2))
     print(f"  Baselines: hit {out['hits']}% · HR {out['homeRuns']}% · "
           f"XBH {out['xbh']}% over {out['player_games']:,} player-games")
+    print(f"  League HR/FB: {out['hrPerFlyBall']}%"
+          if out["hrPerFlyBall"] is not None else
+          "  League HR/FB: not measurable (bb_type absent)")
     return True
 
 
