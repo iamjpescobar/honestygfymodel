@@ -25,8 +25,8 @@ from engines.bullpen_board import (
 inject_kc_theme()
 
 st.markdown(
-    f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">'
-    f'<span style="font-size:20px; font-weight:800; letter-spacing:-0.02em; '
+    f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:var(--lc-space-sm);">'
+    f'<span style="font-size:var(--lc-text-title); font-weight:800; letter-spacing:-0.02em; '
     f'color:{COLOR["text"]};">BULLPEN BOARD</span></div>',
     unsafe_allow_html=True,
 )
@@ -105,7 +105,7 @@ _tot = pen_totals(pen)
 # the raw https://... next to the team name instead of showing the logo.
 _logo_url = logo_for(team)
 _logo_img = (f'<img src="{_logo_url}" style="height:22px; '
-             f'vertical-align:-4px; margin-right:8px;">') if _logo_url else ""
+             f'vertical-align:-4px; margin-right:var(--lc-space-md);">') if _logo_url else ""
 with card("pen_totals"):
     st.markdown(
         f'<div class="pf-card-title" style="color:{COLOR["gold"]};">'

@@ -11,7 +11,7 @@ page_header("NFL Analytics", "In development — built on real data or not at al
 
 st.markdown(card_open("🏈 NFL is on the roadmap"), unsafe_allow_html=True)
 st.markdown(
-    f'<div style="color:{COLOR["gold"]}; font-size:14px; line-height:1.7;">'
+    f'<div style="color:{COLOR["gold"]}; font-size:var(--lc-text-body-lg); line-height:1.7;">'
     f'NFL tools are being built on the same standard as the MLB engine: every number '
     f'traced to a real, verifiable source — no placeholders, no estimates, no filler. '
     f'Nothing ships on this page until its data engine is real.'
@@ -22,23 +22,23 @@ st.markdown(card_close(), unsafe_allow_html=True)
 
 st.markdown(card_open("What\'s planned"), unsafe_allow_html=True)
 st.markdown(
-    f'<div style="margin-bottom:12px;">'
-    f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:13.5px;">Game Cards</div>'
-    f'<div style="color:{COLOR["gold"]}; font-size:12.5px;">Weekly matchup pages — offense vs defense profiles, pace, and weather</div>'
+    f'<div style="margin-bottom:var(--lc-space-lg);">'
+    f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:var(--lc-text-body);">Game Cards</div>'
+    f'<div style="color:{COLOR["gold"]}; font-size:var(--lc-text-small);">Weekly matchup pages — offense vs defense profiles, pace, and weather</div>'
     f'</div>',
     unsafe_allow_html=True,
 )
 st.markdown(
-    f'<div style="margin-bottom:12px;">'
-    f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:13.5px;">QB & Matchup Reports</div>'
-    f'<div style="color:{COLOR["gold"]}; font-size:12.5px;">Passing profiles against coverage tendencies</div>'
+    f'<div style="margin-bottom:var(--lc-space-lg);">'
+    f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:var(--lc-text-body);">QB & Matchup Reports</div>'
+    f'<div style="color:{COLOR["gold"]}; font-size:var(--lc-text-small);">Passing profiles against coverage tendencies</div>'
     f'</div>',
     unsafe_allow_html=True,
 )
 st.markdown(
-    f'<div style="margin-bottom:12px;">'
-    f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:13.5px;">Totals & Spread Models</div>'
-    f'<div style="color:{COLOR["gold"]}; font-size:12.5px;">Game-level leans built on real play-by-play data</div>'
+    f'<div style="margin-bottom:var(--lc-space-lg);">'
+    f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:var(--lc-text-body);">Totals & Spread Models</div>'
+    f'<div style="color:{COLOR["gold"]}; font-size:var(--lc-text-small);">Game-level leans built on real play-by-play data</div>'
     f'</div>',
     unsafe_allow_html=True,
 )

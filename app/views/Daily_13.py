@@ -23,9 +23,9 @@ from engines.calibration import log_picks, grade_pending, summary
 inject_kc_theme()
 
 st.markdown(
-    f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">'
-    f'<span style="font-size:20px; font-weight:800; letter-spacing:-0.02em; color:{COLOR["text"]};">THE DAILY</span>'
-    f'<span style="font-size:20px; font-weight:800; letter-spacing:-0.02em; color:{COLOR["stat_high"]};">13</span>'
+    f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:var(--lc-space-sm);">'
+    f'<span style="font-size:var(--lc-text-title); font-weight:800; letter-spacing:-0.02em; color:{COLOR["text"]};">THE DAILY</span>'
+    f'<span style="font-size:var(--lc-text-title); font-weight:800; letter-spacing:-0.02em; color:{COLOR["stat_high"]};">13</span>'
     f'</div>',
     unsafe_allow_html=True,
 )

@@ -23,9 +23,9 @@ _GAMES = Path(__file__).resolve().parent.parent / "data" / "wnba" / "games.json"
 inject_kc_theme()
 
 st.markdown(
-    f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">'
-    f'<span style="font-size:20px; font-weight:800; letter-spacing:-0.02em; color:{COLOR["text"]};">WITHOUT</span>'
-    f'<span style="font-size:20px; font-weight:800; letter-spacing:-0.02em; color:{COLOR["stat_high"]};">PLAYER</span>'
+    f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:var(--lc-space-sm);">'
+    f'<span style="font-size:var(--lc-text-title); font-weight:800; letter-spacing:-0.02em; color:{COLOR["text"]};">WITHOUT</span>'
+    f'<span style="font-size:var(--lc-text-title); font-weight:800; letter-spacing:-0.02em; color:{COLOR["stat_high"]};">PLAYER</span>'
     f'</div>',
     unsafe_allow_html=True,
 )
@@ -115,8 +115,8 @@ with card("without"):
             _d = meta["team_pts_delta"]
             _col = COLOR["stat_high"] if _d > 0 else COLOR["error"] if _d < 0 else COLOR["text"]
             st.markdown(
-                f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:13px; '
-                f'margin:2px 0 10px 0; color:{COLOR["text"]};">Team scoring: '
+                f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:var(--lc-text-body); '
+                f'margin:var(--lc-space-hair) var(--lc-space-none) var(--lc-space-md) var(--lc-space-none); color:{COLOR["text"]};">Team scoring: '
                 f'<b>{meta["team_pts_with"]}</b> with him \u2192 '
                 f'<b style="color:{_col};">{meta["team_pts_without"]}</b> without '
                 f'(<b style="color:{_col};">{_d:+.1f}</b> per game)</div>',

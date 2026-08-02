@@ -33,10 +33,10 @@ inject_kc_theme()
 require_admin()
 
 st.markdown(
-    f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">'
-    f'<span style="font-size:20px; font-weight:800; letter-spacing:-0.02em; '
+    f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:var(--lc-space-hair);">'
+    f'<span style="font-size:var(--lc-text-title); font-weight:800; letter-spacing:-0.02em; '
     f'color:{COLOR["text"]};">CALIBRATION</span>'
-    f'<span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; '
+    f'<span style="font-size:var(--lc-text-caption); font-weight:700; padding:var(--lc-space-hair) var(--lc-space-md); border-radius:var(--lc-radius-sm); '
     f'background:{COLOR["error"]}22; color:{COLOR["error"]};">ADMIN</span></div>',
     unsafe_allow_html=True,
 )

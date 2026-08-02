@@ -64,7 +64,7 @@ if _stale:
 if games is None:
     st.markdown(card_open("\u26be NPB engine is being connected"), unsafe_allow_html=True)
     st.markdown(
-        f'<div style="color:{COLOR["gold"]}; font-size:14px; line-height:1.7;">'
+        f'<div style="color:{COLOR["gold"]}; font-size:var(--lc-text-body-lg); line-height:1.7;">'
         f'NPB coverage is in active development on the same standard as the MLB engine: '
         f'every number traced to a real, verifiable source \u2014 no placeholders, no estimates. '
         f'This page lights up with the real slate the moment the data pipeline ships; '
@@ -81,9 +81,9 @@ if games is None:
         ("Starter Form", "Season and recent-start lines for the day\'s probables"),
     ]:
         st.markdown(
-            f'<div style="margin-bottom:12px;">'
-            f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:13.5px;">{name}</div>'
-            f'<div style="color:{COLOR["gold"]}; font-size:12.5px;">{desc}</div>'
+            f'<div style="margin-bottom:var(--lc-space-lg);">'
+            f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:var(--lc-text-body);">{name}</div>'
+            f'<div style="color:{COLOR["gold"]}; font-size:var(--lc-text-small);">{desc}</div>'
             f'</div>',
             unsafe_allow_html=True,
         )
@@ -147,7 +147,7 @@ else:
         dot = " \u00b7 "
         joined = dot.join(bits)
         return (f'<div style="display:flex; justify-content:space-between; gap:12px; '
-                f'font-size:12.5px; margin-bottom:6px;">'
+                f'font-size:var(--lc-text-small); margin-bottom:var(--lc-space-sm);">'
                 f'<span style="font-weight:700; color:{COLOR["text"]};">{name}</span>'
                 f'<span style="font-family:\'JetBrains Mono\',monospace; color:{COLOR["gold"]};">'
                 f'{joined}</span></div>')
@@ -200,7 +200,7 @@ else:
             joined = dotsp.join(bits)
             st.markdown(
                 f'<div style="display:flex; justify-content:space-between; gap:12px; '
-                f'font-size:12px; margin-top:4px;">'
+                f'font-size:var(--lc-text-small); margin-top:var(--lc-space-xs);">'
                 f'<span style="font-weight:700; color:{COLOR["text"]}; white-space:nowrap;">'
                 f'{g.get(side, "")} SP \u2014 {name}</span>'
                 f'<span style="font-family:\'JetBrains Mono\',monospace; color:{COLOR["gold"]}; '
@@ -227,7 +227,7 @@ else:
                 _sp_note = " (starters applied)"
             st.markdown(
                 f'<div style="display:flex; justify-content:space-between; gap:12px; '
-                f'font-size:12.5px; margin-top:6px;">'
+                f'font-size:var(--lc-text-small); margin-top:var(--lc-space-sm);">'
                 f'<span style="font-weight:700; color:{COLOR["text"]};">PROJECTED TOTAL</span>'
                 f'<span style="font-family:\'JetBrains Mono\',monospace; color:{COLOR["gold"]};">'
                 f'{_tot} runs \u00b7 {g.get("away","")} {_det["away_exp"]} / '
@@ -236,21 +236,21 @@ else:
 
         stats_html = _team_line(g, "away") + _team_line(g, "home")
         if g.get("h2h"):
-            stats_html += (f'<div style="font-size:11.5px; color:{COLOR["gold"]}; '
-                           f'margin-top:4px;">Season H2H: {g["h2h"]}</div>')
+            stats_html += (f'<div style="font-size:var(--lc-text-caption); color:{COLOR["gold"]}; '
+                           f'margin-top:var(--lc-space-xs);">Season H2H: {g["h2h"]}</div>')
             det = g.get("h2h_detail") or {}
             if det.get("avg_total") is not None:
                 stats_html += (
-                    f'<div style="font-size:11px; color:{COLOR["text"]}; margin-top:2px;">'
+                    f'<div style="font-size:var(--lc-text-caption); color:{COLOR["text"]}; margin-top:var(--lc-space-hair);">'
                     f'H2H runs: {g.get("away")} {det.get("away_avg_runs")} R/G vs '
                     f'{g.get("home")} {det.get("home_avg_runs")} R/G \u00b7 '
                     f'Avg total in series: <b>{det.get("avg_total")}</b></div>')
             if det.get("scorelines"):
                 joined = " \u00b7 ".join(det["scorelines"][:6])
-                stats_html += (f'<div style="font-size:10.5px; color:{COLOR["gold"]}; '
-                               f'opacity:0.85; margin-top:2px;">{joined}</div>')
+                stats_html += (f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["gold"]}; '
+                               f'opacity:0.85; margin-top:var(--lc-space-hair);">{joined}</div>')
         if stats_html:
-            st.markdown(f'<div style="margin-top:10px;">{stats_html}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="margin-top:var(--lc-space-md);">{stats_html}</div>', unsafe_allow_html=True)
         st.markdown(card_close(), unsafe_allow_html=True)
 
         grades = grade_npb_matchup(g)

@@ -24,7 +24,7 @@ st.markdown(
     "<style>"
     ".stTabs [data-baseweb='tab-list'] { gap: 2px; }"
     ".stTabs [data-baseweb='tab'] { font-family: 'JetBrains Mono', monospace; }"
-    f".stTabs [data-baseweb='tab'] p {{ font-size: 12px; color: {COLOR['gold']}; }}"
+    f".stTabs [data-baseweb='tab'] p {{ font-size:var(--lc-text-small); color: {COLOR['gold']}; }}"
     f".stTabs [aria-selected='true'] p {{ color: {COLOR['stat_high']} !important; font-weight: 700; }}"
     f".stTabs [data-baseweb='tab-highlight'] {{ background-color: {COLOR['stat_high']}; }}"
     "</style>",
@@ -137,7 +137,7 @@ if _REF:
 if games is None:
     st.markdown(card_open("\U0001F3C0 WNBA engine is being connected"), unsafe_allow_html=True)
     st.markdown(
-        f'<div style="color:{COLOR["gold"]}; font-size:14px; line-height:1.7;">'
+        f'<div style="color:{COLOR["gold"]}; font-size:var(--lc-text-body-lg); line-height:1.7;">'
         f'WNBA coverage is in active development on the same standard as the MLB engine: '
         f'every number traced to a real, verifiable source \u2014 no placeholders, no estimates.'
         f'</div>',
@@ -186,8 +186,8 @@ if games:
                          wnba_pick.get("proj_ast"))
         if any(v is not None for v in (_pp, _pr, _pa)):
             st.markdown(
-                f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:11px; '
-                f'color:{COLOR["text_muted"]}; margin-top:10px; margin-bottom:2px;">'
+                f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:var(--lc-text-caption); '
+                f'color:{COLOR["text_muted"]}; margin-top:var(--lc-space-md); margin-bottom:var(--lc-space-hair);">'
                 f'PROJECTED TONIGHT</div>', unsafe_allow_html=True)
             j1, j2, j3, j4 = st.columns(4)
             def _proj(col, label, proj, base):
@@ -304,12 +304,12 @@ def _render_slate():
         st.markdown(card_open("", ""), unsafe_allow_html=True)
         st.markdown(
             f'<div style="display:flex; justify-content:center; align-items:baseline; gap:14px; '
-            f'margin:2px 0 2px 0; flex-wrap:wrap;">'
-            f'<span style="font-size:19px; font-weight:800; color:{a_col};">{away}</span>'
-            f'<span style="font-size:12px; color:{COLOR["gold"]};">@</span>'
-            f'<span style="font-size:19px; font-weight:800; color:{h_col};">{home}</span>'
+            f'margin:var(--lc-space-hair) var(--lc-space-none) var(--lc-space-hair) var(--lc-space-none); flex-wrap:wrap;">'
+            f'<span style="font-size:var(--lc-text-title); font-weight:800; color:{a_col};">{away}</span>'
+            f'<span style="font-size:var(--lc-text-small); color:{COLOR["gold"]};">@</span>'
+            f'<span style="font-size:var(--lc-text-title); font-weight:800; color:{h_col};">{home}</span>'
             f'</div>'
-            f'<div style="text-align:center; font-size:11.5px; color:{COLOR["gold"]}; margin-bottom:8px;">'
+            f'<div style="text-align:center; font-size:var(--lc-text-caption); color:{COLOR["gold"]}; margin-bottom:var(--lc-space-md);">'
             f'{g.get("arena", "")} \u00b7 {g.get("time_et", "TBD")} ET</div>',
             unsafe_allow_html=True,
         )
@@ -337,38 +337,38 @@ def _render_slate():
                     continue
             rows_html += (
                 f'<div style="display:grid; grid-template-columns:1fr auto 1fr; gap:10px; '
-                f'padding:4px 0; border-bottom:1px solid {COLOR["surface_raised"]};">'
+                f'padding:var(--lc-space-xs) var(--lc-space-none); border-bottom:1px solid {COLOR["surface_raised"]};">'
                 f'<div style="text-align:right; font-family:\'JetBrains Mono\',monospace; '
-                f'color:{a_col}; font-size:13px; font-weight:700;">{av}</div>'
-                f'<div style="text-align:center; font-size:10px; color:{COLOR["gold"]}; '
+                f'color:{a_col}; font-size:var(--lc-text-body); font-weight:700;">{av}</div>'
+                f'<div style="text-align:center; font-size:var(--lc-text-tiny); color:{COLOR["gold"]}; '
                 f'text-transform:uppercase; letter-spacing:0.06em; min-width:120px; '
                 f'align-self:center;">{label}</div>'
                 f'<div style="text-align:left; font-family:\'JetBrains Mono\',monospace; '
-                f'color:{h_col}; font-size:13px; font-weight:700;">{hv}</div>'
+                f'color:{h_col}; font-size:var(--lc-text-body); font-weight:700;">{hv}</div>'
                 f'</div>')
         if rows_html:
-            st.markdown(f'<div style="max-width:560px; margin:10px auto 0 auto;">{rows_html}</div>',
+            st.markdown(f'<div style="max-width:560px; margin:var(--lc-space-md) auto var(--lc-space-none) auto;">{rows_html}</div>',
                         unsafe_allow_html=True)
 
         hh = g.get("h2h")
         if hh:
             scorelines = " \u00b7 ".join(hh.get("scorelines", [])[:4])
             st.markdown(
-                f'<div style="text-align:center; margin-top:10px;">'
-                f'<span style="display:inline-block; padding:6px 14px; border-radius:6px; '
-                f'background:{COLOR["surface_raised"]}; font-size:12px; color:{COLOR["text"]};">'
+                f'<div style="text-align:center; margin-top:var(--lc-space-md);">'
+                f'<span style="display:inline-block; padding:var(--lc-space-sm) var(--lc-space-lg); border-radius:var(--lc-radius-md); '
+                f'background:{COLOR["surface_raised"]}; font-size:var(--lc-text-small); color:{COLOR["text"]};">'
                 f'<b>Season Series:</b> {hh["summary"]} \u00b7 '
                 f'Avg total in H2H: <b>{_fmt(hh.get("avg_total"))}</b> '
                 f'({hh["meetings"]} meetings)</span>'
-                f'<div style="font-size:10.5px; color:{COLOR["gold"]}; margin-top:4px;">{scorelines}</div>'
+                f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["gold"]}; margin-top:var(--lc-space-xs);">{scorelines}</div>'
                 f'</div>',
                 unsafe_allow_html=True,
             )
         else:
             st.markdown(
-                f'<div style="text-align:center; margin-top:10px;">'
-                f'<span style="display:inline-block; padding:6px 14px; border-radius:6px; '
-                f'background:{COLOR["surface_raised"]}; font-size:12px; color:{COLOR["gold"]};">'
+                f'<div style="text-align:center; margin-top:var(--lc-space-md);">'
+                f'<span style="display:inline-block; padding:var(--lc-space-sm) var(--lc-space-lg); border-radius:var(--lc-radius-md); '
+                f'background:{COLOR["surface_raised"]}; font-size:var(--lc-text-small); color:{COLOR["gold"]};">'
                 f'First meeting of the season \u2014 no head-to-head data exists yet, '
                 f'and this page will not invent any.</span></div>',
                 unsafe_allow_html=True,
@@ -409,7 +409,7 @@ def _render_slate():
             )
             if _show_props:
                 st.markdown(
-                    f'<div class="pf-card-subtitle" style="color:{COLOR["magenta_purple"]}; margin-bottom:4px;">'
+                    f'<div class="pf-card-subtitle" style="color:{COLOR["magenta_purple"]}; margin-bottom:var(--lc-space-xs);">'
                     f'Real box-score data \u00b7 Season / L5 / L10 = averages over all, last 5, and last 10 '
                     f'games played \u00b7 vs OPP = this player\'s real averages in this season\'s meetings '
                     f'with tonight\'s opponent (H2H GP = how many) \u00b7 small samples are shown as small '
@@ -420,8 +420,8 @@ def _render_slate():
 
                 # ---- Player Trend: game-by-game bars + hit-rate chips ----
                 st.markdown(
-                    f'<div style="font-size:12px; font-weight:700; color:{COLOR["gold"]}; '
-                    f'margin:10px 0 2px 0;">Player Trend</div>'
+                    f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["gold"]}; '
+                    f'margin:var(--lc-space-md) var(--lc-space-none) var(--lc-space-hair) var(--lc-space-none);">Player Trend</div>'
                     f'<div class="pf-card-subtitle">Game-by-game results with the line drawn in \u2014 '
                     f'chips show how many games cleared it per window. Real box scores; the log carries '
                     f'the last 25 games.</div>',
@@ -517,10 +517,10 @@ def _render_slate():
                             if not plist:
                                 continue
                             st.markdown(
-                                f'<div style="display:inline-block; padding:3px 10px; border-radius:4px; '
+                                f'<div style="display:inline-block; padding:var(--lc-space-hair) var(--lc-space-md); border-radius:var(--lc-radius-sm); '
                                 f'background:{col}22; border:1px solid {col}55; color:{col}; '
-                                f'font-weight:700; font-size:11px; text-transform:uppercase; '
-                                f'letter-spacing:0.05em; margin:12px 0 4px 0;">{g.get(side, "")}</div>',
+                                f'font-weight:700; font-size:var(--lc-text-caption); text-transform:uppercase; '
+                                f'letter-spacing:0.05em; margin:var(--lc-space-lg) var(--lc-space-none) var(--lc-space-xs) var(--lc-space-none);">{g.get(side, "")}</div>',
                                 unsafe_allow_html=True,
                             )
                             rows = []

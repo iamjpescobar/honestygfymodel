@@ -11,7 +11,7 @@ page_header("NHL Analytics", "In development — built on real data or not at al
 
 st.markdown(card_open("🏒 NHL is on the roadmap"), unsafe_allow_html=True)
 st.markdown(
-    f'<div style="color:{COLOR["gold"]}; font-size:14px; line-height:1.7;">'
+    f'<div style="color:{COLOR["gold"]}; font-size:var(--lc-text-body-lg); line-height:1.7;">'
     f'NHL tools are being built on the same standard as the MLB engine: every number '
     f'traced to a real, verifiable source — no placeholders, no estimates, no filler. '
     f'Nothing ships on this page until its data engine is real.'
@@ -22,23 +22,23 @@ st.markdown(card_close(), unsafe_allow_html=True)
 
 st.markdown(card_open("What\'s planned"), unsafe_allow_html=True)
 st.markdown(
-    f'<div style="margin-bottom:12px;">'
-    f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:13.5px;">Game Cards</div>'
-    f'<div style="color:{COLOR["gold"]}; font-size:12.5px;">Nightly matchup pages — team shot quality and special teams</div>'
+    f'<div style="margin-bottom:var(--lc-space-lg);">'
+    f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:var(--lc-text-body);">Game Cards</div>'
+    f'<div style="color:{COLOR["gold"]}; font-size:var(--lc-text-small);">Nightly matchup pages — team shot quality and special teams</div>'
     f'</div>',
     unsafe_allow_html=True,
 )
 st.markdown(
-    f'<div style="margin-bottom:12px;">'
-    f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:13.5px;">Goalie Matchups</div>'
-    f'<div style="color:{COLOR["gold"]}; font-size:12.5px;">Starter confirmations and save-quality profiles</div>'
+    f'<div style="margin-bottom:var(--lc-space-lg);">'
+    f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:var(--lc-text-body);">Goalie Matchups</div>'
+    f'<div style="color:{COLOR["gold"]}; font-size:var(--lc-text-small);">Starter confirmations and save-quality profiles</div>'
     f'</div>',
     unsafe_allow_html=True,
 )
 st.markdown(
-    f'<div style="margin-bottom:12px;">'
-    f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:13.5px;">Totals Models</div>'
-    f'<div style="color:{COLOR["gold"]}; font-size:12.5px;">Game-level leans built on real shot data</div>'
+    f'<div style="margin-bottom:var(--lc-space-lg);">'
+    f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:var(--lc-text-body);">Totals Models</div>'
+    f'<div style="color:{COLOR["gold"]}; font-size:var(--lc-text-small);">Game-level leans built on real shot data</div>'
     f'</div>',
     unsafe_allow_html=True,
 )

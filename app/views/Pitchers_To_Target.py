@@ -15,9 +15,9 @@ from engines.live_sync import sync_latest_button
 inject_kc_theme()
 
 st.markdown(
-    f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">'
-    f'<span style="font-size:20px; font-weight:800; letter-spacing:-0.02em; color:{COLOR["text"]};">PITCHERS TO</span>'
-    f'<span style="font-size:20px; font-weight:800; letter-spacing:-0.02em; color:{COLOR["stat_high"]};">TARGET</span>'
+    f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:var(--lc-space-sm);">'
+    f'<span style="font-size:var(--lc-text-title); font-weight:800; letter-spacing:-0.02em; color:{COLOR["text"]};">PITCHERS TO</span>'
+    f'<span style="font-size:var(--lc-text-title); font-weight:800; letter-spacing:-0.02em; color:{COLOR["stat_high"]};">TARGET</span>'
     f'</div>',
     unsafe_allow_html=True,
 )

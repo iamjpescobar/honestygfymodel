@@ -34,9 +34,9 @@ EASTERN = ZoneInfo("America/New_York")
 inject_kc_theme()
 
 st.markdown(
-    f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">'
-    f'<span style="font-size:20px; font-weight:800; letter-spacing:-0.02em; color:{COLOR["text"]};">WEATHER</span>'
-    f'<span style="font-size:20px; font-weight:800; letter-spacing:-0.02em; color:{COLOR["stat_high"]};">BOARD</span>'
+    f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:var(--lc-space-sm);">'
+    f'<span style="font-size:var(--lc-text-title); font-weight:800; letter-spacing:-0.02em; color:{COLOR["text"]};">WEATHER</span>'
+    f'<span style="font-size:var(--lc-text-title); font-weight:800; letter-spacing:-0.02em; color:{COLOR["stat_high"]};">BOARD</span>'
     f'</div>',
     unsafe_allow_html=True,
 )
@@ -64,7 +64,7 @@ def _logo_img(team):
     u = logo_for(team)
     if u:
         return f'<img src="{u}" width="22" height="22" style="vertical-align:middle;">'
-    return f'<b style="font-size:11px;">{team_abbr(team or "?")}</b>'
+    return f'<b style="font-size:var(--lc-text-caption);">{team_abbr(team or "?")}</b>'
 
 
 def _drop_icon(col: str, filled: bool = True) -> str:
@@ -98,7 +98,7 @@ def _precip_badge(pct, roofed):
     false alarm.
     """
     if roofed:
-        return (f'<span style="padding:2px 8px; border-radius:4px; font-size:10.5px; '
+        return (f'<span style="padding:var(--lc-space-hair) var(--lc-space-md); border-radius:var(--lc-radius-sm); font-size:var(--lc-text-tiny); '
                 f'font-weight:700; background:{COLOR["text"]}1A; color:{COLOR["text"]};">'
                 f'{_roof_icon(COLOR["text"])} ROOF \u2014 weather protected</span>')
     if pct is None:
@@ -112,7 +112,7 @@ def _precip_badge(pct, roofed):
     else:
         col, label = COLOR["stat_high"], f"{pct}% precip"
         icon = _drop_icon(col, False)
-    return (f'<span style="padding:2px 8px; border-radius:4px; font-size:10.5px; '
+    return (f'<span style="padding:var(--lc-space-hair) var(--lc-space-md); border-radius:var(--lc-radius-sm); font-size:var(--lc-text-tiny); '
             f'font-weight:700; background:{col}22; color:{col};">{icon} {label}</span>')
 
 
@@ -236,7 +236,7 @@ with st.spinner("Pulling game-time forecasts for every park\u2026 (30-min cache 
         # neutral swirl, which wind_arrow() handles.
         _wind_raw = g.get("weather_wind") or (fc.get("wind") if fc else None)
         if g.get("weather_wind"):
-            wind_txt = f'{g["weather_wind"]} <span style="opacity:0.6; font-size:9px;">(official)</span>'
+            wind_txt = f'{g["weather_wind"]} <span style="opacity:0.6; font-size:var(--lc-text-micro);">(official)</span>'
         elif fc and fc.get("wind"):
             wind_txt = f'{fc["wind"]}*'
         else:
@@ -254,30 +254,30 @@ with st.spinner("Pulling game-time forecasts for every park\u2026 (30-min cache 
         _why_txt = " \u00b7 ".join(_hr_why)
 
         rows_html.append(
-            f'<div style="display:flex; align-items:center; gap:12px; padding:9px 12px; '
+            f'<div style="display:flex; align-items:center; gap:12px; padding:var(--lc-space-md) var(--lc-space-lg); '
             f'border:1px solid {COLOR["text"]}1E; border-left:4px solid {_hr_col}; '
-            f'background:{_hr_col}0A; border-radius:8px; margin-bottom:7px;">'
+            f'background:{_hr_col}0A; border-radius:var(--lc-radius-lg); margin-bottom:var(--lc-space-sm);">'
             f'<div style="min-width:110px;">{_logo_img(g.get("away"))}'
-            f'<span style="margin:0 5px; opacity:0.5; font-size:10px;">@</span>'
+            f'<span style="margin:var(--lc-space-none) var(--lc-space-xs); opacity:0.5; font-size:var(--lc-text-tiny);">@</span>'
             f'{_logo_img(g.get("home"))}</div>'
-            f'<div style="flex:1.4; font-size:11px; color:{COLOR["text"]}; opacity:0.8;">{venue}<br>'
+            f'<div style="flex:1.4; font-size:var(--lc-text-caption); color:{COLOR["text"]}; opacity:0.8;">{venue}<br>'
             f'<span style="color:{COLOR["gold"]}; font-weight:600;">{t_str}</span></div>'
-            f'<div style="flex:1; font-size:11.5px; color:{COLOR["text"]}; '
+            f'<div style="flex:1; font-size:var(--lc-text-caption); color:{COLOR["text"]}; '
             f'display:flex; align-items:center; gap:6px;">'
             f'<span style="flex-shrink:0;">{_small(weather_icon(cond_txt))}</span>'
             f'<span>{cond_txt}</span></div>'
-            f'<div style="flex:0.7; font-size:12px; font-weight:700; '
+            f'<div style="flex:0.7; font-size:var(--lc-text-small); font-weight:700; '
             f'color:{COLOR["stat_high"]}; display:flex; align-items:center; gap:5px;">'
             f'<span style="flex-shrink:0;">{_small(temp_icon(temp_txt))}</span>'
             f'<span>{temp_txt}</span></div>'
-            f'<div style="flex:1.3; font-size:11.5px; color:{COLOR["text"]}; '
+            f'<div style="flex:1.3; font-size:var(--lc-text-caption); color:{COLOR["text"]}; '
             f'display:flex; align-items:center; gap:6px;">'
             f'<span style="flex-shrink:0;">{_small(wind_arrow(_wind_raw))}</span>'
             f'<span>{wind_txt}</span></div>'
             f'<div style="flex:1.15; text-align:center;">'
-            f'<span style="padding:2px 8px; border-radius:4px; font-size:10.5px; font-weight:800; '
+            f'<span style="padding:var(--lc-space-hair) var(--lc-space-md); border-radius:var(--lc-radius-sm); font-size:var(--lc-text-tiny); font-weight:800; '
             f'background:{_hr_col}22; color:{_hr_col};">{_hr_label}</span>'
-            f'<div style="font-size:8.5px; color:{COLOR["text"]}; opacity:0.55; margin-top:2px;">'
+            f'<div style="font-size:var(--lc-text-micro); color:{COLOR["text"]}; opacity:0.55; margin-top:var(--lc-space-hair);">'
             + _why_txt + '</div></div>'
             f'<div style="flex:1.1; text-align:right;">{_precip_badge(precip, roofed)}</div>'
             f'</div>'
