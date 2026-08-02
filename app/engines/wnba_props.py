@@ -35,7 +35,7 @@ reason rather than ranked on noise.
 """
 
 import streamlit as st
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 MIN_GP = 8
 MIN_MPG = 15.0
