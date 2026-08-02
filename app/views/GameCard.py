@@ -10,7 +10,8 @@ from styles.kc_theme import (
     pitch_color, pitch_name, edge_tag
 )
 from styles.table_style import (style_stat_table, plain_dark_table,
-                                render_html_table, score_bar, bats_chip)
+                                render_html_table, score_bar, bats_chip,
+                                tier_legend)
 
 from engines.weather_engine import get_todays_games_with_weather
 from engines.park_factors import get_park_factor
@@ -1518,6 +1519,12 @@ with content_col:
                     # The first column stays put either way:
                     # render_html_table makes it sticky in CSS, which works
                     # on touch where the grid's pinning did not.
+                    # Colour key with the table. The lineup has both tier-
+                    # coloured cells AND tier-coloured bars, so without it a
+                    # reader has to infer that gold means "good" — and on
+                    # the pitcher tables above, colour reads the other way.
+                    tier_legend(favor_note="Higher is better for the BATTER \u2014 "
+                                           "colour is his grade in that column.")
                     render_html_table(styled, key="gc_lineup")
                     if not league_data_available:
                         st.caption("HR Score / Hit Score / K Score show N/A above because Baseball Savant's live percentile rankings aren't reachable right now (see warning above) \u2014 not because these players lack power or contact skill.")
