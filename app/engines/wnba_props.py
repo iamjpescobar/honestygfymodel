@@ -319,8 +319,16 @@ def _build_props(games, stat_label="Points", window="l10"):
                 name = p.get("name")
                 if not name:
                     continue
+                # ESPN team ids carried alongside the names so the view can
+                # render logos. wnba_logos keys on the id, and the rows
+                # previously held only names — so there was nothing to look
+                # a logo up by and the WNBA boards stayed text-only while
+                # the MLB ones got marks.
+                _opp_side = "home" if side == "away" else "away"
                 base = {"player": name, "pos": p.get("pos") or "?",
-                        "team": g.get(side, "?"), "opp": opp_name}
+                        "team": g.get(side, "?"), "opp": opp_name,
+                        "team_id": g.get(f"{side}_id"),
+                        "opp_id": g.get(f"{_opp_side}_id")}
                 # AVAILABILITY FIRST. Checked before any season-total
                 # threshold, because those all pass for a player who
                 # stopped playing a month ago — see the note by
