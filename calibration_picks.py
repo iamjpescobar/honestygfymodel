@@ -49,7 +49,6 @@ isn't the pick the site would have shown, and grading it would
 measure a claim the model never made.
 """
 import json
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
