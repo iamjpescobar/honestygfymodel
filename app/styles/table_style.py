@@ -866,4 +866,14 @@ def style_vs_league(df, favor_low=None):
             out.append(_gradient_fill(t))
         return out
 
-    return df.style.apply(_style_row, axis=1)
+    # .hide(axis="index") — this builds its own Styler rather than going
+    # through _base_styler, which is where every other table hides the
+    # index. Without it a throwaway "0" rendered as a first column.
+    return (df.style
+              .apply(_style_row, axis=1)
+              .set_properties(**{
+                  "font-family": "'JetBrains Mono', monospace",
+                  "font-size": "13.5px",
+                  "text-align": "right",
+              })
+              .hide(axis="index"))
