@@ -37,7 +37,11 @@ that finds a real board records it, later runs leave it alone.
 
 BOARDS LOGGED
 -------------
-daily13, potd, and hr_edge.
+daily13, potd, hr_edge, k_board, wnba_props, wnba_defense — see BUILDERS.
+
+The last three grade against a per-pick LINE rather than a fixed
+threshold, so their rows carry "stat" and "line" and main() must write
+both through. See the note at the record.setdefault() call.
 
 hr_edge was previously skipped: its picks were built inside
 GameCard.py from ONE selected game against one opposing team, so the
@@ -205,7 +209,16 @@ def _rows_k_board():
     question: did he clear the number this board published?
     """
     from engines.k_projection import get_slate_k_projections
-    rows = get_slate_k_projections("season") or []
+    # UNPACK THE TUPLE. get_slate_k_projections returns (rows, warning),
+    # exactly as views/Strikeout_Board.py reads it. This line used to
+    # bind the whole tuple to `rows`, so the comprehension below iterated
+    # [list, warning_str] and called .get() on a list — AttributeError on
+    # every single run. main()'s per-board try/except caught it, printed
+    # "k_board: could not build" into the Actions log, and moved on, which
+    # is why this board has never logged one pick despite being wired
+    # into BUILDERS and into both BOARDS configs.
+    rows, _warning = get_slate_k_projections("season")
+    rows = rows or []
     ranked = sorted((r for r in rows if r.get("pid") and r.get("proj")),
                     key=lambda r: -(r.get("proj") or 0))[:5]
     return [{"id": r.get("pid"), "name": r.get("pitcher"), "team": r.get("team"),
@@ -243,9 +256,26 @@ def main() -> int:
             print(f"{board}: no board yet for {date_str} "
                   f"(lineups likely not posted) - will retry.")
             continue
+        # CARRY stat AND line THROUGH. These were hardcoded to None here,
+        # which silently discarded the per-pick numbers every builder
+        # above goes to the trouble of computing — k_board's projected
+        # strikeouts, wnba_props' line, wnba_defense's form.
+        #
+        # For the MLB boards it didn't show: daily13/hr_edge/potd carry a
+        # fixed threshold of 1 in BOARDS, so grade() had a target either
+        # way. For every board whose threshold is None — which is exactly
+        # the boards that grade against their OWN published number — the
+        # target resolved to None and grade() closed each pick "dnp". Not
+        # a wrong result: no result, permanently, by construction. The
+        # WNBA boards logged 30 picks and graded zero of them.
+        #
+        # app/engines/calibration.py's log_picks() already wrote both
+        # fields correctly. This is the CI path, and since every record
+        # now carries source="ci", this was the only path that ran.
         record.setdefault(board, {})[date_str] = {
             "picks": [{"id": r["id"], "name": r.get("name"),
-                       "team": r.get("team"), "stat": None, "line": None,
+                       "team": r.get("team"), "stat": r.get("stat"),
+                       "line": r.get("line"),
                        "result": None} for r in rows],
             "graded": False,
             # Marks picks recorded by CI rather than by a page view, so
