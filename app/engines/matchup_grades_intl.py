@@ -425,7 +425,7 @@ def render_matchup_grades_card(grades, subtitle, source_line, key):
                 res = grades.get(key)
                 st.markdown(
                     f'<div style="font-weight:700; color:{COLOR["magenta_purple"]}; '
-                    f'font-size:13px;">{title}</div>',
+                    f'font-size:var(--lc-text-body);">{title}</div>',
                     unsafe_allow_html=True,
                 )
                 if not res:
@@ -433,19 +433,19 @@ def render_matchup_grades_card(grades, subtitle, source_line, key):
                     continue
                 if res.get("lean"):
                     st.markdown(
-                        f'<div style="font-size:16px; font-weight:800; color:{COLOR["stat_high"]};">'
+                        f'<div style="font-size:var(--lc-text-subhead); font-weight:800; color:{COLOR["stat_high"]};">'
                         f'Lean: {res["lean"]} \u00b7 Grade {res["grade"]}</div>'
-                        f'<div style="font-size:11px; color:{COLOR["gold"]};">{res["score"]}</div>',
+                        f'<div style="font-size:var(--lc-text-caption); color:{COLOR["gold"]};">{res["score"]}</div>',
                         unsafe_allow_html=True,
                     )
                 else:
                     st.markdown(
-                        f'<div style="font-size:13px; color:{COLOR["gold"]};">{res["score"]}</div>',
+                        f'<div style="font-size:var(--lc-text-body); color:{COLOR["gold"]};">{res["score"]}</div>',
                         unsafe_allow_html=True,
                     )
                 for s in res.get("signals", []):
                     st.markdown(
-                        f'<div style="font-size:11.5px; color:{COLOR["text"]};">\u2713 {s}</div>',
+                        f'<div style="font-size:var(--lc-text-caption); color:{COLOR["text"]};">\u2713 {s}</div>',
                         unsafe_allow_html=True,
                     )
         st.caption(source_line)

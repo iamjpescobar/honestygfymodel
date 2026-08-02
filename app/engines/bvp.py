@@ -95,8 +95,8 @@ def career_bvp(batter_id, pitcher_id):
 def render_bvp_card(batter_id, batter_name, pitcher_id, pitcher_name) -> None:
     d = career_bvp(batter_id, pitcher_id)
     st.markdown(
-        f'<div style="font-size:12px; font-weight:700; color:{COLOR["gold"]}; '
-        f'margin-top:12px;">{batter_name} vs {pitcher_name}</div>',
+        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["gold"]}; '
+        f'margin-top:var(--lc-space-lg);">{batter_name} vs {pitcher_name}</div>',
         unsafe_allow_html=True,
     )
     if d is None or not d.get("ab"):
@@ -107,7 +107,7 @@ def render_bvp_card(batter_id, batter_name, pitcher_id, pitcher_name) -> None:
         slg = f'{d["slg"]:.3f}' if d.get("slg") is not None else "\u2014"
         small = " \u00b7 small sample \u2014 read gently" if d["pa"] < 10 else ""
         st.markdown(
-            f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:13px; color:{COLOR["text"]};">'
+            f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:var(--lc-text-body); color:{COLOR["text"]};">'
             f'Career: <b>{d["h"]}-for-{d["ab"]}</b> \u00b7 AVG <b style="color:{COLOR["stat_high"]};">{avg}</b> '
             f'\u00b7 SLG <b style="color:{COLOR["stat_high"]};">{slg}</b> \u00b7 HR {d["hr"]} '
             f'\u00b7 BB {d["bb"]} \u00b7 K {d["k"]} \u00b7 {d["pa"]} PA{small}</div>',
@@ -158,7 +158,7 @@ def render_zone_map(batter_id, batter_name, window_label: str = "L10") -> None:
         df = apply_window(df, w, "games")
 
     st.markdown(
-        f'<div style="font-size:12px; font-weight:700; color:{COLOR["gold"]}; margin-top:12px;">'
+        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["gold"]}; margin-top:var(--lc-space-lg);">'
         f'Zone map \u00b7 {window_label} \u00b7 xSLG on contact (catcher\'s view)</div>',
         unsafe_allow_html=True,
     )
@@ -176,10 +176,10 @@ def render_zone_map(batter_id, batter_name, window_label: str = "L10") -> None:
             zx = xslg[mask & is_bbe].dropna()
             if n < 15 or zx.empty:
                 row_html.append(
-                    f'<td style="width:33%; padding:10px 4px; text-align:center; '
-                    f'background:{COLOR["text"]}0A; border:1px solid {COLOR["text"]}14; border-radius:6px;">'
-                    f'<div style="font-size:12px; color:{COLOR["text"]}; opacity:0.4;">\u2014</div>'
-                    f'<div style="font-size:9px; color:{COLOR["text"]}; opacity:0.4;">{n} p</div></td>')
+                    f'<td style="width:33%; padding:var(--lc-space-md) var(--lc-space-xs); text-align:center; '
+                    f'background:{COLOR["text"]}0A; border:1px solid {COLOR["text"]}14; border-radius:var(--lc-radius-md);">'
+                    f'<div style="font-size:var(--lc-text-small); color:{COLOR["text"]}; opacity:0.4;">\u2014</div>'
+                    f'<div style="font-size:var(--lc-text-micro); color:{COLOR["text"]}; opacity:0.4;">{n} p</div></td>')
                 continue
             v = float(zx.mean())
             col = (COLOR["stat_high"] if v >= 0.500
@@ -195,14 +195,14 @@ def render_zone_map(batter_id, batter_name, window_label: str = "L10") -> None:
                 gap = hh >= ZONE_HH_THRESHOLD and v < 0.350
                 hh_col = COLOR["gold"] if hh >= ZONE_HH_THRESHOLD else COLOR["text"]
                 gap_mark = " \u26a0" if gap else ""
-                hh_txt = (f'<div style="font-size:9.5px; font-weight:700; color:{hh_col};">'
+                hh_txt = (f'<div style="font-size:var(--lc-text-micro); font-weight:700; color:{hh_col};">'
                           f'{hh:.0f}% HH{gap_mark}</div>')
             row_html.append(
-                f'<td style="width:33%; padding:10px 4px; text-align:center; '
-                f'background:{col}26; border:1px solid {col}55; border-radius:6px;">'
-                f'<div style="font-size:13px; font-weight:800; color:{col};">{v:.3f}</div>'
+                f'<td style="width:33%; padding:var(--lc-space-md) var(--lc-space-xs); text-align:center; '
+                f'background:{col}26; border:1px solid {col}55; border-radius:var(--lc-radius-md);">'
+                f'<div style="font-size:var(--lc-text-body); font-weight:800; color:{col};">{v:.3f}</div>'
                 f'{hh_txt}'
-                f'<div style="font-size:9px; color:{COLOR["text"]}; opacity:0.6;">{n} p</div></td>')
+                f'<div style="font-size:var(--lc-text-micro); color:{COLOR["text"]}; opacity:0.6;">{n} p</div></td>')
         cells_html.append("<tr>" + "".join(row_html) + "</tr>")
     st.markdown(
         f'<table style="width:100%; border-collapse:separate; border-spacing:4px;">'
@@ -252,23 +252,23 @@ def _wind_widget(wind: str) -> None:
     # duration: stronger wind = faster drift (capped sane)
     dur = max(0.8, round(4.0 - min(mph, 20) * 0.15, 2))
     st.markdown(
-        f"""<div style="display:flex; align-items:center; gap:10px; margin-top:6px;">
-<div style="width:64px; height:64px; position:relative; overflow:hidden; border-radius:50%;
+        f"""<div style="display:flex; align-items:center; gap:10px; margin-top:var(--lc-space-sm);">
+<div style="width:64px; height:64px; position:relative; overflow:hidden; border-radius:var(--lc-radius-circle);
      border:1px solid {COLOR['stat_high']}44; background:{COLOR['stat_high']}0D;
      transform: rotate({angle}deg);">
   <style>@keyframes lc_wind {{ 0% {{ transform: translateY(26px); opacity:0; }}
     25% {{ opacity:1; }} 75% {{ opacity:1; }}
     100% {{ transform: translateY(-26px); opacity:0; }} }}</style>
   <div style="position:absolute; left:19px; top:14px; color:{COLOR['stat_high']};
-       font-size:15px; animation: lc_wind {dur}s linear infinite;">\u25b2</div>
+       font-size:var(--lc-text-body-lg); animation: lc_wind {dur}s linear infinite;">\u25b2</div>
   <div style="position:absolute; left:31px; top:22px; color:{COLOR['stat_high']};
-       font-size:12px; animation: lc_wind {dur}s linear infinite {dur/3:.2f}s;">\u25b2</div>
+       font-size:var(--lc-text-small); animation: lc_wind {dur}s linear infinite {dur/3:.2f}s;">\u25b2</div>
   <div style="position:absolute; left:41px; top:18px; color:{COLOR['stat_high']}; opacity:0.8;
-       font-size:13px; animation: lc_wind {dur}s linear infinite {2*dur/3:.2f}s;">\u25b2</div>
+       font-size:var(--lc-text-body); animation: lc_wind {dur}s linear infinite {2*dur/3:.2f}s;">\u25b2</div>
 </div>
-<div style="font-family:'JetBrains Mono',monospace; font-size:12px; color:{COLOR['text']};">
+<div style="font-family:'JetBrains Mono',monospace; font-size:var(--lc-text-small); color:{COLOR['text']};">
   Wind tonight: <b style="color:{COLOR['stat_high']};">{txt}</b><br>
-  <span style="opacity:0.65; font-size:11px;">shown from the batter's view \u2014 up = out to center</span>
+  <span style="opacity:0.65; font-size:var(--lc-text-caption);">shown from the batter's view \u2014 up = out to center</span>
 </div></div>""",
         unsafe_allow_html=True,
     )
@@ -330,7 +330,7 @@ def render_spray_chart(batter_id, batter_name, window_label: str = "L10",
         return
 
     st.markdown(
-        f'<div style="font-size:12px; font-weight:700; color:{COLOR["gold"]}; margin-top:12px;">'
+        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["gold"]}; margin-top:var(--lc-space-lg);">'
         f'Spray chart \u00b7 {window_label} \u00b7 {len(bb)} batted balls</div>',
         unsafe_allow_html=True,
     )

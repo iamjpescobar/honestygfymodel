@@ -51,17 +51,17 @@ def window_hit_chips(values, line: float, active_label: str,
         border = (f'border:1px solid {COLOR["stat_high"]};' if lbl == active_label
                   else "border:1px solid transparent;")
         cells.append(
-            f'<div style="flex:1; text-align:center; padding:8px 6px; border-radius:8px; '
+            f'<div style="flex:1; text-align:center; padding:var(--lc-space-md) var(--lc-space-sm); border-radius:var(--lc-radius-lg); '
             f'background:{col}18; {border}">'
-            f'<div style="font-size:10px; letter-spacing:0.06em; color:{COLOR["text"]}; '
+            f'<div style="font-size:var(--lc-text-tiny); letter-spacing:0.06em; color:{COLOR["text"]}; '
             f'opacity:0.65; text-transform:uppercase;">{lbl}</div>'
-            f'<div style="font-size:15px; font-weight:800; color:{col};">{hit}/{total}</div>'
-            f'<div style="font-size:10.5px; color:{col};">{pct:.0f}%</div>'
+            f'<div style="font-size:var(--lc-text-body-lg); font-weight:800; color:{col};">{hit}/{total}</div>'
+            f'<div style="font-size:var(--lc-text-tiny); color:{col};">{pct:.0f}%</div>'
             f'</div>'
         )
     if cells:
         st.markdown(
-            f'<div style="display:flex; gap:8px; margin:6px 0 10px 0;">{"".join(cells)}</div>',
+            f'<div style="display:flex; gap:8px; margin:var(--lc-space-sm) var(--lc-space-none) var(--lc-space-md) var(--lc-space-none);">{"".join(cells)}</div>',
             unsafe_allow_html=True,
         )
 

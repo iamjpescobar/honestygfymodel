@@ -109,20 +109,20 @@ def render_badge_row(st, COLOR, badges, why, name, hr_score, edge):
     if not badges:
         return
     chips = "".join(
-        f'<span style="display:inline-block; padding:2px 8px; margin:2px 4px 2px 0; '
-        f'border-radius:4px; font-size:10px; font-weight:700; '
+        f'<span style="display:inline-block; padding:var(--lc-space-hair) var(--lc-space-md); margin:var(--lc-space-hair) var(--lc-space-xs) var(--lc-space-hair) var(--lc-space-none); '
+        f'border-radius:var(--lc-radius-sm); font-size:var(--lc-text-tiny); font-weight:700; '
         f'background:{COLOR["gold"]}22; color:{COLOR["gold"]};" title="{reason}">{label}</span>'
         for label, reason in badges
     )
     why_txt = " \u00b7 ".join(why)
     st.markdown(
-        f'<div style="padding:7px 10px; margin-bottom:6px; border-radius:8px; '
+        f'<div style="padding:var(--lc-space-sm) var(--lc-space-md); margin-bottom:var(--lc-space-sm); border-radius:var(--lc-radius-lg); '
         f'border:1px solid {COLOR["text"]}1E;">'
-        f'<div style="font-size:12.5px; font-weight:700; color:{COLOR["text"]};">{name}'
-        f'<span style="margin-left:8px; font-size:11px; color:{COLOR["stat_high"]};">'
+        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["text"]};">{name}'
+        f'<span style="margin-left:var(--lc-space-md); font-size:var(--lc-text-caption); color:{COLOR["stat_high"]};">'
         f'HR Score {hr_score} \u2192 Edge {edge}</span></div>'
-        f'<div style="margin-top:3px;">{chips}</div>'
-        f'<div style="font-size:10.5px; color:{COLOR["text"]}; opacity:0.7; margin-top:3px;">'
+        f'<div style="margin-top:var(--lc-space-hair);">{chips}</div>'
+        f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["text"]}; opacity:0.7; margin-top:var(--lc-space-hair);">'
         f'Why upside: {why_txt}</div></div>',
         unsafe_allow_html=True,
     )
