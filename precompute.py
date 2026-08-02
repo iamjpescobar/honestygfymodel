@@ -661,6 +661,84 @@ def build_pitch_type_hr(season_df: pd.DataFrame) -> bool:
 # a low-scoring era or a rules change moves it on its own.
 #
 # A PA is one at_bat_number within one game_pk for one batting side.
+def build_pitcher_allowed_percentiles(season_df: pd.DataFrame) -> bool:
+    """League percentile cut points for contact ALLOWED by pitchers.
+
+    WHY: the HR Vulnerability card shows one pitcher, one row. Colouring a
+    cell means grading it, and grading needs something to compare
+    against — within a single row there is nothing, so every cell fell
+    back to one flat shade. The comparison that actually answers "is this
+    bad?" is against OTHER PITCHERS, which is exactly what this builds.
+
+    For each metric, stores the value at each decile across every pitcher
+    with a real sample. The app finds where tonight's starter sits in that
+    distribution and colours by tier — so gold means "he allows more
+    barrels than most pitchers", a claim backed by the league itself
+    rather than by a threshold someone picked.
+
+    MIN_BBE keeps a reliever with nine batted balls out of the
+    distribution; a percentile built on noise would grade everyone
+    against noise.
+    """
+    need = {"pitcher", "type", "launch_speed", "launch_angle", "events"}
+    if not need.issubset(season_df.columns):
+        print("  Pitcher percentiles skipped — missing required columns.")
+        return False
+
+    MIN_BBE = 50
+    bbe = season_df[season_df["type"] == "X"].copy()
+    if bbe.empty:
+        print("  Pitcher percentiles skipped — no batted balls.")
+        return False
+
+    ls = pd.to_numeric(bbe["launch_speed"], errors="coerce")
+    la = pd.to_numeric(bbe["launch_angle"], errors="coerce")
+    bbe["_hh"] = _mask(ls >= 95)
+    bbe["_fb"] = _mask(bbe.get("bb_type").astype(str) == "fly_ball") \
+        if "bb_type" in bbe.columns else False
+    bbe["_hrw"] = _mask((la >= 20) & (la <= 40))
+    if "launch_speed_angle" in bbe.columns:
+        bbe["_brl"] = _mask(pd.to_numeric(bbe["launch_speed_angle"],
+                                          errors="coerce") == 6)
+    else:
+        # Same rule as the engine: barrels are MEASURED or absent. No
+        # derived approximation ever enters a league distribution.
+        print("  Pitcher percentiles: no launch_speed_angle, Brl% omitted.")
+        bbe["_brl"] = None
+    bbe["_ls"] = ls
+
+    g = bbe.groupby("pitcher")
+    agg = pd.DataFrame({
+        "bbe": g.size(),
+        "HH % Allowed": g["_hh"].mean() * 100,
+        "FB % Allowed": g["_fb"].mean() * 100,
+        "HRWindow % Allowed": g["_hrw"].mean() * 100,
+        "EV90 Allowed": g["_ls"].quantile(0.90),
+    })
+    if bbe["_brl"] is not None and "_brl" in bbe.columns and bbe["_brl"].notna().any():
+        agg["Brl % Allowed"] = g["_brl"].mean() * 100
+    agg = agg[agg["bbe"] >= MIN_BBE]
+    if len(agg) < 50:
+        print(f"  Pitcher percentiles skipped — only {len(agg)} qualified.")
+        return False
+
+    out = {"n_pitchers": int(len(agg)), "min_bbe": MIN_BBE, "deciles": {}}
+    for col in agg.columns:
+        if col == "bbe":
+            continue
+        vals = agg[col].dropna()
+        if vals.empty:
+            continue
+        out["deciles"][col] = [round(float(vals.quantile(q / 10.0)), 3)
+                               for q in range(11)]
+
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    (DATA_DIR / "pitcher_allowed_pct.json").write_text(json.dumps(out, indent=2))
+    print(f"  Pitcher percentiles: {len(out['deciles'])} metrics over "
+          f"{len(agg):,} qualified pitchers")
+    return True
+
+
 def build_pitcher_roles(season_df: pd.DataFrame) -> bool:
     """Precompute SP/RP for every pitcher in one pass.
 
@@ -766,6 +844,9 @@ def main():
 
     print("Building league-wide HR metrics...")
     hrm_ok = build_hr_metrics(season_df)
+
+    print("Building pitcher allowed-contact percentiles...")
+    build_pitcher_allowed_percentiles(season_df)
 
     print("Precomputing pitcher roles (SP/RP)...")
     build_pitcher_roles(season_df)
