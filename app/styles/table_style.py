@@ -174,7 +174,7 @@ def _gradient_fill(t: float, bold: bool = False) -> str:
         f"background-image: linear-gradient(180deg, "
         f"rgba({r},{g},{b},{top:.2f}) 0%, rgba({r},{g},{b},{bottom:.2f}) 100%); "
         f"color: {BG if strong else COLOR['text']}; "
-        f"font-weight: {700 if strong else 600}; border-radius: 5px;"
+        f"font-weight: {700 if strong else 600}; border-radius:var(--lc-radius-md);"
     )
 
 
@@ -316,7 +316,7 @@ def _base_styler(df: pd.DataFrame):
     return base.set_table_styles([
         {"selector": "th.blank", "props": f"background-color:{BG};"},
         {"selector": "th.row_heading", "props": f"background-color:{BG}; color:{COLOR['text']}; font-weight:700;"},
-        {"selector": "th.col_heading", "props": f"background-color:{BG}; color:{COLOR['gold']}; font-weight:700; text-transform:uppercase; font-size:11px;"},
+        {"selector": "th.col_heading", "props": f"background-color:{BG}; color:{COLOR['gold']}; font-weight:700; text-transform:uppercase; font-size:var(--lc-text-caption);"},
     ])
 
 
@@ -383,7 +383,7 @@ _HTML_TABLE_CSS = f"""
   user-select: none;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  border-radius: 6px;
+  border-radius:var(--lc-radius-md);
   min-width: 0;
   max-width: 100%;
 }}
@@ -405,14 +405,14 @@ div[data-testid="column"]:has(.lc-tbl-wrap) {{
   width: max-content;
   min-width: 100%;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
+  font-size:var(--lc-text-body);
 }}
 .lc-tbl-wrap th, .lc-tbl-wrap td {{
   /* Roomier rows and a hairline separator instead of hard-edged blocks.
      The flat, tightly-packed grid was the other half of the dated look —
      the score bars read as modern because they have depth and breathing
      room, and the cells around them had neither. */
-  padding: 9px 12px;
+  padding:var(--lc-space-md) var(--lc-space-lg);
   text-align: right;
   white-space: nowrap;
   background-color: {BG};
@@ -440,9 +440,9 @@ div[data-testid="column"]:has(.lc-tbl-wrap) {{
   color: {COLOR['text_muted']};
   font-weight: 600;
   text-transform: uppercase;
-  font-size: 10px;
+  font-size:var(--lc-text-tiny);
   letter-spacing: 0.07em;
-  padding-bottom: 7px;
+  padding-bottom:var(--lc-space-sm);
   /* Muted grey rather than bright gold. A header row shouting in gold
      competes with the data for attention; the data should win. The
      underline does the separating instead of the colour. */
@@ -472,9 +472,9 @@ div[data-testid="column"]:has(.lc-tbl-wrap) {{
 /* Phones: tighter padding and smaller type so more columns fit before
    any scrolling is needed. Desktop keeps the roomier sizing above. */
 @media (max-width: 900px) {{
-  .lc-tbl-wrap table {{ font-size: 11.5px; }}
-  .lc-tbl-wrap th, .lc-tbl-wrap td {{ padding: 4px 6px; }}
-  .lc-tbl-wrap thead th {{ font-size: 9.5px; }}
+  .lc-tbl-wrap table {{ font-size:var(--lc-text-caption); }}
+  .lc-tbl-wrap th, .lc-tbl-wrap td {{ padding:var(--lc-space-xs) var(--lc-space-sm); }}
+  .lc-tbl-wrap thead th {{ font-size:var(--lc-text-micro); }}
 }}
 </style>
 """
@@ -556,24 +556,24 @@ def score_bar(color_key: str = "gold"):
         #           from an 82 far better than fill colour alone.
         return (
             f'<div style="position:relative; width:100%; min-width:62px; '
-            f'height:19px; line-height:19px; border-radius:4px; '
+            f'height:19px; line-height:19px; border-radius:var(--lc-radius-sm); '
             f'background:{COLOR["bg"]}; '
             f'box-shadow:inset 0 0 0 1px {COLOR["stat_mid_dim"]}; '
             f'overflow:hidden;">'
             f'<div style="position:absolute; left:0; top:0; bottom:0; '
-            f'width:{pct:.0f}%; border-radius:3px; '
+            f'width:{pct:.0f}%; border-radius:var(--lc-radius-sm); '
             f'background:linear-gradient(90deg, {fill}44 0%, {fill}8C 100%);'
             f'"></div>'
             f'<div style="position:absolute; top:1px; bottom:1px; '
             f'left:calc({pct:.0f}% - 2px); width:2px; background:{fill}; '
-            f'border-radius:1px;"></div>'
+            f'border-radius:var(--lc-radius-sm);"></div>'
             # Number sits on the RIGHT with its own padding. Left-aligned
             # it sat underneath the fill and the leading cap sliced
             # through the digits — a 91 rendered as "9|". Right-aligned it
             # is always clear of the cap except at a full 100, where the
             # cap is at the cell edge anyway.
             f'<span style="position:relative; float:right; font-weight:700; '
-            f'padding-right:7px; text-shadow:0 1px 2px {COLOR["bg"]};">'
+            f'padding-right:var(--lc-space-sm); text-shadow:0 1px 2px {COLOR["bg"]};">'
             f'{pct:.0f}</span>'
             f'</div>'
         )
@@ -634,9 +634,9 @@ def bats_chip():
         if not c:
             return str(v)
         return (f'<span style="display:inline-block; min-width:17px; '
-                f'text-align:center; padding:1px 5px; border-radius:3px; '
+                f'text-align:center; padding:var(--lc-space-hair) var(--lc-space-xs); border-radius:var(--lc-radius-sm); '
                 f'background:{c}26; color:{c}; font-weight:700; '
-                f'font-size:11px;">{k}</span>')
+                f'font-size:var(--lc-text-caption);">{k}</span>')
     return _fmt
 
 
@@ -660,9 +660,9 @@ def player_cell(locked_names=None):
         if name not in locked:
             return name
         return (
-            f'{name}<span style="display:inline-block; margin-left:6px; '
-            f'padding:1px 5px; border-radius:3px; background:{COLOR["gold"]}26; '
-            f'color:{COLOR["gold"]}; font-size:9.5px; font-weight:800; '
+            f'{name}<span style="display:inline-block; margin-left:var(--lc-space-sm); '
+            f'padding:var(--lc-space-hair) var(--lc-space-xs); border-radius:var(--lc-radius-sm); background:{COLOR["gold"]}26; '
+            f'color:{COLOR["gold"]}; font-size:var(--lc-text-micro); font-weight:800; '
             f'letter-spacing:0.04em; vertical-align:1px;">HOT</span>'
         )
     return _fmt
@@ -690,7 +690,7 @@ def form_dots(hit_char="\u25cf", miss_char="\u00b7"):
             else:
                 out.append(ch)
         return (f'<span title="oldest on the left, most recent on the right" '
-                f'style="letter-spacing:2.5px; font-size:13px;">'
+                f'style="letter-spacing:2.5px; font-size:var(--lc-text-body);">'
                 + "".join(out) + '</span>')
     return _fmt
 
@@ -763,22 +763,22 @@ def tier_legend(caption: str = "", favor_note: str = "") -> None:
             continue
         swatches.append(
             f'<span style="display:inline-flex; align-items:center; gap:5px; '
-            f'margin-right:14px;">'
-            f'<span style="width:11px; height:11px; border-radius:3px; '
+            f'margin-right:var(--lc-space-lg);">'
+            f'<span style="width:11px; height:11px; border-radius:var(--lc-radius-sm); '
             f'background:{hex_colour}; opacity:0.85; display:inline-block;"></span>'
-            f'<span style="color:{COLOR["text_muted"]}; font-size:10.5px; '
+            f'<span style="color:{COLOR["text_muted"]}; font-size:var(--lc-text-tiny); '
             f'letter-spacing:0.03em;">{label}</span></span>'
         )
     note = ""
     if favor_note:
-        note = (f'<div style="color:{COLOR["text_faint"]}; font-size:10px; '
-                f'margin-top:3px;">{favor_note}</div>')
+        note = (f'<div style="color:{COLOR["text_faint"]}; font-size:var(--lc-text-tiny); '
+                f'margin-top:var(--lc-space-hair);">{favor_note}</div>')
     extra = ""
     if caption:
-        extra = (f'<div style="color:{COLOR["text_faint"]}; font-size:10px; '
-                 f'margin-top:2px;">{caption}</div>')
+        extra = (f'<div style="color:{COLOR["text_faint"]}; font-size:var(--lc-text-tiny); '
+                 f'margin-top:var(--lc-space-hair);">{caption}</div>')
     st.markdown(
-        f'<div style="margin:6px 0 12px 0;">{"".join(swatches)}{note}{extra}</div>',
+        f'<div style="margin:var(--lc-space-sm) var(--lc-space-none) var(--lc-space-lg) var(--lc-space-none);">{"".join(swatches)}{note}{extra}</div>',
         unsafe_allow_html=True,
     )
 
