@@ -52,6 +52,7 @@ then it's cached for the day.
 """
 import json
 from datetime import datetime
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -77,6 +78,10 @@ _ZONE_HH_THRESHOLD = 45.0 # hard-hit% that marks a zone as a damage zone
 _ZONE_HH_BONUS_CAP = 4    # most the hard-hit layer can add or remove
 _PEN_MIN_ARMS = 5
 _PEN_MIN_IP = 40.0
+
+# Ships in the nightly data package, same directory as the parquets and
+# manifest (see fetch_data.py / precompute.build_bullpen_profiles).
+_PEN_PATH = Path(__file__).resolve().parents[1] / "data" / "statcast" / "bullpen_profiles.json"
 
 
 # ------------------------------------------------------------------
@@ -249,6 +254,64 @@ def zone_fit_component(batter_id, pitcher_id):
 # ------------------------------------------------------------------
 # 3) Bullpen (slate-relative)
 # ------------------------------------------------------------------
+@st.cache_data(ttl=21600, max_entries=1, show_spinner=False)
+def _precomputed_pens():
+    """{team: {"relievers":[{id,hr,ip,hand}], "unknown_role":n}} or None.
+
+    Built nightly by precompute.build_bullpen_profiles from the same
+    Statcast rows and the same active rosters the live path below reads —
+    it is the identical calculation, moved off the user's first page load.
+    None when the file isn't in this deploy's data package (an app running
+    before the first nightly that includes it), which is why every caller
+    below keeps its live path intact.
+    """
+    path = _PEN_PATH
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text())
+    except Exception:
+        return None
+
+
+def _pen_from_precomputed(team: str, starter_pid) -> str | None:
+    """Pooled pen line for this team from the nightly file, or None.
+
+    Tonight's starter is still excluded here rather than baked in at
+    build time: role classification puts an opener in the RP bucket, and
+    on the night he opens he is not part of the pen the lineup faces
+    late. Pooling the stored arms is arithmetic on a ~8-item list, so
+    doing it per request costs nothing and keeps this exactly equal to
+    the live path.
+    """
+    pens = _precomputed_pens()
+    if not pens:
+        return None
+    entry = pens.get(team)
+    if not entry:
+        return None
+    arms, hr_total, ip_total, lhp_ip = 0, 0, 0.0, 0.0
+    for r in entry.get("relievers") or []:
+        if starter_pid and str(r.get("id")) == str(starter_pid):
+            continue
+        ip = float(r.get("ip") or 0.0)
+        if ip <= 0:
+            continue
+        arms += 1
+        hr_total += int(r.get("hr") or 0)
+        ip_total += ip
+        if r.get("hand") == "L":
+            lhp_ip += ip
+    if arms < _PEN_MIN_ARMS or ip_total < _PEN_MIN_IP:
+        return json.dumps({"hr9": None, "arms": arms, "ip": round(ip_total, 1),
+                           "lhp_ip_share": None,
+                           "unknown_role": entry.get("unknown_role", 0)})
+    return json.dumps({"hr9": round(hr_total * 9.0 / ip_total, 2),
+                       "arms": arms, "ip": round(ip_total, 1),
+                       "lhp_ip_share": round(lhp_ip / ip_total, 3),
+                       "unknown_role": entry.get("unknown_role", 0)})
+
+
 @st.cache_data(ttl=21600, max_entries=60, show_spinner=False)
 def _pen_profile_json(team: str, starter_pid, date_str: str) -> str:
     """Pooled pen HR/9 from the team's ACTUAL RELIEVERS, plus the
@@ -271,6 +334,20 @@ def _pen_profile_json(team: str, starter_pid, date_str: str) -> str:
     a lefty bat facing an all-right-handed pen is a real edge that a
     single team-level number cannot express.
     """
+    # PRECOMPUTED FIRST. This is the whole point of the nightly build:
+    # the live path below is one HTTPS roster call plus a role lookup, a
+    # full splits derive and a hand lookup for every arm on the roster,
+    # and _slate_pen_avg_json runs it for all ~30 teams on the slate
+    # before the first Game Card can render. Reading the local file
+    # instead turns that from ~30 seconds into microseconds.
+    #
+    # Falls through to the live build on any miss — a team absent from
+    # the file, a deploy predating the first nightly that includes it —
+    # so behaviour is unchanged when the data isn't there.
+    _pre = _pen_from_precomputed(team, starter_pid)
+    if _pre is not None:
+        return _pre
+
     arms, hr_total, ip_total, lhp_ip = 0, 0, 0.0, 0.0
     skipped_unknown = 0
     roster = get_live_team_roster(team) or []
