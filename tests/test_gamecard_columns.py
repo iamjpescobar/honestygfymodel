@@ -15,7 +15,7 @@ eng = open("app/engines/statcast_engine.py").read()
 ret = eng[eng.index('        "Brl %": round(barrels'):]
 produced = set(re.findall(r'"([A-Za-z0-9/ %]+)":', ret[:ret.index("}")]))
 produced |= set(re.findall(r'"([A-Za-z0-9/ %]+)":',
-                eng[eng.index('"SweetSpot %": 0.0'):eng.index('"HRIntent": None,') + 20]))
+                eng[eng.index('    empty = {'):eng.index('"HRIntent": None,') + 20]))
 produced |= {a for _, a in re.findall(r'\("([^"]+)", "([^"]+)"\)', eng)}
 # Keys assigned directly rather than via the alias tuples, e.g.
 # metrics["xHR Allowed"] = ...
