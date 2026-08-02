@@ -352,15 +352,28 @@ def _spray_angle(hc_x, hc_y):
 def _compute_batted_ball_metrics(df: pd.DataFrame):
     """Derives Barrel %, Hard Hit %, LD/GB/FB %, Sweet Spot %, PullAir %,
     Pull Barrel %, and Blast % from batted-ball rows / real bat-tracking data."""
+    # EVERY RATE HERE IS None, NOT 0.0.
+    #
+    # This dict is what a player with no measurable batted balls gets —
+    # a fresh call-up with no parquet and an empty live pull, a window
+    # filter that lands on zero games, a switch-hitter side he hasn't
+    # batted from yet. A 0.0 in these fields is not "we measured him and
+    # he barrels nothing", it is "we measured nothing", and the lineup
+    # table has no PA column to tell those apart. Rendered as 0.0 next to
+    # real numbers it reads as the WORST hitter on the board, which is a
+    # fabricated stat — the one thing this app promises it never shows.
+    #
+    # None flows through to na_rep="N/A" / the em-dash formatters in
+    # table_style, which is the convention the rest of this file already
+    # follows (see SwStr%, EV90, HRIntent, HR/FB).
     empty = {
-        "Brl %": 0.0, "HH %": 0.0, "LD %": 0.0, "GB %": 0.0, "FB %": 0.0,
-        "SweetSpot %": 0.0, "PullAir %": 0.0, "PullBrl %": 0.0, "Blast %": 0.0, "BBE": 0,
-        # HR-specific additions. None (not 0.0) where a real zero would
-        # be a lie about a player we simply can't measure yet.
-        "HRWindow %": 0.0, "EV90": None, "MaxEV": None,
-        "Brl/PA": 0.0, "PA": 0, "HRIntent": None,
-        "BA": 0.0, "AB": 0,
-        "SLG": 0.0, "ISO": 0.0,
+        "Brl %": None, "HH %": None, "LD %": None, "GB %": None, "FB %": None,
+        "SweetSpot %": None, "PullAir %": None, "PullBrl %": None,
+        "Blast %": None, "BBE": 0,
+        "HRWindow %": None, "EV90": None, "MaxEV": None,
+        "Brl/PA": None, "PA": 0, "HRIntent": None,
+        "BA": None, "AB": 0,
+        "SLG": None, "ISO": None,
         "HR/FB": None, "FB_count": 0,
         # No batted balls at all, so nothing about barrels was measured.
         "_barrel_measured": False,
@@ -372,13 +385,19 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
     # standard AB definition (walks/HBP/sac excluded), same event sets
     # the pitcher Splits table uses. On a batter's rows this is his BA;
     # on a pitcher's rows the identical figure is his BA ALLOWED.
-    ba, ab = 0.0, 0
-    slg, iso = 0.0, 0.0
+    # None, not 0.0, with no at-bats: a .000 average is a real and very
+    # bad batting line, and printing one for a hitter who has not had an
+    # at-bat yet is inventing a number. Same reasoning as the `empty`
+    # dict above; every downstream consumer already guards for None
+    # (see slam_engine's slg_fallback, xbh_engine's isinstance check,
+    # daily_13's `ba is None: continue`).
+    ba, ab = None, 0
+    slg, iso = None, None
     if "events" in df.columns:
         _ev = df["events"].dropna()
         _hits = _ev.isin(_HIT_EVENTS).sum()
         ab = int(_ev.isin(_AB_EVENTS).sum())
-        ba = round(_hits / ab, 3) if ab > 0 else 0.0
+        ba = round(_hits / ab, 3) if ab > 0 else None
         # SLG and ISO from the same PA outcomes: total bases weighted
         # 1/2/3/4, then ISO = SLG - BA (extra bases per AB — the pure
         # power number, and the one that matters for a prop where every
@@ -471,7 +490,12 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
     gb = (bb_type == "ground_ball").sum()
     fb = (bb_type == "fly_ball").sum()
 
-    pull_air = 0
+    # None, not 0, when the spray coordinates aren't there to measure
+    # with — same rule as pull_barrel directly below. Without hc_x/hc_y
+    # we cannot tell a pulled fly ball from an opposite-field one, and
+    # "0% pulled air" is a strong (and wrong) statement about a hitter's
+    # swing, not an absence of data.
+    pull_air = None
     # None, not 0, when barrels couldn't be measured — a pulled barrel is
     # a barrel first, so if we can't identify barrels we can't count these
     # either, and 0.0 would read as a real "never pulls a barrel".
@@ -498,7 +522,12 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
     # velocity to measure at all (bat never touched the ball), so it
     # can't enter this specific formula — that's a real physical limit
     # of the stat, not an oversight.
-    blast_pct = 0.0
+    # None, not 0.0, when bat tracking isn't present. Bat speed only
+    # exists from 2024 onward and is missing on plenty of rows, so a
+    # 0.0 here means "this swing wasn't tracked" far more often than it
+    # means "he never squares one up" — and Blast% is a headline column
+    # on the lineup table, where 0.0 reads as a damning real number.
+    blast_pct = None
     if "description" in df.columns and {"bat_speed", "release_speed"}.issubset(df.columns):
         contact_df = df[(df["type"] == "X") | (df["description"] == "foul")]
         c_ls = pd.to_numeric(contact_df.get("launch_speed"), errors="coerce")
@@ -584,7 +613,8 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
         "GB %": round(gb / bbe_count * 100, 2),
         "FB %": round(fb / bbe_count * 100, 2),
         "SweetSpot %": round(sweet_spot / bbe_count * 100, 2),
-        "PullAir %": round(pull_air / bbe_count * 100, 2),
+        "PullAir %": (round(pull_air / bbe_count * 100, 2)
+                      if pull_air is not None else None),
         "PullBrl %": (round(pull_barrel / bbe_count * 100, 2)
                       if pull_barrel is not None else None),
         "Blast %": blast_pct,
@@ -1231,11 +1261,28 @@ def get_pitcher_advanced_splits(pitcher_id, side: str = None, window: str = "sea
                   attack-zone approximation: |plate_x| < 0.83 ft and
                   1.5-3.5 ft plate_z), as % of all pitches
     """
+    # RATES ARE None, COUNTS STAY 0.
+    #
+    # Same rule as _compute_batted_ball_metrics above, and it matters
+    # more here than anywhere else in the app: this dict is what the
+    # Game Card's STATS / STRIKES tables render when a pitcher (or one
+    # side of his platoon split) has no Statcast rows — a September
+    # call-up, a reliever who hasn't faced a lefty yet, a starter whose
+    # parquet isn't in tonight's build. Rendered as zeros, that row said
+    # BA .000, SLG .000, WHIP 0.00, HR/9 0.00 — a line describing the
+    # most dominant pitcher who ever lived, and the table has no sample
+    # column to contradict it.
+    #
+    # IP stays 0.0: it is the sentinel every caller gates on
+    # (bullpen_board's MIN_SPLIT_IP, edge's `ip <= 0`, daily_13), zero
+    # innings measured is a true statement, and the guards read
+    # `(x or 0)` so they are unaffected either way.
     empty = {
         "IP": 0.0,
-        "BA": 0.0, "SLG": 0.0, "ISO": 0.0, "WHIP": 0.0, "HR": 0, "HR/9": 0.0,
-        "BB%": 0.0, "K%": 0.0, "Whiff%": 0.0, "SwStr%": 0.0, "K/9": 0.0,
-        "Putaway%": 0.0, "1stPS%": 0.0, "Meatball%": 0.0, "_error": None,
+        "BA": None, "SLG": None, "ISO": None, "WHIP": None,
+        "HR": None, "HR/9": None,
+        "BB%": None, "K%": None, "Whiff%": None, "SwStr%": None, "K/9": None,
+        "Putaway%": None, "1stPS%": None, "Meatball%": None, "_error": None,
     }
 
     df, error = _get_pitcher_df(pitcher_id)
