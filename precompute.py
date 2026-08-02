@@ -24,6 +24,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import requests
 from pybaseball import statcast
 
 # Must match DEFAULT_START_DATE in app/engines/statcast_engine.py so the
@@ -58,6 +59,21 @@ CATEGORY_COLS = ["type", "events", "description", "bb_type", "stand"]
 OUT_ROOT = Path("build_data")
 DATA_DIR = OUT_ROOT / "data" / "statcast"
 ARCHIVE = Path("statcast_data.tar.gz")
+
+# MUST STAY IDENTICAL to statcast_engine._OUT_EVENTS.
+#
+# build_bullpen_profiles estimates innings the same way the engine does
+# (outs / 3 from terminal PA events), and the app pools precomputed pen
+# numbers against live-computed ones whenever a team is missing from the
+# nightly file. If the two definitions drift, the slate baseline quietly
+# shifts depending on which path built it — a bug with no visible symptom
+# beyond "the edges look different today". tests/test_baselines.py pins
+# this equality.
+_OUT_EVENTS = {
+    "field_out", "strikeout", "strikeout_double_play", "double_play",
+    "grounded_into_double_play", "force_out", "fielders_choice_out",
+    "sac_fly", "sac_bunt", "triple_play", "field_error",
+}
 
 
 def week_ranges(start: date, end: date):
@@ -838,6 +854,165 @@ def build_pa_per_game(season_df: pd.DataFrame):
     return round(per_team_game, 2)
 
 
+def build_bullpen_profiles(season_df: pd.DataFrame) -> bool:
+    """Precompute every team's real bullpen, so the app doesn't have to.
+
+    WHY THIS EXISTS — this is the single biggest first-load cost in the
+    product. The Game Card's Matchup Edge needs a slate-wide bullpen
+    baseline (see edge._slate_pen_avg_json), and building it live meant,
+    for EVERY team on the slate:
+
+        one HTTPS roster call to statsapi  (sequential, ~30 of them)
+      + get_pitcher_role() per rostered pitcher
+      + get_pitcher_advanced_splits() per reliever  (full metric derive)
+      + get_pitcher_hand() per reliever
+
+    That is the ~30-second "Computing matchup edges" spinner the first
+    user of the day sits through — and on Render's free tier the process
+    spins down, so st.cache_data is empty and SOMEBODY pays it again
+    every single day, usually the first person to open the app.
+
+    Everything it computes is already available right here: the whole
+    league's pitches are in memory, and GitHub's runners can reach
+    statsapi without the rate-limit exposure a user-facing request has.
+    So we do it once, nightly, and ship a small JSON.
+
+    SHAPE — per team, the reliever LIST rather than a finished HR/9:
+
+        {"Team Name": {"relievers": [{"id", "hr", "ip", "hand"}, ...],
+                       "unknown_role": n}, ...}
+
+    Storing the arms instead of the pooled rate is what keeps this
+    EXACTLY equivalent to the live path rather than merely close: the
+    app still excludes tonight's starter (an opener classified RP is
+    rare but real) and pools the rest itself, which is microseconds of
+    arithmetic on a list this size.
+
+    IP and HR use the same definitions as get_pitcher_advanced_splits —
+    outs/3 from terminal PA events — because these numbers are pooled
+    against numbers the live fallback produces. A different definition
+    here would make the baseline shift depending on which path built it.
+    """
+    need = {"pitcher", "events"}
+    if not need.issubset(season_df.columns):
+        print("  Bullpen profiles skipped — missing pitcher/events columns.")
+        return False
+
+    roles_path = DATA_DIR / "pitcher_roles.json"
+    if not roles_path.exists():
+        print("  Bullpen profiles skipped — pitcher_roles.json not built.")
+        return False
+    roles = json.loads(roles_path.read_text())
+
+    # Per-pitcher HR allowed and estimated IP, league-wide, in one pass.
+    ev = season_df[["pitcher", "events"]].dropna()
+    if ev.empty:
+        print("  Bullpen profiles skipped — no terminal events.")
+        return False
+    grouped = ev.groupby("pitcher")["events"]
+    hr_by_pid = grouped.apply(lambda s: int((s == "home_run").sum()))
+    outs_by_pid = grouped.apply(lambda s: int(s.isin(_OUT_EVENTS).sum()))
+
+    # Throwing hand from the pitcher's own rows — no extra lookup.
+    hand_by_pid = {}
+    if "p_throws" in season_df.columns:
+        _h = season_df[["pitcher", "p_throws"]].dropna()
+        if not _h.empty:
+            hand_by_pid = (_h.groupby("pitcher")["p_throws"]
+                             .agg(lambda s: s.mode().iat[0] if len(s.mode()) else None)
+                             .to_dict())
+
+    try:
+        teams = requests.get(
+            "https://statsapi.mlb.com/api/v1/teams", params={"sportId": 1}, timeout=20
+        ).json().get("teams", [])
+    except Exception as exc:
+        print(f"  Bullpen profiles skipped — team list unreachable ({exc}).")
+        return False
+
+    out, total_arms = {}, 0
+    for t in teams:
+        tid, tname = t.get("id"), t.get("name")
+        if not tid or not tname:
+            continue
+        try:
+            roster = requests.get(
+                f"https://statsapi.mlb.com/api/v1/teams/{tid}/roster",
+                params={"rosterType": "active"}, timeout=20,
+            ).json().get("roster", [])
+        except Exception:
+            # One unreachable team is not a reason to ship nothing —
+            # the app falls back to the live build for that team only.
+            continue
+
+        relievers, unknown = [], 0
+        for entry in roster:
+            person = entry.get("person") or {}
+            pid = person.get("id")
+            pos = (entry.get("position") or {}).get("abbreviation")
+            if not pid or pos != "P":
+                continue
+            role = roles.get(str(int(pid)))
+            if role != "RP":
+                # None means too few outings to judge. Excluded, not
+                # guessed at — a misclassified starter would drag the
+                # pooled rate straight back toward the rotation.
+                if role is None:
+                    unknown += 1
+                continue
+            outs = int(outs_by_pid.get(pid, 0))
+            if outs <= 0:
+                continue
+            relievers.append({
+                "id": str(pid),
+                "hr": int(hr_by_pid.get(pid, 0)),
+                "ip": round(outs / 3, 1),
+                "hand": hand_by_pid.get(pid),
+            })
+        if relievers:
+            out[tname] = {"relievers": relievers, "unknown_role": unknown}
+            total_arms += len(relievers)
+
+    if not out:
+        print("  Bullpen profiles skipped — no team produced a usable pen.")
+        return False
+
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    (DATA_DIR / "bullpen_profiles.json").write_text(json.dumps(out))
+    print(f"  Bullpen profiles: {len(out)} teams, {total_arms} relievers")
+    return True
+
+
+def fetch_savant_percentiles() -> bool:
+    """Ships MLB's own percentile-rank leaderboard with the data package.
+
+    HR Score / Hit Score / K Score are all built on this table, so the
+    Game Card loads it before it can rank a single batter — and it was
+    loading it LIVE, from baseballsavant.mlb.com, on every cold start.
+    On Render's free tier the process spins down, so "cold start" means
+    most mornings.
+
+    Same fix that was already applied to the FanGraphs leaderboard, for
+    the same reason: GitHub's runners fetch it once, the app reads it
+    from disk. The live call stays in the app as the fallback, so this
+    only ever removes latency — it never becomes the thing that breaks
+    the scores.
+    """
+    try:
+        from pybaseball import statcast_batter_percentile_ranks
+        pct = statcast_batter_percentile_ranks(date.today().year)
+        if pct is None or pct.empty:
+            print("  Savant percentiles returned no data — app will fetch live.")
+            return False
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        pct.to_parquet(DATA_DIR / "savant_percentiles.parquet", index=False)
+        print(f"  Savant percentile ranks saved: {len(pct):,} batters")
+        return True
+    except Exception as exc:
+        print(f"  Savant percentile fetch failed ({exc}) — app will fetch live.")
+        return False
+
+
 def fetch_fangraphs() -> bool:
     """Fetches the real FanGraphs batting leaderboard (same call the app
     makes) from GitHub's servers — which FanGraphs does not block, unlike
@@ -881,6 +1056,10 @@ def main():
     print("Precomputing pitcher roles (SP/RP)...")
     build_pitcher_roles(season_df)
 
+    # AFTER build_pitcher_roles — it reads the roles file that step writes.
+    print("Precomputing bullpen profiles (kills the 30s edge spinner)...")
+    pen_ok = build_bullpen_profiles(season_df)
+
     print("Measuring plate appearances per team-game...")
     pa_per_game = build_pa_per_game(season_df)
 
@@ -892,6 +1071,9 @@ def main():
 
     print("Fetching FanGraphs leaderboard...")
     fangraphs_ok = fetch_fangraphs()
+
+    print("Fetching Savant percentile ranks (off the app's cold start)...")
+    savant_ok = fetch_savant_percentiles()
 
     manifest = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -906,6 +1088,8 @@ def main():
         "hr_metrics_included": hrm_ok,
         "park_hr_factors_included": park_ok,
         "pitch_type_hr_included": pt_ok,
+        "bullpen_profiles_included": pen_ok,
+        "savant_percentiles_included": savant_ok,
         # Measured, not assumed — see build_pa_per_game.
         "pa_per_team_game": pa_per_game,
     }
