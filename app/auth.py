@@ -74,8 +74,8 @@ def _login_screen():
 
         st.markdown(
             f"""
-            <div style="font-size:11.5px; color:#8b0000; text-align:center;
-                        line-height:1.6; margin-top:22px; font-weight:600;">
+            <div style="font-size:var(--lc-text-caption); color:#8b0000; text-align:center;
+                        line-height:1.6; margin-top:var(--lc-space-2xl); font-weight:600;">
             Los Cappers provides statistical models for informational and
             entertainment purposes only. No content here is a guarantee of
             outcome, and nothing on this site constitutes betting advice.

@@ -305,10 +305,10 @@ def render_glossary():
     with st.expander("\U0001F4D6 Glossary"):
         def _section(title):
             st.markdown(
-                f'<div style="display:inline-block; padding:3px 10px; border-radius:4px; '
+                f'<div style="display:inline-block; padding:var(--lc-space-hair) var(--lc-space-md); border-radius:var(--lc-radius-sm); '
                 f'background:{COLOR["error"]}22; border:1px solid {COLOR["error"]}55; '
-                f'color:{COLOR["error"]}; font-weight:700; font-size:10.5px; text-transform:uppercase; '
-                f'letter-spacing:0.04em; margin:10px 0 6px 0;">{title}</div>',
+                f'color:{COLOR["error"]}; font-weight:700; font-size:var(--lc-text-tiny); text-transform:uppercase; '
+                f'letter-spacing:0.04em; margin:var(--lc-space-md) var(--lc-space-none) var(--lc-space-sm) var(--lc-space-none);">{title}</div>',
                 unsafe_allow_html=True,
             )
 
@@ -374,10 +374,10 @@ def render_right_sidebar(nav_titles=None, active_page=None, show_glossary=False)
     role = st.session_state.get("lc_role", "subscriber")
     role_badge_color = COLOR["stat_high"] if role == "admin" else COLOR["warn"]
     st.markdown(
-        f'<div class="pf-card" style="padding:12px 14px; margin-bottom:10px;">'
-        f'<div style="font-size:13px; font-weight:700; color:{COLOR["text"]};">{name}</div>'
-        f'<div style="display:inline-block; margin-top:6px; padding:3px 10px; border-radius:4px; '
-        f'background:{role_badge_color}22; color:{role_badge_color}; font-size:10.5px; font-weight:700; '
+        f'<div class="pf-card" style="padding:var(--lc-space-lg) var(--lc-space-lg); margin-bottom:var(--lc-space-md);">'
+        f'<div style="font-size:var(--lc-text-body); font-weight:700; color:{COLOR["text"]};">{name}</div>'
+        f'<div style="display:inline-block; margin-top:var(--lc-space-sm); padding:var(--lc-space-hair) var(--lc-space-md); border-radius:var(--lc-radius-sm); '
+        f'background:{role_badge_color}22; color:{role_badge_color}; font-size:var(--lc-text-tiny); font-weight:700; '
         f'text-transform:uppercase; letter-spacing:0.05em;">{role}</div>'
         f'</div>',
         unsafe_allow_html=True,
@@ -404,7 +404,7 @@ def render_right_sidebar(nav_titles=None, active_page=None, show_glossary=False)
             "  display: none !important; }"
             "div[role='radiogroup'][aria-label='Navigation'] label {"
             "  display: flex !important; align-items: center !important;"
-            "  width: 100% !important; padding: 8px 12px !important; margin: 0 !important;"
+            "  width: 100% !important; padding:var(--lc-space-md) var(--lc-space-lg) !important; margin:var(--lc-space-none) !important;"
             "  border-left: 2px solid transparent !important; border-radius: 0 !important;"
             "  cursor: pointer; transition: background 0.15s; }"
             "div[role='radiogroup'][aria-label='Navigation'] label:hover {"
