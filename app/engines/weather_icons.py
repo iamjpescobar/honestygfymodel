@@ -252,7 +252,6 @@ def park_icon(pf_text: str) -> str:
     ang = math.pi * (1 - frac)
     x = 12 + 8 * math.cos(ang)
     y = 16 - 8 * math.sin(ang)
-    large = 0
     return (
         '<svg width="30" height="30" viewBox="0 0 24 24" fill="none">'
         f'<path d="M4 16a8 8 0 0 1 16 0" stroke="{_GREY}" stroke-width="1.6" '
