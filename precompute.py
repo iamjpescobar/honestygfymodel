@@ -661,6 +661,47 @@ def build_pitch_type_hr(season_df: pd.DataFrame) -> bool:
 # a low-scoring era or a rules change moves it on its own.
 #
 # A PA is one at_bat_number within one game_pk for one batting side.
+def build_pitcher_roles(season_df: pd.DataFrame) -> bool:
+    """Precompute SP/RP for every pitcher in one pass.
+
+    WHY: get_pitcher_role() derives the role from the median of each
+    pitcher's first at_bat_number per game — cheap arithmetic, but it was
+    loading that pitcher's FULL SEASON dataframe to do it, one pitcher at
+    a time. The slate-wide bullpen baseline runs it across every team's
+    roster, so the first MLB page load of the day was paying for a few
+    hundred separate dataframe loads before anything rendered.
+
+    The whole league is already in memory here. One groupby produces every
+    role at once, and the app reads a small JSON instead.
+
+    Same rule as the engine: fewer than 3 outings means the role is
+    UNKNOWN and the pitcher is left out entirely, rather than guessed at.
+    """
+    need = {"pitcher", "game_pk", "at_bat_number"}
+    if not need.issubset(season_df.columns):
+        print("  Pitcher roles skipped — missing required columns.")
+        return False
+
+    df = season_df[["pitcher", "game_pk", "at_bat_number"]].dropna()
+    if df.empty:
+        print("  Pitcher roles skipped — no rows.")
+        return False
+
+    # First batter each pitcher faced in each game.
+    firsts = df.groupby(["pitcher", "game_pk"])["at_bat_number"].min().reset_index()
+    agg = firsts.groupby("pitcher")["at_bat_number"].agg(["median", "count"])
+    agg = agg[agg["count"] >= 3]
+
+    # <= 9 means he was in from the top of the order: a starter.
+    roles = {str(int(pid)): ("SP" if row["median"] <= 9 else "RP")
+             for pid, row in agg.iterrows()}
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    (DATA_DIR / "pitcher_roles.json").write_text(json.dumps(roles))
+    sp = sum(1 for v in roles.values() if v == "SP")
+    print(f"  Pitcher roles: {len(roles):,} pitchers ({sp} SP, {len(roles)-sp} RP)")
+    return True
+
+
 def build_pa_per_game(season_df: pd.DataFrame):
     """League mean plate appearances per team-game, or None."""
     need = {"game_pk", "at_bat_number", "home_team", "events"}
@@ -725,6 +766,9 @@ def main():
 
     print("Building league-wide HR metrics...")
     hrm_ok = build_hr_metrics(season_df)
+
+    print("Precomputing pitcher roles (SP/RP)...")
+    build_pitcher_roles(season_df)
 
     print("Measuring plate appearances per team-game...")
     pa_per_game = build_pa_per_game(season_df)
