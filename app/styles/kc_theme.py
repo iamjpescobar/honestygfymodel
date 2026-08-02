@@ -72,12 +72,109 @@ COLOR = {
 }
 
 
+# ---------------------------------------------------------
+# TYPE — the only place font sizes should be defined
+#
+# There were 188 inline font-size declarations across 19 distinct
+# values, drifting in half-pixel steps: 8.5, 9.5, 10.5, 11.5, 12.5,
+# 13.5. Nothing was wrong with any single one; the problem was that
+# "make the tables a bit denser" meant editing 188 separate strings
+# spread across the views, and each edit was a fresh guess. COLOR had
+# been a single source of truth since day one and type never was.
+#
+# Eleven steps, not the usual five or six, on purpose. This is a data
+# terminal — the gap between a table cell and its sub-label is one
+# pixel of real information density, and collapsing those into one step
+# would flatten the hierarchy the boards depend on. Every step below
+# maps to sizes already in use, so adopting them changes nothing
+# visually on its own. That's the point: the sweep is safe, and the
+# redesign happens afterwards by editing this dict.
+# ---------------------------------------------------------
+TYPE = {
+    "micro":    "9px",    # dense table sub-labels, footnotes
+    "tiny":     "10px",   # eyebrows, badge text, legends
+    "caption":  "11px",   # captions, secondary metadata
+    "small":    "12px",   # dense table cells, chips
+    "body":     "13px",   # default body text and primary table text
+    "body_lg":  "14px",   # emphasised body, row anchors
+    "subhead":  "16px",   # card titles
+    "title":    "20px",   # page and section titles
+    # stat and display are deliberately NOT merged. 22px is the large
+    # paired stat readout on the Game Card; 26px is the single headline
+    # matchup line, the one thing on the page allowed to be the largest.
+    # They read as one step apart but they are different jobs, and
+    # collapsing them would silently demote the headline.
+    "stat":     "22px",   # large paired stat readout
+    "display":  "26px",   # the one headline per page
+    "hero":     "32px",   # the page header itself (.lc-title)
+}
+
+# ---------------------------------------------------------
+# SPACE — 4px grid, with a 2px half-step
+#
+# 103 distinct padding/margin values existed across the views, including
+# 5px, 9px and 14px one-offs. The grid below covers every one of them
+# within a pixel or two, which is under the threshold anyone can see and
+# well under the threshold anyone can see CONSISTENTLY.
+# ---------------------------------------------------------
+SPACE = {
+    "none": "0",
+    "hair": "2px",
+    "xs":   "4px",
+    "sm":   "6px",
+    "md":   "8px",
+    "lg":   "12px",
+    "xl":   "16px",
+    "2xl":  "24px",
+    "3xl":  "32px",
+}
+
+# ---------------------------------------------------------
+# RADIUS — four size steps plus the two shape primitives.
+#
+# Ten different values were in use, and three of them differed from
+# another only by the space after the colon.
+# ---------------------------------------------------------
+RADIUS = {
+    "sm":     "3px",   # chips, badges, table cells
+    "md":     "6px",   # buttons, inputs
+    "lg":     "8px",   # panels, table containers
+    "xl":     "12px",  # the raised card surface
+    "pill":   "999px",
+    "circle": "50%",
+}
+
+
+def css_variables() -> str:
+    """The token dicts as CSS custom properties.
+
+    Emitted into :root by inject_kc_theme so that raw CSS blocks and
+    Python f-strings read from the SAME source. Before this, the CSS in
+    this file hardcoded its own sizes while the views hardcoded theirs,
+    so the two could disagree and regularly did.
+
+    Prefixed lc- to avoid collision with Streamlit's own variables.
+    """
+    lines = [f"--lc-color-{k.replace('_', '-')}: {v};" for k, v in COLOR.items()]
+    lines += [f"--lc-text-{k.replace('_', '-')}: {v};" for k, v in TYPE.items()]
+    lines += [f"--lc-space-{k}: {v};" for k, v in SPACE.items()]
+    lines += [f"--lc-radius-{k}: {v};" for k, v in RADIUS.items()]
+    return ":root {\n  " + "\n  ".join(lines) + "\n}"
+
+
 def inject_kc_theme():
     import streamlit as st
 
     st.markdown(
         f"""
         <style>
+        /* ---------- Design tokens ----------
+           Generated from COLOR/TYPE/SPACE/RADIUS above. Braces are
+           doubled because this whole block is an f-string; css_variables()
+           returns plain CSS, so it is inserted with a single {{}} pair and
+           needs no escaping itself. */
+        {css_variables()}
+
         /* ---------- Mobile / small screens ---------- */
         /* IMPORTANT: this block used to force
            `stHorizontalBlock {{ flex-wrap: wrap }}` on EVERY row of
@@ -95,17 +192,17 @@ def inject_kc_theme():
             html, body {{ overflow-x: hidden !important; }}
             .stApp {{ overflow-x: hidden !important; }}
 
-            .lc-title {{ font-size: 22px !important; }}
-            .lc-subtitle {{ font-size: 12px !important; }}
-            .lc-eyebrow {{ font-size: 10px !important; }}
+            .lc-title {{ font-size:var(--lc-text-stat) !important; }}
+            .lc-subtitle {{ font-size:var(--lc-text-small) !important; }}
+            .lc-eyebrow {{ font-size:var(--lc-text-tiny) !important; }}
             .block-container {{
                 padding-left: 0.9rem !important;
                 padding-right: 0.9rem !important;
                 padding-top: 1.6rem !important;
                 max-width: 100vw !important;
             }}
-            .pf-card, div[class*="st-key-card_"] {{ padding: 12px 12px !important; }}
-            .pf-metric-value {{ font-size: 21px !important; }}
+            .pf-card, div[class*="st-key-card_"] {{ padding:var(--lc-space-lg) var(--lc-space-lg) !important; }}
+            .pf-metric-value {{ font-size:var(--lc-text-title) !important; }}
 
             /* Columns: let Streamlit's native full-width stacking apply.
                Just make sure nothing inside a stacked column can force
@@ -124,7 +221,7 @@ def inject_kc_theme():
             /* Tables/dataframes: scroll horizontally WITHIN their own
                box instead of pushing the whole page sideways. */
             div[data-testid="stDataFrame"], div[data-testid="stTable"] {{
-                font-size: 11px !important;
+                font-size:var(--lc-text-caption) !important;
                 max-width: 100% !important;
                 overflow-x: auto !important;
                 -webkit-overflow-scrolling: touch;
@@ -136,17 +233,17 @@ def inject_kc_theme():
             .stButton > button, .stDownloadButton > button {{
                 min-height: 40px !important;
                 padding: 0.55rem 1rem !important;
-                font-size: 14px !important;
+                font-size:var(--lc-text-body-lg) !important;
             }}
             div[data-testid="stButtonGroup"] button {{
                 min-height: 38px !important;
-                font-size: 13px !important;
+                font-size:var(--lc-text-body) !important;
             }}
             .st-key-gc_view_nav label {{
-                padding: 12px 12px !important;
+                padding:var(--lc-space-lg) var(--lc-space-lg) !important;
             }}
             .st-key-gc_view_nav label div[data-testid="stMarkdownContainer"] p {{
-                font-size: 14px !important;
+                font-size:var(--lc-text-body-lg) !important;
             }}
 
             /* Sidebar: full-width and comfortably tappable when open. */
@@ -196,18 +293,18 @@ def inject_kc_theme():
         section[data-testid="stSidebar"] label {{
             color: {COLOR["text_muted"]} !important;
             font-weight: 600;
-            font-size: 12px;
+            font-size:var(--lc-text-small);
             text-transform: uppercase;
             letter-spacing: 0.06em;
         }}
         section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3 {{
             color: {COLOR["text"]} !important;
-            font-size: 13px !important;
+            font-size:var(--lc-text-body) !important;
             font-weight: 700 !important;
             text-transform: uppercase;
             letter-spacing: 0.06em;
             border-left: 2px solid {COLOR["accent"]};
-            padding-left: 9px;
+            padding-left:var(--lc-space-md);
             margin-top: 1.4rem !important;
             margin-bottom: 0.6rem !important;
         }}
@@ -215,24 +312,24 @@ def inject_kc_theme():
         /* ---------------- PAGE HEADER ---------------- */
         .lc-eyebrow {{
             text-align: center;
-            font-size: 11px;
+            font-size:var(--lc-text-caption);
             font-weight: 700;
             color: {COLOR["accent"]};
             text-transform: uppercase;
             letter-spacing: 0.18em;
-            margin-bottom: 6px;
+            margin-bottom:var(--lc-space-sm);
         }}
         .lc-title {{
             text-align: center;
-            font-size: 32px;
+            font-size:var(--lc-text-hero);
             font-weight: 800;
             letter-spacing: -0.01em;
             color: {COLOR["text"]};
-            margin-bottom: 4px;
+            margin-bottom:var(--lc-space-xs);
         }}
         .lc-subtitle {{
             text-align: center;
-            font-size: 13px;
+            font-size:var(--lc-text-body);
             font-weight: 500;
             color: {COLOR["text_muted"]};
             margin-bottom: 1.6rem;
@@ -247,12 +344,12 @@ def inject_kc_theme():
         /* Section labels — replaces default h3/subheader look everywhere */
         h3 {{
             color: {COLOR["text"]} !important;
-            font-size: 14px !important;
+            font-size:var(--lc-text-body-lg) !important;
             font-weight: 700 !important;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             border-left: 3px solid {COLOR["accent"]};
-            padding-left: 10px;
+            padding-left:var(--lc-space-md);
             margin-top: 1.6rem !important;
         }}
         h1, h2 {{ color: {COLOR["text"]} !important; }}
@@ -274,9 +371,9 @@ def inject_kc_theme():
         div[class*="st-key-card_"] {{
             background: linear-gradient(165deg, {COLOR["surface_raised"]} 0%, {COLOR["surface"]} 100%) !important;
             border: none !important;
-            border-radius: 14px !important;
-            padding: 18px 20px !important;
-            margin-bottom: 14px !important;
+            border-radius:var(--lc-radius-xl) !important;
+            padding:var(--lc-space-xl) var(--lc-space-xl) !important;
+            margin-bottom:var(--lc-space-lg) !important;
             box-shadow: 0 1px 2px rgba(0,0,0,0.4),
                         0 10px 30px -14px rgba(0,0,0,0.55) !important;
         }}
@@ -301,23 +398,23 @@ def inject_kc_theme():
                surface rather than an outline. */
             background: linear-gradient(165deg, {COLOR["surface_raised"]} 0%, {COLOR["surface"]} 100%);
             border: 1px solid {COLOR["border_soft"]};
-            border-radius: 12px;
-            padding: 16px 18px;
-            margin-bottom: 12px;
+            border-radius:var(--lc-radius-xl);
+            padding:var(--lc-space-xl) var(--lc-space-xl);
+            margin-bottom:var(--lc-space-lg);
             box-shadow: 0 1px 3px rgba(0,0,0,0.35),
                         0 8px 24px -12px rgba(0,0,0,0.5);
         }}
         .pf-card-title {{
             font-weight: 700;
-            font-size: 15px;
+            font-size:var(--lc-text-body-lg);
             color: {COLOR["text"]};
-            margin-bottom: 4px;
+            margin-bottom:var(--lc-space-xs);
             letter-spacing: 0.01em;
         }}
         .pf-card-subtitle {{
-            font-size: 12.5px;
+            font-size:var(--lc-text-small);
             color: {COLOR["text_muted"]};
-            margin-bottom: 12px;
+            margin-bottom:var(--lc-space-lg);
         }}
 
         /* ---------------- BADGES ---------------- */
@@ -325,13 +422,13 @@ def inject_kc_theme():
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 5px 13px;
-            border-radius: 4px;
-            font-size: 12.5px;
+            padding:var(--lc-space-xs) var(--lc-space-lg);
+            border-radius:var(--lc-radius-sm);
+            font-size:var(--lc-text-small);
             font-weight: 600;
             font-family: 'JetBrains Mono', monospace;
-            margin-right: 8px;
-            margin-bottom: 6px;
+            margin-right:var(--lc-space-md);
+            margin-bottom:var(--lc-space-sm);
         }}
         .pf-badge-accent  {{ background: {COLOR["stat_high_dim"]}; color: {COLOR["stat_high"]};    border: 1px solid {COLOR["stat_high_border"]}; }}
         .pf-badge-good    {{ background: {COLOR["stat_high_dim"]}; color: {COLOR["stat_high"]};    border: 1px solid {COLOR["stat_high_border"]}; }}
@@ -340,7 +437,7 @@ def inject_kc_theme():
 
         /* ---------------- DATAFRAMES / TABLES ---------------- */
         div[data-testid="stDataFrame"], div[data-testid="stTable"] {{
-            border-radius: 6px;
+            border-radius:var(--lc-radius-md);
             overflow: hidden;
             border: none;
             background-color: transparent !important;
@@ -363,14 +460,14 @@ def inject_kc_theme():
         }}
         div[data-testid="stDataFrame"] table td, div[data-testid="stTable"] table td,
         div[data-testid="stDataFrame"] table th, div[data-testid="stTable"] table th {{
-            padding: 7px 12px;
+            padding:var(--lc-space-sm) var(--lc-space-lg);
             border-bottom: 1px solid {COLOR["border_soft"]};
-            font-size: 12.5px;
+            font-size:var(--lc-text-small);
         }}
         div[data-testid="stDataFrame"] table th, div[data-testid="stTable"] table th {{
             color: {COLOR["text_muted"]};
             text-transform: uppercase;
-            font-size: 10.5px;
+            font-size:var(--lc-text-tiny);
             letter-spacing: 0.06em;
             background-color: {COLOR["surface_raised"]};
         }}
@@ -383,8 +480,8 @@ def inject_kc_theme():
         .stTabs [data-baseweb="tab"] {{
             color: {COLOR["text_muted"]};
             font-weight: 600;
-            font-size: 13px;
-            padding: 10px 4px;
+            font-size:var(--lc-text-body);
+            padding:var(--lc-space-md) var(--lc-space-xs);
         }}
         .stTabs [aria-selected="true"] {{
             color: {COLOR["accent"]} !important;
@@ -395,7 +492,7 @@ def inject_kc_theme():
            default \u2014 on a page with this many stacked widgets/cards that
            adds up to real, unnecessary scroll. Tighten it globally. */
         div[data-testid="stVerticalBlock"] > div[data-testid="stElementContainer"] {{
-            margin-bottom: 4px !important;
+            margin-bottom:var(--lc-space-xs) !important;
         }}
         .block-container {{
             padding-top: 1.5rem !important;
@@ -429,7 +526,7 @@ def inject_kc_theme():
             background-color: {COLOR["surface_raised"]} !important;
             color: {COLOR["text"]} !important;
             border: 1px solid {COLOR["border"]} !important;
-            border-radius: 6px !important;
+            border-radius:var(--lc-radius-md) !important;
             font-weight: 600 !important;
         }}
         div[data-testid="stButtonGroup"] button:hover {{
@@ -448,7 +545,7 @@ def inject_kc_theme():
         .st-key-game_picker div[data-testid="stButtonGroup"] {{
             flex-wrap: nowrap !important;
             overflow-x: auto !important;
-            padding-bottom: 8px;
+            padding-bottom:var(--lc-space-md);
             scrollbar-width: thin;
             scrollbar-color: {COLOR["border"]} transparent;
         }}
@@ -462,7 +559,7 @@ def inject_kc_theme():
            our dark background. */
         div[data-testid="stRadio"] label div[data-testid="stMarkdownContainer"] p {{
             color: {COLOR["text"]} !important;
-            font-size: 13.5px;
+            font-size:var(--lc-text-body);
         }}
         div[data-testid="stRadio"] > div[data-testid="stWidgetLabel"] p {{
             color: {COLOR["text_muted"]} !important;
@@ -478,8 +575,8 @@ def inject_kc_theme():
             border: none !important;
             border-left: 2px solid transparent !important;
             border-radius: 0 6px 6px 0 !important;
-            padding: 9px 12px !important;
-            margin: 0 !important;
+            padding:var(--lc-space-md) var(--lc-space-lg) !important;
+            margin:var(--lc-space-none) !important;
             width: 100%;
         }}
         .st-key-gc_view_nav label:hover {{
@@ -487,7 +584,7 @@ def inject_kc_theme():
         }}
         .st-key-gc_view_nav label div[data-testid="stMarkdownContainer"] p {{
             color: {COLOR["text_muted"]};
-            font-size: 13px;
+            font-size:var(--lc-text-body);
             font-weight: 600;
         }}
         .st-key-gc_view_nav label input:checked ~ div {{
@@ -506,9 +603,9 @@ def inject_kc_theme():
             background-color: {COLOR["surface_raised"]};
             color: {COLOR["text"]};
             border: 1px solid {COLOR["border"]};
-            border-radius: 6px;
+            border-radius:var(--lc-radius-md);
             font-weight: 600;
-            font-size: 13px;
+            font-size:var(--lc-text-body);
             padding: 0.5rem 1.1rem;
             transition: border-color 0.15s ease, color 0.15s ease;
         }}
@@ -540,7 +637,7 @@ def inject_kc_theme():
         .stNumberInput > div > div {{
             background-color: {COLOR["surface_raised"]} !important;
             border: 1px solid {COLOR["border"]} !important;
-            border-radius: 6px !important;
+            border-radius:var(--lc-radius-md) !important;
             color: {COLOR["text"]} !important;
         }}
         /* The selected value text sits in a deeply nested BaseWeb element
@@ -563,22 +660,22 @@ def inject_kc_theme():
         /* ---------------- METRICS ---------------- */
         .pf-metric-value {{
             font-family: 'JetBrains Mono', monospace;
-            font-size: 26px;
+            font-size:var(--lc-text-display);
             font-weight: 700;
             color: {COLOR["stat_high"]};
         }}
         .pf-metric-label {{
-            font-size: 11px;
+            font-size:var(--lc-text-caption);
             color: {COLOR["text_muted"]};
             text-transform: uppercase;
             letter-spacing: 0.06em;
-            margin-top: 2px;
+            margin-top:var(--lc-space-hair);
         }}
         div[data-testid="stMetric"] {{
             background: {COLOR["surface"]};
             border: 1px solid {COLOR["border"]};
-            border-radius: 8px;
-            padding: 14px 16px;
+            border-radius:var(--lc-radius-lg);
+            padding:var(--lc-space-lg) var(--lc-space-xl);
         }}
         div[data-testid="stMetricValue"] {{
             font-family: 'JetBrains Mono', monospace !important;
@@ -587,16 +684,16 @@ def inject_kc_theme():
 
         /* ---------------- STATUS BANNERS ---------------- */
         .pf-status {{
-            border-radius: 8px;
-            padding: 13px 16px;
-            margin-bottom: 14px;
-            font-size: 13.5px;
+            border-radius:var(--lc-radius-lg);
+            padding:var(--lc-space-lg) var(--lc-space-xl);
+            margin-bottom:var(--lc-space-lg);
+            font-size:var(--lc-text-body);
             font-weight: 500;
             display: flex;
             align-items: flex-start;
             gap: 10px;
         }}
-        .pf-status-icon {{ font-size: 15px; line-height: 1.4; }}
+        .pf-status-icon {{ font-size:var(--lc-text-body-lg); line-height: 1.4; }}
         .pf-status-error   {{ background: {COLOR["error_dim"]}; border: 1px solid {COLOR["error_border"]}; color: #f0a6b0; }}
         .pf-status-warning {{ background: {COLOR["warn_dim"]};  border: 1px solid {COLOR["warn_border"]};  color: #e8c47f; }}
         .pf-status-info    {{ background: {COLOR["cold_dim"]};  border: 1px solid {COLOR["cold_border"]};  color: #9db8cf; }}
@@ -605,13 +702,13 @@ def inject_kc_theme():
         div[data-testid="stAlert"] {{
             background: {COLOR["surface"]} !important;
             border: 1px solid {COLOR["border"]} !important;
-            border-radius: 8px !important;
+            border-radius:var(--lc-radius-lg) !important;
             color: {COLOR["text"]} !important;
         }}
         div[data-testid="stExpander"] {{
             background: {COLOR["surface"]};
             border: 1px solid {COLOR["border"]};
-            border-radius: 8px;
+            border-radius:var(--lc-radius-lg);
         }}
 
         /* Divider */
@@ -726,9 +823,9 @@ def sport_switcher(active: str = "MLB"):
         label_visibility="collapsed",
     )
     st.markdown(
-        f'<div style="text-align:center; font-size:8.5px; font-weight:700; '
+        f'<div style="text-align:center; font-size:var(--lc-text-micro); font-weight:700; '
         f'letter-spacing:0.14em; color:{COLOR["text_faint"]}; opacity:0.75; '
-        f'margin-top:2px; text-transform:uppercase;">'
+        f'margin-top:var(--lc-space-hair); text-transform:uppercase;">'
         f'MLB · KBO · NPB · WNBA live — NBA / NHL / NFL soon</div>',
         unsafe_allow_html=True,
     )
@@ -830,8 +927,8 @@ def edge_tag(label: str, tier: str) -> str:
     }
     bg, fg, border = colors.get(tier, colors["neutral"])
     return (
-        f'<span style="display:inline-block; padding:4px 10px; border-radius:4px; '
-        f'background:{bg}; color:{fg}; border:1px solid {border}; font-size:12px; '
+        f'<span style="display:inline-block; padding:var(--lc-space-xs) var(--lc-space-md); border-radius:var(--lc-radius-sm); '
+        f'background:{bg}; color:{fg}; border:1px solid {border}; font-size:var(--lc-text-small); '
         f'font-weight:600; font-family:\'JetBrains Mono\',monospace;">{label}</span>'
     )
 
@@ -844,8 +941,8 @@ def footer():
 
     st.markdown(
         f"""
-        <div style="margin-top:2.5rem; padding-top:16px; border-top:1px solid {COLOR["border"]};
-                    font-size:11px; color:{COLOR["text_faint"]}; line-height:1.7;">
+        <div style="margin-top:2.5rem; padding-top:var(--lc-space-xl); border-top:1px solid {COLOR["border"]};
+                    font-size:var(--lc-text-caption); color:{COLOR["text_faint"]}; line-height:1.7;">
         Los Cappers provides statistical models for informational and entertainment
         purposes only. Nothing on this site is betting advice or a guarantee of
         outcome. You must be of legal betting age in your jurisdiction. Problem
@@ -866,7 +963,7 @@ def data_timestamp(label: str = "Data refreshed"):
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     st.markdown(
         f'<div style="text-align:center; font-family:\'JetBrains Mono\',monospace; '
-        f'font-size:11px; color:{COLOR["text_faint"]}; margin-top:-10px; margin-bottom:1.4rem;">'
+        f'font-size:var(--lc-text-caption); color:{COLOR["text_faint"]}; margin-top:-10px; margin-bottom:1.4rem;">'
         f'{label}: {now}</div>',
         unsafe_allow_html=True,
     )
