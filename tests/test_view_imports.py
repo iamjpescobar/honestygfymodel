@@ -10,6 +10,7 @@ an import line that didn't match, so the CALL landed and the IMPORT
 silently didn't. The patch reported success and the page was dead.
 """
 import ast
+import builtins
 from pathlib import Path
 
 VIEWS = Path(__file__).resolve().parent.parent / "app" / "views"
@@ -18,7 +19,13 @@ failures = []
 for view in sorted(VIEWS.glob("*.py")):
     tree = ast.parse(view.read_text())
 
-    bound = set(dir(__builtins__)) | {
+    # dir(builtins), NOT dir(__builtins__): as a script __builtins__ is
+    # the builtins MODULE, but under pytest (an import) it's a plain
+    # dict — dir() then returns dict methods instead of builtin names,
+    # and every call to len/sum/float in every view gets flagged as
+    # "never imported". The test passed in CI (script mode) and
+    # exploded under pytest for exactly that reason.
+    bound = set(dir(builtins)) | {
         "__file__", "__name__", "__doc__", "st", "pd", "np",
     }
     for n in ast.walk(tree):
