@@ -40,17 +40,39 @@ from pathlib import Path
 from pybaseball import statcast_batter_percentile_ranks
 
 
+_PCT_PATH = Path(__file__).resolve().parents[1] / "data" / "statcast" / "savant_percentiles.parquet"
+
+
 @st.cache_data(ttl=3600, max_entries=2, show_spinner=False)
 def load_percentile_ranks(year: int = None):
     """
     Real, live MLB-computed percentile ranks for every qualified batter
     this season, straight from baseballsavant.mlb.com. Returns
     (DataFrame indexed by player_id as a string, error_message).
-    Cached 1 hour — this is a season-aggregate leaderboard, not
-    something that needs to refetch every pageview.
+
+    LOCAL FILE FIRST. Every score on the Game Card is built on this
+    table, so the page cannot render a ranked lineup until it resolves —
+    which made it a blocking network round trip on every cold start, and
+    on Render's free tier the process spins down overnight, so somebody
+    pays it most mornings. precompute.fetch_savant_percentiles ships the
+    identical table (same endpoint, same day) in the nightly package.
+
+    The live pull below is unchanged and still runs whenever the file
+    isn't there: a deploy predating the first nightly that includes it,
+    or a nightly where Savant was unreachable. This can only remove
+    latency — it can't become the reason the scores go missing.
     """
     if year is None:
         year = date.today().year
+    if _PCT_PATH.exists():
+        try:
+            df = pd.read_parquet(_PCT_PATH)
+            if df is not None and not df.empty and "player_id" in df.columns:
+                df = df.dropna(subset=["player_id"]).copy()
+                df["player_id"] = df["player_id"].astype(int).astype(str)
+                return df.set_index("player_id"), None
+        except Exception:
+            pass  # fall through to the live pull rather than failing
     try:
         df = statcast_batter_percentile_ranks(year)
         if df is None or df.empty:
