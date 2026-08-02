@@ -775,3 +775,28 @@ def tier_color_for(value, lo=None, hi=None) -> str:
     t = 0.0 if hi <= lo else max(0.0, min(1.0, (v - lo) / (hi - lo)))
     hex_colour, _label = _tier_for(t)
     return hex_colour or COLOR["text_muted"]
+
+
+def wnba_logo_cell(id_by_name: dict):
+    """Formatter: WNBA team logo, keyed by ESPN team id.
+
+    Separate from team_logo_cell because that one resolves against MLB's
+    team map — pointing it at a WNBA abbreviation returns nothing and
+    silently renders no logo, which is why the WNBA boards stayed
+    text-only while the MLB ones got marks.
+
+    `id_by_name` maps the team string in the column to its ESPN id, built
+    by the caller from the rows it already has.
+    """
+    from engines.wnba_logos import logo_url_by_id
+
+    def _fmt(v):
+        if not v or (isinstance(v, float) and pd.isna(v)):
+            return "\u2014"
+        url = logo_url_by_id(id_by_name.get(str(v)))
+        if not url:
+            # No id resolved — text, never a broken image.
+            return str(v)
+        return (f'<img src="{url}" title="{v}" alt="{v}" '
+                f'style="height:19px; vertical-align:-4px;">')
+    return _fmt
