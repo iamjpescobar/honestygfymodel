@@ -50,7 +50,6 @@ speed scales it. A 5 mph breeze straight out is worth far less than a
 import math
 import re
 
-import streamlit as st
 
 # Compass point -> degrees. Each point is 360/16 = 22.5 degrees.
 _POINTS = {
