@@ -15,6 +15,16 @@ Pure rendering + arithmetic on values handed in — no data fetching
 here; the callers own their sources and their honesty labels.
 """
 import pandas as pd
+
+# Pulled from the table tiers so chart and table never drift apart. If
+# the tier palette changes, these follow automatically.
+try:
+    from styles.table_style import _TIERS as _TBL_TIERS
+    _TIER_MISSED = _TBL_TIERS[0][1]    # poor
+    _TIER_CLEARED = _TBL_TIERS[-1][1]  # elite
+except Exception:      # styling import failing must never break a chart
+    _TIER_MISSED, _TIER_CLEARED = "#D6304A", "#3BB8FF"
+
 import streamlit as st
 
 from styles.kc_theme import COLOR
@@ -76,12 +86,53 @@ def render_trend_bars(labels, values, stat_label: str, line: float,
     )
     _yscale = alt.Scale(domain=[-ypad, ymax]) if has_logos else alt.Undefined
     _yaxis = alt.Axis(tickMinStep=1, values=list(range(0, int(ymax) + 1))) if has_logos else alt.Axis(tickMinStep=1)
-    bars = base.mark_bar(cornerRadiusTopLeft=3, cornerRadiusTopRight=3).encode(
-        y=alt.Y("v:Q", title=stat_label, axis=_yaxis, scale=_yscale),
-        color=alt.condition(alt.datum.cleared,
-                            alt.value(COLOR["stat_high"]),
-                            alt.value("#8a3a40")),
-        tooltip=[alt.Tooltip("Game:N"), alt.Tooltip("v:Q", title=stat_label)],
+    # Same treatment as the score bars in the tables: a gradient along the
+    # bar and a bright cap at its end, rather than a flat block of colour.
+    #
+    # Built as TWO LAYERS because a gradient is a mark-level property in
+    # Vega-Lite while cleared/missed is per-datum — one alt.condition
+    # cannot carry two different gradients. Each layer filters to its own
+    # outcome and paints its own fill.
+    def _grad(hex_colour):
+        """Vertical gradient, faint at the base to solid at the top —
+        matching the score bars, where the fill deepens toward the value."""
+        return alt.Gradient(
+            gradient="linear", x1=0, x2=0, y1=1, y2=0,
+            # Two DIFFERENT stops. Both were the same colour on the first
+            # pass, which is a flat fill wearing a gradient's name. Faint
+            # at the base, solid at the top, so the bar deepens toward its
+            # value exactly like the score bars do.
+            stops=[alt.GradientStop(color=COLOR["bg"], offset=0),
+                   alt.GradientStop(color=hex_colour, offset=1)],
+        )
+
+    def _bar_layer(cleared: bool, hex_colour: str, opacity: float):
+        return (
+            # Explicit == comparison rather than `~alt.datum.cleared`.
+            # Negating a datum reference with ~ is easy to get subtly
+            # wrong, and a filter that silently matches nothing renders an
+            # empty layer with no error to explain it.
+            base.transform_filter(
+                alt.datum.cleared == (True if cleared else False))
+            .mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4,
+                      color=_grad(hex_colour), opacity=opacity,
+                      # The bright cap: a stroke on the top edge only,
+                      # which is the cue that makes a value readable
+                      # without reading the number.
+                      stroke=hex_colour, strokeWidth=2)
+            .encode(
+                y=alt.Y("v:Q", title=stat_label, axis=_yaxis, scale=_yscale),
+                tooltip=[alt.Tooltip("Game:N"),
+                         alt.Tooltip("v:Q", title=stat_label)],
+            )
+        )
+
+    # Tier colours, so the chart speaks the same language as the tables:
+    # cleared the line -> "elite" cyan, missed it -> "poor" red. The old
+    # miss colour was a one-off maroon appearing nowhere else on the site.
+    bars = alt.layer(
+        _bar_layer(True, _TIER_CLEARED, 0.85),
+        _bar_layer(False, _TIER_MISSED, 0.75),
     )
     text = base.mark_text(dy=-8, fontWeight="bold", fontSize=12,
                           color=COLOR["text"]).encode(
