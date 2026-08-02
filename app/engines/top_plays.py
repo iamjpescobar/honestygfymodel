@@ -24,7 +24,31 @@ from engines.savant_leaderboard import get_percentile, get_hr_metric, get_hr_met
 # HR/FB scoring anchors — league-average HR/FB sits around 11.5%, so
 # that maps to 50 on the same 0-100 scale the Savant percentiles use.
 # Weight is deliberately light: HR/FB is the least stable power stat.
-_LEAGUE_HRFB = 11.5
+# HR/FB scoring anchor — MEASURED, not asserted.
+#
+# This was a hardcoded 11.5. Close to reality, but typed in rather than
+# measured, so it silently went stale as the league moved and nothing in
+# the app could tell. precompute.build_baselines now measures HR per FLY
+# BALL across the whole league each night and ships it in baselines.json.
+#
+# The literal survives only as a fallback for a build that predates the
+# measurement, so the score never breaks — it just uses the old anchor
+# until the next nightly, and says so in the docstring rather than
+# pretending the number is measured.
+_LEAGUE_HRFB_FALLBACK = 11.5
+
+
+def _league_hrfb() -> float:
+    """League HR/FB percent from the nightly build, else the fallback."""
+    try:
+        import json as _j
+        from pathlib import Path as _P
+        _p = (_P(__file__).resolve().parent.parent
+              / "data" / "statcast" / "baselines.json")
+        v = (_j.loads(_p.read_text()) or {}).get("hrPerFlyBall")
+        return float(v) if v else _LEAGUE_HRFB_FALLBACK
+    except Exception:
+        return _LEAGUE_HRFB_FALLBACK
 _HRFB_WEIGHT = 0.15
 
 # Axis weights for hr_score. These are a considered starting point, NOT
@@ -140,7 +164,7 @@ def hr_score(player_id, savant_df, hrfb_pct=None, hr_df=None):
         base += (xhr_gap - 50.0) / 50.0 * _XHR_MAX_ADJ
     elif hrfb_pct is not None:
         # Only when the better conversion signal is unavailable.
-        hrfb_scaled = max(0.0, min(100.0, hrfb_pct / _LEAGUE_HRFB * 50.0))
+        hrfb_scaled = max(0.0, min(100.0, hrfb_pct / _league_hrfb() * 50.0))
         base = base * (1 - _HRFB_WEIGHT) + hrfb_scaled * _HRFB_WEIGHT
 
     return round(max(0.0, min(100.0, base)))
