@@ -710,18 +710,24 @@ def build_pitcher_allowed_percentiles(season_df: pd.DataFrame) -> bool:
     g = bbe.groupby("pitcher")
     agg = pd.DataFrame({
         "bbe": g.size(),
-        "HH % Allowed": g["_hh"].mean() * 100,
-        "FB % Allowed": g["_fb"].mean() * 100,
-        "HRWindow % Allowed": g["_hrw"].mean() * 100,
+        "HH% Allowed": g["_hh"].mean() * 100,
+        "FB% Allowed": g["_fb"].mean() * 100,
+        "HRWindow% Allowed": g["_hrw"].mean() * 100,
         "EV90 Allowed": g["_ls"].quantile(0.90),
     })
     if bbe["_brl"] is not None and "_brl" in bbe.columns and bbe["_brl"].notna().any():
-        agg["Brl % Allowed"] = g["_brl"].mean() * 100
+        agg["Brl% Allowed"] = g["_brl"].mean() * 100
     agg = agg[agg["bbe"] >= MIN_BBE]
     if len(agg) < 50:
         print(f"  Pitcher percentiles skipped — only {len(agg)} qualified.")
         return False
 
+    # Keys MUST match the view's column headers EXACTLY. They read
+    # "Brl% Allowed" with no space before the %, and the first version
+    # here wrote "Brl % Allowed" — so every metric except EV90 (the only
+    # one without a % in its name) failed to match and rendered ungraded.
+    # The lookup is by string, so a single space is the whole difference
+    # between a coloured card and a flat one.
     out = {"n_pitchers": int(len(agg)), "min_bbe": MIN_BBE, "deciles": {}}
     for col in agg.columns:
         if col == "bbe":
