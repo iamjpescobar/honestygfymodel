@@ -9,7 +9,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table, render_html_table, score_bar
+from styles.table_style import style_stat_table, render_html_table, score_bar, tier_legend
 from engines.wnba_props import (
     build_props, STATS, MIN_GP, MIN_MPG, MIN_LOG,
     W_CONSISTENCY, W_FORM, W_MATCHUP, W_PACE,
@@ -99,6 +99,7 @@ with card("wprops"):
             }
             for r in top
         ])
+        tier_legend(favor_note="Higher is better \u2014 colour is the player\u2019s grade in that column.")
         render_html_table(
             style_stat_table(
                 df,
