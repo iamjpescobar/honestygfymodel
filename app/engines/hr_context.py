@@ -31,7 +31,11 @@ import pandas as pd
 from pathlib import Path
 
 _DATA_DIR = Path(__file__).resolve().parents[1] / "data"
-_PARK_PATH = _DATA_DIR / "park_hr_factors.parquet"
+# data/statcast/, NOT data/ — see the note in engines/savant_leaderboard.py.
+# This read one directory too high, so _park_table() returned None and
+# park_hr_adj() returned (0, None) for every batter, league-wide. Park is
+# the widest band in the whole matchup layer (+/-10) and it was inert.
+_PARK_PATH = _DATA_DIR / "statcast" / "park_hr_factors.parquet"
 
 # Bounded, like every other matchup component in engines/edge.py. Park is
 # the single largest context effect, so it gets the widest band — but
@@ -49,10 +53,16 @@ TEMP_CAP = 4.0
 @st.cache_data(ttl=21600, max_entries=1, show_spinner=False)
 def _park_table():
     """{(park, hand): hr_index} or None when the nightly file is absent."""
-    if not _PARK_PATH.exists():
-        return None
+    path = _PARK_PATH
+    if not path.exists():
+        # A data package predating the statcast/ layout — use it rather
+        # than silently losing the table a second time.
+        legacy = path.parent.parent / path.name
+        if not legacy.exists():
+            return None
+        path = legacy
     try:
-        t = pd.read_parquet(_PARK_PATH)
+        t = pd.read_parquet(path)
         return {(str(r.park), str(r.hand)): float(r.hr_index)
                 for r in t.itertuples(index=False)}
     except Exception:
