@@ -118,6 +118,22 @@ def _leaders(competitor):
     return out
 
 
+def _team_logo(team):
+    """ESPN's own logo URL for a team block, or None.
+
+    Prefers `logo`, falls back to the first entry in `logos`, and returns
+    None when neither is present so the caller can fall back to the
+    id-built path and then to plain text. Never fabricates a URL.
+    """
+    t = team or {}
+    u = t.get("logo")
+    if not u:
+        for cand in (t.get("logos") or []):
+            if isinstance(cand, dict) and cand.get("href"):
+                return cand["href"]
+    return u or None
+
+
 def parse_scoreboard_events(payload):
     for event in payload.get("events", []) or []:
         comps = event.get("competitions") or []
@@ -147,6 +163,18 @@ def parse_scoreboard_events(payload):
             "home_id": str((home.get("team") or {}).get("id") or ""),
             "away_color": (away.get("team") or {}).get("color"),
             "home_color": (home.get("team") or {}).get("color"),
+            # ESPN'S OWN LOGO URL, captured rather than constructed.
+            #
+            # Same fix already applied to the per-game logs (see
+            # _logos in the box-score parser): engines/wnba_logos builds
+            # a CDN path out of the team id, and that path does not
+            # exist for every team — the expansion clubs in particular
+            # 404, which is what renders a broken-image "?" in the
+            # Team/Opp columns of the props and defense boards instead
+            # of a mark. The competitor block already carries the exact
+            # URL ESPN serves, so taking it removes the guess.
+            "away_logo": _team_logo(away.get("team")),
+            "home_logo": _team_logo(home.get("team")),
             "arena": (comp.get("venue") or {}).get("fullName", ""),
             "time_et": _to_et(comp.get("date", "")),
             "status": status,
