@@ -967,8 +967,10 @@ def coming_soon_page(sport: str, emoji: str, blurb_tail: str, planned):
     """
     import streamlit as st
 
-    accent = SPORT_ACCENTS.get(sport) or COLOR["accent"]
-
+    # No local accent lookup here: page_header auto-detects it from the
+    # title's first word, and the title below starts with `sport`. The
+    # variable this replaced was assigned and never read — the colour was
+    # always coming from page_header, so the behaviour is unchanged.
     page_header(f"{sport} Analytics",
                 "In development \u2014 built on real data or not at all",
                 eyebrow="COMING SOON")
