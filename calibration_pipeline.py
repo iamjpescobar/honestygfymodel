@@ -199,8 +199,25 @@ def _wnba_line(pid, date_str):
         pts = row.get("PTS")
         if pts is None:
             return None
-        reb, ast = row.get("REB") or 0, row.get("AST") or 0
-        return {"pts": pts, "reb": reb, "ast": ast, "pra": pts + reb + ast}
+        # NO `or 0` ON REB/AST — see the matching note in
+        # app/engines/calibration.py.
+        #
+        # This read `row.get("REB") or 0`, which reported an unparsed
+        # rebound total as a measured zero AND folded it into PRA. This
+        # file is the SOURCE OF TRUTH for published history, so a
+        # fabricated component here propagates into the record the app
+        # reads back and into every accuracy number shown on the
+        # Calibration page.
+        #
+        # grade() below already sets result="dnp" when `value is None`,
+        # which drops the pick from the win/loss record instead of
+        # scoring it against a total we couldn't actually measure. The
+        # two graders must stay identical — they disagreed once before
+        # and it poisoned the record.
+        reb, ast = row.get("REB"), row.get("AST")
+        pra = (pts + reb + ast
+               if reb is not None and ast is not None else None)
+        return {"pts": pts, "reb": reb, "ast": ast, "pra": pra}
     return None
 
 
