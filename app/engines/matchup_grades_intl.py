@@ -400,16 +400,32 @@ def grade_wnba_matchup(g, window: str = "season"):
 # Grades panel, reused so KBO/NPB/WNBA don't each hand-roll their own.
 # =====================================================================
 
-def render_matchup_grades_card(grades, subtitle, source_line, key):
+# Grade -> colour. The grade is the single most important character on
+# this card and it used to be styled exactly like every other word on
+# it, so an A and a C- looked identical until you read them. Now the
+# badge carries the weight: teal for a strong agreement, amber for a
+# shrug, and the eye can sort a slate without reading.
+# Token names as they exist in kc_theme.COLOR: "accent" IS the teal.
+_GRADE_COLORS = {"A": "accent", "B": "accent", "C": "warn", "C-": "warn"}
+
+
+def render_matchup_grades_card(grades, subtitle, source_line, key, accent=None):
     """`key` must be unique per call on a page that renders more than
     one of these (e.g. one per game in a daily slate) — Streamlit's
-    container needs a unique key or it raises StreamlitDuplicateElementKey."""
+    container needs a unique key or it raises StreamlitDuplicateElementKey.
+
+    accent: hex colour for the card title and section labels. Defaults to
+    the house gold so the KBO and NPB pages that already call this are
+    unchanged; the WNBA page passes its own so the card reads as part of
+    that page instead of introducing two more colours to it.
+    """
     import streamlit as st
     from styles.kc_theme import card, COLOR
 
+    title_color = accent or COLOR["gold"]
     with card(f"matchup_grades_card_{key}"):
         st.markdown(
-            f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Matchup Grades</div>'
+            f'<div class="pf-card-title" style="color:{title_color};">Matchup Grades</div>'
             f'<div class="pf-card-subtitle">{subtitle}</div>',
             unsafe_allow_html=True,
         )
@@ -423,29 +439,51 @@ def render_matchup_grades_card(grades, subtitle, source_line, key):
         for gcol, key, title in ((gcol1, "ml", "Moneyline"), (gcol2, "ou", "Over / Under")):
             with gcol:
                 res = grades.get(key)
+                # Section label was magenta — a colour used nowhere else
+                # on these pages and carrying no meaning here. It's a
+                # label, so it reads as a label.
                 st.markdown(
-                    f'<div style="font-weight:700; color:{COLOR["magenta_purple"]}; '
-                    f'font-size:var(--lc-text-body);">{title}</div>',
+                    f'<div style="font-family:\'JetBrains Mono\',monospace; font-weight:700; '
+                    f'color:{COLOR["text_muted"]}; font-size:var(--lc-text-caption); '
+                    f'letter-spacing:0.12em; text-transform:uppercase;">{title}</div>',
                     unsafe_allow_html=True,
                 )
                 if not res:
                     st.caption("No qualifying signals — no lean either way.")
                     continue
                 if res.get("lean"):
+                    # "Lean:" is dropped — the section above already says
+                    # Moneyline or Over/Under, so the word was restating
+                    # its own heading. The grade becomes a badge on a
+                    # scale so a strong call and a shrug stop looking
+                    # identical.
+                    _gc = COLOR.get(_GRADE_COLORS.get(res["grade"], "warn"),
+                                     COLOR["warn"])
+                    _grade_badge = (
+                        f'<span style="font-family:\'JetBrains Mono\',monospace; '
+                        f'font-size:var(--lc-text-tiny); font-weight:800; letter-spacing:0.1em; '
+                        f'color:{_gc}; border:1px solid {_gc}; border-radius:var(--lc-radius-sm); '
+                        f'padding:1px 6px; margin-left:8px; vertical-align:middle;">'
+                        f'GRADE {res["grade"]}</span>') if res.get("grade") else ""
                     st.markdown(
-                        f'<div style="font-size:var(--lc-text-subhead); font-weight:800; color:{COLOR["stat_high"]};">'
-                        f'Lean: {res["lean"]} \u00b7 Grade {res["grade"]}</div>'
-                        f'<div style="font-size:var(--lc-text-caption); color:{COLOR["gold"]};">{res["score"]}</div>',
+                        f'<div style="font-size:var(--lc-text-subhead); font-weight:800; '
+                        f'color:{COLOR["text"]};">{res["lean"]}{_grade_badge}</div>'
+                        f'<div style="font-size:var(--lc-text-caption); color:{COLOR["text_muted"]};">'
+                        f'{res["score"]} agree</div>',
                         unsafe_allow_html=True,
                     )
                 else:
                     st.markdown(
-                        f'<div style="font-size:var(--lc-text-body); color:{COLOR["gold"]};">{res["score"]}</div>',
+                        f'<div style="font-size:var(--lc-text-body); color:{COLOR["text_muted"]};">{res["score"]}</div>',
                         unsafe_allow_html=True,
                     )
                 for s in res.get("signals", []):
+                    # Checkmarks removed: a list of agreeing signals is
+                    # already a list of agreeing signals, and 8 ticks per
+                    # card was 8 more marks to look past.
                     st.markdown(
-                        f'<div style="font-size:var(--lc-text-caption); color:{COLOR["text"]};">\u2713 {s}</div>',
+                        f'<div style="font-size:var(--lc-text-caption); color:{COLOR["text"]}; '
+                        f'padding-left:2px;">{s}</div>',
                         unsafe_allow_html=True,
                     )
         st.caption(source_line)
