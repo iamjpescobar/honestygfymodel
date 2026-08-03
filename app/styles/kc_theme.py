@@ -51,8 +51,18 @@ COLOR = {
     "bats_l":        "#5CCEFF",   # sky blue
     "bats_r":        "#FF8A65",   # warm coral — replaces the too-dark slate grey
     "bats_s":        "#B8860B",   # dark goldenrod (metallic gold)
-    "gold":          "#D4AF37",   # general "important text" gold — secondary text, labels, captions
-    "magenta_purple":"#D946EF",   # card titles for the Top Plays panel + team names — distinct from player_name's softer violet
+    # Gold marks a SECTION HEADING and nothing else.
+    #
+    # It used to be described as "secondary text, labels, captions",
+    # which meant it was the colour of ordinary prose in 106 places. A
+    # colour that means "text" means nothing, so when something genuinely
+    # was important there was no emphasis left to reach for. Labels are
+    # text_muted, values are text, headings are gold. If a new use
+    # doesn't fit one of those three, it doesn't need a colour.
+    "gold":          "#D4AF37",   # section headings only (.pf-card-title)
+    # RETIRED — zero call sites. Kept only so an old branch referencing
+    # it doesn't KeyError. Delete once nothing in history needs it.
+    "magenta_purple":"#D946EF",   # (unused)
     "headline":      "#22C55E",   # vibrant emerald — reserved for the single biggest matchup headline, distinct from every other color on the page so it reads as THE main event
     # Stat/table tier colors — exact palette: heatmap cells use these
     # literally. Badges use the same hues lightened just enough to read
@@ -312,10 +322,10 @@ def inject_kc_theme():
         /* ---------------- PAGE HEADER ---------------- */
         .lc-eyebrow {{
             /* Left-aligned, not centred. The nav row and the Sync button
-               that sit under this header are left-aligned, so a centred
-               title put two competing axes on the same screen — which is
-               what made the top of every page feel unsettled even after
-               the ordering bug was fixed. One axis, top to bottom. */
+               under this header are left-aligned, so a centred title put
+               two competing axes on one screen — which is what made the
+               top of every page feel unsettled even after the ordering
+               bug was fixed. One axis, top to bottom. */
             text-align: left;
             font-size:var(--lc-text-caption);
             font-weight: 700;
@@ -343,9 +353,9 @@ def inject_kc_theme():
             width: 64px;
             height: 2px;
             background: {COLOR["accent"]};
-            /* was `auto` on both sides to centre it under a centred
-               title; the title is left-aligned now, so the rule anchors
-               to the same left edge instead of floating mid-page. */
+            /* was `auto` both sides to centre under a centred title; the
+               title is left-aligned now, so the rule anchors to the same
+               left edge instead of floating mid-page. */
             margin: 14px auto 1.6rem 0;
         }}
 
