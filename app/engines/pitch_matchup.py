@@ -38,7 +38,11 @@ import pandas as pd
 from pathlib import Path
 
 _DATA_DIR = Path(__file__).resolve().parents[1] / "data"
-_LEAGUE_PATH = _DATA_DIR / "pitch_type_hr.parquet"
+# data/statcast/, NOT data/ — see the note in engines/savant_leaderboard.py.
+# This read one directory too high, so _league_pitch_hr() returned None
+# and the whole pitch-type term dropped out of every matchup score,
+# silently, with no missing column to notice.
+_LEAGUE_PATH = _DATA_DIR / "statcast" / "pitch_type_hr.parquet"
 
 # Regression constant for a hitter's barrel rate against one pitch type.
 # Per-pitch-type samples are a fraction of his overall workload, so this
@@ -56,10 +60,15 @@ def _league_pitch_hr():
     Both measured league-wide by the nightly build, so nothing in this
     module carries an assumed constant.
     """
-    if not _LEAGUE_PATH.exists():
-        return None
+    path = _LEAGUE_PATH
+    if not path.exists():
+        # A data package predating the statcast/ layout.
+        legacy = path.parent.parent / path.name
+        if not legacy.exists():
+            return None
+        path = legacy
     try:
-        t = pd.read_parquet(_LEAGUE_PATH)
+        t = pd.read_parquet(path)
         return {str(r.pitch_type): (float(r.hr_rate), float(r.brl_rate))
                 for r in t.itertuples(index=False)}
     except Exception:
