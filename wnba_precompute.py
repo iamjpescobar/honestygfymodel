@@ -445,14 +445,34 @@ def parse_boxscore(event_id, game_date, logs, debug=False):
                 _made_att(tpt_i, "tpm", "tpa")
                 _made_att(fg_i, "fgm", "fga")
                 _made_att(ft_i, "ftm", "fta")
-                if line.get("pts") is not None:
-                    line["pra"] = (line.get("pts") or 0) + (line.get("reb") or 0) + (line.get("ast") or 0)
-                    line["pr"] = (line.get("pts") or 0) + (line.get("reb") or 0)
-                    line["pa"] = (line.get("pts") or 0) + (line.get("ast") or 0)
-                if line.get("reb") is not None and line.get("ast") is not None:
-                    line["ra"] = (line.get("reb") or 0) + (line.get("ast") or 0)
-                if line.get("stl") is not None or line.get("blk") is not None:
-                    line["stocks"] = (line.get("stl") or 0) + (line.get("blk") or 0)
+                # A COMBO STAT NEEDS EVERY COMPONENT MEASURED.
+                #
+                # `ra` below already did this correctly; pra/pr/pa and
+                # stocks did not. They gated on `pts is not None` alone,
+                # so a REB that ESPN didn't return — or that failed the
+                # parse above — was folded in as a real zero, and the
+                # resulting PRA looked measured. These lines ARE the prop
+                # research: an understated PRA that renders like any
+                # other number is worse than no number, because there is
+                # nothing on the card to tell them apart.
+                #
+                # None means the tables show an em-dash, which is the
+                # convention everywhere else in this app.
+                _pts, _reb = line.get("pts"), line.get("reb")
+                _ast = line.get("ast")
+                if _pts is not None and _reb is not None and _ast is not None:
+                    line["pra"] = _pts + _reb + _ast
+                if _pts is not None and _reb is not None:
+                    line["pr"] = _pts + _reb
+                if _pts is not None and _ast is not None:
+                    line["pa"] = _pts + _ast
+                if _reb is not None and _ast is not None:
+                    line["ra"] = _reb + _ast
+                # STL **and** BLK, not "or". Gating on either meant a
+                # missing block counted as zero blocks.
+                _stl, _blk = line.get("stl"), line.get("blk")
+                if _stl is not None and _blk is not None:
+                    line["stocks"] = _stl + _blk
                 if line.get("min") in (None, 0):
                     continue
                 rec = logs.setdefault(str(athlete["id"]), {
