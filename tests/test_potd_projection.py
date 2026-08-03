@@ -5,7 +5,7 @@ ranks the pick — not a second model. Both inputs are measured: her own
 recent box scores, and what this opponent actually allows versus the
 slate average.
 """
-import re, sys, types
+import sys, types
 
 st = types.ModuleType("streamlit")
 def _c(**kw):
@@ -44,7 +44,11 @@ print("PASS: projection arithmetic — soft matchup up, tough matchup down")
 # --- display ----------------------------------------------------------
 w = open("app/views/WNBA.py").read()
 assert "PROJECTED TONIGHT" in w
-assert 'delta=' in w, "deltas make the matchup effect legible"
+# Deltas vs her own recent form, however they're rendered. This used to
+# assert st.metric's `delta=` kwarg; the tiles are hand-built HTML now,
+# so it checks the requirement (the difference from her form is shown)
+# rather than the widget that used to show it.
+assert "_proj - _base" in w, "the matchup effect must be shown as a delta vs her form"
 assert "estimate, not a forecast with a track record" in w, (
     "a projection shown without that caveat reads as a graded prediction")
 print("PASS: projection displayed with deltas and an honest caveat")
@@ -64,8 +68,13 @@ i_proj = w.index("PROJECTED TONIGHT")
 assert i_form < i_proj, "recent form should read first, projection second"
 print("PASS: recent averages shown first, projection beside them")
 
-# The neutral-matchup case must not silently reprint the same numbers.
-assert "neutral matchup" in w, (
-    "a x1.00 factor makes the projection identical to the form averages; "
-    "saying so is the difference between 'neutral' and a broken render")
-print("PASS: a neutral matchup is stated, not rendered as duplicate tiles")
+# A neutral matchup must be LABELLED, never used as a reason to hide the
+# projection. Hiding it removed the tonight-facing numbers people open
+# this card for; the factor on the label carries the same information.
+assert "neutral matchup" in w, "a ~1.00 factor should be called out, not left implicit"
+assert "PROJECTED TONIGHT" in w
+_i_head = w.index("PROJECTED TONIGHT")
+assert '("PTS", _pp' in w and '("PRA", wnba_pick.get("adj_pra")' in w, (
+    "the projected PTS/REB/AST/PRA numbers must always render — a neutral "
+    "matchup is information, not a reason to show nothing")
+print("PASS: neutral matchup is labelled and the projection still shows its numbers")
