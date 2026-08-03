@@ -352,9 +352,24 @@ def _wnba_day_json(pid, date_str: str) -> str:
         ast = row.get("AST")
         if pts is None:
             return json.dumps(None)
+        # PRA IS None UNLESS ALL THREE COMPONENTS PARSED.
+        #
+        # This was `(pts or 0) + (reb or 0) + (ast or 0)`, which turns a
+        # component ESPN didn't return — a label missing from `names`, a
+        # value that failed the float() above and hit the `continue` —
+        # into a real zero. The sum then looks like a measured PRA and is
+        # graded as one, understated, against a pick that may well have
+        # hit. A rebound we couldn't read is not zero rebounds.
+        #
+        # grade_pending() already treats a None outcome as "dnp" and
+        # leaves it out of the win/loss record, so returning None here
+        # excludes the pick instead of scoring it wrong. Calibration is
+        # the number that proves the model — it is the last place in this
+        # app that should be averaging in a fabricated result.
+        pra = (pts + reb + ast
+               if reb is not None and ast is not None else None)
         return json.dumps({
-            "pts": pts, "reb": reb, "ast": ast,
-            "pra": (pts or 0) + (reb or 0) + (ast or 0),
+            "pts": pts, "reb": reb, "ast": ast, "pra": pra,
         })
     return json.dumps(None)
 
