@@ -285,16 +285,6 @@ def get_last_starting_lineup(team_name: str):
     return lineup, game_date, confirmed
 
 
-def get_pitchers(team_name: str):
-    """Convenience filter: only real pitchers on the roster."""
-    return [p for p in get_live_team_roster(team_name) if p["is_pitcher"]]
-
-
-def get_position_players(team_name: str):
-    """Convenience filter: only real position players (non-pitchers) on the roster."""
-    return [p for p in get_live_team_roster(team_name) if not p["is_pitcher"]]
-
-
 @st.cache_data(ttl=300, show_spinner=False)
 def get_active_player_ids(team_name: str):
     """Set of player ids on this team's ACTIVE roster right now.
