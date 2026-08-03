@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from styles.kc_theme import inject_kc_theme, card, footer, COLOR
+from styles.kc_theme import SPORT_ACCENTS, inject_kc_theme, card, footer, COLOR
 from styles.table_style import style_stat_table, render_html_table, tier_legend
 from engines.wnba_defense import build_board, MIN_PLAYER_GP
 from engines.live_sync import sync_latest_button
@@ -64,7 +64,7 @@ rows, unrated = build_board(games, _stat, _win_opts[_win_label],
 
 with card("wdef"):
     st.markdown(
-        f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Softest {_stat.lower()} matchups tonight</div>'
+        f'<div class="pf-card-title" style="color:{SPORT_ACCENTS["WNBA"]};">Softest {_stat.lower()} matchups tonight</div>'
         f'<div class="pf-card-subtitle" style="color:{COLOR["text_muted"]};">'
         f'Basketball has no starting-pitcher analog, so this is the honest equivalent: how much '
         f'{_stat.lower()} tonight\'s opponent actually ALLOWS to this player\'s position, measured against '
