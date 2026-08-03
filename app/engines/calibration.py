@@ -639,32 +639,6 @@ def implied_pct(odds):
     return round((abs(o) / (abs(o) + 100) if o < 0 else 100 / (o + 100)) * 100, 1)
 
 
-def price_edge(model_pct, odds):
-    """model probability MINUS the book's implied probability.
-
-    THIS is the number that decides whether a pick is worth betting, and
-    a board ranked on model score alone will systematically miss it.
-
-    A -380 hits prop is already priced at 79.2%. To be a good bet, the
-    model has to believe MORE than 79.2% — higher than almost any hitter
-    reaches. A -170 pick is priced at 63.0%, so a model reading of 68% is
-    a genuine 5-point edge. Ranked by raw score the -380 favourite looks
-    like the better pick every time, while actually being the one with
-    the least room in it. That is exactly how a strong-looking board
-    loses money.
-
-    Returns None when either input is missing — no odds means no edge can
-    be computed, and guessing one would defeat the purpose.
-    """
-    imp = implied_pct(odds)
-    if imp is None or model_pct is None:
-        return None
-    try:
-        return round(float(model_pct) - imp, 1)
-    except (TypeError, ValueError):
-        return None
-
-
 def breakeven_pct(odds):
     """The hit rate a price REQUIRES just to break even, as a percent.
 
