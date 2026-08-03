@@ -9,7 +9,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, card, footer, COLOR
-from styles.table_style import style_stat_table, render_html_table
+from styles.table_style import style_stat_table, render_html_table, tier_legend
 from engines.wnba_defense import build_board, MIN_PLAYER_GP
 from engines.live_sync import sync_latest_button
 from engines.calibration import log_picks, grade_pending, summary
@@ -100,6 +100,14 @@ with card("wdef"):
             )
         ,
             key="wnba_defense_94")
+        # Direction matters more here than on any other board: a HIGH
+        # "Opp allows" is good for the player being targeted and bad for
+        # the defence allowing it. Without a key, that column reads
+        # backwards to anyone who assumes green-is-good-for-the-team.
+        tier_legend(
+            favor_note="Colour reads from the PLAYER\u2019s side \u2014 the brightest "
+                       "cells are the softest matchups to target.",
+        )
         # Calibration: the defense board's top picks are graded against
         # each player's own recent form as the line — i.e. "did the soft
         # matchup actually produce more than his usual?"
