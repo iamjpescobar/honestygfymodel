@@ -668,7 +668,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "680777",
@@ -676,7 +676,7 @@
           "team": "MIN",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "543807",
@@ -684,7 +684,7 @@
           "team": "TOR",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "686469",
@@ -708,7 +708,7 @@
           "team": "KC",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "679845",
@@ -716,7 +716,7 @@
           "team": "KC",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "665161",
@@ -724,7 +724,7 @@
           "team": "HOU",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "664983",
@@ -732,7 +732,7 @@
           "team": "COL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "518692",
@@ -740,7 +740,7 @@
           "team": "LAD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "701678",
@@ -748,7 +748,7 @@
           "team": "DET",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "672356",
@@ -756,7 +756,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "650489",
@@ -764,7 +764,7 @@
           "team": "COL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         }
       ],
       "graded": false,
@@ -974,10 +974,10 @@
           "team": "St. Louis Cardinals",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     },
     "2026-08-03": {
@@ -1234,7 +1234,7 @@
           "team": "Philadelphia Phillies",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "624413",
@@ -1242,7 +1242,7 @@
           "team": "Baltimore Orioles",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "695578",
@@ -1250,7 +1250,7 @@
           "team": "Washington Nationals",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "682829",
@@ -1258,7 +1258,7 @@
           "team": "Cincinnati Reds",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "808959",
@@ -1266,10 +1266,10 @@
           "team": "Chicago White Sox",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -1682,7 +1682,7 @@
           "team": "MIL",
           "stat": "strikeOuts",
           "line": 10.2,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 554430,
@@ -1690,7 +1690,7 @@
           "team": "PHI",
           "stat": "strikeOuts",
           "line": 7.9,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 695505,
@@ -1698,7 +1698,7 @@
           "team": "CIN",
           "stat": "strikeOuts",
           "line": 6.7,
-          "result": null
+          "result": "hit"
         },
         {
           "id": 671737,
@@ -1706,7 +1706,7 @@
           "team": "MIN",
           "stat": "strikeOuts",
           "line": 6.7,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 668909,
@@ -1714,10 +1714,10 @@
           "team": "CLE",
           "stat": "strikeOuts",
           "line": 6.5,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     },
     "2026-08-03": {
