@@ -83,7 +83,7 @@ def _load_team_stats():
 
 
 def _stat_row(left, right, mono_right=True):
-    style = f'font-family:\'JetBrains Mono\',monospace; color:{COLOR["gold"]};' if mono_right else f'color:{COLOR["gold"]};'
+    style = f'font-family:\'JetBrains Mono\',monospace; color:{COLOR["text"]};' if mono_right else f'color:{COLOR["text"]};'
     return (f'<div style="display:flex; justify-content:space-between; gap:12px; '
             f'font-size:var(--lc-text-small); margin-bottom:var(--lc-space-sm);">'
             f'<span style="font-weight:700; color:{COLOR["text"]}; white-space:nowrap;">{left}</span>'
@@ -116,7 +116,7 @@ def _render_pitching_leaders():
         era_display = p.get("era", DASH)
         st.markdown(
             _stat_row(
-                f'{p.get("name", "")} <span style="color:{COLOR["gold"]}; font-weight:400;">({p.get("team", "")})</span>',
+                f'{p.get("name", "")} <span style="color:{COLOR["text_muted"]}; font-weight:400;">({p.get("team", "")})</span>',
                 f'ERA {era_display}{DOT}{joined}',
             ),
             unsafe_allow_html=True,
@@ -150,7 +150,7 @@ def _render_batting_leaders():
         ops_display = b.get("ops", DASH)
         st.markdown(
             _stat_row(
-                f'{b.get("name", "")} <span style="color:{COLOR["gold"]}; font-weight:400;">({b.get("team", "")})</span>',
+                f'{b.get("name", "")} <span style="color:{COLOR["text_muted"]}; font-weight:400;">({b.get("team", "")})</span>',
                 f'OPS {ops_display}{DOT}{joined}',
             ),
             unsafe_allow_html=True,
@@ -171,7 +171,7 @@ def _ou_badges(ou_trend, label):
         if key in ou_trend:
             pct = ou_trend[key]["over_pct"]
             bits.append(f'O{line}: {pct}%')
-    return (f'<div style="font-size:var(--lc-text-caption); color:{COLOR["gold"]}; opacity:0.85; margin-top:var(--lc-space-hair);">'
+    return (f'<div style="font-size:var(--lc-text-caption); color:{COLOR["text_muted"]}; opacity:0.85; margin-top:var(--lc-space-hair);">'
             f'{label} O/U trend: {DOT.join(bits)}</div>')
 
 
@@ -256,7 +256,7 @@ if _stale:
 if games is None:
     st.markdown(card_open("\u26be KBO engine is being connected"), unsafe_allow_html=True)
     st.markdown(
-        f'<div style="color:{COLOR["gold"]}; font-size:var(--lc-text-body-lg); line-height:1.7;">'
+        f'<div style="color:{COLOR["text_muted"]}; font-size:var(--lc-text-body-lg); line-height:1.7;">'
         f'KBO coverage is in active development on the same standard as the MLB engine: '
         f'every number traced to a real, verifiable source \u2014 no placeholders, no estimates. '
         f'This page lights up with the real slate the moment the data pipeline ships; '
@@ -275,7 +275,7 @@ if games is None:
         st.markdown(
             f'<div style="margin-bottom:var(--lc-space-lg);">'
             f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:var(--lc-text-body);">{name}</div>'
-            f'<div style="color:{COLOR["gold"]}; font-size:var(--lc-text-small);">{desc}</div>'
+            f'<div style="color:{COLOR["text_muted"]}; font-size:var(--lc-text-small);">{desc}</div>'
             f'</div>',
             unsafe_allow_html=True,
         )
@@ -395,7 +395,7 @@ else:
             bits.append(f'{tp.get("era", DASH)} ERA / {tp.get("whip", DASH)} WHIP')
             if tp.get("runs_allowed_per_game") is not None:
                 bits.append(f'{tp["runs_allowed_per_game"]} RA/G')
-        return (f'<div style="font-size:var(--lc-text-caption); color:{COLOR["gold"]}; opacity:0.9; margin-top:var(--lc-space-hair);">'
+        return (f'<div style="font-size:var(--lc-text-caption); color:{COLOR["text_muted"]}; opacity:0.9; margin-top:var(--lc-space-hair);">'
                 f'Official: {DOT.join(bits)}</div>')
 
     for gi, g in enumerate(games):
@@ -446,15 +446,15 @@ else:
                 f'<div style="font-size:var(--lc-text-small); margin-top:var(--lc-space-sm); '
                 f'display:flex; justify-content:space-between; gap:12px;">'
                 f'<span style="font-weight:700; color:{COLOR["text"]};">PROJECTED TOTAL</span>'
-                f'<span style="font-family:\'JetBrains Mono\',monospace; color:{COLOR["gold"]};">'
+                f'<span style="font-family:\'JetBrains Mono\',monospace; color:{COLOR["text"]};">'
                 f'{_tot} runs \u00b7 {g.get("away","")} {_det["away_exp"]} / '
                 f'{g.get("home","")} {_det["home_exp"]}{_sp_note}</span></div>')
 
         if g.get("h2h_official"):
-            stats_html += (f'<div style="font-size:var(--lc-text-caption); color:{COLOR["gold"]}; '
+            stats_html += (f'<div style="font-size:var(--lc-text-caption); color:{COLOR["text_muted"]}; '
                            f'margin-top:var(--lc-space-sm);">Official season H2H: <b>{g["h2h_official"]}</b></div>')
         if g.get("h2h"):
-            stats_html += (f'<div style="font-size:var(--lc-text-caption); color:{COLOR["gold"]}; '
+            stats_html += (f'<div style="font-size:var(--lc-text-caption); color:{COLOR["text_muted"]}; '
                            f'margin-top:var(--lc-space-hair);">Scoreline H2H: {g["h2h"]}</div>')
             det = g.get("h2h_detail") or {}
             if det.get("avg_total") is not None:
@@ -465,7 +465,7 @@ else:
                     f'Avg total in series: <b>{det.get("avg_total")}</b></div>')
             if det.get("scorelines"):
                 joined = " \u00b7 ".join(det["scorelines"][:6])
-                stats_html += (f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["gold"]}; '
+                stats_html += (f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["text_muted"]}; '
                                f'opacity:0.85; margin-top:var(--lc-space-hair);">{joined}</div>')
 
         for side in ("away", "home"):
