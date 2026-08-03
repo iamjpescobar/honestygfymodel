@@ -69,7 +69,7 @@ rows, unrated = build_props(games, _stat, _win_opts[_win_label],
 with card("wprops"):
     st.markdown(
         f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Best {_stat.lower()} props tonight</div>'
-        f'<div class="pf-card-subtitle" style="color:{COLOR["magenta_purple"]};">'
+        f'<div class="pf-card-subtitle" style="color:{COLOR["text_muted"]};">'
         f'Ranked by consistency ({W_CONSISTENCY:.0%}), form ({W_FORM:.0%}), positional matchup '
         f'({W_MATCHUP:.0%}), and game pace ({W_PACE:.0%}) \u00b7 the Line is each player\'s own recent '
         f'average rounded to the nearest .5 (this app carries no odds) \u00b7 Clears = how often he beat '
@@ -100,12 +100,20 @@ with card("wprops"):
             for r in top
         ])
         # name -> ESPN id, from the rows themselves.
-        _team_ids = {}
+        _team_ids, _team_urls = {}, {}
         for _r in rows:
             if _r.get("team") and _r.get("team_id"):
                 _team_ids[str(_r["team"])] = _r["team_id"]
             if _r.get("opp") and _r.get("opp_id"):
                 _team_ids[str(_r["opp"])] = _r["opp_id"]
+            # ESPN's own URLs, preferred over the id-built path — see
+            # wnba_logo_cell. Absent on a data file older than the
+            # nightly that started capturing them, in which case the id
+            # path is used exactly as before.
+            if _r.get("team") and _r.get("team_logo"):
+                _team_urls[str(_r["team"])] = _r["team_logo"]
+            if _r.get("opp") and _r.get("opp_logo"):
+                _team_urls[str(_r["opp"])] = _r["opp_logo"]
         tier_legend(favor_note="Higher is better \u2014 colour is the player\u2019s grade in that column.")
         render_html_table(
             style_stat_table(
@@ -119,8 +127,8 @@ with card("wprops"):
                     # Logos keyed by ESPN id, which the engine now carries
                     # on each row. Falls back to the team text when an id
                     # doesn't resolve.
-                    "Team": wnba_logo_cell(_team_ids),
-                    "Opp": wnba_logo_cell(_team_ids),
+                    "Team": wnba_logo_cell(_team_ids, _team_urls),
+                    "Opp": wnba_logo_cell(_team_ids, _team_urls),
                 })
         ,
             key="wnba_props_101")
