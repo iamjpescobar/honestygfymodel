@@ -282,58 +282,76 @@ if games:
         # her, negative means it doesn't.
         _pp, _pr, _pa = (wnba_pick.get("proj_pts"), wnba_pick.get("proj_reb"),
                          wnba_pick.get("proj_ast"))
-        # NEUTRAL MATCHUP -> SAY SO, don't reprint the same numbers.
+        # PROJECTION ALWAYS SHOWS ITS NUMBERS.
         #
-        # When the opponent-defense factor lands on 1.00 the projection
-        # is arithmetically identical to the form averages directly
-        # above it, and every delta is hidden because it's zero. The
-        # block then rendered as four tiles repeating 15.1 / 11.8 / 5.4
-        # verbatim with no explanation — which reads as a broken render,
-        # not as "this matchup is neutral".
+        # An earlier pass hid this whole block when the opponent-defense
+        # factor rounded to 1.00, on the reasoning that the projection is
+        # then arithmetically identical to the form averages above and
+        # the tiles read as a duplicate render. That was the wrong call:
+        # it removed the tonight-facing numbers — PTS, REB, AST and the
+        # adjusted PRA — which are the reason anyone opens this card. A
+        # neutral matchup is INFORMATION ("this defense doesn't move
+        # her"), not a reason to show nothing.
         #
-        # It isn't wrong, it's just mute. One line saying so carries the
-        # same information and doesn't look like a bug.
+        # So the numbers always render, and the factor is stated on the
+        # label instead: x0.998 reads as neutral, x1.07 reads as a boost,
+        # and the row underneath says which. Nothing is hidden and
+        # nothing is duplicated without explanation.
         _fac = wnba_pick.get("def_factor")
+        _fac_txt = f'\u00d7{_fac:.3f}'.rstrip("0").rstrip(".") if _fac is not None else ""
         _neutral = _fac is not None and round(float(_fac), 2) == 1.00
-        if _neutral and any(v is not None for v in (_pp, _pr, _pa)):
+        if any(v is not None for v in (_pp, _pr, _pa)):
+            _tag = (f'<span style="color:{COLOR["text_faint"]};">{_fac_txt}'
+                    + (" \u00b7 neutral matchup" if _neutral else "") + '</span>')
             st.markdown(
-                f'<div style="font-family:\'JetBrains Mono\',monospace; '
-                f'font-size:var(--lc-text-caption); color:{COLOR["text_muted"]}; '
-                f'margin-top:var(--lc-space-md);">'
-                f'PROJECTED TONIGHT &nbsp;\u00d71.00 \u2014 neutral matchup: this opponent '
-                f'allows the slate average, so tonight\'s projection is her '
-                f'{_fw_label} form unchanged.</div>',
-                unsafe_allow_html=True,
-            )
-        elif any(v is not None for v in (_pp, _pr, _pa)):
-            st.markdown(
-                f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:var(--lc-text-caption); '
-                f'color:{COLOR["text_muted"]}; margin-top:var(--lc-space-md); margin-bottom:var(--lc-space-hair);">'
-                f'PROJECTED TONIGHT</div>', unsafe_allow_html=True)
-            j1, j2, j3, j4 = st.columns(4)
-            def _proj(col, label, proj, base):
-                if proj is None:
-                    col.metric(label, "N/A")
-                    return
-                # delta vs her own recent form, so the matchup effect is
-                # the number you actually read.
-                d = round(proj - base, 1) if base is not None else None
-                col.metric(label, proj, delta=(f"{d:+.1f}" if d else None))
-            _proj(j1, "PTS", _pp, wnba_pick.get("form_ppg"))
-            _proj(j2, "REB", _pr, wnba_pick.get("form_reb") or wnba_pick.get("form_rpg"))
-            _proj(j3, "AST", _pa, wnba_pick.get("form_apg"))
-            j4.metric("PRA", wnba_pick.get("adj_pra"),
-                      delta=(f'{round(wnba_pick["adj_pra"] - wnba_pick["form_pra"], 1):+.1f}'
-                             if wnba_pick.get("adj_pra") is not None
-                             and wnba_pick.get("form_pra") is not None
-                             and round(wnba_pick["adj_pra"] - wnba_pick["form_pra"], 1) else None))
+                f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:var(--lc-text-tiny); '
+                f'letter-spacing:0.16em; color:{_ACCENT}; font-weight:700; '
+                f'margin-top:var(--lc-space-lg);">PROJECTED TONIGHT &nbsp;{_tag}</div>',
+                unsafe_allow_html=True)
+
+            _proj_rows = ""
+            for _lbl, _proj, _base in (
+                    ("PTS", _pp, wnba_pick.get("form_ppg")),
+                    ("REB", _pr, wnba_pick.get("form_rpg")),
+                    ("AST", _pa, wnba_pick.get("form_apg")),
+                    ("PRA", wnba_pick.get("adj_pra"), wnba_pick.get("form_pra"))):
+                if _proj is None:
+                    _shown, _delta = "N/A", ""
+                else:
+                    _shown = f"{_proj}"
+                    _d = round(_proj - _base, 1) if _base is not None else None
+                    if _d:
+                        _dc = COLOR["accent"] if _d > 0 else COLOR["warn"]
+                        _delta = (f'<span style="font-family:\'JetBrains Mono\',monospace; '
+                                  f'font-size:var(--lc-text-caption); color:{_dc};"> {_d:+.1f}</span>')
+                    else:
+                        # Explicitly "same as her form" rather than a
+                        # blank, so a zero delta doesn't look like a
+                        # missing one.
+                        _delta = (f'<span style="font-family:\'JetBrains Mono\',monospace; '
+                                  f'font-size:var(--lc-text-caption); '
+                                  f'color:{COLOR["text_faint"]};"> \u2014</span>')
+                _proj_rows += (
+                    f'<div style="display:flex; justify-content:space-between; '
+                    f'align-items:baseline; margin-top:var(--lc-space-sm);">'
+                    f'<span style="font-family:\'JetBrains Mono\',monospace; '
+                    f'font-size:var(--lc-text-tiny); letter-spacing:0.12em; '
+                    f'color:{COLOR["text_muted"]};">{_lbl}</span>'
+                    f'<span><span style="font-family:\'JetBrains Mono\',monospace; '
+                    f'font-size:var(--lc-text-body-lg); font-weight:700; '
+                    f'color:{COLOR["text"]};">{_shown}</span>{_delta}</span></div>')
+            st.markdown(f'<div style="max-width:420px;">{_proj_rows}</div>',
+                        unsafe_allow_html=True)
             st.caption(
                 f'Projection = her real last-{_fw_label[1:]}-game averages \u00d7 the same '
-                f'{wnba_pick.get("def_factor", 1.0)}\u00d7 opponent-defense factor used to rank '
-                f'her. Both inputs are measured, not modelled \u2014 but this is an '
-                f'estimate, not a forecast with a track record: the Calibration '
-                f'page grades whether she records an extra-base-equivalent, not '
-                f'whether she hits these numbers.'
+                f'{_fac}\u00d7 opponent-defense factor used to rank her'
+                + (" — this opponent allows almost exactly the slate average, so "
+                   "tonight's line is her recent form essentially unchanged. "
+                   if _neutral else ". ")
+                + 'Both inputs are measured, not modelled \u2014 but this is an '
+                  'estimate, not a forecast with a track record: the Calibration '
+                  'page grades whether she records an extra-base-equivalent, not '
+                  'whether she hits these numbers.'
             )
 
         st.caption(
@@ -704,6 +722,26 @@ def _render_slate():
                         )
                 for tab, (label, season_k, l5_k, l10_k, h2h_k) in zip(tabs, PROP_TABS):
                     with tab:
+                        # SORT CONTROL.
+                        #
+                        # These tables are rendered as HTML (render_html_table)
+                        # rather than st.dataframe, deliberately — st.dataframe
+                        # brings drag-to-reorder columns that can't be disabled,
+                        # which on a phone turns any scroll into a column
+                        # shuffle. The trade was losing click-to-sort headers,
+                        # and this control gives that back without giving the
+                        # scrolling problem back with it.
+                        #
+                        # One control per tab, governing BOTH team tables under
+                        # it: sorting one team by L10 and leaving the other in
+                        # role order would make the two halves of the same
+                        # matchup incomparable.
+                        _sort_opts = ["Role", "Season", "L5", "L10", "vs OPP", "MIN"]
+                        _sort_by = st.segmented_control(
+                            "Sort", _sort_opts, default="Role",
+                            key=f"wnba_sort_{gi}_{label}",
+                            label_visibility="collapsed",
+                        ) or "Role"
                         for side, col in (("away", a_col), ("home", h_col)):
                             plist = g.get(f"{side}_players")
                             if not plist:
@@ -777,8 +815,26 @@ def _render_slate():
                             # in roster order, which put tonight's best bets
                             # anywhere on the list.
                             _order = {"START": 0, "": 1, "BENCH": 1, "OUT": 2}
-                            rows.sort(key=lambda r: (_order.get(r.get("Role"), 1),
-                                                     -(r.get("MIN") or 0)))
+                            if _sort_by == "Role":
+                                rows.sort(key=lambda r: (_order.get(r.get("Role"), 1),
+                                                         -(r.get("MIN") or 0)))
+                            else:
+                                # Sorted by the chosen stat, high to low.
+                                #
+                                # Two rules that survive every sort mode:
+                                # players who are OUT stay at the bottom (a
+                                # board must never lead with someone who
+                                # isn't playing, however good her numbers
+                                # look), and a MISSING value sorts last
+                                # rather than as a zero — an unmeasured stat
+                                # is not a bad one.
+                                def _sort_key(r, _c=_sort_by):
+                                    v = r.get(_c)
+                                    missing = not isinstance(v, (int, float))
+                                    return (1 if r.get("Role") == "OUT" else 0,
+                                            1 if missing else 0,
+                                            -(v if not missing else 0))
+                                rows.sort(key=_sort_key)
                             df = pd.DataFrame(rows)
                             # "Status" is TEXT ("OUT 30d"). It was in this
                             # list, so pd.to_numeric turned it into NaN and
