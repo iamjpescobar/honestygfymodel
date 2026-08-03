@@ -91,8 +91,25 @@ print("PASS: new lineup columns are styled")
 lineup_fmt = re.search(r'styled = styled\.format\(\{(.*?)\}, na_rep=', gc, re.S).group(1)
 formatted = set(re.findall(r'"([^"]+)":', lineup_fmt))
 
-row = re.search(r'return \{\s*\n\s*"Player".*?\n\s{20}\}', gc, re.S).group(0)
-declared = re.findall(r'"([^"]+)":', row)
+# Find the lineup row dict via the syntax tree, not by counting spaces.
+# This used to be a regex anchored on `\n\s{20}\}` — the closing brace at
+# exactly twenty columns. That hard-codes how deeply _stat_row happens to
+# be nested, so the day it moved (it was hoisted out of the 2,000-line
+# `with` block to module level) the terminator stopped matching, the
+# match ran on into an unrelated dict, and this asserted against the
+# wrong keys. ast finds the same dict wherever it lives.
+import ast as _ast
+_tree = _ast.parse(gc)
+_row_dict = None
+for _n in _ast.walk(_tree):
+    if isinstance(_n, _ast.Return) and isinstance(_n.value, _ast.Dict):
+        _keys = [k.value for k in _n.value.keys
+                 if isinstance(k, _ast.Constant) and isinstance(k.value, str)]
+        if "Player" in _keys:
+            _row_dict = _keys
+            break
+assert _row_dict, "could not find the lineup row dict (the one keyed on Player)"
+declared = _row_dict
 NON_NUMERIC = {"Player", "Bats", "Matchup", "Edge", "EdgeLabel", "EdgeTier", "Confidence"}
 missing = [c for c in declared if c not in NON_NUMERIC and c not in formatted]
 assert not missing, f"numeric lineup columns with no format string: {missing}"
