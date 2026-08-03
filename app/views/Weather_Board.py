@@ -261,7 +261,7 @@ with st.spinner("Pulling game-time forecasts for every park\u2026 (30-min cache 
             f'<span style="margin:var(--lc-space-none) var(--lc-space-xs); opacity:0.5; font-size:var(--lc-text-tiny);">@</span>'
             f'{_logo_img(g.get("home"))}</div>'
             f'<div style="flex:1.4; font-size:var(--lc-text-caption); color:{COLOR["text"]}; opacity:0.8;">{venue}<br>'
-            f'<span style="color:{COLOR["gold"]}; font-weight:600;">{t_str}</span></div>'
+            f'<span style="color:{COLOR["text"]}; font-weight:600;">{t_str}</span></div>'
             f'<div style="flex:1; font-size:var(--lc-text-caption); color:{COLOR["text"]}; '
             f'display:flex; align-items:center; gap:6px;">'
             f'<span style="flex-shrink:0;">{_small(weather_icon(cond_txt))}</span>'
