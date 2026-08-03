@@ -64,7 +64,7 @@ from engines.statcast_engine import (
     get_pitcher_role, get_pitcher_hand, get_batter_iso_vs_hand,
 )
 from engines.weather_engine import get_todays_games_with_weather
-from engines.roster import get_live_team_roster
+from engines.roster import get_live_team_roster, get_active_player_ids
 
 EASTERN = ZoneInfo("America/New_York")
 
@@ -274,7 +274,55 @@ def _precomputed_pens():
         return None
 
 
-def _pen_from_precomputed(team: str, starter_pid) -> str | None:
+def _pen_snapshot_is_stale(team: str, entry: dict) -> bool:
+    """True when this team's stored pen no longer matches its real roster.
+
+    bullpen_profiles.json is the ONE nightly artifact keyed by TEAM
+    rather than by player id. Everything else — the per-player parquets,
+    pitcher_roles, hr_metrics, the Savant percentiles — travels with the
+    player, so a trade cannot misfile it. A team's stored reliever LIST
+    can go wrong the moment a deal is announced, and stays wrong until
+    the next 10:00 UTC build.
+
+    On a normal day that is a non-event. On the deadline it is dozens of
+    arms changing clubs at once, hours before first pitch, and the pen
+    HR/9 on a Game Card would be pooled from men who are no longer on
+    that staff — while the newly acquired arm the lineup will actually
+    face is missing from it.
+
+    Two signals, both from data already on hand:
+
+      DEPARTURE — a stored reliever is no longer on the active roster.
+      ARRIVAL   — a pitcher IS on the roster, pitcher_roles (which is
+                  keyed by player id, so it is never stale) classifies
+                  him RP, and the stored pen doesn't have him.
+
+    The arrival test is what catches a team that only received players.
+    Departures alone would miss them entirely.
+
+    FAILS OPEN. An empty roster read means "couldn't check", not
+    "everybody left" — same rule get_active_player_ids documents. A
+    timed-out request must not throw the slate onto the slow path.
+    """
+    live_ids = get_active_player_ids(team) or set()
+    if not live_ids:
+        return False
+    stored = {str(r.get("id")) for r in (entry.get("relievers") or []) if r.get("id")}
+    if not stored:
+        return False
+    if stored - live_ids:
+        return True
+    for pid in live_ids - stored:
+        # Pitchers under the outing floor are legitimately absent from
+        # the snapshot, and get_pitcher_role returns None for them — so
+        # this only fires on an arm with a real, established RP role.
+        if get_pitcher_role(pid) == "RP":
+            return True
+    return False
+
+
+def _pen_from_precomputed(team: str, starter_pid,
+                          verify_roster: bool = False) -> str | None:
     """Pooled pen line for this team from the nightly file, or None.
 
     Tonight's starter is still excluded here rather than baked in at
@@ -289,6 +337,13 @@ def _pen_from_precomputed(team: str, starter_pid) -> str | None:
         return None
     entry = pens.get(team)
     if not entry:
+        return None
+    # Only the team actually on screen is verified. The slate-wide
+    # baseline deliberately does not: it averages ~30 pens, one traded
+    # arm barely moves it, and checking every team would put the ~30
+    # sequential roster calls back on the first page load — the exact
+    # cost the nightly build exists to remove.
+    if verify_roster and _pen_snapshot_is_stale(team, entry):
         return None
     arms, hr_total, ip_total, lhp_ip = 0, 0, 0.0, 0.0
     for r in entry.get("relievers") or []:
@@ -313,7 +368,8 @@ def _pen_from_precomputed(team: str, starter_pid) -> str | None:
 
 
 @st.cache_data(ttl=21600, max_entries=60, show_spinner=False)
-def _pen_profile_json(team: str, starter_pid, date_str: str) -> str:
+def _pen_profile_json(team: str, starter_pid, date_str: str,
+                      verify_roster: bool = False, roster_key: str = "") -> str:
     """Pooled pen HR/9 from the team's ACTUAL RELIEVERS, plus the
     handedness mix of those innings.
 
@@ -344,7 +400,7 @@ def _pen_profile_json(team: str, starter_pid, date_str: str) -> str:
     # Falls through to the live build on any miss — a team absent from
     # the file, a deploy predating the first nightly that includes it —
     # so behaviour is unchanged when the data isn't there.
-    _pre = _pen_from_precomputed(team, starter_pid)
+    _pre = _pen_from_precomputed(team, starter_pid, verify_roster)
     if _pre is not None:
         return _pre
 
@@ -440,8 +496,23 @@ def pen_context(pitcher_team: str, starter_pid, batter_id=None):
     degrades, it doesn't invent.
     """
     date_str = datetime.now(EASTERN).strftime("%Y-%m-%d")
+    # roster_key is a CACHE KEY, not an argument the body reads.
+    #
+    # _pen_profile_json is cached for six hours, so the staleness check
+    # inside it only runs on a miss. Without this, a deal announced after
+    # the day's first Game Card render would sit behind a warm cache
+    # entry until the ttl expired — the check would be correct and simply
+    # never get asked. Folding the roster into the key means any change
+    # to who is on the staff produces a new entry and re-runs the check.
+    #
+    # get_active_player_ids is cached for five minutes and the Game Card
+    # has already called it for this team by now, so this is a dict
+    # lookup in practice.
+    roster_key = ",".join(sorted(get_active_player_ids(pitcher_team) or ()))
     try:
-        prof = json.loads(_pen_profile_json(pitcher_team, starter_pid, date_str))
+        prof = json.loads(_pen_profile_json(pitcher_team, starter_pid, date_str,
+                                            verify_roster=True,
+                                            roster_key=roster_key))
         base = json.loads(_slate_pen_avg_json(date_str))
     except Exception:
         return 0, None
