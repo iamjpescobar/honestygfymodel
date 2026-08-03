@@ -5,7 +5,8 @@ import pandas as pd
 import requests
 import streamlit as st
 
-from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, badge, footer, COLOR
+from styles.kc_theme import (inject_kc_theme, page_header, card_open, card_close,
+                             badge, footer, COLOR, SPORT_ACCENTS)
 from styles.table_style import style_stat_table, render_html_table
 from engines.matchup_grades_intl import grade_wnba_matchup, render_matchup_grades_card
 
@@ -16,25 +17,57 @@ from engines.trend_chart import window_hit_chips, render_trend_bars
 from engines.wnba_logos import logo_url_by_id
 
 inject_kc_theme()
-sync_latest_button(key="sync_wnba", include_data_package=True)
 
-# Prop-tab styling — match the MLB page's language: JetBrains Mono,
-# gold idle tabs, teal active tab + underline.
+# WNBA orange, resolved once. Every accented element on this page reads
+# from here so the page carries ONE identity colour instead of the six
+# it used to (orange header, teal tabs, blue leans, magenta labels, gold
+# body text, per-team blues) — none of which meant anything.
+_ACCENT = SPORT_ACCENTS.get("WNBA", COLOR["stat_high"])
+
+# Prop-tab styling. Idle tabs are muted grey and the active tab is the
+# page accent — previously idle was gold and active was MLB teal, which
+# put two more colours on screen for no informational gain.
 st.markdown(
     "<style>"
     ".stTabs [data-baseweb='tab-list'] { gap: 2px; }"
     ".stTabs [data-baseweb='tab'] { font-family: 'JetBrains Mono', monospace; }"
-    f".stTabs [data-baseweb='tab'] p {{ font-size:var(--lc-text-small); color: {COLOR['gold']}; }}"
-    f".stTabs [aria-selected='true'] p {{ color: {COLOR['stat_high']} !important; font-weight: 700; }}"
-    f".stTabs [data-baseweb='tab-highlight'] {{ background-color: {COLOR['stat_high']}; }}"
+    f".stTabs [data-baseweb='tab'] p {{ font-size:var(--lc-text-small); color: {COLOR['text_muted']}; }}"
+    f".stTabs [aria-selected='true'] p {{ color: {_ACCENT} !important; font-weight: 700; }}"
+    f".stTabs [data-baseweb='tab-highlight'] {{ background-color: {_ACCENT}; }}"
+    # Segmented controls (form window / grade window) follow the same rule.
+    f'div[data-testid="stSegmentedControl"] button[aria-checked="true"] {{ color: {_ACCENT} !important; }}'
     "</style>",
     unsafe_allow_html=True,
 )
 
+def _ordinal(n):
+    """1 -> st, 2 -> nd, 3 -> rd, 11-13 -> th. Used for percentile ranks.
+
+    Defined UP HERE, not down with the other helpers: the Player of the
+    Day block runs at module level (this view is a script, not a
+    function), so a definition further down the file would not exist yet
+    when that block calls it.
+    """
+    if 10 <= n % 100 <= 20:
+        return "th"
+    return {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+
+
 _WNBA_GAMES = Path(__file__).resolve().parent.parent / "data" / "wnba" / "games.json"
 _SB_URL = "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard"
 
-page_header("WNBA Analytics", "Live season coverage — game & prop research", eyebrow="LIVE")
+# HEADER FIRST, TOOLBAR SECOND.
+#
+# sync_latest_button() used to run up at import time, before this line,
+# so Streamlit painted the sync control and the tab strip at the very top
+# and pushed the page title down behind them — roughly 150px of empty
+# black above the only element that tells you what page you're on, and on
+# a phone the title landed below the fold entirely.
+#
+# Nothing about the button changed; it just renders after the header now.
+page_header("WNBA Analytics", "Live season coverage — game & prop research",
+            eyebrow="LIVE", align="left")
+sync_latest_button(key="sync_wnba", include_data_package=True)
 
 
 # Shared availability rule — the same one the Props, Defense and Player
@@ -137,7 +170,7 @@ if _REF:
 if games is None:
     st.markdown(card_open("\U0001F3C0 WNBA engine is being connected"), unsafe_allow_html=True)
     st.markdown(
-        f'<div style="color:{COLOR["gold"]}; font-size:var(--lc-text-body-lg); line-height:1.7;">'
+        f'<div style="color:{COLOR["text_muted"]}; font-size:var(--lc-text-body-lg); line-height:1.7;">'
         f'WNBA coverage is in active development on the same standard as the MLB engine: '
         f'every number traced to a real, verifiable source \u2014 no placeholders, no estimates.'
         f'</div>',
@@ -171,11 +204,76 @@ if games:
             + badge(f'{_fw_label} PRA {wnba_pick["form_pra"]}', "accent")
         )
         st.markdown(f'<div>{potd_badges}</div>', unsafe_allow_html=True)
-        pc1, pc2, pc3, pc4 = st.columns(4)
-        pc1.metric(f"{_fw_label} PPG", wnba_pick["form_ppg"] if wnba_pick["form_ppg"] is not None else "N/A")
-        pc2.metric(f"{_fw_label} RPG", wnba_pick["form_rpg"] if wnba_pick["form_rpg"] is not None else "N/A")
-        pc3.metric(f"{_fw_label} APG", wnba_pick["form_apg"] if wnba_pick["form_apg"] is not None else "N/A")
-        pc4.metric("Season PRA", wnba_pick["season_pra"])
+        # TILE HIERARCHY.
+        #
+        # Four numbers used to sit at one size in one colour, so nothing
+        # told you which to read — and the stat the pick is actually
+        # RANKED on (form PRA) was the smallest thing on the row, tucked
+        # into a badge. It leads now, in the page accent, with season PRA
+        # and the delta as its supporting line.
+        #
+        # The three component averages carry real league percentiles
+        # (engines/wnba_props.percentile_of) computed from every
+        # qualified player's season in the same nightly file. Where a
+        # percentile can't be computed honestly — stat missing, or too
+        # few qualified players — the rank is simply absent. There is no
+        # fallback 50th.
+        from engines.wnba_props import league_percentiles as _lp, percentile_of as _pct
+        _dist = _lp()
+        _season_pra = wnba_pick.get("season_pra")
+        _form_pra = wnba_pick.get("form_pra")
+        _pra_delta = (round(_form_pra - _season_pra, 1)
+                      if _form_pra is not None and _season_pra is not None else None)
+        _delta_txt = ""
+        if _season_pra is not None:
+            _delta_txt = f'SEASON {_season_pra}'
+            if _pra_delta:
+                _delta_txt += f' · {_pra_delta:+.1f}'
+        st.markdown(
+            f'<div style="margin-top:var(--lc-space-md);">'
+            f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:var(--lc-text-tiny); '
+            f'letter-spacing:0.16em; color:{_ACCENT}; font-weight:700;">{_fw_label} PRA</div>'
+            f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:var(--lc-text-hero); '
+            f'font-weight:800; color:{_ACCENT}; line-height:1.1;">'
+            f'{_form_pra if _form_pra is not None else "N/A"}</div>'
+            f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:var(--lc-text-caption); '
+            f'color:{COLOR["text_muted"]};">{_delta_txt}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+        _rows = ""
+        for _lbl, _val, _key in (("PPG", wnba_pick.get("form_ppg"), "ppg"),
+                                 ("RPG", wnba_pick.get("form_rpg"), "rpg"),
+                                 ("APG", wnba_pick.get("form_apg"), "apg")):
+            _p = _pct(_key, _val, _dist)
+            # Bar width IS the percentile — no bar at all when there
+            # isn't one, rather than an empty rail implying zero.
+            if _p is not None:
+                _rank = (f'<span style="font-family:\'JetBrains Mono\',monospace; '
+                         f'font-size:var(--lc-text-caption); color:{COLOR["stat_high"]};">'
+                         f'{_p}{_ordinal(_p)}</span>')
+                _bar = (f'<div style="height:3px; background:{COLOR["surface_raised"]}; '
+                        f'border-radius:2px; margin-top:3px;">'
+                        f'<div style="height:3px; width:{_p}%; background:{COLOR["stat_high"]}; '
+                        f'border-radius:2px;"></div></div>')
+            else:
+                _rank, _bar = "", ""
+            _rows += (
+                f'<div style="margin-top:var(--lc-space-sm);">'
+                f'<div style="display:flex; justify-content:space-between; align-items:baseline;">'
+                f'<span style="font-family:\'JetBrains Mono\',monospace; font-size:var(--lc-text-tiny); '
+                f'letter-spacing:0.12em; color:{COLOR["text_muted"]};">{_lbl}</span>'
+                f'<span><span style="font-family:\'JetBrains Mono\',monospace; '
+                f'font-size:var(--lc-text-body-lg); font-weight:700; color:{COLOR["text"]};">'
+                f'{_val if _val is not None else "N/A"}</span> {_rank}</span>'
+                f'</div>{_bar}</div>')
+        st.markdown(f'<div style="max-width:420px;">{_rows}</div>', unsafe_allow_html=True)
+        if _dist:
+            st.caption(
+                "Percentile = this player's real season average ranked against every "
+                "WNBA player with 5+ real games in the same nightly file. Measured, not modelled."
+            )
 
         # PROJECTED LINE FOR TONIGHT, shown beside the recent averages
         # it's built from so the adjustment is visible rather than
@@ -184,7 +282,30 @@ if games:
         # her, negative means it doesn't.
         _pp, _pr, _pa = (wnba_pick.get("proj_pts"), wnba_pick.get("proj_reb"),
                          wnba_pick.get("proj_ast"))
-        if any(v is not None for v in (_pp, _pr, _pa)):
+        # NEUTRAL MATCHUP -> SAY SO, don't reprint the same numbers.
+        #
+        # When the opponent-defense factor lands on 1.00 the projection
+        # is arithmetically identical to the form averages directly
+        # above it, and every delta is hidden because it's zero. The
+        # block then rendered as four tiles repeating 15.1 / 11.8 / 5.4
+        # verbatim with no explanation — which reads as a broken render,
+        # not as "this matchup is neutral".
+        #
+        # It isn't wrong, it's just mute. One line saying so carries the
+        # same information and doesn't look like a bug.
+        _fac = wnba_pick.get("def_factor")
+        _neutral = _fac is not None and round(float(_fac), 2) == 1.00
+        if _neutral and any(v is not None for v in (_pp, _pr, _pa)):
+            st.markdown(
+                f'<div style="font-family:\'JetBrains Mono\',monospace; '
+                f'font-size:var(--lc-text-caption); color:{COLOR["text_muted"]}; '
+                f'margin-top:var(--lc-space-md);">'
+                f'PROJECTED TONIGHT &nbsp;\u00d71.00 \u2014 neutral matchup: this opponent '
+                f'allows the slate average, so tonight\'s projection is her '
+                f'{_fw_label} form unchanged.</div>',
+                unsafe_allow_html=True,
+            )
+        elif any(v is not None for v in (_pp, _pr, _pa)):
             st.markdown(
                 f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:var(--lc-text-caption); '
                 f'color:{COLOR["text_muted"]}; margin-top:var(--lc-space-md); margin-bottom:var(--lc-space-hair);">'
@@ -237,15 +358,71 @@ def _fmt(v):
     return "\u2014" if v is None else v
 
 
+
+# (label, key, direction) — direction says which side of the row is the
+# BETTER number, and it's the whole basis of the new colouring:
+#   "high" larger wins   "low" smaller wins   None neither (context row)
+#
+# Colour used to encode team identity: orange meant Connecticut, blue
+# meant Dallas. You already know that from which column the number is
+# in, so the colour carried no information and you had to read all
+# eleven rows to work out who was better at anything. Now brightness
+# means advantage and the team colour survives as a small edge marker,
+# so a sweep is visible at a glance — and "points against", where lower
+# wins and the winner flips sides, is handled by the same rule instead
+# of asking you to remember that it's inverted.
 TAPE_ROWS = [
-    ("Record", "record"), ("Home / Road", None),
-    ("Last 10", "l10"),
-    ("Points For / G", "pf_pg"), ("Points Against / G", "pa_pg"),
-    ("Avg Game Total", "avg_total"),
-    ("FG %", "fg_pct"), ("3P %", "tp_pct"),
-    ("Rebounds / G", "reb_g"), ("Assists / G", "ast_g"),
-    ("Turnovers / G", "to_g"),
+    ("Record", "record", "record"), ("Home / Road", None, None),
+    ("Last 10", "l10", "record"),
+    ("Points For / G", "pf_pg", "high"), ("Points Against / G", "pa_pg", "low"),
+    # Neither team "wins" the shared total of their own game — it's a
+    # totals-market context row, so it stays neutral rather than being
+    # forced into a winner.
+    ("Avg Game Total", "avg_total", None),
+    ("FG %", "fg_pct", "high"), ("3P %", "tp_pct", "high"),
+    ("Rebounds / G", "reb_g", "high"), ("Assists / G", "ast_g", "high"),
+    ("Turnovers / G", "to_g", "low"),
 ]
+
+
+def _win_pct(rec):
+    """Win rate from a 'W-L' record string, or None if it isn't one.
+
+    Used only to decide which side of a Record / Last 10 row is ahead.
+    Returns None for anything unparseable so the row simply renders
+    neutral rather than guessing a winner.
+    """
+    try:
+        w, l = str(rec).replace("\u2013", "-").split("-")[:2]
+        w, l = int(w), int(l)
+        return w / (w + l) if (w + l) else None
+    except Exception:
+        return None
+
+
+def _num(v):
+    try:
+        return float(str(v).replace("%", ""))
+    except Exception:
+        return None
+
+
+def _advantage(av, hv, direction):
+    """Returns (away_is_better, home_is_better).
+
+    Both False on a tie, on a neutral row, or whenever either value is
+    missing or unparseable — an unknown is never shown as a win. This is
+    the same rule the rest of the app follows: no data means no claim.
+    """
+    if not direction:
+        return False, False
+    a = _win_pct(av) if direction == "record" else _num(av)
+    h = _win_pct(hv) if direction == "record" else _num(hv)
+    if a is None or h is None or a == h:
+        return False, False
+    better_is_larger = direction in ("high", "record")
+    a_wins = (a > h) if better_is_larger else (a < h)
+    return a_wins, not a_wins
 
 PROP_TABS = [
     ("Points", "ppg", "l5_ppg", "l10_ppg", "h2h_ppg"),
@@ -306,10 +483,10 @@ def _render_slate():
             f'<div style="display:flex; justify-content:center; align-items:baseline; gap:14px; '
             f'margin:var(--lc-space-hair) var(--lc-space-none) var(--lc-space-hair) var(--lc-space-none); flex-wrap:wrap;">'
             f'<span style="font-size:var(--lc-text-title); font-weight:800; color:{a_col};">{away}</span>'
-            f'<span style="font-size:var(--lc-text-small); color:{COLOR["gold"]};">@</span>'
+            f'<span style="font-size:var(--lc-text-small); color:{COLOR["text_faint"]};">@</span>'
             f'<span style="font-size:var(--lc-text-title); font-weight:800; color:{h_col};">{home}</span>'
             f'</div>'
-            f'<div style="text-align:center; font-size:var(--lc-text-caption); color:{COLOR["gold"]}; margin-bottom:var(--lc-space-md);">'
+            f'<div style="text-align:center; font-size:var(--lc-text-caption); color:{COLOR["text_muted"]}; margin-bottom:var(--lc-space-md);">'
             f'{g.get("arena", "")} \u00b7 {g.get("time_et", "TBD")} ET</div>',
             unsafe_allow_html=True,
         )
@@ -325,7 +502,7 @@ def _render_slate():
         st.markdown(f'<div style="text-align:center;">{center}</div>', unsafe_allow_html=True)
 
         rows_html = ""
-        for label, key in TAPE_ROWS:
+        for label, key, direction in TAPE_ROWS:
             if key is None:  # Home / Road split row
                 av = f'{_fmt(g.get("away_home_record"))} / {_fmt(g.get("away_road_record"))}'
                 hv = f'{_fmt(g.get("home_home_record"))} / {_fmt(g.get("home_road_record"))}'
@@ -335,16 +512,30 @@ def _render_slate():
                 av, hv = _fmt(g.get(f"away_{key}")), _fmt(g.get(f"home_{key}"))
                 if av == "\u2014" and hv == "\u2014":
                     continue
+            # BRIGHT = BETTER. The winning side gets full-strength text
+            # and a 2px team-coloured edge marker; the losing side is
+            # dimmed. On a tie, a context row, or a missing value both
+            # sides render neutral — an unknown must never look like a
+            # win.
+            a_win, h_win = _advantage(av, hv, direction)
+            a_style = (f'color:{COLOR["text"]}; font-weight:700;' if a_win
+                       else f'color:{COLOR["text_muted"]}; font-weight:400;')
+            h_style = (f'color:{COLOR["text"]}; font-weight:700;' if h_win
+                       else f'color:{COLOR["text_muted"]}; font-weight:400;')
+            a_mark = (f'border-right:2px solid {a_col}; padding-right:8px;' if a_win
+                      else 'border-right:2px solid transparent; padding-right:8px;')
+            h_mark = (f'border-left:2px solid {h_col}; padding-left:8px;' if h_win
+                      else 'border-left:2px solid transparent; padding-left:8px;')
             rows_html += (
                 f'<div style="display:grid; grid-template-columns:1fr auto 1fr; gap:10px; '
                 f'padding:var(--lc-space-xs) var(--lc-space-none); border-bottom:1px solid {COLOR["surface_raised"]};">'
                 f'<div style="text-align:right; font-family:\'JetBrains Mono\',monospace; '
-                f'color:{a_col}; font-size:var(--lc-text-body); font-weight:700;">{av}</div>'
-                f'<div style="text-align:center; font-size:var(--lc-text-tiny); color:{COLOR["gold"]}; '
+                f'font-size:var(--lc-text-body); {a_style} {a_mark}">{av}</div>'
+                f'<div style="text-align:center; font-size:var(--lc-text-tiny); color:{COLOR["text_faint"]}; '
                 f'text-transform:uppercase; letter-spacing:0.06em; min-width:120px; '
                 f'align-self:center;">{label}</div>'
                 f'<div style="text-align:left; font-family:\'JetBrains Mono\',monospace; '
-                f'color:{h_col}; font-size:var(--lc-text-body); font-weight:700;">{hv}</div>'
+                f'font-size:var(--lc-text-body); {h_style} {h_mark}">{hv}</div>'
                 f'</div>')
         if rows_html:
             st.markdown(f'<div style="max-width:560px; margin:var(--lc-space-md) auto var(--lc-space-none) auto;">{rows_html}</div>',
@@ -360,7 +551,7 @@ def _render_slate():
                 f'<b>Season Series:</b> {hh["summary"]} \u00b7 '
                 f'Avg total in H2H: <b>{_fmt(hh.get("avg_total"))}</b> '
                 f'({hh["meetings"]} meetings)</span>'
-                f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["gold"]}; margin-top:var(--lc-space-xs);">{scorelines}</div>'
+                f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["text_muted"]}; margin-top:var(--lc-space-xs);">{scorelines}</div>'
                 f'</div>',
                 unsafe_allow_html=True,
             )
@@ -368,7 +559,7 @@ def _render_slate():
             st.markdown(
                 f'<div style="text-align:center; margin-top:var(--lc-space-md);">'
                 f'<span style="display:inline-block; padding:var(--lc-space-sm) var(--lc-space-lg); border-radius:var(--lc-radius-md); '
-                f'background:{COLOR["surface_raised"]}; font-size:var(--lc-text-small); color:{COLOR["gold"]};">'
+                f'background:{COLOR["surface_raised"]}; font-size:var(--lc-text-small); color:{COLOR["text_muted"]};">'
                 f'First meeting of the season \u2014 no head-to-head data exists yet, '
                 f'and this page will not invent any.</span></div>',
                 unsafe_allow_html=True,
@@ -392,6 +583,7 @@ def _render_slate():
                       "engines/matchup_grades_intl.py. Not calibrated probabilities." + _gw_note),
             source_line="Source: real WNBA box-score-derived team stats.",
             key=f'wnba_{gi}_{away}_{home}',
+            accent=_ACCENT,
         )
 
         if g.get("away_players") or g.get("home_players"):
@@ -420,7 +612,7 @@ def _render_slate():
 
                 # ---- Player Trend: game-by-game bars + hit-rate chips ----
                 st.markdown(
-                    f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["gold"]}; '
+                    f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["text"]}; '
                     f'margin:var(--lc-space-md) var(--lc-space-none) var(--lc-space-hair) var(--lc-space-none);">Player Trend</div>'
                     f'<div class="pf-card-subtitle">Game-by-game results with the line drawn in \u2014 '
                     f'chips show how many games cleared it per window. Real box scores; the log carries '
