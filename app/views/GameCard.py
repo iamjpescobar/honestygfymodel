@@ -81,6 +81,142 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
+# ---------------------------------------------------------------------
+# Helpers hoisted out of the render block.
+#
+# These were defined INSIDE the 2,000-line `with content_col:` statement,
+# so nothing could reach them — not a test, not another view, not even a
+# different part of this file. All seven are closure-free: they read only
+# their arguments and module-level names, so lifting them here changes no
+# behaviour.
+#
+# Dedenting these is fussier than it looks. A plain textwrap.dedent also
+# strips the leading spaces from CONTINUATION LINES OF MULTI-LINE STRINGS,
+# where that whitespace is string content rather than indentation — it
+# silently rewrote three format strings and test_gamecard_columns.py
+# caught it. The lines inside multi-line string tokens are copied verbatim.
+#
+# The block still needs breaking up properly. This is the part that could
+# be proven safe without running the app.
+# ---------------------------------------------------------------------
+
+def _pick_game(_gidx):
+    st.session_state["gc_selected_game_idx"] = _gidx
+
+def _xslg_chip(v):
+    if v is None:
+        return f'<span style="color:{COLOR["text"]}; opacity:0.4;">\u2014</span>'
+    c = (COLOR["error"] if v >= XSLG_HOT
+         else COLOR["stat_high"] if v <= XSLG_COLD else COLOR["warn"])
+    return (f'<span style="font-weight:800; color:{c};">{v:.3f}</span>')
+
+def _bullpen_opponent_batters(gpk, team_label, side):
+    """Light lineup fetch for the bullpen browser, same honest
+        fallback order as the main lineup section but without the
+        banners: today's confirmed lineup -> real starting 9 from the
+        team's last game -> roster. Returns (batters, source_label)."""
+    lineup, ok = get_confirmed_lineup(gpk, side)
+    if ok:
+        return [p for p in lineup if not p.get("is_pitcher")], "today's confirmed lineup"
+    last, last_date, ok2 = get_last_starting_lineup(team_label)
+    if ok2:
+        return [p for p in last if not p.get("is_pitcher")], f"real starting 9 from their last game ({last_date})"
+    roster_p = get_live_team_roster(team_label) or []
+    return [p for p in roster_p if not p.get("is_pitcher")][:9], "team roster (no lineup posted yet)"
+
+def _score_sort_key(r, field):
+    v = r.get(field)
+    return -1 if v is None else -v  # None sorts last regardless of view
+
+def _score_display(v):
+    return "N/A" if v is None else str(v)
+
+def _score_num(v):
+    """0 for display-only numeric contexts (progress bars) \u2014 always
+        paired with the N/A text elsewhere so it's never the only signal."""
+    return 0 if v is None else v
+
+def _stat_row(name, bats_label, profile, *, matchup=None, slam=None,
+              hr_edge=None, hr_score=None, hit_score=None,
+              edge_cell=None, edge_label="", edge_tier="neutral",
+              confidence="", batting_order=None):
+    """One table row. Score/matchup fields are optional so a
+                    switch hitter's non-matchup side can show stats only (its
+                    HR/Hit scores would be for the wrong platoon side, so we
+                    blank them rather than print a misleading number)."""
+    return {
+        "Player": name,
+        "Bats": bats_label,
+        # 1-9 as posted, sitting with the other identity
+        # columns rather than mid-table between HR/FB and
+        # Brl%, where it interrupted the run of rate
+        # stats. Blank on the unconfirmed-lineup fallback,
+        # which genuinely has no batting order.
+        "Ord": (batting_order // 100) if batting_order else None,
+        "Matchup": matchup if matchup is not None else "\u2014",
+        "SLAM": round(slam, 1) if slam is not None else None,
+        # NO ", 0" DEFAULTS ANYWHERE IN THIS ROW.
+        #
+        # A missing BA is not a .000 BA, a missing HH% is
+        # not a 0.0 HH%. The engine now returns None for
+        # anything it couldn't measure (see
+        # _compute_batted_ball_metrics), and na_rep="N/A"
+        # on the formatter below renders that honestly.
+        # A zero-default here would have quietly undone
+        # that at the last step — this table has no PA
+        # column, so a fabricated 0.0 is indistinguishable
+        # from a measured one.
+        "BA": profile.get("BA"),
+        "xwOBA": profile.get("xwOBA"),
+        "xSLG": profile.get("xSLG"),
+        "ISO": profile.get("ISO"),
+        "HR/FB": profile.get("HR/FB"),
+        "Brl%": profile.get("Brl %"),
+        # Barrels per PLATE APPEARANCE, next to the
+        # per-batted-ball rate. The gap between the two
+        # IS the read: a bat with a high Brl% and a low
+        # Brl/PA barrels well but doesn't put enough
+        # balls in play to cash it in.
+        "Brl/PA": profile.get("Brl/PA"),
+        "HH%": profile.get("HH %"),
+        # 90th-percentile exit velocity — the scored
+        # power ceiling. Max EV sits beside it for
+        # interest only; it's a sample of one.
+        "EV90": profile.get("EV90"),
+        "MaxEV": profile.get("MaxEV"),
+        "LD%": profile.get("LD %"),
+        "FB%": profile.get("FB %"),
+        "GB%": profile.get("GB %"),
+        "SweetSpot%": profile.get("SweetSpot %"),
+        # Launch angle 20-40 — the HOME RUN band, which
+        # is NOT SweetSpot% (8-32, built for overall
+        # production and starting at a line drive). Both
+        # are shown because they answer different
+        # questions and the difference is informative.
+        "HRWindow%": profile.get("HRWindow %"),
+        "PullAir%": profile.get("PullAir %"),
+        "PullBrl%": profile.get("PullBrl %"),
+        "Blast%": profile.get("Blast %"),
+        # Process, not outcome: bat speed + swing plane +
+        # pull tendency. Every other column here is
+        # downstream of results, so they all sag together
+        # when a power bat goes cold. This one doesn't.
+        "HRIntent": profile.get("HRIntent"),
+        # No ", 0" default: a missing SwStr% is not a
+        # 0.00 SwStr%, and 0.00 in this column reads as
+        # the best possible value. na_rep on the
+        # formatter below renders None as N/A.
+        "SwStr%": profile.get("SwStr %"),
+        "HR Edge": hr_edge,
+        "HR Score": hr_score,
+        "Hit Score": hit_score,
+        "Edge": edge_cell if edge_cell is not None else edge_tag("\u2014", "neutral"),
+        "EdgeLabel": edge_label,
+        "EdgeTier": edge_tier,
+        "Confidence": confidence,
+    }
+
 # Plain container instead of st.columns — keeps the `with content_col:`
 # indentation below untouched while letting the page use the full width
 # app.py's main column gives it.
@@ -157,9 +293,6 @@ with content_col:
             "</style>",
             unsafe_allow_html=True,
         )
-
-        def _pick_game(_gidx):
-            st.session_state["gc_selected_game_idx"] = _gidx
 
         _card_cols = st.columns(len(visible_labels)) if visible_labels else []
         for _ci, (_lbl, _vg) in enumerate(zip(visible_labels, visible_games)):
@@ -394,13 +527,6 @@ with content_col:
             if _ws.get("error"):
                 st.caption(_ws["error"])
             else:
-                def _xslg_chip(v):
-                    if v is None:
-                        return f'<span style="color:{COLOR["text"]}; opacity:0.4;">\u2014</span>'
-                    c = (COLOR["error"] if v >= XSLG_HOT
-                         else COLOR["stat_high"] if v <= XSLG_COLD else COLOR["warn"])
-                    return (f'<span style="font-weight:800; color:{c};">{v:.3f}</span>')
-
                 st.markdown(
                     f'<div class="pf-card-subtitle">xSLG allowed on contact \u00b7 '
                     f'red = hitters do real damage, blue = he wins there \u00b7 '
@@ -555,20 +681,6 @@ with content_col:
     # -----------------------------------------------------
     # BOTH STARTERS + BULLPEN — full-staff arsenal browser
     # -----------------------------------------------------
-    def _bullpen_opponent_batters(gpk, team_label, side):
-        """Light lineup fetch for the bullpen browser, same honest
-        fallback order as the main lineup section but without the
-        banners: today's confirmed lineup -> real starting 9 from the
-        team's last game -> roster. Returns (batters, source_label)."""
-        lineup, ok = get_confirmed_lineup(gpk, side)
-        if ok:
-            return [p for p in lineup if not p.get("is_pitcher")], "today's confirmed lineup"
-        last, last_date, ok2 = get_last_starting_lineup(team_label)
-        if ok2:
-            return [p for p in last if not p.get("is_pitcher")], f"real starting 9 from their last game ({last_date})"
-        roster_p = get_live_team_roster(team_label) or []
-        return [p for p in roster_p if not p.get("is_pitcher")][:9], "team roster (no lineup posted yet)"
-
     def _arsenal_bars(p_data):
         arsenal_d = p_data.get("Pitch Arsenal", {}) if p_data else {}
         if not arsenal_d:
@@ -854,18 +966,6 @@ with content_col:
                 if _p_throws in ("R", "L") and _r.get("id"):
                     _r["iso_vs_hand"] = get_batter_iso_vs_hand(_r["id"], _p_throws)
                     _r["opp_hand"] = f"{_p_throws}HP"
-
-    def _score_sort_key(r, field):
-        v = r.get(field)
-        return -1 if v is None else -v  # None sorts last regardless of view
-
-    def _score_display(v):
-        return "N/A" if v is None else str(v)
-
-    def _score_num(v):
-        """0 for display-only numeric contexts (progress bars) \u2014 always
-        paired with the N/A text elsewhere so it's never the only signal."""
-        return 0 if v is None else v
 
     # -----------------------------------------------------
     # TODAY'S TOP PLAYS \u2014 plain section label, not its own card,
@@ -1275,86 +1375,6 @@ with content_col:
 
                 if not filtered:
                     st.info(f"No batters match that Bats filter for {opposing_team}.")
-
-                def _stat_row(name, bats_label, profile, *, matchup=None, slam=None,
-                              hr_edge=None, hr_score=None, hit_score=None,
-                              edge_cell=None, edge_label="", edge_tier="neutral",
-                              confidence="", batting_order=None):
-                    """One table row. Score/matchup fields are optional so a
-                    switch hitter's non-matchup side can show stats only (its
-                    HR/Hit scores would be for the wrong platoon side, so we
-                    blank them rather than print a misleading number)."""
-                    return {
-                        "Player": name,
-                        "Bats": bats_label,
-                        # 1-9 as posted, sitting with the other identity
-                        # columns rather than mid-table between HR/FB and
-                        # Brl%, where it interrupted the run of rate
-                        # stats. Blank on the unconfirmed-lineup fallback,
-                        # which genuinely has no batting order.
-                        "Ord": (batting_order // 100) if batting_order else None,
-                        "Matchup": matchup if matchup is not None else "\u2014",
-                        "SLAM": round(slam, 1) if slam is not None else None,
-                        # NO ", 0" DEFAULTS ANYWHERE IN THIS ROW.
-                        #
-                        # A missing BA is not a .000 BA, a missing HH% is
-                        # not a 0.0 HH%. The engine now returns None for
-                        # anything it couldn't measure (see
-                        # _compute_batted_ball_metrics), and na_rep="N/A"
-                        # on the formatter below renders that honestly.
-                        # A zero-default here would have quietly undone
-                        # that at the last step — this table has no PA
-                        # column, so a fabricated 0.0 is indistinguishable
-                        # from a measured one.
-                        "BA": profile.get("BA"),
-                        "xwOBA": profile.get("xwOBA"),
-                        "xSLG": profile.get("xSLG"),
-                        "ISO": profile.get("ISO"),
-                        "HR/FB": profile.get("HR/FB"),
-                        "Brl%": profile.get("Brl %"),
-                        # Barrels per PLATE APPEARANCE, next to the
-                        # per-batted-ball rate. The gap between the two
-                        # IS the read: a bat with a high Brl% and a low
-                        # Brl/PA barrels well but doesn't put enough
-                        # balls in play to cash it in.
-                        "Brl/PA": profile.get("Brl/PA"),
-                        "HH%": profile.get("HH %"),
-                        # 90th-percentile exit velocity — the scored
-                        # power ceiling. Max EV sits beside it for
-                        # interest only; it's a sample of one.
-                        "EV90": profile.get("EV90"),
-                        "MaxEV": profile.get("MaxEV"),
-                        "LD%": profile.get("LD %"),
-                        "FB%": profile.get("FB %"),
-                        "GB%": profile.get("GB %"),
-                        "SweetSpot%": profile.get("SweetSpot %"),
-                        # Launch angle 20-40 — the HOME RUN band, which
-                        # is NOT SweetSpot% (8-32, built for overall
-                        # production and starting at a line drive). Both
-                        # are shown because they answer different
-                        # questions and the difference is informative.
-                        "HRWindow%": profile.get("HRWindow %"),
-                        "PullAir%": profile.get("PullAir %"),
-                        "PullBrl%": profile.get("PullBrl %"),
-                        "Blast%": profile.get("Blast %"),
-                        # Process, not outcome: bat speed + swing plane +
-                        # pull tendency. Every other column here is
-                        # downstream of results, so they all sag together
-                        # when a power bat goes cold. This one doesn't.
-                        "HRIntent": profile.get("HRIntent"),
-                        # No ", 0" default: a missing SwStr% is not a
-                        # 0.00 SwStr%, and 0.00 in this column reads as
-                        # the best possible value. na_rep on the
-                        # formatter below renders None as N/A.
-                        "SwStr%": profile.get("SwStr %"),
-                        "HR Edge": hr_edge,
-                        "HR Score": hr_score,
-                        "Hit Score": hit_score,
-                        "Edge": edge_cell if edge_cell is not None else edge_tag("\u2014", "neutral"),
-                        "EdgeLabel": edge_label,
-                        "EdgeTier": edge_tier,
-                        "Confidence": confidence,
-                    }
 
                 table_rows = []
                 for r in filtered:
