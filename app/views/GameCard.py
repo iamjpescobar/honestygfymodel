@@ -39,6 +39,7 @@ from engines.slam_engine import slam_from_profile
 from engines.top_plays import rank_batters, confidence_tier, matchup_tier
 from engines.team_abbreviations import team_abbr
 from engines.matchup_grades import grade_matchup
+from engines.matchup_grades_intl import render_matchup_grades_card
 
 # page_icon repeated on purpose: set_page_config RE-APPLIES on every
 # call, and omitting it here dropped the favicon app.py set, so the
@@ -300,7 +301,7 @@ with content_col:
         f"{game['away_pitcher']} ({game['away']}{', ' + _away_ht if _away_ht else ''})",
         f"{game['home_pitcher']} ({game['home']}{', ' + _home_ht if _home_ht else ''})",
     ]
-    st.markdown(f'<div style="font-size:var(--lc-text-body-lg); font-weight:600; color:{COLOR["magenta_purple"]}; margin-bottom:var(--lc-space-xs);">Select Pitcher</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="font-size:var(--lc-text-body-lg); font-weight:600; color:{COLOR["text"]}; margin-bottom:var(--lc-space-xs);">Select Pitcher</div>', unsafe_allow_html=True)
     pitcher_choice = st.segmented_control(
         "Select Pitcher", pitcher_options, default=pitcher_options[0],
         # Key includes the option labels. The labels can CHANGE mid-session:
@@ -527,36 +528,29 @@ with content_col:
         park_factor=park.get("park_factor"), park_verified=park.get("verified", False),
         temp=game.get("weather_temp"), window=_grade_window,
     )
-    with card("matchup_grades_card"):
-        st.markdown(
-            f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Matchup Grades \u00b7 {_gw_label}</div>'
-            f'<div class="pf-card-subtitle">This app\'s own signal checklists from real Statcast splits, '
-            f'park factor, and posted weather \u2014 formula documented in engines/matchup_grades.py. '
-            f'Not calibrated probabilities.</div>',
-            unsafe_allow_html=True,
-        )
-        if grades.get("error"):
-            st.info(grades["error"])
-        else:
-            gcol1, gcol2 = st.columns(2)
-            for gcol, key, title in ((gcol1, "ml", "Moneyline"), (gcol2, "ou", "Over / Under")):
-                with gcol:
-                    res = grades.get(key)
-                    st.markdown(f'<div style="font-weight:700; color:{COLOR["magenta_purple"]}; font-size:var(--lc-text-body);">{title}</div>', unsafe_allow_html=True)
-                    if not res:
-                        st.caption("No qualifying signals \u2014 no lean either way.")
-                        continue
-                    if res.get("lean"):
-                        st.markdown(
-                            f'<div style="font-size:var(--lc-text-subhead); font-weight:800; color:{COLOR["stat_high"]};">'
-                            f'Lean: {res["lean"]} \u00b7 Grade {res["grade"]}</div>'
-                            f'<div style="font-size:var(--lc-text-caption); color:{COLOR["gold"]};">{res["score"]}</div>',
-                            unsafe_allow_html=True,
-                        )
-                    else:
-                        st.markdown(f'<div style="font-size:var(--lc-text-body); color:{COLOR["gold"]};">{res["score"]}</div>', unsafe_allow_html=True)
-                    for s in res.get("signals", []):
-                        st.markdown(f'<div style="font-size:var(--lc-text-caption); color:{COLOR["text"]};">\u2713 {s}</div>', unsafe_allow_html=True)
+    # ONE RENDERER FOR EVERY SPORT.
+    #
+    # This block used to be a hand-rolled copy of the same card the
+    # KBO/NPB/WNBA pages render through
+    # engines/matchup_grades_intl.render_matchup_grades_card. Two copies
+    # meant the improvements — the grade as a coloured badge, the
+    # dropped "Lean:" prefix that only restated its own heading, the
+    # retired checkmarks — landed on the international pages and never
+    # reached the MLB Game Card, which is the page most people actually
+    # open.
+    #
+    # The renderer lives in the _intl module for historical reasons
+    # only; nothing in it is sport-specific. MLB passes no accent, so it
+    # keeps the house gold exactly as before.
+    render_matchup_grades_card(
+        grades,
+        subtitle=("This app's own signal checklists from real Statcast splits, "
+                  "park factor, and posted weather \u2014 formula documented in "
+                  "engines/matchup_grades.py. Not calibrated probabilities."),
+        source_line=None,
+        key="mlb",
+        title=f"Matchup Grades \u00b7 {_gw_label}",
+    )
 
     # -----------------------------------------------------
     # BOTH STARTERS + BULLPEN — full-staff arsenal browser
@@ -607,7 +601,7 @@ with content_col:
             (hc, game.get("home_pitcher", "TBD"), game.get("home_pitcher_id"), game.get("home")),
         ):
             with colx:
-                st.markdown(f'<div style="font-weight:700; color:{COLOR["magenta_purple"]}; font-size:var(--lc-text-body);">{sp_name} <span style="color:{COLOR["gold"]}; font-weight:600;">({team_abbr(team_label)})</span></div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:var(--lc-text-body);">{sp_name} <span style="color:{COLOR["gold"]}; font-weight:600;">({team_abbr(team_label)})</span></div>', unsafe_allow_html=True)
                 if sp_id:
                     _arsenal_bars(get_pitcher_statcast(sp_id))
                 else:
@@ -958,7 +952,7 @@ with content_col:
             with card("stack_pick"):
                 st.markdown(
                     f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Stack Pick</div>'
-                    f'<div style="font-size:var(--lc-text-subhead); font-weight:800; color:{COLOR["magenta_purple"]}; margin-bottom:var(--lc-space-lg);">{opposing_team}</div>'
+                    f'<div style="font-size:var(--lc-text-subhead); font-weight:800; color:{COLOR["text"]}; margin-bottom:var(--lc-space-lg);">{opposing_team}</div>'
                     f'<div style="display:flex; gap:16px;">'
                     f'<div><div style="font-family:\'JetBrains Mono\',monospace; font-size:var(--lc-text-stat); font-weight:700; color:{COLOR["stat_high"]};">{_score_display(avg_hr)}</div>'
                     f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["gold"]}; text-transform:uppercase;">Avg HR Score</div></div>'
@@ -974,7 +968,7 @@ with content_col:
     if view == "\U0001F3E0 Matchup":
         st.markdown(
             f'<div class="pf-card-title" style="margin-top:var(--lc-space-sm); color:{COLOR["gold"]};">Splits</div>'
-            f'<div class="pf-card-subtitle" style="color:{COLOR["magenta_purple"]};">Blue = favorable for batter, red = favorable for pitcher \u00b7 IP estimated from Statcast out events (no official box-score feed)</div>',
+            f'<div class="pf-card-subtitle" style="color:{COLOR["text_muted"]};">Blue = favorable for batter, red = favorable for pitcher \u00b7 IP estimated from Statcast out events (no official box-score feed)</div>',
             unsafe_allow_html=True,
         )
         splits_overall = get_pitcher_advanced_splits(pitcher_id) if pitcher_id else None
@@ -1109,7 +1103,7 @@ with content_col:
 
         table_rows = []
         with card("lineup"):
-            st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">{opposing_team} Lineup</div><div class="pf-card-subtitle" style="color:{COLOR["magenta_purple"]};">vs {selected_pitcher_name}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">{opposing_team} Lineup</div><div class="pf-card-subtitle" style="color:{COLOR["text_muted"]};">vs {selected_pitcher_name}</div>', unsafe_allow_html=True)
 
             if not ranked:
                 st.info(f"No lineup data available for {opposing_team} right now.")
@@ -1718,7 +1712,7 @@ with content_col:
                         # box scores — the source that actually carries RBI
                         # and runs, which Statcast pitch data doesn't) ----
                         st.markdown(
-                            f'<div class="pf-card-title" style="color:{COLOR["magenta_purple"]}; margin-top:var(--lc-space-lg);">Batter Trend</div>'
+                            f'<div class="pf-card-title" style="color:{COLOR["text"]}; margin-top:var(--lc-space-lg);">Batter Trend</div>'
                             f'<div class="pf-card-subtitle">Game-by-game Hits / HR / RBI / H+R+RBI from MLB official box scores.</div>',
                             unsafe_allow_html=True,
                         )
@@ -1970,7 +1964,7 @@ with content_col:
             with card("pitch_arsenal_tab"):
                 st.markdown(
                     f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Pitch Arsenal</div>'
-                    f'<div class="pf-card-subtitle" style="color:{COLOR["magenta_purple"]};">What each pitch actually does, not just how often it\'s thrown</div>',
+                    f'<div class="pf-card-subtitle" style="color:{COLOR["text_muted"]};">What each pitch actually does, not just how often it\'s thrown</div>',
                     unsafe_allow_html=True,
                 )
                 arsenal_detail = pitcher_data.get("Pitch Arsenal Detail", {}) if pitcher_data else {}
@@ -2067,7 +2061,7 @@ with content_col:
         s1, s2, s3 = st.columns(3)
         with s1:
             with card("matchup_summary"):
-                st.markdown(f'<div class="pf-card-title" style="color:{COLOR["magenta_purple"]};">Matchup Summary</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="pf-card-title" style="color:{COLOR["text"]};">Matchup Summary</div>', unsafe_allow_html=True)
                 top_arsenal = ", ".join(pitch_name(k) for k, v in sorted(arsenal.items(), key=lambda x: -x[1])[:2]) if arsenal else "an unclear arsenal"
                 top_hr_names = ", ".join(r["name"] for r in sorted(ranked, key=lambda x: _score_sort_key(x, "hr_score"))[:2]) if ranked else "the lineup"
                 st.markdown(
@@ -2080,7 +2074,7 @@ with content_col:
                 )
         with s2:
             with card("key_insights"):
-                st.markdown(f'<div class="pf-card-title" style="color:{COLOR["magenta_purple"]};">Key Insights</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="pf-card-title" style="color:{COLOR["text"]};">Key Insights</div>', unsafe_allow_html=True)
                 above_avg_hr = sum(1 for r in ranked if r["hr_score"] is not None and r["hr_score"] >= 60)
                 high_k_risk = sum(1 for r in ranked if r["k_score"] is not None and r["k_score"] >= 70)
                 st.markdown(f'<span style="color:{COLOR["gold"]};">\u2713 {above_avg_hr} batters with above-average HR Score</span>', unsafe_allow_html=True)
@@ -2089,7 +2083,7 @@ with content_col:
                     st.markdown(f'<span style="color:{COLOR["gold"]};">\u2713 {park["venue"]} park factor: {park["park_factor"]}</span>', unsafe_allow_html=True)
         with s3:
             with card("legend"):
-                st.markdown(f'<div class="pf-card-title" style="color:{COLOR["magenta_purple"]};">Legend</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="pf-card-title" style="color:{COLOR["text"]};">Legend</div>', unsafe_allow_html=True)
                 st.markdown(
                     edge_tag("Strong Edge", "strong") + " " + edge_tag("Good Pick", "good") + "<br><br>"
                     + edge_tag("Neutral", "neutral") + " " + edge_tag("Risk / Avoid", "risk"),
