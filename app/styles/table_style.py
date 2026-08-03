@@ -803,7 +803,7 @@ def tier_color_for(value, lo=None, hi=None) -> str:
     return hex_colour or COLOR["text_muted"]
 
 
-def wnba_logo_cell(id_by_name: dict):
+def wnba_logo_cell(id_by_name: dict, url_by_name: dict = None):
     """Formatter: WNBA team logo, keyed by ESPN team id.
 
     Separate from team_logo_cell because that one resolves against MLB's
@@ -813,17 +813,30 @@ def wnba_logo_cell(id_by_name: dict):
 
     `id_by_name` maps the team string in the column to its ESPN id, built
     by the caller from the rows it already has.
+
+    `url_by_name` maps the team string to ESPN'S OWN logo URL, as
+    captured by the nightly build. PREFERRED over the id when present,
+    because the id-built CDN path does not exist for every club — the
+    expansion teams 404, and a 404 renders as a broken-image "?" glyph
+    in the cell, which is worse than no logo at all. Order is therefore:
+    real URL -> id-built path -> plain text.
     """
     from engines.wnba_logos import logo_url_by_id
+
+    url_by_name = url_by_name or {}
 
     def _fmt(v):
         if not v or (isinstance(v, float) and pd.isna(v)):
             return "\u2014"
-        url = logo_url_by_id(id_by_name.get(str(v)))
+        url = url_by_name.get(str(v)) or logo_url_by_id(id_by_name.get(str(v)))
         if not url:
-            # No id resolved — text, never a broken image.
+            # Nothing resolved — text, never a broken image.
             return str(v)
+        # onerror is the last line of defence: if the URL itself 404s at
+        # render time, the image replaces ITSELF with the team name
+        # rather than leaving a broken glyph in the table.
         return (f'<img src="{url}" title="{v}" alt="{v}" '
+                f'onerror="this.replaceWith(document.createTextNode(this.alt))" '
                 f'style="height:19px; vertical-align:-4px;">')
     return _fmt
 
