@@ -65,7 +65,7 @@ rows, unrated = build_board(games, _stat, _win_opts[_win_label],
 with card("wdef"):
     st.markdown(
         f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Softest {_stat.lower()} matchups tonight</div>'
-        f'<div class="pf-card-subtitle" style="color:{COLOR["magenta_purple"]};">'
+        f'<div class="pf-card-subtitle" style="color:{COLOR["text_muted"]};">'
         f'Basketball has no starting-pitcher analog, so this is the honest equivalent: how much '
         f'{_stat.lower()} tonight\'s opponent actually ALLOWS to this player\'s position, measured against '
         f'the slate average \u00b7 Edge = the extra production that softness implies for his own '
