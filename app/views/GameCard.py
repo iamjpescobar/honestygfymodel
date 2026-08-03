@@ -200,7 +200,7 @@ with content_col:
     except Exception:
         game_time_str = "TBD"
     st.markdown(
-        f'<div style="font-size:var(--lc-text-small); color:{COLOR["gold"]}; margin-bottom:var(--lc-space-lg);">'
+        f'<div style="font-size:var(--lc-text-small); color:{COLOR["text_muted"]}; margin-bottom:var(--lc-space-lg);">'
         f'MLB &nbsp;\u203a&nbsp; {game["away"]} @ {game["home"]} &nbsp;\u203a&nbsp; Today, {game_time_str}</div>',
         unsafe_allow_html=True,
     )
@@ -259,18 +259,18 @@ with content_col:
 
     st.markdown(
         f'<div class="pf-card" style="display:flex; justify-content:space-around; text-align:center; padding:var(--lc-space-md) var(--lc-space-xl);">'
-        f'<div><div class="pf-metric-label" style="color:{COLOR["gold"]};">Condition</div>'
+        f'<div><div class="pf-metric-label" style="color:{COLOR["text_muted"]};">Condition</div>'
         f'<div style="margin:var(--lc-space-hair) var(--lc-space-none); height:30px;" class="lc-weather-icon">{weather_icon(_cond_display)}</div>'
-        f'<div style="font-size:var(--lc-text-body); color:{COLOR["gold"]}; font-weight:600;">{_cond_display}</div></div>'
-        f'<div><div class="pf-metric-label" style="color:{COLOR["gold"]};">Temp</div>'
+        f'<div style="font-size:var(--lc-text-body); color:{COLOR["text"]}; font-weight:600;">{_cond_display}</div></div>'
+        f'<div><div class="pf-metric-label" style="color:{COLOR["text_muted"]};">Temp</div>'
         f'<div style="margin:var(--lc-space-hair) var(--lc-space-none); height:30px;">{temp_icon(temp_display)}</div>'
-        f'<div style="font-size:var(--lc-text-body); color:{COLOR["gold"]}; font-weight:600;">{temp_display}\u00b0F</div></div>'
-        f'<div><div class="pf-metric-label" style="color:{COLOR["gold"]};">Wind</div>'
+        f'<div style="font-size:var(--lc-text-body); color:{COLOR["text"]}; font-weight:600;">{temp_display}\u00b0F</div></div>'
+        f'<div><div class="pf-metric-label" style="color:{COLOR["text_muted"]};">Wind</div>'
         f'<div style="margin:var(--lc-space-hair) var(--lc-space-none); height:30px;" class="lc-wind-icon">{wind_arrow(_wind_display)}</div>'
-        f'<div style="font-size:var(--lc-text-body); color:{COLOR["gold"]}; font-weight:600;">{_wind_display}</div></div>'
-        f'<div><div class="pf-metric-label" style="color:{COLOR["gold"]};">Park Factor</div>'
+        f'<div style="font-size:var(--lc-text-body); color:{COLOR["text"]}; font-weight:600;">{_wind_display}</div></div>'
+        f'<div><div class="pf-metric-label" style="color:{COLOR["text_muted"]};">Park Factor</div>'
         f'<div style="margin:var(--lc-space-hair) var(--lc-space-none); height:30px;">{park_icon(park_display)}</div>'
-        f'<div style="font-size:var(--lc-text-body); color:{COLOR["gold"]}; font-weight:600;">{park_display}</div></div>'
+        f'<div style="font-size:var(--lc-text-body); color:{COLOR["text"]}; font-weight:600;">{park_display}</div></div>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -352,7 +352,7 @@ with content_col:
                 f'<span style="font-family:\'JetBrains Mono\',monospace; '
                 f'font-size:var(--lc-text-caption); color:{COLOR["text_muted"]}; margin-left:var(--lc-space-sm);">'
                 f'{_hand}HP</span>' if _hand in ("R", "L") else "")
-            st.markdown(f'<span style="font-weight:700; color:{COLOR["gold"]};">'
+            st.markdown(f'<span style="font-weight:700; color:{COLOR["text"]};">'
                         f'{selected_pitcher_name}</span>{_hand_tag}',
                         unsafe_allow_html=True)
             _baa = pitcher_data.get("BA") if pitcher_data else None
@@ -413,7 +413,7 @@ with content_col:
                 _pitches = [p for p in _ws.get("pitches", []) if p["usage"] >= 3]
                 if _pitches:
                     st.markdown(
-                        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["gold"]}; '
+                        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["text_muted"]}; '
                         f'margin-top:var(--lc-space-md);">By pitch type</div>', unsafe_allow_html=True)
                     _rows = "".join(
                         f'<tr><td style="padding:var(--lc-space-hair) var(--lc-space-md) var(--lc-space-hair) var(--lc-space-none); font-size:var(--lc-text-caption); '
@@ -431,7 +431,7 @@ with content_col:
                 _bands = _ws.get("bands", [])
                 if _bands:
                     st.markdown(
-                        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["gold"]}; '
+                        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["text_muted"]}; '
                         f'margin-top:var(--lc-space-md);">By zone band</div>', unsafe_allow_html=True)
                     _cells = "".join(
                         f'<td style="text-align:center; padding:var(--lc-space-sm); border:1px solid '
@@ -450,7 +450,7 @@ with content_col:
                 _tto = _ws.get("tto", [])
                 if _tto:
                     st.markdown(
-                        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["gold"]}; '
+                        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["text_muted"]}; '
                         f'margin-top:var(--lc-space-md);">Times through the order</div>', unsafe_allow_html=True)
                     _cells = "".join(
                         f'<td style="text-align:center; padding:var(--lc-space-sm); border:1px solid '
@@ -488,7 +488,7 @@ with content_col:
                 _slots = _ws.get("slots", [])
                 if any(s.get("xslg") is not None for s in _slots):
                     st.markdown(
-                        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["gold"]}; '
+                        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["text_muted"]}; '
                         f'margin-top:var(--lc-space-md);">By batting-order slot</div>', unsafe_allow_html=True)
                     _cells = "".join(
                         f'<td style="text-align:center; padding:var(--lc-space-xs); border:1px solid '
@@ -601,7 +601,7 @@ with content_col:
             (hc, game.get("home_pitcher", "TBD"), game.get("home_pitcher_id"), game.get("home")),
         ):
             with colx:
-                st.markdown(f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:var(--lc-text-body);">{sp_name} <span style="color:{COLOR["gold"]}; font-weight:600;">({team_abbr(team_label)})</span></div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:var(--lc-text-body);">{sp_name} <span style="color:{COLOR["text_muted"]}; font-weight:600;">({team_abbr(team_label)})</span></div>', unsafe_allow_html=True)
                 if sp_id:
                     _arsenal_bars(get_pitcher_statcast(sp_id))
                 else:
@@ -615,7 +615,7 @@ with content_col:
         bp1, bp2 = st.columns(2)
         for colx, team_name in ((bp1, game.get("away")), (bp2, game.get("home"))):
             with colx:
-                st.markdown(f'<div style="font-weight:700; color:{COLOR["gold"]}; font-size:var(--lc-text-body);">{team_name}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="font-weight:700; color:{COLOR["text"]}; font-size:var(--lc-text-body);">{team_name}</div>', unsafe_allow_html=True)
                 staff = [p for p in (get_live_team_roster(team_name) or []) if p.get("is_pitcher")]
                 if not staff:
                     st.caption("Roster unavailable right now.")
@@ -656,7 +656,7 @@ with content_col:
                                     })
                                 bp_names = ", ".join(pitch_name(p) for p in bp_top3)
                                 st.markdown(
-                                    f'<div style="font-size:var(--lc-text-caption); font-weight:700; color:{COLOR["gold"]}; '
+                                    f'<div style="font-size:var(--lc-text-caption); font-weight:700; color:{COLOR["text_muted"]}; '
                                     f'margin-top:var(--lc-space-md);">{opp_label} vs this arsenal ({bp_names})</div>',
                                     unsafe_allow_html=True,
                                 )
@@ -955,9 +955,9 @@ with content_col:
                     f'<div style="font-size:var(--lc-text-subhead); font-weight:800; color:{COLOR["text"]}; margin-bottom:var(--lc-space-lg);">{opposing_team}</div>'
                     f'<div style="display:flex; gap:16px;">'
                     f'<div><div style="font-family:\'JetBrains Mono\',monospace; font-size:var(--lc-text-stat); font-weight:700; color:{COLOR["stat_high"]};">{_score_display(avg_hr)}</div>'
-                    f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["gold"]}; text-transform:uppercase;">Avg HR Score</div></div>'
+                    f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["text_muted"]}; text-transform:uppercase;">Avg HR Score</div></div>'
                     f'<div><div style="font-family:\'JetBrains Mono\',monospace; font-size:var(--lc-text-stat); font-weight:700; color:{COLOR["warn"]};">{_score_display(avg_hit)}</div>'
-                    f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["gold"]}; text-transform:uppercase;">Avg Hit Score</div></div>'
+                    f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["text_muted"]}; text-transform:uppercase;">Avg Hit Score</div></div>'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
@@ -1980,15 +1980,15 @@ with content_col:
                             f'<div style="margin-bottom:var(--lc-space-lg);">'
                             f'<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:var(--lc-space-xs);">'
                             f'<span style="font-weight:700; color:{c}; font-size:var(--lc-text-body-lg);">{pitch_name(pt)}</span>'
-                            f'<span style="font-family:\'JetBrains Mono\',monospace; color:{COLOR["gold"]}; font-size:var(--lc-text-small);">n={d["n"]}</span>'
+                            f'<span style="font-family:\'JetBrains Mono\',monospace; color:{COLOR["text_muted"]}; font-size:var(--lc-text-small);">n={d["n"]}</span>'
                             f'</div>'
                             f'<div style="height:8px; width:100%; background:{COLOR["surface_raised"]}; border-radius:var(--lc-radius-sm); margin-bottom:var(--lc-space-sm);">'
                             f'<div style="height:8px; width:{min(d["usage"],100)}%; background:{c}; border-radius:var(--lc-radius-sm);"></div>'
                             f'</div>'
                             f'<div style="display:flex; gap:18px; font-size:var(--lc-text-small); font-family:\'JetBrains Mono\',monospace;">'
-                            f'<span style="color:{COLOR["gold"]};">Usage <b style="color:{COLOR["text"]};">{d["usage"]:.1f}%</b></span>'
-                            f'<span style="color:{COLOR["gold"]};">Whiff <b style="color:{COLOR["stat_high"] if (d["whiff"] or 0) >= 25 else COLOR["text"]};">{whiff_display}</b></span>'
-                            f'<span style="color:{COLOR["gold"]};">Hard-Hit Allowed <b style="color:{COLOR["error"] if (d["hh_allowed"] or 0) >= 40 else COLOR["text"]};">{hh_display}</b></span>'
+                            f'<span style="color:{COLOR["text_muted"]};">Usage <b style="color:{COLOR["text"]};">{d["usage"]:.1f}%</b></span>'
+                            f'<span style="color:{COLOR["text_muted"]};">Whiff <b style="color:{COLOR["stat_high"] if (d["whiff"] or 0) >= 25 else COLOR["text"]};">{whiff_display}</b></span>'
+                            f'<span style="color:{COLOR["text_muted"]};">Hard-Hit Allowed <b style="color:{COLOR["error"] if (d["hh_allowed"] or 0) >= 40 else COLOR["text"]};">{hh_display}</b></span>'
                             f'</div>'
                             f'</div>',
                             unsafe_allow_html=True,
@@ -2065,7 +2065,7 @@ with content_col:
                 top_arsenal = ", ".join(pitch_name(k) for k, v in sorted(arsenal.items(), key=lambda x: -x[1])[:2]) if arsenal else "an unclear arsenal"
                 top_hr_names = ", ".join(r["name"] for r in sorted(ranked, key=lambda x: _score_sort_key(x, "hr_score"))[:2]) if ranked else "the lineup"
                 st.markdown(
-                    f'<span style="color:{COLOR["gold"]};">'
+                    f'<span style="color:{COLOR["text_muted"]};">'
                     f"{selected_pitcher_name} relies heavily on {top_arsenal}. "
                     f"{top_hr_names} rate highest on HR Score against this arsenal. "
                     f"These are this app's own composite scores, not a certified prediction."
@@ -2077,10 +2077,10 @@ with content_col:
                 st.markdown(f'<div class="pf-card-title" style="color:{COLOR["text"]};">Key Insights</div>', unsafe_allow_html=True)
                 above_avg_hr = sum(1 for r in ranked if r["hr_score"] is not None and r["hr_score"] >= 60)
                 high_k_risk = sum(1 for r in ranked if r["k_score"] is not None and r["k_score"] >= 70)
-                st.markdown(f'<span style="color:{COLOR["gold"]};">\u2713 {above_avg_hr} batters with above-average HR Score</span>', unsafe_allow_html=True)
-                st.markdown(f'<span style="color:{COLOR["gold"]};">\u2713 {high_k_risk} batters carrying elevated strikeout risk</span>', unsafe_allow_html=True)
+                st.markdown(f'<span style="color:{COLOR["text_muted"]};">\u2713 {above_avg_hr} batters with above-average HR Score</span>', unsafe_allow_html=True)
+                st.markdown(f'<span style="color:{COLOR["text_muted"]};">\u2713 {high_k_risk} batters carrying elevated strikeout risk</span>', unsafe_allow_html=True)
                 if park["verified"]:
-                    st.markdown(f'<span style="color:{COLOR["gold"]};">\u2713 {park["venue"]} park factor: {park["park_factor"]}</span>', unsafe_allow_html=True)
+                    st.markdown(f'<span style="color:{COLOR["text_muted"]};">\u2713 {park["venue"]} park factor: {park["park_factor"]}</span>', unsafe_allow_html=True)
         with s3:
             with card("legend"):
                 st.markdown(f'<div class="pf-card-title" style="color:{COLOR["text"]};">Legend</div>', unsafe_allow_html=True)
