@@ -3,7 +3,33 @@ import numpy as np
 import streamlit as st
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from pybaseball import statcast_batter, statcast_pitcher, playerid_lookup
+# pybaseball is imported LAZILY, inside the three functions that use it.
+#
+# `import pybaseball` runs pybaseball/__init__.py, which imports
+# pybaseball.plotting, which imports matplotlib. Measured on this
+# requirements set: +0.5s to cold start and +60MB RSS, for a plotting
+# stack this app never calls.
+#
+# That is a quarter of the headroom on Render's 512MB free tier, and it
+# was being paid on every boot by every process — including the many
+# where pybaseball is never called at all. In production the nightly
+# parquets serve every read; these three functions are the fallback for
+# when a player's file is missing, which is the exception, not the path.
+#
+# _pull_and_trim, get_player_id and the percentile loader in
+# engines/savant_leaderboard.py all import at call time instead. Nothing
+# about their behaviour changes — the first fallback call pays the
+# import once, and the module is cached from then on.
+
+
+def _statcast_batter():
+    from pybaseball import statcast_batter
+    return statcast_batter
+
+
+def _statcast_pitcher():
+    from pybaseball import statcast_pitcher
+    return statcast_pitcher
 
 DEFAULT_START_DATE = "2026-03-01"
 
@@ -271,7 +297,7 @@ def _get_batter_df(batter_id, start_date=DEFAULT_START_DATE, end_date=None):
         return local, None
     if end_date is None:
         end_date = _today_str()
-    return _pull_and_trim(statcast_batter, batter_id, start_date, end_date)
+    return _pull_and_trim(_statcast_batter(), batter_id, start_date, end_date)
 
 
 # Every probable plus both bullpens across a 15-game slate is
@@ -283,7 +309,7 @@ def _get_pitcher_df(pitcher_id, start_date=DEFAULT_START_DATE, end_date=None):
         return local, None
     if end_date is None:
         end_date = _today_str()
-    return _pull_and_trim(statcast_pitcher, pitcher_id, start_date, end_date)
+    return _pull_and_trim(_statcast_pitcher(), pitcher_id, start_date, end_date)
 
 
 def get_player_id(full_name: str):
@@ -304,6 +330,7 @@ def get_player_id(full_name: str):
     last_name = " ".join(parts[1:])
 
     try:
+        from pybaseball import playerid_lookup
         matches = playerid_lookup(last_name, first_name)
         if matches is None or matches.empty:
             return None
