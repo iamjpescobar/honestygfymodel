@@ -41,7 +41,7 @@ if meta.get("warning"):
 with card("daily13"):
     st.markdown(
         f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Most consistent hitters on today\'s slate</div>'
-        f'<div class="pf-card-subtitle" style="color:{COLOR["magenta_purple"]};">'
+        f'<div class="pf-card-subtitle" style="color:{COLOR["text_muted"]};">'
         f'The 13 best bets to get a hit TONIGHT \u2014 a slate read, not a season leaderboard \u00b7 '
         f'floor to qualify: \u2265 {MIN_HIT_RATE:.0f}% of games with a hit and \u2265 {MIN_GAMES} games \u00b7 '
         f'ranked by recent form ({W_FORM:.0%}), tonight\'s pitcher matchup ({W_MATCHUP:.0%}), and '
