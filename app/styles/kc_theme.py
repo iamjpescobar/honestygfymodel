@@ -311,7 +311,12 @@ def inject_kc_theme():
 
         /* ---------------- PAGE HEADER ---------------- */
         .lc-eyebrow {{
-            text-align: center;
+            /* Left-aligned, not centred. The nav row and the Sync button
+               that sit under this header are left-aligned, so a centred
+               title put two competing axes on the same screen — which is
+               what made the top of every page feel unsettled even after
+               the ordering bug was fixed. One axis, top to bottom. */
+            text-align: left;
             font-size:var(--lc-text-caption);
             font-weight: 700;
             color: {COLOR["accent"]};
@@ -320,7 +325,7 @@ def inject_kc_theme():
             margin-bottom:var(--lc-space-sm);
         }}
         .lc-title {{
-            text-align: center;
+            text-align: left;
             font-size:var(--lc-text-hero);
             font-weight: 800;
             letter-spacing: -0.01em;
@@ -328,7 +333,7 @@ def inject_kc_theme():
             margin-bottom:var(--lc-space-xs);
         }}
         .lc-subtitle {{
-            text-align: center;
+            text-align: left;
             font-size:var(--lc-text-body);
             font-weight: 500;
             color: {COLOR["text_muted"]};
@@ -338,7 +343,10 @@ def inject_kc_theme():
             width: 64px;
             height: 2px;
             background: {COLOR["accent"]};
-            margin: 14px auto 1.6rem auto;
+            /* was `auto` on both sides to centre it under a centred
+               title; the title is left-aligned now, so the rule anchors
+               to the same left edge instead of floating mid-page. */
+            margin: 14px auto 1.6rem 0;
         }}
 
         /* Section labels — replaces default h3/subheader look everywhere */
