@@ -38,7 +38,6 @@ import pandas as pd
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from pathlib import Path
-from pybaseball import statcast_batter_percentile_ranks
 
 
 _EASTERN = ZoneInfo("America/New_York")
@@ -80,6 +79,10 @@ def load_percentile_ranks(year: int = None):
         except Exception:
             pass  # fall through to the live pull rather than failing
     try:
+        # Lazy: see the note in engines/statcast_engine.py. Only the
+        # live fallback needs pybaseball, and the local parquet above
+        # serves every production read.
+        from pybaseball import statcast_batter_percentile_ranks
         df = statcast_batter_percentile_ranks(year)
         if df is None or df.empty:
             return pd.DataFrame(), "Baseball Savant returned no data for this year yet."
