@@ -12,7 +12,12 @@ from styles.table_style import style_stat_table, render_html_table, team_logo_ce
 from engines.pitchers_to_target import get_pitchers_to_target
 from engines.live_sync import sync_latest_button
 
-inject_kc_theme()
+# Theme injection lives in app.py, which renders once per script run
+# before this view is exec'd. It used to be called here as well, so the
+# same ~26KB of inline CSS was serialised, shipped and parsed TWICE on
+# every rerun of every page. Same cascade either way (the two layers
+# overlap only on properties resolved by specificity), so the second
+# copy bought nothing.
 
 st.markdown(
     f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:var(--lc-space-sm);">'

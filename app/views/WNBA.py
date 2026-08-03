@@ -16,7 +16,12 @@ from engines.live_sync import sync_latest_button
 from engines.trend_chart import window_hit_chips, render_trend_bars
 from engines.wnba_logos import logo_url_by_id
 
-inject_kc_theme()
+# Theme injection lives in app.py, which renders once per script run
+# before this view is exec'd. It used to be called here as well, so the
+# same ~26KB of inline CSS was serialised, shipped and parsed TWICE on
+# every rerun of every page. Same cascade either way (the two layers
+# overlap only on properties resolved by specificity), so the second
+# copy bought nothing.
 
 # WNBA orange, resolved once. Every accented element on this page reads
 # from here so the page carries ONE identity colour instead of the six

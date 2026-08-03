@@ -13,7 +13,12 @@ from styles.table_style import style_stat_table, render_html_table
 
 from engines.live_sync import sync_latest_button
 
-inject_kc_theme()
+# Theme injection lives in app.py, which renders once per script run
+# before this view is exec'd. It used to be called here as well, so the
+# same ~26KB of inline CSS was serialised, shipped and parsed TWICE on
+# every rerun of every page. Same cascade either way (the two layers
+# overlap only on properties resolved by specificity), so the second
+# copy bought nothing.
 sync_latest_button(key="sync_kbo", include_data_package=True)
 
 _KBO_GAMES = Path(__file__).resolve().parent.parent / "data" / "kbo" / "games.json"

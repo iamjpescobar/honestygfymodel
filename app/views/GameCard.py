@@ -45,7 +45,12 @@ from engines.matchup_grades_intl import render_matchup_grades_card
 # call, and omitting it here dropped the favicon app.py set, so the
 # tab icon vanished on this page only.
 st.set_page_config(page_title="Game Card", page_icon="⚾", layout="wide")
-inject_kc_theme()
+# Theme injection lives in app.py, which renders once per script run
+# before this view is exec'd. It used to be called here as well, so the
+# same ~26KB of inline CSS was serialised, shipped and parsed TWICE on
+# every rerun of every page. Same cascade either way (the two layers
+# overlap only on properties resolved by specificity), so the second
+# copy bought nothing.
 
 games, games_error = get_todays_games_with_weather()
 
@@ -546,9 +551,14 @@ def _compute_matchup_edges(_p_throws, game, opposing_team, pitcher_data, pitcher
     """Per-batter matchup grade against this arsenal."""
     if ranked and pitcher_id:
         _pitcher_team = game["away"] if opposing_team == game["home"] else game["home"]
-        with st.spinner("Computing matchup edges \u2014 the first lineup of the day also "
-                        "builds the slate-wide bullpen baseline (~30s once, cached all day; "
-                        "instant after)\u2026"):
+        # Wording no longer promises a ~30s wait. That was true when the
+        # first lineup of the day built the slate-wide pen baseline live —
+        # one roster call plus a splits derive and a hand lookup per arm,
+        # for all 30 teams. precompute.build_bullpen_profiles now ships
+        # that nightly and edge._pen_profile_json reads it locally, so the
+        # warm path is microseconds. Telling a subscriber to expect half a
+        # minute makes the app feel slower than it is.
+        with st.spinner("Computing matchup edges\u2026"):
             # Warm-up call only — the RESULT is discarded. Its job is to
             # build the slate-wide pen baseline behind the spinner above,
             # which takes ~30s on the first game of the day. The values
