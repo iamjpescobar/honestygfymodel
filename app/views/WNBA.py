@@ -7,7 +7,7 @@ import streamlit as st
 
 from styles.kc_theme import (inject_kc_theme, page_header, card_open, card_close,
                              badge, footer, COLOR, SPORT_ACCENTS)
-from styles.table_style import style_stat_table, render_html_table
+from styles.table_style import style_stat_table, render_html_table, tier_legend
 from engines.matchup_grades_intl import grade_wnba_matchup, render_matchup_grades_card
 
 # NOTE: no st.set_page_config here — app.py already sets it once.
@@ -887,6 +887,21 @@ def _render_slate():
                             # nothing but the scrolling artifact.
                             render_html_table(styled,
                                 key="wnba_636")
+                            # Every other gradient table on the site says
+                            # what its colours mean; this one didn't, and
+                            # it is the densest table we render. Five
+                            # filled tiers look authoritative whether or
+                            # not anyone knows what they stand for, so a
+                            # table without a key is a table that invites
+                            # a confident misread.
+                            tier_legend(
+                                favor_note="Higher is better \u2014 colour is the "
+                                           "player\u2019s grade in that column, "
+                                           "against the rest of this table.",
+                                caption="vs OPP is this player\u2019s real average in "
+                                        "this season\u2019s meetings with tonight\u2019s "
+                                        "opponent \u2014 check H2H GP before trusting it.",
+                            )
                             note = TAB_NOTES.get(label)
                             if note:
                                 st.caption(note)
