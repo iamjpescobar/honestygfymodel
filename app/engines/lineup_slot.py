@@ -127,7 +127,15 @@ def league_pa_per_game():
     """Measured PA per team-game from the nightly manifest, or None."""
     import json
     from pathlib import Path
-    path = Path(__file__).resolve().parents[1] / "data" / "manifest.json"
+    # data/statcast/, NOT data/ — see engines/savant_leaderboard.py.
+    # engines/daily_13.py reads the same manifest from the right place;
+    # this copy read one directory too high and always returned None, so
+    # the slot adjustment fell back to its assumed PA curve instead of
+    # the measured one.
+    base = Path(__file__).resolve().parents[1] / "data"
+    path = base / "statcast" / "manifest.json"
+    if not path.exists():
+        path = base / "manifest.json"   # pre-statcast/ data package
     if not path.exists():
         return None
     try:
