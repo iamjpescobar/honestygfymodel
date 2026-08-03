@@ -331,7 +331,15 @@ def _build_props(games, stat_label="Points", window="l10"):
                 base = {"player": name, "pos": p.get("pos") or "?",
                         "team": g.get(side, "?"), "opp": opp_name,
                         "team_id": g.get(f"{side}_id"),
-                        "opp_id": g.get(f"{_opp_side}_id")}
+                        "opp_id": g.get(f"{_opp_side}_id"),
+                        # ESPN's own logo URLs when the nightly captured
+                        # them. The id-built CDN path 404s for the
+                        # expansion clubs, which is what put broken-image
+                        # "?" marks in the Team/Opp columns. None here on
+                        # an older data file — the view falls back to the
+                        # id path, then to plain text.
+                        "team_logo": g.get(f"{side}_logo"),
+                        "opp_logo": g.get(f"{_opp_side}_logo")}
                 # AVAILABILITY FIRST. Checked before any season-total
                 # threshold, because those all pass for a player who
                 # stopped playing a month ago — see the note by
