@@ -113,6 +113,24 @@ else:
     print("PASS: daily_13 manifest -> data/statcast/manifest.json")
 
 # ----------------------------------------------------------------------
+# 2b) The calibration record — the other producer/consumer pair, and the
+# only artifact written a level ABOVE statcast/. Three places have to
+# agree or graded picks silently stop reaching the app:
+#   calibration_pipeline.RECORD_PATH  -> build_data/data/calibration.json
+#   the archive                       -> data/calibration.json
+#   engines.calibration               -> app/data/calibration.json
+# ----------------------------------------------------------------------
+cp_src = (ROOT / "calibration_pipeline.py").read_text()
+if 'RECORD_PATH = BUILD_DATA / "calibration.json"' not in cp_src or \
+        'BUILD_DATA = Path("build_data") / "data"' not in cp_src:
+    failures.append("calibration_pipeline no longer writes "
+                    "build_data/data/calibration.json")
+else:
+    import engines.calibration as cal          # noqa: E402
+    check("calibration published record", cal._published_path(),
+          "", "calibration.json")
+
+# ----------------------------------------------------------------------
 # 3) Nothing the pipeline builds should be unreachable.
 #
 # Catches the other direction: a new table added to precompute.py that no
