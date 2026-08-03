@@ -510,12 +510,22 @@ def _resolve_lineup_batters(confirmed_lineup, lineup_confirmed, opposing_team):
             )
             if _dropped:
                 st.warning(
-                    f"Removed from that lineup: {', '.join(_dropped)} \u2014 no longer on "
-                    f"{opposing_team}'s active roster (IL, optioned, or restricted). "
-                    f"They played on {last_game_date} but aren't available today, so "
-                    f"scoring them here would be a real-looking number on someone "
-                    f"who isn't in the building."
+                    f"Removed from that lineup: {', '.join(_dropped)} — no longer on "
+                    f"{opposing_team}'s active roster (traded, IL, optioned, or "
+                    f"restricted). They played on {last_game_date} but aren't "
+                    f"available today, so scoring them here would be a real-looking "
+                    f"number on someone who isn't in the building."
                 )
+            # The other half of a trade. A player acquired since that game
+            # was never in it, so he cannot appear in this fallback — the
+            # nine below are real, they are just the nine from BEFORE the
+            # deal. Without this line the omission is invisible: a card
+            # showing nine correct hitters looks complete whether or not a
+            # new bat is missing from it.
+            st.caption(
+                "This is the lineup from that date. Anyone acquired since then "
+                "won't appear until MLB posts today's confirmed order."
+            )
         else:
             # Fallback #2: no completed game in the last 14 days to pull a
             # real lineup from (e.g. after a long break) — show the full
