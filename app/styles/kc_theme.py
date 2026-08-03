@@ -927,20 +927,6 @@ def pitch_name(pitch_type: str) -> str:
     return PITCH_NAMES.get(pitch_type, pitch_type)
 
 
-def internal_nav(items: list, active: str, key: str) -> str:
-    """
-    Vertical icon-strip-style nav rendered as a themed radio group \u2014
-    used for switching between views WITHIN one page (Matchup / Top
-    Plays / etc.) so the selected game context never resets. This is
-    deliberately NOT Streamlit's page-level st.navigation \u2014 that would
-    force a full page reload and lose the selected game, exactly the
-    friction this redesign was meant to remove.
-    """
-    import streamlit as st
-    return st.radio(key, items, index=items.index(active) if active in items else 0,
-                     key=key, label_visibility="collapsed")
-
-
 def edge_tag(label: str, tier: str) -> str:
     """
     Colored edge/opportunity tag for the Top Plays table.
@@ -961,6 +947,63 @@ def edge_tag(label: str, tier: str) -> str:
         f'background:{bg}; color:{fg}; border:1px solid {border}; font-size:var(--lc-text-small); '
         f'font-weight:600; font-family:\'JetBrains Mono\',monospace;">{label}</span>'
     )
+
+
+def coming_soon_page(sport: str, emoji: str, blurb_tail: str, planned):
+    """The whole body of a not-yet-built sport page.
+
+    NFL.py, NBA.py and NHL.py were three 51-line files differing only by
+    a sport name, an emoji, and three title/description pairs — about 150
+    lines to say the same thing three times. Any copy edit to the shared
+    promise ("no placeholders, no estimates, no filler") had to be made
+    in three places or the pages quietly disagreed with each other, which
+    is a bad look on the one line that IS the site's pitch.
+
+    `planned` is a list of (title, description) pairs, rendered in order.
+
+    Each page draws its own SPORT_ACCENTS colour, so a visitor landing on
+    NHL sees the same identity system the live pages use rather than the
+    MLB house style on a page that isn't MLB.
+    """
+    import streamlit as st
+
+    accent = SPORT_ACCENTS.get(sport) or COLOR["accent"]
+
+    page_header(f"{sport} Analytics",
+                "In development \u2014 built on real data or not at all",
+                eyebrow="COMING SOON")
+
+    st.markdown(card_open(f"{emoji} {sport} is on the roadmap"), unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="color:{COLOR["text_muted"]}; font-size:var(--lc-text-body-lg); '
+        f'line-height:1.7;">'
+        f'{sport} tools are being built on the same standard as the MLB engine: '
+        f'every number traced to a real, verifiable source \u2014 no placeholders, '
+        f'no estimates, no filler. {blurb_tail}'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(card_close(), unsafe_allow_html=True)
+
+    st.markdown(card_open("What's planned"), unsafe_allow_html=True)
+    for title, desc in planned:
+        st.markdown(
+            f'<div style="margin-bottom:var(--lc-space-lg);">'
+            f'<div style="font-weight:700; color:{COLOR["text"]}; '
+            f'font-size:var(--lc-text-body);">{title}</div>'
+            f'<div style="color:{COLOR["text_muted"]}; '
+            f'font-size:var(--lc-text-small);">{desc}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+    st.markdown(card_close(), unsafe_allow_html=True)
+
+    st.markdown(
+        badge("MLB \u2014 live now", "good")
+        + badge(f'{sport} \u2014 in development', "neutral"),
+        unsafe_allow_html=True,
+    )
+    footer()
 
 
 def footer():
