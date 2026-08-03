@@ -92,7 +92,7 @@ with card("without"):
     st.markdown(
         f'<div class="pf-card-title" style="color:{COLOR["gold"]};">'
         f'{meta["team"]} without {meta["player"]}</div>'
-        f'<div class="pf-card-subtitle" style="color:{COLOR["magenta_purple"]};">'
+        f'<div class="pf-card-subtitle" style="color:{COLOR["text_muted"]};">'
         f'Real per-game box scores split by whether he played \u00b7 '
         f'{meta["games_with"]} games with him, {meta["games_without"]} without '
         f'(of {meta["team_games"]} team games) \u00b7 minimum {MIN_WITHOUT} games missed to show '
