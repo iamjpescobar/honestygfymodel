@@ -3,7 +3,8 @@ from pathlib import Path
 
 import streamlit as st
 
-from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, badge, footer, COLOR
+from styles.kc_theme import (inject_kc_theme, page_header, card_open, card_close,
+                             badge, footer, COLOR, SPORT_ACCENTS)
 from engines.matchup_grades_intl import grade_npb_matchup, render_matchup_grades_card
 
 # NOTE: no st.set_page_config here — app.py already sets it once.
@@ -262,6 +263,11 @@ else:
                       "engines/matchup_grades_intl.py. Not calibrated probabilities."),
             source_line="Source: npb.jp official leaderboards \u00b7 starter or team form.",
             key=f'npb_{gi}_{g.get("away","")}_{g.get("home","")}',
+            # Card carries this page's own identity colour, the same way
+            # the WNBA page does. Grade badge colours are grade-driven,
+            # so they are identical everywhere — only the title follows
+            # the sport.
+            accent=SPORT_ACCENTS.get("NPB"),
         )
 
 footer()
