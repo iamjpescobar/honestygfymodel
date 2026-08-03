@@ -731,7 +731,7 @@ SPORT_ACCENTS = {
 
 
 def page_header(title: str, subtitle: str = "", eyebrow: str = "LOS CAPPERS",
-                accent: str = None):
+                accent: str = None, align: str = "center"):
     """
     Renders the shared page header — eyebrow label, title, subtitle, accent
     rule. Use this on every page instead of st.title()/emoji headers so the
@@ -746,14 +746,26 @@ def page_header(title: str, subtitle: str = "", eyebrow: str = "LOS CAPPERS",
     if accent is None:
         accent = SPORT_ACCENTS.get((title.split() or [""])[0])
 
-    eb_style = f' style="color:{accent};"' if accent else ""
-    ti_style = f' style="color:{accent};"' if accent else ""
-    rule_style = f' style="background:{accent};"' if accent else ""
+    # align: "center" (default, unchanged for every existing page) or
+    # "left". Left-aligning puts the title on the SAME vertical axis as
+    # the nav and content below it; centred titles over left-aligned
+    # controls are what makes a page top feel unsettled. Opt-in per page
+    # rather than a global flip, so adopting it anywhere is a one-word
+    # change and adopting it nowhere costs nothing.
+    _left = align == "left"
+    _al = "text-align:left;" if _left else ""
+    _rule_al = "margin-left:0;margin-right:auto;" if _left else ""
+
+    eb_style = f' style="{_al}color:{accent};"' if accent else (f' style="{_al}"' if _left else "")
+    ti_style = f' style="{_al}color:{accent};"' if accent else (f' style="{_al}"' if _left else "")
+    sub_style = f' style="{_al}"' if _left else ""
+    rule_style = (f' style="{_rule_al}background:{accent};"' if accent
+                  else (f' style="{_rule_al}"' if _left else ""))
 
     html = (f'<div class="lc-eyebrow"{eb_style}>{eyebrow}</div>'
             f'<h1 class="lc-title"{ti_style}>{title}</h1>')
     if subtitle:
-        html += f'<div class="lc-subtitle">{subtitle}</div>'
+        html += f'<div class="lc-subtitle"{sub_style}>{subtitle}</div>'
     html += f'<div class="lc-rule"{rule_style}></div>'
     st.markdown(html, unsafe_allow_html=True)
 
