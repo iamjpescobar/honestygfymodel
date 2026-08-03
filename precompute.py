@@ -1013,24 +1013,26 @@ def fetch_savant_percentiles() -> bool:
         return False
 
 
-def fetch_fangraphs() -> bool:
-    """Fetches the real FanGraphs batting leaderboard (same call the app
-    makes) from GitHub's servers — which FanGraphs does not block, unlike
-    cloud hosts like Render — and ships it with the data package so the
-    app can read it locally in production. Returns True on success."""
-    try:
-        from pybaseball import batting_stats
-        fg = batting_stats(2026, qual=10)
-        if fg is None or fg.empty:
-            print("  FanGraphs returned no data — app will use its live/Statcast fallback.")
-            return False
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
-        fg.to_parquet(DATA_DIR / "fangraphs_batting.parquet", index=False)
-        print(f"  FanGraphs leaderboard saved: {len(fg):,} qualified batters")
-        return True
-    except Exception as exc:
-        print(f"  FanGraphs fetch failed ({exc}) — app will use its live/Statcast fallback.")
-        return False
+# fetch_fangraphs() was REMOVED.
+#
+# It fetched the FanGraphs batting leaderboard every night and wrote
+# data/statcast/fangraphs_batting.parquet — which NO app module ever read.
+# Verified across the whole repo: the only references to that filename
+# were the lines that produced it.
+#
+# It is a leftover from before the scoring migration. engines/top_plays.py
+# documents that move in its own header: scores are built on Baseball
+# Savant percentiles matched by MLBAM player_id, specifically because
+# FanGraphs blocks cloud hosts and Savant is MLB's first-party data. Once
+# that landed nothing consumed the leaderboard, but the nightly fetch kept
+# running — a network round trip, a parquet write, and archive weight
+# Render downloads and never opens.
+#
+# If a future feature wants FanGraphs data, restore this from git history
+# rather than rewriting it, and wire the consumer in the SAME change so it
+# cannot drift back into being built-but-unread. tests/test_data_paths.py
+# prints a NOTE for any nightly artifact no app module references — that
+# is how this was found.
 
 
 def main():
@@ -1069,9 +1071,6 @@ def main():
     print("Building league HR rates by pitch type...")
     pt_ok = build_pitch_type_hr(season_df)
 
-    print("Fetching FanGraphs leaderboard...")
-    fangraphs_ok = fetch_fangraphs()
-
     print("Fetching Savant percentile ranks (off the app's cold start)...")
     savant_ok = fetch_savant_percentiles()
 
@@ -1083,7 +1082,6 @@ def main():
         "n_batters": counts["batters"],
         "n_pitchers": counts["pitchers"],
         "source": "Baseball Savant via pybaseball bulk statcast()",
-        "fangraphs_included": fangraphs_ok,
         "xhr_table_included": xhr_ok,
         "hr_metrics_included": hrm_ok,
         "park_hr_factors_included": park_ok,
