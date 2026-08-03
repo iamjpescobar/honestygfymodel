@@ -50,7 +50,22 @@ assert "estimate, not a forecast with a track record" in w, (
 print("PASS: projection displayed with deltas and an honest caveat")
 
 # It must sit alongside the real averages, not replace them.
-assert 'pc1.metric(f"{_fw_label} PPG"' in w
-i_form, i_proj = w.index('pc1.metric(f"{_fw_label} PPG"'), w.index("PROJECTED TONIGHT")
+#
+# Anchored on the form-average ROW DEFINITION rather than on the
+# st.metric call it used to be: the tiles were rebuilt with a real
+# hierarchy (ranked stat leading, league percentiles on the components),
+# so the widget changed while the requirement — her measured averages
+# read first, the projection second — did not. Testing the requirement
+# instead of the markup is the point.
+assert '("PPG", wnba_pick.get("form_ppg")' in w, (
+    "the real recent averages must still be on the tile")
+i_form = w.index('("PPG", wnba_pick.get("form_ppg")')
+i_proj = w.index("PROJECTED TONIGHT")
 assert i_form < i_proj, "recent form should read first, projection second"
 print("PASS: recent averages shown first, projection beside them")
+
+# The neutral-matchup case must not silently reprint the same numbers.
+assert "neutral matchup" in w, (
+    "a x1.00 factor makes the projection identical to the form averages; "
+    "saying so is the difference between 'neutral' and a broken render")
+print("PASS: a neutral matchup is stated, not rendered as duplicate tiles")
