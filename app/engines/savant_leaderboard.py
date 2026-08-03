@@ -123,16 +123,47 @@ def get_percentile(df: pd.DataFrame, player_id, column: str):
 # Returns None (never 0) when the table is absent or the batter didn't
 # clear the sample floor. The table only appears after a nightly run
 # that includes it, so hr_score MUST keep working without it.
-_HR_METRICS_PATH = Path(__file__).resolve().parents[1] / "data" / "hr_metrics.parquet"
+# data/statcast/, NOT data/.
+#
+# This was `data/hr_metrics.parquet` and silently never resolved.
+# precompute.py writes every table except calibration.json into
+# build_data/data/statcast/, and fetch_data.py extracts the archive root
+# at app/ — so the file lands at app/data/statcast/hr_metrics.parquet.
+# The reader looked one directory too high, found nothing, and returned
+# None, which hr_score() is explicitly built to survive. So there was no
+# error and no blank column: HR Score just quietly fell back to the old
+# Savant-only path on every board that uses it (Top Plays, HR Edge,
+# Player of the Day), with the launch, intent and xHR-gap axes dark.
+#
+# Every test that touches this monkeypatches the constant to a tmp dir,
+# which is why the builder and the reader were both covered and the
+# wiring between them was not. tests/test_data_paths.py now pins the
+# production path against what precompute actually writes.
+_HR_METRICS_PATH = (Path(__file__).resolve().parents[1]
+                    / "data" / "statcast" / "hr_metrics.parquet")
+
+
+def _with_legacy_fallback(path: Path) -> Path:
+    """`path`, or the same filename one directory up if that's what exists.
+
+    Keeps a deploy whose data package predates the statcast/ layout
+    working instead of silently losing the table again. Costs one stat
+    call, and only when the expected file is missing.
+    """
+    if path.exists():
+        return path
+    legacy = path.parent.parent / path.name
+    return legacy if legacy.exists() else path
 
 
 @st.cache_data(ttl=21600, max_entries=1, show_spinner=False)
 def get_hr_metrics():
     """DataFrame indexed by batter id, or None when unavailable."""
-    if not _HR_METRICS_PATH.exists():
+    path = _with_legacy_fallback(_HR_METRICS_PATH)
+    if not path.exists():
         return None
     try:
-        df = pd.read_parquet(_HR_METRICS_PATH)
+        df = pd.read_parquet(path)
         return df.set_index("batter")
     except Exception:
         return None
