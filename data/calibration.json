@@ -1416,5 +1416,53 @@
       "graded": false,
       "source": "ci"
     }
+  },
+  "k_board": {
+    "2026-08-02": {
+      "picks": [
+        {
+          "id": 694819,
+          "name": "Jacob Misiorowski (RHP)",
+          "team": "MIL",
+          "stat": "strikeOuts",
+          "line": 10.2,
+          "result": null
+        },
+        {
+          "id": 554430,
+          "name": "Zack Wheeler (RHP)",
+          "team": "PHI",
+          "stat": "strikeOuts",
+          "line": 7.9,
+          "result": null
+        },
+        {
+          "id": 695505,
+          "name": "Chase Burns (RHP)",
+          "team": "CIN",
+          "stat": "strikeOuts",
+          "line": 6.7,
+          "result": null
+        },
+        {
+          "id": 671737,
+          "name": "Taj Bradley (RHP)",
+          "team": "MIN",
+          "stat": "strikeOuts",
+          "line": 6.7,
+          "result": null
+        },
+        {
+          "id": 668909,
+          "name": "Gavin Williams (RHP)",
+          "team": "CLE",
+          "stat": "strikeOuts",
+          "line": 6.5,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    }
   }
 }
