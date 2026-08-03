@@ -95,7 +95,7 @@ def career_bvp(batter_id, pitcher_id):
 def render_bvp_card(batter_id, batter_name, pitcher_id, pitcher_name) -> None:
     d = career_bvp(batter_id, pitcher_id)
     st.markdown(
-        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["gold"]}; '
+        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["text"]}; '
         f'margin-top:var(--lc-space-lg);">{batter_name} vs {pitcher_name}</div>',
         unsafe_allow_html=True,
     )
@@ -158,7 +158,7 @@ def render_zone_map(batter_id, batter_name, window_label: str = "L10") -> None:
         df = apply_window(df, w, "games")
 
     st.markdown(
-        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["gold"]}; margin-top:var(--lc-space-lg);">'
+        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["text"]}; margin-top:var(--lc-space-lg);">'
         f'Zone map \u00b7 {window_label} \u00b7 xSLG on contact (catcher\'s view)</div>',
         unsafe_allow_html=True,
     )
@@ -330,7 +330,7 @@ def render_spray_chart(batter_id, batter_name, window_label: str = "L10",
         return
 
     st.markdown(
-        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["gold"]}; margin-top:var(--lc-space-lg);">'
+        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["text"]}; margin-top:var(--lc-space-lg);">'
         f'Spray chart \u00b7 {window_label} \u00b7 {len(bb)} batted balls</div>',
         unsafe_allow_html=True,
     )
