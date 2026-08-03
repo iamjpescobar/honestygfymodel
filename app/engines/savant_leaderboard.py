@@ -35,10 +35,13 @@ score. See engines/top_plays.k_score.
 """
 import streamlit as st
 import pandas as pd
-from datetime import date
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from pybaseball import statcast_batter_percentile_ranks
 
+
+_EASTERN = ZoneInfo("America/New_York")
 
 _PCT_PATH = Path(__file__).resolve().parents[1] / "data" / "statcast" / "savant_percentiles.parquet"
 
@@ -63,7 +66,10 @@ def load_percentile_ranks(year: int = None):
     latency — it can't become the reason the scores go missing.
     """
     if year is None:
-        year = date.today().year
+        # Eastern, not the server's UTC: on Dec 31 after 7pm ET the
+        # server is already in January and would request a season that
+        # has no leaderboard yet, blanking every score on the board.
+        year = datetime.now(_EASTERN).year
     if _PCT_PATH.exists():
         try:
             df = pd.read_parquet(_PCT_PATH)

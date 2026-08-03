@@ -1,14 +1,27 @@
 import pandas as pd
 import numpy as np
 import streamlit as st
-from datetime import date
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from pybaseball import statcast_batter, statcast_pitcher, playerid_lookup
 
 DEFAULT_START_DATE = "2026-03-01"
 
 
+_EASTERN = ZoneInfo("America/New_York")
+
+
 def _today_str():
-    return date.today().strftime("%Y-%m-%d")
+    """Today in EASTERN time, not the server's.
+
+    Render runs in UTC, so date.today() rolls over at 8pm ET — every
+    evening, this returned TOMORROW. It's used as the end_date of a live
+    Statcast pull, where a day in the future is merely wasteful rather
+    than wrong, but the rest of the app (calibration, trends, bvp,
+    slate dates) already anchors to America/New_York and this was the
+    straggler. One clock across the app is worth more than the bug it
+    happens to avoid today."""
+    return datetime.now(_EASTERN).strftime("%Y-%m-%d")
 
 
 # ============================================================
