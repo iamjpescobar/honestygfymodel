@@ -126,17 +126,3 @@ def compute_slam_window(batter_id, window: str, unit: str) -> dict:
     """
     profile = get_batter_profile_windowed(batter_id, window=window, unit=unit)
     return slam_from_profile(profile)
-
-
-def compute_slam_all_windows(batter_id) -> dict:
-    """
-    Real SLAM across all three windows at once — {"l25_pa": {...},
-    "l25_bbe": {...}, "l25_games": {...}}, each with its own
-    slam_score/xSLG/xwOBA/sample size. Callers should show all three,
-    not just one, so a hot recent streak isn't hidden by a wider
-    window that's still catching up.
-    """
-    return {
-        key: compute_slam_window(batter_id, window, unit)
-        for key, label, window, unit in SLAM_WINDOWS
-    }
