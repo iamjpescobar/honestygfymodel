@@ -3,7 +3,8 @@ from pathlib import Path
 
 import streamlit as st
 
-from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close, badge, footer, COLOR
+from styles.kc_theme import (inject_kc_theme, page_header, card_open, card_close,
+                             badge, footer, COLOR, SPORT_ACCENTS)
 from engines.matchup_grades_intl import grade_kbo_matchup, render_matchup_grades_card
 from engines.kbo_k_projection import project_kbo_slate
 from styles.table_style import style_stat_table, render_html_table
@@ -485,6 +486,11 @@ else:
                       "form rather than starter vs. starter. Not calibrated probabilities."),
             source_line="Source: official KBO leaderboards \u00b7 team form.",
             key=f'kbo_{gi}_{g.get("away","")}_{g.get("home","")}',
+            # Card carries this page's own identity colour, the same way
+            # the WNBA page does. Grade badge colours are grade-driven,
+            # so they are identical everywhere — only the title follows
+            # the sport.
+            accent=SPORT_ACCENTS.get("KBO"),
         )
 
 footer()
