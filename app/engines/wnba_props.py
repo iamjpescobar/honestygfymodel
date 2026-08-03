@@ -34,8 +34,11 @@ history. Below any of those a player is listed unrated with the
 reason rather than ranked on noise.
 """
 
-import streamlit as st
+import json
 from datetime import datetime, timezone
+from pathlib import Path
+
+import streamlit as st
 
 MIN_GP = 8
 MIN_MPG = 15.0
@@ -500,3 +503,85 @@ def likely_starters(players, today=None):
         return set()
     ranked.sort(reverse=True)
     return {pid for _m, pid in ranked[:STARTERS_PER_TEAM]}
+
+
+# ---------------------------------------------------------------
+# LEAGUE PERCENTILES
+#
+# The Player of the Day tile shows PPG / RPG / APG with no sense of
+# scale — 11.8 rebounds could be elite or ordinary and the tile gives
+# you nothing to judge by. These percentiles supply that scale, and
+# they are COMPUTED FROM REAL DATA, not estimated: every qualified
+# player's own season averages out of the same players.json the nightly
+# build writes from ESPN box scores.
+#
+# Deliberately NOT a made-up curve or a hard-coded league average. If
+# the file is missing, or too few players qualify to make a percentile
+# meaningful, this returns None and the tile shows no percentile at all
+# — the same rule the rest of the app follows.
+# ---------------------------------------------------------------
+
+_WNBA_PLAYERS = Path(__file__).resolve().parent.parent / "data" / "wnba" / "players.json"
+
+# A percentile against 12 part-time players is noise dressed as a
+# statistic. 20 qualified players is still thin, but it's the point
+# below which the number stops meaning anything at all.
+_PCT_MIN_QUALIFIED = 20
+# Season-long percentile, so the qualifier is season-long too: 5 games
+# is the same floor Player of the Day already uses to crown anyone.
+_PCT_MIN_GP = 5
+
+
+@st.cache_data(ttl=1800, max_entries=2, show_spinner=False)
+def league_percentiles():
+    """{stat_key: sorted list of every qualified player's value}.
+
+    Returns {} on any failure. Callers must treat an empty dict as "no
+    percentile available" rather than falling back to a guess.
+    """
+    try:
+        payload = json.loads(_WNBA_PLAYERS.read_text())
+    except Exception:
+        return {}
+    players = payload.get("players")
+    if isinstance(players, dict):
+        players = list(players.values())
+    if not players:
+        return {}
+    out = {}
+    for stat in ("ppg", "rpg", "apg", "pra", "tpm"):
+        vals = sorted(
+            float(p[stat]) for p in players
+            if isinstance(p, dict)
+            and (p.get("gp") or 0) >= _PCT_MIN_GP
+            and isinstance(p.get(stat), (int, float))
+        )
+        if len(vals) >= _PCT_MIN_QUALIFIED:
+            out[stat] = vals
+    return out
+
+
+def percentile_of(stat: str, value, dist=None):
+    """Real league percentile (1-99) for `value` in `stat`, or None.
+
+    None whenever the value is missing, the stat has no usable
+    distribution, or the sample is too thin — never a fabricated 50th.
+    """
+    if value is None:
+        return None
+    dist = dist if dist is not None else league_percentiles()
+    vals = (dist or {}).get(stat)
+    # The qualifier is enforced HERE as well as in league_percentiles,
+    # not only there: a caller passing its own distribution would
+    # otherwise get a confident "99th percentile" off three players.
+    if not vals or len(vals) < _PCT_MIN_QUALIFIED:
+        return None
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return None
+    below = sum(1 for x in vals if x < v)
+    ties = sum(1 for x in vals if x == v)
+    # Midpoint rule for ties, so identical averages get identical ranks.
+    pct = (below + ties / 2) / len(vals) * 100
+    return max(1, min(99, int(round(pct))))
