@@ -619,7 +619,7 @@ def _render_slate():
             )
             if _show_props:
                 st.markdown(
-                    f'<div class="pf-card-subtitle" style="color:{COLOR["magenta_purple"]}; margin-bottom:var(--lc-space-xs);">'
+                    f'<div class="pf-card-subtitle" style="color:{COLOR["text_muted"]}; margin-bottom:var(--lc-space-xs);">'
                     f'Real box-score data \u00b7 Season / L5 / L10 = averages over all, last 5, and last 10 '
                     f'games played \u00b7 vs OPP = this player\'s real averages in this season\'s meetings '
                     f'with tonight\'s opponent (H2H GP = how many) \u00b7 small samples are shown as small '
