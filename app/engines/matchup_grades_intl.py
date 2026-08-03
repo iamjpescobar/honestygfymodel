@@ -409,15 +409,27 @@ def grade_wnba_matchup(g, window: str = "season"):
 _GRADE_COLORS = {"A": "accent", "B": "accent", "C": "warn", "C-": "warn"}
 
 
-def render_matchup_grades_card(grades, subtitle, source_line, key, accent=None):
+def render_matchup_grades_card(grades, subtitle, source_line, key, accent=None,
+                               title="Matchup Grades"):
     """`key` must be unique per call on a page that renders more than
     one of these (e.g. one per game in a daily slate) — Streamlit's
     container needs a unique key or it raises StreamlitDuplicateElementKey.
 
-    accent: hex colour for the card title and section labels. Defaults to
-    the house gold so the KBO and NPB pages that already call this are
-    unchanged; the WNBA page passes its own so the card reads as part of
-    that page instead of introducing two more colours to it.
+    accent: hex colour for the card title. Defaults to the house gold, so
+    a caller that passes nothing (MLB) is unchanged; the WNBA, KBO and
+    NPB pages pass their own so the card reads as part of the page it
+    sits on.
+
+    title: card heading. MLB appends its grade window ("Matchup Grades ·
+    L15"), the international pages use the default.
+
+    NOTE — this renderer is shared by all four sports despite living in
+    the _intl module. MLB had its own copy of this block inline in
+    GameCard.py, which is why the two drifted: the grade badge, the
+    dropped "Lean:" prefix and the retired checkmarks landed on the
+    international pages and never reached the one page most people
+    open. One renderer means a grade looks the same everywhere, which
+    is the entire point of a grade.
     """
     import streamlit as st
     from styles.kc_theme import card, COLOR
@@ -425,7 +437,7 @@ def render_matchup_grades_card(grades, subtitle, source_line, key, accent=None):
     title_color = accent or COLOR["gold"]
     with card(f"matchup_grades_card_{key}"):
         st.markdown(
-            f'<div class="pf-card-title" style="color:{title_color};">Matchup Grades</div>'
+            f'<div class="pf-card-title" style="color:{title_color};">{title}</div>'
             f'<div class="pf-card-subtitle">{subtitle}</div>',
             unsafe_allow_html=True,
         )
@@ -486,4 +498,5 @@ def render_matchup_grades_card(grades, subtitle, source_line, key, accent=None):
                         f'padding-left:2px;">{s}</div>',
                         unsafe_allow_html=True,
                     )
-        st.caption(source_line)
+        if source_line:
+            st.caption(source_line)
