@@ -258,17 +258,6 @@ def compute_xhr(df: pd.DataFrame):
     return round(xhr, 1), actual
 
 
-def get_data_timestamp():
-    """Returns the UTC ISO timestamp of the precomputed data fetch, or
-    None if running on live pulls only. Show this in the UI so users can
-    see exactly how fresh the numbers are."""
-    try:
-        manifest = _json.loads((_DATA_DIR / "manifest.json").read_text())
-        return manifest.get("generated_at_utc")
-    except Exception:
-        return None
-
-
 # Sized for a FULL SLATE, not a single game card. The Daily 13
 # reads every hitter on the slate (~400 players), so a 10-entry
 # cache had a 100% miss rate: every call re-read a parquet from
@@ -327,27 +316,6 @@ def get_player_id(full_name: str):
 # Kept as an alias — existing code calls get_pitcher_id(), and the lookup
 # itself isn't pitcher-specific.
 get_pitcher_id = get_player_id
-
-
-def build_pitch_arsenal(pitcher_data: dict) -> pd.DataFrame:
-    """
-    Converts the 'Pitch Arsenal' usage dict inside a pitcher profile
-    (as returned by get_pitcher_statcast) into a clean DataFrame for display.
-    """
-    arsenal = {}
-    if isinstance(pitcher_data, dict):
-        arsenal = pitcher_data.get("Pitch Arsenal", {}) or {}
-
-    if not arsenal:
-        return pd.DataFrame(columns=["Pitch Type", "Usage %"])
-
-    from styles.kc_theme import pitch_name
-    df = pd.DataFrame(
-        [(pitch_name(k), v) for k, v in arsenal.items()],
-        columns=["Pitch Type", "Usage %"]
-    ).sort_values("Usage %", ascending=False).reset_index(drop=True)
-
-    return df
 
 
 # ============================================================
