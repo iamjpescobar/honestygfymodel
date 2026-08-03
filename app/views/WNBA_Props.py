@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from styles.kc_theme import inject_kc_theme, card, footer, COLOR
+from styles.kc_theme import SPORT_ACCENTS, inject_kc_theme, card, footer, COLOR
 from styles.table_style import style_stat_table, render_html_table, score_bar, tier_legend, wnba_logo_cell
 from engines.wnba_props import (
     build_props, STATS, MIN_GP, MIN_MPG, MIN_LOG,
@@ -68,7 +68,7 @@ rows, unrated = build_props(games, _stat, _win_opts[_win_label],
 
 with card("wprops"):
     st.markdown(
-        f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Best {_stat.lower()} props tonight</div>'
+        f'<div class="pf-card-title" style="color:{SPORT_ACCENTS["WNBA"]};">Best {_stat.lower()} props tonight</div>'
         f'<div class="pf-card-subtitle" style="color:{COLOR["text_muted"]};">'
         f'Ranked by consistency ({W_CONSISTENCY:.0%}), form ({W_FORM:.0%}), positional matchup '
         f'({W_MATCHUP:.0%}), and game pace ({W_PACE:.0%}) \u00b7 the Line is each player\'s own recent '
