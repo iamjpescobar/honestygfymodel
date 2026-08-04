@@ -200,7 +200,12 @@ if games:
         form_window=_fw_opts.get(_fw_label, "l5")
     )
     if wnba_pick:
-        st.markdown(card_open(f'\u2b50 Player of the Day \u2014 {wnba_pick["name"]} ({wnba_pick["team"]})'),
+        # NO STAR. It was the only emoji on any board on the site, and
+        # it sat on a real model output — a ranked recent-form pick with
+        # published percentiles behind it — making it read like a social
+        # post rather than a result. MLB's Player of the Day carries no
+        # decoration; this one now matches.
+        st.markdown(card_open(f'Player of the Day \u2014 {wnba_pick["name"]} ({wnba_pick["team"]})'),
                     unsafe_allow_html=True)
         st.caption("This app's best real recent-form pick, by the numbers \u2014 not a prediction, not a lock.")
         potd_badges = (
@@ -238,8 +243,17 @@ if games:
             f'<div style="margin-top:var(--lc-space-md);">'
             f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:var(--lc-text-tiny); '
             f'letter-spacing:0.16em; color:{_ACCENT}; font-weight:700;">{_fw_label} PRA</div>'
+            # THE VALUE IS NOT THE PAGE ACCENT.
+            #
+            # kc_theme's own rule is "labels are text_muted, values are
+            # text, headings are gold" — colour on a number has to mean
+            # something. A hero figure painted in the sport's identity
+            # colour reads as a rating, when 30.5 is just a number. It
+            # still leads: it is the largest, heaviest thing in the card.
+            # The eyebrow above it keeps the accent, because marking
+            # WHOSE page this is what the sport colour is for.
             f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:var(--lc-text-hero); '
-            f'font-weight:800; color:{_ACCENT}; line-height:1.1;">'
+            f'font-weight:800; color:{COLOR["text"]}; line-height:1.1;">'
             f'{_form_pra if _form_pra is not None else "N/A"}</div>'
             f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:var(--lc-text-caption); '
             f'color:{COLOR["text_muted"]};">{_delta_txt}</div>'
