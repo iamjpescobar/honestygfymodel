@@ -162,9 +162,8 @@ if 'Back to {selected_sport}' not in app_src:
                     "clicking the already-active sport is a no-op, so Home "
                     "becomes a room with no door")
 elif "_home_nav" not in app_src or "render_right_sidebar(nav_titles=_home_nav" not in app_src:
-    failures.append("Home no longer shows the page nav — every page without "
-                    "a card on Home becomes unreachable from the landing "
-                    "screen")
+    failures.append("Home no longer passes a nav to the sidebar — the admin "
+                    "diagnostics have no other route in")
 elif 'if _nav is not None and _nav != st.session_state.get("lc_active_page"):' not in app_src:
     failures.append("a nav click from Home does not leave the Home view, so "
                     "the sidebar would appear dead")
@@ -204,6 +203,47 @@ if "st.radio(" in app_src:
                     "first page again")
 else:
     print("PASS: navigation is buttons, which can show no selection at all")
+
+# ----------------------------------------------------------------------
+# EVERY PAGE MUST BE REACHABLE FROM HOME.
+#
+# This used to be checked indirectly, by asserting that Home rendered the
+# sport's whole page nav in the sidebar. That nav was nine parts
+# duplication by the time Home grew Today cards and an Explore grid, and
+# it is gone — so the old check would now pass or fail for reasons
+# unrelated to the thing it cared about.
+#
+# The concern behind it is still real and this tests it directly: walk
+# the actual page list and confirm each non-admin entry has a route from
+# Home's body. Delete an Explore card without adding another way in and
+# this fails, which the old string check could never have caught.
+# ----------------------------------------------------------------------
+import ast as _ast
+
+_nav_titles = []
+for _n in _ast.parse(app_src).body:
+    if isinstance(_n, _ast.FunctionDef) and _n.name == "build_mlb_pages":
+        for _c in _ast.walk(_n):
+            if (isinstance(_c, _ast.Tuple) and len(_c.elts) == 2
+                    and isinstance(_c.elts[0], _ast.Constant)):
+                _nav_titles.append(_c.elts[0].value)
+
+if not _nav_titles:
+    failures.append("could not read build_mlb_pages — the reachability "
+                    "check below is not running")
+else:
+    # A title counts as reachable if Home names it anywhere: BOARD_PAGE
+    # and WNBA_PAGE map a board to its page for the Today-card titles,
+    # EXPLORE lists the rest, and Results arrives via its own _goto.
+    _unreachable = [t for t in _nav_titles
+                    if "(Admin)" not in t and f'"{t}"' not in home_src]
+    if _unreachable:
+        failures.append("no route from Home to: " + ", ".join(_unreachable)
+                        + " — every non-admin page needs a card, a board "
+                          "title, or a link on the landing screen")
+    else:
+        print(f"PASS: all {len(_nav_titles)} MLB pages are reachable "
+              f"(admin ones via the sidebar, the rest via Home's own cards)")
 
 # The jump buttons write lc_nav_radio. That key kept its name through the
 # radio-to-button change so every existing reader keeps working, but it is
