@@ -151,6 +151,26 @@ elif app_src.index('st.session_state["lc_view"] = "sport"') > \
 else:
     print("PASS: a sport click leaves Home, detected before the switcher syncs")
 
+# ----------------------------------------------------------------------
+# HOME MUST HAVE A WAY OUT. This shipped broken once: the button only
+# ever set lc_view="home", and clicking the already-selected sport is a
+# no-op in sport_switcher (it reruns only when the sport CHANGES). A new
+# session landed on Home and could reach five of the ten destinations.
+# ----------------------------------------------------------------------
+if 'Back to {selected_sport}' not in app_src:
+    failures.append("the Home button no longer flips to a Back control — "
+                    "clicking the already-active sport is a no-op, so Home "
+                    "becomes a room with no door")
+elif "_home_nav" not in app_src or "render_right_sidebar(nav_titles=_home_nav" not in app_src:
+    failures.append("Home no longer shows the page nav — every page without "
+                    "a card on Home becomes unreachable from the landing "
+                    "screen")
+elif 'if _nav is not None and _nav != st.session_state.get("lc_active_page"):' not in app_src:
+    failures.append("a nav click from Home does not leave the Home view, so "
+                    "the sidebar would appear dead")
+else:
+    print("PASS: Home has a Back control, the page nav, and both exits work")
+
 # The jump buttons write the nav radio's widget key. That is only legal
 # because app.py instantiates the radio AFTER the main column renders.
 if 'st.session_state["lc_nav_radio"]' not in home_src:
