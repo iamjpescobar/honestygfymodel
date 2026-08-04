@@ -568,9 +568,15 @@ def _render_explore():
     elsewhere = [(p, sp) for p, sp, _b in EXPLORE if sp != CURRENT_SPORT]
 
     st.caption("What each place actually answers.")
-    cols = st.columns(3)
+
+    # Column count picked so the last row is never a single card with
+    # two empty slots beside it. Four MLB pages in a three-up grid gave
+    # 3 + 1, which reads as a layout bug rather than a list that ended.
+    _n = len(here) or 1
+    _ncols = 2 if _n == 4 else min(_n, 3)
+    cols = st.columns(_ncols)
     for i, (page, sport, blurb) in enumerate(here):
-        with cols[i % 3]:
+        with cols[i % _ncols]:
             with card(f"home_explore_{i}"):
                 _goto(page, key=f"home_ex_{i}", label=f"{page}  \u2192",
                       compact=True)
@@ -587,8 +593,8 @@ def _render_explore():
             by_sport.setdefault(sport, []).append(page)
         # Separators are built OUTSIDE the f-strings. A backslash escape
         # inside an f-string EXPRESSION is a SyntaxError on Python 3.11,
-        # which is what requirements.txt and both workflows pin, and it
-        # fails at import time — the page does not render at all.
+        # which requirements.txt and both workflows pin, and it fails at
+        # import time — the page does not render at all.
         _DASH = "\u2014"
         _DOT = " \u00b7 "
         parts = [f'{", ".join(pages)} {_DASH} switch to {sport} above'
@@ -649,9 +655,46 @@ def _render_track_record(record):
         st.caption("Every pick, graded, with the league rate beside it.")
 
 
+def _inject_card_css():
+    """Flatten the link-style buttons that act as card titles.
+
+    kc_theme sets `.stButton > button { background-color: surface_raised;
+    border: 1px solid border }` for every button on the site. That is
+    right for an action and wrong for a title that happens to be
+    clickable — it drew a bordered box at the top of each of the nine
+    cards on this page, which is the same visual weight the full-width
+    "Open X" buttons had before they were replaced.
+
+    Scoped to this page's own container keys (home_today_*, home_explore_*)
+    rather than to a Streamlit internal, and more specific than the
+    global rule, so it wins without touching buttons anywhere else.
+    """
+    st.markdown(
+        "<style>"
+        "[class*='st-key-home_'] .stButton > button {"
+        "  background: transparent !important; border: none !important;"
+        "  padding: 0 !important; min-height: 0 !important;"
+        "  text-align: left !important; justify-content: flex-start !important; }"
+        "[class*='st-key-home_'] .stButton > button p {"
+        f"  color: {COLOR['text']} !important; font-weight: 700 !important;"
+        "  text-align: left !important; margin: 0 !important; }"
+        "[class*='st-key-home_'] .stButton > button:hover p {"
+        f"  color: {COLOR['accent']} !important; }}"
+        # Same 1rem-gap problem as the nav: the theme's tightening rule
+        # only matches DIRECT children of a vertical block, and a keyed
+        # container adds a wrapper — so a card's title sat a full line
+        # away from its own first row.
+        "[class*='st-key-home_'] div[data-testid='stVerticalBlock'] {"
+        "  gap: var(--lc-space-sm) !important; }"
+        "</style>",
+        unsafe_allow_html=True,
+    )
+
+
 def render():
     global _RECORD
     today = _today()
+    _inject_card_css()
     page_header(
         _greeting(),
         subtitle=("Everything this site published today, how last night's "
