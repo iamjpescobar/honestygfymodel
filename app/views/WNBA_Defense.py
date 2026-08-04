@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+from engines.slate_guard import load_slate, staleness_note
 
 from styles.kc_theme import SPORT_ACCENTS, inject_kc_theme, card, footer, COLOR
 from styles.table_style import style_stat_table, render_html_table, tier_legend
@@ -40,16 +41,19 @@ sync_latest_button(key="sync_wnba_def", include_data_package=True)
 # each click. The file only changes when the nightly build publishes.
 @st.cache_data(ttl=900, show_spinner=False)
 def _load_games():
-    try:
-        payload = json.loads(_GAMES.read_text())
-        return payload.get("games", []), payload.get("generated_at")
-    except Exception:
-        return [], None
+    # See WNBA_Props._load_games — same guard, same reason.
+    games, slate_date, _ok = load_slate("wnba")
+    return games, slate_date
 
 
 games, generated_at = _load_games()
 if not games:
-    st.info("No WNBA slate loaded \u2014 press \u27f3 Sync latest to pull the current data build.")
+    # A stale slate is not a slate. staleness_note() says WHICH night is
+    # on disk, because "no data" and "the data we have is from the 2nd"
+    # are different facts and the second one is the actionable one.
+    st.warning(staleness_note("wnba") or
+               "No WNBA slate loaded \u2014 press \u27f3 Sync latest to pull the "
+               "current data build.")
     footer()
     st.stop()
 
