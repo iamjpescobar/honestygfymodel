@@ -1,0 +1,32 @@
+name: WNBA scoreboard probe
+
+# Manual only. Prints what each ESPN scoreboard mirror actually returns
+# for one date, and whether parse_scoreboard_events can read it.
+#
+# Separate from "WNBA gamelog probe", which answers a different question
+# (an athlete's game log, for diagnosing a pick that failed to grade).
+# This one is about the layer above: which host answers, and in what
+# shape.
+#
+# Runs in about fifteen seconds and touches nothing: no commit, no
+# release, no deploy hook. Safe to run as often as needed.
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Date to probe (YYYY-MM-DD). Pick a day the WNBA definitely played."
+        required: false
+        default: "2026-08-03"
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests
+      - name: Probe the scoreboard mirrors
+        run: python wnba_scoreboard_probe.py "${{ inputs.date }}"

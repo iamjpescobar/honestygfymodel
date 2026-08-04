@@ -867,16 +867,31 @@ def main():
     # WNBA slate is missing, and the pages show their "engine is being
     # connected" placeholder — which is TRUE — instead of a board that
     # looks published and answers nothing.
-    if days_failed and days_failed == days_attempted:
+    # THE CONDITION IS "NO BOX SCORES", full stop.
+    #
+    # This started as two narrower checks — every day failed, or there
+    # are games tonight but no logs — and the nightly of 2026-08-04 walked
+    # straight between them. 37 of 124 days failed (so not "every day"),
+    # today's slate parsed as 0 games (so "todays" was falsy and the
+    # second check never evaluated), and the run shipped games.json with
+    # 0 games, players.json with 0 players, and a green tick.
+    #
+    # The mistake was describing the symptom instead of the thing that
+    # matters. Every board on this site is built from `logs`. If the
+    # backfill walked the whole season and came back with no box scores,
+    # the league has no data behind it, and WHY is a detail — a block, a
+    # mirror answering in a shape the parser can't read, a schema change.
+    # None of those are states worth publishing.
+    #
+    # A genuinely empty result is only possible before the season's first
+    # game, which SEASON_START already excludes.
+    if not logs:
         raise RuntimeError(
-            f"every one of the {days_attempted} scoreboard days failed — "
-            f"ESPN is blocking this runner, not an off-season. Refusing to "
-            f"publish a slate with no player data behind it.")
-    if todays and not logs:
-        raise RuntimeError(
-            f"{len(todays)} games tonight but zero box scores parsed from "
-            f"{days_attempted - days_failed} reachable days. Refusing to "
-            f"publish a slate in which no player has a single number.")
+            f"walked {days_attempted} days ({days_failed} unreachable, "
+            f"{days_attempted - days_failed} answered) and parsed ZERO box "
+            f"scores. A mirror answering 200 is not the same as a mirror "
+            f"the parser can read — see wnba_scoreboard_probe.py. Refusing "
+            f"to publish a league with no data behind it.")
     if days_failed:
         print(f"WNBA: WARNING — {days_failed}/{days_attempted} scoreboard "
               f"days were unreachable; season splits are built on the rest.")
