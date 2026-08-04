@@ -108,14 +108,75 @@ jobs:
       - name: Fetch and package real Statcast data
         run: python precompute.py
 
+      # DO NOT PUBLISH A PARTIAL ARCHIVE.
+      #
+      # The three slate fetches above end in `|| echo "... continuing
+      # without it"`, which is right — one league's site being down must
+      # not cost the other four. But the packaging step downstream had no
+      # idea any of it had failed, so a failed WNBA fetch produced a
+      # tarball with no data/wnba/ in it, and the publish step below
+      # deleted the last good release BEFORE uploading the new one.
+      #
+      # The result was total, silent, and unrecoverable: app/data/wnba/
+      # simply did not exist on the deployed instance, every WNBA view
+      # fell through to its "engine is being connected" placeholder, and
+      # yesterday's working archive had already been destroyed.
+      #
+      # This checks what actually went into the tarball. Statcast is
+      # required — without it there is no MLB product and publishing is
+      # pointless. The international slates are warned about but allowed
+      # through, because a real league break (FIBA, KBO All-Star) is
+      # indistinguishable here from a fetch failure, and refusing to ship
+      # MLB data during a WNBA off-week would be its own outage.
+      - name: Verify the archive before publishing
+        run: |
+          python3 - <<'PY'
+          import sys, tarfile
+          names = set()
+          with tarfile.open("statcast_data.tar.gz", "r:gz") as tar:
+              for n in tar.getnames():
+                  names.add(n.strip("./"))
+
+          def has(prefix):
+              return any(n.startswith(prefix) for n in names)
+
+          required = {"data/statcast/manifest.json": "Statcast manifest"}
+          expected = {"data/wnba/games.json": "WNBA slate",
+                      "data/kbo/games.json": "KBO slate",
+                      "data/npb/games.json": "NPB slate"}
+
+          missing_required = [d for p, d in required.items() if p not in names]
+          missing_expected = [d for p, d in expected.items() if p not in names]
+
+          for d in missing_expected:
+              print(f"::warning::{d} is missing from the archive - that "
+                    f"league's pages will show their placeholder until the "
+                    f"next successful run.")
+
+          if missing_required:
+              print("::error::Refusing to publish: " +
+                    ", ".join(missing_required) + " missing from the "
+                    "archive. The existing release is left untouched.")
+              sys.exit(1)
+
+          print(f"Archive verified: {len(names)} entries.")
+          for p in list(required) + list(expected):
+              print(f"  {'present ' if p in names else 'MISSING '} {p}")
+          PY
+
       - name: Publish data as release asset
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete nightly-data -y || true
+          # Upload FIRST, delete second. This used to delete the release
+          # before creating the new one, so any failure between the two
+          # left no archive at all and the site with no data. --clobber
+          # replaces the asset in place, so there is never a window
+          # without a usable download.
           gh release create nightly-data statcast_data.tar.gz \
             -t "Nightly Statcast Data" \
-            -n "Auto-generated nightly. Real Baseball Savant pitch data + NPB slate from npb.jp. See manifest.json inside for fetch timestamp."
+            -n "Auto-generated nightly. Real Baseball Savant pitch data + NPB slate from npb.jp. See manifest.json inside for fetch timestamp." \
+            || gh release upload nightly-data statcast_data.tar.gz --clobber
 
       - name: Trigger Render deploy
         env:
