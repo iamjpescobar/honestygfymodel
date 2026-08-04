@@ -72,9 +72,31 @@ print(f"PASS: hr_edge has a single writer (CI owns {sorted(ci_boards)}); "
 
 # The safety of those shared boards rests entirely on idempotency.
 src = open("app/engines/calibration.py").read()
-body = src[src.index("def log_picks"):src.index("def log_picks") + 2200]
-assert "existing.get(\"picks\")" in body and "return True" in body, (
-    "log_picks must refuse to overwrite an existing entry — otherwise a "
-    "page re-render resets every result to None and wipes that day's grades."
+# Slice to the NEXT top-level def, not a fixed 2200 characters.
+#
+# The fixed window is why this test went stale and stayed stale: when
+# log_picks was rewritten from per-day to per-market idempotency the
+# guard moved past character 2200 and the assertion below started
+# failing — which fails the nightly workflow's "Run tests" gate, which
+# refuses to grade picks or publish an archive. A test that breaks on a
+# refactor of correct code is worse than no test, because the thing it
+# takes down is the pipeline.
+_start = src.index("def log_picks")
+body = src[_start:src.index("\ndef ", _start + 1)]
+
+# The PROPERTY, not one expression that happened to implement it: a
+# board+date+market already recorded must not be rewritten, because a
+# rewrite resets every "result" to None and wipes that day's grades.
+assert "logged_markets" in body and "if not fresh:" in body and "return True" in body, (
+    "log_picks must refuse to re-record a market it already holds — "
+    "otherwise a page re-render resets every result to None and wipes "
+    "that day's grades."
 )
-print("PASS: log_picks refuses to overwrite an existing day (grades survive)")
+# The specific regression: an unconditional assignment of the whole
+# day's entry, which is what the guard above replaced.
+assert "data[board][date_str] = {" not in body, (
+    "log_picks assigns a fresh entry over the whole day again — this is "
+    "the exact write that wiped grades on every re-render."
+)
+print("PASS: log_picks refuses to re-record a market it already holds "
+      "(grades survive)")
