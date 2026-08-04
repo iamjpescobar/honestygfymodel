@@ -42,7 +42,8 @@ import pandas as pd
 import streamlit as st
 
 from engines.weather_engine import get_todays_games_with_weather
-from engines.roster import get_live_team_roster, get_confirmed_lineup
+from engines.roster import (get_live_team_roster, get_confirmed_lineup,
+                            prefetch_slate)
 from engines.statcast_engine import (
     _read_local_parquet, _HIT_EVENTS, get_pitcher_advanced_splits,
 )
@@ -203,6 +204,21 @@ def _daily13_json(date_str: str) -> str:
             opp_info[g.get("away")] = (g["home_pitcher_id"], g.get("home_pitcher"), g.get("home"))
         if g.get("away_pitcher_id"):
             opp_info[g.get("home")] = (g["away_pitcher_id"], g.get("away_pitcher"), g.get("away"))
+
+    # ---- warm every MLB Stats API call this build is about to make ----
+    #
+    # Everything below is serial: a boxscore per game for confirmed
+    # lineups, then a roster per team for the fallback pool and again in
+    # _pen_contact_json. Each waits on the last, and on a 15-game slate
+    # that is well over a hundred sequential round-trips to
+    # statsapi.mlb.com — measured at roughly 36 seconds of this board's
+    # build, nearly all of it idle. They are independent reads, so they
+    # are fetched concurrently here and the loops below hit memory.
+    #
+    # Purely an optimisation: if this line were deleted the board would
+    # still be correct, just slow again.
+    prefetch_slate(team_names=[t for t, _pk, _s in teams],
+                   game_sides=[(pk, side) for _t, pk, side in teams])
 
     through, _built = _data_stamp()
     cutoff = None
