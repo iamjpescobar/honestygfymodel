@@ -93,6 +93,64 @@ def _tile(label: str, value: str, sub: str = "", color: str = None) -> str:
             f'{sub_html}</div>')
 
 
+# Kept in step with engines.calibration._edge_verdict, which refuses to
+# call anything below this a result. The per-market split below has no
+# verdict of its own, so it borrows the same floor rather than inventing
+# a second, looser standard for the same record.
+MIN_JUDGEABLE = 30
+
+
+def _render_markets(days, stats):
+    """Per-market split for a board that publishes more than one.
+
+    Deliberately counts and rates only — no baseline, no verdict, no
+    trend line. Splitting a board's record five ways leaves each market
+    with a fraction of the sample, and a bare percentage on 22 picks is
+    the most misleading thing this page could print. The sample size
+    sits next to every rate, and anything under the engine's own
+    judgeability floor says so instead of being coloured as a result.
+    """
+    st.caption(
+        "Split by the market each pick was published in. No baseline and "
+        "no verdict here on purpose \u2014 those need a sample this split "
+        "does not have yet. Read the counts before the percentages."
+    )
+    for stat in stats:
+        hits = miss = 0
+        for day in days.values():
+            for p in day.get("picks", []):
+                if p.get("stat") != stat:
+                    continue
+                if p.get("result") == "hit":
+                    hits += 1
+                elif p.get("result") == "miss":
+                    miss += 1
+        total = hits + miss
+        if not total:
+            rate_html = (f'<span style="color:{COLOR["text_faint"]};">'
+                         f'no graded picks yet</span>')
+            note = ""
+        else:
+            thin = total < MIN_JUDGEABLE
+            col = COLOR["text_muted"] if thin else COLOR["text"]
+            rate_html = (f'<span style="color:{col};">'
+                         f'{hits / total * 100:.1f}%</span>'
+                         f'<span style="color:{COLOR["text_faint"]};"> '
+                         f'\u00b7 {hits}/{total}</span>')
+            note = (f'<span style="color:{COLOR["warn"]};"> '
+                    f'\u00b7 too few to judge</span>' if thin else "")
+        st.markdown(
+            f'<div style="display:flex; justify-content:space-between; '
+            f'gap:var(--lc-space-lg); padding:var(--lc-space-sm) '
+            f'var(--lc-space-none); border-bottom:1px solid '
+            f'{COLOR["border_soft"]}; font-family:\'JetBrains Mono\',monospace; '
+            f'font-size:var(--lc-text-caption);">'
+            f'<span style="color:{COLOR["text_muted"]};">{stat}</span>'
+            f'<span>{rate_html}{note}</span></div>',
+            unsafe_allow_html=True,
+        )
+
+
 def _section_tag(text: str) -> str:
     return (f'<div style="display:inline-block; '
             f'padding:var(--lc-space-hair) var(--lc-space-md); '
@@ -225,6 +283,13 @@ def _render_board(board, cfg, s, days):
     # rather than implying a direction from two points.
     with st.expander("Trend"):
         render_calibration_trend(days, base, label)
+
+    # Only for boards that actually publish several markets. On a
+    # single-market board this would be one row restating the header,
+    # so it stays absent rather than adding a click that leads nowhere.
+    if len(stats) > 1:
+        with st.expander("By market"):
+            _render_markets(days, stats)
 
 
 def render():
