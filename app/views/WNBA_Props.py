@@ -15,7 +15,8 @@ from engines.wnba_props import (
     W_CONSISTENCY, W_FORM, W_MATCHUP, W_PACE,
 )
 from engines.live_sync import sync_latest_button
-from engines.calibration import log_picks, grade_pending, summary
+from engines.calibration import (log_picks, grade_pending, summary,
+                                 has_id)
 
 _GAMES = Path(__file__).resolve().parent.parent / "data" / "wnba" / "games.json"
 
@@ -143,7 +144,7 @@ with card("wprops"):
             log_picks("wnba_props", [
                 {"id": r.get("id"), "name": r["player"], "team": r["team"],
                  "stat": STATS[_stat]["key"], "line": r["line"]}
-                for r in top[:10] if r.get("id")
+                for r in top[:10] if has_id(r.get("id"))
             ])
             grade_pending()
             _cal = summary().get("wnba_props", {})
