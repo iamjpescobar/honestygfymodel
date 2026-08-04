@@ -30,7 +30,7 @@ gamelog for WNBA — the same sources the app itself grades against.
 import json
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -202,6 +202,45 @@ def _mlb_pitching_line(pid, date_str):
 
 
 # ----------------------------------------------------------------------
+# ESPN gives gameDate in UTC. The picks are logged under the ET slate
+# date. Those are the same calendar day only for tips before 8 PM ET.
+#
+#   7:00 PM ET  -> 23:00Z  same day     matched
+#   8:00 PM ET  -> 00:00Z  NEXT day     never matched
+#   10:00 PM ET -> 02:00Z  NEXT day     never matched
+#
+# The old comparison took gameDate[:10] raw, so every evening game — most
+# of the WNBA schedule, and all of the West Coast slate — fell through to
+# "no event matching the date" and the pick was closed as a DNP three
+# days later. DNPs are excluded from the hit-rate denominator, so this
+# removed picks from the record without ever reporting a failure.
+#
+# The fixture in tests/test_wnba_grading_honesty.py used T23:00Z, which
+# is 7 PM ET — the one tip time on the schedule where the two dates
+# agree. The parse was covered; the date match never was.
+#
+# MUST STAY BYTE-IDENTICAL between calibration_pipeline.py and
+# app/engines/calibration.py. The two graders disagreed once before and
+# it poisoned the record.
+# ----------------------------------------------------------------------
+def _espn_slate_date(raw) -> str:
+    """ESPN's UTC gameDate as the ET calendar date a pick was logged under."""
+    s = str(raw or "").strip()
+    if not s:
+        return ""
+    try:
+        dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except ValueError:
+        # Unparseable: fall back to the old raw prefix rather than
+        # matching nothing, so a shape change can never do WORSE than
+        # the behaviour this replaced.
+        return s[:10]
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(EASTERN).strftime("%Y-%m-%d")
+
+
+# ----------------------------------------------------------------------
 # WNBA GRADING DIAGNOSTICS
 #
 # _wnba_line returns None for four completely different reasons — the
@@ -274,10 +313,10 @@ def _wnba_line(pid, date_str):
         return _wnba_diag("gamelog response was not an object",
                           f"pid={pid} type={type(data).__name__}")
     names = [str(n).upper() for n in (data.get("names") or data.get("labels") or [])]
-    want = date_str.replace("-", "")
+    want = date_str
     _seen = []
     for _ev_id, ev in (data.get("events") or {}).items():
-        _gd = str(ev.get("gameDate") or "")[:10].replace("-", "")
+        _gd = _espn_slate_date(ev.get("gameDate"))
         _seen.append(_gd)
         if _gd != want:
             continue
