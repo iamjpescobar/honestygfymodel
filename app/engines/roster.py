@@ -56,15 +56,22 @@ def _memo_key(url, params):
     return (url, tuple(sorted((params or {}).items())))
 
 
-def _get_json(url, params=None, timeout=10):
-    """GET returning parsed JSON, or None. Never raises."""
+def _get_json(url, params=None, timeout=10, headers=None):
+    """GET returning parsed JSON, or None. Never raises.
+
+    headers is for hosts that require them — api.weather.gov rejects a
+    request with no User-Agent. It is NOT part of the memo key: the same
+    URL returns the same body whoever asks, and keying on it would mean
+    a prefetch and the call that follows missed each other.
+    """
     key = _memo_key(url, params)
     hit = _MEMO.get(key)
     now = time.monotonic()
     if hit and now - hit[0] < _MEMO_TTL:
         return hit[1]
     try:
-        resp = _SESSION.get(url, params=params, timeout=timeout)
+        resp = _SESSION.get(url, params=params, timeout=timeout,
+                            headers=headers)
         resp.raise_for_status()
         data = resp.json()
     except Exception:
@@ -78,7 +85,7 @@ def _get_json(url, params=None, timeout=10):
     return data
 
 
-def prefetch_json(specs, workers=_PREFETCH_WORKERS):
+def prefetch_json(specs, workers=_PREFETCH_WORKERS, headers=None):
     """Warm the memo for many (url, params) pairs at once.
 
     Fire-and-forget: results land in _MEMO and callers just make their
@@ -89,10 +96,11 @@ def prefetch_json(specs, workers=_PREFETCH_WORKERS):
     specs = [sp for sp in specs if sp]
     if len(specs) < 2:
         for url, params in specs:
-            _get_json(url, params)
+            _get_json(url, params, headers=headers)
         return
     with ThreadPoolExecutor(max_workers=min(workers, len(specs))) as pool:
-        list(pool.map(lambda sp: _get_json(sp[0], sp[1]), specs))
+        list(pool.map(lambda sp: _get_json(sp[0], sp[1], headers=headers),
+                      specs))
 
 
 _TEAMS_URL = "https://statsapi.mlb.com/api/v1/teams?sportId=1"
