@@ -33,20 +33,34 @@ from engines.calibration import BOARDS, _load, summary
 
 EASTERN = ZoneInfo("America/New_York")
 
-# Which nav entry owns each board, for the jump buttons.
+# Home is a top-level view, not a page inside one sport, so it reports
+# every board on the site. The jump buttons are what have to be careful.
 #
-# MLB boards only. The WNBA boards live under a different sport, and the
-# sport switcher is a widget app.py instantiates ABOVE the main column —
-# writing to its key from here would raise StreamlitAPIException
-# ("cannot be modified after the widget is instantiated"). Their picks
-# still render; they just don't get a button. The nav radio is created
-# AFTER this page renders, so writing lc_nav_radio is safe.
+# The sport switcher is instantiated by app.py ABOVE the main column, so
+# its key (lc_sport_seg) cannot be written from here — Streamlit raises
+# StreamlitAPIException for any widget key set after the widget exists.
+# A jump therefore cannot change sport, only page WITHIN the sport that
+# is currently selected. The per-sport nav radios ARE safe to write,
+# because app.py renders neither of them on a Home run.
+#
+# So a board gets a button when its page belongs to the current sport,
+# and otherwise just renders its picks. Nothing is offered that would
+# land somewhere unexpected.
 BOARD_PAGE = {
     "daily13": "Daily 13",
     "potd": "Player of the Day",
     "hr_edge": "HR Edge",
     "k_board": "Strikeout Board",
 }
+
+# The WNBA boards live under that sport's own subpage nav (lc_sub_WNBA).
+WNBA_PAGE = {
+    "wnba_props": "Props Board",
+    "wnba_defense": "Defense Matchup",
+}
+
+CURRENT_SPORT = (st.session_state.get("lc_sport_seg")
+                 or st.session_state.get("lc_sport", "MLB"))
 
 # Display order: MLB boards first, then WNBA. BOARDS itself is keyed for
 # grading, not for reading, so the order there is incidental.
@@ -146,17 +160,30 @@ def _pick_row(pick, show_result=False):
             f'</div>')
 
 
-def _goto(page_title, key):
-    """Jump button into the board's own page.
+def _jump_target(board):
+    """The page a board's button should open, or None if it isn't
+    reachable from the sport currently selected. See BOARD_PAGE."""
+    if CURRENT_SPORT == "MLB" and board in BOARD_PAGE:
+        return BOARD_PAGE[board]
+    if CURRENT_SPORT == "WNBA" and board in WNBA_PAGE:
+        return WNBA_PAGE[board]
+    return None
 
-    Writes the nav radio's WIDGET key, which app.py reads at the top of
-    the next run to resolve the active page — the same one-click path a
-    click on the radio itself takes. Safe from here only because the
-    radio is instantiated after the main column; see BOARD_PAGE.
+
+def _goto(page_title, key):
+    """Jump button out of Home and into a page of the current sport.
+
+    Leaves the Home view and writes that sport's nav key, which app.py
+    reads at the top of the next run — the same one-click path a click on
+    the radio itself takes.
     """
     if st.button(f"Open {page_title}", key=key, use_container_width=True):
-        st.session_state["lc_nav_radio"] = page_title
-        st.session_state["lc_active_page"] = page_title
+        st.session_state["lc_view"] = "sport"
+        if CURRENT_SPORT == "WNBA":
+            st.session_state["lc_sub_WNBA"] = page_title
+        else:
+            st.session_state["lc_nav_radio"] = page_title
+            st.session_state["lc_active_page"] = page_title
         st.rerun()
 
 
@@ -182,10 +209,14 @@ def _render_today(record, today):
                 f'</div>',
                 unsafe_allow_html=True,
             )
-            cols = st.columns(len(BOARD_PAGE))
-            for col, (board, page) in zip(cols, BOARD_PAGE.items()):
-                with col:
-                    _goto(page, key=f"home_build_{board}")
+            if CURRENT_SPORT == "MLB":
+                cols = st.columns(len(BOARD_PAGE))
+                for col, (board, page) in zip(cols, BOARD_PAGE.items()):
+                    with col:
+                        _goto(page, key=f"home_build_{board}")
+            else:
+                st.caption("Switch to MLB above to build one of the boards "
+                           "live.")
         return
 
     cols = st.columns(2)
@@ -219,7 +250,7 @@ def _render_today(record, today):
                         f'+{len(picks) - 6} more</div>',
                         unsafe_allow_html=True,
                     )
-                page = BOARD_PAGE.get(board)
+                page = _jump_target(board)
                 if page:
                     _goto(page, key=f"home_open_{board}")
 
@@ -249,11 +280,16 @@ def _render_last_night(record, yesterday):
         total = hits + sum(1 for p in picks if p.get("result") == "miss")
         with cols[i % 2]:
             with card(f"home_last_{board}"):
-                score = f"{hits}/{total}" if total else "—"
-                score_color = COLOR["text_muted"]
+                # "NOT GRADED", never a bare em dash. An em dash reads
+                # as "no data" when what it actually means is "we
+                # published these picks and scored none of them" — the
+                # measurement gap this whole record exists to expose.
+                score = f"{hits}/{total}" if total else "NOT GRADED"
                 if total:
                     score_color = (COLOR["stat_high"] if hits * 2 >= total
                                    else COLOR["error"])
+                else:
+                    score_color = COLOR["warn"]
                 st.markdown(
                     f'<div style="display:flex; align-items:baseline; '
                     f'justify-content:space-between; gap:var(--lc-space-md);">'
@@ -303,7 +339,11 @@ def _render_track_record(record):
                           color=(COLOR["stat_high"] if beating else COLOR["text"])),
                     unsafe_allow_html=True)
     with cols[3]:
-        _goto("Results", key="home_open_results")
+        # Results is in the MLB nav and in the WNBA subpage nav. The
+        # other sports have no page to open, so they get the sentence
+        # without a dead button.
+        if CURRENT_SPORT in ("MLB", "WNBA"):
+            _goto("Results", key="home_open_results")
         st.caption("Every pick, graded, with the league rate beside it.")
 
 
