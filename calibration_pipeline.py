@@ -201,21 +201,91 @@ def _mlb_pitching_line(pid, date_str):
     return None
 
 
+# ----------------------------------------------------------------------
+# WNBA GRADING DIAGNOSTICS
+#
+# _wnba_line returns None for four completely different reasons — the
+# request failed, the gamelog holds no event on that date, the event
+# carries no stats, or PTS didn't parse — and grade() treats all four
+# identically: leave the pick open, then close it as "dnp" once
+# FINALIZE_AFTER_DAYS has passed. DNPs are excluded from the hit-rate
+# denominator, so a grader that never reads a single line does not show
+# up as a failure anywhere. The board reports "tracked" and measures
+# nothing, and the picks quietly age out three days at a time.
+#
+# That is exactly the state the record is in: 45 WNBA picks logged
+# across three days, every result still None, none ever graded. So this
+# records WHICH of the four happened, and main() prints the tally. One
+# nightly run then names the cause instead of another day of silence.
+#
+# Counting only — the parse below is unchanged, and must stay
+# byte-identical to app/engines/calibration._wnba_day_json (see
+# tests/test_wnba_grading_honesty.py, which pins both to the same
+# behaviour on the same inputs). The app grader gets no diagnostics
+# because nobody reads a Render log looking for them; this one runs in
+# CI, where the log is the whole point.
+# ----------------------------------------------------------------------
+_WNBA_DIAG = {"reasons": {}, "samples": [], "ok": 0}
+
+
+def _wnba_diag(reason, detail=None):
+    """Record why a line couldn't be read, and return None as before."""
+    _WNBA_DIAG["reasons"][reason] = _WNBA_DIAG["reasons"].get(reason, 0) + 1
+    if detail and len(_WNBA_DIAG["samples"]) < 3:
+        _WNBA_DIAG["samples"].append(f"{reason} -> {detail}")
+    return None
+
+
+def report_wnba_diagnostics():
+    """Print the tally. Called from main() after grading."""
+    failed = sum(_WNBA_DIAG["reasons"].values())
+    total = failed + _WNBA_DIAG["ok"]
+    if not total:
+        return
+    print(f"\n[verify-wnba] read {_WNBA_DIAG['ok']}/{total} box-score lines.")
+    for reason, n in sorted(_WNBA_DIAG["reasons"].items(), key=lambda x: -x[1]):
+        print(f"[verify-wnba]   {n:4d}  {reason}")
+    for sample in _WNBA_DIAG["samples"]:
+        print(f"[verify-wnba]   sample: {sample}")
+    if failed and not _WNBA_DIAG["ok"]:
+        # Loud on purpose. This is the case that looks like nothing.
+        print(f"[verify-wnba] NOT ONE line was read this run. Every WNBA pick "
+              f"stays ungraded and closes as DNP after {FINALIZE_AFTER_DAYS} "
+              f"days, which removes it from the record without ever "
+              f"reporting a failure. The reason above is the bug.")
+    print("")
+
+
 def _wnba_line(pid, date_str):
     try:
         resp = requests.get(ESPN_URL.format(pid=pid), timeout=15)
         resp.raise_for_status()
         data = resp.json()
-    except Exception:
-        return None
+    except Exception as exc:
+        # getattr, not resp.status_code: `resp` may not exist (the
+        # request itself failed), and the test stub in
+        # tests/test_wnba_grading_honesty.py deliberately implements only
+        # raise_for_status() and json(). Reaching for an attribute it
+        # doesn't have would break the one test pinning this parse.
+        _status = getattr(locals().get("resp"), "status_code", "?")
+        return _wnba_diag(f"request failed ({type(exc).__name__}, HTTP {_status})",
+                          f"pid={pid} {str(exc)[:160]}")
+    if not isinstance(data, dict):
+        return _wnba_diag("gamelog response was not an object",
+                          f"pid={pid} type={type(data).__name__}")
     names = [str(n).upper() for n in (data.get("names") or data.get("labels") or [])]
     want = date_str.replace("-", "")
+    _seen = []
     for _ev_id, ev in (data.get("events") or {}).items():
-        if str(ev.get("gameDate") or "")[:10].replace("-", "") != want:
+        _gd = str(ev.get("gameDate") or "")[:10].replace("-", "")
+        _seen.append(_gd)
+        if _gd != want:
             continue
         stats = ev.get("stats") or []
         if not stats or not names:
-            return None
+            return _wnba_diag(
+                "matched the date but the event had no stats or no labels",
+                f"pid={pid} labels={names[:10]} stats={list(stats)[:10]}")
         row = {}
         raw = {}
         for i, label in enumerate(names):
@@ -232,7 +302,12 @@ def _wnba_line(pid, date_str):
                 continue
         pts = row.get("PTS")
         if pts is None:
-            return None
+            # The labels are the diagnostic here: if PTS isn't among them
+            # the response shape has changed, and if it is, the value
+            # didn't survive float().
+            return _wnba_diag("event found but PTS did not parse",
+                              f"pid={pid} labels={names[:12]} "
+                              f"raw={dict(list(raw.items())[:6])}")
         # NO `or 0` ON REB/AST — see the matching note in
         # app/engines/calibration.py.
         #
@@ -271,8 +346,17 @@ def _wnba_line(pid, date_str):
                     tpm = None
         pra = (pts + reb + ast
                if reb is not None and ast is not None else None)
+        _WNBA_DIAG["ok"] += 1
         return {"pts": pts, "reb": reb, "ast": ast, "pra": pra, "tpm": tpm}
-    return None
+    # No event on that date. The sample below is the highest-value line
+    # in the whole report: the top-level keys tell you whether this is
+    # even a gamelog (an error page or a rate-limit body has neither
+    # "events" nor "names"), and the dates tell you whether the player's
+    # log is real but the date format or timezone doesn't line up.
+    return _wnba_diag(
+        "no event matching the date" if _seen else "gamelog contained no events",
+        f"pid={pid} want={want} saw={_seen[:6]} events={len(_seen)} "
+        f"labels={names[:8]} top_keys={sorted(data.keys())[:8]}")
 
 
 def grade(record):
@@ -435,6 +519,11 @@ def main():
               f"freeze bug — re-grading them against box scores that have "
               f"since posted.")
     graded = grade(record)
+    # Printed BEFORE the per-board summary below, because the summary is
+    # what makes this invisible: a board with zero graded picks prints
+    # "nothing graded yet", which reads as "no picks yet" rather than
+    # "the grader failed on all of them".
+    report_wnba_diagnostics()
     record = prune(record)
 
     RECORD_PATH.parent.mkdir(parents=True, exist_ok=True)
