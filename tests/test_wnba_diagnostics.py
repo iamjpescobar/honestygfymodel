@@ -68,8 +68,13 @@ CASES = [
     ("wrong date",        dict(payload=gamelog(["PTS"], ["20"], "2026-07-30")),
      "no event matching the date"),
     ("event has no stats", dict(payload=gamelog(["PTS", "REB", "AST"], [])),
-     "no stats or no labels"),
-    ("PTS not in labels", dict(payload=gamelog(["REB", "AST"], ["8", "5"])),
+     "carried no stat row"),
+    # Headers that map to nothing usable is a DIFFERENT bug from a
+    # missing stat row — this is the shape that broke grading for a week
+    # (long-form names read as if they were the short ones).
+    ("no PTS in headers", dict(payload=gamelog(["REB", "AST"], ["8", "5"])),
+     "no usable column headers"),
+    ("PTS present but junk", dict(payload=gamelog(["PTS", "REB"], ["--", "8"])),
      "PTS did not parse"),
 ]
 
