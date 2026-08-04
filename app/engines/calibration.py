@@ -143,12 +143,44 @@ def _published_path():
     return _DATA_DIR / "calibration.json"
 
 
+def _repo_path():
+    """The record CI commits back to the REPOSITORY.
+
+    This is the file .github/workflows/slate-picks.yml writes at 1, 5 and
+    7 PM ET, and it is a different file from _published_path() — that one
+    only changes when the nightly archive is rebuilt at 6 AM ET.
+
+    Nothing in the app read this until now, and the consequence was
+    invisible rather than loud: today's picks were logged by CI, committed,
+    and then not seen by the site until the NEXT morning's archive carried
+    them back. The only way today's board appeared on the site at all was
+    log_picks() firing as a side effect of somebody opening that board's
+    page — which is the exact "no visitor, no picks" failure
+    calibration_picks.py was written to eliminate on the CI side.
+
+    Render checks out the whole repository, so this resolves in production;
+    app/ is the service root, not the checkout root.
+    """
+    return Path(__file__).resolve().parents[2] / "data" / "calibration.json"
+
+
 def _load():
-    """Published record (durable) merged with local picks (today's).
+    """Published record (durable) merged with local picks (today's), then
+    backfilled from the CI-committed repo record.
 
     Per day, the version with more graded picks wins — so a day the
     pipeline has already graded is never overwritten by a local copy
-    that only has the picks."""
+    that only has the picks.
+
+    The repo record is applied LAST and FILL-ONLY: it supplies (board, day)
+    entries the first two sources don't have at all, and never replaces one
+    they do. That is deliberate rather than lazy. Its job here is today's
+    board, which by definition nothing else holds yet; graded history is
+    owned by the pipeline, and letting a third file overwrite an already
+    graded day would reintroduce exactly the "which record wins" ambiguity
+    the _LOG_PATH split was created to end. It also keeps hand-entered odds
+    safe, since those live only in the local log.
+    """
     merged = {}
     for path in (_published_path(), _LOG_PATH):
         try:
@@ -163,6 +195,18 @@ def _load():
                 prev = dest.get(day)
                 if prev is None or _graded_n(entry) >= _graded_n(prev):
                     dest[day] = entry
+
+    try:
+        repo = json.loads(_repo_path().read_text())
+    except Exception:
+        repo = None
+    for board, days in (repo or {}).items():
+        if not isinstance(days, dict):
+            continue
+        dest = merged.setdefault(board, {})
+        for day, entry in days.items():
+            dest.setdefault(day, entry)
+
     return merged
 
 
