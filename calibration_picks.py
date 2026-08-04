@@ -168,12 +168,31 @@ def _rows_wnba_props():
         return []
 
     from engines.wnba_props import build_props, STATS
-    # "Points" and "l10" are the view's defaults — keep them in step.
-    rows, _unrated = build_props(games, "Points", "l10")
-    stat_key = STATS["Points"]["key"]
-    return [{"id": r.get("id"), "name": r.get("player"), "team": r.get("team"),
-             "stat": stat_key, "line": r.get("line")}
-            for r in (rows or [])[:10] if r.get("id")]
+    # EVERY MARKET, not just Points.
+    #
+    # This used to build "Points" alone, which meant rebounds, assists,
+    # PRA and threes were published nightly and never once scored. The
+    # board reported a tracked record covering one fifth of what it
+    # actually put in front of people.
+    #
+    # STATS is the view's own market list, so this follows automatically
+    # if a market is ever added or dropped there — no second copy to
+    # drift. "l10" and top-10 remain the view's defaults; changing
+    # either here would grade a claim the site never made.
+    out = []
+    for stat_label, cfg in STATS.items():
+        try:
+            rows, _unrated = build_props(games, stat_label, "l10")
+        except Exception as exc:
+            # One market failing must not cost the other four.
+            print(f"  wnba_props/{stat_label}: skipped "
+                  f"({type(exc).__name__}: {exc})")
+            continue
+        out.extend({"id": r.get("id"), "name": r.get("player"),
+                    "team": r.get("team"), "stat": cfg["key"],
+                    "line": r.get("line")}
+                   for r in (rows or [])[:10] if r.get("id"))
+    return out
 
 
 def _rows_wnba_defense():
@@ -189,11 +208,25 @@ def _rows_wnba_defense():
     if not games:
         return []
 
-    from engines.wnba_defense import build_board
-    rows, _unrated = build_board(games, "Points", "l10")
-    return [{"id": r.get("id"), "name": r.get("player"), "team": r.get("team"),
-             "stat": "pts", "line": r.get("form")}
-            for r in (rows or [])[:5] if r.get("id")]
+    from engines.wnba_defense import build_board, _STATS
+    # Same reasoning as _rows_wnba_props: log every market this board
+    # can publish, not just the first one. _STATS is the board's own
+    # list (Points / Rebounds / Assists — deliberately fewer than the
+    # props board, since a defensive matchup rating only exists for
+    # those three), so this tracks it without a second copy.
+    out = []
+    for stat_label, stat_key in _STATS.items():
+        try:
+            rows, _unrated = build_board(games, stat_label, "l10")
+        except Exception as exc:
+            print(f"  wnba_defense/{stat_label}: skipped "
+                  f"({type(exc).__name__}: {exc})")
+            continue
+        out.extend({"id": r.get("id"), "name": r.get("player"),
+                    "team": r.get("team"), "stat": stat_key,
+                    "line": r.get("form")}
+                   for r in (rows or [])[:5] if r.get("id"))
+    return out
 
 
 def _rows_k_board():
@@ -238,11 +271,19 @@ def main() -> int:
     wrote = 0
 
     for board, build in BUILDERS.items():
-        existing = record.get(board, {}).get(date_str)
-        if existing and existing.get("picks"):
-            print(f"{board}: already logged for {date_str} "
-                  f"({len(existing['picks'])} picks) - leaving alone.")
-            continue
+        # SKIP PER MARKET, NOT PER DAY — mirrors the same change in
+        # app/engines/calibration.py's log_picks().
+        #
+        # The old check bailed out as soon as a date had any picks. On a
+        # multi-market board that froze the day after the first market
+        # landed: if only Points was up when the 17:00 run fired, the
+        # 21:00 and 23:00 runs saw a non-empty day and left it alone, so
+        # the other four markets were never recorded even though they
+        # were available hours before tip-off. Idempotency is now per
+        # (board, date, market), which keeps the retry behaviour these
+        # three daily runs exist for.
+        existing = record.get(board, {}).get(date_str) or {}
+        logged_markets = {p.get("stat") for p in existing.get("picks", [])}
         try:
             rows = build()
         except Exception as exc:
@@ -272,18 +313,28 @@ def main() -> int:
         # app/engines/calibration.py's log_picks() already wrote both
         # fields correctly. This is the CI path, and since every record
         # now carries source="ci", this was the only path that ran.
-        record.setdefault(board, {})[date_str] = {
-            "picks": [{"id": r["id"], "name": r.get("name"),
-                       "team": r.get("team"), "stat": r.get("stat"),
-                       "line": r.get("line"),
-                       "result": None} for r in rows],
-            "graded": False,
-            # Marks picks recorded by CI rather than by a page view, so
-            # a mixed record stays interpretable later.
-            "source": "ci",
-        }
-        wrote += len(rows)
-        print(f"{board}: logged {len(rows)} pick(s) for {date_str}.")
+        fresh = [r for r in rows if r.get("stat") not in logged_markets]
+        if not fresh:
+            print(f"{board}: every market already logged for {date_str} "
+                  f"({len(existing.get('picks', []))} picks) - leaving alone.")
+            continue
+        entry = record.setdefault(board, {}).setdefault(
+            date_str, {"picks": [], "graded": False,
+                       # Marks picks recorded by CI rather than by a page
+                       # view, so a mixed record stays interpretable later.
+                       "source": "ci"})
+        entry.setdefault("picks", []).extend(
+            {"id": r["id"], "name": r.get("name"),
+             "team": r.get("team"), "stat": r.get("stat"),
+             "line": r.get("line"),
+             "result": None} for r in fresh)
+        # A market added after an earlier grading pass must reopen the
+        # day, or grade() will skip straight past it forever.
+        entry["graded"] = False
+        wrote += len(fresh)
+        _added = sorted({str(r.get("stat")) for r in fresh})
+        print(f"{board}: logged {len(fresh)} pick(s) for {date_str} "
+              f"({', '.join(_added)}).")
 
     if wrote:
         RECORD_PATH.parent.mkdir(parents=True, exist_ok=True)
