@@ -10,23 +10,28 @@ text instead — a missing logo is never a broken image.
 """
 import json
 
-import requests
 import streamlit as st
 
-_TEAMS_URL = "https://statsapi.mlb.com/api/v1/teams?sportId=1"
+from engines.roster import _teams_raw
+
 _LOGO_URL = "https://www.mlbstatic.com/team-logos/{tid}.svg"
 
 
 @st.cache_data(ttl=86400, max_entries=2, show_spinner=False)
 def _team_ids_json() -> str:
     try:
-        resp = requests.get(_TEAMS_URL, timeout=10)
-        resp.raise_for_status()
-        teams = resp.json().get("teams", [])
+        # THE THIRD COPY OF THIS FETCH, now removed.
+        #
+        # teams?sportId=1 was being pulled independently here, having
+        # already been pulled inside get_all_teams(), get_live_team_roster()
+        # and get_last_starting_lineup() — all four hitting the same
+        # endpoint for the same list, which changes about once a year.
+        # roster._teams_raw() caches it for 24 hours and is now the only
+        # place it is fetched.
+        teams = _teams_raw()
     except Exception:
         return json.dumps({})
-    return json.dumps({t.get("name"): t.get("id") for t in teams
-                       if t.get("name") and t.get("id")})
+    return json.dumps({name: tid for name, tid in teams})
 
 
 def team_id(name):
