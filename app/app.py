@@ -536,8 +536,18 @@ def render_right_sidebar(nav_titles=None, active_page=None, show_glossary=False,
                     )
                 elif st.button(_title, key=f"lc_nav_btn_{_i}",
                                type="tertiary", use_container_width=True):
+                    # ONLY lc_nav_radio. Setting lc_active_page here too
+                    # is what broke Home's nav: the check near the top of
+                    # this file leaves Home when the two keys DISAGREE,
+                    # which is how it tells a nav click apart from a
+                    # normal render. Writing both together made every
+                    # click look like Home's own jump buttons, so the
+                    # condition never fired and the rail did nothing.
+                    #
+                    # lc_active_page is set at the bottom of this
+                    # function from the page actually being rendered,
+                    # which is the only place that can know it.
                     st.session_state["lc_nav_radio"] = _title
-                    st.session_state["lc_active_page"] = _title
                     st.rerun()
 
         # Kept in step every run, not just on a click, so downstream
@@ -581,8 +591,26 @@ if st.session_state.get("lc_view") == "home":
     # they call st.rerun() immediately, which ends the script before the
     # widget is ever instantiated. Order matters here — see the note in
     # views/Home.py.
-    _home_nav = ([t for t, _p in build_mlb_pages(include_admin=user_is_admin)]
-                 if selected_sport == "MLB" else None)
+    # ADMIN PAGES ONLY — not the whole MLB list.
+    #
+    # This used to mirror the sport's entire page nav, on the reasoning
+    # that pages without a card on Home would be unreachable. Home has
+    # grown since: Daily 13, Player of the Day, HR Edge and the Strikeout
+    # Board are Today-card titles (BOARD_PAGE), Game Card, Bullpen Board,
+    # Weather Board and Pitchers to Target are Explore cards, and Results
+    # is the Track Record link. Nine of eleven entries were a second copy
+    # of navigation the page already provides.
+    #
+    # The two that genuinely had no other route are the admin
+    # diagnostics, so those are all that remain. A subscriber's Home now
+    # has no rail nav at all — every destination is a card.
+    #
+    # tests/test_home.py checks reachability directly rather than
+    # checking for this nav, so removing a card without adding a route
+    # still fails the suite.
+    _admin_pages = [t for t, _p in build_mlb_pages(include_admin=True)
+                    if "(Admin)" in t]
+    _home_nav = _admin_pages if user_is_admin else None
 
     # No page is active on Home, so clear the nav's selection. Both keys,
     # and BEFORE the widget is created: the radio ignores `index` once
@@ -599,7 +627,7 @@ if st.session_state.get("lc_view") == "home":
         load_page_module("views/Home.py")
     with _right_col:
         render_right_sidebar(nav_titles=_home_nav, active_page=None,
-                             nav_caption=f"{selected_sport} pages")
+                             nav_caption="Admin" if _home_nav else None)
 
 elif selected_sport == "MLB":
     pages = build_mlb_pages(include_admin=user_is_admin)
