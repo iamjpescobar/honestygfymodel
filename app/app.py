@@ -167,6 +167,12 @@ def build_mlb_pages(include_admin: bool):
         ("Bullpen Board", "views/Bullpen_Board.py"),
         ("Weather Board", "views/Weather_Board.py"),
         ("Player of the Day", "views/Player_Of_The_Day.py"),
+        # The site's own track record. Subscriber-facing on purpose:
+        # the Calibration page keeps the admin diagnostics (raw records,
+        # storage path, odds entry), and this shows the numbers a paying
+        # user is entitled to see — hit rate per board against the
+        # measured league baseline for that same outcome.
+        ("Results", "views/Results.py"),
         # Model / Pitcher Report / Pitcher Splits / Pitch Mix Splits /
         # Lineup Analysis / Team Tools / KC Lineup Dashboard removed
         # from the nav on purpose: unstable pages are worse than absent
@@ -205,6 +211,10 @@ SPORT_SUBPAGES = {
         ("Defense Matchup", "views/WNBA_Defense.py"),
         ("Props Board", "views/WNBA_Props.py"),
         ("Without Player", "views/Without_Player.py"),
+        # Same page as the MLB nav. It reports every board, so a WNBA
+        # user sees the baseball record too. That is intended: the
+        # track record belongs to the site, not to one sport.
+        ("Results", "views/Results.py"),
     ],
 }
 
