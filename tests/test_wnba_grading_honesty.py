@@ -164,6 +164,72 @@ for _tip_i, (when, stamp) in enumerate(TIP_TIMES):
             f"A pick on this slate grades as DNP and leaves the record "
             f"without ever reporting a failure.")
 
+# ----------------------------------------------------------------------
+# THE REAL PAYLOAD SHAPE.
+#
+# Every fixture above is a simplification written from the NBA gamelog's
+# shape, and it hid two bugs that a nightly run then exposed on 45 picks:
+#
+#   1. ESPN sends headers twice — `labels` short (PTS/REB/AST/3PT) and
+#      `names` long (POINTS/TOTALREBOUNDS/...). The parser read
+#      `names or labels`, took the long array, and looked up "PTS" in it.
+#   2. The top-level `events` map is METADATA. Its "stats" key is an
+#      empty list; the numbers live under seasonTypes -> categories ->
+#      events, keyed by eventId.
+#
+# So this case is the payload as ESPN actually returns it, at an 8 PM ET
+# tip (00:00Z the next day) to keep the timezone fix under test at the
+# same time.
+# ----------------------------------------------------------------------
+REAL_LABELS = ["MIN", "FG", "FG%", "3PT", "3P%", "FT", "FT%",
+               "REB", "AST", "BLK", "STL", "PF", "TO", "PTS"]
+REAL_NAMES = ["MINUTES", "FIELDGOALSMADE-FIELDGOALSATTEMPTED", "FIELDGOALPCT",
+              "THREEPOINTFIELDGOALSMADE-THREEPOINTFIELDGOALSATTEMPTED",
+              "THREEPOINTFIELDGOALPCT", "FREETHROWSMADE-FREETHROWSATTEMPTED",
+              "FREETHROWPCT", "TOTALREBOUNDS", "ASSISTS", "BLOCKS", "STEALS",
+              "FOULS", "TURNOVERS", "POINTS"]
+REAL_ROW = ["31", "8-15", "53.3", "2-5", "40.0", "4-4", "100.0",
+            "9", "6", "1", "2", "3", "2", "22"]
+EXPECT = {"pts": 22.0, "reb": 9.0, "ast": 6.0, "pra": 37.0, "tpm": 2.0}
+
+
+def real_payload(with_short_labels=True):
+    p = {
+        "names": REAL_NAMES,
+        "seasonTypes": [{"categories": [{"events": [
+            {"eventId": "401800", "stats": REAL_ROW}]}]}],
+        # Metadata only — note the empty stats list, exactly as served.
+        "events": {"401800": {"gameDate": "2026-08-02T00:00Z", "stats": []}},
+    }
+    if with_short_labels:
+        p["labels"] = REAL_LABELS
+    return p
+
+
+for _real_i, _short in enumerate((True, False)):
+    payload = real_payload(_short)
+    pid = 70000 + _real_i
+    who = "labels + names" if _short else "long names only"
+
+    sys.modules["requests"] = stub_requests(payload)
+    for m in [k for k in sys.modules if k.startswith("calibration_pipeline")]:
+        del sys.modules[m]
+    import calibration_pipeline as cp
+    pipe = cp._wnba_line(pid, "2026-08-01")
+
+    sys.modules["requests"] = stub_requests(payload)
+    for m in [k for k in sys.modules if k.startswith("engines.calibration")]:
+        del sys.modules[m]
+    import engines.calibration as cal
+    _raw = cal._wnba_day_json(pid, "2026-08-01")
+    app = json.loads(_raw) if _raw else None
+
+    ok = pipe == EXPECT and app == EXPECT
+    print(f"{'PASS' if ok else 'FAIL'}: real ESPN shape ({who})")
+    if not ok:
+        failures.append(f"real ESPN shape ({who}): pipeline={pipe!r} "
+                        f"app={app!r}, expected {EXPECT!r}")
+
 # A game on a genuinely different day must still NOT match, or the fix
 # would grade picks against the wrong night.
 payload = {"names": ["PTS", "REB", "AST"],
