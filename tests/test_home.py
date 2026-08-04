@@ -202,6 +202,42 @@ else:
     print("PASS: main column renders before the nav radio, so Home may set it")
 
 # ----------------------------------------------------------------------
+
+# ----------------------------------------------------------------------
+# NO FABRICATED FRESHNESS.
+#
+# data_timestamp() printed datetime.now() under the words "Data
+# refreshed", on every page, always the current second — so a three-day-
+# old archive read as fresh and the one control a subscriber has for
+# judging staleness was the one thing guaranteed not to reflect it. It
+# must read the nightly's own manifest instead.
+# ----------------------------------------------------------------------
+theme_src = (ROOT / "app" / "styles" / "kc_theme.py").read_text()
+_ts = theme_src[theme_src.index("def data_timestamp"):]
+_ts = _ts[:_ts.index("\ndef ")] if "\ndef " in _ts else _ts
+if "generated_at_utc" not in _ts or "manifest.json" not in _ts:
+    failures.append("data_timestamp no longer reads the nightly manifest — it "
+                    "would be reporting the clock as the data's age")
+elif "no data manifest on disk" not in _ts:
+    # The property that matters isn't "never calls now()" — computing an
+    # age needs the clock. It's that a MISSING manifest says so, instead
+    # of quietly substituting the current time and calling it fresh.
+    failures.append("data_timestamp has no honest fallback for a missing "
+                    "manifest — it would go back to displaying the clock as "
+                    "the data's age")
+else:
+    print("PASS: the freshness stamp reports the DATA's age, not the clock")
+
+# Home must not invent a slate. A missing games.json means the nightly
+# hasn't shipped it, which is not the same fact as "no games tonight".
+if "def _slate_counts" not in home_src:
+    failures.append("Home lost _slate_counts")
+elif "if games:" not in home_src:
+    failures.append("Home would show a league with zero games as if the slate "
+                    "were empty, when the file is simply absent")
+else:
+    print("PASS: an unshipped slate is omitted, not shown as an empty one")
+
 if failures:
     print("\n" + "=" * 68)
     for f in failures:
