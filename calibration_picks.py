@@ -128,21 +128,40 @@ def _rows_hr_edge():
             for r in rows if has_id(r.get("id"))]
 
 
-def _wnba_games():
-    """Tonight's WNBA slate, read from the same file the views read.
+from engines.slate_guard import load_slate  # noqa: E402
 
-    fetch_data.py unpacks the nightly archive into app/, so the slate
-    lands at app/data/wnba/games.json — and slate-picks.yml runs that
-    fetch BEFORE this script, so the file is current by the time either
-    builder below asks for it.
+
+def _wnba_games():
+    """Tonight's WNBA slate, or [] when what's on disk isn't tonight's.
+
+    THE COMMENT THAT USED TO BE HERE SAID the file is current because
+    slate-picks.yml runs fetch_data.py first. That is true only when the
+    nightly published. fetch_data downloads the last SUCCESSFULLY
+    published archive, so while the nightly was failing the fetch kept
+    succeeding and kept returning a slate — just an older one.
+
+    Nothing compared its date to today, so boards were built from games
+    that had already been played and logged under TODAY's date. The
+    grader then looked for box scores on a night those players did not
+    play, found none, and closed 45 picks as DNP. The probe that caught
+    it: a player on the Aug 3 board whose most recent ESPN game was
+    Aug 2 at 7 PM ET.
+
+    Publishing a board for a slate that already finished is worse than
+    publishing nothing, so a stale slate now yields nothing and says so.
     """
-    path = (Path(__file__).resolve().parent
-            / "app" / "data" / "wnba" / "games.json")
-    try:
-        return json.loads(path.read_text()).get("games", []) or []
-    except Exception as exc:
-        print(f"wnba: no slate to read ({exc})")
-        return []
+    games, slate_date, ok = load_slate("wnba")
+    if ok:
+        return games
+    if slate_date is None:
+        print("wnba: no slate on disk (or it carries no slate_date_et) \u2014 "
+              "no picks logged")
+    else:
+        print(f"wnba: slate on disk is for {slate_date}, not "
+              f"{datetime.now(EASTERN).strftime('%Y-%m-%d')} \u2014 the nightly "
+              f"archive has not published since. Those games are already "
+              f"played; refusing to log picks for them.")
+    return []
 
 
 def _rows_wnba_props():
