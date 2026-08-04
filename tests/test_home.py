@@ -122,20 +122,45 @@ else:
 # 3) Home is registered, and it is the default landing page.
 # ----------------------------------------------------------------------
 app_src = (ROOT / "app" / "app.py").read_text()
-if '("Home", "views/Home.py")' not in app_src:
-    failures.append("Home is not registered in app.py's MLB page list")
-elif app_src.index('("Home", "views/Home.py")') > app_src.index('("Game Card"'):
-    failures.append("Home is not first in the page list — menu_titles[0] is "
-                    "the default landing page, so a cold session would land "
-                    "on a page that builds a board before it paints")
+
+# Home is a TOP-LEVEL VIEW, not one of baseball's pages. It reports every
+# board on the site, WNBA included, so living in the MLB nav made it
+# unreachable from every other sport.
+if '("Home", "views/Home.py")' in app_src:
+    failures.append("Home is back in the MLB page list — it belongs above "
+                    "the sport switcher, not inside one sport's nav")
+elif 'st.session_state.setdefault("lc_view", "home")' not in app_src:
+    failures.append("a new session no longer defaults to the Home view")
+elif 'if st.session_state.get("lc_view") == "home":' not in app_src:
+    failures.append("app.py has no Home branch — the view is unreachable")
 else:
-    print("PASS: Home is registered and lands first")
+    print("PASS: Home is a top-level view and is where a new session lands")
+
+# A sport click must leave Home, and the check has to sit ABOVE the
+# switcher: Streamlit syncs the widget key before the script runs, and
+# sport_switcher writes lc_sport then reruns, so the two disagree on
+# exactly one run — the click. Checking afterwards always misses it.
+if 'st.session_state["lc_view"] = "sport"' not in app_src:
+    failures.append("nothing leaves the Home view when a sport is clicked — "
+                    "the switcher would appear dead from Home")
+elif app_src.index('st.session_state["lc_view"] = "sport"') > \
+        app_src.index("sport_switcher(active=selected_sport)"):
+    failures.append("the sport-click check runs after sport_switcher has "
+                    "already synced lc_sport_seg and lc_sport, so it can "
+                    "never fire")
+else:
+    print("PASS: a sport click leaves Home, detected before the switcher syncs")
 
 # The jump buttons write the nav radio's widget key. That is only legal
 # because app.py instantiates the radio AFTER the main column renders.
 if 'st.session_state["lc_nav_radio"]' not in home_src:
     failures.append("Home lost its nav jump — the boards become unreachable "
                     "from the landing page")
+elif "lc_sport_seg" in home_src.split("CURRENT_SPORT")[-1].replace(
+        'st.session_state.get("lc_sport_seg")', ""):
+    failures.append("Home writes lc_sport_seg — that widget is instantiated "
+                    "by app.py above the main column, so setting it raises "
+                    "StreamlitAPIException")
 elif app_src.index("with main_col:") > app_src.index("with right_col:"):
     # Source order of the two `with` blocks IS execution order, and the
     # radio (key="lc_nav_radio") is rendered inside the right one. Writing
