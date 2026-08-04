@@ -1,5 +1,157 @@
+"""
+MLB Stats API access — lineups, rosters, team ids.
+
+PERFORMANCE NOTE (this is why the module looks the way it does)
+
+A cold Daily 13 build was measured at ~36 seconds in CI, and almost all
+of it was spent here, waiting on statsapi.mlb.com. Three separate
+causes, all fixed below:
+
+  1. THE TEAM LIST WAS REFETCHED CONSTANTLY. `teams?sportId=1` — a list
+     that changes about once a year — was fetched inside
+     get_all_teams(), get_live_team_roster() AND get_last_starting_lineup(),
+     on every call, per team. A slate with no confirmed lineups walks the
+     fallback path for every club, so that was up to 30 identical
+     requests. _team_ids() now fetches it once a day.
+
+  2. NO CONNECTION REUSE. Every requests.get() opened a fresh TLS
+     connection. At 100+ calls the handshakes alone were a large share of
+     the wall clock. Everything now goes through one keep-alive Session.
+
+  3. EVERYTHING WAS SEQUENTIAL. Each call waited for the last, though
+     they are independent reads of a remote server. prefetch_slate()
+     warms them concurrently before the serial code runs.
+
+On the concurrency, deliberately: the pool runs _get_json, which is
+plain requests and touches nothing from streamlit. st.cache_data
+decorators stay on the OUTER functions, called from the main thread as
+before. Calling a cached function from a worker thread has no script run
+context and is not worth the risk — memoising one layer down gets the
+same win with none of it.
+"""
+import time
+from concurrent.futures import ThreadPoolExecutor
+
 import requests
+from requests.adapters import HTTPAdapter
 import streamlit as st
+
+# One connection pool for the whole process. maxsize matches the
+# prefetch worker count so concurrent warms never queue on a free socket.
+_SESSION = requests.Session()
+_SESSION.mount("https://", HTTPAdapter(pool_connections=4, pool_maxsize=16))
+
+_PREFETCH_WORKERS = 8
+
+# Response memo, one layer BELOW st.cache_data. Its only job is to let a
+# parallel prefetch and the serial code that follows share one fetch.
+# TTL matches the shortest cache above it (5 min, the lineup window), so
+# it can never serve something the caller would have considered stale.
+_MEMO = {}
+_MEMO_TTL = 300
+_MEMO_MAX = 400
+
+
+def _memo_key(url, params):
+    return (url, tuple(sorted((params or {}).items())))
+
+
+def _get_json(url, params=None, timeout=10):
+    """GET returning parsed JSON, or None. Never raises."""
+    key = _memo_key(url, params)
+    hit = _MEMO.get(key)
+    now = time.monotonic()
+    if hit and now - hit[0] < _MEMO_TTL:
+        return hit[1]
+    try:
+        resp = _SESSION.get(url, params=params, timeout=timeout)
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception:
+        # Cache nothing on failure. A transient error must not be pinned
+        # for five minutes — the retry a few seconds later is the whole
+        # reason the scheduled runs are staggered.
+        return None
+    if len(_MEMO) >= _MEMO_MAX:
+        _MEMO.clear()
+    _MEMO[key] = (now, data)
+    return data
+
+
+def prefetch_json(specs, workers=_PREFETCH_WORKERS):
+    """Warm the memo for many (url, params) pairs at once.
+
+    Fire-and-forget: results land in _MEMO and callers just make their
+    normal serial calls afterwards, which now hit memory. Every failure
+    is swallowed, so a prefetch can only ever make things faster or
+    leave them exactly as they were.
+    """
+    specs = [sp for sp in specs if sp]
+    if len(specs) < 2:
+        for url, params in specs:
+            _get_json(url, params)
+        return
+    with ThreadPoolExecutor(max_workers=min(workers, len(specs))) as pool:
+        list(pool.map(lambda sp: _get_json(sp[0], sp[1]), specs))
+
+
+_TEAMS_URL = "https://statsapi.mlb.com/api/v1/teams?sportId=1"
+
+
+@st.cache_data(ttl=86400, max_entries=1, show_spinner=False)
+def _teams_raw():
+    """[(name, id)] for every MLB club. Fetched once a day, not per call.
+
+    The single source for both the id lookup and the display list, so
+    the two can never fall out of step and neither triggers its own
+    fetch. Names are kept EXACTLY as MLB returns them — reconstructing
+    them from a lowercased key would quietly mangle anything title-case
+    does not round-trip.
+    """
+    data = _get_json(_TEAMS_URL) or {}
+    return [(t["name"], t["id"]) for t in data.get("teams", [])
+            if t.get("name") and t.get("id")]
+
+
+def _team_ids():
+    """{lowercased team name: team id}."""
+    return {name.lower(): tid for name, tid in _teams_raw()}
+
+
+def _team_id(team_name: str):
+    return _team_ids().get((team_name or "").lower())
+
+
+def prefetch_slate(team_names=(), game_sides=()):
+    """Warm every request a slate build is about to make, concurrently.
+
+    team_names: clubs whose rosters will be read.
+    game_sides: (game_pk, side) pairs whose lineups will be read.
+
+    Call this ONCE at the top of a board build, before the per-team and
+    per-game loops. It is purely an optimisation — every function below
+    still works correctly if it is never called.
+    """
+    ids = _team_ids()
+    specs = []
+    for pk, _side in game_sides:
+        if pk:
+            specs.append((f"https://statsapi.mlb.com/api/v1/game/{pk}/boxscore", None))
+    for name in team_names:
+        tid = ids.get((name or "").lower())
+        if not tid:
+            continue
+        for roster_type in ("40Man", "active"):
+            specs.append((f"https://statsapi.mlb.com/api/v1/teams/{tid}/roster",
+                          {"rosterType": roster_type, "hydrate": "person"}))
+    # de-dupe: two sides of one game share a boxscore
+    seen, uniq = set(), []
+    for sp in specs:
+        k = _memo_key(*sp)
+        if k not in seen:
+            seen.add(k)
+            uniq.append(sp)
+    prefetch_json(uniq)
 
 
 @st.cache_data(ttl=300, max_entries=40, show_spinner=False)
@@ -20,13 +172,12 @@ def get_confirmed_lineup(game_pk, side: str):
     """
     if not game_pk:
         return [], False
-    try:
-        url = f"https://statsapi.mlb.com/api/v1/game/{game_pk}/boxscore"
-        data = requests.get(url, timeout=10).json()
-        team_data = data.get("teams", {}).get(side, {})
-        players = team_data.get("players", {})
-    except Exception:
+    url = f"https://statsapi.mlb.com/api/v1/game/{game_pk}/boxscore"
+    data = _get_json(url)
+    if not data:
         return [], False
+    team_data = data.get("teams", {}).get(side, {})
+    players = team_data.get("players", {})
 
     lineup = []
     for p in players.values():
@@ -58,20 +209,16 @@ def get_confirmed_lineup(game_pk, side: str):
     # timing out on a slow connection could bog down the whole page load.
     ids = ",".join(x["id"] for x in lineup if x["id"])
     if ids:
-        try:
-            people_resp = requests.get(
-                "https://statsapi.mlb.com/api/v1/people",
-                params={"personIds": ids},
-                timeout=10,
-            ).json()
+        people_resp = _get_json("https://statsapi.mlb.com/api/v1/people",
+                                params={"personIds": ids})
+        # Leave everyone as "?" rather than silently guessing a side.
+        if people_resp:
             bats_by_id = {
                 str(person["id"]): (person.get("batSide", {}).get("code") or "?")
                 for person in people_resp.get("people", [])
             }
             for x in lineup:
                 x["bats"] = bats_by_id.get(x["id"], "?")
-        except Exception:
-            pass  # leave everyone as "?" rather than silently guessing a side
 
     lineup.sort(key=lambda x: x["battingOrder"])
     return lineup, True
@@ -84,14 +231,9 @@ def get_all_teams():
     (rather than crashing the page) if the MLB Stats API is unreachable —
     callers already handle an empty team list with a warning message.
     """
-    url = "https://statsapi.mlb.com/api/v1/teams?sportId=1"
-    try:
-        resp = requests.get(url, timeout=10)
-        resp.raise_for_status()
-        teams = resp.json().get("teams", [])
-    except Exception:
-        return []
-    return sorted([t["name"] for t in teams])
+    # Names come from the shared _teams_raw() cache — this used to be
+    # its own fetch of the very same list.
+    return sorted(name for name, _tid in _teams_raw())
 
 
 @st.cache_data(ttl=300, max_entries=40, show_spinner=False)
@@ -123,18 +265,7 @@ def get_live_team_roster(team_name: str):
     player.
     """
 
-    teams_url = "https://statsapi.mlb.com/api/v1/teams?sportId=1"
-    try:
-        teams = requests.get(teams_url, timeout=10).json().get("teams", [])
-    except Exception:
-        return []
-
-    team_id = None
-    for t in teams:
-        if t["name"].lower() == team_name.lower():
-            team_id = t["id"]
-            break
-
+    team_id = _team_id(team_name)
     if not team_id:
         return []
 
@@ -142,14 +273,9 @@ def get_live_team_roster(team_name: str):
     active_pids = set()  # who is on the ACTIVE 26 right now
     for roster_type in ("40Man", "active"):  # loaded in this order so active overwrites 40Man on overlap
         roster_url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster"
-        try:
-            resp = requests.get(
-                roster_url,
-                params={"rosterType": roster_type, "hydrate": "person"},
-                timeout=10,
-            ).json().get("roster", [])
-        except Exception:
-            resp = []
+        resp = (_get_json(roster_url,
+                          params={"rosterType": roster_type,
+                                  "hydrate": "person"}) or {}).get("roster", [])
         for player in resp:
             pid = player.get("person", {}).get("id")
             if pid is not None:
@@ -200,20 +326,16 @@ def get_live_team_roster(team_name: str):
     # (older cached edge or a schema hiccup) — one bulk call fills them
     # in rather than falling back to N individual requests.
     if missing_bio_ids:
-        try:
-            people_resp = requests.get(
-                "https://statsapi.mlb.com/api/v1/people",
-                params={"personIds": ",".join(missing_bio_ids)},
-                timeout=10,
-            ).json().get("people", [])
-            bio_by_id = {str(p["id"]): p for p in people_resp}
-            for pl in players:
-                if pl["id"] in bio_by_id:
-                    src = bio_by_id[pl["id"]]
-                    pl["bats"] = (src.get("batSide", {}).get("code", "").upper() or None)
-                    pl["throws"] = (src.get("pitchHand", {}).get("code", "").upper() or None)
-        except Exception:
-            pass  # leave as None rather than silently guessing "R"
+        people_resp = (_get_json(
+            "https://statsapi.mlb.com/api/v1/people",
+            params={"personIds": ",".join(missing_bio_ids)}) or {}).get("people", [])
+        # Leave as None rather than silently guessing "R".
+        bio_by_id = {str(p["id"]): p for p in people_resp}
+        for pl in players:
+            if pl["id"] in bio_by_id:
+                src = bio_by_id[pl["id"]]
+                pl["bats"] = (src.get("batSide", {}).get("code", "").upper() or None)
+                pl["throws"] = (src.get("pitchHand", {}).get("code", "").upper() or None)
 
     return players
 
@@ -235,18 +357,7 @@ def get_last_starting_lineup(team_name: str):
     confirmed is True only if a real posted lineup was found. Callers
     MUST check `confirmed` before showing this as "the starters."
     """
-    teams_url = "https://statsapi.mlb.com/api/v1/teams?sportId=1"
-    try:
-        teams = requests.get(teams_url, timeout=10).json().get("teams", [])
-    except Exception:
-        return [], None, False
-
-    team_id = None
-    for t in teams:
-        if t["name"].lower() == team_name.lower():
-            team_id = t["id"]
-            break
-
+    team_id = _team_id(team_name)
     if not team_id:
         return [], None, False
 
@@ -259,9 +370,8 @@ def get_last_starting_lineup(team_name: str):
         "https://statsapi.mlb.com/api/v1/schedule"
         f"?sportId=1&teamId={team_id}&startDate={start.isoformat()}&endDate={today.isoformat()}"
     )
-    try:
-        sched = requests.get(sched_url, timeout=10).json()
-    except Exception:
+    sched = _get_json(sched_url)
+    if not sched:
         return [], None, False
 
     games = []
