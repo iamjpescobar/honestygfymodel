@@ -95,7 +95,7 @@ def _rows_daily13():
     rows = result[0] if isinstance(result, tuple) else result
     rows = rows or []
     return [{"id": r.get("id"), "name": r.get("name"), "team": r.get("team")}
-            for r in rows if isinstance(r, dict) and r.get("id")]
+            for r in rows if isinstance(r, dict) and has_id(r.get("id"))]
 
 
 def _rows_potd():
@@ -105,7 +105,7 @@ def _rows_potd():
     # The engine returns (pick, note)-shaped or dict-shaped data across
     # versions; accept either rather than assuming.
     pick = result[0] if isinstance(result, tuple) else result
-    if not isinstance(pick, dict) or not pick.get("id"):
+    if not isinstance(pick, dict) or not has_id(pick.get("id")):
         return []
     return [{"id": pick.get("id"), "name": pick.get("name"),
              "team": pick.get("team")}]
@@ -124,7 +124,7 @@ def _rows_hr_edge():
     from engines.hr_edge_board import top_hr_edge
     rows, _meta = top_hr_edge(n=5, confirmed_only=True)
     return [{"id": r.get("id"), "name": r.get("name"), "team": r.get("team")}
-            for r in rows if r.get("id")]
+            for r in rows if has_id(r.get("id"))]
 
 
 def _wnba_games():
@@ -191,7 +191,7 @@ def _rows_wnba_props():
         out.extend({"id": r.get("id"), "name": r.get("player"),
                     "team": r.get("team"), "stat": cfg["key"],
                     "line": r.get("line")}
-                   for r in (rows or [])[:10] if r.get("id"))
+                   for r in (rows or [])[:10] if has_id(r.get("id")))
     return out
 
 
@@ -225,7 +225,7 @@ def _rows_wnba_defense():
         out.extend({"id": r.get("id"), "name": r.get("player"),
                     "team": r.get("team"), "stat": stat_key,
                     "line": r.get("form")}
-                   for r in (rows or [])[:5] if r.get("id"))
+                   for r in (rows or [])[:5] if has_id(r.get("id")))
     return out
 
 
@@ -252,12 +252,17 @@ def _rows_k_board():
     # into BUILDERS and into both BOARDS configs.
     rows, _warning = get_slate_k_projections("season")
     rows = rows or []
-    ranked = sorted((r for r in rows if r.get("pid") and r.get("proj")),
+    ranked = sorted((r for r in rows if has_id(r.get("pid")) and r.get("proj")),
                     key=lambda r: -(r.get("proj") or 0))[:5]
     return [{"id": r.get("pid"), "name": r.get("pitcher"), "team": r.get("team"),
              "stat": "strikeOuts", "line": r.get("proj")}
             for r in ranked]
 
+
+# Shared with the app so the two never diverge on what counts as an id.
+# sys.path already has app/ (see the top of this file), and CI installs
+# streamlit because the board engines need it.
+from engines.calibration import has_id  # noqa: E402
 
 BUILDERS = {"daily13": _rows_daily13, "potd": _rows_potd,
             "k_board": _rows_k_board,
