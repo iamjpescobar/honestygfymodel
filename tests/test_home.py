@@ -168,8 +168,16 @@ elif "_home_nav" not in app_src or "render_right_sidebar(nav_titles=_home_nav" n
 elif 'if _nav is not None and _nav != st.session_state.get("lc_active_page"):' not in app_src:
     failures.append("a nav click from Home does not leave the Home view, so "
                     "the sidebar would appear dead")
+elif 'st.session_state["lc_nav_radio"] = None' not in app_src:
+    failures.append("Home no longer clears the nav selection — the radio "
+                    "ignores index once its key holds a value, so the active "
+                    "rail would sit on a page the user is not on")
+elif "index=_idx" not in app_src or "else None" not in app_src.split("_idx =")[1][:80]:
+    failures.append("the nav falls back to index 0 when nothing is active, "
+                    "which highlights the first page while the user is on Home")
 else:
     print("PASS: Home has a Back control, the page nav, and both exits work")
+    print("PASS: the nav shows no active page on Home")
 
 # The jump buttons write the nav radio's widget key. That is only legal
 # because app.py instantiates the radio AFTER the main column renders.
