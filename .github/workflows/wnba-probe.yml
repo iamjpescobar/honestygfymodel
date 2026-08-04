@@ -1,0 +1,32 @@
+name: WNBA gamelog probe
+
+# Manual only. Prints the raw structure of one ESPN gamelog so the
+# grader's remaining failure can be diagnosed from the response itself
+# rather than from an assumption about its shape.
+#
+# Runs in about ten seconds and touches nothing: no commit, no release,
+# no deploy hook. Safe to run as often as needed.
+on:
+  workflow_dispatch:
+    inputs:
+      pid:
+        description: "ESPN athlete id (from a pick that failed to grade)"
+        required: false
+        default: "4398966"
+      date:
+        description: "ET slate date the pick was logged under (YYYY-MM-DD)"
+        required: false
+        default: "2026-08-03"
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests
+      - name: Probe the gamelog
+        run: python wnba_probe.py "${{ inputs.pid }}" "${{ inputs.date }}"
