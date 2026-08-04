@@ -66,12 +66,20 @@ print("PASS: WNBA picks carry the line the grader needs")
 # --- 4. the slate path must match where fetch_data extracts ----------
 FETCH = (ROOT / "app" / "fetch_data.py").read_text()
 assert "extracts to app/data" in FETCH or 'DEST = os.path.dirname' in FETCH
-# The path lives in the shared _wnba_games() helper, not each builder.
+# The path moved again, and for a good reason: it now lives in
+# app/engines/slate_guard.py, which is also the only place that checks
+# the slate's DATE. Reading the file without that check is what let
+# boards be built from games already played — see tests/test_slate_guard.
 _slate = PICKS[PICKS.index("def _wnba_games"):PICKS.index("def _rows_wnba_props")]
-assert '"app"' in _slate and '"wnba"' in _slate and '"games.json"' in _slate, (
-    "the builder reads the slate from a path that isn't where fetch_data "
-    "unpacks it — it would silently return no picks every run")
-print("PASS: builder reads the slate from where fetch_data extracts it")
+assert 'load_slate("wnba")' in _slate, (
+    "the builder no longer goes through slate_guard.load_slate — it would "
+    "read the slate file without checking which night it was built for")
+GUARD = (ROOT / "app" / "engines" / "slate_guard.py").read_text()
+assert '"data"' in GUARD and '"games.json"' in GUARD, (
+    "slate_guard reads from a path that isn't where fetch_data unpacks the "
+    "archive — every league would silently return no games every run")
+print("PASS: the slate is read through the date guard, from where "
+      "fetch_data extracts it")
 
 # --- 5. the workflow must fetch the slate BEFORE logging picks -------
 # Compare actual STEP order, not raw text position — the filenames also
