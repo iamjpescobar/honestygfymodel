@@ -44,7 +44,7 @@ from zoneinfo import ZoneInfo
 
 from engines.weather_engine import get_todays_games_with_weather
 from engines.roster import (get_confirmed_lineup, get_last_starting_lineup,
-                            get_active_player_ids)
+                            get_active_player_ids, prefetch_slate)
 from engines.savant_leaderboard import load_percentile_ranks
 from engines.statcast_engine import get_batter_profile_windowed, get_pitcher_statcast
 from engines.top_plays import rank_batters
@@ -128,6 +128,20 @@ def get_hr_edge_board(_date_str=None, confirmed_only=True):
     if not games:
         return [], {"error": games_error or "No games on the slate.",
                     "date": date_str, "games": 0}
+
+    # Warm the per-game boxscore and per-team roster calls concurrently
+    # before the serial loop below — same reasoning as the identical
+    # call in engines/daily_13.py. Optimisation only; removing it costs
+    # speed, never correctness.
+    _sides = []
+    _clubs = []
+    for _g in games:
+        for _s in ("away", "home"):
+            if _g.get("game_pk"):
+                _sides.append((_g.get("game_pk"), _s))
+            if _g.get(_s):
+                _clubs.append(_g.get(_s))
+    prefetch_slate(team_names=_clubs, game_sides=_sides)
 
     savant_df, savant_error = load_percentile_ranks()
     rows, skipped = [], []
