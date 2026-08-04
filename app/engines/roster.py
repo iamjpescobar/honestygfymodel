@@ -48,8 +48,19 @@ _PREFETCH_WORKERS = 8
 # TTL matches the shortest cache above it (5 min, the lineup window), so
 # it can never serve something the caller would have considered stale.
 _MEMO = {}
-_MEMO_TTL = 300
-_MEMO_MAX = 400
+# BOUNDED DELIBERATELY TIGHTLY — this runs on a small Render instance
+# alongside Statcast caches that already budget thousands of DataFrame
+# entries, and a parsed MLB boxscore is several times the size of its
+# JSON once it is Python dicts.
+#
+# The memo exists for one job: let a parallel prefetch and the serial
+# loop immediately after it share a fetch. That window is seconds, not
+# minutes, and a full slate touches roughly 120 entries (a boxscore per
+# game, two roster types per club). 120s/128 covers that with headroom
+# and caps what can be held at any moment. It was 300s/400, which bought
+# nothing and could pin several hundred megabytes of boxscore.
+_MEMO_TTL = 120
+_MEMO_MAX = 128
 
 
 def _memo_key(url, params):
@@ -79,8 +90,17 @@ def _get_json(url, params=None, timeout=10, headers=None):
         # for five minutes — the retry a few seconds later is the whole
         # reason the scheduled runs are staggered.
         return None
+    # Drop anything already expired before deciding the memo is full.
+    # Cheap (the dict is capped at 128) and it means a long build evicts
+    # stale entries rather than live ones.
     if len(_MEMO) >= _MEMO_MAX:
-        _MEMO.clear()
+        for k in [k for k, (t, _v) in _MEMO.items() if now - t >= _MEMO_TTL]:
+            _MEMO.pop(k, None)
+    # Still full: evict oldest-first instead of clearing everything.
+    # A full clear threw away the prefetch the caller was about to read,
+    # so the slowest possible build was the one that refetched the lot.
+    while len(_MEMO) >= _MEMO_MAX:
+        _MEMO.pop(min(_MEMO, key=lambda k: _MEMO[k][0]), None)
     _MEMO[key] = (now, data)
     return data
 
