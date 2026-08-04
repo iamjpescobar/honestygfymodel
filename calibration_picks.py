@@ -54,6 +54,7 @@ measure a claim the model never made.
 """
 import json
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -274,6 +275,14 @@ def main() -> int:
     date_str = datetime.now(EASTERN).strftime("%Y-%m-%d")
     record = _load()
     wrote = 0
+    # PER-BOARD TIMING.
+    #
+    # Every print in this script was buffered and flushed at exit, so the
+    # Actions log showed the whole run as one block and there was no way
+    # to tell which board was slow — only that the six together took a
+    # minute. flush=True plus an elapsed figure per board turns the log
+    # into the profile, at the cost of nothing.
+    timings = []
 
     for board, build in BUILDERS.items():
         # SKIP PER MARKET, NOT PER DAY — mirrors the same change in
@@ -289,18 +298,22 @@ def main() -> int:
         # three daily runs exist for.
         existing = record.get(board, {}).get(date_str) or {}
         logged_markets = {p.get("stat") for p in existing.get("picks", [])}
+        _t0 = time.monotonic()
         try:
             rows = build()
         except Exception as exc:
             # One board failing must not cost the other. A missing board
             # is a gap; a crash here would be a whole lost day.
-            print(f"{board}: could not build ({type(exc).__name__}: {exc})")
+            print(f"{board}: could not build after {time.monotonic() - _t0:.1f}s "
+                  f"({type(exc).__name__}: {exc})", flush=True)
             continue
+        _elapsed = time.monotonic() - _t0
+        timings.append((board, _elapsed))
         if not rows:
             # Almost always "lineups aren't posted yet" — a real timing
             # fact, not an error. A later run picks it up.
-            print(f"{board}: no board yet for {date_str} "
-                  f"(lineups likely not posted) - will retry.")
+            print(f"{board}: no board yet for {date_str} in {_elapsed:.1f}s "
+                  f"(lineups likely not posted) - will retry.", flush=True)
             continue
         # CARRY stat AND line THROUGH. These were hardcoded to None here,
         # which silently discarded the per-pick numbers every builder
@@ -321,7 +334,8 @@ def main() -> int:
         fresh = [r for r in rows if r.get("stat") not in logged_markets]
         if not fresh:
             print(f"{board}: every market already logged for {date_str} "
-                  f"({len(existing.get('picks', []))} picks) - leaving alone.")
+                  f"({len(existing.get('picks', []))} picks) - leaving alone "
+                  f"[built in {_elapsed:.1f}s].", flush=True)
             continue
         entry = record.setdefault(board, {}).setdefault(
             date_str, {"picks": [], "graded": False,
@@ -339,7 +353,14 @@ def main() -> int:
         wrote += len(fresh)
         _added = sorted({str(r.get("stat")) for r in fresh})
         print(f"{board}: logged {len(fresh)} pick(s) for {date_str} "
-              f"({', '.join(_added)}).")
+              f"({', '.join(_added)}) in {_elapsed:.1f}s.", flush=True)
+
+    if timings:
+        _total = sum(t for _b, t in timings)
+        print("\n--- build time by board (slowest first) ---", flush=True)
+        for _b, _t in sorted(timings, key=lambda x: -x[1]):
+            print(f"  {_t:7.1f}s  {_b}", flush=True)
+        print(f"  {_total:7.1f}s  TOTAL\n", flush=True)
 
     if wrote:
         RECORD_PATH.parent.mkdir(parents=True, exist_ok=True)
