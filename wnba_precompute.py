@@ -28,7 +28,7 @@ import requests
 
 EASTERN = ZoneInfo("America/New_York")
 SEASON_START = date(2026, 4, 3)
-BASE = "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba"
+BASE = "https://site.web.api.espn.com/apis/site/v2/sports/basketball/wnba"
 
 UA = {
     "User-Agent": ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "

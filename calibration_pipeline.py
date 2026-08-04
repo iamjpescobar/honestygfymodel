@@ -52,7 +52,7 @@ EXISTING_PATHS = [
 ]
 
 MLB_URL = "https://statsapi.mlb.com/api/v1/people/{pid}/stats"
-ESPN_URL = ("https://site.api.espn.com/apis/common/v3/sports/basketball/wnba/"
+ESPN_URL = ("https://site.web.api.espn.com/apis/common/v3/sports/basketball/wnba/"
             "athletes/{pid}/gamelog")
 
 BOARDS = {
