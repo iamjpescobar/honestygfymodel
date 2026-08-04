@@ -449,59 +449,74 @@ def render_right_sidebar(nav_titles=None, active_page=None, show_glossary=False,
     )
 
     if nav_titles:
-        # Page navigation — always visible (was hidden inside the "Menu"
-        # dropdown before). Same key as the old radio so nothing else
-        # reading lc_nav_radio breaks.
+        # Page navigation — buttons, not a styled st.radio.
         #
-        # Accent-rail restyle: pure CSS over the same st.radio — circles
-        # hidden, each option becomes a full-width row, the active row
-        # gets a teal left rail + tint (matches the section-tag / badge
-        # language in kc_theme). If a future Streamlit version changes
-        # that DOM, the nav gracefully degrades to plain radios.
+        # This was an st.radio with ~20 lines of CSS hiding the circles
+        # and painting an accent rail. It degraded exactly the way its
+        # own comment warned it might: the selectors leaned on Streamlit
+        # internals — `label > div > :not(:has(p))` for the circle and
+        # `label[data-selected='true']` for the active row — and neither
+        # matches 1.59's radio markup. So the circles came back, and the
+        # nav read as an unfinished form rather than navigation. It
+        # failed silently, which is the worst way for styling to fail.
+        #
+        # Buttons need no DOM archaeology, and they are the honest
+        # control anyway: these are actions, not a choice among options
+        # to be submitted. The only Streamlit internal left is the
+        # `.st-key-*` container class, which is a documented feature the
+        # card() helper already depends on.
+        #
+        # lc_nav_radio is kept as the state key so every existing reader
+        # (including Home's jump buttons) keeps working. It is now a
+        # plain session value rather than a widget key, which also lifts
+        # the restriction on writing it from elsewhere.
         _rail = COLOR["stat_high"]
-        _hover = COLOR["text"]
         st.markdown(
             "<style>"
-            "div[role='radiogroup'][aria-label='Navigation'] label > div > :not(:has(p)):not(p) {"
-            "  display: none !important; }"
-            "div[role='radiogroup'][aria-label='Navigation'] label *::before,"
-            "div[role='radiogroup'][aria-label='Navigation'] label *::after {"
-            "  display: none !important; }"
-            "div[role='radiogroup'][aria-label='Navigation'] label {"
-            "  display: flex !important; align-items: center !important;"
-            "  width: 100% !important; padding:var(--lc-space-md) var(--lc-space-lg) !important; margin:var(--lc-space-none) !important;"
-            "  border-left: 2px solid transparent !important; border-radius: 0 !important;"
-            "  cursor: pointer; transition: background 0.15s; }"
-            "div[role='radiogroup'][aria-label='Navigation'] label:hover {"
-            f"  background: {_hover}0D !important; }}"
-            "div[role='radiogroup'][aria-label='Navigation'] label[data-selected='true'] {"
-            f"  background: {_rail}1A !important; border-left-color: {_rail} !important; }}"
-            "div[role='radiogroup'][aria-label='Navigation'] label[data-selected='true'] p {"
-            f"  color: {_rail} !important; font-weight: 600 !important; }}"
+            ".st-key-lc_nav button {"
+            "  width: 100% !important; justify-content: flex-start !important;"
+            "  text-align: left !important;"
+            "  padding: var(--lc-space-md) var(--lc-space-lg) !important;"
+            "  border: none !important; border-left: 2px solid transparent !important;"
+            "  border-radius: 0 !important; }"
+            ".st-key-lc_nav button:hover {"
+            f"  background: {COLOR['text']}0D !important; }}"
             "</style>",
             unsafe_allow_html=True,
         )
+
         # WHOSE PAGES THESE ARE. Unlabelled, the list reads as the
         # current page's nav — which is wrong on Home, where it is the
         # selected SPORT's page list and Home belongs to no sport.
         if nav_caption:
             st.caption(nav_caption)
 
-        # index=None, NOT 0, when nothing is active.
-        #
-        # Falling back to 0 put the teal active rail on Game Card while
-        # the user was standing on Home, which states plainly that they
-        # are on a page they are not on. A nav with no current page must
-        # show no current page.
-        _idx = nav_titles.index(active_page) if active_page in nav_titles else None
-        selected = st.radio(
-            "Navigation",
-            nav_titles,
-            index=_idx,
-            key="lc_nav_radio",
-            label_visibility="collapsed",
-        )
-        st.session_state["lc_active_page"] = selected
+        with st.container(key="lc_nav"):
+            for _i, _title in enumerate(nav_titles):
+                # The active page is rendered as text, not a button.
+                # There is nowhere to navigate to from where you already
+                # are, and a pressable control that does nothing is the
+                # same lie the old always-selected radio told.
+                if _title == active_page:
+                    st.markdown(
+                        f'<div style="padding:var(--lc-space-md) var(--lc-space-lg); '
+                        f'border-left:2px solid {_rail}; background:{_rail}1A; '
+                        f'color:{_rail}; font-weight:600; '
+                        f'font-size:var(--lc-text-body);">{_title}</div>',
+                        unsafe_allow_html=True,
+                    )
+                elif st.button(_title, key=f"lc_nav_btn_{_i}",
+                               type="tertiary", use_container_width=True):
+                    st.session_state["lc_nav_radio"] = _title
+                    st.session_state["lc_active_page"] = _title
+                    st.rerun()
+
+        # Kept in step every run, not just on a click, so downstream
+        # readers see the page actually being rendered. active_page is
+        # None on Home, and that stays None rather than defaulting to the
+        # first item — a nav with no current page must show no current
+        # page.
+        st.session_state["lc_active_page"] = active_page
 
     # Glossary — carried over from the Game Card's old sidebar. Every
     # term in it is baseball, so it only shows on MLB.
@@ -611,12 +626,31 @@ else:
             # Read the widget key first so a click takes effect on the
             # same rerun (same one-click fix the main nav uses).
             _active = st.session_state.get(_key, _titles[0])
-            _choice = st.radio(
-                f"{selected_sport} pages", _titles,
-                index=_titles.index(_active) if _active in _titles else 0,
-                key=_key, horizontal=True, label_visibility="collapsed",
-            )
-            _path = dict(_subpages).get(_choice or _titles[0], _subpages[0][1])
+            if _active not in _titles:
+                _active = _titles[0]
+
+            # Buttons, matching the main nav — see the long note in
+            # render_right_sidebar. A horizontal st.radio drew the same
+            # unstyled circles here, so the two navs on the site were
+            # inconsistent AND both looked unfinished.
+            _cols = st.columns(len(_titles))
+            for _c, _t in zip(_cols, _titles):
+                with _c:
+                    if _t == _active:
+                        st.markdown(
+                            f'<div style="padding:var(--lc-space-sm) var(--lc-space-md); '
+                            f'text-align:center; border-bottom:2px solid '
+                            f'{COLOR["stat_high"]}; color:{COLOR["stat_high"]}; '
+                            f'font-weight:600; font-size:var(--lc-text-caption);">'
+                            f'{_t}</div>',
+                            unsafe_allow_html=True,
+                        )
+                    elif st.button(_t, key=f"{_key}_btn_{_t}",
+                                   type="tertiary", use_container_width=True):
+                        st.session_state[_key] = _t
+                        st.rerun()
+
+            _path = dict(_subpages).get(_active, _subpages[0][1])
             load_page_module(_path)
         else:
             # .get(), not [selected_sport]. selected_sport comes from
