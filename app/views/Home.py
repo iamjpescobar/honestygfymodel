@@ -58,6 +58,43 @@ WNBA_PAGE = {
     "wnba_defense": "Defense Matchup",
 }
 
+# WHICH BOARDS BELONG TO WHICH SPORT — stated once, explicitly.
+#
+# Every consumer of this used to re-derive it inline as
+# `BOARD_PAGE if CURRENT_SPORT == "MLB" else WNBA_PAGE`, which has no
+# third branch. So on KBO, NPB, NBA, NFL and NHL — five of the seven
+# sports in the switcher — the "else" fired and Home presented WNBA
+# Props and WNBA Defense Matchup as that sport's OWN board cards: full
+# size, same weight as a live card, no jump button (correctly, since
+# they aren't reachable from there) and no explanation of why. On a
+# quiet night it went further and told a KBO subscriber "Not published
+# yet: WNBA Props, WNBA Defense Matchup", which is a sentence about a
+# league they aren't looking at.
+#
+# A sport that publishes no boards maps to {} and gets the honest empty
+# state, which is a real answer rather than another sport's inventory.
+SPORT_BOARDS = {
+    "MLB": BOARD_PAGE,
+    "WNBA": WNBA_PAGE,
+}
+
+
+# Every board the site publishes, in a stable order: each sport's own
+# boards, sports in SPORT_BOARDS order.
+ALL_BOARDS = [b for pages in SPORT_BOARDS.values() for b in pages]
+
+
+def _boards_for(sport):
+    """The boards `sport` publishes, as {board_key: page_title}."""
+    return SPORT_BOARDS.get(sport, {})
+
+
+def _boards_elsewhere(sport):
+    """Every board the site publishes that `sport` does not, keyed by the
+    sport that owns it — so the 'also published' section can name the
+    right destination instead of assuming there are only two sports."""
+    return {sp: pages for sp, pages in SPORT_BOARDS.items() if sp != sport}
+
 CURRENT_SPORT = (st.session_state.get("lc_sport_seg")
                  or st.session_state.get("lc_sport", "MLB"))
 
@@ -140,15 +177,27 @@ def _slate_counts():
     return out
 
 
-def _chip(text, color):
-    return (f'<span style="display:inline-block; padding:var(--lc-space-hair) var(--lc-space-md); '
+def _chip(text, color, live=False):
+    """A small monospace status pill. live=True prefixes the breathing
+    dot defined in _inject_card_css — used only on the pulse rail, where
+    the statement really is about right now."""
+    dot = (f'<span class="lc-live-dot" style="background:{color};"></span>'
+           if live else "")
+    return (f'<span style="display:inline-flex; align-items:center; '
+            f'padding:var(--lc-space-hair) var(--lc-space-md); '
             f'border-radius:var(--lc-radius-sm); background:{color}22; color:{color}; '
+            f'border:1px solid {color}33; '
             f'font-size:var(--lc-text-tiny); font-weight:700; letter-spacing:0.04em; '
-            f'font-family:\'JetBrains Mono\',monospace;">{text}</span>')
+            f'font-family:\'JetBrains Mono\',monospace;">{dot}{text}</span>')
 
 
 def _section_tag(text):
-    return (f'<div style="display:inline-block; margin:var(--lc-space-xl) var(--lc-space-none) '
+    # Inline-flex with a short accent rule leading into the label. The
+    # four sections on this page were previously distinguished only by
+    # vertical gap, which on a phone (where the gap collapses) meant they
+    # were not distinguished at all.
+    return (f'<div style="display:inline-flex; align-items:center; '
+            f'gap:var(--lc-space-sm); margin:var(--lc-space-xl) var(--lc-space-none) '
             f'var(--lc-space-md) var(--lc-space-none); padding:var(--lc-space-hair) var(--lc-space-md); '
             f'border-radius:var(--lc-radius-sm); background:{COLOR["accent_dim"]}; '
             f'border:1px solid {COLOR["accent_border"]}; color:{COLOR["accent"]}; '
@@ -162,7 +211,13 @@ def _tile(label, value, sub="", color=None):
     if sub:
         sub_html = (f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["text_faint"]}; '
                     f'margin-top:var(--lc-space-hair);">{sub}</div>')
-    return (f'<div style="background:{COLOR["surface"]}; border-radius:var(--lc-radius-lg); '
+    # The figure's own colour carries down into a hairline under it, so
+    # a red "0/4" and a green "3/4" read differently at a glance instead
+    # of being four identically-weighted grey boxes.
+    return (f'<div style="background:{COLOR["surface"]}; '
+            f'border:1px solid {COLOR["border"]}; '
+            f'border-top:2px solid {color}; '
+            f'border-radius:var(--lc-radius-lg); height:100%; '
             f'padding:var(--lc-space-lg) var(--lc-space-xl);">'
             f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["text_muted"]}; '
             f'letter-spacing:0.06em; text-transform:uppercase;">{label}</div>'
@@ -274,11 +329,7 @@ def _last_night_score(board):
 def _jump_target(board):
     """The page a board's button should open, or None if it isn't
     reachable from the sport currently selected. See BOARD_PAGE."""
-    if CURRENT_SPORT == "MLB" and board in BOARD_PAGE:
-        return BOARD_PAGE[board]
-    if CURRENT_SPORT == "WNBA" and board in WNBA_PAGE:
-        return WNBA_PAGE[board]
-    return None
+    return _boards_for(CURRENT_SPORT).get(board)
 
 
 def _goto(page_title, key, label=None, compact=False):
@@ -318,8 +369,15 @@ def _render_pulse(record, today):
                     for b in BOARDS)
 
     chips = []
-    if record.get("daily13", {}).get(today):
-        chips.append(("MLB \u00b7 board published", COLOR["accent"]))
+    # PER SPORT, derived. This was hardcoded to daily13 and to the word
+    # "MLB", so a WNBA session with both its boards published was told
+    # "MLB - board published", and an MLB night where HR Edge landed but
+    # Daily 13 hadn't yet showed no chip at all.
+    for _sp, _pages in SPORT_BOARDS.items():
+        _n = sum(1 for _b in _pages if record.get(_b, {}).get(today))
+        if _n:
+            chips.append((f"{_sp} \u00b7 {_n} board{'s' if _n != 1 else ''} "
+                          f"published", COLOR["accent"]))
     for league, n in slates.items():
         chips.append((f"{league} \u00b7 {n} game{'s' if n != 1 else ''}",
                       COLOR["cold"]))
@@ -328,11 +386,19 @@ def _render_pulse(record, today):
 
     tail = ""
     if published:
-        tail = (f'<span style="margin-left:var(--lc-space-lg); '
-                f'color:{COLOR["text_muted"]}; font-size:var(--lc-text-caption);">'
+        tail = (f'<span style="color:{COLOR["text_muted"]}; '
+                f'font-size:var(--lc-text-caption);">'
                 f'{published} picks published today</span>')
-    st.markdown(" ".join(_chip(t, c) for t, c in chips) + tail,
-                unsafe_allow_html=True)
+    # A wrapping flex rail rather than inline spans separated by spaces:
+    # on a phone the chips used to break mid-pill and the trailing count
+    # landed on its own orphan line.
+    st.markdown(
+        f'<div style="display:flex; flex-wrap:wrap; align-items:center; '
+        f'gap:var(--lc-space-sm) var(--lc-space-md); '
+        f'padding:var(--lc-space-sm) var(--lc-space-none);">'
+        + "".join(_chip(t, c, live=True) for t, c in chips)
+        + tail + '</div>',
+        unsafe_allow_html=True)
 
 
 def _render_today(record, today):
@@ -344,8 +410,11 @@ def _render_today(record, today):
     # two WNBA cards in the same grid as the baseball ones, at identical
     # weight, with no way to open either (they aren't reachable from
     # here). Whatever the day's mix happened to be decided the layout.
-    _mine_boards = list(BOARD_PAGE) if CURRENT_SPORT == "MLB" else list(WNBA_PAGE)
-    _other_boards = list(WNBA_PAGE) if CURRENT_SPORT == "MLB" else list(BOARD_PAGE)
+    _mine_boards = list(_boards_for(CURRENT_SPORT))
+    # Grouped BY OWNING SPORT rather than flattened into one "the other
+    # sport" bucket, because there is no such thing as one other sport —
+    # see SPORT_BOARDS.
+    _elsewhere = _boards_elsewhere(CURRENT_SPORT)
 
     mine = [(b, record[b][today]) for b in _mine_boards
             if record.get(b, {}).get(today)]
@@ -353,7 +422,8 @@ def _render_today(record, today):
     # used to vanish silently, so an absent HR Edge looked identical to
     # an HR Edge that doesn't exist. Named below instead.
     pending = [b for b in _mine_boards if not record.get(b, {}).get(today)]
-    others = [(b, record[b][today]) for b in _other_boards
+    others = [(sp, b, record[b][today])
+              for sp, pages in _elsewhere.items() for b in pages
               if record.get(b, {}).get(today)]
     live = mine + others
 
@@ -374,14 +444,20 @@ def _render_today(record, today):
                 f'</div>',
                 unsafe_allow_html=True,
             )
-            if CURRENT_SPORT == "MLB":
-                cols = st.columns(len(BOARD_PAGE))
-                for col, (board, page) in zip(cols, BOARD_PAGE.items()):
+            _mine = _boards_for(CURRENT_SPORT)
+            if _mine:
+                cols = st.columns(len(_mine))
+                for col, (board, page) in zip(cols, _mine.items()):
                     with col:
                         _goto(page, key=f"home_build_{board}")
             else:
-                st.caption("Switch to MLB above to build one of the boards "
-                           "live.")
+                # Named, not assumed. This said "Switch to MLB above"
+                # verbatim on every sport that isn't MLB — including
+                # WNBA, which publishes two boards of its own.
+                _elsewhere = " or ".join(sorted(_boards_elsewhere(CURRENT_SPORT)))
+                st.caption(f"{CURRENT_SPORT} doesn't publish a graded board "
+                           f"yet \u2014 switch to {_elsewhere} above to build "
+                           f"one live.")
         return
 
     # Column count follows the card count so the last row is never a
@@ -419,8 +495,13 @@ def _render_today(record, today):
                 # read the whole site twice before they have chosen
                 # anything. Three is enough to recognise a board and see
                 # whether tonight looks interesting.
-                for pick in picks[:_PREVIEW_ROWS]:
-                    st.markdown(_pick_row(pick), unsafe_allow_html=True)
+                # One element for the rows, not one per row. Streamlit
+                # ships each st.markdown as its own entry in the delta,
+                # so a three-up grid of boards was sending a dozen tiny
+                # HTML fragments to draw what the browser lays out as a
+                # single list.
+                _rows_html = "".join(_pick_row(p)
+                                     for p in picks[:_PREVIEW_ROWS])
 
                 extra = ""
                 if len(picks) > _PREVIEW_ROWS:
@@ -434,15 +515,14 @@ def _render_today(record, today):
                 # for the picks directly above it.
                 last = _last_night_score(board)
                 if last or extra:
-                    st.markdown(
+                    _rows_html += (
                         f'<div style="display:flex; align-items:center; '
                         f'justify-content:space-between; gap:var(--lc-space-md); '
                         f'padding-top:var(--lc-space-sm); '
                         f'font-size:var(--lc-text-tiny); '
                         f'font-family:\'JetBrains Mono\',monospace;">'
-                        f'{extra}{last}</div>',
-                        unsafe_allow_html=True,
-                    )
+                        f'{extra}{last}</div>')
+                st.markdown(_rows_html, unsafe_allow_html=True)
 
     # ---- boards this sport publishes that aren't recorded yet ----
     #
@@ -468,32 +548,38 @@ def _render_today(record, today):
     # same card as a live one is the mistake the Explore grid used to
     # make with its "Select WNBA above" tiles.
     if others:
-        _other_sport = "WNBA" if CURRENT_SPORT == "MLB" else "MLB"
-        st.markdown(
+        # ONE markdown call for the whole block, not one per row.
+        # Streamlit ships every st.markdown as its own element in the
+        # delta, so a six-board night cost seven round-trips to draw what
+        # is visually a single list.
+        _sports = sorted({sp for sp, _b, _e in others})
+        _where = " or ".join(_sports)
+        _html = [
             f'<div style="color:{COLOR["text_muted"]}; '
             f'font-size:var(--lc-text-caption); font-weight:600; '
             f'padding:var(--lc-space-2xl) var(--lc-space-none) '
             f'var(--lc-space-sm);">Also published today \u00b7 '
             f'<span style="color:{COLOR["text_faint"]}; font-weight:400;">'
-            f'switch to {_other_sport} above to open these</span></div>',
-            unsafe_allow_html=True,
-        )
-        for board, entry in others:
+            f'switch to {_where} above to open these</span></div>'
+        ]
+        for sport, board, entry in others:
             cfg = BOARDS.get(board, {})
             _n = len(entry.get("picks", []))
             _last = _last_night_score(board)
-            st.markdown(
+            _html.append(
                 f'<div style="display:flex; align-items:baseline; '
                 f'justify-content:space-between; gap:var(--lc-space-lg); '
                 f'padding:var(--lc-space-sm) var(--lc-space-none); '
                 f'border-bottom:1px solid {COLOR["border_soft"]};">'
                 f'<span style="color:{COLOR["text"]};">'
-                f'{cfg.get("label", board)}</span>'
+                f'{cfg.get("label", board)}'
+                f'<span style="color:{COLOR["text_faint"]}; '
+                f'font-size:var(--lc-text-tiny); '
+                f'margin-left:var(--lc-space-sm);">{sport}</span></span>'
                 f'<span style="font-family:\'JetBrains Mono\',monospace; '
                 f'font-size:var(--lc-text-tiny); color:{COLOR["text_faint"]};">'
-                f'{_n} picks{"  " + _last if _last else ""}</span></div>',
-                unsafe_allow_html=True,
-            )
+                f'{_n} picks{"  " + _last if _last else ""}</span></div>')
+        st.markdown("".join(_html), unsafe_allow_html=True)
 
 
 def _best_call(rows, sums):
@@ -522,8 +608,11 @@ def _best_call(rows, sums):
 def _render_last_night(record, yesterday):
     """The night as a scoreboard: one row per board, in pick order, with
     the detail folded away rather than stacked six cards deep."""
+    # ALL_BOARDS, not BOARD_PAGE + WNBA_PAGE. Adding a sport to
+    # SPORT_BOARDS now shows up here automatically; the old form silently
+    # omitted any board that wasn't baseball's or basketball's.
     rows = [(b, record.get(b, {}).get(yesterday))
-            for b in list(BOARD_PAGE) + list(WNBA_PAGE)
+            for b in ALL_BOARDS
             if record.get(b, {}).get(yesterday)]
 
     if not rows:
@@ -555,6 +644,7 @@ def _render_last_night(record, yesterday):
             unsafe_allow_html=True,
         )
 
+    _board_rows = []
     for board, entry in rows:
         cfg = BOARDS.get(board, {})
         picks = (entry or {}).get("picks", [])
@@ -582,7 +672,7 @@ def _render_last_night(record, yesterday):
         else:
             note = "published, not yet scored"
 
-        st.markdown(
+        _board_rows.append(
             f'<div style="display:flex; align-items:center; gap:var(--lc-space-lg); '
             f'padding:var(--lc-space-md) var(--lc-space-none); '
             f'border-bottom:1px solid {COLOR["border_soft"]};">'
@@ -595,9 +685,9 @@ def _render_last_night(record, yesterday):
             f'<div style="flex:none; min-width:5.5rem; text-align:right; '
             f'font-family:\'JetBrains Mono\',monospace; font-weight:700; '
             f'color:{score_color};">{score}</div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
+            f'</div>')
+
+    st.markdown("".join(_board_rows), unsafe_allow_html=True)
 
     # ONE expander for the whole night, not one per board.
     #
@@ -606,19 +696,23 @@ def _render_last_night(record, yesterday):
     # name, read as six grey bars stacked down the page. The label was
     # pure repetition and the chrome outweighed what it hid.
     with st.expander("Every pick from last night"):
+        # The whole night in ONE element. This was two st.markdown calls
+        # per board plus one per pick — on a six-board night with
+        # thirteen Daily 13 picks that is over fifty separate fragments,
+        # all of them inside a collapsed expander the reader may never
+        # open.
+        _detail = []
         for board, entry in rows:
             cfg = BOARDS.get(board, {})
-            st.markdown(
+            _detail.append(
                 f'<div style="color:{COLOR["gold"]}; font-weight:700; '
                 f'font-size:var(--lc-text-caption); text-transform:uppercase; '
                 f'letter-spacing:0.06em; padding:var(--lc-space-lg) '
                 f'var(--lc-space-none) var(--lc-space-xs);">'
-                f'{cfg.get("label", board)}</div>',
-                unsafe_allow_html=True,
-            )
-            for pick in (entry or {}).get("picks", []):
-                st.markdown(_pick_row(pick, show_result=True),
-                            unsafe_allow_html=True)
+                f'{cfg.get("label", board)}</div>')
+            _detail.extend(_pick_row(pick, show_result=True)
+                           for pick in (entry or {}).get("picks", []))
+        st.markdown("".join(_detail), unsafe_allow_html=True)
 
 
 
@@ -754,6 +848,65 @@ def _inject_card_css():
         # away from its own first row.
         "[class*='st-key-home_'] div[data-testid='stVerticalBlock'] {"
         "  gap: var(--lc-space-sm) !important; }"
+
+        # ------------------------------------------------------------------
+        # The cards are real surfaces now.
+        #
+        # `card()` returns a container with border=False, so every Today
+        # and Explore card was an invisible box: the grid read as loose
+        # text in columns, and the three-up layout was carried entirely by
+        # whitespace. These give each one a surface, a border and a radius
+        # — the same tokens every other panel on the site already uses, so
+        # nothing new is invented, it is just applied where it was missing.
+        # ------------------------------------------------------------------
+        "[class*='st-key-card_home_'] {"
+        f"  background: {COLOR['surface']};"
+        f"  border: 1px solid {COLOR['border']};"
+        "  border-radius: var(--lc-radius-lg);"
+        "  padding: var(--lc-space-lg) var(--lc-space-xl);"
+        "  position: relative; overflow: hidden;"
+        "  transition: border-color .18s ease, transform .18s ease; }"
+
+        # A hairline of the accent along the top edge, revealed on hover.
+        # Costs no layout (it is a pseudo-element), and it is the only
+        # thing on the page that moves — the card tells you it is
+        # clickable at the moment you are considering clicking it.
+        "[class*='st-key-card_home_']::before {"
+        "  content: ''; position: absolute; top: 0; left: 0; right: 0;"
+        f"  height: 2px; background: {COLOR['accent']};"
+        "  opacity: 0; transition: opacity .18s ease; }"
+        "[class*='st-key-card_home_']:hover::before { opacity: 1; }"
+        "[class*='st-key-card_home_']:hover {"
+        f"  border-color: {COLOR['accent_border']};"
+        "  transform: translateY(-1px); }"
+
+        # The last row of a card (the +N more / last-night strip) sits
+        # against the card's own bottom padding rather than a border.
+        "[class*='st-key-card_home_'] > div > div > div:last-child > div"
+        " > div:last-child { border-bottom: none; }"
+
+        # ------------------------------------------------------------------
+        # The live dot on the pulse rail. Two-second breath, and it is
+        # switched off entirely under prefers-reduced-motion — an
+        # animation nobody asked for is a bug for the readers who cannot
+        # tolerate one.
+        # ------------------------------------------------------------------
+        ".lc-live-dot {"
+        "  display: inline-block; width: .45rem; height: .45rem;"
+        "  border-radius: 50%; margin-right: .4rem;"
+        "  vertical-align: middle; animation: lc-breathe 2s ease-in-out infinite; }"
+        "@keyframes lc-breathe { 0%,100% { opacity: 1; } 50% { opacity: .35; } }"
+        "@media (prefers-reduced-motion: reduce) {"
+        "  .lc-live-dot { animation: none; }"
+        "  [class*='st-key-card_home_'] { transition: none; }"
+        "  [class*='st-key-card_home_']:hover { transform: none; } }"
+
+        # On a phone the three-up grid is already stacked by Streamlit;
+        # tighten the card padding so a stack of six doesn't become six
+        # screens of scrolling.
+        "@media (max-width: 640px) {"
+        "  [class*='st-key-card_home_'] {"
+        "    padding: var(--lc-space-md) var(--lc-space-lg); } }"
         "</style>",
         unsafe_allow_html=True,
     )

@@ -13,6 +13,8 @@ five different prototypes stitched together.
 # ---------------------------------------------------------
 # TOKENS — the only place colors should be defined
 # ---------------------------------------------------------
+import functools
+
 COLOR = {
     "bg":            "#0a0d10",
     # SURFACES ARE SPACED SO THEY CAN ACTUALLY BE SEEN APART.
@@ -204,10 +206,21 @@ def css_variables() -> str:
     return ":root {\n  " + "\n  ".join(lines) + "\n}"
 
 
-def inject_kc_theme():
-    import streamlit as st
+@functools.lru_cache(maxsize=1)
+def _theme_css() -> str:
+    """The whole stylesheet, built once per process.
 
-    st.markdown(
+    inject_kc_theme() runs on every script run of every page, and this is
+    a ~26 KB f-string over 500 lines with a generated token block inside
+    it. Nothing in it depends on the session, the page or the user, so
+    rebuilding it per rerun was pure repeated work — and the string is
+    identical every time, which is exactly the shape lru_cache is for.
+
+    Kept as its own function rather than a module-level constant so the
+    COLOR/TYPE/SPACE/RADIUS dicts above are still the single source and
+    the cost is only paid if a page actually asks for the theme.
+    """
+    return (
         f"""
         <style>
         /* ---------- Design tokens ----------
@@ -764,9 +777,14 @@ def inject_kc_theme():
         /* Divider */
         hr {{ border-color: {COLOR["border"]} !important; }}
         </style>
-        """,
-        unsafe_allow_html=True,
+        """
     )
+
+
+def inject_kc_theme():
+    import streamlit as st
+
+    st.markdown(_theme_css(), unsafe_allow_html=True)
 
 
 SPORT_ACCENTS = {

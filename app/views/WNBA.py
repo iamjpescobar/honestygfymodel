@@ -579,15 +579,25 @@ def _render_slate():
                         unsafe_allow_html=True)
 
         hh = g.get("h2h")
-        if hh:
-            scorelines = " \u00b7 ".join(hh.get("scorelines", [])[:4])
+        # .get(), not [] — this block used to index hh["summary"] and
+        # hh["meetings"] directly, so a games.json written by any build
+        # whose team_h2h shape differed by one key raised a KeyError that
+        # escaped the whole view. Not a degraded H2H strip: the entire
+        # WNBA page fell to app.py's generic "something went wrong"
+        # error, taking the slate, the props and the Player of the Day
+        # with it. A supplementary line must never be able to do that.
+        if hh and hh.get("summary"):
+            scorelines = " \u00b7 ".join(hh.get("scorelines") or [])
+            _meetings = hh.get("meetings")
+            _meet_txt = (f' ({_meetings} meetings)'
+                         if _meetings is not None else "")
             st.markdown(
                 f'<div style="text-align:center; margin-top:var(--lc-space-md);">'
                 f'<span style="display:inline-block; padding:var(--lc-space-sm) var(--lc-space-lg); border-radius:var(--lc-radius-md); '
                 f'background:{COLOR["surface_raised"]}; font-size:var(--lc-text-small); color:{COLOR["text"]};">'
                 f'<b>Season Series:</b> {hh["summary"]} \u00b7 '
-                f'Avg total in H2H: <b>{_fmt(hh.get("avg_total"))}</b> '
-                f'({hh["meetings"]} meetings)</span>'
+                f'Avg total in H2H: <b>{_fmt(hh.get("avg_total"))}</b>'
+                f'{_meet_txt}</span>'
                 f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["text_muted"]}; margin-top:var(--lc-space-xs);">{scorelines}</div>'
                 f'</div>',
                 unsafe_allow_html=True,

@@ -164,7 +164,58 @@ def _repo_path():
     return Path(__file__).resolve().parents[2] / "data" / "calibration.json"
 
 
+def _record_stamp():
+    """A cheap fingerprint of the three files _load() reads: (size, mtime)
+    per path, missing files included as None.
+
+    This is the CACHE KEY, and it has to be the files themselves rather
+    than a TTL. The app writes picks mid-session (see _save), and a
+    time-based cache would keep serving the pre-write record until it
+    expired — the board a subscriber just triggered would be missing from
+    Home and from Results for up to an hour, which is precisely the
+    "logged but invisible" class of bug this module already carries two
+    long comments about. Keying on mtime means a write invalidates on the
+    very next read, and an untouched record costs three stat() calls.
+    """
+    out = []
+    for p in (_published_path(), _LOG_PATH, _repo_path()):
+        try:
+            s = p.stat()
+            out.append((str(p), s.st_size, s.st_mtime_ns))
+        except Exception:
+            out.append((str(p), None, None))
+    return tuple(out)
+
+
+@st.cache_data(ttl=900, max_entries=8, show_spinner=False)
+def _load_cached(stamp):
+    # NO leading underscore on `stamp`. Streamlit EXCLUDES any argument
+    # whose name starts with "_" from the cache key, so naming it _stamp
+    # would have produced a cache that never invalidated — strictly worse
+    # than no cache, because the record would then be frozen for the
+    # whole TTL no matter what was written to disk underneath it.
+    return _load_uncached()
+
+
 def _load():
+    """Cached front door to _load_uncached().
+
+    Home called _load() directly once and summary() twice, and summary()
+    calls _load() itself — so a single paint of the landing page read and
+    json-parsed all three record files NINE times and walked the entire
+    pick history three times. Streamlit re-runs the whole script on every
+    widget interaction, so that was the cost of each click, against a
+    calibration.json that grows by every pick of every board every day
+    for a whole season.
+
+    The uncached path stays available under its own name so the tests
+    that monkeypatch _published_path/_repo_path/_LOG_PATH keep exercising
+    the real merge logic rather than a cached copy of it.
+    """
+    return _load_cached(_record_stamp())
+
+
+def _load_uncached():
     """Published record (durable) merged with local picks (today's), then
     backfilled from the CI-committed repo record.
 
@@ -737,13 +788,29 @@ def reopen_recent_days(days_back: int = FINALIZE_AFTER_DAYS) -> int:
     return reopened
 
 
+@st.cache_data(ttl=900, max_entries=8, show_spinner=False)
+def _summary_cached(stamp):
+    return _summary_uncached()
+
+
 def summary():
     """Per-board record over everything graded so far.
 
     Reads whatever _load() returns, which is the pipeline-published
     record merged with any picks this container has logged today. The
     pipeline is the source of truth for GRADED history; the app only
-    ever adds today's ungraded picks on top."""
+    ever adds today's ungraded picks on top.
+
+    Cached on the same record fingerprint as _load — see _record_stamp.
+    Home calls this twice per paint and Results calls it once per board,
+    and each call re-walked every pick of every board of every day and
+    re-derived the baselines. Same key as _load, so the two can never
+    disagree about which version of the record they are describing.
+    """
+    return _summary_cached(_record_stamp())
+
+
+def _summary_uncached():
     data = _load()
     out = {}
     for board, cfg in BOARDS.items():

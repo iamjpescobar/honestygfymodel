@@ -109,25 +109,61 @@ SCOREBOARD_SOURCES = [
 ]
 
 
-def fetch_scoreboard(yyyymmdd):
-    """Today's slate, from whichever ESPN host is answering.
+# The source that last answered. The season backfill asks for ~120 days
+# in a row, and without this every one of them re-probed site.api first —
+# which is the host that gets blocked, so each day paid two failed
+# attempts plus their backoff before reaching a mirror that works. Once
+# one host has answered, it goes to the front of the queue.
+_PREFERRED_SOURCE = None
+
+
+def _sources_by_preference():
+    if _PREFERRED_SOURCE is None:
+        return SCOREBOARD_SOURCES
+    return sorted(SCOREBOARD_SOURCES, key=lambda s: s[0] != _PREFERRED_SOURCE)
+
+
+def _is_scoreboard(data):
+    """True when a source actually ANSWERED, empty slate or not.
+
+    Presence of the key is the test, not truthiness of the array: a day
+    with no games returns events=[], and treating that as a failure is
+    what made an off-day and a 403 look identical.
+    """
+    return isinstance(data, dict) and ("events" in data or "sports" in data)
+
+
+def fetch_scoreboard(yyyymmdd, require_events=True):
+    """One day's slate, from whichever ESPN host is answering.
 
     Returns (payload, source_name). Raises only if every source fails,
     and then names all of them — a silent empty slate is indistinguishable
     from an off-day, which is the confusion that cost a full day of WNBA
     coverage.
+
+    require_events=False is for the season backfill, where an empty day
+    is an ordinary off-day and must be accepted as a real answer rather
+    than sending the loop off to re-probe the other two hosts.
     """
+    global _PREFERRED_SOURCE
     errors = []
-    for name, build_url, unwrap in SCOREBOARD_SOURCES:
+    for name, build_url, unwrap in _sources_by_preference():
         url = build_url(yyyymmdd)
         try:
             data = unwrap(get_json(url, _attempts=2))
-            if data and (data.get("events") or data.get("sports")):
-                print(f"WNBA: scoreboard via {name}")
-                return data, name
-            errors.append(f"{name}: 200 but no events")
         except Exception as exc:
             errors.append(f"{name}: {type(exc).__name__} {exc}")
+            continue
+        if not _is_scoreboard(data):
+            errors.append(f"{name}: 200 but not a scoreboard payload")
+            continue
+        if require_events and not (data.get("events") or data.get("sports")):
+            errors.append(f"{name}: 200 but no events")
+            continue
+        if _PREFERRED_SOURCE != name:
+            print(f"WNBA: scoreboard via {name}")
+            _PREFERRED_SOURCE = name
+        return data, name
     raise RuntimeError("every ESPN scoreboard source failed -> "
                        + " | ".join(errors))
 
@@ -770,12 +806,34 @@ def main():
 
     logs, finals = {}, []
     finals_count = 0
+    days_attempted = days_failed = 0
     d = SEASON_START
     first_debug = True
     while d <= now_et.date():
+        # THROUGH fetch_scoreboard, NOT straight at BASE.
+        #
+        # This was `get_json(f"{BASE}/scoreboard?dates=...")` — the exact
+        # host the comment above SCOREBOARD_SOURCES documents as being
+        # 403'd from cloud IPs, with no fallback and no mirror. So on
+        # every run where ESPN blocked site.api, today's slate came
+        # through fine (that call already used the fallback) while EVERY
+        # historical day failed, and the failure was invisible: one
+        # "scoreboard <date> failed" line per day, buried in ~120 of
+        # them, and the job still exited 0.
+        #
+        # What shipped then was a games.json full of tonight's fixtures
+        # in which no player had a single number — no logs, so no season
+        # or L5/L10 splits, no player H2H, no team research, no
+        # positional defense. The Props and Defense Matchup boards had
+        # nothing to rank and the slate rendered every stat as "—".
+        # That is the "WNBA is not working" failure, and it was one
+        # unrouted call.
+        days_attempted += 1
         try:
-            day_sb = get_json(f"{BASE}/scoreboard?dates={d.strftime('%Y%m%d')}")
+            day_sb, _ = fetch_scoreboard(d.strftime("%Y%m%d"),
+                                         require_events=False)
         except Exception as exc:
+            days_failed += 1
             print(f"  scoreboard {d} failed: {exc}")
             d += timedelta(days=1)
             continue
@@ -793,6 +851,35 @@ def main():
                 print(f"  boxscore {event_id} ({d}) failed: {exc}")
         time.sleep(0.15)
         d += timedelta(days=1)
+
+    # A SLATE WITH NO NUMBERS IS NOT A SLATE — refuse to publish one.
+    #
+    # Every board on the site is built from `logs`. When the backfill is
+    # blocked wholesale, games.json still writes cleanly (tonight's
+    # fixtures come from a different call) and the archive verifier
+    # downstream only checks that the FILE exists — so a league with no
+    # stats in it sailed through every gate and landed on the site as a
+    # slate of dashes.
+    #
+    # This is an outage, not a data state, and the honest failure is to
+    # exit non-zero. The workflow's `|| echo "WNBA fetch failed"` then
+    # keeps the rest of the nightly alive, the verifier warns that the
+    # WNBA slate is missing, and the pages show their "engine is being
+    # connected" placeholder — which is TRUE — instead of a board that
+    # looks published and answers nothing.
+    if days_failed and days_failed == days_attempted:
+        raise RuntimeError(
+            f"every one of the {days_attempted} scoreboard days failed — "
+            f"ESPN is blocking this runner, not an off-season. Refusing to "
+            f"publish a slate with no player data behind it.")
+    if todays and not logs:
+        raise RuntimeError(
+            f"{len(todays)} games tonight but zero box scores parsed from "
+            f"{days_attempted - days_failed} reachable days. Refusing to "
+            f"publish a slate in which no player has a single number.")
+    if days_failed:
+        print(f"WNBA: WARNING — {days_failed}/{days_attempted} scoreboard "
+              f"days were unreachable; season splits are built on the rest.")
 
     players = player_summaries(logs)
     teams = team_research(finals)
