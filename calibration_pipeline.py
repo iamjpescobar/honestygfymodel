@@ -241,6 +241,67 @@ def _espn_slate_date(raw) -> str:
 
 
 # ----------------------------------------------------------------------
+# ESPN sends the column headers TWICE, in two different arrays:
+#
+#   labels: ["MIN", "PTS", "REB", "AST", "3PT", ...]        short
+#   names:  ["MINUTES", "POINTS", "TOTALREBOUNDS", ...]     long
+#
+# The parser read `names or labels`, so it always took the LONG array and
+# then looked up "PTS" in it. Not a key there, so pts was None on every
+# player, on every date, forever.
+#
+# MUST STAY BYTE-IDENTICAL between calibration_pipeline.py and
+# app/engines/calibration.py — see tests/test_wnba_grading_honesty.py.
+# ----------------------------------------------------------------------
+_LABEL_ALIASES = {
+    "MINUTES": "MIN",
+    "POINTS": "PTS",
+    "TOTALREBOUNDS": "REB",
+    "REBOUNDS": "REB",
+    "ASSISTS": "AST",
+    "STEALS": "STL",
+    "BLOCKS": "BLK",
+    "TURNOVERS": "TO",
+    "THREEPOINTFIELDGOALSMADE-THREEPOINTFIELDGOALSATTEMPTED": "3PT",
+    "FIELDGOALSMADE-FIELDGOALSATTEMPTED": "FG",
+    "FREETHROWSMADE-FREETHROWSATTEMPTED": "FT",
+}
+
+
+def _espn_labels(data) -> list:
+    """Column headers normalised to PTS/REB/AST/3PT, from whichever array
+    ESPN populated. Returns [] when none of them carries points, so the
+    caller reports a parse failure instead of silently reading nothing."""
+    for key in ("labels", "names", "displayNames"):
+        arr = [_LABEL_ALIASES.get(str(n).upper(), str(n).upper())
+               for n in (data.get(key) or [])]
+        if "PTS" in arr:
+            return arr
+    return []
+
+
+def _espn_event_stats(data) -> dict:
+    """{eventId: stat row}.
+
+    The top-level `events` map is METADATA — date, opponent, result — and
+    its "stats" key is an empty list on every entry. The numbers live
+    under seasonTypes -> categories -> events, keyed by eventId. So
+    `events[id]["stats"]` returned [] for every game ever played, which
+    is why even the games that matched on date produced no line.
+    """
+    out = {}
+    for season in (data.get("seasonTypes") or []):
+        for cat in (season.get("categories") or []):
+            for ev in (cat.get("events") or []):
+                if not isinstance(ev, dict):
+                    continue
+                eid = str(ev.get("eventId") or ev.get("id") or "")
+                if eid and ev.get("stats"):
+                    out[eid] = ev.get("stats")
+    return out
+
+
+# ----------------------------------------------------------------------
 # WNBA GRADING DIAGNOSTICS
 #
 # _wnba_line returns None for four completely different reasons — the
@@ -264,14 +325,21 @@ def _espn_slate_date(raw) -> str:
 # because nobody reads a Render log looking for them; this one runs in
 # CI, where the log is the whole point.
 # ----------------------------------------------------------------------
-_WNBA_DIAG = {"reasons": {}, "samples": [], "ok": 0}
+_WNBA_DIAG = {"reasons": {}, "samples": {}, "ok": 0}
 
 
 def _wnba_diag(reason, detail=None):
     """Record why a line couldn't be read, and return None as before."""
     _WNBA_DIAG["reasons"][reason] = _WNBA_DIAG["reasons"].get(reason, 0) + 1
-    if detail and len(_WNBA_DIAG["samples"]) < 3:
-        _WNBA_DIAG["samples"].append(f"{reason} -> {detail}")
+    if detail:
+        # CAPPED PER REASON, not overall. The first run filled all three
+        # sample slots with one failure mode, so the other — thirty picks'
+        # worth of "no event matching the date" — printed a count and no
+        # detail at all, which is the half of the report that tells you
+        # what to fix.
+        bucket = _WNBA_DIAG["samples"].setdefault(reason, [])
+        if len(bucket) < 2:
+            bucket.append(detail)
     return None
 
 
@@ -284,8 +352,9 @@ def report_wnba_diagnostics():
     print(f"\n[verify-wnba] read {_WNBA_DIAG['ok']}/{total} box-score lines.")
     for reason, n in sorted(_WNBA_DIAG["reasons"].items(), key=lambda x: -x[1]):
         print(f"[verify-wnba]   {n:4d}  {reason}")
-    for sample in _WNBA_DIAG["samples"]:
-        print(f"[verify-wnba]   sample: {sample}")
+    for reason, details in _WNBA_DIAG["samples"].items():
+        for detail in details:
+            print(f"[verify-wnba]   sample: {reason} -> {detail}")
     if failed and not _WNBA_DIAG["ok"]:
         # Loud on purpose. This is the case that looks like nothing.
         print(f"[verify-wnba] NOT ONE line was read this run. Every WNBA pick "
@@ -312,7 +381,8 @@ def _wnba_line(pid, date_str):
     if not isinstance(data, dict):
         return _wnba_diag("gamelog response was not an object",
                           f"pid={pid} type={type(data).__name__}")
-    names = [str(n).upper() for n in (data.get("names") or data.get("labels") or [])]
+    names = _espn_labels(data)
+    _stats_by_event = _espn_event_stats(data)
     want = date_str
     _seen = []
     for _ev_id, ev in (data.get("events") or {}).items():
@@ -320,11 +390,20 @@ def _wnba_line(pid, date_str):
         _seen.append(_gd)
         if _gd != want:
             continue
-        stats = ev.get("stats") or []
-        if not stats or not names:
+        stats = ev.get("stats") or _stats_by_event.get(str(_ev_id)) or []
+        # SPLIT, because these are different bugs with different fixes.
+        # Merged, a header-format change and a missing stat row reported
+        # as one reason, and the log couldn't tell you which you had.
+        if not names:
             return _wnba_diag(
-                "matched the date but the event had no stats or no labels",
-                f"pid={pid} labels={names[:10]} stats={list(stats)[:10]}")
+                "no usable column headers (nothing maps to PTS)",
+                f"pid={pid} labels={list(data.get('labels') or [])[:6]} "
+                f"names={list(data.get('names') or [])[:6]}")
+        if not stats:
+            return _wnba_diag(
+                "matched the date but the event carried no stat row",
+                f"pid={pid} event={_ev_id} "
+                f"seasonType_events={len(_stats_by_event)}")
         row = {}
         raw = {}
         for i, label in enumerate(names):
