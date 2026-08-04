@@ -473,22 +473,31 @@ def render_right_sidebar(nav_titles=None, active_page=None, show_glossary=False,
         _rail = COLOR["stat_high"]
         st.markdown(
             "<style>"
+            # Streamlit puts a 1rem gap between stacked elements. The
+            # theme tightens that, but only for DIRECT children of a
+            # vertical block — a keyed container adds a wrapper, so the
+            # nav fell back to the default and ten rows spread over the
+            # entire page height.
+            ".st-key-lc_nav div[data-testid='stVerticalBlock'] {"
+            "  gap: 0 !important; }"
+            ".st-key-lc_nav div[data-testid='stElementContainer'] {"
+            "  margin-bottom: 0 !important; }"
+            # The label is a <p> INSIDE the button and carries its own
+            # centring, so setting justify-content on the button alone
+            # left every row centred.
+            ".st-key-lc_nav button p {"
+            "  text-align: left !important; width: 100% !important;"
+            "  margin: 0 !important; font-weight: 400 !important; }"
             ".st-key-lc_nav button {"
             "  width: 100% !important; justify-content: flex-start !important;"
-            "  text-align: left !important;"
+            "  text-align: left !important; min-height: 0 !important;"
             "  padding: var(--lc-space-md) var(--lc-space-lg) !important;"
             "  border: none !important; border-left: 2px solid transparent !important;"
             "  border-radius: 0 !important;"
-            # A tertiary button has no fill of its own, but the app's
-            # own surface styling was landing on it, so every row drew
-            # its own tile and the nav read as eight stacked cards
-            # rather than one list. Lifting `surface` in the palette
-            # pass made that visible; it was there before, just too
-            # close to the page to see.
+            # The theme's global `.stButton > button` rule paints every
+            # button as a raised box with a border. Right for an action,
+            # wrong for a nav row.
             "  background: transparent !important;"
-            # Resting rows are muted so the active row is the only one
-            # at full strength. Ten items all at text weight gives the
-            # eye nothing to land on.
             f"  color: {COLOR['text_muted']} !important; }}"
             ".st-key-lc_nav button:hover {"
             f"  background: {COLOR['text']}0D !important;"
@@ -497,7 +506,8 @@ def render_right_sidebar(nav_titles=None, active_page=None, show_glossary=False,
             # buttons but is not inside a keyed container, so it needs its
             # own selector. Its buttons are keyed lc_sub_<SPORT>_btn_<page>.
             "[class*='st-key-lc_sub_'] button {"
-            "  background: transparent !important; border: none !important; }"
+            "  background: transparent !important; border: none !important;"
+            "  font-weight: 400 !important; }"
             "[class*='st-key-lc_sub_'] button:hover {"
             f"  color: {COLOR['text']} !important; }}"
             "</style>",
