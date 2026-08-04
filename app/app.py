@@ -138,12 +138,43 @@ except Exception:
 # time, before this rerun executes. Reading only lc_sport (which
 # sport_switcher sets at the bottom of its render, after this line has
 # already run) made every sport change take two clicks.
+# -------------------------
+# Top-level view: Home, or a sport.
+#
+# Home is NOT an MLB page. It reports every board on the site — the WNBA
+# ones included — so filing it under baseball's nav made it unreachable
+# from every other sport and implied the track record belonged to one of
+# them. It sits beside the sport switcher as its own destination, and a
+# new session lands there.
+# -------------------------
+st.session_state.setdefault("lc_view", "home")
+
 selected_sport = (
     st.session_state.get("lc_sport_seg")
     or st.session_state.get("lc_sport", "MLB")
 )
 
-_, _strip_col = st.columns([4, 6])
+# A SPORT CLICK LEAVES HOME, and it has to be detected HERE.
+#
+# Streamlit updates the widget key (lc_sport_seg) at click time, before
+# this script runs, while sport_switcher writes lc_sport at the bottom of
+# its own render. So the two disagree on exactly one run — the click —
+# and agree on every other. Checking after the switcher has rendered
+# would always be too late: it has already synced them and reran.
+_seg = st.session_state.get("lc_sport_seg")
+if _seg is not None and _seg != st.session_state.get("lc_sport"):
+    st.session_state["lc_view"] = "sport"
+
+_home_col, _strip_col = st.columns([4, 6])
+with _home_col:
+    # Occupies the column that was previously an empty spacer, so this
+    # costs no layout and the mobile stacking rules are unchanged.
+    if st.button(
+        "\u2302  Home", key="lc_home_btn",
+        type=("primary" if st.session_state["lc_view"] == "home" else "secondary"),
+    ):
+        st.session_state["lc_view"] = "home"
+        st.rerun()
 with _strip_col:
     sport_switcher(active=selected_sport)
 
@@ -153,12 +184,9 @@ with _strip_col:
 # -------------------------
 def build_mlb_pages(include_admin: bool):
     pages = [
-        # FIRST on purpose: menu_titles[0] is the default landing page,
-        # and Home is the only one that paints without building anything.
-        # It reads the day's published board off disk (see views/Home.py
-        # for why it never rebuilds live), so a cold session lands on
-        # content instead of on a boot-time board computation.
-        ("Home", "views/Home.py"),
+        # Home is deliberately NOT in this list — it is a top-level view
+        # above the sport switcher, not one of baseball's pages. See the
+        # lc_view block near the top of this file.
         ("Game Card", "views/GameCard.py"),
         # Slate-wide HR Edge. The Game Card shows one game's version of
         # the same number; this ranks every bat on the slate, and it is
@@ -464,7 +492,18 @@ def render_right_sidebar(nav_titles=None, active_page=None, show_glossary=False)
 # -------------------------
 # Render UI
 # -------------------------
-if selected_sport == "MLB":
+if st.session_state.get("lc_view") == "home":
+    # Full-width Home with the shared account/sign-out sidebar, and no
+    # page nav: Home belongs to no sport, so neither the MLB radio nor a
+    # sport's subpage radio is instantiated on this run. That is what
+    # lets Home's jump buttons write those keys — see views/Home.py.
+    _main_col, _right_col = st.columns([8, 2])
+    with _main_col:
+        load_page_module("views/Home.py")
+    with _right_col:
+        render_right_sidebar()
+
+elif selected_sport == "MLB":
     pages = build_mlb_pages(include_admin=user_is_admin)
     menu_titles = [title for title, _ in pages]
 
