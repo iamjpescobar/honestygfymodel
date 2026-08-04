@@ -201,19 +201,33 @@ for board, cfg in BOARDS.items():
             "Day to price", sorted(days.keys(), reverse=True),
             key=f"odds_day_{board}", label_visibility="collapsed",
         )
+        # KEY AND MATCH ON THE MARKET AS WELL AS THE PLAYER.
+        #
+        # A day used to hold one market per board, so a player id was a
+        # unique handle here. It no longer is: WNBA Props logs five
+        # markets under one board, and the same player can appear on the
+        # points list AND the rebounds list on the same night. That broke
+        # two things at once — two number_inputs sharing a widget key
+        # (Streamlit raises a duplicate-key error and the page dies), and
+        # set_odds() writing one price onto both picks, inventing a
+        # number for a market that was never priced.
         for _pk in (days.get(_day, {}).get("picks", []) or []):
+            _stat = _pk.get("stat")
             _c1, _c2 = st.columns([3, 1])
             with _c1:
-                st.caption(f'{_pk.get("name", "?")} · {_pk.get("result") or "pending"}')
+                _mkt = f' · {_stat}' if _stat else ""
+                st.caption(f'{_pk.get("name", "?")}{_mkt} · '
+                           f'{_pk.get("result") or "pending"}')
             with _c2:
                 _cur = int(_pk["odds"]) if _pk.get("odds") else 0
                 _new = st.number_input(
                     "odds", value=_cur, step=5, format="%d",
-                    key=f'odds_{board}_{_day}_{_pk.get("id")}',
+                    key=f'odds_{board}_{_day}_{_pk.get("id")}_{_stat}',
                     label_visibility="collapsed",
                 )
                 if _new != _cur:
-                    set_odds(board, _day, _pk.get("id"), _new or None)
+                    set_odds(board, _day, _pk.get("id"), _new or None,
+                             stat=_stat)
 
 with card("cal_storage"):
     st.markdown(
