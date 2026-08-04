@@ -385,7 +385,14 @@ def _daily13_json(date_str: str) -> str:
     # matter. BVP_POOL is comfortably wider than the board itself, so
     # a bat can still climb in on BvP — but the cost is ~30 network
     # calls instead of ~400.
-    from engines.bvp import career_bvp
+    from engines.bvp import career_bvp, prefetch_career_bvp
+
+    # Warm all thirty splits concurrently before the serial loop below,
+    # same reasoning as prefetch_slate earlier in this function. This was
+    # the last sequential MLB round-trip loop in the build.
+    prefetch_career_bvp((r.get("id"), r.get("_opp_pid"))
+                        for r in qualified[:BVP_POOL])
+
     for r in qualified[:BVP_POOL]:
         opp_pid = r.pop("_opp_pid", None)
         if not opp_pid or not r.get("id"):
