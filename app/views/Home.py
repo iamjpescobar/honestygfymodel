@@ -96,6 +96,11 @@ STAT_LABEL = {"strikeOuts": "K", "pts": "PTS", "reb": "REB", "ast": "AST",
 
 RESULT_COLOR = {"hit": COLOR["stat_high"], "miss": COLOR["error"]}
 
+# The loaded record, set once by render(). _load() is cheap and cached,
+# but reading it in a helper called inside a column loop would mean one
+# call per card for a value that cannot change within a run.
+_RECORD = {}
+
 
 def _today():
     return datetime.now(EASTERN).strftime("%Y-%m-%d")
@@ -214,7 +219,7 @@ def _pick_row(pick, show_result=False):
             f'</div>')
 
 
-def _result_dots(picks):
+def _result_dots(picks, limit=None):
     """The night at a glance, in pick order — filled for a hit, hollow for
     a miss, faint for one that never got a result.
 
@@ -222,6 +227,12 @@ def _result_dots(picks):
     seven" is a different night from "alternated all evening", and a bare
     7/11 hides which one it was.
     """
+    # limit: a three-up card is far too narrow for thirteen dots. Above
+    # the limit the strip is dropped entirely rather than truncated — a
+    # cut-off strip would misreport the night, which is the one thing
+    # this element must never do.
+    if limit is not None and len(picks) > limit:
+        return ""
     out = []
     for p in picks:
         res = p.get("result")
@@ -235,6 +246,31 @@ def _result_dots(picks):
             f'font-family:\'JetBrains Mono\',monospace;">{"".join(out)}</span>')
 
 
+# How many picks a today-card previews. Three fits a three-up column
+# without the card becoming a second copy of the board's own page.
+_PREVIEW_ROWS = 3
+
+
+def _last_night_score(board):
+    """'●○●●● 3/5' for this board's previous night, or ''.
+
+    Read straight off the same record every other number here comes
+    from, so a today-card and the Last night section can never disagree.
+    Silent when the board did not publish yesterday or nothing was
+    graded: an empty result is not a zero, and must not look like one.
+    """
+    picks = (_RECORD.get(board, {}).get(_yesterday()) or {}).get("picks", [])
+    hits = sum(1 for p in picks if p.get("result") == "hit")
+    total = hits + sum(1 for p in picks if p.get("result") == "miss")
+    if not total:
+        return ""
+    color = COLOR["stat_high"] if hits * 2 >= total else COLOR["error"]
+    dots = _result_dots(picks, limit=8)
+    return (f'<span style="color:{COLOR["text_faint"]};">last night</span> '
+            f'{dots} <span style="color:{color}; font-weight:700;">'
+            f'{hits}/{total}</span>')
+
+
 def _jump_target(board):
     """The page a board's button should open, or None if it isn't
     reachable from the sport currently selected. See BOARD_PAGE."""
@@ -245,15 +281,23 @@ def _jump_target(board):
     return None
 
 
-def _goto(page_title, key, label=None):
+def _goto(page_title, key, label=None, compact=False):
     """Jump button out of Home and into a page of the current sport.
 
     Leaves the Home view and writes that sport's nav key, which app.py
     reads at the top of the next run — the same one-click path a click on
     the radio itself takes.
     """
+    # compact=True renders a tertiary (link-style) button instead of a
+    # full-width bordered one. Home used to end EVERY card with a
+    # full-width button repeating the card's own title — eight of them
+    # down the page, each as visually heavy as the content above it.
+    # That flattened the hierarchy (nothing could lead, because every
+    # card weighed the same) and cost roughly a screen of height on its
+    # own. The card header carries the link now; the box is gone.
     if st.button(label or f"Open {page_title}", key=key,
-                 use_container_width=True):
+                 type="tertiary" if compact else "secondary",
+                 use_container_width=not compact):
         st.session_state["lc_view"] = "sport"
         if CURRENT_SPORT == "WNBA":
             st.session_state["lc_sub_WNBA"] = page_title
@@ -324,40 +368,64 @@ def _render_today(record, today):
                            "live.")
         return
 
-    cols = st.columns(2)
+    # Three across, not two. On a tablet in landscape the two-column
+    # layout left roughly a third of the viewport empty down the whole
+    # page while forcing the card list twice as long as it needed to be.
+    cols = st.columns(3)
     for i, (board, entry) in enumerate(live):
         cfg = BOARDS.get(board, {})
         picks = entry.get("picks", [])
-        with cols[i % 2]:
+        with cols[i % 3]:
             with card(f"home_today_{board}"):
+                page = _jump_target(board)
+                if page:
+                    _goto(page, key=f"home_open_{board}",
+                          label=f"{cfg.get('label', board)}  \u2192",
+                          compact=True)
+                else:
+                    st.markdown(
+                        f'<div style="font-weight:700; color:{COLOR["text"]}; '
+                        f'font-size:var(--lc-text-body);">'
+                        f'{cfg.get("label", board)}</div>',
+                        unsafe_allow_html=True,
+                    )
                 st.markdown(
-                    f'<div style="display:flex; align-items:baseline; '
-                    f'justify-content:space-between; gap:var(--lc-space-md);">'
-                    f'<div style="font-weight:700; color:{COLOR["text"]}; '
-                    f'font-size:var(--lc-text-body);">{cfg.get("label", board)}</div>'
-                    f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["text_faint"]}; '
-                    f'font-family:\'JetBrains Mono\',monospace;">{len(picks)} picks</div>'
-                    f'</div>'
-                    f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["text_muted"]}; '
-                    f'margin-bottom:var(--lc-space-sm);">Graded on whether the player '
+                    f'<div style="font-size:var(--lc-text-tiny); '
+                    f'color:{COLOR["text_muted"]}; margin-bottom:var(--lc-space-sm);">'
+                    f'{len(picks)} picks \u00b7 graded on whether the player '
                     f'{cfg.get("question", "hit")}.</div>',
                     unsafe_allow_html=True,
                 )
-                # Capped rather than scrolled. The full board is one click
-                # away on its own page, and a home screen that reproduces
-                # thirteen rows six times over stops being a home screen.
-                for pick in picks[:6]:
+                # Three rows, not six. The full board is one click away on
+                # its own page; a home screen that reprints six of every
+                # board's rows is not orienting anyone, it is making them
+                # read the whole site twice before they have chosen
+                # anything. Three is enough to recognise a board and see
+                # whether tonight looks interesting.
+                for pick in picks[:_PREVIEW_ROWS]:
                     st.markdown(_pick_row(pick), unsafe_allow_html=True)
-                if len(picks) > 6:
+
+                extra = ""
+                if len(picks) > _PREVIEW_ROWS:
+                    extra = (f'<span style="color:{COLOR["text_faint"]};">'
+                             f'+{len(picks) - _PREVIEW_ROWS} more</span>')
+
+                # HOW THIS BOARD DID LAST NIGHT, right beside what it likes
+                # tonight. This is the one thing the site has that nobody
+                # else does, and it was buried three sections down the page
+                # where it read as a separate report rather than as context
+                # for the picks directly above it.
+                last = _last_night_score(board)
+                if last or extra:
                     st.markdown(
-                        f'<div style="font-size:var(--lc-text-tiny); '
-                        f'color:{COLOR["text_faint"]}; padding-top:var(--lc-space-sm);">'
-                        f'+{len(picks) - 6} more</div>',
+                        f'<div style="display:flex; align-items:center; '
+                        f'justify-content:space-between; gap:var(--lc-space-md); '
+                        f'padding-top:var(--lc-space-sm); '
+                        f'font-size:var(--lc-text-tiny); '
+                        f'font-family:\'JetBrains Mono\',monospace;">'
+                        f'{extra}{last}</div>',
                         unsafe_allow_html=True,
                     )
-                page = _jump_target(board)
-                if page:
-                    _goto(page, key=f"home_open_{board}")
 
 
 def _best_call(rows, sums):
@@ -462,38 +530,70 @@ def _render_last_night(record, yesterday):
             f'</div>',
             unsafe_allow_html=True,
         )
-        with st.expander(f"{cfg.get('label', board)} \u2014 every pick"):
-            for pick in picks:
+
+    # ONE expander for the whole night, not one per board.
+    #
+    # Six collapsed expanders each labelled "<board> - every pick", every
+    # one sitting directly under a heading that already said the board's
+    # name, read as six grey bars stacked down the page. The label was
+    # pure repetition and the chrome outweighed what it hid.
+    with st.expander("Every pick from last night"):
+        for board, entry in rows:
+            cfg = BOARDS.get(board, {})
+            st.markdown(
+                f'<div style="color:{COLOR["gold"]}; font-weight:700; '
+                f'font-size:var(--lc-text-caption); text-transform:uppercase; '
+                f'letter-spacing:0.06em; padding:var(--lc-space-lg) '
+                f'var(--lc-space-none) var(--lc-space-xs);">'
+                f'{cfg.get("label", board)}</div>',
+                unsafe_allow_html=True,
+            )
+            for pick in (entry or {}).get("picks", []):
                 st.markdown(_pick_row(pick, show_result=True),
                             unsafe_allow_html=True)
+
 
 
 def _render_explore():
     """The hook. A nav label says a page exists; this says what question it
     answers, which is the only reason anyone opens a second page."""
-    st.caption("Six places worth your time, and what each one actually "
-               "answers.")
-    cols = st.columns(2)
-    for i, (page, sport, blurb) in enumerate(EXPLORE):
-        with cols[i % 2]:
+    # Only pages reachable from the sport currently selected get a card.
+    #
+    # A page from another sport used to occupy a full tile identical in
+    # size and weight to a live one, its only content the sentence
+    # "Select WNBA above to open this." Two dead tiles sat in the grid
+    # looking exactly as important as the four working ones. They are
+    # one line of text below the grid now, which is what they are worth.
+    here = [(p, sp, b) for p, sp, b in EXPLORE if sp == CURRENT_SPORT]
+    elsewhere = [(p, sp) for p, sp, _b in EXPLORE if sp != CURRENT_SPORT]
+
+    st.caption("What each place actually answers.")
+    cols = st.columns(3)
+    for i, (page, sport, blurb) in enumerate(here):
+        with cols[i % 3]:
             with card(f"home_explore_{i}"):
+                _goto(page, key=f"home_ex_{i}", label=f"{page}  \u2192",
+                      compact=True)
                 st.markdown(
-                    f'<div style="display:flex; align-items:baseline; '
-                    f'gap:var(--lc-space-md);">'
-                    f'<div style="font-weight:700; color:{COLOR["text"]}; '
-                    f'font-size:var(--lc-text-body);">{page}</div>'
-                    f'<div style="font-size:var(--lc-text-tiny); '
-                    f'color:{COLOR["text_faint"]}; letter-spacing:0.06em;">'
-                    f'{sport}</div></div>'
                     f'<div style="color:{COLOR["text_muted"]}; '
                     f'font-size:var(--lc-text-caption); line-height:1.6; '
-                    f'margin:var(--lc-space-sm) var(--lc-space-none);">{blurb}</div>',
+                    f'margin-top:var(--lc-space-xs);">{blurb}</div>',
                     unsafe_allow_html=True,
                 )
-                if sport == CURRENT_SPORT:
-                    _goto(page, key=f"home_ex_{i}")
-                else:
-                    st.caption(f"Select {sport} above to open this.")
+
+    if elsewhere:
+        by_sport = {}
+        for page, sport in elsewhere:
+            by_sport.setdefault(sport, []).append(page)
+        parts = [f'{", ".join(pages)} \u2014 switch to {sport} above'
+                 for sport, pages in by_sport.items()]
+        st.markdown(
+            f'<div style="color:{COLOR["text_faint"]}; '
+            f'font-size:var(--lc-text-caption); '
+            f'padding-top:var(--lc-space-md);">'
+            f'{" \u00b7 ".join(parts)}</div>',
+            unsafe_allow_html=True,
+        )
 
 
 def _render_track_record(record):
@@ -519,19 +619,31 @@ def _render_track_record(record):
     with cols[1]:
         st.markdown(_tile("Days tracked", str(days_tracked)), unsafe_allow_html=True)
     with cols[2]:
+        # Coloured by what it actually says. `0/4` was rendered in plain
+        # text, styled identically to a good number — the page's worst
+        # figure and its best one looked the same. Honest reporting is
+        # the point of this site; flat reporting is not the same thing.
+        if not beating:
+            _bl_color = COLOR["error"]
+        elif beating == len(tracked):
+            _bl_color = COLOR["accent"]
+        else:
+            _bl_color = COLOR["stat_high"]
         st.markdown(_tile("Beating baseline", f"{beating}/{len(tracked)}",
-                          color=(COLOR["stat_high"] if beating else COLOR["text"])),
+                          color=_bl_color),
                     unsafe_allow_html=True)
     with cols[3]:
         # Results is in the MLB nav and in the WNBA subpage nav. The
         # other sports have no page to open, so they get the sentence
         # without a dead button.
         if CURRENT_SPORT in ("MLB", "WNBA"):
-            _goto("Results", key="home_open_results")
+            _goto("Results", key="home_open_results",
+                  label="Open Results  \u2192", compact=True)
         st.caption("Every pick, graded, with the league rate beside it.")
 
 
 def render():
+    global _RECORD
     today = _today()
     page_header(
         _greeting(),
@@ -544,6 +656,7 @@ def render():
     data_timestamp("Data refreshed", align="left")
 
     record = _load()
+    _RECORD = record
     _render_pulse(record, today)
 
     st.markdown(_section_tag(f"Today \u00b7 {today}"), unsafe_allow_html=True)
