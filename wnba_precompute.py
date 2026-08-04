@@ -51,10 +51,85 @@ STATUS_MAP = {
 LEADER_CATS = {"points": "PTS", "rebounds": "REB", "assists": "AST"}
 
 
-def get_json(url):
-    r = requests.get(url, headers=UA, timeout=25)
-    r.raise_for_status()
-    return r.json()
+def get_json(url, _attempts=3):
+    """GET with retries. Raises on final failure, as it always did.
+
+    ESPN returns intermittent 403s to cloud IPs. A single attempt turned
+    a transient block into a whole missing league for the day, so this
+    backs off and tries again before giving up.
+    """
+    last = None
+    for i in range(_attempts):
+        try:
+            r = requests.get(url, headers=UA, timeout=25)
+            r.raise_for_status()
+            return r.json()
+        except Exception as exc:
+            last = exc
+            if i < _attempts - 1:
+                time.sleep(2 ** i)
+    raise last
+
+
+# ----------------------------------------------------------------------
+# THE SCOREBOARD ENDPOINT GETS BLOCKED; THE GAMELOG ENDPOINT DOES NOT.
+#
+# Measured, in one CI run, minutes apart, from the same runner:
+#
+#   /apis/site/v2/.../wnba/scoreboard  -> 403 Forbidden
+#   /apis/common/v3/.../wnba/gamelog   -> 200, 227 KB
+#
+# So this is not the User-Agent (both send the same one) and not an IP
+# ban on Actions. ESPN blocks that one API path from cloud ranges, and
+# when it does, wnba_precompute dies at its very first call — no slate,
+# no players, no logs. Every WNBA page then falls through to its "engine
+# is being connected" placeholder, because the whole league's data comes
+# from this one request.
+#
+# Rather than pick a replacement blind, try the known mirrors of the same
+# scoreboard in order and REPORT which one answered. They return
+# different envelopes, so each is unwrapped to the shape
+# parse_scoreboard_events already expects.
+# ----------------------------------------------------------------------
+SCOREBOARD_SOURCES = [
+    ("site.api",
+     lambda d: f"{BASE}/scoreboard?dates={d}",
+     lambda j: j),
+    # ESPN's own CDN serves the same payload under a different host, and
+    # is not behind the same filter. The scoreboard sits one level down.
+    ("cdn.espn",
+     lambda d: f"https://cdn.espn.com/core/wnba/scoreboard?xhr=1&date={d}",
+     lambda j: (j or {}).get("content", {}).get("sbData", j)),
+    # The mobile/web API. Different host again, same events array.
+    ("site.web.api",
+     lambda d: ("https://site.web.api.espn.com/apis/v2/scoreboard/header"
+                f"?sport=basketball&league=wnba&dates={d}"),
+     lambda j: (j or {}).get("sports", [{}])[0].get("leagues", [{}])[0]
+     if (j or {}).get("sports") else j),
+]
+
+
+def fetch_scoreboard(yyyymmdd):
+    """Today's slate, from whichever ESPN host is answering.
+
+    Returns (payload, source_name). Raises only if every source fails,
+    and then names all of them — a silent empty slate is indistinguishable
+    from an off-day, which is the confusion that cost a full day of WNBA
+    coverage.
+    """
+    errors = []
+    for name, build_url, unwrap in SCOREBOARD_SOURCES:
+        url = build_url(yyyymmdd)
+        try:
+            data = unwrap(get_json(url, _attempts=2))
+            if data and (data.get("events") or data.get("sports")):
+                print(f"WNBA: scoreboard via {name}")
+                return data, name
+            errors.append(f"{name}: 200 but no events")
+        except Exception as exc:
+            errors.append(f"{name}: {type(exc).__name__} {exc}")
+    raise RuntimeError("every ESPN scoreboard source failed -> "
+                       + " | ".join(errors))
 
 
 def _to_et(iso_utc: str) -> str:
@@ -682,7 +757,7 @@ def main():
     now_et = datetime.now(EASTERN)
     today = now_et.strftime("%Y-%m-%d")
 
-    sb = get_json(f"{BASE}/scoreboard?dates={today.replace('-', '')}")
+    sb, _sb_source = fetch_scoreboard(today.replace("-", ""))
     # Keep the event id ON the game. parse_scoreboard_events yields it
     # separately, so it was being discarded here — and without it there's
     # no way to ask ESPN for tonight's injury report and lineups for this
