@@ -153,6 +153,12 @@ with _strip_col:
 # -------------------------
 def build_mlb_pages(include_admin: bool):
     pages = [
+        # FIRST on purpose: menu_titles[0] is the default landing page,
+        # and Home is the only one that paints without building anything.
+        # It reads the day's published board off disk (see views/Home.py
+        # for why it never rebuilds live), so a cold session lands on
+        # content instead of on a boot-time board computation.
+        ("Home", "views/Home.py"),
         ("Game Card", "views/GameCard.py"),
         # Slate-wide HR Edge. The Game Card shows one game's version of
         # the same number; this ranks every bat on the slate, and it is
