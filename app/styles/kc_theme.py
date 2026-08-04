@@ -15,13 +15,37 @@ five different prototypes stitched together.
 # ---------------------------------------------------------
 COLOR = {
     "bg":            "#0a0d10",
-    "surface":       "#12161a",
-    "surface_raised":"#161b20",
-    "border":        "#232b31",
-    "border_soft":   "#1a2025",
-    "text":          "#e6edf0",
-    "text_muted":    "#7c8791",
-    "text_faint":    "#4d565d",
+    # SURFACES ARE SPACED SO THEY CAN ACTUALLY BE SEEN APART.
+    #
+    # They used to run #12161a / #161b20 / #1a2025 / #232b31 — the whole
+    # structural range inside 13 points of luminance. Measured, `surface`
+    # against `bg` was 1.07:1 and a card border against its own card was
+    # 1.26:1. At those numbers a card is not a subtle card, it is the
+    # same colour as the page: no depth, no grouping, nothing for the eye
+    # to land on. That flatness is most of what read as "dead" — the
+    # palette was not dull so much as invisible.
+    #
+    # bg stays #0a0d10. It is the brand black and everything else is
+    # measured against it.
+    "surface":       "#161c22",   # 1.13:1 vs bg (was 1.07)
+    "surface_raised":"#1e252d",   # 1.26:1 vs bg (was 1.12)
+    "border":        "#323c46",   # 1.53:1 vs surface (was 1.26)
+    "border_soft":   "#242c34",
+    # A THREE-STEP TEXT RAMP WHERE ALL THREE STEPS ARE READABLE.
+    #
+    # The old ramp was 16.45 / 5.32 / 2.60 against bg: one bright step
+    # and then two dim ones, the last of which failed WCAG's 4.5 floor
+    # for body text outright. That mattered more than it sounds, because
+    # text_faint was the MOST-USED colour on the Home page — nine call
+    # sites, more than `text` itself. The landing page's dominant colour
+    # was one people have to squint at.
+    #
+    # Now 16.45 / 7.59 / 5.11, so there is a genuine middle to reach for
+    # and the bottom step is still legible. Labels are muted, values are
+    # text, and faint is for genuine metadata only.
+    "text":          "#e6edf0",   # 16.45:1
+    "text_muted":    "#98a3ad",   #  7.59:1 (was 5.32)
+    "text_faint":    "#7a848d",   #  5.11:1 (was 2.60 — below the AA floor)
     "accent":        "#34d7c8",   # signal cyan — heat, active states, primary data
     "accent_dim":    "rgba(52, 215, 200, 0.14)",
     "accent_border": "rgba(52, 215, 200, 0.45)",
@@ -75,10 +99,18 @@ COLOR = {
     "stat_mid_text":   "#4fc4cf",   # lightened Mid, for badge legibility
     "stat_mid_dim":    "rgba(14, 124, 134, 0.22)",
     "stat_mid_border": "rgba(14, 124, 134, 0.55)",
-    "stat_low":        "#0A1F26",
-    "stat_low_text":   "#4a7a87",   # lightened Low, for badge legibility
-    "stat_low_dim":    "rgba(10, 31, 38, 0.55)",
-    "stat_low_border": "rgba(74, 122, 135, 0.4)",
+    # LIFTED WITH THE SURFACES, not independently.
+    #
+    # #0A1F26 sat at 0.0118 luminance. Against the old card (#12161a,
+    # 0.0078) it read as the dark end of a ramp; against the new one
+    # (#161c22, 0.0112) it is within a rounding error of the card
+    # itself, so the "low" cell would have looked like a hole punched in
+    # the card rather than the bottom rung. Raised to keep the same
+    # three-step reading: 0.044 / 0.162 / 0.424.
+    "stat_low":        "#16404d",
+    "stat_low_text":   "#6fa3b0",   # lightened Low, for badge legibility (4.10 -> 6.35)
+    "stat_low_dim":    "rgba(22, 64, 77, 0.55)",
+    "stat_low_border": "rgba(111, 163, 176, 0.4)",
 }
 
 
