@@ -29,10 +29,10 @@ import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-import requests
 import streamlit as st
 
 from engines.weather_engine import get_todays_games_with_weather
+from engines.roster import _get_json, prefetch_json
 from engines.statcast_engine import (
     get_pitcher_advanced_splits, get_pitcher_k_game_log_json, hand_tag,
 )
@@ -50,17 +50,14 @@ def _k_vs_team_json(pid: int, opp_team: str, season: int) -> str:
     Returns {"avg", "n", "ks"} — n=0 means they simply haven't met."""
     ks = []
     for yr in (season, season - 1):
-        try:
-            resp = requests.get(
-                _PLAYER_STATS_URL.format(pid=pid),
-                params={"stats": "gameLog", "group": "pitching", "season": yr},
-                timeout=10,
-            )
-            resp.raise_for_status()
-            stats = resp.json().get("stats") or []
-            splits = (stats[0].get("splits") if stats else []) or []
-        except Exception:
+        data = _get_json(
+            _PLAYER_STATS_URL.format(pid=pid),
+            params={"stats": "gameLog", "group": "pitching", "season": yr},
+        )
+        if not data:
             continue
+        stats = data.get("stats") or []
+        splits = (stats[0].get("splits") if stats else []) or []
         for sp in splits:
             if ((sp.get("opponent") or {}).get("name") or "") == opp_team:
                 try:
@@ -81,14 +78,11 @@ def _team_k_rates_json() -> str:
     """Season K% (strikeouts / plate appearances) for every MLB team,
     plus the league rate, from MLB's own team hitting stats. Cached 6h —
     these rates move slowly. Returns a JSON string (pickle-proof)."""
+    data = _get_json(_TEAM_STATS_URL,
+                     params={"sportId": 1, "group": "hitting",
+                             "stats": "season"})
     try:
-        resp = requests.get(
-            _TEAM_STATS_URL,
-            params={"sportId": 1, "group": "hitting", "stats": "season"},
-            timeout=10,
-        )
-        resp.raise_for_status()
-        splits = resp.json()["stats"][0]["splits"]
+        splits = data["stats"][0]["splits"]
     except Exception as e:
         return json.dumps(
             {"teams": {}, "league": None, "error": f"Team K-rate request failed: {e}"},
@@ -125,6 +119,26 @@ def _slate_projections_json(date_str: str, basis: str = "season") -> str:
 
     tk = json.loads(_team_k_rates_json())
     team_k, league_k, k_err = tk.get("teams", {}), tk.get("league"), tk.get("error")
+
+    # ---- warm every probable's game logs concurrently ----
+    #
+    # _k_vs_team_json runs per pitcher and loops two seasons, so a full
+    # slate is up to 60 sequential round-trips, each waiting on the last
+    # for no reason. Fetching them together first turns that into one
+    # round-trip's worth of waiting; the loop below then hits memory.
+    # Optimisation only — delete it and the board is still correct.
+    _season = datetime.now(EASTERN).year
+    _warm = []
+    for _g in games:
+        for _side in ("away", "home"):
+            _p = _g.get(f"{_side}_pitcher_id")
+            if not _p:
+                continue
+            for _yr in (_season, _season - 1):
+                _warm.append((_PLAYER_STATS_URL.format(pid=_p),
+                              {"stats": "gameLog", "group": "pitching",
+                               "season": _yr}))
+    prefetch_json(_warm)
 
     rows = []
     for g in games:
