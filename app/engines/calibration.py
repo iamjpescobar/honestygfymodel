@@ -452,6 +452,67 @@ def _espn_slate_date(raw) -> str:
     return dt.astimezone(EASTERN).strftime("%Y-%m-%d")
 
 
+# ----------------------------------------------------------------------
+# ESPN sends the column headers TWICE, in two different arrays:
+#
+#   labels: ["MIN", "PTS", "REB", "AST", "3PT", ...]        short
+#   names:  ["MINUTES", "POINTS", "TOTALREBOUNDS", ...]     long
+#
+# The parser read `names or labels`, so it always took the LONG array and
+# then looked up "PTS" in it. Not a key there, so pts was None on every
+# player, on every date, forever.
+#
+# MUST STAY BYTE-IDENTICAL between calibration_pipeline.py and
+# app/engines/calibration.py — see tests/test_wnba_grading_honesty.py.
+# ----------------------------------------------------------------------
+_LABEL_ALIASES = {
+    "MINUTES": "MIN",
+    "POINTS": "PTS",
+    "TOTALREBOUNDS": "REB",
+    "REBOUNDS": "REB",
+    "ASSISTS": "AST",
+    "STEALS": "STL",
+    "BLOCKS": "BLK",
+    "TURNOVERS": "TO",
+    "THREEPOINTFIELDGOALSMADE-THREEPOINTFIELDGOALSATTEMPTED": "3PT",
+    "FIELDGOALSMADE-FIELDGOALSATTEMPTED": "FG",
+    "FREETHROWSMADE-FREETHROWSATTEMPTED": "FT",
+}
+
+
+def _espn_labels(data) -> list:
+    """Column headers normalised to PTS/REB/AST/3PT, from whichever array
+    ESPN populated. Returns [] when none of them carries points, so the
+    caller reports a parse failure instead of silently reading nothing."""
+    for key in ("labels", "names", "displayNames"):
+        arr = [_LABEL_ALIASES.get(str(n).upper(), str(n).upper())
+               for n in (data.get(key) or [])]
+        if "PTS" in arr:
+            return arr
+    return []
+
+
+def _espn_event_stats(data) -> dict:
+    """{eventId: stat row}.
+
+    The top-level `events` map is METADATA — date, opponent, result — and
+    its "stats" key is an empty list on every entry. The numbers live
+    under seasonTypes -> categories -> events, keyed by eventId. So
+    `events[id]["stats"]` returned [] for every game ever played, which
+    is why even the games that matched on date produced no line.
+    """
+    out = {}
+    for season in (data.get("seasonTypes") or []):
+        for cat in (season.get("categories") or []):
+            for ev in (cat.get("events") or []):
+                if not isinstance(ev, dict):
+                    continue
+                eid = str(ev.get("eventId") or ev.get("id") or "")
+                if eid and ev.get("stats"):
+                    out[eid] = ev.get("stats")
+    return out
+
+
 @st.cache_data(ttl=3600, max_entries=256, show_spinner=False)
 def _wnba_day_json(pid, date_str: str) -> str:
     """That player's real box-score line for one date, from ESPN's
@@ -465,14 +526,15 @@ def _wnba_day_json(pid, date_str: str) -> str:
         return json.dumps(None)
 
     # ESPN returns a labels array plus per-event stat rows; map by label
-    names = [str(n).upper() for n in (data.get("names") or data.get("labels") or [])]
+    names = _espn_labels(data)
+    _stats_by_event = _espn_event_stats(data)
     events = (data.get("events") or {})
     want = date_str
     for ev_id, ev in events.items():
         ev_date = _espn_slate_date(ev.get("gameDate"))
         if ev_date != want:
             continue
-        stats = ev.get("stats") or []
+        stats = ev.get("stats") or _stats_by_event.get(str(ev_id)) or []
         if not stats or not names:
             return json.dumps(None)
         row = {}
