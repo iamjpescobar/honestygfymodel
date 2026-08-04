@@ -10,7 +10,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from styles.kc_theme import inject_kc_theme, card, footer, COLOR
+from styles.kc_theme import card, footer, COLOR
 from styles.table_style import style_stat_table, render_html_table
 from engines.without_player import (
     without_player, team_players, MIN_WITHOUT, MIN_TEAMMATE_GP,

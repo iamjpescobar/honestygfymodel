@@ -1,4 +1,4 @@
-from styles.kc_theme import inject_kc_theme, coming_soon_page
+from styles.kc_theme import coming_soon_page
 
 # NOTE: no st.set_page_config here — app.py already sets it once for the
 # whole app, and these pages render inside that same run.

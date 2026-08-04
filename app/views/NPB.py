@@ -3,7 +3,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from styles.kc_theme import (inject_kc_theme, page_header, card_open, card_close,
+from styles.kc_theme import (page_header, card_open, card_close,
                              badge, footer, COLOR, SPORT_ACCENTS)
 from engines.matchup_grades_intl import grade_npb_matchup, render_matchup_grades_card
 

@@ -1,7 +1,7 @@
 import streamlit as st
 
 from styles.kc_theme import (
-    inject_kc_theme, page_header, card_open, card_close, badge,
+    page_header, card_open, card_close, badge,
     edge_tag, status_banner, footer, data_timestamp,
 )
 from engines.player_of_the_day import get_mlb_player_of_the_day
@@ -51,7 +51,7 @@ if error and not candidates:
 # -----------------------------------------------------
 # THE PICK
 # -----------------------------------------------------
-st.markdown(card_open(f'\u2b50 {pick["name"]} \u2014 {pick["team"]}'), unsafe_allow_html=True)
+st.markdown(card_open(f'{pick["name"]} \u2014 {pick["team"]}'), unsafe_allow_html=True)
 
 top_line = (
     badge(f'Bats {pick["bats"]}', "neutral")

@@ -9,7 +9,7 @@ engines/daily_13.py.
 import pandas as pd
 import streamlit as st
 
-from styles.kc_theme import inject_kc_theme, card, footer, COLOR
+from styles.kc_theme import card, footer, COLOR
 from styles.table_style import (style_stat_table, render_html_table,
                                 team_logo_cell, player_cell, form_dots,
                                 sort_control, score_bar, tier_legend)

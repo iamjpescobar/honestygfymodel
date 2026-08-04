@@ -9,7 +9,7 @@ and all inputs are shown on the page — see engines/k_projection.py.
 import pandas as pd
 import streamlit as st
 
-from styles.kc_theme import inject_kc_theme, card, footer, COLOR
+from styles.kc_theme import card, footer, COLOR
 from styles.table_style import style_stat_table, render_html_table, team_logo_cell, sort_control, tier_legend
 from engines.k_projection import get_slate_k_projections
 from engines.pitcher_trends import render_pitcher_trend

@@ -1,6 +1,6 @@
 import streamlit as st
 
-from styles.kc_theme import inject_kc_theme, page_header, card_open, card_close
+from styles.kc_theme import page_header, card_open, card_close
 from auth import require_admin
 from engines.roster import get_live_team_roster
 

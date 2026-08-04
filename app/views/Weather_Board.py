@@ -21,7 +21,7 @@ from zoneinfo import ZoneInfo
 
 import streamlit as st
 
-from styles.kc_theme import inject_kc_theme, footer, COLOR
+from styles.kc_theme import footer, COLOR
 from engines.weather_engine import get_todays_games_with_weather
 from engines.park_weather import (get_park_forecast, is_roofed,
                                   prefetch_forecasts)

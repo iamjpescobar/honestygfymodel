@@ -13,7 +13,7 @@ bats, and that is frequently the whole story of a late-inning spot.
 import pandas as pd
 import streamlit as st
 
-from styles.kc_theme import inject_kc_theme, footer, card, COLOR
+from styles.kc_theme import footer, card, COLOR
 from styles.table_style import style_stat_table, render_html_table
 from engines.weather_engine import get_todays_games_with_weather
 from engines.team_logos import logo_for

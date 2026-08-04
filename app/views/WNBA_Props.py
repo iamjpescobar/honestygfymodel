@@ -9,7 +9,7 @@ import pandas as pd
 import streamlit as st
 from engines.slate_guard import load_slate, staleness_note
 
-from styles.kc_theme import SPORT_ACCENTS, inject_kc_theme, card, footer, COLOR
+from styles.kc_theme import SPORT_ACCENTS, card, footer, COLOR
 from styles.table_style import style_stat_table, render_html_table, score_bar, tier_legend, wnba_logo_cell
 from engines.wnba_props import (
     build_props, STATS, MIN_GP, MIN_MPG, MIN_LOG,

@@ -23,7 +23,7 @@ import json
 import pandas as pd
 import streamlit as st
 
-from styles.kc_theme import inject_kc_theme, card, footer, COLOR
+from styles.kc_theme import card, footer, COLOR
 from auth import require_admin
 from engines.calibration_trend import render_calibration_trend
 from engines.calibration import (summary, grade_pending, reopen_recent_days,

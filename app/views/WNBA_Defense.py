@@ -9,7 +9,7 @@ import pandas as pd
 import streamlit as st
 from engines.slate_guard import load_slate, staleness_note
 
-from styles.kc_theme import SPORT_ACCENTS, inject_kc_theme, card, footer, COLOR
+from styles.kc_theme import SPORT_ACCENTS, card, footer, COLOR
 from styles.table_style import style_stat_table, render_html_table, tier_legend
 from engines.wnba_defense import build_board, MIN_PLAYER_GP
 from engines.live_sync import sync_latest_button

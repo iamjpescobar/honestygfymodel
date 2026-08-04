@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 EASTERN = ZoneInfo("America/New_York")
 
 from styles.kc_theme import (
-    inject_kc_theme, badge, card, footer, COLOR,
+    badge, card, footer, COLOR,
     pitch_color, pitch_name, edge_tag
 )
 from styles.table_style import (style_stat_table, plain_dark_table,

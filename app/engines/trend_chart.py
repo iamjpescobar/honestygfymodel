@@ -23,6 +23,13 @@ try:
     _TIER_MISSED = _TBL_TIERS[0][1]    # poor
     _TIER_CLEARED = _TBL_TIERS[-1][1]  # elite
 except Exception:      # styling import failing must never break a chart
+    # LITERALS ON PURPOSE - do not "fix" these into COLOR lookups.
+    #
+    # This branch runs precisely when importing from styles/ has failed.
+    # Reaching back into styles.kc_theme for COLOR here would be the one
+    # thing guaranteed not to work, and would turn a chart that renders
+    # in fallback colours into a NameError. They mirror COLOR["error"]
+    # and COLOR["stat_high"]; if the palette moves, update them by hand.
     _TIER_MISSED, _TIER_CLEARED = "#D6304A", "#3BB8FF"
 
 import streamlit as st

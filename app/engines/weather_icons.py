@@ -20,8 +20,10 @@ import re
 
 from styles.kc_theme import COLOR
 
-_GREY = "#8fa3ad"
-_COLD = "#5aa9e6"
+# Icon strokes read from the palette like everything else, so a
+# theme change moves them too instead of leaving them behind.
+_GREY = COLOR["text_muted"]
+_COLD = COLOR["cold"]
 
 # Compass bearing -> map angle (0 = up/North, clockwise). Used only for the
 # forecast-pending state: when MLB hasn't posted official field-relative wind

@@ -290,7 +290,7 @@ def _field_layers(alt):
         {"x": 0, "y": 51, "seg": "d"}, {"x": -25.5, "y": 25.5, "seg": "d"},
         {"x": 0, "y": 0, "seg": "d"},
     ])
-    line_style = dict(color="#3a4a55", strokeWidth=1.5)
+    line_style = dict(color=COLOR["border"], strokeWidth=1.5)
     layers = []
     for src in (fence, foul, diamond):
         layers.append(
@@ -348,7 +348,10 @@ def render_spray_chart(batter_id, batter_name, window_label: str = "L10",
         y=alt.Y("y:Q", axis=None, scale=alt.Scale(domain=[-10, 210])),
         color=alt.Color("Result:N",
                         scale=alt.Scale(domain=["HR", "Hit", "Out"],
-                                        range=[COLOR["gold"], COLOR["stat_high"], "#8a3a40"]),
+                                        # Two stops came from COLOR and the third was hardcoded, so a
+                                        # palette edit moved two and stranded one.
+                                        range=[COLOR["gold"], COLOR["stat_high"],
+                                               COLOR["error"]]),
                         legend=alt.Legend(orient="bottom", title=None)),
         tooltip=[alt.Tooltip("Result:N")],
     )

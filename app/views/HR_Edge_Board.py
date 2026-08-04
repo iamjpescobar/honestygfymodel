@@ -13,7 +13,7 @@ list the calibration logger records, so the two must agree.
 import pandas as pd
 import streamlit as st
 
-from styles.kc_theme import inject_kc_theme, card, footer, COLOR
+from styles.kc_theme import card, footer, COLOR
 from styles.table_style import style_stat_table, render_html_table, team_logo_cell, score_bar, sort_control, tier_legend
 from engines.hr_edge_board import get_hr_edge_board
 from engines.live_sync import sync_latest_button
