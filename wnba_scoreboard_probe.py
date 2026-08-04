@@ -113,7 +113,7 @@ def probe(name, url, unwrap, want_date):
 
     if r.status_code != 200:
         print(f"  body starts: {r.text[:200]!r}")
-        return
+        return None
 
     try:
         raw = r.json()
@@ -145,6 +145,7 @@ def probe(name, url, unwrap, want_date):
 
     ev = events[0]
     print(f"\n  FIRST EVENT keys: {_keys(ev)}")
+    _ids = (ev.get("id"), None)
 
     # THE QUESTION THIS PROBE EXISTS TO ANSWER.
     comps = ev.get("competitions") if isinstance(ev, dict) else None
@@ -160,8 +161,10 @@ def probe(name, url, unwrap, want_date):
         if isinstance(alt, list):
             print(f"  BUT event.competitors exists: {len(alt)} entries")
             print(f"     first competitor keys: {_keys(alt[0]) if alt else '-'}")
-        print("  -> SHAPE MISMATCH: every event would be SKIPPED by "
-              "parse_scoreboard_events (`if not comps: continue`)")
+        print("  -> SHAPE MISMATCH for the RAW parser "
+              "(`if not comps: continue`)")
+        if isinstance(alt, list) and alt:
+            _ids = (ev.get("id"), str(alt[0].get("id") or ""))
 
     print("\n  first event, trimmed:")
     print("  " + json.dumps(ev, indent=2)[:1200].replace("\n", "\n  "))
@@ -169,26 +172,103 @@ def probe(name, url, unwrap, want_date):
     # The real parser's verdict, which is the only number that counts.
     try:
         sys.path.insert(0, ".")
-        from wnba_precompute import parse_scoreboard_events
-        got = list(parse_scoreboard_events(data))
-        print(f"\n  parse_scoreboard_events() -> {len(got)} games")
+        from wnba_precompute import (parse_scoreboard_events,
+                                     _normalize_header_events)
+        raw_n = len(list(parse_scoreboard_events(data)))
+        got = list(parse_scoreboard_events(_normalize_header_events(data)))
+        print(f"\n  parse_scoreboard_events(raw)        -> {raw_n} games")
+        print(f"  parse_scoreboard_events(normalized) -> {len(got)} games")
         for _eid, _st, _done, g in got[:3]:
-            print(f"     {g.get('away')} @ {g.get('home')}  "
-                  f"({_st}, completed={_done})")
+            print(f"     {g.get('away')} {g.get('away_score','-')} - "
+                  f"{g.get('home_score','-')} {g.get('home')}  "
+                  f"({_st}, completed={_done}, id={_eid})")
+        if got:
+            _e0 = got[0][3]
+            _ids = (got[0][0], _e0.get("away_id") or _e0.get("home_id"))
     except Exception as exc:
-        print(f"\n  could not run parse_scoreboard_events: "
-              f"{type(exc).__name__}: {exc}")
+        print(f"\n  could not run the parser: {type(exc).__name__}: {exc}")
+    return _ids
+
+
+def probe_downstream(event_id, team_id):
+    """The endpoints the scoreboard is only the doorway to.
+
+    Fixing the scoreboard buys nothing on its own. Every actual NUMBER on
+    the site comes from parse_boxscore (/summary?event=), the rosters come
+    from /teams/{id}/roster, and tonight's injury report comes from
+    /summary again — and all three call site.api DIRECTLY, which is the
+    host the probe above just caught returning 403.
+
+    So this asks the question that decides whether the league is
+    recoverable at all: is the 403 specific to the scoreboard PATH, or is
+    the whole host closed to this runner?
+    """
+    print("\n\n" + "#" * 70)
+    print("# DOWNSTREAM ENDPOINTS — where the actual data comes from")
+    print("#" * 70)
+
+    checks = [
+        ("box score / summary", f"{BASE}/summary?event={event_id}",
+         ("boxscore", "rosters", "injuries")),
+        ("team roster", f"{BASE}/teams/{team_id}/roster",
+         ("athletes", "team")),
+        # Known to work from a previous run, so it is the control: if
+        # THIS one 403s too, the whole host is closed, not one path.
+        ("athlete gamelog (control)",
+         "https://site.api.espn.com/apis/common/v3/sports/basketball/wnba/"
+         "athletes/4398966/gamelog",
+         ("events", "seasonTypes", "labels")),
+    ]
+
+    for label, url, want in checks:
+        print(f"\n--- {label}\n    {url}")
+        try:
+            r = requests.get(url, headers=UA, timeout=25)
+        except Exception as exc:
+            print(f"    REQUEST FAILED: {type(exc).__name__}: {exc}")
+            continue
+        print(f"    HTTP {r.status_code}   {len(r.content):,} bytes   "
+              f"{r.headers.get('content-type','?')}")
+        if r.status_code != 200:
+            print(f"    body starts: {r.text[:160]!r}")
+            print("    -> BLOCKED")
+            continue
+        try:
+            j = r.json()
+        except Exception as exc:
+            print(f"    NOT JSON: {exc}")
+            print(f"    body starts: {r.text[:160]!r}")
+            continue
+        print(f"    top-level keys: {_keys(j)}")
+        present = [k for k in want if isinstance(j, dict) and k in j]
+        missing = [k for k in want if k not in present]
+        print(f"    expected blocks present: {present or 'NONE'}")
+        if missing:
+            print(f"    missing: {missing}")
+        print("    -> USABLE" if present else "    -> 200 but nothing we need")
 
 
 def main(want_date):
     d = want_date.replace("-", "")
     print(f"WNBA scoreboard probe — date {want_date} (as {d})")
+    first_event, first_team = None, None
     for name, build_url, unwrap in SOURCES:
-        probe(name, build_url(d), unwrap, want_date)
+        got = probe(name, build_url(d), unwrap, want_date)
+        if got and not first_event:
+            first_event, first_team = got
+
+    if first_event:
+        probe_downstream(first_event, first_team or "17")
+    else:
+        print("\nNo event id recovered, so the downstream endpoints could "
+              "not be probed.")
+
     print("\n" + "=" * 70)
     print("READ THIS AS: a source is usable only if it reports SHAPE OK")
     print("and a non-zero game count. 200 + JSON is not enough — that is")
     print("exactly what shipped an empty league on 2026-08-04.")
+    print("And if the downstream section shows BLOCKED, fixing the")
+    print("scoreboard alone will NOT bring the league back.")
     return 0
 
 

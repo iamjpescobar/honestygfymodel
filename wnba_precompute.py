@@ -133,6 +133,109 @@ def _is_scoreboard(data):
     return isinstance(data, dict) and ("events" in data or "sports" in data)
 
 
+def _normalize_header_events(data):
+    """Reshape site.web.api's /scoreboard/header payload into the shape
+    parse_scoreboard_events reads.
+
+    MEASURED, not assumed. wnba_scoreboard_probe.py against 2026-08-03:
+
+        site.api      HTTP 403, text/html "Access Denied"
+        cdn.espn      HTTP 202, ZERO bytes
+        site.web.api  HTTP 200, 70,704 bytes of real JSON, 3 events
+
+    So exactly one host is answering, and its events carry the same games
+    in a FLATTER shape: there is no `competitions` array at all, and the
+    two sides sit directly on `event["competitors"]` — already carrying
+    `homeAway`, with the team fields (id, displayName, color, logo)
+    flattened onto the competitor rather than nested under `team`.
+
+    parse_scoreboard_events opens with `comps = event.get("competitions")`
+    and skips the event when that is empty, so every game of every day was
+    dropped in silence. That is the whole of the 2026-08-04 failure: 87
+    days answered 200 and produced zero games.
+
+    This rebuilds the nesting rather than touching the parser, so the
+    site.api shape keeps working unchanged if ESPN ever unblocks it — and
+    a payload that ALREADY has competitions is returned untouched.
+    """
+    events = (data or {}).get("events")
+    if not isinstance(events, list) or not events:
+        return data
+    # Already the full scoreboard shape — leave it alone.
+    if isinstance(events[0], dict) and events[0].get("competitions"):
+        return data
+
+    # Team identity fields, which the header flattens onto the competitor.
+    _TEAM_KEYS = ("id", "uid", "displayName", "shortDisplayName", "name",
+                  "abbreviation", "location", "color", "alternateColor",
+                  "logo", "logos", "links", "venue")
+
+    out = []
+    for ev in events:
+        if not isinstance(ev, dict):
+            continue
+        comps = ev.get("competitors") or []
+        if not comps:
+            continue
+
+        # fullStatus carries the {"type": {"name", "completed"}} block the
+        # parser needs. `status` on this feed is often a bare string, which
+        # would crash the .get("type") chain — so it is only used when it
+        # is genuinely an object.
+        status = ev.get("fullStatus")
+        if not isinstance(status, dict):
+            _s = ev.get("status")
+            status = _s if isinstance(_s, dict) else {}
+
+        norm = []
+        for c in comps:
+            if not isinstance(c, dict):
+                continue
+            entry = {
+                "homeAway": c.get("homeAway"),
+                "score": c.get("score"),
+                "winner": c.get("winner"),
+                "team": {k: c.get(k) for k in _TEAM_KEYS if c.get(k) is not None},
+            }
+            # _record() iterates records expecting dicts; this feed
+            # sometimes gives a bare "20-8" string instead, and iterating
+            # THAT yields characters and an AttributeError. Pass it
+            # through only in the shape the reader can actually handle.
+            _recs = c.get("records") or c.get("record")
+            if isinstance(_recs, list):
+                entry["records"] = _recs
+            elif isinstance(_recs, str) and _recs:
+                entry["records"] = [{"name": "overall", "summary": _recs}]
+            for _k in ("leaders", "statistics"):
+                if isinstance(c.get(_k), list):
+                    entry[_k] = c[_k]
+            norm.append(entry)
+
+        out.append({
+            "id": ev.get("id"),
+            "uid": ev.get("uid"),
+            "date": ev.get("date"),
+            "name": ev.get("name"),
+            "shortName": ev.get("shortName"),
+            "status": status,
+            "competitions": [{
+                "id": ev.get("competitionId") or ev.get("id"),
+                "date": ev.get("date"),
+                "competitors": norm,
+                # The header gives the arena as a plain string on the
+                # event; the parser reads comp["venue"]["fullName"].
+                "venue": {"fullName": ev.get("location") or ""},
+                "broadcasts": ev.get("broadcasts") or [],
+                "odds": ev.get("odds") or [],
+                "status": status,
+            }],
+        })
+
+    merged = dict(data)
+    merged["events"] = out
+    return merged
+
+
 def fetch_scoreboard(yyyymmdd, require_events=True):
     """One day's slate, from whichever ESPN host is answering.
 
@@ -157,6 +260,11 @@ def fetch_scoreboard(yyyymmdd, require_events=True):
         if not _is_scoreboard(data):
             errors.append(f"{name}: 200 but not a scoreboard payload")
             continue
+        # Applied to EVERY source, not just the one known to need it: it
+        # is a no-op on a payload that already carries `competitions`, and
+        # making it conditional on the source name would mean a mirror
+        # that changes shape silently goes back to yielding nothing.
+        data = _normalize_header_events(data)
         if require_events and not (data.get("events") or data.get("sports")):
             errors.append(f"{name}: 200 but no events")
             continue
