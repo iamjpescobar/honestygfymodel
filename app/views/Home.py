@@ -337,9 +337,25 @@ def _render_pulse(record, today):
 
 def _render_today(record, today):
     """Today's published board, or an honest account of why there isn't one."""
-    live = [(b, record.get(b, {}).get(today))
-            for b in list(BOARD_PAGE) + list(WNBA_PAGE)
+    # SPLIT BY SPORT, don't interleave.
+    #
+    # This used to be one flat list — every MLB board followed by every
+    # WNBA board — poured into cols[i % 3]. On an MLB session that put
+    # two WNBA cards in the same grid as the baseball ones, at identical
+    # weight, with no way to open either (they aren't reachable from
+    # here). Whatever the day's mix happened to be decided the layout.
+    _mine_boards = list(BOARD_PAGE) if CURRENT_SPORT == "MLB" else list(WNBA_PAGE)
+    _other_boards = list(WNBA_PAGE) if CURRENT_SPORT == "MLB" else list(BOARD_PAGE)
+
+    mine = [(b, record[b][today]) for b in _mine_boards
             if record.get(b, {}).get(today)]
+    # Boards this sport publishes that have NOT been recorded yet. They
+    # used to vanish silently, so an absent HR Edge looked identical to
+    # an HR Edge that doesn't exist. Named below instead.
+    pending = [b for b in _mine_boards if not record.get(b, {}).get(today)]
+    others = [(b, record[b][today]) for b in _other_boards
+              if record.get(b, {}).get(today)]
+    live = mine + others
 
     if not live:
         with card("home_no_board"):
@@ -368,14 +384,15 @@ def _render_today(record, today):
                            "live.")
         return
 
-    # Three across, not two. On a tablet in landscape the two-column
-    # layout left roughly a third of the viewport empty down the whole
-    # page while forcing the card list twice as long as it needed to be.
-    cols = st.columns(3)
-    for i, (board, entry) in enumerate(live):
+    # Column count follows the card count so the last row is never a
+    # single card with two empty slots beside it — same rule as the
+    # Explore grid below.
+    _ncols = 2 if len(mine) == 4 else max(1, min(len(mine), 3))
+    cols = st.columns(_ncols)
+    for i, (board, entry) in enumerate(mine):
         cfg = BOARDS.get(board, {})
         picks = entry.get("picks", [])
-        with cols[i % 3]:
+        with cols[i % _ncols]:
             with card(f"home_today_{board}"):
                 page = _jump_target(board)
                 if page:
@@ -426,6 +443,57 @@ def _render_today(record, today):
                         f'{extra}{last}</div>',
                         unsafe_allow_html=True,
                     )
+
+    # ---- boards this sport publishes that aren't recorded yet ----
+    #
+    # One line, not a card. A board with no picks used to disappear
+    # entirely, so an HR Edge still waiting on lineups looked exactly
+    # like an HR Edge that doesn't exist — and the grid quietly changed
+    # shape depending on how far into the afternoon it was.
+    if pending:
+        _names = ", ".join(BOARDS.get(b, {}).get("label", b) for b in pending)
+        st.markdown(
+            f'<div style="color:{COLOR["text_faint"]}; '
+            f'font-size:var(--lc-text-caption); '
+            f'padding-top:var(--lc-space-lg);">'
+            f'Not published yet: {_names} \u2014 recorded once lineups are '
+            f'confirmed.</div>',
+            unsafe_allow_html=True,
+        )
+
+    # ---- what the OTHER sport published, as rows rather than cards ----
+    #
+    # These are worth knowing about — the site published them today — but
+    # they cannot be opened from here, and giving an unopenable board the
+    # same card as a live one is the mistake the Explore grid used to
+    # make with its "Select WNBA above" tiles.
+    if others:
+        _other_sport = "WNBA" if CURRENT_SPORT == "MLB" else "MLB"
+        st.markdown(
+            f'<div style="color:{COLOR["text_muted"]}; '
+            f'font-size:var(--lc-text-caption); font-weight:600; '
+            f'padding:var(--lc-space-2xl) var(--lc-space-none) '
+            f'var(--lc-space-sm);">Also published today \u00b7 '
+            f'<span style="color:{COLOR["text_faint"]}; font-weight:400;">'
+            f'switch to {_other_sport} above to open these</span></div>',
+            unsafe_allow_html=True,
+        )
+        for board, entry in others:
+            cfg = BOARDS.get(board, {})
+            _n = len(entry.get("picks", []))
+            _last = _last_night_score(board)
+            st.markdown(
+                f'<div style="display:flex; align-items:baseline; '
+                f'justify-content:space-between; gap:var(--lc-space-lg); '
+                f'padding:var(--lc-space-sm) var(--lc-space-none); '
+                f'border-bottom:1px solid {COLOR["border_soft"]};">'
+                f'<span style="color:{COLOR["text"]};">'
+                f'{cfg.get("label", board)}</span>'
+                f'<span style="font-family:\'JetBrains Mono\',monospace; '
+                f'font-size:var(--lc-text-tiny); color:{COLOR["text_faint"]};">'
+                f'{_n} picks{"  " + _last if _last else ""}</span></div>',
+                unsafe_allow_html=True,
+            )
 
 
 def _best_call(rows, sums):
