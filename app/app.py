@@ -430,7 +430,8 @@ def render_glossary():
 # nav_titles/active_page are MLB-only (that's the page nav); everything
 # else renders for every sport.
 # -------------------------
-def render_right_sidebar(nav_titles=None, active_page=None, show_glossary=False):
+def render_right_sidebar(nav_titles=None, active_page=None, show_glossary=False,
+                         nav_caption=None):
     st.markdown('<div class="right-sidebar">', unsafe_allow_html=True)
 
     # Account card — who's signed in and their role
@@ -480,10 +481,23 @@ def render_right_sidebar(nav_titles=None, active_page=None, show_glossary=False)
             "</style>",
             unsafe_allow_html=True,
         )
+        # WHOSE PAGES THESE ARE. Unlabelled, the list reads as the
+        # current page's nav — which is wrong on Home, where it is the
+        # selected SPORT's page list and Home belongs to no sport.
+        if nav_caption:
+            st.caption(nav_caption)
+
+        # index=None, NOT 0, when nothing is active.
+        #
+        # Falling back to 0 put the teal active rail on Game Card while
+        # the user was standing on Home, which states plainly that they
+        # are on a page they are not on. A nav with no current page must
+        # show no current page.
+        _idx = nav_titles.index(active_page) if active_page in nav_titles else None
         selected = st.radio(
             "Navigation",
             nav_titles,
-            index=nav_titles.index(active_page) if active_page in nav_titles else 0,
+            index=_idx,
             key="lc_nav_radio",
             label_visibility="collapsed",
         )
@@ -526,12 +540,22 @@ if st.session_state.get("lc_view") == "home":
     _home_nav = ([t for t, _p in build_mlb_pages(include_admin=user_is_admin)]
                  if selected_sport == "MLB" else None)
 
+    # No page is active on Home, so clear the nav's selection. Both keys,
+    # and BEFORE the widget is created: the radio ignores `index` once
+    # its key holds a value, so leaving lc_nav_radio set would re-select
+    # the last page and re-light the rail. Clearing lc_active_page too
+    # keeps the "did the user just click nav?" check above honest — it
+    # compares the two, and a None against a stale title would read as a
+    # click on every single run.
+    st.session_state["lc_nav_radio"] = None
+    st.session_state["lc_active_page"] = None
+
     _main_col, _right_col = st.columns([8, 2])
     with _main_col:
         load_page_module("views/Home.py")
     with _right_col:
-        render_right_sidebar(nav_titles=_home_nav,
-                             active_page=st.session_state.get("lc_active_page"))
+        render_right_sidebar(nav_titles=_home_nav, active_page=None,
+                             nav_caption=f"{selected_sport} pages")
 
 elif selected_sport == "MLB":
     pages = build_mlb_pages(include_admin=user_is_admin)
