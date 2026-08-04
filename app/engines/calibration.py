@@ -231,6 +231,29 @@ def _save(data):
         return False
 
 
+def has_id(value) -> bool:
+    """True when `value` is a usable player id.
+
+    NOT a truthiness check. Every id filter in the calibration path used
+    to read `if r.get("id")`, which silently discards the id 0 — and 0 is
+    a perfectly ordinary integer, indistinguishable from a real id
+    everywhere except in a boolean test. Nothing in the record would show
+    the pick had been dropped; it would simply never appear, and the
+    board's denominator would be quietly short.
+
+    MLB and ESPN do not currently issue an id of 0, so this has never
+    fired. That is exactly what makes it worth removing: a filter that is
+    wrong but never triggers is one upstream change away from silently
+    eating picks, and the symptom (a board a little thinner than it
+    should be) looks like nothing at all.
+
+    An empty or whitespace-only string is still rejected — that is a
+    missing id rather than a real one, and str(0) is "0", so the integer
+    survives.
+    """
+    return value is not None and str(value).strip() != ""
+
+
 def log_picks(board: str, rows, date_str: str = None) -> bool:
     """Record today's picks for later grading. rows: [{"id","name",
     "team"}...]. Idempotent per (board, date)."""
@@ -281,7 +304,7 @@ def log_picks(board: str, rows, date_str: str = None) -> bool:
 
     logged_markets = {p.get("stat") for p in entry.get("picks", [])}
     fresh = [r for r in rows
-             if r.get("id") and r.get("stat") not in logged_markets]
+             if has_id(r.get("id")) and r.get("stat") not in logged_markets]
     if not fresh:
         return True
 
@@ -452,7 +475,7 @@ def grade_pending(max_days: int = 14) -> int:
             for pick in entry.get("picks", []):
                 if pick.get("result") is not None:
                     continue
-                if not pick.get("id"):
+                if not has_id(pick.get("id")):
                     # no player id to look up — nothing we can ever grade
                     # here, so don't let it hold the day open forever.
                     pick["result"] = "dnp"
@@ -558,7 +581,7 @@ def reopen_recent_days(days_back: int = FINALIZE_AFTER_DAYS) -> int:
             for pick in entry.get("picks", []):
                 # Only reset picks that have an id to look up and were
                 # left as "dnp" — those are the ones the bug stranded.
-                if pick.get("id") and pick.get("result") == "dnp":
+                if has_id(pick.get("id")) and pick.get("result") == "dnp":
                     pick["result"] = None
                     reopened += 1
                     touched = True
