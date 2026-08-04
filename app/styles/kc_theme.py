@@ -1028,17 +1028,60 @@ def footer():
     )
 
 
-def data_timestamp(label: str = "Data refreshed"):
-    """Renders a small monospace 'as-of' timestamp. Call right under a page
-    header on any page that pulls live data — on a paid data product, users
-    should always be able to see how fresh what they're looking at is."""
-    import streamlit as st
-    from datetime import datetime, timezone
+def data_timestamp(label: str = "Data refreshed", align: str = "center"):
+    """Renders a small monospace 'as-of' stamp for the DATA, not the clock.
 
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    THIS USED TO PRINT datetime.now().
+
+    Under the words "Data refreshed", on every page, always the current
+    second — so a three-day-old archive read as fresh to the second, and
+    the one control a subscriber has for judging staleness was the one
+    thing on the page guaranteed not to reflect it. On a product whose
+    entire pitch is that the numbers are real, a fabricated freshness
+    stamp is the worst possible thing to fabricate.
+
+    The nightly writes the real fetch time to
+    data/statcast/manifest.json as `generated_at_utc`. That is what this
+    reads. When the manifest is missing it says so, rather than
+    substituting the clock.
+    """
+    import streamlit as st
+    import json
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    stamp, age_txt, tone = None, "", COLOR["text_faint"]
+    try:
+        _m = json.loads(
+            (Path(__file__).resolve().parents[1] / "data" / "statcast"
+             / "manifest.json").read_text())
+        _gen = datetime.fromisoformat(str(_m.get("generated_at_utc")))
+        if _gen.tzinfo is None:
+            _gen = _gen.replace(tzinfo=timezone.utc)
+        stamp = _gen.strftime("%Y-%m-%d %H:%M UTC")
+        _hours = (datetime.now(timezone.utc) - _gen).total_seconds() / 3600.0
+        if _hours < 1:
+            age_txt = " \u00b7 under an hour ago"
+        elif _hours < 48:
+            age_txt = f" \u00b7 {_hours:.0f}h ago"
+        else:
+            age_txt = f" \u00b7 {_hours / 24:.0f} days ago"
+        # Past a day and a half the nightly has missed at least one run.
+        # Say so in amber rather than letting it read as normal.
+        if _hours > 36:
+            tone = COLOR["warn"]
+    except Exception:
+        stamp = None
+
+    body = (f"{label}: {stamp}{age_txt}" if stamp
+            else f"{label}: unknown \u2014 no data manifest on disk")
+    if stamp is None:
+        tone = COLOR["warn"]
+
+    _al = "left" if align == "left" else "center"
     st.markdown(
-        f'<div style="text-align:center; font-family:\'JetBrains Mono\',monospace; '
-        f'font-size:var(--lc-text-caption); color:{COLOR["text_faint"]}; margin-top:-10px; margin-bottom:1.4rem;">'
-        f'{label}: {now}</div>',
+        f'<div style="text-align:{_al}; font-family:\'JetBrains Mono\',monospace; '
+        f'font-size:var(--lc-text-caption); color:{tone}; margin-top:-10px; margin-bottom:1.4rem;">'
+        f'{body}</div>',
         unsafe_allow_html=True,
     )
