@@ -116,6 +116,69 @@ for _case_i, (label, labels, stats, expect) in enumerate(CASES):
             if got.get("ast") == 0 and "AST" not in labels:
                 failures.append(f"{label}: {name} reported an unread AST as 0")
 
+# ----------------------------------------------------------------------
+# THE DATE MATCH — the half of this parse that was never covered.
+#
+# Every case above uses T23:00Z, which is 7 PM ET: the one tip time on
+# the WNBA schedule where the UTC date and the ET slate date are the same
+# calendar day. gameDate is UTC and picks are logged under the ET date,
+# so an 8 PM tip is 00:00Z TOMORROW and a 10 PM West Coast tip is 02:00Z
+# TOMORROW. Both used to fall through to "no matching event", grade as
+# DNP three days later, and drop out of the hit-rate denominator without
+# reporting anything.
+#
+# Real tip times, all belonging to the 2026-08-01 ET slate.
+# ----------------------------------------------------------------------
+TIP_TIMES = [
+    ("12:00 PM ET matinee", "2026-08-01T16:00Z"),
+    ("3:00 PM ET",          "2026-08-01T19:00Z"),
+    ("7:00 PM ET",          "2026-08-01T23:00Z"),
+    ("8:00 PM ET",          "2026-08-02T00:00Z"),
+    ("10:00 PM ET west",    "2026-08-02T02:00Z"),
+]
+
+for _tip_i, (when, stamp) in enumerate(TIP_TIMES):
+    payload = {"names": ["PTS", "REB", "AST"],
+               "events": {"1": {"gameDate": stamp, "stats": ["20", "8", "5"]}}}
+    pid = 90000 + _tip_i
+
+    sys.modules["requests"] = stub_requests(payload)
+    for m in [k for k in sys.modules if k.startswith("calibration_pipeline")]:
+        del sys.modules[m]
+    import calibration_pipeline as cp
+    pipe = cp._wnba_line(pid, "2026-08-01")
+
+    sys.modules["requests"] = stub_requests(payload)
+    for m in [k for k in sys.modules if k.startswith("engines.calibration")]:
+        del sys.modules[m]
+    import engines.calibration as cal
+    _raw = cal._wnba_day_json(pid, "2026-08-01")
+    app = json.loads(_raw) if _raw else None
+
+    ok = (pipe or {}).get("pts") == 20.0 and (app or {}).get("pts") == 20.0
+    print(f"{'PASS' if ok else 'FAIL'}: {when:22} pipeline="
+          f"{'read' if pipe else 'MISSED':6} app={'read' if app else 'MISSED'}")
+    if not ok:
+        failures.append(
+            f"{when}: the line was not read (pipeline={pipe!r}, app={app!r}). "
+            f"A pick on this slate grades as DNP and leaves the record "
+            f"without ever reporting a failure.")
+
+# A game on a genuinely different day must still NOT match, or the fix
+# would grade picks against the wrong night.
+payload = {"names": ["PTS", "REB", "AST"],
+           "events": {"1": {"gameDate": "2026-07-30T23:00Z",
+                            "stats": ["20", "8", "5"]}}}
+sys.modules["requests"] = stub_requests(payload)
+for m in [k for k in sys.modules if k.startswith("calibration_pipeline")]:
+    del sys.modules[m]
+import calibration_pipeline as cp
+if cp._wnba_line(99999, "2026-08-01") is not None:
+    failures.append("a game two days earlier matched the slate date — the "
+                    "grader would score picks against the wrong night")
+else:
+    print("PASS: a different night still does not match")
+
 if failures:
     print("\n" + "=" * 68)
     for f in failures:
