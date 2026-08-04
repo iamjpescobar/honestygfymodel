@@ -8,3 +8,4 @@ venv/
 
 # Real credentials — never commit these. See auth_config.example.yaml.
 app/auth_config.yaml
+app/data/
