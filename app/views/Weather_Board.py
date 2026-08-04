@@ -23,7 +23,8 @@ import streamlit as st
 
 from styles.kc_theme import inject_kc_theme, footer, COLOR
 from engines.weather_engine import get_todays_games_with_weather
-from engines.park_weather import get_park_forecast, is_roofed
+from engines.park_weather import (get_park_forecast, is_roofed,
+                                  prefetch_forecasts)
 from engines.team_logos import logo_for
 from engines.weather_icons import weather_icon, wind_arrow, temp_icon
 from engines.team_abbreviations import team_abbr
@@ -216,6 +217,13 @@ def _hr_weather(temp_val, wind_str, roofed, home_team=None):
 
 
 with st.spinner("Pulling game-time forecasts for every park\u2026 (30-min cache after the first load)"):
+    # Every open-air park's forecast, fetched concurrently before the
+    # serial loop below. Roofed parks are skipped here for the same
+    # reason they are skipped there — no forecast is requested for them
+    # at all.
+    prefetch_forecasts(g.get("venue") for g in games
+                       if g.get("venue") and not is_roofed(g["venue"]))
+
     rows_html = []
     for g in games:
         venue = g.get("venue") or ""
