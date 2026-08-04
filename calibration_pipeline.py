@@ -68,6 +68,34 @@ BOARDS = {
     "wnba_defense": {"sport": "wnba", "stat": "pts", "threshold": None},
 }
 
+def has_id(value) -> bool:
+    """True when `value` is a usable player id.
+
+    NOT a truthiness check. Every id filter in the calibration path used
+    to read `if r.get("id")`, which silently discards the id 0 — and 0 is
+    a perfectly ordinary integer, indistinguishable from a real id
+    everywhere except in a boolean test. Nothing in the record would show
+    the pick had been dropped; it would simply never appear, and the
+    board's denominator would be quietly short.
+
+    MLB and ESPN do not currently issue an id of 0, so this has never
+    fired. That is exactly what makes it worth removing: a filter that is
+    wrong but never triggers is one upstream change away from silently
+    eating picks, and the symptom (a board a little thinner than it
+    should be) looks like nothing at all.
+
+    An empty or whitespace-only string is still rejected — that is a
+    missing id rather than a real one, and str(0) is "0", so the integer
+    survives.
+    """
+    return value is not None and str(value).strip() != ""
+
+    # Standalone copy: this script runs on a bare CI runner with no
+    # app/ on sys.path, so it cannot import the twin in
+    # app/engines/calibration.py. Keep the two identical — the graders
+    # disagreeing is what poisoned the record before.
+
+
 MAX_GRADE_DAYS = 21     # don't chase results older than this
 RETENTION_DAYS = 120    # keep roughly a season of history
 
@@ -189,9 +217,15 @@ def _wnba_line(pid, date_str):
         if not stats or not names:
             return None
         row = {}
+        raw = {}
         for i, label in enumerate(names):
             if i >= len(stats):
                 break
+            # Keep the RAW value alongside the parsed float. Combo
+            # labels like 3PT/FG/FT are "made-attempted" strings that
+            # float() cannot handle, and the `continue` below drops
+            # them from `row` entirely.
+            raw[label] = stats[i]
             try:
                 row[label] = float(stats[i])
             except (TypeError, ValueError):
@@ -215,9 +249,29 @@ def _wnba_line(pid, date_str):
         # two graders must stay identical — they disagreed once before
         # and it poisoned the record.
         reb, ast = row.get("REB"), row.get("AST")
+        # THREES ARRIVE AS A MADE-ATTEMPTED STRING ("5-11"), NOT A NUMBER.
+        # float() therefore fails on the 3PT label and the `continue`
+        # above silently drops it, so `tpm` was missing from every line
+        # this parser produced. grade() reads `line.get("tpm")`, got
+        # None, and closed every 3PM pick as a DNP — the market could
+        # never accumulate a record no matter how many picks were logged.
+        #
+        # wnba_precompute.py already solved this with _made_att: split on
+        # the dash, take the made half. Same rule here, and it must stay
+        # BYTE-IDENTICAL between this file and its twin — the two graders
+        # disagreed once before and it poisoned the record.
+        tpm = None
+        _tpt = raw.get("3PT")
+        if _tpt is not None:
+            _parts = str(_tpt).split("-")
+            if len(_parts) == 2:
+                try:
+                    tpm = float(_parts[0])
+                except (TypeError, ValueError):
+                    tpm = None
         pra = (pts + reb + ast
                if reb is not None and ast is not None else None)
-        return {"pts": pts, "reb": reb, "ast": ast, "pra": pra}
+        return {"pts": pts, "reb": reb, "ast": ast, "pra": pra, "tpm": tpm}
     return None
 
 
@@ -244,7 +298,7 @@ def grade(record):
                 if pick.get("result") in ("hit", "miss", "dnp"):
                     continue
                 pid = pick.get("id")
-                if not pid:
+                if not has_id(pid):
                     pick["result"] = "dnp"
                     continue
                 if cfg["sport"] == "wnba":
@@ -331,7 +385,7 @@ def reopen_stuck(record, days_back: int = FINALIZE_AFTER_DAYS) -> int:
                 continue
             touched = False
             for pick in entry.get("picks", []):
-                if pick.get("id") and pick.get("result") == "dnp":
+                if has_id(pick.get("id")) and pick.get("result") == "dnp":
                     pick["result"] = None
                     reopened += 1
                     touched = True
