@@ -191,61 +191,90 @@ def probe(name, url, unwrap, want_date):
 
 
 def probe_downstream(event_id, team_id):
-    """The endpoints the scoreboard is only the doorway to.
+    """The endpoints the scoreboard is only the doorway to — across EVERY
+    host that might serve them.
 
-    Fixing the scoreboard buys nothing on its own. Every actual NUMBER on
-    the site comes from parse_boxscore (/summary?event=), the rosters come
-    from /teams/{id}/roster, and tonight's injury report comes from
-    /summary again — and all three call site.api DIRECTLY, which is the
-    host the probe above just caught returning 403.
+    The 2026-08-03 probe closed the first question: site.api.espn.com
+    returns 403 Access Denied on /summary, on /teams/{id}/roster AND on
+    the gamelog control, which had been working. So the whole host is
+    shut to this runner, not one path.
 
-    So this asks the question that decides whether the league is
-    recoverable at all: is the 403 specific to the scoreboard PATH, or is
-    the whole host closed to this runner?
+    What it also showed, seconds apart in the same run, is that
+    site.web.api.espn.com answered with 70 KB of real JSON. The runner is
+    not banned from ESPN — it is banned from one hostname. So the only
+    question left is whether the same paths exist on a host that answers,
+    and that is a question about which URL, not about parsing.
+
+    Each path is therefore tried on every candidate host, and the first
+    combination that returns the blocks we need is the answer.
     """
     print("\n\n" + "#" * 70)
-    print("# DOWNSTREAM ENDPOINTS — where the actual data comes from")
+    print("# DOWNSTREAM ENDPOINTS — every path, on every host")
     print("#" * 70)
 
-    checks = [
-        ("box score / summary", f"{BASE}/summary?event={event_id}",
+    # Hosts, in the order worth trying. site.web.api is FIRST because it
+    # is the one measured to work.
+    HOSTS = [
+        ("site.web.api", "https://site.web.api.espn.com"),
+        ("site.api", "https://site.api.espn.com"),
+        ("cdn.espn", "https://cdn.espn.com"),
+    ]
+
+    V2 = "/apis/site/v2/sports/basketball/wnba"
+    V3 = "/apis/common/v3/sports/basketball/wnba"
+
+    paths = [
+        ("box score / summary", f"{V2}/summary?event={event_id}",
          ("boxscore", "rosters", "injuries")),
-        ("team roster", f"{BASE}/teams/{team_id}/roster",
+        ("team roster", f"{V2}/teams/{team_id}/roster",
          ("athletes", "team")),
-        # Known to work from a previous run, so it is the control: if
-        # THIS one 403s too, the whole host is closed, not one path.
-        ("athlete gamelog (control)",
-         "https://site.api.espn.com/apis/common/v3/sports/basketball/wnba/"
-         "athletes/4398966/gamelog",
+        ("athlete gamelog", f"{V3}/athletes/4398966/gamelog",
          ("events", "seasonTypes", "labels")),
     ]
 
-    for label, url, want in checks:
-        print(f"\n--- {label}\n    {url}")
-        try:
-            r = requests.get(url, headers=UA, timeout=25)
-        except Exception as exc:
-            print(f"    REQUEST FAILED: {type(exc).__name__}: {exc}")
-            continue
-        print(f"    HTTP {r.status_code}   {len(r.content):,} bytes   "
-              f"{r.headers.get('content-type','?')}")
-        if r.status_code != 200:
-            print(f"    body starts: {r.text[:160]!r}")
-            print("    -> BLOCKED")
-            continue
-        try:
-            j = r.json()
-        except Exception as exc:
-            print(f"    NOT JSON: {exc}")
-            print(f"    body starts: {r.text[:160]!r}")
-            continue
-        print(f"    top-level keys: {_keys(j)}")
-        present = [k for k in want if isinstance(j, dict) and k in j]
-        missing = [k for k in want if k not in present]
-        print(f"    expected blocks present: {present or 'NONE'}")
-        if missing:
-            print(f"    missing: {missing}")
-        print("    -> USABLE" if present else "    -> 200 but nothing we need")
+    winners = {}
+    for label, path, want in paths:
+        print(f"\n--- {label}")
+        for hname, root in HOSTS:
+            url = root + path
+            try:
+                r = requests.get(url, headers=UA, timeout=25)
+            except Exception as exc:
+                print(f"    {hname:<14} REQUEST FAILED {type(exc).__name__}")
+                continue
+            line = (f"    {hname:<14} HTTP {r.status_code}  "
+                    f"{len(r.content):>9,} bytes  "
+                    f"{r.headers.get('content-type','?')[:30]}")
+            if r.status_code != 200 or not r.content:
+                print(line + "   -> no")
+                continue
+            try:
+                j = r.json()
+            except Exception:
+                print(line + "   -> not JSON")
+                continue
+            present = [k for k in want if isinstance(j, dict) and k in j]
+            if present:
+                print(line + f"   -> USABLE  has {present}")
+                winners.setdefault(label, (hname, url))
+            else:
+                print(line + f"   -> 200 but keys={_keys(j, 8)}")
+
+    print("\n" + "-" * 70)
+    if winners:
+        print("WORKING COMBINATIONS FOUND:")
+        for label, (hname, url) in winners.items():
+            print(f"  {label:<22} {hname}")
+            print(f"    {url}")
+        print("\n-> Point wnba_precompute's BASE (and the gamelog URL) at")
+        print("   the host above. This is a URL change, not a parser change.")
+    else:
+        print("NO HOST SERVED ANY OF THESE PATHS.")
+        print("-> ESPN is not a viable source from GitHub Actions right now.")
+        print("   Options: run the fetch elsewhere (a small VPS, Render")
+        print("   cron, your own machine) and commit the result, or move")
+        print("   to a different data provider. No parser change helps.")
+    return winners
 
 
 def main(want_date):
