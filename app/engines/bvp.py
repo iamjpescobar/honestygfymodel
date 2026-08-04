@@ -24,8 +24,9 @@ import json
 from zoneinfo import ZoneInfo
 
 import pandas as pd
-import requests
 import streamlit as st
+
+from engines.roster import _get_json, prefetch_json
 
 from styles.kc_theme import COLOR
 from engines.statcast_engine import _get_batter_df
@@ -48,18 +49,13 @@ _SWINGS = {"hit_into_play", "foul", "foul_tip", "swinging_strike", "swinging_str
 # Daily 13 crawl.
 @st.cache_data(ttl=21600, max_entries=600, show_spinner=False)
 def _career_bvp_json(batter_id: int, pitcher_id: int) -> str:
-    try:
-        resp = requests.get(
-            _URL.format(pid=batter_id),
-            params={"stats": "vsPlayerTotal", "group": "hitting",
-                    "opposingPlayerId": pitcher_id},
-            timeout=10,
-        )
-        resp.raise_for_status()
-        stats = resp.json().get("stats") or []
-        splits = (stats[0].get("splits") if stats else []) or []
-    except Exception as e:
-        return json.dumps({"found": False, "error": f"BvP request failed: {e}"})
+    data = _get_json(_URL.format(pid=batter_id),
+                     params={"stats": "vsPlayerTotal", "group": "hitting",
+                             "opposingPlayerId": pitcher_id})
+    if data is None:
+        return json.dumps({"found": False, "error": "BvP request failed"})
+    stats = data.get("stats") or []
+    splits = (stats[0].get("splits") if stats else []) or []
     if not splits:
         return json.dumps({"found": False, "error": None})
     stat = splits[0].get("stat", {}) or {}
@@ -363,3 +359,25 @@ def render_spray_chart(batter_id, batter_name, window_label: str = "L10",
     st.caption("Real Statcast landing coordinates over a generic field (orientation only \u2014 "
                "not the actual park's dimensions; this window spans multiple parks). "
                "Gold = HR, blue = other hits, red = outs.")
+
+
+def prefetch_career_bvp(pairs):
+    """Warm every (batter, opposing starter) split at once.
+
+    career_bvp is called once per qualifying batter inside the Daily 13
+    build, and BVP_POOL is 30 — thirty sequential round-trips to MLB,
+    each waiting on the last, after everything else on that page has
+    already been fetched in parallel. It was the last serial loop left
+    in the slowest board on the site.
+
+    Optimisation only. If this is never called, career_bvp still works;
+    it just goes back to waiting thirty times in a row.
+    """
+    specs = []
+    for batter_id, pitcher_id in pairs:
+        if not batter_id or not pitcher_id:
+            continue
+        specs.append((_URL.format(pid=batter_id),
+                      {"stats": "vsPlayerTotal", "group": "hitting",
+                       "opposingPlayerId": pitcher_id}))
+    prefetch_json(specs)
