@@ -25,8 +25,9 @@ import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-import requests
 import streamlit as st
+
+from engines.roster import _get_json
 
 from engines.trend_chart import window_hit_chips, render_trend_bars
 from engines.team_logos import logo_url_by_id
@@ -42,13 +43,11 @@ _WIN_N = {"Season": None, "L25": 25, "L10": 10, "L5": 5}
 @st.cache_data(ttl=1800, max_entries=32, show_spinner=False)
 def _game_log_json(batter_id: int, season: int) -> str:
     try:
-        resp = requests.get(
+        data = _get_json(
             _URL.format(pid=batter_id),
             params={"stats": "gameLog", "group": "pitching", "season": season},
-            timeout=10,
-        )
-        resp.raise_for_status()
-        stats = resp.json().get("stats") or []
+        ) or {}
+        stats = data.get("stats") or []
         splits = (stats[0].get("splits") if stats else []) or []
     except Exception as e:
         return json.dumps({"games": [], "error": f"Game log request failed: {e}"})
