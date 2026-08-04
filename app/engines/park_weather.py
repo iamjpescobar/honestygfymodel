@@ -22,8 +22,9 @@ matched to the scheduled first pitch and cached 30 minutes.
 import json
 from datetime import datetime, timedelta, timezone
 
-import requests
 import streamlit as st
+
+from engines.roster import _get_json, prefetch_json
 
 _UA = {"User-Agent": "loscappers.site park weather (admin@loscappers.site)"}
 
@@ -99,23 +100,52 @@ def _coords_for(venue: str):
     return None
 
 
+def _points_url(ll):
+    return f"https://api.weather.gov/points/{ll[0]},{ll[1]}"
+
+
+def prefetch_forecasts(venues):
+    """Warm api.weather.gov for a whole slate, in two parallel waves.
+
+    A forecast is two dependent requests: /points gives the coordinates'
+    grid, whose response names the hourly URL. The Weather Board called
+    get_park_forecast once per game, so fifteen games meant thirty
+    sequential round-trips to a government API that is not fast — the
+    slowest page on the site by a distance, and none of it parallel.
+
+    The dependency is real, so the two calls for ONE park cannot overlap.
+    Across parks they can: every /points goes out together, then every
+    hourly URL those replies name goes out together. Thirty serial waits
+    become two.
+
+    Optimisation only — get_park_forecast is correct without it.
+    """
+    coords = [(_coords_for(v), v) for v in dict.fromkeys(venues) if v]
+    points = [(_points_url(ll), None) for ll, _v in coords if ll]
+    if not points:
+        return
+    prefetch_json(points, headers=_UA)
+
+    hourly = []
+    for url, _params in points:
+        data = _get_json(url, headers=_UA)
+        target = ((data or {}).get("properties") or {}).get("forecastHourly")
+        if target:
+            hourly.append((target, None))
+    prefetch_json(hourly, headers=_UA)
+
+
 @st.cache_data(ttl=1800, max_entries=40, show_spinner=False)
 def _forecast_json(venue: str, game_time_iso: str) -> str:
     ll = _coords_for(venue)
     if not ll:
         return json.dumps(None)
-    try:
-        pts = requests.get(f"https://api.weather.gov/points/{ll[0]},{ll[1]}",
-                           headers=_UA, timeout=10)
-        pts.raise_for_status()
-        hourly_url = ((pts.json().get("properties") or {}).get("forecastHourly"))
-        if not hourly_url:
-            return json.dumps(None)
-        fc = requests.get(hourly_url, headers=_UA, timeout=10)
-        fc.raise_for_status()
-        periods = ((fc.json().get("properties") or {}).get("periods")) or []
-    except Exception:
+    pts = _get_json(_points_url(ll), headers=_UA)
+    hourly_url = ((pts or {}).get("properties") or {}).get("forecastHourly")
+    if not hourly_url:
         return json.dumps(None)
+    fc = _get_json(hourly_url, headers=_UA)
+    periods = ((fc or {}).get("properties") or {}).get("periods") or []
     if not periods:
         return json.dumps(None)
 
