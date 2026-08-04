@@ -12,7 +12,8 @@ from styles.kc_theme import SPORT_ACCENTS, inject_kc_theme, card, footer, COLOR
 from styles.table_style import style_stat_table, render_html_table, tier_legend
 from engines.wnba_defense import build_board, MIN_PLAYER_GP
 from engines.live_sync import sync_latest_button
-from engines.calibration import log_picks, grade_pending, summary
+from engines.calibration import (log_picks, grade_pending, summary,
+                                 has_id)
 
 _GAMES = Path(__file__).resolve().parent.parent / "data" / "wnba" / "games.json"
 
@@ -121,7 +122,7 @@ with card("wdef"):
                 {"id": r.get("id"), "name": r["player"], "team": r["team"],
                  "stat": {"Points": "pts", "Rebounds": "reb", "Assists": "ast"}[_stat],
                  "line": r["form"]}
-                for r in rows[:5] if r.get("id")
+                for r in rows[:5] if has_id(r.get("id"))
             ])
             grade_pending()
             _cal = summary().get("wnba_defense", {})
