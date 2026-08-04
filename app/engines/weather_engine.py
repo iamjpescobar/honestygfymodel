@@ -12,8 +12,9 @@ posted weather for that game yet (common for games more than a day out).
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-import requests
 import streamlit as st
+
+from engines.roster import _get_json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -64,7 +65,9 @@ def _fetch_todays_games_json(date_str: str) -> str:
     }
 
     try:
-        resp = requests.get(url, params=params, timeout=10).json()
+        resp = _get_json(url, params=params)
+        if resp is None:
+            return _done([], "Schedule request failed")
     except Exception as e:
         return _done([], f"Schedule request failed: {e}")
 
@@ -156,7 +159,7 @@ def _fetch_one_weather(game_pk):
     """
     try:
         url = f"https://statsapi.mlb.com/api/v1.1/game/{game_pk}/feed/live"
-        data = requests.get(url, timeout=10).json()
+        data = _get_json(url) or {}
         return data.get("gameData", {}).get("weather", {}) or {}
     except Exception:
         return {}
