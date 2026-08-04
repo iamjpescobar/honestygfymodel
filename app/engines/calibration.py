@@ -254,28 +254,58 @@ def log_picks(board: str, rows, date_str: str = None) -> bool:
     # First writer for a date wins. That is the honest rule: picks are
     # meant to be locked in BEFORE the games, so a later, better-informed
     # version of the same board is not the pick that was made.
-    existing = data[board].get(date_str)
-    if existing and existing.get("picks"):
+    # FIRST WRITER WINS PER MARKET, NOT PER DAY.
+    #
+    # This used to bail out the moment a date had any picks at all. On a
+    # single-market board that is exactly right, and it stays right —
+    # MLB picks carry stat=None, so the first write claims None and
+    # every later write for that day is still refused.
+    #
+    # But WNBA Props publishes five markets (points, rebounds, assists,
+    # PRA, threes) under one board key, and each is logged by a separate
+    # call. Under the old rule whichever market happened to be built
+    # first claimed the day and the other four were dropped in silence.
+    # Four of five markets therefore had NO record at all, however many
+    # nights ran — the board looked tracked while 80% of what it
+    # published went unmeasured.
+    #
+    # Keying on (board, date, stat) keeps the honest part of the old
+    # rule — a later, better-informed version of a market you already
+    # recorded is not the pick that was made, so it is still refused —
+    # while letting a market nobody has logged yet be added to the same
+    # day.
+    entry = data[board].get(date_str)
+    if entry is None:
+        entry = {"picks": [], "graded": False}
+        data[board][date_str] = entry
+
+    logged_markets = {p.get("stat") for p in entry.get("picks", [])}
+    fresh = [r for r in rows
+             if r.get("id") and r.get("stat") not in logged_markets]
+    if not fresh:
         return True
 
-    data[board][date_str] = {
-        "picks": [{"id": r.get("id"), "name": r.get("name"),
-                   "team": r.get("team"),
-                   # optional per-pick grading target; falls back to the
-                   # board default when absent
-                   "stat": r.get("stat"), "line": r.get("line"),
-                   # American odds for this pick, e.g. -180 or +320.
-                   # Optional and usually absent at log time: nothing
-                   # here has a sportsbook feed, so this is filled in by
-                   # the user on the Calibration page with the price they
-                   # ACTUALLY got. That is better data than a scraped
-                   # consensus would be, and it is the only thing that
-                   # turns a hit rate into a profit figure.
-                   "odds": r.get("odds"),
-                   "result": None}
-                  for r in rows if r.get("id")],
-        "graded": False,
-    }
+    entry.setdefault("picks", []).extend(
+        {"id": r.get("id"), "name": r.get("name"),
+         "team": r.get("team"),
+         # optional per-pick grading target; falls back to the
+         # board default when absent
+         "stat": r.get("stat"), "line": r.get("line"),
+         # American odds for this pick, e.g. -180 or +320.
+         # Optional and usually absent at log time: nothing
+         # here has a sportsbook feed, so this is filled in by
+         # the user on the Calibration page with the price they
+         # ACTUALLY got. That is better data than a scraped
+         # consensus would be, and it is the only thing that
+         # turns a hit rate into a profit figure.
+         "odds": r.get("odds"),
+         "result": None}
+        for r in fresh)
+
+    # Adding a market reopens the day. grade_pending() skips any entry
+    # already flagged graded, so without this a market logged after an
+    # earlier grading pass would sit ungraded forever.
+    entry["graded"] = False
     return _save(data)
 
 
@@ -340,9 +370,15 @@ def _wnba_day_json(pid, date_str: str) -> str:
         if not stats or not names:
             return json.dumps(None)
         row = {}
+        raw = {}
         for i, label in enumerate(names):
             if i >= len(stats):
                 break
+            # Keep the RAW value alongside the parsed float. Combo
+            # labels like 3PT/FG/FT are "made-attempted" strings that
+            # float() cannot handle, and the `continue` below drops
+            # them from `row` entirely.
+            raw[label] = stats[i]
             try:
                 row[label] = float(stats[i])
             except (TypeError, ValueError):
@@ -366,10 +402,30 @@ def _wnba_day_json(pid, date_str: str) -> str:
         # excludes the pick instead of scoring it wrong. Calibration is
         # the number that proves the model — it is the last place in this
         # app that should be averaging in a fabricated result.
+        # THREES ARRIVE AS A MADE-ATTEMPTED STRING ("5-11"), NOT A NUMBER.
+        # float() therefore fails on the 3PT label and the `continue`
+        # above silently drops it, so `tpm` was missing from every line
+        # this parser produced. grade() reads `line.get("tpm")`, got
+        # None, and closed every 3PM pick as a DNP — the market could
+        # never accumulate a record no matter how many picks were logged.
+        #
+        # wnba_precompute.py already solved this with _made_att: split on
+        # the dash, take the made half. Same rule here, and it must stay
+        # BYTE-IDENTICAL between this file and its twin — the two graders
+        # disagreed once before and it poisoned the record.
+        tpm = None
+        _tpt = raw.get("3PT")
+        if _tpt is not None:
+            _parts = str(_tpt).split("-")
+            if len(_parts) == 2:
+                try:
+                    tpm = float(_parts[0])
+                except (TypeError, ValueError):
+                    tpm = None
         pra = (pts + reb + ast
                if reb is not None and ast is not None else None)
         return json.dumps({
-            "pts": pts, "reb": reb, "ast": ast, "pra": pra,
+            "pts": pts, "reb": reb, "ast": ast, "pra": pra, "tpm": tpm,
         })
     return json.dumps(None)
 
@@ -594,7 +650,7 @@ def _baseline_for(stat):
     return float(v) if isinstance(v, (int, float)) else None
 
 
-def set_odds(board: str, date_str: str, pid, odds) -> bool:
+def set_odds(board: str, date_str: str, pid, odds, stat=None) -> bool:
     """Attach the price you actually got to one already-logged pick.
 
     Written separately from log_picks because odds are not known when a
@@ -613,12 +669,26 @@ def set_odds(board: str, date_str: str, pid, odds) -> bool:
         return False
     hit = False
     for pk in entry.get("picks", []):
-        if str(pk.get("id")) == str(pid):
-            try:
-                pk["odds"] = int(odds) if odds not in (None, "", 0) else None
-            except (TypeError, ValueError):
-                return False
-            hit = True
+        if str(pk.get("id")) != str(pid):
+            continue
+        # MATCH ON THE MARKET TOO, once a `stat` is supplied.
+        #
+        # A day used to hold one market per board, so a player id was a
+        # unique handle. It no longer is: the same player can carry a
+        # points pick AND a rebounds pick on the same night, at
+        # completely different prices. Matching on id alone wrote one
+        # price onto both, quietly inventing a number for the market
+        # that was never priced and corrupting its ROI.
+        #
+        # stat stays optional so existing single-market callers keep
+        # working unchanged.
+        if stat is not None and pk.get("stat") != stat:
+            continue
+        try:
+            pk["odds"] = int(odds) if odds not in (None, "", 0) else None
+        except (TypeError, ValueError):
+            return False
+        hit = True
     return _save(data) if hit else False
 
 
