@@ -165,16 +165,36 @@ _seg = st.session_state.get("lc_sport_seg")
 if _seg is not None and _seg != st.session_state.get("lc_sport"):
     st.session_state["lc_view"] = "sport"
 
+# A PAGE-NAV CLICK ALSO LEAVES HOME. Same mechanism: Streamlit writes
+# lc_nav_radio at click time, while render_right_sidebar writes
+# lc_active_page at the bottom of its own render, so the two disagree on
+# exactly the click. Home's own jump buttons set both together, so they
+# never trip this.
+_nav = st.session_state.get("lc_nav_radio")
+if _nav is not None and _nav != st.session_state.get("lc_active_page"):
+    st.session_state["lc_view"] = "sport"
+
+_on_home = st.session_state["lc_view"] == "home"
+
 _home_col, _strip_col = st.columns([4, 6])
 with _home_col:
     # Occupies the column that was previously an empty spacer, so this
     # costs no layout and the mobile stacking rules are unchanged.
-    if st.button(
-        "\u2302  Home", key="lc_home_btn",
-        type=("primary" if st.session_state["lc_view"] == "home" else "secondary"),
-    ):
-        st.session_state["lc_view"] = "home"
-        st.rerun()
+    #
+    # THE LABEL FLIPS, and it has to. The first version was a Home button
+    # that highlighted when you were already on Home — which left no way
+    # back, because clicking the ALREADY-SELECTED sport in the switcher
+    # is a no-op (sport_switcher only reruns when the sport CHANGES). A
+    # new session landed on Home and could reach five destinations out of
+    # ten. The one control in this corner has to work in both directions.
+    if _on_home:
+        if st.button(f"\u2190  Back to {selected_sport}", key="lc_home_btn"):
+            st.session_state["lc_view"] = "sport"
+            st.rerun()
+    else:
+        if st.button("\u2302  Home", key="lc_home_btn"):
+            st.session_state["lc_view"] = "home"
+            st.rerun()
 with _strip_col:
     sport_switcher(active=selected_sport)
 
@@ -493,15 +513,25 @@ def render_right_sidebar(nav_titles=None, active_page=None, show_glossary=False)
 # Render UI
 # -------------------------
 if st.session_state.get("lc_view") == "home":
-    # Full-width Home with the shared account/sign-out sidebar, and no
-    # page nav: Home belongs to no sport, so neither the MLB radio nor a
-    # sport's subpage radio is instantiated on this run. That is what
-    # lets Home's jump buttons write those keys — see views/Home.py.
+    # Home keeps the sport's page nav in the sidebar. Dropping it made
+    # every page without a card on Home — Game Card, Pitchers to Target,
+    # Bullpen Board, Weather Board — unreachable from the screen a new
+    # session lands on.
+    #
+    # The nav radio is created in the RIGHT column, which renders after
+    # the main one, so Home's jump buttons can still write lc_nav_radio:
+    # they call st.rerun() immediately, which ends the script before the
+    # widget is ever instantiated. Order matters here — see the note in
+    # views/Home.py.
+    _home_nav = ([t for t, _p in build_mlb_pages(include_admin=user_is_admin)]
+                 if selected_sport == "MLB" else None)
+
     _main_col, _right_col = st.columns([8, 2])
     with _main_col:
         load_page_module("views/Home.py")
     with _right_col:
-        render_right_sidebar()
+        render_right_sidebar(nav_titles=_home_nav,
+                             active_page=st.session_state.get("lc_active_page"))
 
 elif selected_sport == "MLB":
     pages = build_mlb_pages(include_admin=user_is_admin)
