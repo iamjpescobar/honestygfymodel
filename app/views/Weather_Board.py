@@ -205,12 +205,18 @@ def _hr_weather(temp_val, wind_str, roofed, home_team=None):
                 _resolved = True
         if not _resolved and (not w or "not posted" in w):
             reasons.append("wind pending official")
+    # NO EMOJI ON THE VERDICTS.
+    #
+    # Two of these five carried one and three did not, so the same
+    # function returned two different visual languages depending on how
+    # extreme the score was. The colour already carries the signal, and
+    # it carries it consistently across all five.
     if score >= 3:
-        return "🔥 HR FRIENDLY", COLOR["gold"], reasons
+        return "HR FRIENDLY", COLOR["gold"], reasons
     if score >= 1:
         return "Leans HR", COLOR["stat_high"], reasons
     if score <= -3:
-        return "❄️ SUPPRESSIVE", COLOR["error"], reasons
+        return "SUPPRESSIVE", COLOR["error"], reasons
     if score <= -1:
         return "Leans under", COLOR["warn"], reasons
     return "Neutral", COLOR["text"], reasons
