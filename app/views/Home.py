@@ -585,13 +585,20 @@ def _render_explore():
         by_sport = {}
         for page, sport in elsewhere:
             by_sport.setdefault(sport, []).append(page)
-        parts = [f'{", ".join(pages)} \u2014 switch to {sport} above'
+        # Separators are built OUTSIDE the f-strings. A backslash escape
+        # inside an f-string EXPRESSION is a SyntaxError on Python 3.11,
+        # which is what requirements.txt and both workflows pin, and it
+        # fails at import time — the page does not render at all.
+        _DASH = "\u2014"
+        _DOT = " \u00b7 "
+        parts = [f'{", ".join(pages)} {_DASH} switch to {sport} above'
                  for sport, pages in by_sport.items()]
+        _joined = _DOT.join(parts)
         st.markdown(
             f'<div style="color:{COLOR["text_faint"]}; '
             f'font-size:var(--lc-text-caption); '
             f'padding-top:var(--lc-space-md);">'
-            f'{" \u00b7 ".join(parts)}</div>',
+            f'{_joined}</div>',
             unsafe_allow_html=True,
         )
 
