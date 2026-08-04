@@ -169,18 +169,48 @@ elif 'if _nav is not None and _nav != st.session_state.get("lc_active_page"):' n
     failures.append("a nav click from Home does not leave the Home view, so "
                     "the sidebar would appear dead")
 elif 'st.session_state["lc_nav_radio"] = None' not in app_src:
-    failures.append("Home no longer clears the nav selection — the radio "
-                    "ignores index once its key holds a value, so the active "
+    failures.append("Home no longer clears the nav selection, so the active "
                     "rail would sit on a page the user is not on")
-elif "index=_idx" not in app_src or "else None" not in app_src.split("_idx =")[1][:80]:
-    failures.append("the nav falls back to index 0 when nothing is active, "
-                    "which highlights the first page while the user is on Home")
+# The nav used to be an st.radio, and this guard checked `index=_idx ...
+# else None` — a radio always selects SOMETHING, so passing index=None was
+# the only way to show no active page on Home. The nav is buttons now and
+# there is no index to pass, so that string check could never pass again.
+#
+# The BUG it guards against is unchanged and still worth guarding: on
+# Home, no page is current, and the rail must not light up the first one.
+# With buttons that is expressed by rendering the active row only on an
+# exact match, and by handing `active_page` straight through instead of
+# defaulting it. Both are checked below, which is a stricter test than
+# the old one — it reads the actual condition rather than the presence of
+# a keyword argument.
+elif "if _title == active_page:" not in app_src:
+    failures.append("the nav no longer marks the active row by exact match, "
+                    "so it may highlight a page the user is not on")
+elif 'st.session_state["lc_active_page"] = active_page' not in app_src:
+    failures.append("the nav defaults lc_active_page instead of passing it "
+                    "through, so Home (which has no active page) would "
+                    "highlight the first entry")
 else:
     print("PASS: Home has a Back control, the page nav, and both exits work")
     print("PASS: the nav shows no active page on Home")
 
-# The jump buttons write the nav radio's widget key. That is only legal
-# because app.py instantiates the radio AFTER the main column renders.
+# The nav is st.button now, not st.radio. A radio needs a value for every
+# render and silently selects index 0 when handed none, which is exactly
+# the failure the block above exists to prevent — so a revert to st.radio
+# should fail loudly here rather than quietly re-highlighting page one.
+if "st.radio(" in app_src:
+    failures.append("app.py is back on st.radio for navigation — a radio "
+                    "always has a selection, so Home would light up the "
+                    "first page again")
+else:
+    print("PASS: navigation is buttons, which can show no selection at all")
+
+# The jump buttons write lc_nav_radio. That key kept its name through the
+# radio-to-button change so every existing reader keeps working, but it is
+# now a plain session value rather than a widget key — which means writing
+# it from Home is no longer order-dependent. The ordering check below is
+# kept anyway: it is still true, still cheap, and still the thing that
+# would break first if the layout were reshuffled.
 if 'st.session_state["lc_nav_radio"]' not in home_src:
     failures.append("Home lost its nav jump — the boards become unreachable "
                     "from the landing page")
