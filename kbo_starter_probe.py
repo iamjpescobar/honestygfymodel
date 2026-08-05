@@ -50,16 +50,31 @@ def find_a_game():
     print(f"  HTTP {r.status_code}  {len(r.content):,} bytes")
     if r.status_code != 200:
         return None
+    today = date.today().strftime("%Y%m%d")
     slugs = []
     for m in GAME_LINE.finditer(r.text):
         game_id, away, home, ymd, _inner = m.groups()
-        slugs.append(f"{game_id}-{away}-vs-{home}-{ymd}")
+        slugs.append((ymd, f"{game_id}-{away}-vs-{home}-{ymd}"))
     print(f"  {len(slugs)} games matched GAME_LINE")
     if not slugs:
         print("  !! GAME_LINE matched nothing. The SCHEDULE parser is broken")
         print("     too, which would be a bigger finding than the starters.")
         return None
-    return slugs[-1]
+
+    # THE NEAREST upcoming game, not the furthest. The first version of
+    # this probe took slugs[-1] and landed on a fixture four days out,
+    # which of course had no announced starter and proved nothing.
+    # mykbostats announces the day before, so only tomorrow-or-sooner
+    # can distinguish "parser broken" from "not posted yet".
+    upcoming = sorted(d for d, _ in slugs if d >= today)
+    print(f"  dates on this page: {sorted({d for d, _ in slugs})}")
+    if not upcoming:
+        print("  !! no upcoming games this week. Try next week's schedule.")
+        return None
+    pick = upcoming[0]
+    slug = next(s for d, s in slugs if d == pick)
+    print(f"  nearest upcoming: {pick} -> {slug}")
+    return slug
 
 
 def main():
