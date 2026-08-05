@@ -1,0 +1,122 @@
+name: intl-late-refresh
+
+# WHY THIS EXISTS
+#
+# The nightly fetches the KBO and NPB slates at 08:00 UTC — 5 PM local,
+# roughly ninety minutes before first pitch. A postponement announced
+# after that does not reach the site until the following night's run, so
+# subscribers were looking at boards for games that had already been
+# called off, and betting them. That is where the voids came from.
+#
+# This re-fetches ONLY the two international slates, close to first
+# pitch, and republishes. It does not re-run the Statcast pull: that
+# takes fifteen minutes and nothing about it changes in the intervening
+# hour. Instead it downloads the archive the nightly already published,
+# swaps in the fresh slates, and re-uploads the same asset — a couple of
+# minutes of runner time.
+#
+# WHAT IT DELIBERATELY DOES NOT DO
+#
+# It never publishes an archive it did not successfully rebuild. If the
+# download fails, or either fetch fails, or the repacked tarball is
+# missing the Statcast payload, the job stops WITHOUT uploading. The
+# nightly's own comments explain why that rule exists: an earlier
+# version of the publish step destroyed the last good release before
+# uploading the new one, and the failure was total and silent. A stale
+# slate is a bad afternoon; a destroyed archive is an outage.
+
+on:
+  schedule:
+    # 09:20 UTC = 18:20 KST / JST. KBO first pitch is typically 18:30
+    # local and NPB 18:00, so this lands inside the window where a
+    # weather postponement has been announced but the games have not
+    # been played. Deliberately ONE extra run rather than several: each
+    # one triggers a Render deploy, and on the free tier that means a
+    # cold start for whoever is on the site at the time.
+    - cron: "20 9 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Only what the two slate builders need. pybaseball, pyarrow and
+      # numpy are for the Statcast pull, which this job does not run —
+      # installing the full pinned set would add minutes for nothing.
+      - name: Install slate dependencies
+        run: pip install requests beautifulsoup4 lxml
+
+      - name: Download the published archive
+        run: |
+          set -e
+          curl -fsSL -o statcast_data.tar.gz \
+            "https://github.com/${GITHUB_REPOSITORY}/releases/download/nightly-data/statcast_data.tar.gz"
+          mkdir -p build_data
+          tar -xzf statcast_data.tar.gz -C build_data
+          echo "Extracted archive:"
+          ls build_data/data
+
+      # Both write into build_data/data/<league>/, overwriting the
+      # nightly's copies in place — the same paths the packaging below
+      # reads back.
+      - name: Re-fetch NPB slate
+        id: npb
+        run: python npb_precompute.py
+
+      - name: Re-fetch KBO slate
+        id: kbo
+        run: python kbo_precompute.py
+
+      # REBUILD, THEN CHECK, THEN UPLOAD — never the other way round.
+      - name: Repack and verify
+        run: |
+          set -e
+          rm -f statcast_data.tar.gz
+          tar -czf statcast_data.tar.gz -C build_data .
+          python3 - <<'PY'
+          import sys, tarfile
+          names = {n.strip("./") for n in
+                   tarfile.open("statcast_data.tar.gz", "r:gz").getnames()}
+          def has(prefix):
+              return any(n.startswith(prefix) for n in names)
+          # The Statcast payload came from the nightly and this job never
+          # touches it. If it is missing, the download or the extract went
+          # wrong, and uploading would replace a complete archive with a
+          # gutted one.
+          if not has("data/statcast/"):
+              print("::error::Statcast data missing from the repack — "
+                    "refusing to publish and overwrite a good archive.")
+              sys.exit(1)
+          for lg in ("kbo", "npb"):
+              print(("present " if has(f"data/{lg}/") else "MISSING ")
+                    + f"data/{lg}/")
+          print(f"Repacked archive verified: {len(names)} entries.")
+          PY
+
+      - name: Publish the refreshed archive
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload nightly-data statcast_data.tar.gz --clobber
+
+      # Render only picks up a new archive on deploy — fetch_data.py runs
+      # at build time, not per request — so without this the refreshed
+      # slate sits in the release and never reaches anyone.
+      - name: Trigger Render deploy
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$HOOK" ]; then
+            curl -fsS "$HOOK" && echo "Render deploy triggered."
+          else
+            echo "No RENDER_DEPLOY_HOOK secret set - skipping deploy."
+          fi
