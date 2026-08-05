@@ -63,7 +63,16 @@ def main():
 
     try:
         with tarfile.open(fileobj=io.BytesIO(blob), mode="r:gz") as tar:
-            tar.extractall(DEST)
+            # filter="data" refuses absolute paths, ../ traversal, symlinks
+            # and device nodes. Python 3.14 makes this the default anyway.
+            # Guarded because this file's contract is to never fail the
+            # build: on a Python older than 3.11.4 the kwarg raises
+            # TypeError, and extracting unfiltered beats losing the archive
+            # and silently falling back to live Statcast pulls.
+            try:
+                tar.extractall(DEST, filter="data")
+            except TypeError:
+                tar.extractall(DEST)
         manifest_path = os.path.join(DEST, "data", "statcast", "manifest.json")
         if os.path.exists(manifest_path):
             with open(manifest_path) as f:
