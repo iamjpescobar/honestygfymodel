@@ -256,6 +256,16 @@ XHR_MIN_EV, XHR_MAX_EV = 80.0, 122.0
 XHR_MIN_LA, XHR_MAX_LA = 8.0, 50.0
 XHR_MIN_BUCKET_N = 15
 
+# Clears Anywhere thresholds. Deliberately strict: this metric's whole
+# claim is "this gets out of ANY park", so a bucket that only mostly
+# gets out does not belong in it.
+CA_MIN_PROB = 0.90       # 90%+ of this bucket's contact left the yard
+CA_MIN_PARKS = 28        # seen in essentially every park, and out of all
+                         # of them. Not 30: a bucket can legitimately go
+                         # unseen in a park or two over one season, and
+                         # demanding a literal 30 would throw away real
+                         # qualifying trajectories on a sampling accident.
+
 
 def build_xhr_table(season_df: pd.DataFrame) -> bool:
     """Writes the empirical HR-probability grid used for xHR."""
@@ -278,6 +288,12 @@ def build_xhr_table(season_df: pd.DataFrame) -> bool:
         "la_bin": (la // LA_BIN * LA_BIN).astype("float32"),
         "is_hr": _mask(bbe["events"].astype(str) == "home_run").astype("int8"),
     })
+    # Venue rides along so the "clears anywhere" flag below can be
+    # VERIFIED rather than asserted. home_team identifies the park in
+    # Statcast's pitch data and is already in the pull (see line 49).
+    if "home_team" in bbe.columns:
+        grid["park"] = bbe["home_team"].astype(str).values
+
     agg = grid.groupby(["ev_bin", "la_bin"], observed=True)["is_hr"].agg(["sum", "count"])
     agg = agg[agg["count"] >= XHR_MIN_BUCKET_N]
     if agg.empty:
@@ -285,11 +301,76 @@ def build_xhr_table(season_df: pd.DataFrame) -> bool:
         return False
     agg["hr_prob"] = (agg["sum"] / agg["count"]).astype("float32")
 
-    out = agg.reset_index()[["ev_bin", "la_bin", "hr_prob"]]
+    # ------------------------------------------------------------
+    # CLEARS ANYWHERE — the launch floor that gets out of all 30 parks
+    #
+    # There is no single launch angle that clears every fence, because
+    # the angle required depends on exit velocity: ~28 degrees at 95 mph,
+    # ~18 at 110. The floor is a curve, and this is that curve, measured
+    # instead of modelled.
+    #
+    # The alternative was a hand-built table of fence distances and wall
+    # heights plus a drag-and-lift trajectory model. That produces an
+    # ESTIMATE, and an estimate is the one thing the boards on this site
+    # promise never to show. This grid is already averaged over all 30
+    # parks — every batted ball in the league, wherever it was struck —
+    # so a bucket sitting at 95% did not merely leave somewhere, it left
+    # nearly everywhere it was hit. That contour IS the all-parks floor
+    # and it was already in this file.
+    #
+    # Two conditions, both required:
+    #
+    #   hr_prob >= CA_MIN_PROB   most balls of this shape leave. On its
+    #                            own this is not enough: a bucket can
+    #                            record one homer in each of 30 parks
+    #                            while most of its contact stays in.
+    #   every park that saw contact in this bucket also saw it LEAVE,
+    #   across at least CA_MIN_PARKS parks. This is the literal claim —
+    #   "gets out of all 30" verified against 30 actual venues, not
+    #   inferred from geometry.
+    #
+    # Parks are not sampled evenly (a Rockies hitter takes a large share
+    # of his cuts at Coors), which is exactly why the park count is
+    # checked per bucket rather than trusted from the league average.
+    ca_flag = pd.Series(False, index=agg.index)
+    parks_seen = pd.Series(0, index=agg.index, dtype="int16")
+    parks_out = pd.Series(0, index=agg.index, dtype="int16")
+
+    if "park" in grid.columns:
+        by_park = grid.groupby(["ev_bin", "la_bin"], observed=True)["park"]
+        parks_seen = by_park.nunique().reindex(agg.index).fillna(0).astype("int16")
+        hr_rows = grid[grid["is_hr"] == 1]
+        parks_out = (hr_rows.groupby(["ev_bin", "la_bin"], observed=True)["park"]
+                     .nunique().reindex(agg.index).fillna(0).astype("int16"))
+        ca_flag = ((agg["hr_prob"] >= CA_MIN_PROB)
+                   & (parks_seen >= CA_MIN_PARKS)
+                   & (parks_out >= parks_seen))
+    else:
+        print("  clears-anywhere flag skipped — home_team absent from the pull.")
+
+    agg["parks_seen"] = parks_seen
+    agg["parks_out"] = parks_out
+    agg["clears_anywhere"] = ca_flag.astype(bool)
+
+    out = agg.reset_index()[["ev_bin", "la_bin", "hr_prob",
+                             "parks_seen", "parks_out", "clears_anywhere"]]
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     out.to_parquet(DATA_DIR / "xhr_table.parquet", index=False)
     print(f"  xHR table: {len(out):,} buckets from {len(bbe):,} batted balls "
           f"({int(grid['is_hr'].sum()):,} home runs)")
+    _ca = out[out["clears_anywhere"]]
+    if len(_ca):
+        # Printed every night on purpose. If this contour drifts — a
+        # juiced ball, a humidor, a fence moved — the log says so, and
+        # nothing downstream has to be edited to follow it.
+        print(f"  Clears Anywhere: {len(_ca)} buckets qualify "
+              f"(EV {_ca['ev_bin'].min():.0f}+ mph, LA "
+              f"{_ca['la_bin'].min():.0f}-{_ca['la_bin'].max():.0f} deg, "
+              f"verified across {int(_ca['parks_out'].min())}-"
+              f"{int(_ca['parks_out'].max())} parks)")
+    else:
+        print("  Clears Anywhere: no bucket qualified — metric reports N/A, "
+              "not zero.")
     return True
 
 
