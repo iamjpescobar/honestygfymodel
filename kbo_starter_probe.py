@@ -34,47 +34,41 @@ Touches nothing: no commit, no release, no deploy hook.
 """
 import re
 import sys
+import time
 
 import requests
 
 from kbo_precompute import GAME_LINE, UA
 
 
-def find_a_game():
-    """Pull this week's schedule and return the first upcoming slug,
-    built exactly the way kbo_precompute builds it."""
+def survey():
+    """One game per date on this week's page, past AND future.
+
+    Two earlier versions of this probe each sampled a single game and
+    each picked a useless one: first the furthest fixture (four days
+    out, nothing announced), then a game that had already been played,
+    because date.today() is UTC and KBO runs on KST. Choosing one game
+    correctly turns out to be the hard part of this question.
+
+    So don't choose. Walk every date on the page and print the starter
+    count for each. The pattern across past/today/future answers it
+    outright: if NO date has a starter block the markup changed; if the
+    near-future ones do, the scrape works and the pipeline is sampling
+    or timing wrong.
+    """
     from datetime import date
     url = f"https://mykbostats.com/schedule/week_of/{date.today().isoformat()}"
     print(f"schedule: {url}")
     r = requests.get(url, headers=UA, timeout=25)
     print(f"  HTTP {r.status_code}  {len(r.content):,} bytes")
     if r.status_code != 200:
-        return None
-    today = date.today().strftime("%Y%m%d")
-    slugs = []
+        return []
+    by_date = {}
     for m in GAME_LINE.finditer(r.text):
         game_id, away, home, ymd, _inner = m.groups()
-        slugs.append((ymd, f"{game_id}-{away}-vs-{home}-{ymd}"))
-    print(f"  {len(slugs)} games matched GAME_LINE")
-    if not slugs:
-        print("  !! GAME_LINE matched nothing. The SCHEDULE parser is broken")
-        print("     too, which would be a bigger finding than the starters.")
-        return None
-
-    # THE NEAREST upcoming game, not the furthest. The first version of
-    # this probe took slugs[-1] and landed on a fixture four days out,
-    # which of course had no announced starter and proved nothing.
-    # mykbostats announces the day before, so only tomorrow-or-sooner
-    # can distinguish "parser broken" from "not posted yet".
-    upcoming = sorted(d for d, _ in slugs if d >= today)
-    print(f"  dates on this page: {sorted({d for d, _ in slugs})}")
-    if not upcoming:
-        print("  !! no upcoming games this week. Try next week's schedule.")
-        return None
-    pick = upcoming[0]
-    slug = next(s for d, s in slugs if d == pick)
-    print(f"  nearest upcoming: {pick} -> {slug}")
-    return slug
+        by_date.setdefault(ymd, f"{game_id}-{away}-vs-{home}-{ymd}")
+    print(f"  {len(by_date)} dates: {sorted(by_date)}")
+    return [by_date[d] for d in sorted(by_date)]
 
 
 def main():
@@ -82,44 +76,45 @@ def main():
     print("KBO probable-starter probe - mykbostats")
     print("=" * 70)
 
-    slug = sys.argv[1] if len(sys.argv) > 1 else find_a_game()
-    if not slug:
+    slugs = [sys.argv[1]] if len(sys.argv) > 1 else survey()
+    if not slugs:
         return 1
 
-    url = f"https://mykbostats.com/games/{slug}"
-    print(f"\ngame page: {url}")
-    try:
-        r = requests.get(url, headers=UA, timeout=25)
-    except Exception as exc:
-        print(f"  request failed: {type(exc).__name__}: {exc}")
-        return 1
-    print(f"  HTTP {r.status_code}  {len(r.content):,} bytes")
-    if r.status_code != 200:
-        print("  -> CAUSE 3: the game page moved or is gone. Everything")
-        print("     downstream is fine; the URL is wrong.")
-        print(f"  body starts: {r.text[:300]!r}")
+    print("\n" + "-" * 70)
+    print(f"{'date':<10} {'HTTP':<6} {'starter':>8} {'player-link':>12}  slug")
+    print("-" * 70)
+    detail = None
+    for slug in slugs:
+        try:
+            r = requests.get(f"https://mykbostats.com/games/{slug}",
+                             headers=UA, timeout=25)
+        except Exception as exc:
+            print(f"{slug[-8:]:<10} FAILED {type(exc).__name__}")
+            continue
+        html = r.text if r.status_code == 200 else ""
+        n_start = html.count("starter")
+        n_link = html.count("player-link")
+        print(f"{slug[-8:]:<10} {r.status_code:<6} {n_start:>8} {n_link:>12}  {slug}")
+        if n_start and detail is None:
+            detail = (slug, html)
+        time.sleep(0.3)
+
+    if detail is None:
+        print("\nNO DATE ON THIS PAGE HAS A STARTER BLOCK.")
+        print("That is the finding: parse_starters is looking for markup")
+        print("mykbostats no longer emits, and no amount of timing fixes it.")
+        print("Next step is to read a game page by hand and find what")
+        print("replaced <div class=\"away-starter\">.")
         return 0
 
-    html = r.text
+    slug, html = detail
+    print(f"\nFirst page WITH a starter block: {slug}")
 
-    # --- does the word appear at all? ---
-    print("\n[1] Does 'starter' appear anywhere in the page?")
-    for token in ("away-starter", "home-starter", "starter", "player-link",
-                  "probable", "Season:"):
-        print(f"    {token:<14} {html.count(token)} occurrence(s)")
-
-    # --- what does the real attribute look like now? ---
     print("\n[2] Every class attribute containing 'starter':")
-    found = re.findall(r'class="([^"]*starter[^"]*)"', html)
-    if found:
-        for c in sorted(set(found)):
-            exact = c in ("away-starter", "home-starter")
-            print(f"    class=\"{c}\"{'' if exact else '   <-- NOT an exact match'}")
-    else:
-        print("    none. Either the page has no starter block (genuinely")
-        print("    unannounced) or the markup was renamed entirely.")
+    for c in sorted(set(re.findall(r'class="([^"]*starter[^"]*)"', html))):
+        exact = c in ("away-starter", "home-starter")
+        print(f"    class=\"{c}\"{'' if exact else '   <-- NOT an exact match'}")
 
-    # --- the current regex, run verbatim ---
     print("\n[3] The regex kbo_precompute actually uses:")
     for cls in ("away-starter", "home-starter"):
         m = re.search(rf'<div class="{cls}">(.*?)</div>', html, re.S)
@@ -136,20 +131,12 @@ def main():
             print("      -> CAUSE 1: capture stopped early (nested </div>).")
         print(f"      captured: {body[:300]!r}")
 
-    # --- raw context, so the real shape is visible ---
     print("\n[4] Raw HTML around the first 'starter' mention:")
     i = html.find("starter")
-    if i == -1:
-        print("    'starter' does not appear. If the game is genuinely")
-        print("    unannounced this is expected - rerun closer to tip.")
-    else:
-        print(html[max(0, i - 600):i + 1400])
+    print(html[max(0, i - 600):i + 1400])
 
     print("\n" + "=" * 70)
-    print("Done. Send the whole log. The fix follows from [2] and [3]:")
-    print("  NO MATCH + a different class  -> cause 2, widen the attribute")
-    print("  match but <2 anchors          -> cause 1, stop using regex here")
-    print("  no 'starter' anywhere         -> genuinely unannounced, recheck")
+    print("Done. Send the whole log.")
     print("=" * 70)
     return 0
 
