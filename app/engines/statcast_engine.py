@@ -279,6 +279,47 @@ def _clears_anywhere_buckets():
         return None
 
 
+# ------------------------------------------------------------
+# LEAGUE ANCHORS
+#
+# The numbers that define "league average = 50" for HRIntent and
+# HRThreat. Measured nightly by build_hr_metrics over the same qualified
+# population the percentiles are built on, and read here so the app and
+# the build cannot drift apart — they used to be typed into both files
+# separately.
+#
+# The literals below are a FALLBACK for an archive published before the
+# anchors shipped, not a default. They are the values that were
+# hardcoded, kept only so an old archive still renders something rather
+# than dividing by nothing.
+_ANCHOR_FALLBACK = {
+    "bat_speed": 71.0,
+    "hr_window_pct": 30.0,
+    "pull_air_pct": 18.0,
+    "brl_per_pa": 6.0,
+    # 0.5, not the 4.0 originally typed here. Contact that clears every
+    # park is far rarer than that guess assumed — the first nightly to
+    # measure the contour found only a couple of qualifying buckets in
+    # the whole league. A 4.0 anchor scored every hitter alike near zero
+    # and turned a real signal into noise.
+    "clears_anywhere_pct": 0.5,
+}
+
+
+@st.cache_data(ttl=21600, max_entries=1, show_spinner=False)
+def _hr_anchors():
+    """Measured league anchors, falling back per-key to the old literals."""
+    out = dict(_ANCHOR_FALLBACK)
+    try:
+        raw = _json.loads((_DATA_DIR / "baselines.json").read_text())
+        for k, v in (raw.get("hr_anchors") or {}).items():
+            if isinstance(v, (int, float)) and v and v > 0:
+                out[k] = float(v)
+    except Exception:
+        pass
+    return out
+
+
 def clears_anywhere_pct(df: pd.DataFrame):
     """Share of batted balls on a trajectory that clears any park, or None.
 
@@ -297,7 +338,15 @@ def clears_anywhere_pct(df: pd.DataFrame):
     Works unchanged on a pitcher's rows, where it is the rate he allows.
     """
     buckets = _clears_anywhere_buckets()
-    if buckets is None or df is None or df.empty:
+    # An EMPTY contour is not a zero rate. If no trajectory in the whole
+    # league qualified this season — a short pull, a dead ball, an early
+    # April archive — then "0.0% of his contact clears anywhere" reads as
+    # a measurement of him when it is really a statement about the
+    # league. Every hitter would show the same 0.0, and it would drag the
+    # composite below by exactly the same amount for all of them: noise
+    # with the shape of a stat. Same reasoning as the `empty` dict in
+    # _compute_batted_ball_metrics.
+    if not buckets or df is None or df.empty:
         return None
     if not {"launch_speed", "launch_angle", "type"}.issubset(df.columns):
         return None
@@ -661,9 +710,13 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
     # Bat speed is unavailable before 2024 and on some rows, so the
     # component simply drops out when absent instead of zeroing the
     # composite.
-    _INTENT_BATSPEED_ANCHOR = 71.0   # league-average bat speed -> 50
-    _INTENT_HRWINDOW_ANCHOR = 30.0   # ~30% of BBE in the band -> 50
-    _INTENT_PULLAIR_ANCHOR = 18.0    # ~18% pulled air -> 50
+    # Measured nightly — see _hr_anchors. These were three typed
+    # constants duplicated in precompute.py; the build and the app can no
+    # longer disagree about what league average is.
+    _A = _hr_anchors()
+    _INTENT_BATSPEED_ANCHOR = _A["bat_speed"]
+    _INTENT_HRWINDOW_ANCHOR = _A["hr_window_pct"]
+    _INTENT_PULLAIR_ANCHOR = _A["pull_air_pct"]
     _intent_parts = []
     if "bat_speed" in df.columns:
         _bs = pd.to_numeric(df["bat_speed"], errors="coerce").dropna()
@@ -722,8 +775,8 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
     # contact has no threat score, which is not the same as a threat
     # score of zero, and the lineup table has no column to tell those
     # apart. See the `empty` dict at the top of this function.
-    _THREAT_BRLPA_ANCHOR = 6.0    # ~6% of PA barrelled -> 50, elite is ~10
-    _THREAT_CA_ANCHOR = 4.0       # ~4% of BBE clears anywhere -> 50
+    _THREAT_BRLPA_ANCHOR = _A["brl_per_pa"]
+    _THREAT_CA_ANCHOR = _A["clears_anywhere_pct"]
     _threat_parts = []            # (weight, 0-100 score)
     if brl_per_pa is not None:
         _threat_parts.append((0.35, min(100.0, brl_per_pa / _THREAT_BRLPA_ANCHOR * 50.0)))
