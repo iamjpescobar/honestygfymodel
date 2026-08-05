@@ -820,6 +820,7 @@ def _render_slate():
                                     # guess, and saying which is which
                                     # keeps the two distinguishable.
                                     "Status": (p.get("today_status")
+                                               or p.get("injury_status")
                                                or (f'OUT {_days}d' if (not _ok and _days)
                                                    else ("OUT" if not _ok else ""))),
                                     "Role": ("OUT" if not _ok
