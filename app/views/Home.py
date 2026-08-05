@@ -23,18 +23,16 @@ Nothing here is computed for this page. The picks come from
 engines.calibration._load(), the rates from summary(). That is also why
 it cannot disagree with the Results page or with the boards themselves.
 """
-import json
 from datetime import datetime, timedelta
-from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import streamlit as st
 
 from styles.kc_theme import page_header, card, footer, data_timestamp, COLOR
 from engines.calibration import BOARDS, _load, summary
+from engines.slate_guard import load_slate
 
 EASTERN = ZoneInfo("America/New_York")
-_DATA = Path(__file__).resolve().parent.parent / "data"
 
 # Home is a top-level view, not a page inside one sport, so it reports
 # every board on the site. The jump buttons are what have to be careful.
@@ -101,9 +99,11 @@ CURRENT_SPORT = (st.session_state.get("lc_sport_seg")
 # Leagues whose slate the nightly writes to disk. MLB is absent on
 # purpose: its schedule is a live API call, and this page does not make
 # them.
-SLATE_FILES = {"WNBA": _DATA / "wnba" / "games.json",
-               "KBO": _DATA / "kbo" / "games.json",
-               "NPB": _DATA / "npb" / "games.json"}
+# Leagues to report, not paths to read: slate_guard owns where the file
+# lives and what its date key is called. Holding a second copy of those
+# paths here is how this reader drifted out from under the guard in the
+# first place.
+SLATE_LEAGUES = ("WNBA", "KBO", "NPB")
 
 # What each part of the site actually answers. One honest sentence each —
 # a nav label tells you a page exists; this tells you why you would open
@@ -165,15 +165,24 @@ def _slate_counts():
     Silently omits a league rather than showing a zero: a missing file
     means the nightly hasn't shipped that slate, which is NOT the same
     fact as "no games tonight" and must not be displayed as if it were.
+
+    ROUTED THROUGH slate_guard. This read the file directly and reported
+    whatever count it found, so a nightly that stopped publishing left
+    the landing page — the first screen a subscriber sees — advertising
+    "WNBA - 6 games" off a slate for a night already played. That is the
+    exact failure slate_guard was written for, and this was the most
+    prominent reader still outside it.
+
+    Returns {league: (n_games, slate_date_or_None)}: the date rides
+    along so a lookahead slate can be labelled rather than passed off as
+    tonight's. KBO and NPB publish one on purpose when Seoul or Tokyo
+    has no games today.
     """
     out = {}
-    for league, path in SLATE_FILES.items():
-        try:
-            games = (json.loads(path.read_text()) or {}).get("games") or []
-        except Exception:
-            continue
+    for league in SLATE_LEAGUES:
+        games, slate_date, is_current = load_slate(league.lower())
         if games:
-            out[league] = len(games)
+            out[league] = (len(games), None if is_current else slate_date)
     return out
 
 
@@ -378,8 +387,13 @@ def _render_pulse(record, today):
         if _n:
             chips.append((f"{_sp} \u00b7 {_n} board{'s' if _n != 1 else ''} "
                           f"published", COLOR["accent"]))
-    for league, n in slates.items():
-        chips.append((f"{league} \u00b7 {n} game{'s' if n != 1 else ''}",
+    for league, (n, ahead) in slates.items():
+        # `ahead` is set only when the slate is for a later date than
+        # today in that league's own timezone. Naming the date is the
+        # whole point: an unlabelled count is indistinguishable from
+        # tonight's, which is how the stale-slate bug stayed invisible.
+        _when = f" \u00b7 {ahead}" if ahead else ""
+        chips.append((f"{league} \u00b7 {n} game{'s' if n != 1 else ''}{_when}",
                       COLOR["cold"]))
     if not chips and not published:
         return
