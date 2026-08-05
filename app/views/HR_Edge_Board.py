@@ -85,6 +85,19 @@ else:
                 "Park": r.get("park"),
                 "HR Edge": r.get("edge"),
                 "HR Score": r.get("hr_score"),
+                # 60% outcome (barrels per PA, no-doubt contact), 40%
+                # process (bat speed, swing plane, pull tendency). Sits
+                # next to HR Score rather than inside it: HR Score is the
+                # scored skill number the board is ranked on, and folding
+                # a second composite into it would double-count the same
+                # barrel rate that already feeds both.
+                "Threat": r.get("hr_threat"),
+                # Contact on a trajectory that leaves ANY park, measured
+                # off the league's own outcomes. Two decimals because the
+                # league average is a fraction of a percent — this column
+                # is meant to be near-empty, and a bat with a real number
+                # in it is the point.
+                "Clears%": r.get("clears_anywhere"),
                 "Matchup": r.get("mx"),
                 "Context": r.get("ctx_adj"),
                 "Why": ctx,
@@ -106,7 +119,7 @@ else:
             # and destroyed the track, which is the thing that makes bar
             # length readable. Same reason they were removed from the
             # Game Card lineup.
-            favor_high=["Matchup", "Context"],
+            favor_high=["Matchup", "Context", "Threat", "Clears%"],
             gradient=True,
         ).format({
             # Explicit formats for every numeric column — style_stat_table
@@ -116,6 +129,7 @@ else:
             # lineup — these are the two columns the board is ranked on.
             "HR Edge": score_bar("gold"), "HR Score": score_bar("stat_high"),
             "Matchup": "{:+.1f}", "Context": "{:+.1f}",
+            "Threat": "{:.0f}", "Clears%": "{:.2f}",
             # Logo beside the abbreviation; text stays so the column
             # still reads if an image fails to load.
             "Team": team_logo_cell(),
