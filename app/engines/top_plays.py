@@ -279,5 +279,20 @@ def rank_batters(batter_profiles: list, savant_df) -> list:
                                  hr_df=hr_df),
             "hit_score": hit_score(pid, savant_df),
             "k_score": k_score(pid, savant_df),
+            # Slate-wide HR metrics off the nightly league table. Free
+            # here: hr_df is already loaded above for hr_score and the
+            # lookups are O(1) on an indexed frame, so the board gets
+            # these without a single extra Statcast pull.
+            #
+            # The REGRESSED rates, not the raw ones. This board ranks
+            # hitters against each other, and an unregressed rate off 40
+            # batted balls sorts above a bat with ten times the evidence
+            # — noise at the top of the board is exactly what the
+            # shrinkage in build_hr_metrics exists to prevent. The raw
+            # figures stay on the Game Card, where you're reading one
+            # hitter rather than ordering four hundred.
+            "hr_threat": get_hr_metric(hr_df, pid, "hr_threat"),
+            "clears_anywhere": get_hr_metric(hr_df, pid, "clears_anywhere_pct"),
+            "fb95": get_hr_metric(hr_df, pid, "fb95_pct"),
         })
     return out
