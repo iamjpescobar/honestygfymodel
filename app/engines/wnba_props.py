@@ -80,6 +80,38 @@ STALE_DAYS = 8
 # describes what she is being asked to do.
 MIN_LAST_MIN = 8.0
 
+# THE TEAM'S OWN INJURY REPORT.
+#
+# wnba_precompute now carries ESPN's roster injury note through onto
+# every slate row (injury_status / injury_date). Until this block
+# existed, only the Status COLUMN read it: the same table row could
+# print "Status: Out" beside "Role: START", and the boards that
+# actually pick players — Props, Defense, Player of the Day — went on
+# offering her, because they ask availability() and availability()
+# had never heard of the field. A reported, sourced "Out" losing to a
+# guess derived from a game log is exactly backwards.
+#
+# Only POSITIVE, unambiguous statuses rule anyone out. Everything else
+# on ESPN's vocabulary is uncertainty, not absence — a questionable
+# player is usually playing, and dropping her from a board on a maybe
+# would be the same class of error in the other direction. Anything
+# unrecognised falls through to the log inference untouched, so a new
+# ESPN status string can never silently empty a board.
+_INJURY_OUT_STATUSES = {
+    "out", "injuredreserve", "ir", "suspension", "suspended",
+    "inactive", "notwithteam", "seasonending",
+}
+# For the record, deliberately NOT ruled out: day-to-day, questionable,
+# doubtful, probable, game-time decision, available, active, healthy.
+
+# How long a roster injury note is believed. These notes are not always
+# cleared when a player returns, and a stale one would keep a healthy
+# player off every board indefinitely. Past this many days the note is
+# ignored and the game log — which is dated, and therefore checkable —
+# decides. Measured against the DATA's newest game date, like every
+# other window here, so a feed outage can't age a note out.
+INJURY_TRUST_DAYS = 10
+
 W_CONSISTENCY = 0.35
 W_FORM = 0.25
 W_MATCHUP = 0.25
@@ -203,6 +235,57 @@ def league_reference_date(games, fallback=None):
     return latest or fallback
 
 
+def _norm_status(text):
+    """A status string reduced to letters and digits, for comparison.
+
+    ESPN sends the same status as "Out", "OUT", "Day-To-Day" and
+    "Injured Reserve" depending on the endpoint and the shape it
+    arrived in, so matching on the raw string misses most of them.
+    """
+    if not isinstance(text, str):
+        return ""
+    return "".join(ch for ch in text.lower() if ch.isalnum())
+
+
+def _injury_flag(player, today=None, last_played=None):
+    """(out, reason) from the roster's reported injury note.
+
+    Returns (False, None) — meaning "this says nothing", NOT "she is
+    available" — whenever the note is absent, unrecognised, stale, or
+    contradicted by the log. The caller falls through to its own
+    inference in every one of those cases.
+
+    Two ways a note is discarded even when it does say Out:
+
+    1. SHE HAS PLAYED SINCE. A game log entry dated after the injury
+       date settles it outright — an appearance is harder evidence
+       than a report, and this is the common case for a note nobody
+       cleared.
+    2. IT IS OLDER THAN INJURY_TRUST_DAYS. With no dated appearance to
+       contradict it, an ancient note is simply not evidence about
+       tonight. Note that discarding it rarely clears anyone: a player
+       genuinely absent that long trips STALE_DAYS below anyway. What
+       it does protect is the player who came back and whose return
+       the roster feed never acknowledged.
+
+    An undated note is trusted. It is the roster's current statement
+    with nothing to weigh against it, and failing open there would
+    reinstate the bug this exists to fix.
+    """
+    status = player.get("injury_status")
+    if _norm_status(status) not in _INJURY_OUT_STATUSES:
+        return False, None
+
+    reported = _parse_log_date(player.get("injury_date"))
+    if reported:
+        if last_played and last_played > reported:
+            return False, None
+        if today and (today - reported).days > INJURY_TRUST_DAYS:
+            return False, None
+
+    return True, f"listed {str(status).lower()} on the team's injury report"
+
+
 def availability(player, today=None):
     """(ok, reason, days_since) — has this player actually been playing?
 
@@ -243,12 +326,28 @@ def availability(player, today=None):
 
     dates = [(_parse_log_date(gl.get("date")), gl) for gl in log]
     dated = [(d, gl) for d, gl in dates if d is not None]
+
+    today = today or datetime.now(timezone.utc).date()
+    last_date, last_game = (max(dated, key=lambda pair: pair[0])
+                            if dated else (None, {}))
+
+    # THE ROSTER'S REPORTED STATUS BEATS THE LOG INFERENCE.
+    #
+    # Ranked below today_out above, on purpose: that block is ESPN's
+    # per-game injury report for THIS game, which is both more specific
+    # and more current than a roster-level note. Ranked above
+    # everything below, also on purpose: a reported Out is evidence,
+    # and the days-since-played test is a guess. Placed after last_date
+    # is known so _injury_flag can throw out a note the log has already
+    # contradicted.
+    _out, _why = _injury_flag(player, today=today, last_played=last_date)
+    if _out:
+        return False, _why, ((today - last_date).days if last_date else None)
+
     if not dated:
         # No parseable dates anywhere — no evidence either way.
         return True, None, None
 
-    today = today or datetime.now(timezone.utc).date()
-    last_date, last_game = max(dated, key=lambda pair: pair[0])
     days = (today - last_date).days
 
     if days > STALE_DAYS:
