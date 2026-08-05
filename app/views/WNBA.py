@@ -1,6 +1,3 @@
-import json
-from pathlib import Path
-
 import pandas as pd
 import requests
 import streamlit as st
@@ -15,6 +12,8 @@ from engines.matchup_grades_intl import grade_wnba_matchup, render_matchup_grade
 from engines.live_sync import sync_latest_button
 from engines.trend_chart import window_hit_chips, render_trend_bars
 from engines.wnba_logos import logo_url_by_id
+from engines.slate_guard import (load_slate, staleness_note,
+                                 generated_at as slate_guard_generated_at)
 
 # Theme injection lives in app.py, which renders once per script run
 # before this view is exec'd. It used to be called here as well, so the
@@ -58,7 +57,6 @@ def _ordinal(n):
     return {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
 
 
-_WNBA_GAMES = Path(__file__).resolve().parent.parent / "data" / "wnba" / "games.json"
 _SB_URL = "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard"
 
 # HEADER FIRST, TOOLBAR SECOND.
@@ -88,13 +86,26 @@ from engines.wnba_props import (availability as _availability,
 # Streamlit re-runs the whole script each time you touch a control. The
 # other views were cached in an earlier pass and this one was missed.
 # The file only changes when the nightly build publishes.
+#
+# ROUTED THROUGH slate_guard. WNBA_Props and WNBA_Defense were moved
+# behind the guard when the stale-slate bug was found; this page — the
+# main WNBA board, the one those two hang off — was left reading the
+# file raw, so the headline board could still present a night already
+# played as tonight's while its two sub-pages correctly refused to.
+#
+# The _REF machinery below is NOT a substitute and is not being replaced:
+# it anchors "has she played recently" to the newest game in the data,
+# which is a different question from "is this slate tonight's". Both are
+# needed. A slate from three nights ago produces internally consistent
+# availability and a completely wrong board.
 @st.cache_data(ttl=900, show_spinner=False)
 def _load_games():
-    try:
-        payload = json.loads(_WNBA_GAMES.read_text())
-        return payload.get("games", []), payload.get("generated_at_et")
-    except Exception:
-        return None, None
+    games, slate_date, is_current = load_slate("wnba")
+    if not games:
+        # Distinguishes "guard rejected it" from "file is gone" for the
+        # caller: None means no board at all, and the note says why.
+        return None, None, slate_date
+    return games, slate_guard_generated_at("wnba"), slate_date
 
 
 @st.cache_data(ttl=60, max_entries=4, show_spinner=False)
@@ -138,7 +149,7 @@ def _live_overrides():
         return {}
 
 
-games, generated_at = _load_games()
+games, generated_at, slate_date = _load_games()
 
 # Reference point for "has she played recently". Anchored to the newest
 # game in the data rather than the wall clock, because the nightly WNBA
@@ -173,6 +184,15 @@ if _REF:
         )
 
 if games is None:
+    # A rejected slate is a different fact from an unbuilt engine, and
+    # reads completely differently to a subscriber: one is "not ready
+    # yet", the other is "tonight's data never arrived". Saying the
+    # first when the second is true is what hid this for days.
+    _note = staleness_note("wnba")
+    if slate_date or _note:
+        st.warning(_note)
+        footer()
+        st.stop()
     st.markdown(card_open("\U0001F3C0 WNBA engine is being connected"), unsafe_allow_html=True)
     st.markdown(
         f'<div style="color:{COLOR["text_muted"]}; font-size:var(--lc-text-body-lg); line-height:1.7;">'
