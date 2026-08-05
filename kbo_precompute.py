@@ -137,67 +137,127 @@ def fetch(url):
     return r.content.decode("utf-8", errors="replace")
 
 
-def parse_starters(html):
-    """Extract away/home probable starters from a mykbostats game-detail
-    page. Names come already romanized (e.g. "So Hyeong-jun"). Returns
-    names, player ids, and the season W-L/ERA line for each side.
-    Anything the page doesn't state stays None — never guessed, matching
-    how the rest of this pipeline treats unknowns.
+# THE 2026-08 REBUILD MOVED PROBABLES OFF THE GAME PAGE.
+#
+# parse_starters() used to read <div class="away-starter"> off each
+# game-detail page. mykbostats shipped "v3 Build 886 (2026-08-04)", an
+# Elixir/Phoenix rewrite, and that markup went with it. Measured from
+# Actions on an upcoming game (13800-SSG-vs-NC-20260809): the words
+# probable, starter, pitcher and the Korean 선발 / 예고 each appear ZERO
+# times; there is no application/json blob and no JSON-bearing data-*
+# attribute; /games/{slug}.json returns HTML and /games/{slug}/probables
+# 404s. So it is not renamed, not client-side, and not behind an API —
+# it is simply not on that page any more. The week schedule page has no
+# player links either.
+#
+# It is on the HOMEPAGE, one line inside each game-card anchor:
+#
+#     Hanwha Eagles Samsung Lions 31° 6:30pm Daegu
+#         Starters: Park Jun-yeong vs. Chris Paddack
+#
+# with "Compare starting pitchers →" linking to
+#     /stats/compare?pids=15400,15284,15357,...
+# which is two ids per game in slate order — the ids the old parser used
+# to read off the anchors.
+#
+# WHY THIS KEYS ON TEXT AND HREF, NOT CLASS NAMES. The class vocabulary
+# has now changed under this parser once, and KBO pitcher matchups ran
+# blind for as long as nobody noticed, because a regex that matches
+# nothing returns an empty dict without raising. The href pattern and
+# the visible words "Starters:" and "vs." are the product rather than
+# the styling, so they are what a redesign is least likely to touch.
+#
+# ONE REQUEST FOR THE WHOLE SLATE, replacing one per upcoming game.
+#
+# CAVEAT, and it is a real one: the homepage carries TODAY only. Games
+# further out resolve to None and stay TBD, which is correct — nobody
+# publishes them yet — but it means this can never fill a week ahead.
+STARTERS_LINE = re.compile(r"Starters:\s*(.+?)\s+vs\.\s+(.+?)\s*$")
+HOME_GAME_A = re.compile(r'<a[^>]*href="/games/([^"]+)"[^>]*>(.*?)</a>', re.S)
+COMPARE_PIDS = re.compile(r'href="/stats/compare\?pids=([^"&]+)"')
 
-    Structure (verified against a real game page): each side sits in a
-    <div class="away-starter"> / <div class="home-starter">. Inside are
-    two player-link anchors — the first wraps the photo <img>, the second
-    is the name. "Season:" is followed by two <abbr> values, W-L then ERA.
+_STARTER_KEYS = ("away_starter", "home_starter", "away_starter_id",
+                 "home_starter_id", "away_starter_stats", "home_starter_stats")
+
+
+def _no_starters():
+    return {k: None for k in _STARTER_KEYS}
+
+
+def parse_homepage_starters(html):
+    """{game_id: {away_starter, home_starter, ...ids...}} off the homepage.
+
+    Keyed by the NUMERIC game id rather than the full slug: the id is the
+    stable half of "13777-Hanwha-vs-Samsung-20260805", and a team-name or
+    date-format change in the slug would otherwise silently match nothing
+    — the same failure this whole function exists to replace.
+
+    A game with no "Starters:" line is omitted rather than recorded as
+    empty, so the caller can tell "not announced" from "announced as
+    nothing". Absent stays absent; nothing here guesses.
     """
-    out = {
-        "away_starter": None, "home_starter": None,
-        "away_starter_id": None, "home_starter_id": None,
-        "away_starter_stats": None, "home_starter_stats": None,
-    }
-    for side, cls in (("away", "away-starter"), ("home", "home-starter")):
-        block = re.search(rf'<div class="{cls}">(.*?)</div>', html, re.S)
-        if not block:
+    out, ordered = {}, []
+    for slug, inner in HOME_GAME_A.findall(html):
+        text = re.sub(r"\s+", " ", _strip(inner)).strip()
+        m = STARTERS_LINE.search(text)
+        if not m:
             continue
-        b = block.group(1)
-        for am in re.finditer(
-                r'<a class="player-link"[^>]*data-id="(\d+)"[^>]*>(.*?)</a>', b, re.S):
-            inner = am.group(2)
-            if "<img" in inner:
-                continue  # photo anchor, not the name
-            txt = re.sub(r"<[^>]+>", "", inner).strip()
-            if txt:
-                out[f"{side}_starter"] = txt
-                out[f"{side}_starter_id"] = am.group(1)
-                break
-        seas = re.search(
-            r'Season:.*?<abbr title="Wins - Losses">([\d-]+)</abbr>\s*,\s*'
-            r'<abbr title="ERA[^"]*">([\d.]+)</abbr>', b, re.S)
-        if seas:
-            try:
-                out[f"{side}_starter_stats"] = {"wl": seas.group(1), "era": float(seas.group(2))}
-            except ValueError:
-                pass
+        away, home = m.group(1).strip(), m.group(2).strip()
+        if not away or not home:
+            continue
+        gid = slug.split("-", 1)[0]
+        entry = _no_starters()
+        entry["away_starter"], entry["home_starter"] = away, home
+        out[gid] = entry
+        ordered.append(gid)
+
+    # Ids only when the count matches exactly two per game. A partial or
+    # surprising list is dropped whole rather than aligned on a guess —
+    # an id attached to the wrong pitcher is worse than no id, because
+    # every downstream lookup would silently describe someone else.
+    cm = COMPARE_PIDS.search(html)
+    if cm and ordered:
+        pids = [p for p in re.split(r"%2C|,", cm.group(1)) if p.strip()]
+        if len(pids) == 2 * len(ordered):
+            for n, gid in enumerate(ordered):
+                out[gid]["away_starter_id"] = pids[2 * n]
+                out[gid]["home_starter_id"] = pids[2 * n + 1]
+        else:
+            print(f"  KBO: compare link carried {len(pids)} pids for "
+                  f"{len(ordered)} games with starters — ids left unset")
     return out
 
 
-def fetch_starters_for_game(game_slug):
-    """Fetch one game-detail page and return its probable starters.
-    Best-effort: any failure returns an all-None dict so a single bad
-    game never blocks the slate. mykbostats announces KBO starters the
-    day before, so upcoming games usually have them."""
-    empty = {
-        "away_starter": None, "home_starter": None,
-        "away_starter_id": None, "home_starter_id": None,
-        "away_starter_stats": None, "home_starter_stats": None,
-    }
+def fetch_homepage_starters():
+    """Today's probables for the whole slate in one request, or {}.
+
+    Returns {} on any failure, which leaves every game TBD — the same
+    state the site itself shows before an announcement, and the same one
+    this pipeline was already in while the old parser matched nothing.
+    """
     try:
-        r = requests.get(f"https://mykbostats.com/games/{game_slug}", headers=UA, timeout=25)
-        if r.status_code != 200:
-            return empty
-        return parse_starters(r.text)
+        r = requests.get("https://mykbostats.com/", headers=UA, timeout=25)
     except Exception as exc:
-        print(f"  KBO starter fetch failed for {game_slug}: {exc}")
-        return empty
+        print(f"  KBO: homepage fetch failed ({exc}) — no probables this run")
+        return {}
+    if r.status_code != 200:
+        print(f"  KBO: homepage HTTP {r.status_code} — no probables this run")
+        return {}
+
+    found = parse_homepage_starters(r.text)
+    cards = len(HOME_GAME_A.findall(r.text))
+    print(f"KBO: homepage — {len(found)} of {cards} game cards carried a "
+          f"Starters line")
+    if not found:
+        # WHEN THIS IS NORMAL, so a zero is not misread as a break.
+        # Measured 0 at 06:36 KST on a day the slate was heat-canceled,
+        # about twelve hours before first pitch. The scheduled refresh
+        # runs at 18:20 KST, which is after the announcement window.
+        print("  0 is expected before the announcement and on a canceled "
+              "slate. If the 18:20 KST refresh also reports 0 on a day that "
+              "is played, the line has moved again — re-probe, don't widen "
+              "the regex.")
+    return found
 
 
 def parse_week(html, today_str, sample_holder):
@@ -640,15 +700,20 @@ def main():
     upcoming = [g for g in all_games
                 if g["date"] >= today and g.get("status") != "final"
                 and g.get("game_slug")]
+    _hp = fetch_homepage_starters()
     starter_hits = 0
     for g in upcoming:
-        s = fetch_starters_for_game(g["game_slug"])
-        g.update(s)
-        if s.get("away_starter") or s.get("home_starter"):
+        # Match on the numeric game id, the stable half of the slug.
+        _gid = str(g.get("game_slug") or "").split("-", 1)[0]
+        s = _hp.get(_gid)
+        # Every upcoming game gets the keys either way, so a downstream
+        # .get() never sees a game that simply lacks them.
+        g.update(s or _no_starters())
+        if s:
             starter_hits += 1
-        time.sleep(0.15)
-    print(f"KBO: fetched starters for {len(upcoming)} upcoming games; "
-          f"{starter_hits} had at least one probable posted")
+    print(f"KBO: matched probables onto {starter_hits} of {len(upcoming)} "
+          f"upcoming games (homepage carries TODAY only, so anything "
+          f"further out stays TBD by design)")
 
     stats = team_form(finals) if finals else {}
 
