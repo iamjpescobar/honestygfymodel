@@ -153,26 +153,10 @@ def parse_scoreboard_events(payload):
         g = {
             "away": (away.get("team") or {}).get("displayName", "TBD"),
             "home": (home.get("team") or {}).get("displayName", "TBD"),
-            # ESPN's numeric team ids. Kept because the SUMMARY endpoint's
-            # "rosters" block is empty for the WNBA feed — verified in a
-            # nightly log: "0 announced starters" on every game, with only
-            # the handful of injury-report entries present. So the only
-            # way to learn who is actually on a team is the dedicated
-            # /teams/{id}/roster endpoint, which needs these ids.
             "away_id": str((away.get("team") or {}).get("id") or ""),
             "home_id": str((home.get("team") or {}).get("id") or ""),
             "away_color": (away.get("team") or {}).get("color"),
             "home_color": (home.get("team") or {}).get("color"),
-            # ESPN'S OWN LOGO URL, captured rather than constructed.
-            #
-            # Same fix already applied to the per-game logs (see
-            # _logos in the box-score parser): engines/wnba_logos builds
-            # a CDN path out of the team id, and that path does not
-            # exist for every team — the expansion clubs in particular
-            # 404, which is what renders a broken-image "?" in the
-            # Team/Opp columns of the props and defense boards instead
-            # of a mark. The competitor block already carries the exact
-            # URL ESPN serves, so taking it removes the guess.
             "away_logo": _team_logo(away.get("team")),
             "home_logo": _team_logo(home.get("team")),
             "arena": (comp.get("venue") or {}).get("fullName", ""),
@@ -224,57 +208,42 @@ def _num(s):
         return None
 
 
-# ------------------------------------------------------------
-# TODAY'S AVAILABILITY — from ESPN's own game summary
-# ------------------------------------------------------------
-# THE THING GAME LOGS CANNOT TELL YOU.
-#
-# Everything else in this file is a record of the PAST. Availability was
-# being inferred from it — "she hasn't appeared in 9 days, so she's
-# probably out" — which is backwards-looking by construction and can
-# never answer "is she playing TONIGHT". A player returning today looks
-# absent; a player who played yesterday and was ruled out this morning
-# looks fine. Both are wrong, and no amount of cleverness on game logs
-# fixes either, because the information simply isn't in there.
-#
-# ESPN's summary endpoint carries it directly, and this file already
-# calls that endpoint for box scores (see parse_boxscore), so the shape
-# and the auth story are both known-good:
-#
-#   injuries[]  per team, per athlete, with a status ("Out",
-#               "Day-To-Day", "Questionable", "Active")
-#   rosters[]   per team, each entry carrying starter true/false once
-#               lineups are announced
-#
-# Written defensively on purpose. This is an undocumented endpoint whose
-# shape can change without notice, so every field is probed rather than
-# assumed, and the result is EMPTY rather than wrong when anything is
-# unrecognisable — an empty result makes the app fall back to the old
-# inference, which is worse but not misleading. The counts are printed so
-# a silent shape change shows up in the workflow log instead of quietly
-# degrading every board.
 _OUT_STATUSES = {"out", "injured", "suspended", "not with team", "inactive"}
 
 
+def _status_text(value):
+    """ESPN's athlete `status` as a plain word, whatever shape it arrives in."""
+    if isinstance(value, str):
+        return value.strip() or None
+    if isinstance(value, dict):
+        for key in ("name", "description", "abbreviation", "type", "id"):
+            got = value.get(key)
+            if isinstance(got, str) and got.strip():
+                return got.strip()
+    return None
+
+
+def _injury_note(athlete):
+    """(status, date) from the roster payload's own injuries[] array."""
+    entries = athlete.get("injuries")
+    if not isinstance(entries, list):
+        return None, None
+    for item in entries:
+        if not isinstance(item, dict):
+            continue
+        status = _status_text(item.get("status"))
+        if status:
+            return status, item.get("date")
+    return None, None
+
+
+_roster_shapes = {"status_kind": set(), "with_injury": 0, "players": 0}
+
+
 def fetch_team_roster(team_id, debug=False):
-    """{pid: {"name", "pos"}} — every player on a team's roster.
-
-    WHY THIS EXISTS. The summary endpoint's "rosters" block is empty for
-    the WNBA feed. A nightly log showed "0 announced starters" on all
-    three games, with only 4-7 entries per event, and those were the
-    injury report. So availability data alone can never tell us who is on
-    a team; it only tells us who is hurt.
-
-    That mattered because every other list of players was derived from
-    BOX SCORES, which by definition contain only players who have already
-    played. A star who has been out — or who is early in a return — has no
-    box-score rows, so she existed nowhere in the pipeline and no filter
-    change could bring her back. This endpoint is the roster itself,
-    independent of whether anyone has played a minute.
-
-    Returns {} on any failure, and every caller treats that as "unknown"
-    and falls back to box-score history, so a bad response degrades to
-    the old behaviour rather than emptying a slate.
+    """{pid: {name, pos, jersey, roster_status, injury_status,
+    injury_date, exp}} — every player on a team's roster, with the
+    reported status ESPN already sent us.
     """
     if not team_id:
         return {}
@@ -284,10 +253,6 @@ def fetch_team_roster(team_id, debug=False):
         print(f"  [roster] team {team_id}: fetch failed ({exc})")
         return {}
 
-    # ESPN returns athletes either as a flat list or grouped into
-    # position buckets ({"position": "guard", "items": [...]}) depending
-    # on sport and endpoint version. Handle both rather than betting on
-    # one shape.
     raw = data.get("athletes") or []
     flat = []
     for a in raw:
@@ -306,23 +271,40 @@ def fetch_team_roster(team_id, debug=False):
             continue
         pos = ((ath.get("position") or {}).get("abbreviation")
                if isinstance(ath.get("position"), dict) else "") or ""
-        out[pid] = {"name": name, "pos": pos}
 
-    print(f"  [roster] team {team_id}: {len(out)} players")
+        _inj_status, _inj_date = _injury_note(ath)
+        _status = _status_text(ath.get("status"))
+        _exp = ath.get("experience")
+        if isinstance(_exp, dict):
+            _exp = _exp.get("years")
+
+        _jersey = ath.get("jersey")
+        if _jersey is not None and not isinstance(_jersey, str):
+            _jersey = str(_jersey)
+
+        _roster_shapes["players"] += 1
+        _roster_shapes["status_kind"].add(type(ath.get("status")).__name__)
+        if _inj_status:
+            _roster_shapes["with_injury"] += 1
+
+        out[pid] = {
+            "name": name,
+            "pos": pos,
+            "jersey": _jersey,
+            "roster_status": _status,
+            "injury_status": _inj_status,
+            "injury_date": _inj_date,
+            "exp": _exp if isinstance(_exp, (int, float)) else None,
+        }
+
+    _hurt = sum(1 for v in out.values() if v.get("injury_status"))
+    print(f"  [roster] team {team_id}: {len(out)} players, "
+          f"{_hurt} with a reported injury")
     return out
 
 
 def fetch_game_availability(event_id, debug=False):
-    """{pid: {"status", "out", "starter", "name", "pos"}} for one game, or {} on failure.
-
-    name/pos are captured here because this is ESPN's OWN roster for this
-    specific game — the authoritative answer to "who is on this team
-    tonight". The slate builder needs it to show a player who is on the
-    roster but has little or no game log: a star returning from injury
-    has no season stats to rank on, so every stats-derived list drops her,
-    and she vanished from the site while every other research site listed
-    her. Carrying the name here is what lets her be shown at all.
-    """
+    """{pid: {"status", "out", "starter", "name", "pos"}} for one game, or {} on failure."""
     try:
         data = get_json(f"{BASE}/summary?event={event_id}")
     except Exception as exc:
@@ -332,7 +314,6 @@ def fetch_game_availability(event_id, debug=False):
     out = {}
 
     def _remember(ath, entry):
-        """Keep the display name and position off the athlete block."""
         nm = ath.get("displayName") or ath.get("shortName")
         if nm and not entry.get("name"):
             entry["name"] = nm
@@ -340,7 +321,6 @@ def fetch_game_availability(event_id, debug=False):
         if pos and not entry.get("pos"):
             entry["pos"] = pos
 
-    # --- injury report ------------------------------------------------
     for team_block in data.get("injuries") or []:
         for item in team_block.get("injuries") or []:
             ath = item.get("athlete") or {}
@@ -348,14 +328,13 @@ def fetch_game_availability(event_id, debug=False):
             if not pid:
                 continue
             status = (item.get("status")
-                      or (item.get("type") or {}).get("description")
-                      or (item.get("type") or {}).get("name") or "")
+                     or (item.get("type") or {}).get("description")
+                    or (item.get("type") or {}).get("name") or "")
             entry = out.setdefault(pid, {})
             entry["status"] = str(status)
             entry["out"] = str(status).strip().lower() in _OUT_STATUSES
             _remember(ath, entry)
 
-    # --- announced lineups --------------------------------------------
     for team_block in data.get("rosters") or []:
         _tname = ((team_block.get("team") or {}).get("displayName") or "")
         for item in team_block.get("roster") or []:
@@ -366,12 +345,8 @@ def fetch_game_availability(event_id, debug=False):
             entry = out.setdefault(pid, {})
             if "starter" in item:
                 entry["starter"] = bool(item.get("starter"))
-            # Being listed on a game roster is itself evidence she is
-            # available, unless the injury block already said otherwise.
             entry.setdefault("out", False)
             _remember(ath, entry)
-            # Which side she's on tonight, so the slate builder can place
-            # a roster-only player on the correct team.
             if _tname:
                 entry["team"] = _tname
             entry["rostered"] = True
@@ -388,16 +363,7 @@ def parse_boxscore(event_id, game_date, logs, debug=False):
     data = get_json(f"{BASE}/summary?event={event_id}")
     blocks = (data.get("boxscore") or {}).get("players", []) or []
     names = [(b.get("team") or {}).get("displayName", "") for b in blocks]
-    # ESPN's box-score team block carries the team id — capturing it
-    # here is what lets the trend chart show opponent LOGOS instead of
-    # long team names, matching the MLB charts.
     ids = [(b.get("team") or {}).get("id") for b in blocks]
-    # ESPN's OWN logo URL, captured rather than constructed.
-    #
-    # wnba_logos builds a path from the team id, and that path does not
-    # exist for every team — those games rendered a broken-image "?" under
-    # the bar instead of a mark. The team block already carries the exact
-    # URL ESPN serves, so using it removes the guesswork entirely.
     _logos = []
     for b in blocks:
         t = b.get("team") or {}
@@ -432,32 +398,17 @@ def parse_boxscore(event_id, game_date, logs, debug=False):
                     continue
                 line = {"date": game_date, "team": team_name, "opp": opp_name,
                         "opp_id": opp_id,
-                        # Real URL from ESPN; the view prefers this and
-                        # falls back to the id-built path.
-                        "opp_logo": (_logos[1 - i] if len(_logos) == 2 else None)}
+                    "opp_logo": (_logos[1 - i] if len(_logos) == 2 else None)}
                 for k, i2 in idx.items():
                     line[k.lower()] = _num(stats[i2])
                 def _made_att(i, mk, ak):
                     if i is not None and len(stats) > i:
                         parts = str(stats[i]).split("-")
                         if len(parts) == 2:
-                            line[mk], line[ak] = _num(parts[0]), _num(parts[1])
+                          line[mk], line[al] = _num(parts[0]), _num(parts[1])
                 _made_att(tpt_i, "tpm", "tpa")
                 _made_att(fg_i, "fgm", "fga")
                 _made_att(ft_i, "ftm", "fta")
-                # A COMBO STAT NEEDS EVERY COMPONENT MEASURED.
-                #
-                # `ra` below already did this correctly; pra/pr/pa and
-                # stocks did not. They gated on `pts is not None` alone,
-                # so a REB that ESPN didn't return — or that failed the
-                # parse above — was folded in as a real zero, and the
-                # resulting PRA looked measured. These lines ARE the prop
-                # research: an understated PRA that renders like any
-                # other number is worse than no number, because there is
-                # nothing on the card to tell them apart.
-                #
-                # None means the tables show an em-dash, which is the
-                # convention everywhere else in this app.
                 _pts, _reb = line.get("pts"), line.get("reb")
                 _ast = line.get("ast")
                 if _pts is not None and _reb is not None and _ast is not None:
@@ -468,8 +419,6 @@ def parse_boxscore(event_id, game_date, logs, debug=False):
                     line["pa"] = _pts + _ast
                 if _reb is not None and _ast is not None:
                     line["ra"] = _reb + _ast
-                # STL **and** BLK, not "or". Gating on either meant a
-                # missing block counted as zero blocks.
                 _stl, _blk = line.get("stl"), line.get("blk")
                 if _stl is not None and _blk is not None:
                     line["stocks"] = _stl + _blk
@@ -491,21 +440,10 @@ def _avg(vals):
 
 
 def positional_defense(logs):
-    """How many points, rebounds, and assists each team ALLOWS to each
-    position, per game — the WNBA analog of "which pitcher is easiest
-    to hit". Built from the same real box-score logs already collected:
-    every player line records who he played against, so crediting the
-    opponent with what each position did to them is pure arithmetic on
-    data we already have.
-
-    Returns {team: {pos: {"pts": x, "reb": y, "ast": z, "gp": n}}}.
-    Positions with fewer than MIN_POS_GAMES team-games of data are
-    dropped rather than reported on a thin sample."""
     MIN_POS_GAMES = 5
-    # allowed[team][pos] -> {"pts": [...per game...], ...}
     allowed = {}
     for pid, rec in logs.items():
-        pos = (rec.get("pos") or "").upper()[:1]   # G / F / C
+        pos = (rec.get("pos") or "").upper()[:1]
         if pos not in ("G", "F", "C"):
             continue
         for gl in rec.get("games", []):
@@ -535,8 +473,6 @@ def positional_defense(logs):
 
 
 def team_research(finals):
-    """Per-team: PF/PA per game, last-10 record, avg total — arithmetic
-    on real final scores."""
     per = {}
     for g in sorted(finals, key=lambda x: x["date"]):
         for side, opp in (("home", "away"), ("away", "home")):
@@ -564,10 +500,6 @@ def team_research(finals):
             "pf_pg": _avg(t["pf"]), "pa_pg": _avg(t["pa"]),
             "avg_total": _avg([a + b for a, b in zip(t["pf"], t["pa"])]),
             "l10": f'{last10.count("W")}-{last10.count("L")}',
-            # Windowed scoring form from the same real final scores —
-            # feeds the Season/L25/L15/L10/L5 grade windows. FG% and
-            # TO/G can't be windowed (ESPN publishes them as season
-            # team stats, not per-game logs) and stay season-based.
             "form": {"season": _form(), "l25": _form(25), "l15": _form(15),
                      "l10": _form(10), "l5": _form(5)},
         }
@@ -575,7 +507,6 @@ def team_research(finals):
 
 
 def team_h2h(finals, away, home):
-    """Season series between tonight's two teams, from real finals."""
     meetings = [g for g in finals if {g["home"], g["away"]} == {away, home}]
     if not meetings:
         return None
@@ -600,10 +531,6 @@ def team_h2h(finals, away, home):
 
 
 def _shooting_pct(subset, made_key, att_key):
-    """Attempts-weighted shooting percentage over a set of game logs —
-    total makes / total attempts, NOT an average of per-game
-    percentages (which would let a 1-for-1 night count the same as a
-    10-for-20 one). None when there are no attempts."""
     made = sum(g.get(made_key) or 0 for g in subset)
     att = sum(g.get(att_key) or 0 for g in subset)
     return round(made / att * 100, 1) if att > 0 else None
@@ -629,8 +556,6 @@ def player_summaries(logs):
             "tpm": col("tpm", games), "l5_tpm": col("tpm", games[-5:]), "l10_tpm": col("tpm", games[-10:]),
             "pra": col("pra", games), "l5_pra": col("pra", games[-5:]), "l10_pra": col("pra", games[-10:]),
             "l15_pra": col("pra", games[-15:]), "l25_pra": col("pra", games[-25:]),
-            # Per-game log (last 25) — powers the Player Trend chart.
-            # Slim on purpose: only what the chart plots.
             "log": [
                 {"date": gl.get("date"), "opp": gl.get("opp"),
                  "opp_id": gl.get("opp_id"),
@@ -661,7 +586,6 @@ def player_summaries(logs):
 
 
 def player_h2h(logs, pid, opponent):
-    """A player's real averages specifically vs tonight's opponent."""
     games = [g for g in logs.get(pid, {}).get("games", []) if g.get("opp") == opponent]
     if not games:
         return None
@@ -683,10 +607,6 @@ def main():
     today = now_et.strftime("%Y-%m-%d")
 
     sb, _sb_source = fetch_scoreboard(today.replace("-", ""))
-    # Keep the event id ON the game. parse_scoreboard_events yields it
-    # separately, so it was being discarded here — and without it there's
-    # no way to ask ESPN for tonight's injury report and lineups for this
-    # specific game.
     todays = []
     for _eid, _st, _done, g in parse_scoreboard_events(sb):
         g["event_id"] = _eid
@@ -699,24 +619,6 @@ def main():
     d = SEASON_START
     first_debug = True
     while d <= now_et.date():
-        # THROUGH fetch_scoreboard, NOT straight at BASE.
-        #
-        # This was `get_json(f"{BASE}/scoreboard?dates=...")` — the exact
-        # host the comment above SCOREBOARD_SOURCES documents as being
-        # 403'd from cloud IPs, with no fallback and no mirror. So on
-        # every run where ESPN blocked site.api, today's slate came
-        # through fine (that call already used the fallback) while EVERY
-        # historical day failed, and the failure was invisible: one
-        # "scoreboard <date> failed" line per day, buried in ~120 of
-        # them, and the job still exited 0.
-        #
-        # What shipped then was a games.json full of tonight's fixtures
-        # in which no player had a single number — no logs, so no season
-        # or L5/L10 splits, no player H2H, no team research, no
-        # positional defense. The Props and Defense Matchup boards had
-        # nothing to rank and the slate rendered every stat as "—".
-        # That is the "WNBA is not working" failure, and it was one
-        # unrouted call.
         days_attempted += 1
         try:
             day_sb, _ = fetch_scoreboard(d.strftime("%Y%m%d"),
@@ -731,7 +633,7 @@ def main():
                 continue
             if g.get("away_score") is not None and g.get("home_score") is not None:
                 finals.append({"date": d.isoformat(), "away": g["away"], "home": g["home"],
-                               "away_score": g["away_score"], "home_score": g["home_score"]})
+                                "away_score": g["away_score"], "home_score": g["home_score"]})
             try:
                 parse_boxscore(event_id, d.isoformat(), logs, debug=first_debug)
                 first_debug = False
@@ -741,39 +643,6 @@ def main():
         time.sleep(0.15)
         d += timedelta(days=1)
 
-    # A SLATE WITH NO NUMBERS IS NOT A SLATE — refuse to publish one.
-    #
-    # Every board on the site is built from `logs`. When the backfill is
-    # blocked wholesale, games.json still writes cleanly (tonight's
-    # fixtures come from a different call) and the archive verifier
-    # downstream only checks that the FILE exists — so a league with no
-    # stats in it sailed through every gate and landed on the site as a
-    # slate of dashes.
-    #
-    # This is an outage, not a data state, and the honest failure is to
-    # exit non-zero. The workflow's `|| echo "WNBA fetch failed"` then
-    # keeps the rest of the nightly alive, the verifier warns that the
-    # WNBA slate is missing, and the pages show their "engine is being
-    # connected" placeholder — which is TRUE — instead of a board that
-    # looks published and answers nothing.
-    # THE CONDITION IS "NO BOX SCORES", full stop.
-    #
-    # This started as two narrower checks — every day failed, or there
-    # are games tonight but no logs — and the nightly of 2026-08-04 walked
-    # straight between them. 37 of 124 days failed (so not "every day"),
-    # today's slate parsed as 0 games (so "todays" was falsy and the
-    # second check never evaluated), and the run shipped games.json with
-    # 0 games, players.json with 0 players, and a green tick.
-    #
-    # The mistake was describing the symptom instead of the thing that
-    # matters. Every board on this site is built from `logs`. If the
-    # backfill walked the whole season and came back with no box scores,
-    # the league has no data behind it, and WHY is a detail — a block, a
-    # mirror answering in a shape the parser can't read, a schema change.
-    # None of those are states worth publishing.
-    #
-    # A genuinely empty result is only possible before the season's first
-    # game, which SEASON_START already excludes.
     if not logs:
         raise RuntimeError(
             f"walked {days_attempted} days ({days_failed} unreachable, "
@@ -802,9 +671,6 @@ def main():
     for plist in by_team.values():
         plist.sort(key=lambda p: -(p["ppg"] or 0))
 
-    # Team rosters, fetched ONCE per team rather than once per game — a
-    # team appears in only one game a night, but this also keeps the
-    # request count to one per team even if that ever changes.
     _team_rosters = {}
     for g in todays:
         for side in ("away", "home"):
@@ -814,15 +680,16 @@ def main():
     _roster_total = sum(len(v) for v in _team_rosters.values())
     print(f"WNBA: fetched {len(_team_rosters)} team rosters, "
           f"{_roster_total} players total")
+    print(f"WNBA: roster status field types "
+          f"{sorted(_roster_shapes['status_kind']) or ['none']}, "
+          f"{_roster_shapes['with_injury']} of {_roster_shapes['players']} "
+          f"players carry a reported injury")
     if not _roster_total:
         print("  *** WARNING: no team rosters returned. Slates will fall back "
               "to box-score history, which cannot include a player who has "
               "not appeared yet. ***")
 
     for g in todays:
-        # TODAY'S availability, straight from ESPN's summary for THIS
-        # game — the only source here that knows about tonight rather
-        # than last week. See fetch_game_availability.
         _avail = fetch_game_availability(g.get("event_id")) if g.get("event_id") else {}
         if _avail:
             g["availability_source"] = "espn_summary"
@@ -832,86 +699,30 @@ def main():
             if t:
                 g[f"{side}_pf_pg"] = t["pf_pg"]
                 g[f"{side}_pa_pg"] = t["pa_pg"]
-                # Positional defense the OPPOSING team allows — powers
-                # the Defense Matchup board and the per-player rating.
                 g[f"{side}_pos_def_allowed"] = pos_def.get(g.get(side)) or {}
                 g[f"{side}_avg_total"] = t["avg_total"]
                 g[f"{side}_l10"] = t["l10"]
                 g[f"{side}_form"] = t["form"]
 
             opponent = g[opp_side]
-            # TONIGHT'S ROSTER DECIDES WHO APPEARS — not a scoring rank.
-            #
-            # This was `[p for p in by_team[...] if p["gp"] >= 3][:15]`,
-            # sorted by season ppg. Three separate ways that hid real
-            # players, all of them at BUILD time, so no page could show
-            # them or say why no matter what the app did:
-            #
-            #   1. The [:15] cap was applied to every player who logged a
-            #      minute for the team all season — waived players, 10-day
-            #      contracts, hardship signings — so a full-season roster
-            #      routinely ran past 15 and cut genuine rotation players.
-            #   2. It ranked by POINTS, so a low-scoring starter playing 30
-            #      minutes a night lost her slot to a bench scorer. The
-            #      comment that used to sit here flagged exactly this
-            #      "sorted before anyone knew who was available" problem
-            #      when the cap was 9, and then kept the ppg sort.
-            #   3. gp >= 3 erased anyone with fewer than three games —
-            #      which is every star returning from a long injury. She
-            #      has no season sample to rank on, so a stats-derived
-            #      list can never contain her, and the site showed nothing
-            #      while every other research site listed her.
-            #
-            # So: start from ESPN's own roster for THIS game, which is the
-            # authoritative "who is on this team tonight", and attach
-            # whatever season stats exist. A player with no log still gets
-            # a row with None stats — visible, correctly named, honestly
-            # empty — rather than being deleted. Anyone with a real sample
-            # who is not on tonight's roster block (ESPN sometimes omits
-            # it pre-game) is kept too, so a missing roster block can never
-            # empty the slate.
             _stats_by_pid = {str(p["pid"]): p for p in by_team.get(g[side], [])}
             _team_name = g.get(side)
 
-            # THE ROSTER ENDPOINT IS THE SOURCE OF TRUTH for who is on
-            # this team. Not the summary block (empty for WNBA — see
-            # fetch_team_roster) and not box-score history (contains only
-            # players who have already played, which is precisely how a
-            # returning star stayed invisible).
             _roster = _team_rosters.get(g.get(f"{side}_id")) or {}
 
             picks = []
             for pid, info in _roster.items():
                 p = _stats_by_pid.get(pid)
                 if p is None:
-                    # On the roster, no box-score history. Name and
-                    # position come from the roster; every stat stays None
-                    # so the app renders "—" rather than inventing one.
                     p = {"pid": pid, "name": info["name"], "pos": info.get("pos") or "",
                          "team": _team_name, "gp": 0, "log": []}
                 picks.append(p)
 
-            # FALLBACK, not a supplement. Only when the roster endpoint
-            # gave us nothing do we fall back to box-score history, so a
-            # failed fetch degrades to the old behaviour instead of
-            # emptying the slate. When a roster DOES exist it is the whole
-            # answer: adding stats-only players on top would put waived and
-            # traded names back on tonight's card.
             if not picks:
                 picks = [p for p in _stats_by_pid.values()
                          if (p.get("gp") or 0) >= 3]
 
-            # Minutes, not points — who actually plays tonight.
             picks.sort(key=lambda p: -((p.get("min") or 0)))
-            # "pid" FIRST, and it was missing entirely.
-            #
-            # Without it every slate row was anonymous, which broke three
-            # things silently: likely_starters had no id to key on and
-            # always returned an empty set (so the Role column stayed
-            # blank for everyone), the app couldn't match ESPN's per-game
-            # availability back to a player, and wnba_defense logged its
-            # calibration picks as {"id": None} — meaning that board's
-            # record could never be graded against a box score at all.
             row_keys = ("pid", "name", "pos", "gp", "min",
                         "ppg", "l5_ppg", "l10_ppg",
                         "rpg", "l5_rpg", "l10_rpg",
@@ -937,14 +748,17 @@ def main():
                 hh = player_h2h(logs, p["pid"], opponent) or {}
                 for k in h2h_keys:
                     row[k] = hh.get(k)
-                # Attach tonight's real status when ESPN has it. These
-                # are AUTHORITATIVE and the app prefers them over the
-                # game-log inference; absent, the keys stay None and the
-                # old behaviour applies unchanged.
                 a = _avail.get(str(p.get("pid"))) or {}
                 row["today_status"] = a.get("status")
                 row["today_out"] = a.get("out")
                 row["today_starter"] = a.get("starter")
+
+                _ri = _roster.get(str(p.get("pid"))) or {}
+                row["jersey"] = _ri.get("jersey")
+                row["roster_status"] = _ri.get("roster_status")
+                row["injury_status"] = _ri.get("injury_status")
+                row["injury_date"] = _ri.get("injury_date")
+                row["exp"] = _ri.get("exp")
                 rows.append(row)
             if rows:
                 g[f"{side}_players"] = rows
@@ -965,11 +779,6 @@ def main():
         "players": players,
     }, ensure_ascii=False, indent=2))
 
-    # Per-game logs, trimmed to what the without-player page needs.
-    # Only players with real game lines are included, and each line
-    # keeps just date/team/minutes/production — enough to split a
-    # season by "did teammate X play", without shipping the full raw
-    # box score for every game.
     slim_logs = {}
     for pid, rec in logs.items():
         games = [
