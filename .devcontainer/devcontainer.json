@@ -6,7 +6,7 @@
     "codespaces": {
       "openFiles": [
         "README.md",
-        "app.py"
+        "app/app.py"
       ]
     },
     "vscode": {
@@ -17,9 +17,17 @@
       ]
     }
   },
-  "updateContentCommand": "[ -f packages.txt ] && sudo apt update && sudo apt upgrade -y && sudo xargs apt install -y <packages.txt; [ -f requirements.txt ] && pip3 install --user -r requirements.txt; pip3 install --user streamlit; echo '✅ Packages installed and Requirements met'",
+  // The stray `pip3 install --user streamlit` that shipped with the
+  // template is gone: requirements.txt already pins streamlit==1.59.2,
+  // and an unpinned install after it only has an effect when the pinned
+  // install FAILED - which is exactly when you want a loud error, not a
+  // silently different Streamlit than production runs.
+  "updateContentCommand": "[ -f packages.txt ] && sudo apt update && sudo apt upgrade -y && sudo xargs apt install -y <packages.txt; pip3 install --user -r requirements.txt; echo '✅ Packages installed and Requirements met'",
+  // The entrypoint is app/app.py. The template's `streamlit run app.py`
+  // never matched this repo's layout, so every Codespace attach opened
+  // with "Error: Invalid value: File does not exist: app.py".
   "postAttachCommand": {
-    "server": "streamlit run app.py --server.enableCORS false --server.enableXsrfProtection false"
+    "server": "streamlit run app/app.py --server.enableCORS false --server.enableXsrfProtection false"
   },
   "portsAttributes": {
     "8501": {
