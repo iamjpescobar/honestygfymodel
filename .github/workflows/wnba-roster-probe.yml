@@ -1,0 +1,41 @@
+name: WNBA roster probe
+
+# Manual only. Prints what ESPN actually returns for team rosters,
+# injuries and announced starters, so the "every player with their
+# situation, plus confirmed lineups" work can be designed against
+# measured payloads instead of assumptions.
+#
+# MUST run here rather than locally: ESPN blocks some paths from cloud IP
+# ranges and not from residential ones, which is why SCOREBOARD_SOURCES
+# exists at all. A result from a laptop does not predict what the nightly
+# or Render will see.
+#
+# Touches nothing: no commit, no release, no deploy hook. Safe to run as
+# often as needed.
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Date to probe (YYYY-MM-DD). Pick a day the WNBA played."
+        required: false
+        default: "2026-08-03"
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      # The probe imports wnba_precompute for BASE, UA, fetch_scoreboard
+      # and parse_scoreboard_events rather than re-declaring the mirror
+      # list. Duplicating those is exactly the drift that left the app's
+      # live-score check pointed at a host returning 403.
+      - run: pip install -c requirements.txt requests pandas lxml beautifulsoup4
+
+      - name: Probe rosters, injuries and starters
+        run: python wnba_roster_probe.py "${{ inputs.date }}"
