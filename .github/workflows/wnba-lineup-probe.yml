@@ -1,0 +1,39 @@
+name: WNBA lineup probe (stats.wnba.com)
+
+# Manual only. Asks whether the league's own stats API publishes
+# starting lineups, and if so how early. ESPN does not — the roster
+# probe settled that — which is why the Role column now says LIKELY
+# rather than START.
+#
+# MUST run here rather than on a laptop: stats.wnba.com filters by IP
+# range and by header, so a residential result predicts nothing about
+# what the pipeline or Render would see.
+#
+# Touches nothing: no commit, no release, no deploy hook. Safe to run
+# as often as needed.
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Date to probe (YYYY-MM-DD). Pick a day the WNBA played."
+        required: false
+        default: "2026-08-03"
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      # Only requests. This probe deliberately imports nothing from the
+      # app: it is reconnaissance on an outside source, and coupling it
+      # to the pipeline would mean a change here could break the nightly.
+      - run: pip install -c requirements.txt requests
+
+      - name: Probe stats.wnba.com for lineups
+        run: python wnba_lineup_probe.py "${{ inputs.date }}"
