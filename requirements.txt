@@ -17,6 +17,14 @@
 # resolved set on every run if you need to re-derive these.
 
 streamlit==1.59.2
+# Transitive, pinned deliberately. Streamlit declares `starlette` with no
+# upper bound, so a fresh environment resolved starlette 1.4.0, whose
+# GZipResponder gained a required keyword-only argument that Streamlit's
+# own middleware does not pass. The server died on boot with a TypeError.
+# Nothing in this file was wrong; starlette simply was not in it. A
+# transitive dependency that can take the site down on the next Render
+# build belongs here like any other.
+starlette==0.52.1
 pandas==2.2.3
 numpy==2.4.6
 pyarrow==24.0.0
