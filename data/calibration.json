@@ -989,6 +989,116 @@
       ],
       "graded": false,
       "source": "ci"
+    },
+    "2026-08-05": {
+      "picks": [
+        {
+          "id": "802415",
+          "name": "Chandler Simpson",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "680777",
+          "name": "Ryan Jeffers",
+          "team": "MIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "650859",
+          "name": "Luis Rengifo",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664034",
+          "name": "Ty France",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "650489",
+          "name": "Willi Castro",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "665161",
+          "name": "Jeremy Pe\u00f1a",
+          "team": "HOU",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666018",
+          "name": "Jonathan Aranda",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663743",
+          "name": "Nick Fortes",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "681624",
+          "name": "Andy Pages",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "592626",
+          "name": "Joc Pederson",
+          "team": "TEX",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664983",
+          "name": "Jake McCarthy",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "687093",
+          "name": "Vaughn Grissom",
+          "team": "LAA",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -1116,6 +1226,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-05": {
+      "picks": [
+        {
+          "id": "670541",
+          "name": "Yordan Alvarez",
+          "team": "Houston Astros",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -2153,6 +2277,412 @@
       ],
       "graded": false,
       "source": "ci"
+    },
+    "2026-08-05": {
+      "picks": [
+        {
+          "id": "4398911",
+          "name": "S. Austin",
+          "team": "Washington Mystics",
+          "stat": "pts",
+          "line": 16.5,
+          "result": null
+        },
+        {
+          "id": "4594786",
+          "name": "S. Taylor",
+          "team": "Chicago Sky",
+          "stat": "pts",
+          "line": 17.5,
+          "result": null
+        },
+        {
+          "id": "2529137",
+          "name": "N. Cloud",
+          "team": "Chicago Sky",
+          "stat": "pts",
+          "line": 10.0,
+          "result": null
+        },
+        {
+          "id": "1068",
+          "name": "N. Ogwumike",
+          "team": "Los Angeles Sparks",
+          "stat": "pts",
+          "line": 18.5,
+          "result": null
+        },
+        {
+          "id": "2566106",
+          "name": "D. Hamby",
+          "team": "Los Angeles Sparks",
+          "stat": "pts",
+          "line": 15.5,
+          "result": null
+        },
+        {
+          "id": "3146151",
+          "name": "A. Atkins",
+          "team": "Los Angeles Sparks",
+          "stat": "pts",
+          "line": 10.0,
+          "result": null
+        },
+        {
+          "id": "4398764",
+          "name": "R. Burrell",
+          "team": "Los Angeles Sparks",
+          "stat": "pts",
+          "line": 16.0,
+          "result": null
+        },
+        {
+          "id": "2491214",
+          "name": "E. Wheeler",
+          "team": "Los Angeles Sparks",
+          "stat": "pts",
+          "line": 10.0,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 18.0,
+          "result": null
+        },
+        {
+          "id": "2998928",
+          "name": "B. Stewart",
+          "team": "New York Liberty",
+          "stat": "pts",
+          "line": 23.0,
+          "result": null
+        },
+        {
+          "id": "3146151",
+          "name": "A. Atkins",
+          "team": "Los Angeles Sparks",
+          "stat": "reb",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "2998928",
+          "name": "B. Stewart",
+          "team": "New York Liberty",
+          "stat": "reb",
+          "line": 8.5,
+          "result": null
+        },
+        {
+          "id": "1068",
+          "name": "N. Ogwumike",
+          "team": "Los Angeles Sparks",
+          "stat": "reb",
+          "line": 9.0,
+          "result": null
+        },
+        {
+          "id": "4433405",
+          "name": "K. Cardoso",
+          "team": "Chicago Sky",
+          "stat": "reb",
+          "line": 9.0,
+          "result": null
+        },
+        {
+          "id": "4433404",
+          "name": "C. Brink",
+          "team": "Los Angeles Sparks",
+          "stat": "reb",
+          "line": 5.0,
+          "result": null
+        },
+        {
+          "id": "2491214",
+          "name": "E. Wheeler",
+          "team": "Los Angeles Sparks",
+          "stat": "reb",
+          "line": 2.0,
+          "result": null
+        },
+        {
+          "id": "5220150",
+          "name": "D. Malonga",
+          "team": "Seattle Storm",
+          "stat": "reb",
+          "line": 10.0,
+          "result": null
+        },
+        {
+          "id": "5345325",
+          "name": "A. Fam",
+          "team": "Seattle Storm",
+          "stat": "reb",
+          "line": 6.5,
+          "result": null
+        },
+        {
+          "id": "4066533",
+          "name": "S. Ionescu",
+          "team": "New York Liberty",
+          "stat": "reb",
+          "line": 4.5,
+          "result": null
+        },
+        {
+          "id": "5105737",
+          "name": "L. Betts",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 4.5,
+          "result": null
+        },
+        {
+          "id": "1068",
+          "name": "N. Ogwumike",
+          "team": "Los Angeles Sparks",
+          "stat": "ast",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 8.5,
+          "result": null
+        },
+        {
+          "id": "2529137",
+          "name": "N. Cloud",
+          "team": "Chicago Sky",
+          "stat": "ast",
+          "line": 5.0,
+          "result": null
+        },
+        {
+          "id": "4433405",
+          "name": "K. Cardoso",
+          "team": "Chicago Sky",
+          "stat": "ast",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "2566106",
+          "name": "D. Hamby",
+          "team": "Los Angeles Sparks",
+          "stat": "ast",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "2998928",
+          "name": "B. Stewart",
+          "team": "New York Liberty",
+          "stat": "ast",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "5220150",
+          "name": "D. Malonga",
+          "team": "Seattle Storm",
+          "stat": "ast",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "5345325",
+          "name": "A. Fam",
+          "team": "Seattle Storm",
+          "stat": "ast",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "4698736",
+          "name": "F. Johnson",
+          "team": "Seattle Storm",
+          "stat": "ast",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "3146151",
+          "name": "A. Atkins",
+          "team": "Los Angeles Sparks",
+          "stat": "pra",
+          "line": 15.5,
+          "result": null
+        },
+        {
+          "id": "1068",
+          "name": "N. Ogwumike",
+          "team": "Los Angeles Sparks",
+          "stat": "pra",
+          "line": 31.0,
+          "result": null
+        },
+        {
+          "id": "4398764",
+          "name": "R. Burrell",
+          "team": "Los Angeles Sparks",
+          "stat": "pra",
+          "line": 21.0,
+          "result": null
+        },
+        {
+          "id": "2491214",
+          "name": "E. Wheeler",
+          "team": "Los Angeles Sparks",
+          "stat": "pra",
+          "line": 18.0,
+          "result": null
+        },
+        {
+          "id": "4594786",
+          "name": "S. Taylor",
+          "team": "Chicago Sky",
+          "stat": "pra",
+          "line": 22.0,
+          "result": null
+        },
+        {
+          "id": "4066533",
+          "name": "S. Ionescu",
+          "team": "New York Liberty",
+          "stat": "pra",
+          "line": 29.5,
+          "result": null
+        },
+        {
+          "id": "869",
+          "name": "D. Bonner",
+          "team": "Phoenix Mercury",
+          "stat": "pra",
+          "line": 21.5,
+          "result": null
+        },
+        {
+          "id": "2529137",
+          "name": "N. Cloud",
+          "team": "Chicago Sky",
+          "stat": "pra",
+          "line": 17.5,
+          "result": null
+        },
+        {
+          "id": "4698736",
+          "name": "F. Johnson",
+          "team": "Seattle Storm",
+          "stat": "pra",
+          "line": 25.5,
+          "result": null
+        },
+        {
+          "id": "3917453",
+          "name": "K. Samuelson",
+          "team": "Seattle Storm",
+          "stat": "pra",
+          "line": 7.5,
+          "result": null
+        },
+        {
+          "id": "4398764",
+          "name": "R. Burrell",
+          "team": "Los Angeles Sparks",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "4594786",
+          "name": "S. Taylor",
+          "team": "Chicago Sky",
+          "stat": "tpm",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "4433790",
+          "name": "A. Fudd",
+          "team": "Dallas Wings",
+          "stat": "tpm",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "1068",
+          "name": "N. Ogwumike",
+          "team": "Los Angeles Sparks",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "4433404",
+          "name": "C. Brink",
+          "team": "Los Angeles Sparks",
+          "stat": "tpm",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "3146151",
+          "name": "A. Atkins",
+          "team": "Los Angeles Sparks",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "2529137",
+          "name": "N. Cloud",
+          "team": "Chicago Sky",
+          "stat": "tpm",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "2491214",
+          "name": "E. Wheeler",
+          "team": "Los Angeles Sparks",
+          "stat": "tpm",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "2998928",
+          "name": "B. Stewart",
+          "team": "New York Liberty",
+          "stat": "tpm",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "4398915",
+          "name": "N. Hillmon",
+          "team": "Atlanta Dream",
+          "stat": "tpm",
+          "line": 1.0,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "wnba_defense": {
@@ -2419,6 +2949,132 @@
       ],
       "graded": false,
       "source": "ci"
+    },
+    "2026-08-05": {
+      "picks": [
+        {
+          "id": "4398911",
+          "name": "S. Austin",
+          "team": "Washington Mystics",
+          "stat": "pts",
+          "line": 19.8,
+          "result": null
+        },
+        {
+          "id": "2998928",
+          "name": "B. Stewart",
+          "team": "New York Liberty",
+          "stat": "pts",
+          "line": 21.7,
+          "result": null
+        },
+        {
+          "id": "1068",
+          "name": "N. Ogwumike",
+          "team": "Los Angeles Sparks",
+          "stat": "pts",
+          "line": 19.3,
+          "result": null
+        },
+        {
+          "id": "4594786",
+          "name": "S. Taylor",
+          "team": "Chicago Sky",
+          "stat": "pts",
+          "line": 19.3,
+          "result": null
+        },
+        {
+          "id": "2566106",
+          "name": "D. Hamby",
+          "team": "Los Angeles Sparks",
+          "stat": "pts",
+          "line": 16.4,
+          "result": null
+        },
+        {
+          "id": "4433405",
+          "name": "K. Cardoso",
+          "team": "Chicago Sky",
+          "stat": "reb",
+          "line": 8.6,
+          "result": null
+        },
+        {
+          "id": "1068",
+          "name": "N. Ogwumike",
+          "team": "Los Angeles Sparks",
+          "stat": "reb",
+          "line": 9.5,
+          "result": null
+        },
+        {
+          "id": "2998928",
+          "name": "B. Stewart",
+          "team": "New York Liberty",
+          "stat": "reb",
+          "line": 9.2,
+          "result": null
+        },
+        {
+          "id": "4398911",
+          "name": "S. Austin",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 9.8,
+          "result": null
+        },
+        {
+          "id": "2566106",
+          "name": "D. Hamby",
+          "team": "Los Angeles Sparks",
+          "stat": "reb",
+          "line": 6.6,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 9.0,
+          "result": null
+        },
+        {
+          "id": "1068",
+          "name": "N. Ogwumike",
+          "team": "Los Angeles Sparks",
+          "stat": "ast",
+          "line": 4.2,
+          "result": null
+        },
+        {
+          "id": "5345325",
+          "name": "A. Fam",
+          "team": "Seattle Storm",
+          "stat": "ast",
+          "line": 2.4,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 3.8,
+          "result": null
+        },
+        {
+          "id": "2998928",
+          "name": "B. Stewart",
+          "team": "New York Liberty",
+          "stat": "ast",
+          "line": 4.3,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "k_board": {
@@ -2558,6 +3214,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-05": {
+      "picks": [
+        {
+          "id": 672282,
+          "name": "Reid Detmers (LHP)",
+          "team": "LAA",
+          "stat": "strikeOuts",
+          "line": 7.1,
+          "result": null
+        },
+        {
+          "id": 694973,
+          "name": "Paul Skenes (RHP)",
+          "team": "PIT",
+          "stat": "strikeOuts",
+          "line": 6.4,
+          "result": null
+        },
+        {
+          "id": 690986,
+          "name": "Kyle Harrison (LHP)",
+          "team": "MIL",
+          "stat": "strikeOuts",
+          "line": 6.3,
+          "result": null
+        },
+        {
+          "id": 680732,
+          "name": "Sean Burke (RHP)",
+          "team": "CWS",
+          "stat": "strikeOuts",
+          "line": 6.2,
+          "result": null
+        },
+        {
+          "id": 693433,
+          "name": "Bryan Woo (RHP)",
+          "team": "SEA",
+          "stat": "strikeOuts",
+          "line": 5.9,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
