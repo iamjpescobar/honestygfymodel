@@ -1,196 +1,134 @@
 """
-Where did KBO probables go? They are not on the game page.
+CONFIRM: KBO probables moved to the mykbostats HOMEPAGE.
 
-WHAT IS ESTABLISHED (runs 84211307417 and 84214829706)
+WHAT IS ESTABLISHED (runs 84211307417, 84214829706, 84219057409)
 
-  * mykbostats was rebuilt on a `ds-`-prefixed design system. The word
-    "starter" appears ZERO times on any game page, so parse_starters()'s
-    <div class="away-starter"> went with the redesign. Not a nested
-    </div>, not a moved page — every fetch returned HTTP 200.
-  * Counting REAL anchor tags instead of the "player-link" substring:
-        played   20260804      -> 36 anchors  (a full box score)
-        upcoming 20260805-09   ->  0 anchors
-    Site chrome accounts for exactly 4 substring hits (40-36 and 4-0
-    both give 4), which is why the raw counts read as 40 and 4.
+  * mykbostats rebuilt as Elixir/Phoenix, "v3 Build 886 (2026-08-04)" —
+    one day before the first probe. That is the whole story.
+  * The GAME PAGE no longer carries probables at all. On an upcoming
+    game (13800-SSG-vs-NC-20260809): probable/Probable/starter/Starter/
+    pitcher/Pitcher/선발/예고 all count ZERO. Its <main> is fully
+    server-rendered and complete — game-header, matchup, team-comparison
+    (Record/BA/ERA/HR/Head-to-head), records rail, other-games panel —
+    with no pitcher block and no placeholder.
+  * Not client-side either: 4 <script> tags, zero application/json
+    blobs, zero JSON-bearing data-* attributes.
+  * No API: /games/{slug}.json returns HTML, /games/{slug}/probables 404s.
+  * The week SCHEDULE page has no player links either (its only
+    /players/ hrefs are the "Foreign Players" nav item, twice).
 
-A PREDICTION THAT WAS WRONG, recorded so nobody makes it again: run 1's
-table was read as "2 real anchors per upcoming game, one probable
-pitcher per side." That estimated chrome at 2 occurrences. It is 4, and
-the true anchor count on an unplayed game is ZERO. There is no
-probable-pitcher pair hiding in the game page markup.
+  * The HOMEPAGE has them. Read directly off https://mykbostats.com/ :
+        Hanwha Eagles Samsung Lions 31° 6:30pm Daegu
+            Starters: Park Jun-yeong vs. Chris Paddack
+        NC Dinos Doosan Bears 35° 6:30pm Seoul-Jamsil
+            Chance of Heat Cancellation
+            Starters: Thompson vs. Choi Min-seok
+    plus "Compare starting pitchers →" pointing at
+        /stats/compare?pids=15400,15284,15357,15404,15448,15496,...
+    which is TEN pids for FIVE games — two per game, in slate order.
 
-So probables are not server-rendered into the game page at all. Three
-places they can be instead, and this checks all three rather than
-picking one — choosing wrong is what cost the two earlier runs.
+WHY THIS RUN EXISTS ANYWAY
 
-  A. THE SCHEDULE PAGE. The old flow was schedule -> game page -> parse.
-     A redesign that moves probables onto the listing is invisible to
-     kbo_precompute, which only ever reads the game page. The week page
-     is ~71 KB, which is a lot for six days of fixtures.
-  B. CLIENT-SIDE JSON. The chrome carries data-turbolinks, so this is a
-     Rails app, and a <script type="application/json"> payload or a
-     .json endpoint is the normal pattern. requests cannot run JS, so
-     anything rendered that way is invisible to every probe so far.
-  C. NOWHERE PUBLIC YET. Possible, but the site has always announced the
-     day before, so treat this as the residual, not the expectation.
+That reading came from a fetch outside Actions, and this repo already
+learned the hard way that a result from one network says nothing about
+another: ESPN serves 403 to cloud ranges and 200 elsewhere, which is
+why all ESPN access was centralised. So this confirms from the runner
+that publishes the slate.
 
-ONE MORE THING TO EXPLAIN, and it may matter more than it looks. The
-20260805 row showed 0 anchors. That game's 18:30 KST first pitch is
-about 12:30 UTC and run 2 was at 21:09 UTC — roughly eight and a half
-hours later. A completed game should look like 20260804 and carry a box
-score. It does not. Either it was postponed (KBO voids are a known
-problem here and the reason weather work is on the backlog), or these
-pages are not server-rendering game data at all, which would point hard
-at B. Section D prints the status text so the log answers it.
+It also captures RAW markup. The reading above came from a rendered
+text extraction, which cannot show whether "Starters:" sits inside the
+anchor, how the two names are delimited, or what wraps the temperature
+and the cancellation warning. parse_starters() has to be written
+against the real bytes — writing a regex against a guess is exactly how
+this broke.
 
-A BUG IN v2, fixed here: its closing keyword counts came from
-`list(pages.items())[:1]` — the FIRST page, which is the PLAYED game,
-not an upcoming one. So 'pitcher': 6 described a finished box score and
-said nothing about probables. Section B counts on an explicitly chosen
-upcoming page.
-
-Still fixes nothing. A regex written against a guess is how this broke.
+Still fixes nothing.
 
 Run from Actions. Touches nothing: no commit, no release, no deploy.
 """
 import re
 import sys
-import time
 
 import requests
 
-from kbo_precompute import GAME_LINE, UA
+from kbo_precompute import UA
 
-ANCHOR = re.compile(
-    r'<a[^>]*class="[^"]*\bplayer-link\b[^"]*"[^>]*>(.*?)</a>', re.S)
-PLAYER_HREF = re.compile(r'<a[^>]*href="(/players/[^"]+)"[^>]*>(.*?)</a>', re.S)
 TAGS = re.compile(r'<[^>]+>')
 CLASSES = re.compile(r'class="([^"]{1,70})"')
+GAME_A = re.compile(r'<a[^>]*href="(/games/[^"]+)"[^>]*>(.*?)</a>', re.S)
 
 
 def txt(s):
     return re.sub(r'\s+', ' ', TAGS.sub(" ", s)).strip()
 
 
-def get(url):
-    try:
-        r = requests.get(url, headers=UA, timeout=25)
-    except Exception as exc:
-        print(f"  {url}: FAILED {type(exc).__name__}")
-        return None, None
-    return r.status_code, r.text
-
-
 def main():
     print("=" * 70)
-    print("KBO probables - where do they live now?")
+    print("KBO probables - confirming the HOMEPAGE from Actions")
     print("=" * 70)
 
-    from datetime import date
-    sched_url = f"https://mykbostats.com/schedule/week_of/{date.today().isoformat()}"
-    code, sched = get(sched_url)
-    print(f"schedule: {sched_url}  HTTP {code}  {len(sched or ''):,} chars")
-    if not sched:
+    try:
+        r = requests.get("https://mykbostats.com/", headers=UA, timeout=25)
+    except Exception as exc:
+        print(f"FAILED {type(exc).__name__}: {exc}")
+        return 1
+    html = r.text
+    print(f"homepage HTTP {r.status_code}  {len(html):,} chars")
+    if r.status_code != 200:
         return 1
 
-    by_date = {}
-    for m in GAME_LINE.finditer(sched):
-        gid, away, home, ymd, _ = m.groups()
-        by_date.setdefault(ymd, f"{gid}-{away}-vs-{home}-{ymd}")
-    dates = sorted(by_date)
-    print(f"  {len(dates)} dates: {dates}")
+    print("\n  keyword counts:")
+    for kw in ("Starters:", "starter", "Cancel", "Chance of",
+               "\u00b0", "Compare starting pitchers"):
+        print(f"     {kw!r}: {html.count(kw)}")
 
-    # ---- A. Does the SCHEDULE page carry player links? -----------------
+    # The build stamp tells a future session whether the markup below is
+    # still the one this parser was written against.
+    b = re.search(r'(v\d+\s+Build\s+\d+\s*\([^)]*\))', html)
+    print(f"\n  build stamp: {b.group(1) if b else 'not found'}")
+
+    # The compare link carries the starter player ids, two per game in
+    # slate order — the ids parse_starters used to read off the anchors.
+    c = re.search(r'href="(/stats/compare\?pids=[^"]+)"', html)
+    print(f"  compare link: {c.group(1) if c else 'NOT FOUND'}")
+    if c:
+        pids = re.search(r'pids=([^"&]+)', c.group(1)).group(1)
+        pids = [p for p in re.split(r'%2C|,', pids) if p]
+        print(f"    -> {len(pids)} pids: {pids}")
+
+    games = GAME_A.findall(html)
+    print(f"\n  /games/ anchors on the homepage: {len(games)}")
+
     print("\n" + "=" * 70)
-    print("[A] SCHEDULE PAGE - does the listing itself name pitchers?")
+    print("RAW ANCHOR MARKUP - what parse_starters must key on")
     print("=" * 70)
-    s_anchor = ANCHOR.findall(sched)
-    s_href = PLAYER_HREF.findall(sched)
-    print(f"  player-link class anchors : {len(s_anchor)}")
-    print(f"  ANY /players/ hrefs       : {len(s_href)}")
-    for href, inner in s_href[:12]:
-        print(f"     {href}  ->  {txt(inner)!r}")
-    if not s_href:
-        print("  none - probables are not on the listing either.")
+    shown = 0
+    for href, inner in games:
+        if "Starters" not in inner:
+            continue
+        shown += 1
+        print(f"\n--- {href}")
+        print(f"    text: {txt(inner)!r}")
+        print(f"    classes inside: {list(dict.fromkeys(CLASSES.findall(inner)))}")
+        print("    raw:")
+        print(inner.strip()[:2200])
+        if shown >= 2:
+            break
+    if not shown:
+        print("  NO anchor contains 'Starters'. Either nothing is announced")
+        print("  right now, or Actions is served a different page than a")
+        print("  browser. Dumping the first game anchor so the difference")
+        print("  is visible rather than guessed:")
+        if games:
+            print(games[0][1].strip()[:2200])
 
-    # ---- B. An UPCOMING game page, in detail --------------------------
-    # Explicitly the LAST date on the page: furthest from now, so it
-    # cannot be a finished game masquerading as upcoming.
-    slug = by_date[dates[-1]]
-    print("\n" + "=" * 70)
-    print(f"[B] UPCOMING GAME PAGE - {slug}")
-    print("=" * 70)
-    code, html = get(f"https://mykbostats.com/games/{slug}")
-    print(f"  HTTP {code}  {len(html or ''):,} chars")
-    if html:
-        print("\n  keyword counts ON THIS upcoming page:")
-        for kw in ("probable", "Probable", "starter", "Starter",
-                   "pitcher", "Pitcher", "\uc120\ubc1c", "\uc608\uace0",
-                   "postponed", "Postponed"):
-            print(f"     {kw!r}: {html.count(kw)}")
-
-        scripts = re.findall(r'<script([^>]*)>', html)
-        print(f"\n  <script> tags: {len(scripts)}")
-        for a in scripts:
-            a = a.strip()
-            if a:
-                print(f"     <script {a[:110]}>")
-        blobs = re.findall(
-            r'<script[^>]*type="application/json"[^>]*>(.*?)</script>',
-            html, re.S)
-        print(f"  application/json blobs: {len(blobs)}")
-        for b in blobs[:3]:
-            print(f"     {b.strip()[:400]}")
-
-        # data-* attributes carrying JSON are the other Rails pattern.
-        dj = re.findall(r'(data-[\w-]+)="(\{[^"]{20,300})', html)
-        print(f"  data-* attributes holding JSON: {len(dj)}")
-        for k, v in dj[:5]:
-            print(f"     {k}={v[:160]}")
-
-        # The main content region, chrome stripped.
-        i = html.find("<main")
-        if i < 0:
-            i = html.find('id="content"')
-        print(f"\n  <main> found at offset {i}")
-        if i >= 0:
-            region = html[i:i + 7000]
-            print("\n  --- distinct classes inside main ---")
-            for c in list(dict.fromkeys(CLASSES.findall(region)))[:45]:
-                print(f"     {c}")
-            print("\n  --- main, tags stripped (first 1500 chars of text) ---")
-            print("  " + txt(region)[:1500])
-            print("\n  --- raw main HTML (first 4000 chars) ---")
-            print(region[:4000])
-
-    # ---- C. Is there a JSON endpoint? ---------------------------------
-    print("\n" + "=" * 70)
-    print("[C] JSON ENDPOINT CANDIDATES")
-    print("=" * 70)
-    for path in (f"/games/{slug}.json",
-                 f"/games/{slug}/probables",
-                 f"/schedule/week_of/{date.today().isoformat()}.json"):
-        code, body = get("https://mykbostats.com" + path)
-        head = (body or "")[:160].replace("\n", " ")
-        print(f"  {path}\n     HTTP {code}  {len(body or ''):,} chars  {head!r}")
-        time.sleep(0.3)
-
-    # ---- D. The 20260805 anomaly --------------------------------------
-    print("\n" + "=" * 70)
-    print("[D] 20260805 - finished ~8.5h before run 2, yet 0 anchors")
-    print("=" * 70)
-    odd = by_date.get("20260805")
-    if odd:
-        code, h = get(f"https://mykbostats.com/games/{odd}")
-        if h:
-            print(f"  HTTP {code}  {len(h):,} chars  anchors={len(ANCHOR.findall(h))}")
-            for kw in ("postponed", "Postponed", "Cancel", "cancel",
-                       "\uc6b0\ucc9c", "\ucde8\uc18c", "Final", "final"):
-                print(f"     {kw!r}: {h.count(kw)}")
-            j = h.find("<main")
-            if j >= 0:
-                print("\n  --- its main text ---")
-                print("  " + txt(h[j:j + 4000])[:900])
+    # Everything above is today's slate. Confirm the section heading so a
+    # future session knows the homepage only ever carries TODAY, and that
+    # tomorrow's probables are simply not published yet.
+    i = html.find("Today")
+    print(f"\n  'Today' first appears at offset {i}")
+    if i >= 0:
+        print("  section text: " + txt(html[i:i + 1200])[:600])
 
     print("\n" + "=" * 70)
     print("Done. Send the whole log.")
