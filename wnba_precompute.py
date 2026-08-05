@@ -402,10 +402,21 @@ def parse_boxscore(event_id, game_date, logs, debug=False):
                 for k, i2 in idx.items():
                     line[k.lower()] = _num(stats[i2])
                 def _made_att(i, mk, ak):
+                    # `line[ak]`, NOT `line[al]`. It was `al` — an
+                    # undefined name — and it raised NameError on the
+                    # first player of every box score. parse_boxscore is
+                    # called inside a try/except that prints and moves
+                    # on, so every game "failed" quietly, `logs` came
+                    # back empty, the RuntimeError below killed the
+                    # script, and the nightly's
+                    # `|| echo "WNBA fetch failed - continuing"` swallowed
+                    # that too. Net effect: the archive published with no
+                    # data/wnba/ at all and the site showed "No WNBA
+                    # slate on disk" while every step stayed green.
                     if i is not None and len(stats) > i:
                         parts = str(stats[i]).split("-")
                         if len(parts) == 2:
-                          line[mk], line[al] = _num(parts[0]), _num(parts[1])
+                            line[mk], line[ak] = _num(parts[0]), _num(parts[1])
                 _made_att(tpt_i, "tpm", "tpa")
                 _made_att(fg_i, "fgm", "fga")
                 _made_att(ft_i, "ftm", "fta")
