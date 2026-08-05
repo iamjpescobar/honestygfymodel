@@ -16,7 +16,6 @@ from engines.live_sync import sync_latest_button
 from engines.calibration import (log_picks, grade_pending, summary,
                                  has_id)
 
-_GAMES = Path(__file__).resolve().parent.parent / "data" / "wnba" / "games.json"
 
 # Theme injection lives in app.py, which renders once per script run
 # before this view is exec'd. It used to be called here as well, so the
