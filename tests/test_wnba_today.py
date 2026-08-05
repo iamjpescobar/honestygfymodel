@@ -112,10 +112,23 @@ print("PASS: with pid present, starters resolve; without, the set is empty")
 # knew who was available — so injured stars consumed slots and their
 # replacements were cut from the file entirely. The sixth option matters
 # most on exactly the nights the starters are out.
+#
+# This assertion used to grep for the cap NUMBER and require it to be
+# >= 12. The cap has since been removed outright: picks are built by
+# walking the team's full ESPN roster, so there is no number left to
+# find and the old regex could only ever fail. That failure took the
+# whole nightly down with it (the "Run tests" step gates the fetch), so
+# the check is now written against the PROPERTY rather than the
+# spelling of one line: the build must walk the roster, and nothing may
+# slice the pick list back down. The gp >= 3 filter still exists but
+# only as a fallback for when the roster fetch itself fails.
 import re
-cap = re.search(r'if p\["gp"\] >= 3\]\[:(\d+)\]', build)
-assert cap, "roster cap not found"
-assert int(cap.group(1)) >= 12, (
-    f"cap is {cap.group(1)}; a WNBA roster is 11-12 and three players out "
-    f"leaves too few to fill a board")
-print(f"PASS: slate keeps up to {cap.group(1)} players per team (full roster)")
+_slate = build[build.index("picks = []"):build.index("row_keys = (")]
+assert "_roster.items()" in _slate, (
+    "slate players must be built from the team's full roster, not from "
+    "whoever happens to have box-score rows")
+_cap = re.search(r"\]\[:\s*(\d+)\]|picks\s*=\s*picks\[:\s*(\d+)\]", _slate)
+assert _cap is None, (
+    f"a roster cap is back in the slate build ({_cap.group(0)!r}); the "
+    f"sixth option matters most on the nights the starters are out")
+print("PASS: slate keeps every rostered player (no build-time cap)")
