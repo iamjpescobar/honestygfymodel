@@ -848,7 +848,19 @@ def _render_track_record(record):
 
     days_tracked = len({d for board in record.values() for d in board})
     tracked = [s for s in sums.values() if s.get("total")]
-    beating = sum(1 for s in tracked if "beating" in (s.get("verdict") or ""))
+
+    # _edge_verdict answers one of five ways, and two of them mean "we
+    # cannot tell yet" rather than any result. Splitting them here is
+    # what lets the tile below say something true.
+    def _verdict(s):
+        return s.get("verdict") or ""
+
+    measurable = [s for s in tracked
+                  if "beating the league baseline" in _verdict(s)
+                  or "below the league baseline" in _verdict(s)
+                  or "no measurable edge" in _verdict(s)]
+    beating = sum(1 for s in measurable if "beating" in _verdict(s))
+    below = sum(1 for s in measurable if "below" in _verdict(s))
 
     cols = st.columns(4)
     with cols[0]:
@@ -856,17 +868,41 @@ def _render_track_record(record):
     with cols[1]:
         st.markdown(_tile("Days tracked", str(days_tracked)), unsafe_allow_html=True)
     with cols[2]:
-        # Coloured by what it actually says. `0/4` was rendered in plain
-        # text, styled identically to a good number — the page's worst
-        # figure and its best one looked the same. Honest reporting is
-        # the point of this site; flat reporting is not the same thing.
-        if not beating:
-            _bl_color = COLOR["error"]
-        elif beating == len(tracked):
-            _bl_color = COLOR["accent"]
+        # RED MUST MEAN LOSING, NOT "TOO EARLY".
+        #
+        # Colouring by verdict was the right instinct and the wrong
+        # denominator. `beating / len(tracked)` counted every board that
+        # had graded a single pick, so a board _edge_verdict had already
+        # refused to judge — "only 22 graded picks, far too few" — landed
+        # in the same bucket as one measurably below the baseline, and
+        # both painted red. With 227 picks spread over six boards that
+        # produced a red 0/6 on the landing page, which is the site
+        # calling itself a loser on evidence it had itself decided was
+        # insufficient. That is the exact failure this whole engine was
+        # written to avoid, reintroduced one layer up.
+        #
+        # Now the denominator is the boards that CAN be judged, and the
+        # colour follows the verdicts rather than their absence: green
+        # when every measurable board clears the bar, red only when one
+        # is genuinely below it, amber for a real mixed picture, and
+        # muted when nothing has enough data yet.
+        if not measurable:
+            _bl_color = COLOR["text_muted"]
+            _bl_value = "\u2014"
+            _bl_sub = "no board has enough graded picks to judge yet"
         else:
-            _bl_color = COLOR["stat_high"]
-        st.markdown(_tile("Beating baseline", f"{beating}/{len(tracked)}",
+            _bl_value = f"{beating}/{len(measurable)}"
+            _plural = "" if len(measurable) == 1 else "s"
+            _bl_sub = f"of {len(measurable)} board{_plural} with enough data"
+            if beating == len(measurable):
+                _bl_color = COLOR["accent"]
+            elif below:
+                _bl_color = COLOR["error"]
+            elif beating:
+                _bl_color = COLOR["stat_high"]
+            else:
+                _bl_color = COLOR["warn"]
+        st.markdown(_tile("Beating baseline", _bl_value, sub=_bl_sub,
                           color=_bl_color),
                     unsafe_allow_html=True)
     with cols[3]:
@@ -1006,6 +1042,20 @@ def _inject_card_css():
         "  border-radius: 50%; margin-right: .4rem;"
         "  vertical-align: middle; animation: lc-breathe 2s ease-in-out infinite; }"
         "@keyframes lc-breathe { 0%,100% { opacity: 1; } 50% { opacity: .35; } }"
+        # RAGGED ROWS. One board publishes ten picks and another
+        # publishes one, so three cards in a row ended at three
+        # different heights and the row read as a pile rather than a
+        # row. Stretching each card to fill its column costs nothing and
+        # gives the eye a line to follow. Both testids are matched
+        # because Streamlit has renamed this element between versions
+        # and a pinned upgrade should not silently undo the layout.
+        "[data-testid='stColumn'], [data-testid='column'] {"
+        "  display: flex; align-items: stretch; }"
+        "[data-testid='stColumn'] > div, [data-testid='column'] > div {"
+        "  width: 100%; }"
+        "[class*='st-key-card_home_'] {"
+        "  height: 100%; }"
+
         "@media (prefers-reduced-motion: reduce) {"
         "  .lc-live-dot { animation: none; }"
         "  [class*='st-key-card_home_'] { transition: none; }"
@@ -1052,11 +1102,15 @@ def render():
     st.markdown(_section_tag("Last night"), unsafe_allow_html=True)
     _render_last_night(record, _yesterday())
 
-    st.markdown(_section_tag("Explore"), unsafe_allow_html=True)
-    _render_explore()
-
+    # Track record before Explore, on purpose. Explore is a menu; the
+    # graded record is the argument. A first-time reader was scrolling
+    # past four navigation cards to reach the only thing on this page
+    # that distinguishes the site from every other picks account.
     st.markdown(_section_tag("Track record"), unsafe_allow_html=True)
     _render_track_record(record)
+
+    st.markdown(_section_tag("Explore"), unsafe_allow_html=True)
+    _render_explore()
 
     footer()
 
