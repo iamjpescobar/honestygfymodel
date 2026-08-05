@@ -30,15 +30,22 @@ page_header("NPB Analytics", "Nippon Professional Baseball — game-level market
 @st.cache_data(ttl=900, show_spinner=False)
 def _load_games():
     """Reads the NPB slate produced by the nightly pipeline. Returns
-    (games, generated_at) or (None, None) when the engine hasn't shipped
-    data yet — the page then shows the honest in-development panel
-    instead of anything fabricated."""
+    (games, generated_at, slate_date), or (None, None, None) when the
+    engine hasn't shipped data yet — the page then shows the honest
+    in-development panel instead of anything fabricated."""
     try:
         payload = json.loads(_NPB_GAMES.read_text())
         return (payload.get("games", []), payload.get("generated_at_jst"),
                 payload.get("slate_date_jst"))
     except Exception:
-        return None, None
+        # THREE values, not two — the same bug already fixed in KBO.py.
+        # The success path returns a 3-tuple and the caller below unpacks
+        # three names, so returning two here turned every failure to read
+        # the slate file (missing, truncated, mid-write) into
+        # "ValueError: not enough values to unpack" and took the whole
+        # page down, instead of degrading into the in-development panel
+        # this function was written to reach.
+        return None, None, None
 
 
 games, generated_at, slate_date = _load_games()
