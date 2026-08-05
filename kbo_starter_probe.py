@@ -101,10 +101,28 @@ def main():
 
     if detail is None:
         print("\nNO DATE ON THIS PAGE HAS A STARTER BLOCK.")
-        print("That is the finding: parse_starters is looking for markup")
-        print("mykbostats no longer emits, and no amount of timing fixes it.")
-        print("Next step is to read a game page by hand and find what")
-        print("replaced <div class=\"away-starter\">.")
+        print("parse_starters hunts markup mykbostats no longer emits.")
+        print("\nBut an UPCOMING game still carries exactly 4 player-link")
+        print("anchors, and the old structure was two per side (photo +")
+        print("name). So the starters are probably still on the page in a")
+        print("renamed container. Dumping what wraps them.")
+
+        for slug in slugs:
+            r = requests.get(f"https://mykbostats.com/games/{slug}",
+                             headers=UA, timeout=25)
+            if r.status_code != 200 or r.text.count("player-link") != 4:
+                continue
+            html = r.text
+            print(f"\n=== {slug} — the 4 anchors and their surroundings ===")
+            i = html.find("player-link")
+            lo, hi = max(0, i - 2500), i + 3500
+            window = html[lo:hi]
+            print("\n--- class attributes in this window ---")
+            for c in dict.fromkeys(re.findall(r'class="([^"]{1,60})"', window)):
+                print(f"    {c}")
+            print("\n--- raw HTML ---")
+            print(window)
+            break
         return 0
 
     slug, html = detail
