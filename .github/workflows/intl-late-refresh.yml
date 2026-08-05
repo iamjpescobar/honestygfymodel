@@ -52,8 +52,16 @@ jobs:
       # Only what the two slate builders need. pybaseball, pyarrow and
       # numpy are for the Statcast pull, which this job does not run —
       # installing the full pinned set would add minutes for nothing.
+      #
+      # But the NAMES are chosen here while the VERSIONS come from
+      # requirements.txt via -c (constraints). A hand-written unpinned
+      # list is the exact mistake nightly-data.yml documents having made
+      # and reverted: it drifts from production, and it silently omitted
+      # pandas, which kbo_precompute.py imports at module scope. That
+      # killed every run of this job with ModuleNotFoundError before KBO
+      # — the league this workflow exists for — ever refreshed.
       - name: Install slate dependencies
-        run: pip install requests beautifulsoup4 lxml
+        run: pip install -c requirements.txt requests pandas lxml beautifulsoup4
 
       - name: Download the published archive
         run: |
@@ -68,16 +76,30 @@ jobs:
       # Both write into build_data/data/<league>/, overwriting the
       # nightly's copies in place — the same paths the packaging below
       # reads back.
+      # continue-on-error so ONE league's outage cannot take the other
+      # down with it. This is safe here and nowhere else in the job:
+      # build_data already holds the nightly's copy of both slates, so a
+      # failed fetch leaves last night's data in place rather than a
+      # hole. Publishing fresh-KBO + nightly-NPB beats publishing
+      # nothing. The job is still marked failed at the end — see
+      # "Report fetch failures" — so a silent outage stays impossible.
       - name: Re-fetch NPB slate
         id: npb
+        continue-on-error: true
         run: python npb_precompute.py
 
       - name: Re-fetch KBO slate
         id: kbo
+        continue-on-error: true
         run: python kbo_precompute.py
 
       # REBUILD, THEN CHECK, THEN UPLOAD — never the other way round.
+      # If NEITHER fetch worked there is nothing new to ship, and
+      # republishing would trigger a Render deploy — a cold start on the
+      # free tier for whoever is on the site, in exchange for a
+      # byte-identical archive.
       - name: Repack and verify
+        if: steps.npb.outcome == 'success' || steps.kbo.outcome == 'success'
         run: |
           set -e
           rm -f statcast_data.tar.gz
@@ -103,6 +125,7 @@ jobs:
           PY
 
       - name: Publish the refreshed archive
+        if: steps.npb.outcome == 'success' || steps.kbo.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -112,6 +135,7 @@ jobs:
       # at build time, not per request — so without this the refreshed
       # slate sits in the release and never reaches anyone.
       - name: Trigger Render deploy
+        if: steps.npb.outcome == 'success' || steps.kbo.outcome == 'success'
         env:
           HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
@@ -120,3 +144,20 @@ jobs:
           else
             echo "No RENDER_DEPLOY_HOOK secret set - skipping deploy."
           fi
+
+      # Runs AFTER publishing, on purpose: the good league still ships,
+      # and only then does the run go red. continue-on-error alone would
+      # leave the job green and the outage invisible.
+      - name: Report fetch failures
+        if: steps.npb.outcome == 'failure' || steps.kbo.outcome == 'failure'
+        env:
+          NPB_OUTCOME: ${{ steps.npb.outcome }}
+          KBO_OUTCOME: ${{ steps.kbo.outcome }}
+        run: |
+          if [ "$NPB_OUTCOME" = "failure" ]; then
+            echo "::error::NPB refresh failed - the archive kept the nightly's NPB slate."
+          fi
+          if [ "$KBO_OUTCOME" = "failure" ]; then
+            echo "::error::KBO refresh failed - the archive kept the nightly's KBO slate."
+          fi
+          exit 1
