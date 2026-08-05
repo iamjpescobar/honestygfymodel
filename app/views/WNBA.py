@@ -83,7 +83,8 @@ sync_latest_button(key="sync_wnba", include_data_package=True)
 # Shared availability rule — the same one the Props, Defense and Player
 # of the Day boards use, so one page can't disagree with another about
 # who is playing.
-from engines.wnba_props import (availability as _availability,
+from engines.wnba_props import (announced_starters as _announced_starters,
+                                availability as _availability,
                                 likely_starters as _likely_starters,
                                 league_reference_date as _ref_date)
 
@@ -792,6 +793,9 @@ def _render_slate():
                             # flag. See likely_starters for why recent and
                             # not season minutes.
                             _starters = _likely_starters(plist, today=_REF)
+                            # Same set either way, so ask separately which
+                            # one this is. Drives START vs LIKELY below.
+                            _announced = bool(_announced_starters(plist))
                             for p in plist:
                                 pos = p.get("pos") or ""
                                 # Flag, don't hide. This is the full slate
@@ -823,8 +827,24 @@ def _render_slate():
                                                or p.get("injury_status")
                                                or (f'OUT {_days}d' if (not _ok and _days)
                                                    else ("OUT" if not _ok else ""))),
+                                    # START is a REPORTED lineup. LIKELY is
+                                    # this app's own inference from recent
+                                    # minutes, and for the WNBA it is always
+                                    # the inference — ESPN publishes no
+                                    # starter flag for this league, so the
+                                    # announced branch never fires today.
+                                    #
+                                    # It said START regardless. Every badge
+                                    # on the site was a guess wearing the
+                                    # word for a fact, on the one page whose
+                                    # argument is that it keeps those apart.
+                                    # The inference is useful and stays; it
+                                    # just says what it is now, and upgrades
+                                    # itself the day ESPN starts posting
+                                    # lineups.
                                     "Role": ("OUT" if not _ok
-                                             else "START" if _is_starter
+                                             else ("START" if _announced
+                                                   else "LIKELY") if _is_starter
                                              else ("BENCH" if _starters else "")),
                                     "GP": p.get("gp"), "MIN": p.get("min"),
                                     "Season": p.get(season_k),
@@ -848,7 +868,8 @@ def _render_slate():
                             # and within each group by minutes. The table was
                             # in roster order, which put tonight's best bets
                             # anywhere on the list.
-                            _order = {"START": 0, "": 1, "BENCH": 1, "OUT": 2}
+                            _order = {"START": 0, "LIKELY": 0,
+                                      "": 1, "BENCH": 1, "OUT": 2}
                             if _sort_by == "Role":
                                 rows.sort(key=lambda r: (_order.get(r.get("Role"), 1),
                                                          -(r.get("MIN") or 0)))

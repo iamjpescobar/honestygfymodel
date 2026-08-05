@@ -579,19 +579,44 @@ def _recent_minutes(player, lookback=STARTER_LOOKBACK):
     return sum(mins) / len(mins)
 
 
+def announced_starters(players):
+    """Pids ESPN has actually POSTED as starting tonight, else empty set.
+
+    Split out of likely_starters so a caller can tell a REPORTED lineup
+    from an INFERRED one. The set that function returns looks identical
+    either way, which is how the Role column ended up printing "START"
+    over a minutes guess.
+
+    Expect this to be empty for the WNBA. The roster probe established
+    that ESPN does not publish today_starter for this league, so the
+    announced branch is dead in practice. It stays because the field
+    exists and may begin arriving, and because a UI that says LIKELY
+    needs a defined way to say START on the day it does.
+
+    Both this and likely_starters read the flag through here, so the two
+    can never drift about what counts as announced.
+    """
+    return {p.get("pid") or p.get("id")
+            for p in players or [] if p.get("today_starter") is True}
+
+
 def likely_starters(players, today=None):
-    """See below — announced lineups override the minutes inference."""
     """Set of pids most likely to start for this team tonight.
 
-    Returns an EMPTY SET when minutes can't be read for anyone, so callers
-    treat it as "unknown" and show everyone rather than hiding a whole
-    roster behind a failed inference.
+    Announced lineups override the minutes inference. Returns an EMPTY
+    SET when minutes can't be read for anyone, so callers treat it as
+    "unknown" and show everyone rather than hiding a whole roster behind
+    a failed inference.
+
+    A caller that LABELS this result must ask announced_starters() which
+    kind of answer it got. The pids alone cannot tell you, and printing
+    a guess with the confidence of a fact is the one thing this app is
+    built not to do.
     """
     # ANNOUNCED lineups win. When ESPN has posted who's starting, use it
     # rather than guessing from minutes — the inference exists only for
     # the hours before that's published.
-    announced = {p.get("pid") or p.get("id")
-                 for p in players or [] if p.get("today_starter") is True}
+    announced = announced_starters(players)
     if announced:
         return announced
 
