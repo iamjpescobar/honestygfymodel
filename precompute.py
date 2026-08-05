@@ -523,13 +523,19 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
         "bbe": is_bbe.astype("int32"),
         "barrel": (is_bbe & is_barrel).astype("int32"),
         "window": in_window.astype("int32"),
+        # FB95: hard-hit fly balls. HH% and FB% each existed alone; the
+        # intersection is the one that predicts home runs. A 95 mph
+        # ground ball and a 78 mph fly ball each inflate one parent rate
+        # without being a home-run trajectory.
+        "fb95": _mask(is_bbe & _mask(df.get("bb_type") == "fly_ball")
+                      & _mask(ev >= 95.0)).astype("int32"),
         "pullair": is_pull_air.astype("int32"),
         "hr": _mask(df["events"].astype(str) == "home_run").astype("int32"),
         "ev": ev.where(is_bbe),
         "bat_speed": pd.to_numeric(df.get("bat_speed"), errors="coerce"),
     })
     g = work.groupby("batter", observed=True)
-    out = g[["pa", "bbe", "barrel", "window", "pullair", "hr"]].sum()
+    out = g[["pa", "bbe", "barrel", "window", "fb95", "pullair", "hr"]].sum()
     out["ev90"] = g["ev"].quantile(0.90)
     out["max_ev"] = g["ev"].max()
     out["bat_speed"] = g["bat_speed"].mean()
@@ -537,6 +543,48 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
     if out.empty:
         print("  HR metrics skipped — no batter cleared the sample floor.")
         return False
+
+    # xHR and Clears Anywhere from the same empirical grid, so the app
+    # and the build agree. Both come off one merge — the grid carries
+    # hr_prob and the verified clears_anywhere flag in the same rows.
+    xhr_path = DATA_DIR / "xhr_table.parquet"
+    ca_measured = False
+    if xhr_path.exists():
+        tbl = pd.read_parquet(xhr_path)
+        key = pd.DataFrame({
+            "batter": df["batter"],
+            "ev_bin": (ev // 2.0 * 2.0),
+            "la_bin": (la // 2.0 * 2.0),
+        })[is_bbe.values]
+        merged = key.merge(tbl, on=["ev_bin", "la_bin"], how="left")
+        merged["hr_prob"] = merged["hr_prob"].fillna(0.0)
+        out["xhr"] = merged.groupby("batter", observed=True)["hr_prob"].sum()
+        out["xhr"] = out["xhr"].fillna(0.0)
+        # THE regression signal: trajectories that deserved to leave and
+        # didn't. Positive = owed home runs.
+        out["xhr_gap"] = out["xhr"] - out["hr"]
+
+        # Clears Anywhere: batted balls on a trajectory verified to leave
+        # every park. An OLDER parquet has no such column — that means
+        # "we cannot tell", so the count stays NaN and every rate built
+        # on it stays NaN rather than becoming a fabricated zero.
+        if "clears_anywhere" in merged.columns and bool(tbl["clears_anywhere"].any()):
+            merged["_ca"] = merged["clears_anywhere"].fillna(False).astype(int)
+            out["ca"] = merged.groupby("batter", observed=True)["_ca"].sum()
+            out["ca"] = out["ca"].fillna(0).astype("int32")
+            ca_measured = True
+        else:
+            # Column present but NOTHING qualified league-wide, or column
+            # absent entirely. Both mean the same thing here: this season
+            # has no measurable clears-anywhere contact, so the rate is
+            # N/A for everyone and the component drops out of HR Threat
+            # rather than scoring the whole league a flat zero. The app
+            # applies the identical rule — see clears_anywhere_pct.
+            out["ca"] = np.nan
+    else:
+        out["xhr"] = np.nan
+        out["xhr_gap"] = np.nan
+        out["ca"] = np.nan
 
     # ------------------------------------------------------------
     # SAMPLE-SIZE REGRESSION
@@ -569,6 +617,12 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
     K_BRL_PA = 170      # plate appearances
     K_WINDOW = 110      # batted balls
     K_PULL_AIR = 110    # batted balls
+    K_FB95 = 110        # batted balls
+    K_CA = 200          # batted balls. Higher than the rest on purpose:
+                        # clears-anywhere contact is RARE (a couple of
+                        # grid buckets league-wide), so a hitter with two
+                        # of them in 40 batted balls would otherwise post
+                        # an untouchable rate off two swings.
 
     def _regress(made, opp, k):
         """Rate per 100, pulled toward the league mean by sample size."""
@@ -578,6 +632,9 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
     out["brl_per_pa"] = _regress(out["barrel"], out["pa"], K_BRL_PA)
     out["hr_window_pct"] = _regress(out["window"], out["bbe"], K_WINDOW)
     out["pull_air_pct"] = _regress(out["pullair"], out["bbe"], K_PULL_AIR)
+    out["fb95_pct"] = _regress(out["fb95"], out["bbe"], K_FB95)
+    out["clears_anywhere_pct"] = (_regress(out["ca"], out["bbe"], K_CA)
+                                  if ca_measured else np.nan)
 
     # Raw, unregressed rates kept alongside for DISPLAY. The regressed
     # values are what get ranked; the raw ones are what a hitter actually
@@ -585,43 +642,105 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
     out["brl_per_pa_raw"] = out["barrel"] / out["pa"] * 100
     out["hr_window_pct_raw"] = out["window"] / out["bbe"] * 100
     out["pull_air_pct_raw"] = out["pullair"] / out["bbe"] * 100
+    out["fb95_pct_raw"] = out["fb95"] / out["bbe"] * 100
+    out["clears_anywhere_pct_raw"] = (out["ca"] / out["bbe"] * 100
+                                      if ca_measured else np.nan)
 
     # HR Intent — same three process inputs and the same league anchors
     # as statcast_engine, averaged over whatever is measurable.
     # Built on the REGRESSED rates on purpose. Intent feeds a ranked
     # percentile like everything else, so a thin-sample hitter would
     # otherwise import exactly the noise the regression above removes.
+    # ------------------------------------------------------------
+    # LEAGUE ANCHORS — MEASURED, NOT TYPED
+    #
+    # Every composite below maps "league average" to 50, and the anchors
+    # that define league average used to be literals: 71.0 bat speed,
+    # 30.0 HR window, 18.0 pull air, and (in statcast_engine) 6.0 Brl/PA
+    # and 4.0 clears-anywhere. Two problems with that. They were
+    # duplicated between this file and the engine, so the build and the
+    # app could silently disagree. And they go stale without saying so —
+    # exactly what happened to the hardcoded 11.5 league HR/FB, which
+    # build_baselines replaced after measuring the real figure at 17.1.
+    #
+    # The clears-anywhere anchor was the worst of them: it was set at 4.0
+    # before any nightly had run, and the real contour turned out to be
+    # so tight that hitters land near a tenth of that. Every hitter would
+    # have scored the same near-zero on that component, contributing
+    # noise to HRThreat instead of signal.
+    #
+    # So they are measured here, from the same qualified population the
+    # percentiles are built on, and shipped for the app to read. A hitter
+    # at the league mean scores exactly 50 by construction, every night,
+    # whatever the league does next.
+    anchors = {
+        "bat_speed": float(out["bat_speed"].mean(skipna=True)),
+        "hr_window_pct": float(out["hr_window_pct"].mean()),
+        "pull_air_pct": float(out["pull_air_pct"].mean()),
+        "brl_per_pa": float(out["brl_per_pa"].mean()),
+        "clears_anywhere_pct": (float(out["clears_anywhere_pct"].mean())
+                                if ca_measured else None),
+        "qualified_batters": int(len(out)),
+    }
+
+    def _anchor(name, fallback):
+        """Measured anchor, or the old literal if it came back unusable.
+
+        A NaN or zero anchor would divide the whole league to infinity or
+        NaN, so the literal survives as a floor. It is a fallback, not a
+        default: the log says which one was used.
+        """
+        v = anchors.get(name)
+        if v is None or not np.isfinite(v) or v <= 0:
+            print(f"  anchor {name}: unmeasurable, falling back to {fallback}")
+            anchors[name] = fallback
+            return fallback
+        return v
+
     intent = [
-        (out["bat_speed"] / 71.0 * 50.0).clip(upper=100),
-        (out["hr_window_pct"] / 30.0 * 50.0).clip(upper=100),
-        (out["pull_air_pct"] / 18.0 * 50.0).clip(upper=100),
+        (out["bat_speed"] / _anchor("bat_speed", 71.0) * 50.0).clip(upper=100),
+        (out["hr_window_pct"] / _anchor("hr_window_pct", 30.0) * 50.0).clip(upper=100),
+        (out["pull_air_pct"] / _anchor("pull_air_pct", 18.0) * 50.0).clip(upper=100),
     ]
     stacked = pd.concat(intent, axis=1)
     out["hr_intent"] = stacked.mean(axis=1, skipna=True)
 
-    # xHR from the same empirical grid, so the app and the build agree.
-    xhr_path = DATA_DIR / "xhr_table.parquet"
-    if xhr_path.exists():
-        tbl = pd.read_parquet(xhr_path)
-        key = pd.DataFrame({
-            "batter": df["batter"],
-            "ev_bin": (ev // 2.0 * 2.0),
-            "la_bin": (la // 2.0 * 2.0),
-        })[is_bbe.values]
-        merged = key.merge(tbl, on=["ev_bin", "la_bin"], how="left")
-        merged["hr_prob"] = merged["hr_prob"].fillna(0.0)
-        out["xhr"] = merged.groupby("batter", observed=True)["hr_prob"].sum()
-        out["xhr"] = out["xhr"].fillna(0.0)
-        # THE regression signal: trajectories that deserved to leave and
-        # didn't. Positive = owed home runs.
-        out["xhr_gap"] = out["xhr"] - out["hr"]
-    else:
-        out["xhr"] = np.nan
-        out["xhr_gap"] = np.nan
+    # HR THREAT — 60% outcome, 40% process. Same weights and the same
+    # anchors the app uses, so a board built here and a player page
+    # rendered live can never disagree.
+    _threat = [(0.35, (out["brl_per_pa"] / _anchor("brl_per_pa", 6.0)
+                       * 50.0).clip(upper=100))]
+    if ca_measured:
+        _threat.append((0.25, (out["clears_anywhere_pct"]
+                               / _anchor("clears_anywhere_pct", 0.5)
+                               * 50.0).clip(upper=100)))
+    _threat.append((0.40, out["hr_intent"]))
+    _wsum = sum(w for w, _ in _threat)
+    out["hr_threat"] = sum(w * v for w, v in _threat) / _wsum
+
+    # Shipped alongside the baselines the app already reads.
+    _bl_path = DATA_DIR / "baselines.json"
+    try:
+        _bl = json.loads(_bl_path.read_text()) if _bl_path.exists() else {}
+    except Exception:
+        _bl = {}
+    _bl["hr_anchors"] = {k: (round(v, 3) if isinstance(v, float) else v)
+                         for k, v in anchors.items()}
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _bl_path.write_text(json.dumps(_bl, indent=2))
+    print(f"  HR anchors (league means): bat speed "
+          f"{anchors['bat_speed']:.1f} mph · HR window "
+          f"{anchors['hr_window_pct']:.1f}% · pull air "
+          f"{anchors['pull_air_pct']:.1f}% · Brl/PA "
+          f"{anchors['brl_per_pa']:.2f}% · clears anywhere "
+          + (f"{anchors['clears_anywhere_pct']:.2f}%"
+             if anchors.get("clears_anywhere_pct") else "N/A"))
+
 
     # Rank to 0-100 league percentiles, matching the Savant scale.
     for col in ("brl_per_pa", "hr_window_pct", "pull_air_pct",
-                "ev90", "hr_intent", "xhr_gap"):
+                "fb95_pct", "clears_anywhere_pct",
+                "ev90", "hr_intent", "hr_threat", "xhr_gap"):
         out[col + "_pct"] = out[col].rank(pct=True) * 100.0
 
     out = out.reset_index()
