@@ -1169,9 +1169,11 @@ def get_pitcher_statcast(pitcher_id):
     # _compute_batted_ball_metrics above already ran on this PITCHER's
     # rows, which means Brl %, HH %, FB %, HRWindow % and EV90 in
     # `metrics` are ALREADY "allowed" figures — they describe the contact
-    # hitters made against him. They were computed and then never
-    # surfaced anywhere, so the pitcher side of the HR model was invisible
-    # despite the numbers existing.
+    # hitters made against him. They were computed and, for a while,
+    # never surfaced anywhere, so the pitcher side of the HR model was
+    # invisible despite the numbers existing. They ARE rendered now —
+    # GameCard's hr_vuln_table — and this comment stayed stale long
+    # enough to send someone looking for work that was already done.
     #
     # Aliased here under explicit "Allowed" names so no view has to know
     # that a batter-shaped metric means something different on this side
