@@ -1,4 +1,4 @@
-name: intl-late-refresh
+name: Late slate refresh (KBO, NPB, WNBA)
 
 # WHY THIS EXISTS
 #
@@ -93,6 +93,27 @@ jobs:
         continue-on-error: true
         run: python kbo_precompute.py
 
+      # WNBA HAS NO OTHER WAY BACK.
+      #
+      # The WNBA slate is built solely inside nightly-data.yml, downstream
+      # of the ~15-minute Statcast pull. When the nightly failed on
+      # Aug 5 the site showed "No WNBA slate on disk for 2026-08-05" for
+      # the rest of the day — slate_guard correctly refusing to pass an
+      # older night's games off as tonight's — and there was no way to
+      # recover short of a full nightly run. "Sync latest" cannot help
+      # either: it re-downloads the same release asset and honestly
+      # reports that nothing changed.
+      #
+      # This job already downloads, swaps, repacks, verifies and
+      # publishes. wnba_precompute.py writes to build_data/data/wnba,
+      # exactly the convention kbo_precompute and npb_precompute use, and
+      # needs nothing the install step does not already provide. So the
+      # recovery path costs one step.
+      - name: Re-fetch WNBA slate
+        id: wnba
+        continue-on-error: true
+        run: python wnba_precompute.py
+
       # REBUILD, THEN CHECK, THEN UPLOAD — never the other way round.
       # If NEITHER fetch worked there is nothing new to ship, and
       # republishing would trigger a Render deploy — a cold start on the
@@ -100,6 +121,9 @@ jobs:
       # byte-identical archive.
       - name: Repack and verify
         if: steps.npb.outcome == 'success' || steps.kbo.outcome == 'success'
+          || steps.wnba.outcome == 'success'
+          || steps.wnba.outcome == 'success'
+          || steps.wnba.outcome == 'success'
         run: |
           set -e
           rm -f statcast_data.tar.gz
@@ -118,7 +142,7 @@ jobs:
               print("::error::Statcast data missing from the repack — "
                     "refusing to publish and overwrite a good archive.")
               sys.exit(1)
-          for lg in ("kbo", "npb"):
+          for lg in ("kbo", "npb", "wnba"):
               print(("present " if has(f"data/{lg}/") else "MISSING ")
                     + f"data/{lg}/")
           print(f"Repacked archive verified: {len(names)} entries.")
@@ -150,14 +174,19 @@ jobs:
       # leave the job green and the outage invisible.
       - name: Report fetch failures
         if: steps.npb.outcome == 'failure' || steps.kbo.outcome == 'failure'
+          || steps.wnba.outcome == 'failure'
         env:
           NPB_OUTCOME: ${{ steps.npb.outcome }}
           KBO_OUTCOME: ${{ steps.kbo.outcome }}
+          WNBA_OUTCOME: ${{ steps.wnba.outcome }}
         run: |
           if [ "$NPB_OUTCOME" = "failure" ]; then
             echo "::error::NPB refresh failed - the archive kept the nightly's NPB slate."
           fi
           if [ "$KBO_OUTCOME" = "failure" ]; then
             echo "::error::KBO refresh failed - the archive kept the nightly's KBO slate."
+          fi
+          if [ "$WNBA_OUTCOME" = "failure" ]; then
+            echo "::error::WNBA refresh failed - the archive kept the nightly's WNBA slate."
           fi
           exit 1
