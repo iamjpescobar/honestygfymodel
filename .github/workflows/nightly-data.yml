@@ -10,6 +10,23 @@ on:
 permissions:
   contents: write           # needed to publish the release asset
 
+# Never let two runs race each other into a commit conflict.
+#
+# A manual dispatch and a cron can overlap. Most of this job survives
+# that — the release publish is upload-then-clobber, and grade() skips
+# any pick already marked hit/miss/dnp, so grading twice cannot
+# double-count. The step that does NOT survive it is "Commit graded
+# calibration record": both runs write data/calibration.json, commit
+# it, then git pull --rebase, and whichever lands second rebases onto
+# the first's commit to the same file and can conflict — turning a
+# healthy run red for no real reason.
+#
+# cancel-in-progress is FALSE on purpose. The Statcast fetch is ~15
+# minutes; killing one mid-flight is worse than making the second wait.
+concurrency:
+  group: nightly-data
+  cancel-in-progress: false
+
 jobs:
   build-data:
     runs-on: ubuntu-latest
