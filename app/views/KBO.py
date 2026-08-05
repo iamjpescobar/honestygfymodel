@@ -3,6 +3,10 @@ from pathlib import Path
 
 import streamlit as st
 
+from engines.intl_venues import (roof as _roof_kind,
+                                  roof_note as _roof_note)
+_LEAGUE = "kbo"
+
 from styles.kc_theme import (page_header, card_open, card_close,
                              badge, footer, COLOR, SPORT_ACCENTS)
 from engines.matchup_grades_intl import grade_kbo_matchup, render_matchup_grades_card
@@ -410,6 +414,28 @@ else:
 
         status_style = {"postponed": "bad", "final": "good", "final (tie)": "good"}.get(status, "neutral")
         badges = badge(status.upper(), status_style)
+
+        # ROOF BADGE — the only postponement signal this site can give
+        # honestly today.
+        #
+        # Both leagues report a postponement only once it has been
+        # ANNOUNCED, which is routinely after a bet is placed; that is
+        # where the voids come from. A forecast would need a weather
+        # provider the site does not have. A roof needs nothing: a game
+        # under one cannot be called for rain, full stop.
+        #
+        # Shown only BEFORE the game resolves. On a final, the roof is
+        # no longer information — the outcome already answered it — and
+        # a badge on every finished game is noise.
+        if status == "scheduled":
+            _roof = _roof_kind(_LEAGUE, g.get("stadium"))
+            if _roof in ("dome", "retractable"):
+                badges += badge(_roof_note(_LEAGUE, g.get("stadium")), "good")
+            elif _roof == "open":
+                badges += badge("open air", "neutral")
+            # _roof is None -> say NOTHING. An unlisted venue is unknown,
+            # not open air, and a wrong "open air" badge on a domed park
+            # is worse than no badge: it invents a risk that is not there.
         if g.get("final"):
             badges += badge(g["final"], "accent")
         if g.get("starters_raw"):
