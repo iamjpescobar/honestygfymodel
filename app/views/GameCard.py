@@ -831,6 +831,29 @@ def _stat_row(name, bats_label, profile, *, matchup=None, slam=None,
         # downstream of results, so they all sag together
         # when a power bat goes cold. This one doesn't.
         "HRIntent": profile.get("HRIntent"),
+        # Hard-hit FLY BALLS. HH% and FB% are both already
+        # above, on their own; this is the intersection,
+        # and it's the one that predicts home runs. A 95
+        # mph ground ball is a single and a 78 mph fly
+        # ball is an out — each inflates one of those two
+        # parent columns without being a HR trajectory.
+        "FB95%": profile.get("FB95 %"),
+        # The launch floor that gets out of ANY park,
+        # measured off the league's own outcomes rather
+        # than a fence diagram. There is no single angle
+        # that does it — the angle needed falls as exit
+        # velocity rises — so this is a curve, and these
+        # are the balls that sit above it. Rare on
+        # purpose: league average is a fraction of a
+        # percent, so a bat showing anything here is
+        # producing genuine no-doubt contact.
+        "Clears%": profile.get("ClearsAnywhere %"),
+        # 60% outcome, 40% process. HRIntent above stays
+        # visible beside it deliberately — when the two
+        # disagree, that gap is the read: high intent with
+        # low threat is a home-run swing that isn't
+        # landing yet.
+        "HRThreat": profile.get("HRThreat"),
         # No ", 0" default: a missing SwStr% is not a
         # 0.00 SwStr%, and 0.00 in this column reads as
         # the best possible value. na_rep on the
@@ -1214,7 +1237,12 @@ with content_col:
                 "Brl% Allowed": pitcher_data.get("Brl % Allowed"),
                 "HH% Allowed": pitcher_data.get("HH % Allowed"),
                 "FB% Allowed": pitcher_data.get("FB % Allowed"),
+                "FB95% Allowed": pitcher_data.get("FB95 % Allowed"),
                 "HRWindow% Allowed": pitcher_data.get("HRWindow % Allowed"),
+                # The trajectories he gives up that leave ANY park. The
+                # strictest column on this card: a pitcher with a number
+                # here is surrendering contact that no building holds.
+                "Clears% Allowed": pitcher_data.get("ClearsAnywhere % Allowed"),
                 "EV90 Allowed": pitcher_data.get("EV90 Allowed"),
                 "HR Allowed": pitcher_data.get("HR Allowed"),
                 "xHR Allowed": pitcher_data.get("xHR Allowed"),
@@ -1246,7 +1274,9 @@ with content_col:
                         # plain rather than falsely graded.
                         style_vs_league(_hv_df).format({
                             "Brl% Allowed": "{:.1f}", "HH% Allowed": "{:.1f}",
-                            "FB% Allowed": "{:.1f}", "HRWindow% Allowed": "{:.1f}",
+                            "FB% Allowed": "{:.1f}", "FB95% Allowed": "{:.1f}",
+                            "HRWindow% Allowed": "{:.1f}",
+                            "Clears% Allowed": "{:.2f}",
                             "EV90 Allowed": "{:.1f}",
                             # Counting stat — no decimals.
                             "HR Allowed": "{:.0f}",
@@ -1310,7 +1340,8 @@ with content_col:
                         # click away.
                         "Sort by", ["Batting Order", "SLAM", "HR Edge", "HR Score",
                                     "Hit Score", "xwOBA", "xSLG", "ISO", "Brl%",
-                                    "Brl/PA", "HH%", "EV90", "HRWindow%", "HRIntent"],
+                                    "Brl/PA", "HH%", "EV90", "HRWindow%", "HRIntent",
+                                    "HRThreat", "FB95%", "Clears%"],
                         key="lineup_sort_by"
                     )
                 with window_col:
@@ -1455,6 +1486,9 @@ with content_col:
                     "EV90": lambda r: windowed_profile_cache[r["name"]].get("EV90") or 0,
                     "HRWindow%": lambda r: windowed_profile_cache[r["name"]].get("HRWindow %") or 0,
                     "HRIntent": lambda r: windowed_profile_cache[r["name"]].get("HRIntent") or 0,
+                    "HRThreat": lambda r: windowed_profile_cache[r["name"]].get("HRThreat") or 0,
+                    "FB95%": lambda r: windowed_profile_cache[r["name"]].get("FB95 %") or 0,
+                    "Clears%": lambda r: windowed_profile_cache[r["name"]].get("ClearsAnywhere %") or 0,
                 }
                 filtered = sorted(filtered, key=sort_key_map[sort_choice], reverse=True)
 
@@ -1545,9 +1579,24 @@ with content_col:
                     _ident = ["Player", "Bats", "Ord"]
                     _groups = {
                         "All": None,
-                        "Power": _ident + ["HR Edge", "HR Score", "Brl%", "Brl/PA",
-                                           "EV90", "MaxEV", "HRWindow%", "HRIntent",
-                                           "PullAir%", "PullBrl%", "Blast%"],
+                        # CAPPED AT 14 (see tests/test_column_groups) and it
+                        # was already at 14, so the two new columns had to
+                        # displace two. What went, and why:
+                        #
+                        #   MaxEV     the comment on its own row calls it
+                        #             interest only — it's a sample of one.
+                        #             EV90 is the scored power ceiling and
+                        #             stays.
+                        #   PullBrl%  overlaps PullAir% and Brl% almost
+                        #             entirely, and both of those stay.
+                        #
+                        # Neither is gone: "All" still shows every column,
+                        # and both remain sortable. This group is the
+                        # narrow phone view, not the full table.
+                        "Power": _ident + ["HR Edge", "HR Score", "HRThreat",
+                                           "Brl%", "Brl/PA", "Clears%",
+                                           "EV90", "HRWindow%", "HRIntent",
+                                           "PullAir%", "Blast%"],
                         "Contact": _ident + ["Hit Score", "SLAM", "BA", "xwOBA", "xSLG",
                                              "ISO", "HH%", "LD%", "FB%", "GB%",
                                              "SweetSpot%"],
@@ -1576,7 +1625,7 @@ with content_col:
                     # render_html_table pins the first column in CSS.)
                     styled = style_stat_table(
                         _table_df,
-                        favor_high=["SLAM", "BA", "xwOBA", "xSLG", "ISO", "HR/FB", "Brl%", "Brl/PA", "HH%", "EV90", "MaxEV", "LD%", "FB%", "SweetSpot%", "HRWindow%", "PullAir%", "PullBrl%", "Blast%", "HRIntent"],
+                        favor_high=["SLAM", "BA", "xwOBA", "xSLG", "ISO", "HR/FB", "Brl%", "Brl/PA", "HH%", "EV90", "MaxEV", "LD%", "FB%", "SweetSpot%", "HRWindow%", "PullAir%", "PullBrl%", "Blast%", "HRIntent", "HRThreat", "FB95%", "Clears%"],
                         # HR Edge / HR Score / Hit Score are deliberately
                         # NOT in favor_high: score_bar already encodes each
                         # one as a filled bar, and a gradient cell behind
@@ -1605,7 +1654,13 @@ with content_col:
                         # Statcast publishes them.
                         "EV90": "{:.1f}", "MaxEV": "{:.1f}",
                         # 0-100 composite, formatted like HR/Hit Score.
-                        "HRIntent": "{:.0f}",
+                        "HRIntent": "{:.0f}", "HRThreat": "{:.0f}",
+                        "FB95%": "{:.1f}",
+                        # Two decimals, not one. League average clears-anywhere
+                        # contact is a fraction of a percent, so {:.1f} would
+                        # print 0.0 for most of the league and throw away the
+                        # only resolution this column has.
+                        "Clears%": "{:.2f}",
                         # Inline filled bars, same three columns that used
                         # st.column_config.ProgressColumn before this table
                         # moved off st.dataframe. score_bar returns markup
