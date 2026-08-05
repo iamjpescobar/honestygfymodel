@@ -1,0 +1,39 @@
+name: KBO starter probe (mykbostats)
+
+# Manual only. Answers why every KBO run reports 0 probable starters,
+# including one at 16:49 KST — an hour forty before first pitch, when
+# mykbostats announces starters the day before. Timing does not explain
+# it, so this prints the real page and lets the markup say which of the
+# three silent failure modes is happening.
+#
+# Run from Actions so the answer reflects what the pipeline sees, not
+# what a laptop sees.
+#
+# Touches nothing: no commit, no release, no deploy hook.
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: "Optional game slug. Blank = pick one off this week's schedule."
+        required: false
+        default: ""
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      # kbo_precompute imports pandas at module scope, and this probe
+      # imports GAME_LINE and UA from it rather than re-declaring them —
+      # a second copy of the schedule regex is how the app's live-score
+      # check ended up on a host returning 403.
+      - run: pip install -c requirements.txt requests pandas lxml beautifulsoup4
+
+      - name: Probe mykbostats for probable starters
+        run: python kbo_starter_probe.py ${{ inputs.slug }}
