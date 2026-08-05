@@ -915,6 +915,12 @@ def _inject_card_css():
         "  [class*='st-key-card_home_'] { transition: none; }"
         "  [class*='st-key-card_home_']:hover { transform: none; } }"
 
+        # The lift and the shadow are the two things that cost paint on a
+        # phone, and a stacked column of cards is where that is felt.
+        "@media (hover: none) {"
+        "  [class*='st-key-card_home_']:hover { transform: none;"
+        "    box-shadow: 0 1px 2px rgba(0,0,0,.35); } }"
+
         # On a phone the three-up grid is already stacked by Streamlit;
         # tighten the card padding so a stack of six doesn't become six
         # screens of scrolling.

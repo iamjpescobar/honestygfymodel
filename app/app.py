@@ -149,6 +149,26 @@ except Exception:
 # -------------------------
 st.session_state.setdefault("lc_view", "home")
 
+# A HOME CARD CAN ASK FOR A SPORT CHANGE, and this is the only place it
+# can be granted.
+#
+# sport_switcher() instantiates st.segmented_control(key="lc_sport_seg")
+# further down this file, ABOVE the main column — so by the time
+# views/Home.py runs, that widget already exists and Streamlit raises
+# StreamlitAPIException on any write to its key. Writing lc_sport alone
+# does not work either: selected_sport below prefers lc_sport_seg, so the
+# widget wins and the click appears to do nothing.
+#
+# So Home writes an INTENT (lc_pending_sport) and reruns, and it is
+# consumed here on the next pass, before the widget is created. Setting a
+# widget key before its widget exists is legal and seeds the value.
+# Popped rather than read so it fires exactly once.
+_pending_sport = st.session_state.pop("lc_pending_sport", None)
+if _pending_sport:
+    st.session_state["lc_sport_seg"] = _pending_sport
+    st.session_state["lc_sport"] = _pending_sport
+    st.session_state["lc_view"] = "sport"
+
 selected_sport = (
     st.session_state.get("lc_sport_seg")
     or st.session_state.get("lc_sport", "MLB")
