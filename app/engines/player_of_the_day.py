@@ -66,9 +66,6 @@ PITCHER_VULN_CHECKS = [
     ("SLG", 0.420),
 ]
 
-_WNBA_GAMES = Path(__file__).resolve().parent.parent / "data" / "wnba" / "games.json"
-
-
 # How many top candidates get the full Edge treatment. Wider than the
 # single pick so matchup can still change who wins, but far short of
 # every hitter on the slate — each one costs a network call.
@@ -321,14 +318,17 @@ def get_wnba_player_of_the_day(form_window: str = "l5"):
     Same honesty contract, WNBA version — see module docstring. Returns
     (pick, all_candidates, error) exactly like get_mlb_player_of_the_day.
     """
-    try:
-        payload = json.loads(_WNBA_GAMES.read_text())
-    except Exception as e:
-        return None, [], f"WNBA data isn't available right now ({e})."
-
-    games = payload.get("games", [])
+    # ROUTED THROUGH slate_guard. This picked the Player of the Day
+    # straight off the slate file with no date check, so on a night the
+    # nightly failed it would crown a player from a game already played
+    # and the Home page would feature her as tonight's pick. The message
+    # on the failure path now says WHICH night is on disk instead of
+    # implying tonight simply has no games.
+    from engines.slate_guard import load_slate, staleness_note
+    games, _slate_date, _is_current = load_slate("wnba")
     if not games:
-        return None, [], "No WNBA games on today's slate."
+        return None, [], (staleness_note("wnba")
+                          or "No WNBA games on today's slate.")
 
     # Imported here rather than at module scope: player_of_the_day is
     # imported by the MLB paths too, and they have no reason to pull in
