@@ -255,6 +255,66 @@ def _xhr_table():
         return None
 
 
+@st.cache_data(ttl=21600, max_entries=1, show_spinner=False)
+def _clears_anywhere_buckets():
+    """Set of (ev_bin, la_bin) that leave ALL 30 parks, or None.
+
+    Derived nightly from the league's own batted balls — see
+    build_xhr_table. None (not an empty set) when the column is absent,
+    because an older parquet from before this shipped means "we cannot
+    tell", and the metric must read N/A rather than 0.0. That distinction
+    is the same one the `empty` dict in _compute_batted_ball_metrics
+    exists to protect.
+    """
+    path = _DATA_DIR / "xhr_table.parquet"
+    if not path.exists():
+        return None
+    try:
+        t = pd.read_parquet(path)
+        if "clears_anywhere" not in t.columns:
+            return None
+        q = t[t["clears_anywhere"].astype(bool)]
+        return {(float(r.ev_bin), float(r.la_bin)) for r in q.itertuples(index=False)}
+    except Exception:
+        return None
+
+
+def clears_anywhere_pct(df: pd.DataFrame):
+    """Share of batted balls on a trajectory that clears any park, or None.
+
+    THE LAUNCH FLOOR, MEASURED. No single launch angle clears all 30
+    fences — the angle needed falls as exit velocity rises — so this is
+    a curve read off the league's own outcomes rather than a constant.
+    See build_xhr_table for how the contour is derived and verified
+    against the number of parks that actually saw those balls leave.
+
+    Distinct from HRWindow %, which is angle-only and deliberately blind
+    to how hard the ball was hit; that independence is what makes it
+    useful next to Brl%. This one requires BOTH axes at once and answers
+    a different question: not "is his swing plane right" but "how often
+    does he produce contact that is out everywhere".
+
+    Works unchanged on a pitcher's rows, where it is the rate he allows.
+    """
+    buckets = _clears_anywhere_buckets()
+    if buckets is None or df is None or df.empty:
+        return None
+    if not {"launch_speed", "launch_angle", "type"}.issubset(df.columns):
+        return None
+    bbe = df[df["type"] == "X"]
+    if bbe.empty:
+        return None
+    ev = pd.to_numeric(bbe["launch_speed"], errors="coerce")
+    la = pd.to_numeric(bbe["launch_angle"], errors="coerce")
+    ok = ev.notna() & la.notna()
+    n = int(ok.sum())
+    if n == 0:
+        return None
+    keys = zip((ev[ok] // _EV_BIN * _EV_BIN), (la[ok] // _LA_BIN * _LA_BIN))
+    hits = sum(1 for e, l in keys if (float(e), float(l)) in buckets)
+    return round(hits / n * 100, 2)
+
+
 def compute_xhr(df: pd.DataFrame):
     """(xHR, actual HR) for these rows, or (None, None) if unavailable.
 
@@ -378,8 +438,9 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
         "Brl %": None, "HH %": None, "LD %": None, "GB %": None, "FB %": None,
         "SweetSpot %": None, "PullAir %": None, "PullBrl %": None,
         "Blast %": None, "BBE": 0,
-        "HRWindow %": None, "EV90": None, "MaxEV": None,
-        "Brl/PA": None, "PA": 0, "HRIntent": None,
+        "HRWindow %": None, "FB95 %": None, "EV90": None, "MaxEV": None,
+        "ClearsAnywhere %": None,
+        "Brl/PA": None, "PA": 0, "HRIntent": None, "HRThreat": None,
         "BA": None, "AB": 0,
         "SLG": None, "ISO": None,
         "HR/FB": None, "FB_count": 0,
@@ -469,6 +530,21 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
     # that independence from the power axis is the entire point.
     hr_window = la.between(_HR_LA_MIN, _HR_LA_MAX).sum()
 
+    # FB95 % — hard-hit fly balls as a share of batted balls.
+    #
+    # HH % (95+ mph) and FB % were both already here, on their own, and
+    # the INTERSECTION never was — which is the one that actually
+    # predicts home runs. A 95 mph ground ball is a single and a 78 mph
+    # fly ball is an out; neither is a home-run trajectory, yet each
+    # lands in one of those two rates and inflates it. Requiring both at
+    # once costs nothing extra to compute and is a cleaner power signal
+    # than either parent.
+    #
+    # Denominator is BBE, not fly balls: per-FB would flatter a hitter
+    # who almost never lifts the ball, and how OFTEN he gets it airborne
+    # is half the question.
+    # (computed below, once bb_type's fly-ball mask exists)
+
     # EV90 (scored) and Max EV (display only). Both from the same
     # measured exit velocities; see _EV_PERCENTILE for why the score
     # uses the percentile and not the max.
@@ -494,6 +570,12 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
     if _fb_n >= _HRFB_MIN_FB and "events" in bbe_df.columns:
         _hr_on_fb = int((bbe_df.loc[_fb_mask, "events"] == "home_run").sum())
         _hr_fb = round(_hr_on_fb / _fb_n * 100, 1)
+    # FB95 count — see the block above HR Window %. Uses Statcast's own
+    # bb_type fly-ball classification, the same one FB % and HR/FB use,
+    # rather than a homemade launch-angle cut, so the three stay
+    # consistent with each other and with Savant.
+    fb95 = int(((ls >= 95).fillna(False) & _fb_mask).sum())
+
     ld = (bb_type == "line_drive").sum()
     gb = (bb_type == "ground_ball").sum()
     fb = (bb_type == "fly_ball").sum()
@@ -594,6 +676,7 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
         _intent_parts.append(min(100.0, _pa_pct / _INTENT_PULLAIR_ANCHOR * 50.0))
     hr_intent = round(sum(_intent_parts) / len(_intent_parts), 1) if _intent_parts else None
 
+
     # Barrels per PLATE APPEARANCE, not per batted ball.
     #
     # Brl% (per BBE) answers "when he connects, how good is it" and
@@ -608,14 +691,61 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
     brl_per_pa = (round(barrels / pa_count * 100, 2)
                   if barrels is not None and pa_count > 0 else None)
 
+    # Trajectory-level "gets out anywhere" rate for this same set of
+    # rows. Computed here rather than in the caller so the composite
+    # below and the displayed column can never disagree.
+    clears_anywhere = clears_anywhere_pct(df)
+
+    # ------------------------------------------------------------
+    # HR THREAT — intent weighted toward whether it is WORKING.
+    #
+    # HRIntent above stays exactly as it was, and stays visible. Its
+    # value is that it is pure process: a good power hitter in a cold
+    # week still shows a home-run swing here, which every outcome metric
+    # on this page hides. Averaging that away would have destroyed the
+    # one signal that does not move with results.
+    #
+    # This sits beside it, 60% outcome / 40% that process score:
+    #
+    #   Brl/PA           barrels per plate appearance, not per contact —
+    #                    folds in strikeouts, which per-BBE rates hide
+    #   ClearsAnywhere % contact on a trajectory that leaves any park
+    #   HRIntent         the process score above
+    #
+    # Each outcome component is scaled against a measured league anchor,
+    # the same way the intent components are. Components that cannot be
+    # measured drop out and the weights renormalise over what remains,
+    # rather than a missing axis silently scoring as zero — the same
+    # rule top_plays already follows.
+    #
+    # Returns None when NOTHING is measurable. A hitter with no tracked
+    # contact has no threat score, which is not the same as a threat
+    # score of zero, and the lineup table has no column to tell those
+    # apart. See the `empty` dict at the top of this function.
+    _THREAT_BRLPA_ANCHOR = 6.0    # ~6% of PA barrelled -> 50, elite is ~10
+    _THREAT_CA_ANCHOR = 4.0       # ~4% of BBE clears anywhere -> 50
+    _threat_parts = []            # (weight, 0-100 score)
+    if brl_per_pa is not None:
+        _threat_parts.append((0.35, min(100.0, brl_per_pa / _THREAT_BRLPA_ANCHOR * 50.0)))
+    if clears_anywhere is not None:
+        _threat_parts.append((0.25, min(100.0, clears_anywhere / _THREAT_CA_ANCHOR * 50.0)))
+    if hr_intent is not None:
+        _threat_parts.append((0.40, hr_intent))
+    _wsum = sum(w for w, _ in _threat_parts)
+    hr_threat = (round(sum(w * v for w, v in _threat_parts) / _wsum, 1)
+                 if _wsum > 0 else None)
+
     return {
         "Brl %": round(barrels / bbe_count * 100, 2) if barrels is not None else None,
         "HRWindow %": round(hr_window / bbe_count * 100, 2),
+        "FB95 %": round(fb95 / bbe_count * 100, 2),
         "EV90": ev90,
         "MaxEV": max_ev_actual,
         "Brl/PA": brl_per_pa,
         "PA": pa_count,
         "HRIntent": hr_intent,
+        "HRThreat": hr_threat,
+        "ClearsAnywhere %": clears_anywhere,
         "HH %": round(hh / bbe_count * 100, 2),
         "LD %": round(ld / bbe_count * 100, 2),
         "GB %": round(gb / bbe_count * 100, 2),
@@ -996,7 +1126,9 @@ def get_pitcher_statcast(pitcher_id):
     for src, dst in (("Brl %", "Brl % Allowed"),
                      ("HH %", "HH % Allowed"),
                      ("FB %", "FB % Allowed"),
+                     ("FB95 %", "FB95 % Allowed"),
                      ("HRWindow %", "HRWindow % Allowed"),
+                     ("ClearsAnywhere %", "ClearsAnywhere % Allowed"),
                      ("EV90", "EV90 Allowed")):
         if src in metrics:
             metrics[dst] = metrics[src]
