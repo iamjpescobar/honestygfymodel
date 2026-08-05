@@ -19,261 +19,42 @@ their sample size so the reader can judge them honestly.
 """
 
 import json
+import sys
 import time
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-import requests
-
 EASTERN = ZoneInfo("America/New_York")
 SEASON_START = date(2026, 4, 3)
-BASE = "https://site.web.api.espn.com/apis/site/v2/sports/basketball/wnba"
-
-UA = {
-    "User-Agent": ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                   "AppleWebKit/537.36 (KHTML, like Gecko) "
-                   "Chrome/126.0.0.0 Safari/537.36"),
-}
+# ESPN ACCESS LIVES IN ONE PLACE NOW: app/engines/espn_wnba.py.
+#
+# The mirror chain, the unwrappers, the header normalizer and get_json
+# were all defined here, and app/views/WNBA.py quietly kept a SECOND,
+# older copy — one hardcoded URL pointing at the very host this file had
+# been moved off because it 403s from cloud ranges. The live-score
+# overlay was dead for as long as that duplicate existed, silently,
+# because the reader returned {} instead of raising.
+#
+# These names are re-exported rather than renamed so wnba_probe.py,
+# wnba_scoreboard_probe.py and wnba_roster_probe.py keep importing them
+# from here, which is where their workflows expect them.
+ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT / "app"))
+from engines.espn_wnba import (  # noqa: E402
+    BASE, SCOREBOARD_SOURCES, STATUS_MAP, UA, fetch_scoreboard, get_json,
+    _is_scoreboard, _normalize_header_events,
+)
 
 OUT = Path("build_data") / "data" / "wnba"
-
-STATUS_MAP = {
-    "STATUS_SCHEDULED": "scheduled",
-    "STATUS_IN_PROGRESS": "in progress",
-    "STATUS_HALFTIME": "in progress",
-    "STATUS_END_PERIOD": "in progress",
-    "STATUS_FINAL": "final",
-    "STATUS_POSTPONED": "postponed",
-    "STATUS_CANCELED": "postponed",
-}
 
 LEADER_CATS = {"points": "PTS", "rebounds": "REB", "assists": "AST"}
 
 
-def get_json(url, _attempts=3):
-    """GET with retries. Raises on final failure, as it always did.
-
-    ESPN returns intermittent 403s to cloud IPs. A single attempt turned
-    a transient block into a whole missing league for the day, so this
-    backs off and tries again before giving up.
-    """
-    last = None
-    for i in range(_attempts):
-        try:
-            r = requests.get(url, headers=UA, timeout=25)
-            r.raise_for_status()
-            return r.json()
-        except Exception as exc:
-            last = exc
-            if i < _attempts - 1:
-                time.sleep(2 ** i)
-    raise last
-
-
-# ----------------------------------------------------------------------
-# THE SCOREBOARD ENDPOINT GETS BLOCKED; THE GAMELOG ENDPOINT DOES NOT.
-#
-# Measured, in one CI run, minutes apart, from the same runner:
-#
-#   /apis/site/v2/.../wnba/scoreboard  -> 403 Forbidden
-#   /apis/common/v3/.../wnba/gamelog   -> 200, 227 KB
-#
-# So this is not the User-Agent (both send the same one) and not an IP
-# ban on Actions. ESPN blocks that one API path from cloud ranges, and
-# when it does, wnba_precompute dies at its very first call — no slate,
-# no players, no logs. Every WNBA page then falls through to its "engine
-# is being connected" placeholder, because the whole league's data comes
-# from this one request.
-#
-# Rather than pick a replacement blind, try the known mirrors of the same
-# scoreboard in order and REPORT which one answered. They return
-# different envelopes, so each is unwrapped to the shape
-# parse_scoreboard_events already expects.
-# ----------------------------------------------------------------------
-SCOREBOARD_SOURCES = [
-    ("site.api",
-     lambda d: f"{BASE}/scoreboard?dates={d}",
-     lambda j: j),
-    # ESPN's own CDN serves the same payload under a different host, and
-    # is not behind the same filter. The scoreboard sits one level down.
-    ("cdn.espn",
-     lambda d: f"https://cdn.espn.com/core/wnba/scoreboard?xhr=1&date={d}",
-     lambda j: (j or {}).get("content", {}).get("sbData", j)),
-    # The mobile/web API. Different host again, same events array.
-    ("site.web.api",
-     lambda d: ("https://site.web.api.espn.com/apis/v2/scoreboard/header"
-                f"?sport=basketball&league=wnba&dates={d}"),
-     lambda j: (j or {}).get("sports", [{}])[0].get("leagues", [{}])[0]
-     if (j or {}).get("sports") else j),
-]
-
-
-# The source that last answered. The season backfill asks for ~120 days
-# in a row, and without this every one of them re-probed site.api first —
-# which is the host that gets blocked, so each day paid two failed
-# attempts plus their backoff before reaching a mirror that works. Once
-# one host has answered, it goes to the front of the queue.
-_PREFERRED_SOURCE = None
-
-
-def _sources_by_preference():
-    if _PREFERRED_SOURCE is None:
-        return SCOREBOARD_SOURCES
-    return sorted(SCOREBOARD_SOURCES, key=lambda s: s[0] != _PREFERRED_SOURCE)
-
-
-def _is_scoreboard(data):
-    """True when a source actually ANSWERED, empty slate or not.
-
-    Presence of the key is the test, not truthiness of the array: a day
-    with no games returns events=[], and treating that as a failure is
-    what made an off-day and a 403 look identical.
-    """
-    return isinstance(data, dict) and ("events" in data or "sports" in data)
-
-
-def _normalize_header_events(data):
-    """Reshape site.web.api's /scoreboard/header payload into the shape
-    parse_scoreboard_events reads.
-
-    MEASURED, not assumed. wnba_scoreboard_probe.py against 2026-08-03:
-
-        site.api      HTTP 403, text/html "Access Denied"
-        cdn.espn      HTTP 202, ZERO bytes
-        site.web.api  HTTP 200, 70,704 bytes of real JSON, 3 events
-
-    So exactly one host is answering, and its events carry the same games
-    in a FLATTER shape: there is no `competitions` array at all, and the
-    two sides sit directly on `event["competitors"]` — already carrying
-    `homeAway`, with the team fields (id, displayName, color, logo)
-    flattened onto the competitor rather than nested under `team`.
-
-    parse_scoreboard_events opens with `comps = event.get("competitions")`
-    and skips the event when that is empty, so every game of every day was
-    dropped in silence. That is the whole of the 2026-08-04 failure: 87
-    days answered 200 and produced zero games.
-
-    This rebuilds the nesting rather than touching the parser, so the
-    site.api shape keeps working unchanged if ESPN ever unblocks it — and
-    a payload that ALREADY has competitions is returned untouched.
-    """
-    events = (data or {}).get("events")
-    if not isinstance(events, list) or not events:
-        return data
-    # Already the full scoreboard shape — leave it alone.
-    if isinstance(events[0], dict) and events[0].get("competitions"):
-        return data
-
-    # Team identity fields, which the header flattens onto the competitor.
-    _TEAM_KEYS = ("id", "uid", "displayName", "shortDisplayName", "name",
-                  "abbreviation", "location", "color", "alternateColor",
-                  "logo", "logos", "links", "venue")
-
-    out = []
-    for ev in events:
-        if not isinstance(ev, dict):
-            continue
-        comps = ev.get("competitors") or []
-        if not comps:
-            continue
-
-        # fullStatus carries the {"type": {"name", "completed"}} block the
-        # parser needs. `status` on this feed is often a bare string, which
-        # would crash the .get("type") chain — so it is only used when it
-        # is genuinely an object.
-        status = ev.get("fullStatus")
-        if not isinstance(status, dict):
-            _s = ev.get("status")
-            status = _s if isinstance(_s, dict) else {}
-
-        norm = []
-        for c in comps:
-            if not isinstance(c, dict):
-                continue
-            entry = {
-                "homeAway": c.get("homeAway"),
-                "score": c.get("score"),
-                "winner": c.get("winner"),
-                "team": {k: c.get(k) for k in _TEAM_KEYS if c.get(k) is not None},
-            }
-            # _record() iterates records expecting dicts; this feed
-            # sometimes gives a bare "20-8" string instead, and iterating
-            # THAT yields characters and an AttributeError. Pass it
-            # through only in the shape the reader can actually handle.
-            _recs = c.get("records") or c.get("record")
-            if isinstance(_recs, list):
-                entry["records"] = _recs
-            elif isinstance(_recs, str) and _recs:
-                entry["records"] = [{"name": "overall", "summary": _recs}]
-            for _k in ("leaders", "statistics"):
-                if isinstance(c.get(_k), list):
-                    entry[_k] = c[_k]
-            norm.append(entry)
-
-        out.append({
-            "id": ev.get("id"),
-            "uid": ev.get("uid"),
-            "date": ev.get("date"),
-            "name": ev.get("name"),
-            "shortName": ev.get("shortName"),
-            "status": status,
-            "competitions": [{
-                "id": ev.get("competitionId") or ev.get("id"),
-                "date": ev.get("date"),
-                "competitors": norm,
-                # The header gives the arena as a plain string on the
-                # event; the parser reads comp["venue"]["fullName"].
-                "venue": {"fullName": ev.get("location") or ""},
-                "broadcasts": ev.get("broadcasts") or [],
-                "odds": ev.get("odds") or [],
-                "status": status,
-            }],
-        })
-
-    merged = dict(data)
-    merged["events"] = out
-    return merged
-
-
-def fetch_scoreboard(yyyymmdd, require_events=True):
-    """One day's slate, from whichever ESPN host is answering.
-
-    Returns (payload, source_name). Raises only if every source fails,
-    and then names all of them — a silent empty slate is indistinguishable
-    from an off-day, which is the confusion that cost a full day of WNBA
-    coverage.
-
-    require_events=False is for the season backfill, where an empty day
-    is an ordinary off-day and must be accepted as a real answer rather
-    than sending the loop off to re-probe the other two hosts.
-    """
-    global _PREFERRED_SOURCE
-    errors = []
-    for name, build_url, unwrap in _sources_by_preference():
-        url = build_url(yyyymmdd)
-        try:
-            data = unwrap(get_json(url, _attempts=2))
-        except Exception as exc:
-            errors.append(f"{name}: {type(exc).__name__} {exc}")
-            continue
-        if not _is_scoreboard(data):
-            errors.append(f"{name}: 200 but not a scoreboard payload")
-            continue
-        # Applied to EVERY source, not just the one known to need it: it
-        # is a no-op on a payload that already carries `competitions`, and
-        # making it conditional on the source name would mean a mirror
-        # that changes shape silently goes back to yielding nothing.
-        data = _normalize_header_events(data)
-        if require_events and not (data.get("events") or data.get("sports")):
-            errors.append(f"{name}: 200 but no events")
-            continue
-        if _PREFERRED_SOURCE != name:
-            print(f"WNBA: scoreboard via {name}")
-            _PREFERRED_SOURCE = name
-        return data, name
-    raise RuntimeError("every ESPN scoreboard source failed -> "
-                       + " | ".join(errors))
+# get_json, SCOREBOARD_SOURCES, _is_scoreboard,
+# _normalize_header_events and fetch_scoreboard moved to
+# app/engines/espn_wnba.py so the live page reads the same chain.
+# They are imported above; STATUS_MAP is shared from there too.
 
 
 def _to_et(iso_utc: str) -> str:

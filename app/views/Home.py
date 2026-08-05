@@ -335,6 +335,78 @@ def _last_night_score(board):
             f'{hits}/{total}</span>')
 
 
+def _spacer_row():
+    """A row that takes up exactly the height of a real pick row and
+    shows nothing.
+
+    WHY THIS IS MARKUP AND NOT CSS. One board publishes thirteen picks
+    and another publishes one, so three cards in a row ended at three
+    different heights and the row read as a pile. The first fix was a
+    stylesheet rule stretching [data-testid='stColumn'] so every card
+    filled the tallest column. It did nothing at all: Streamlit had
+    renamed that element in the version requirements.txt pins, so the
+    selector matched no element and failed silently — the worst kind of
+    failure, because the page still rendered. Reserving the space in the
+    content cannot be broken by a vendor rename.
+
+    visibility:hidden, not display:none — the row must still occupy its
+    space. The padding, weight, size and 1px border are copied from
+    _pick_row so the reserved height is the real one and not an
+    estimate. If _pick_row's box changes, change this with it.
+    """
+    return ('<div aria-hidden="true" style="display:flex; '
+            'align-items:center; '
+            'padding:var(--lc-space-sm) var(--lc-space-none); '
+            'border-bottom:1px solid transparent; visibility:hidden;">'
+            '<div style="font-weight:600; font-size:var(--lc-text-body);">'
+            '&nbsp;</div></div>')
+
+
+def _card_rows(picks, board):
+    """A board card's whole body: always _PREVIEW_ROWS rows and always
+    one footer line, however many picks the board published.
+
+    Every card in a row therefore emits the same number of boxes and they
+    end level. Returned as ONE string rather than drawn per row, because
+    Streamlit ships each st.markdown as its own entry in the delta and a
+    three-up grid was sending a dozen fragments to draw what the browser
+    lays out as a single list.
+    """
+    rows = [_pick_row(p) for p in picks[:_PREVIEW_ROWS]]
+    rows += [_spacer_row()] * (_PREVIEW_ROWS - len(rows))
+
+    extra = ""
+    if len(picks) > _PREVIEW_ROWS:
+        extra = (f'<span style="color:{COLOR["text_faint"]};">'
+                 f'+{len(picks) - _PREVIEW_ROWS} more</span>')
+
+    # HOW THIS BOARD DID LAST NIGHT, right beside what it likes tonight.
+    # This is the one thing the site has that nobody else does, and it
+    # was buried three sections down the page where it read as a
+    # separate report rather than as context for the picks above it.
+    last = _last_night_score(board)
+
+    # ALWAYS emitted, even when both halves are empty — a board with no
+    # graded yesterday and no overflow used to drop this line entirely
+    # and come up one line short of its neighbours. The &nbsp; is what
+    # holds the line open.
+    #
+    # white-space:nowrap because "last night (dots) 3/5" next to
+    # "+10 more" is wider than a three-up column: the Strikeout Board's
+    # footer wrapped onto a second line, which is the same ragged row by
+    # another route. Overflow is clipped rather than wrapped; the dots
+    # already drop out above eight picks (see _result_dots).
+    rows.append(
+        f'<div style="display:flex; align-items:center; '
+        f'justify-content:space-between; gap:var(--lc-space-md); '
+        f'padding-top:var(--lc-space-sm); '
+        f'font-size:var(--lc-text-tiny); '
+        f'white-space:nowrap; overflow:hidden; '
+        f'font-family:\'JetBrains Mono\',monospace;">'
+        f'{extra or "&nbsp;"}{last}</div>')
+    return "".join(rows)
+
+
 def _jump_target(board):
     """The page a board's button should open, or None if it isn't
     reachable from the sport currently selected. See BOARD_PAGE."""
@@ -517,47 +589,28 @@ def _render_today(record, today):
                         f'{cfg.get("label", board)}</div>',
                         unsafe_allow_html=True,
                     )
+                # min-height reserves TWO lines. The question text
+                # varies by board, so this sentence wraps on some cards
+                # and not others — a one-line difference at the top of
+                # the card that no amount of padding below it can undo.
                 st.markdown(
                     f'<div style="font-size:var(--lc-text-tiny); '
-                    f'color:{COLOR["text_muted"]}; margin-bottom:var(--lc-space-sm);">'
+                    f'color:{COLOR["text_muted"]}; line-height:1.5; '
+                    f'min-height:3em; margin-bottom:var(--lc-space-sm);">'
                     f'{len(picks)} picks \u00b7 graded on whether the player '
                     f'{cfg.get("question", "hit")}.</div>',
                     unsafe_allow_html=True,
                 )
-                # Three rows, not six. The full board is one click away on
-                # its own page; a home screen that reprints six of every
-                # board's rows is not orienting anyone, it is making them
-                # read the whole site twice before they have chosen
-                # anything. Three is enough to recognise a board and see
-                # whether tonight looks interesting.
-                # One element for the rows, not one per row. Streamlit
-                # ships each st.markdown as its own entry in the delta,
-                # so a three-up grid of boards was sending a dozen tiny
-                # HTML fragments to draw what the browser lays out as a
-                # single list.
-                _rows_html = "".join(_pick_row(p)
-                                     for p in picks[:_PREVIEW_ROWS])
-
-                extra = ""
-                if len(picks) > _PREVIEW_ROWS:
-                    extra = (f'<span style="color:{COLOR["text_faint"]};">'
-                             f'+{len(picks) - _PREVIEW_ROWS} more</span>')
-
-                # HOW THIS BOARD DID LAST NIGHT, right beside what it likes
-                # tonight. This is the one thing the site has that nobody
-                # else does, and it was buried three sections down the page
-                # where it read as a separate report rather than as context
-                # for the picks directly above it.
-                last = _last_night_score(board)
-                if last or extra:
-                    _rows_html += (
-                        f'<div style="display:flex; align-items:center; '
-                        f'justify-content:space-between; gap:var(--lc-space-md); '
-                        f'padding-top:var(--lc-space-sm); '
-                        f'font-size:var(--lc-text-tiny); '
-                        f'font-family:\'JetBrains Mono\',monospace;">'
-                        f'{extra}{last}</div>')
-                st.markdown(_rows_html, unsafe_allow_html=True)
+                # Three rows, not six. The full board is one click away
+                # on its own page; a home screen that reprints six of
+                # every board's rows is not orienting anyone, it is
+                # making them read the whole site twice before they have
+                # chosen anything. Three is enough to recognise a board
+                # and see whether tonight looks interesting.
+                #
+                # _card_rows pads to that fixed three so this row of
+                # cards ends level, and carries the last-night score.
+                st.markdown(_card_rows(picks, board), unsafe_allow_html=True)
 
     # ---- boards this sport publishes that aren't recorded yet ----
     #
@@ -625,23 +678,8 @@ def _render_today(record, today):
                             f'{cfg.get("label", board)}</div>',
                             unsafe_allow_html=True,
                         )
-                    _rows_html = "".join(_pick_row(p)
-                                         for p in picks[:_PREVIEW_ROWS])
-                    _extra = ""
-                    if len(picks) > _PREVIEW_ROWS:
-                        _extra = (f'<span style="color:{COLOR["text_faint"]};">'
-                                  f'+{len(picks) - _PREVIEW_ROWS} more</span>')
-                    _last = _last_night_score(board)
-                    if _last or _extra:
-                        _rows_html += (
-                            f'<div style="display:flex; align-items:center; '
-                            f'justify-content:space-between; '
-                            f'gap:var(--lc-space-md); '
-                            f'padding-top:var(--lc-space-sm); '
-                            f'font-size:var(--lc-text-tiny); '
-                            f'font-family:\'JetBrains Mono\',monospace;">'
-                            f'{_extra}{_last}</div>')
-                    st.markdown(_rows_html, unsafe_allow_html=True)
+                    st.markdown(_card_rows(picks, board),
+                                unsafe_allow_html=True)
 
 
 def _best_call(rows, sums):
@@ -789,7 +827,7 @@ def _render_explore():
     # looking exactly as important as the four working ones. They are
     # one line of text below the grid now, which is what they are worth.
     here = [(p, sp, b) for p, sp, b in EXPLORE if sp == CURRENT_SPORT]
-    elsewhere = [(p, sp) for p, sp, _b in EXPLORE if sp != CURRENT_SPORT]
+    elsewhere = [(p, sp, b) for p, sp, b in EXPLORE if sp != CURRENT_SPORT]
 
     st.caption("What each place actually answers.")
 
@@ -812,25 +850,48 @@ def _render_explore():
                 )
 
     if elsewhere:
+        # These used to be one dead sentence: "Props Board, Defense
+        # Matchup \u2014 switch to WNBA above". _render_today had exactly
+        # that dead end for exactly the same two boards, and it was fixed
+        # by making them openable rather than by rewording them. Leaving
+        # this one behind meant the same page behaved two different ways
+        # for the same pair of boards depending on which section you
+        # were reading.
+        #
+        # _goto_sport records the sport change as an intent and lets
+        # app.py apply it before the switcher exists \u2014 see the
+        # lc_pending_sport comment there. One click lands on the board.
+        #
+        # Deliberately lighter than the cards above: a link and its
+        # blurb, no surface. "Published here" and "published elsewhere"
+        # should still read differently at a glance; that difference is
+        # just no longer the difference between working and not.
         by_sport = {}
-        for page, sport in elsewhere:
-            by_sport.setdefault(sport, []).append(page)
-        # Separators are built OUTSIDE the f-strings. A backslash escape
-        # inside an f-string EXPRESSION is a SyntaxError on Python 3.11,
-        # which requirements.txt and both workflows pin, and it fails at
-        # import time — the page does not render at all.
-        _DASH = "\u2014"
-        _DOT = " \u00b7 "
-        parts = [f'{", ".join(pages)} {_DASH} switch to {sport} above'
-                 for sport, pages in by_sport.items()]
-        _joined = _DOT.join(parts)
-        st.markdown(
-            f'<div style="color:{COLOR["text_faint"]}; '
-            f'font-size:var(--lc-text-caption); '
-            f'padding-top:var(--lc-space-md);">'
-            f'{_joined}</div>',
-            unsafe_allow_html=True,
-        )
+        for page, sport, blurb in elsewhere:
+            by_sport.setdefault(sport, []).append((page, blurb))
+        for sport, pages in sorted(by_sport.items()):
+            st.markdown(
+                f'<div style="color:{COLOR["text_muted"]}; '
+                f'font-size:var(--lc-text-caption); font-weight:600; '
+                f'padding:var(--lc-space-xl) var(--lc-space-none) '
+                f'var(--lc-space-sm);">{sport} \u00b7 '
+                f'<span style="color:{COLOR["text_faint"]}; '
+                f'font-weight:400;">opening one switches sport</span></div>',
+                unsafe_allow_html=True,
+            )
+            _ocols = st.columns(max(1, min(len(pages), 3)))
+            for j, (page, blurb) in enumerate(pages):
+                with _ocols[j % len(_ocols)]:
+                    _goto_sport(sport, page,
+                                key=f"home_ex_other_{sport}_{j}",
+                                label=f"{page}  \u2192")
+                    st.markdown(
+                        f'<div style="color:{COLOR["text_muted"]}; '
+                        f'font-size:var(--lc-text-caption); '
+                        f'line-height:1.6; '
+                        f'margin-top:var(--lc-space-xs);">{blurb}</div>',
+                        unsafe_allow_html=True,
+                    )
 
 
 def _render_track_record(record):
@@ -1042,19 +1103,16 @@ def _inject_card_css():
         "  border-radius: 50%; margin-right: .4rem;"
         "  vertical-align: middle; animation: lc-breathe 2s ease-in-out infinite; }"
         "@keyframes lc-breathe { 0%,100% { opacity: 1; } 50% { opacity: .35; } }"
-        # RAGGED ROWS. One board publishes ten picks and another
-        # publishes one, so three cards in a row ended at three
-        # different heights and the row read as a pile rather than a
-        # row. Stretching each card to fill its column costs nothing and
-        # gives the eye a line to follow. Both testids are matched
-        # because Streamlit has renamed this element between versions
-        # and a pinned upgrade should not silently undo the layout.
-        "[data-testid='stColumn'], [data-testid='column'] {"
-        "  display: flex; align-items: stretch; }"
-        "[data-testid='stColumn'] > div, [data-testid='column'] > div {"
-        "  width: 100%; }"
-        "[class*='st-key-card_home_'] {"
-        "  height: 100%; }"
+        # RAGGED ROWS are fixed in the MARKUP, not here.
+        #
+        # This block used to stretch [data-testid='stColumn'] so each
+        # card filled the tallest column in its row. It never worked:
+        # Streamlit renamed that element in the version requirements.txt
+        # pins, the selector matched nothing, and the failure was silent
+        # because the page still rendered. _card_rows reserves the space
+        # in the content instead. Do not reintroduce a selector-based
+        # version of this - guessing at a vendor's internal class names
+        # is what cost the last attempt.
 
         "@media (prefers-reduced-motion: reduce) {"
         "  .lc-live-dot { animation: none; }"

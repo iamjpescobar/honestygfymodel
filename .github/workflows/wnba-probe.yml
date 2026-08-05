@@ -27,6 +27,6 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
-      - run: pip install requests
+      - run: pip install -c requirements.txt requests
       - name: Probe the gamelog
         run: python wnba_probe.py "${{ inputs.pid }}" "${{ inputs.date }}"

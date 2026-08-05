@@ -1,5 +1,4 @@
 import pandas as pd
-import requests
 import streamlit as st
 
 from styles.kc_theme import (page_header, card_open, card_close,
@@ -57,7 +56,15 @@ def _ordinal(n):
     return {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
 
 
-_SB_URL = "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard"
+# _SB_URL used to live here: one hardcoded scoreboard host, which was
+# the exact path wnba_precompute documents as 403 from cloud IP
+# ranges. It was already blocked when it was written. The page never
+# said so, because _live_overrides swallows failures by design, so
+# live scores and the 75s auto-refresh were both dead in silence.
+#
+# The mirror chain lives in engines/espn_wnba.py and the pipeline
+# reads the same one. Do not put a URL back in this file.
+from engines.espn_wnba import live_scores as _live_scores
 
 # HEADER FIRST, TOOLBAR SECOND.
 #
@@ -110,43 +117,20 @@ def _load_games():
 
 @st.cache_data(ttl=60, max_entries=4, show_spinner=False)
 def _live_overrides():
-    """Best-effort live score check straight from the same verified feed
-    the pipeline uses, shared across all sessions and refreshed at most
-    once a minute. Returns {} on ANY failure — the page then simply
-    shows the pipeline snapshot, never anything invented."""
-    try:
-        r = requests.get(_SB_URL, timeout=8,
-                         headers={"User-Agent": "Mozilla/5.0"})
-        if r.status_code != 200:
-            return {}
-        out = {}
-        for event in r.json().get("events", []) or []:
-            comp = (event.get("competitions") or [{}])[0]
-            competitors = comp.get("competitors") or []
-            home = next((c for c in competitors if c.get("homeAway") == "home"), None)
-            away = next((c for c in competitors if c.get("homeAway") == "away"), None)
-            if not home or not away:
-                continue
-            key = ((away.get("team") or {}).get("displayName", ""),
-                   (home.get("team") or {}).get("displayName", ""))
-            stype = ((event.get("status") or {}).get("type")) or {}
-            name = stype.get("name", "")
-            status = {"STATUS_FINAL": "final", "STATUS_IN_PROGRESS": "in progress",
-                      "STATUS_HALFTIME": "in progress", "STATUS_END_PERIOD": "in progress",
-                      "STATUS_POSTPONED": "postponed"}.get(name)
-            entry = {"detail": stype.get("shortDetail") or stype.get("detail")}
-            if status:
-                entry["status"] = status
-            try:
-                a_s, h_s = int(float(away.get("score", 0))), int(float(home.get("score", 0)))
-                if status in ("in progress", "final"):
-                    entry["scoreline"] = f"{key[0]} {a_s} - {h_s} {key[1]}"
-            except (TypeError, ValueError):
-                pass
-            out[key] = entry
-        return out
-    except Exception:
-        return {}
+    """Live scores for tonight, or {} — shared across sessions and
+    refreshed at most once a minute.
+
+    All the work is in engines/espn_wnba.live_scores(), which tries every
+    known mirror and returns {} rather than raising. Keeping the fetch
+    there rather than here is the whole point of the change: this file
+    used to hold its own copy pointed at a blocked host.
+
+    The mirrors are proven from GitHub Actions, not from Render — a
+    different cloud range, and ESPN blocks by range. Worst case every
+    mirror is blocked here too and this returns {}, which is exactly what
+    the old single-host version returned on every single call.
+    """
+    return _live_scores()
 
 
 games, generated_at, slate_date = _load_games()
