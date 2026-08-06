@@ -1,0 +1,36 @@
+name: KBO official-source probe
+
+# Manual only. Asks whether eng.koreabaseball.com can replace
+# mykbostats, whose Acceptable Use clause 6 prohibits using their
+# content to make sports bets, and whose Aug 2026 rewrite broke our
+# parser silently.
+#
+# The real question is whether a specific month can be requested by GET
+# or whether the ASP.NET page needs a viewstate POST. That decides
+# whether the rewrite is easy or awkward, and it should be known first.
+#
+# MUST run here rather than on a laptop: Korean sites regularly
+# geo-fence or rate-limit by region.
+#
+# Touches nothing: no commit, no release, no deploy hook.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      # Only requests. This probe imports nothing from the app on
+      # purpose: it is reconnaissance on an outside source, and coupling
+      # it to the pipeline would let a change here break the nightly.
+      - run: pip install -c requirements.txt requests
+
+      - name: Probe the official KBO site
+        run: python kbo_official_probe.py
