@@ -795,24 +795,38 @@ def main():
           f"upcoming games (homepage carries TODAY only, so anything "
           f"further out stays TBD by design)")
 
-    # HEAT RISK, from the same document. This is the item that has been
-    # costing real money: a game voided for extreme heat settles bets
-    # nobody could have avoided, and the site publishes the warning
-    # hours ahead. Keys are set on every upcoming game so a downstream
-    # .get() never has to distinguish "no risk" from "not looked at" —
-    # False means checked and clear, and temp_c stays None when the card
-    # carried no figure.
-    _hc = fetch_homepage_conditions()
-    heat_hits = 0
+    # WEATHER FROM A SOURCE WE OWN.
+    #
+    # This used to read a temperature and a "Chance of Heat Cancellation"
+    # off the mykbostats homepage. That inherited their terms, their
+    # upstream (the figure is Apple Weather) and their markup, which was
+    # rewritten on 2026-08-04. Fetching a forecast directly removes all
+    # three dependencies and adds one thing their page cannot give:
+    # tomorrow's risk, not just today's.
+    #
+    # Keys are set on every upcoming game so a downstream .get() never
+    # has to tell "no risk" from "not looked at".
+    from engines.intl_weather import forecast as _wx, summarize as _wxsum
+    _venues = [g.get("stadium") or g.get("venue") or "" for g in upcoming]
+    _wx_by_date = {}
     for g in upcoming:
-        _gid = str(g.get("game_slug") or "").split("-", 1)[0]
-        c = _hc.get(_gid) or {}
-        g["temp_c"] = c.get("temp_c")
-        g["heat_risk"] = bool(c.get("heat_risk"))
-        if g["heat_risk"]:
-            heat_hits += 1
-    print(f"KBO: {heat_hits} of {len(upcoming)} upcoming games flagged at "
-          f"risk of heat cancellation")
+        _wx_by_date.setdefault(g["date"], []).append(g)
+    heat_hits = 0
+    for _d, _games in _wx_by_date.items():
+        _r = _wx("kbo", [g.get("stadium") or g.get("venue") or ""
+                         for g in _games], _d)
+        print("  " + _wxsum(_r))
+        for g in _games:
+            c = _r.get(g.get("stadium") or g.get("venue") or "") or {}
+            g["temp_c"] = c.get("temp_c")
+            g["max_temp_c"] = c.get("max_temp_c")
+            g["precip_prob"] = c.get("precip_prob")
+            g["heat_risk"] = bool(c.get("heat_risk"))
+            g["weather_attribution"] = c.get("attribution")
+            if g["heat_risk"]:
+                heat_hits += 1
+    print(f"KBO: {heat_hits} of {len(upcoming)} upcoming games at or above "
+          f"the heat-cancellation threshold")
 
     stats = team_form(finals) if finals else {}
 
