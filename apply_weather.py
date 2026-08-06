@@ -6,7 +6,15 @@ RESULT line, then delete it:
     python apply_weather.py
     rm apply_weather.py
 
-SUPERSEDES the earlier apply_weather.py. Same six files plus
+SUPERSEDES every earlier apply_weather.py, and unlike them it accepts a
+REPO THAT ALREADY HAS AN EARLIER BATCH APPLIED. The first version
+aborted with "6 file(s) drifted" for exactly that reason: it was built
+against the uploaded zip, and by then the tree had moved on. Each entry
+below therefore carries a TUPLE of acceptable prior hashes — every state
+these files are known to have been in — plus the target. Anything
+outside that set is still refused, which is the point of the guard.
+
+Safe to re-run: a file already at its target hash is left alone. Same six files plus
 kbo_precompute.py, and it carries the three venue-lookup fixes the
 first live run exposed (Kia Tigers vs KIA Tigers, the full-length
 Japanese park names, and an unrecognised venue beating the fallback).
@@ -50,17 +58,27 @@ def sha(path):
 def main():
     # ---- 1. PRE-FLIGHT. Nothing is written until every file checks out.
     drift = []
-    for rel, before, _after, *_body in FILES:
-        exists = os.path.exists(rel)
-        if before is None and exists:
-            drift.append(rel + " (expected new, already present)")
-        elif before is not None and not exists:
-            drift.append(rel + " (missing)")
-        elif before is not None and sha(rel) != before:
-            drift.append(rel + " (changed since this was built)")
+    for rel, accept, after, *_body in FILES:
+        # `accept` is every prior state this file is known to have been
+        # in. An empty tuple means the file is new.
+        if not os.path.exists(rel):
+            # None inside `accept` means "legitimately absent" — this
+            # batch introduces the file, so some valid trees lack it.
+            if None not in accept:
+                drift.append(rel + " (missing)")
+            continue
+        cur = sha(rel)
+        if cur == after:
+            continue          # already applied; writing it again is a no-op
+        if cur not in accept:
+            drift.append(rel + " (unrecognised state " + cur + ")")
 
     if drift:
-        print("ABORT: working tree does not match. Nothing was written.")
+        print("ABORT: a file is in a state this script does not know.")
+        print("Nothing was written. Send these lines back rather than")
+        print("forcing it — an unrecognised hash means someone changed")
+        print("the file outside these batches, and overwriting it would")
+        print("silently discard that work.")
         for d in drift:
             print("  drift:", d)
         print("RESULT: aborted, " + str(len(drift)) + " file(s) drifted")
@@ -138,7 +156,7 @@ def main():
 
 
 FILES = [
-    ('npb_precompute.py', 'a55632b29c380f8d', '0a7a9d3b8388c2da',
+    ('npb_precompute.py', ('a55632b29c380f8d', 'ccde40dbd6636d03', '818cc4b757cf0c45'), '0a7a9d3b8388c2da',
      "IiIiCk5QQiBzbGF0ZSArIHRlYW0gc3RhdHMgZmV0Y2hlciDigJQgcmVhbCBkYXRhIGZyb20gbnBiLmpwJ3Mgb2ZmaWNpYWwKbW9u"
      "dGhseSBzY2hlZHVsZS9yZXN1bHRzIHBhZ2VzLgoKVHdvIGpvYnMsIG9uZSB2ZXJpZmllZCBzb3VyY2U6CjEuIFRvZGF5J3Mgc2xh"
      "dGUgSU4gSlNUICh3aGljaCBhIFVTIHVzZXIgc2VlcyBhcyB0b21vcnJvdydzIGdhbWVzCiAgIHRvbmlnaHQpLCB3aXRoIHN0YXR1"
@@ -515,7 +533,7 @@ FILES = [
      "IG5vdCBnYW1lc19vdXQ6CiAgICAgICAgcHJpbnQoIk5QQjogZW1wdHkgc2xhdGUg4oCUIGxpa2VseSBhIGxlYWd1ZSBvZmYtZGF5"
      "LiBUaGF0IGlzIHRoZSBob25lc3Qgc3RhdGUuIikKCgppZiBfX25hbWVfXyA9PSAiX19tYWluX18iOgogICAgbWFpbigpCg=="
      ),
-    ('kbo_precompute.py', '92ea5de851a158ba', 'ff3f850006de69d6',
+    ('kbo_precompute.py', ('92ea5de851a158ba', 'd375502dd27752e6', 'de485070873f2931'), 'ff3f850006de69d6',
      "IiIiCktCTyBzbGF0ZSArIHNlYXNvbiBkYXRhIGZldGNoZXIg4oCUIHJlYWwgZGF0YSBmcm9tIE15S0JPU3RhdHMsIHBsdXMgcmVh"
      "bApzZWFzb24gc3RhdHMgZnJvbSB0aGUgb2ZmaWNpYWwgS0JPIHN0YXRzIHNpdGUuCgp2MiBhZGRzIHRoZSBzZWFzb24gbGF5ZXI6"
      "IGNyYXdscyBldmVyeSB3ZWVrJ3Mgc2NoZWR1bGUgcGFnZSBzaW5jZQpvcGVuaW5nIGRheSwgcGFyc2VzIGZpbmFscyBERUZFTlNJ"
@@ -1154,7 +1172,7 @@ FILES = [
      "IHNpbmNlIHRoaXMgd2FzIHdyaXR0ZW47IHBhZ2Ugd2lsbCBob25lc3RseSAiCiAgICAgICAgICAgICAgIm9taXQgdGhlc2Ugc2Vj"
      "dGlvbnMgcmF0aGVyIHRoYW4gZ3Vlc3MuIikKCgppZiBfX25hbWVfXyA9PSAiX19tYWluX18iOgogICAgbWFpbigpCg=="
      ),
-    ('app/engines/intl_weather.py', '327f2daf95acf2a9', '479bd1024525fcec',
+    ('app/engines/intl_weather.py', ('327f2daf95acf2a9', '93a8302268fd8e2f'), '479bd1024525fcec',
      "IiIiCkZvcmVjYXN0IHdlYXRoZXIgZm9yIEtCTyBhbmQgTlBCIHZlbnVlcywgZnJvbSBhIHNvdXJjZSB3ZSBhY3R1YWxseSBvd24u"
      "CgpXSFkgVEhJUyBFWElTVFMKCnBhcmtfd2VhdGhlci5weSBhbHJlYWR5IGRvZXMgdGhpcyBwcm9wZXJseSBmb3IgTUxCOiBhcGku"
      "d2VhdGhlci5nb3YsClVTIGdvdmVybm1lbnQgZGF0YSwgcHVibGljIGRvbWFpbiwgbm8ga2V5LiBUaGVyZSB3YXMgbm8gZXF1aXZh"
@@ -1384,7 +1402,7 @@ FILES = [
      "ICAgIGlmIHRlbXAgaXMgbm90IE5vbmU6CiAgICAgICAgb3V0LmFwcGVuZCgoZiJ7cm91bmQodGVtcCl9XHUwMGIwQyIsICJuZXV0"
      "cmFsIikpCiAgICByZXR1cm4gb3V0Cg=="
      ),
-    ('app/views/KBO.py', 'c73d8703151fdd4e', '24c57d3909abe520',
+    ('app/views/KBO.py', ('c73d8703151fdd4e',), '24c57d3909abe520',
      "aW1wb3J0IGpzb24KZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCgppbXBvcnQgc3RyZWFtbGl0IGFzIHN0Cgpmcm9tIGVuZ2luZXMu"
      "aW50bF92ZW51ZXMgaW1wb3J0IChyb29mIGFzIF9yb29mX2tpbmQsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBy"
      "b29mX25vdGUgYXMgX3Jvb2Zfbm90ZSkKX0xFQUdVRSA9ICJrYm8iCgpmcm9tIHN0eWxlcy5rY190aGVtZSBpbXBvcnQgKHBhZ2Vf"
@@ -1733,7 +1751,7 @@ FILES = [
      "aGVyZSDigJQgb25seSB0aGUgdGl0bGUgZm9sbG93cwogICAgICAgICAgICAjIHRoZSBzcG9ydC4KICAgICAgICAgICAgYWNjZW50"
      "PVNQT1JUX0FDQ0VOVFMuZ2V0KCJLQk8iKSwKICAgICAgICApCgpmb290ZXIoKQo="
      ),
-    ('app/views/NPB.py', 'b0b700da668205ef', 'a0ed3a5eefa4a421',
+    ('app/views/NPB.py', ('b0b700da668205ef',), 'a0ed3a5eefa4a421',
      "aW1wb3J0IGpzb24KZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCgppbXBvcnQgc3RyZWFtbGl0IGFzIHN0Cgpmcm9tIGVuZ2luZXMu"
      "aW50bF92ZW51ZXMgaW1wb3J0IChyb29mIGFzIF9yb29mX2tpbmQsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBy"
      "b29mX25vdGUgYXMgX3Jvb2Zfbm90ZSkKX0xFQUdVRSA9ICJucGIiCgpmcm9tIHN0eWxlcy5rY190aGVtZSBpbXBvcnQgKHBhZ2Vf"
@@ -1967,7 +1985,7 @@ FILES = [
      "b2xsb3dzCiAgICAgICAgICAgICMgdGhlIHNwb3J0LgogICAgICAgICAgICBhY2NlbnQ9U1BPUlRfQUNDRU5UUy5nZXQoIk5QQiIp"
      "LAogICAgICAgICkKCmZvb3RlcigpCg=="
      ),
-    ('tests/test_intl_weather_parity.py', None, '6b9b77ada4a2cdb0',
+    ('tests/test_intl_weather_parity.py', (None, 'c46af4007809a392', 'aed8406cefd6887a'), '6b9b77ada4a2cdb0',
      "IiIiS0JPIGFuZCBOUEIgbXVzdCBzaG93IHRoZSBzYW1lIHdlYXRoZXIgc2lnbmFsLCBvciBuZWl0aGVyIHNob3VsZC4KCldIWSBU"
      "SElTIFRFU1QgRVhJU1RTCgpIZSBiZXRzIHRoZSB0d28gbWFya2V0cyB0b2dldGhlci4gQSByaXNrIG1hcmtlciB0aGF0IGFwcGVh"
      "cnMgb24gb25lCmJvYXJkIGFuZCBub3QgdGhlIG90aGVyIGlzIHdvcnNlIHRoYW4gbm8gbWFya2VyIGF0IGFsbCwgYmVjYXVzZSBh"
@@ -2083,7 +2101,7 @@ FILES = [
      "aXQoMSkKcHJpbnQoIlBBU1M6IEtCTyBhbmQgTlBCIHNoYXJlIG9uZSB3ZWF0aGVyIGVuZ2luZSwgb25lIHdvcmRpbmcsIG9uZSBj"
      "cmVkaXQiKQo="
      ),
-    ('tests/test_kbo_homepage_starters.py', 'acbc0264f8fc8f34', '8f96b57a603fbc28',
+    ('tests/test_kbo_homepage_starters.py', ('acbc0264f8fc8f34',), '8f96b57a603fbc28',
      "IiIiS0JPIHByb2JhYmxlcyBjb21lIG9mZiB0aGUgbXlrYm9zdGF0cyBIT01FUEFHRSwgbm90IHRoZSBnYW1lIHBhZ2UuCgpXSFkg"
      "VEhJUyBURVNUIEVYSVNUUwoKa2JvX3ByZWNvbXB1dGUgcmVwb3J0ZWQgYDAgaGFkIGF0IGxlYXN0IG9uZSBwcm9iYWJsZSBwb3N0"
      "ZWRgIG9uIGV2ZXJ5CnJ1biBmb3Igd2Vla3MsIGluY2x1ZGluZyBvbmUgYXQgMTY6NDkgS1NUIOKAlCBhbiBob3VyIGZvcnR5IGJl"
@@ -2218,7 +2236,7 @@ FILES = [
      "KQpwcmludCgiUEFTUzogaG9tZXBhZ2Ugc3VwcGxpZXMgc3RhcnRlcnMsIHZlbnVlIGFuZCBzdGFydCB0aW1lOyBndWVzcy1mcmVl"
      "IikK"
      ),
-    ('HANDOFF.md', 'e7b8b961667e62ee', '884ee199eabd3290',
+    ('HANDOFF.md', ('e7b8b961667e62ee', 'a2b72dce4c8a2bca', '57ecb13efd927532'), '884ee199eabd3290',
      "IyBMb3MgQ2FwcGVycyDigJQgc2Vzc2lvbiBoYW5kb2ZmCgpSZWFkIFJVTEVTIGJlZm9yZSBwcm9wb3NpbmcgYW55IGNoYW5nZTsg"
      "ZXZlcnkgb25lIHdhcyBsZWFybmVkIGJ5CmJyZWFraW5nIHNvbWV0aGluZy4KCioqVGhpcyBmaWxlIHdhcyByZXdyaXR0ZW4gYWZ0"
      "ZXIgYW4gYXVkaXQgZm91bmQgc2V2ZXJhbCBQRU5ESU5HIGl0ZW1zCndlcmUgYWxyZWFkeSBzaGlwcGVkLiBWZXJpZnkgYmVmb3Jl"
