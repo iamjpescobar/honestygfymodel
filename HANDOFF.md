@@ -3,11 +3,78 @@
 Read RULES before proposing any change; every one was learned by
 breaking something.
 
-**Rewritten 2026-08-06 (second audit of the day). The previous version
-of this file was itself corrupt — a dead copy of item V was left
-dangling under the pitcher-H2H section, describing as broken something
-the section twenty lines above described as fixed. Verify before you
-build; the block below is the whole point of this document.**
+**Rewritten 2026-08-06. An earlier version of this file was itself
+corrupt — a dead copy of item V dangled under the pitcher-H2H section,
+describing as broken something the section twenty lines above described
+as fixed. Verify before you build. START WITH "PICK UP HERE".**
+
+---
+
+## PICK UP HERE — state as of 2026-08-06 ~17:00 UTC
+
+**Everything below the next divider is background. This block is what
+you do first.**
+
+### What is on main and verified green
+`TESTS:68 FAILING: none` in the Codespace, everything pushed. Four
+things shipped today:
+
+1. **The KBO crash fix.** `fetch_homepage_schedule()` now exists;
+   `main()` calls it and `fetch_homepage_starters()` separately instead
+   of unpacking two values from a one-value function.
+2. **`parse_week` reads venue and first pitch off schedule-card text**
+   via `_card_time_venue()`, which reuses `HOME_TIME_VENUE`. This is
+   the `TBD · TBD KST / TBD ET` fix for FUTURE dates.
+3. **Open-Meteo retries once** on a transport failure.
+4. **`intl_v2_probe.py`** + its workflow, plus two new tests
+   (`test_return_arity.py`, `test_kbo_schedule_card.py`).
+
+### What is NOT verified, and why
+**None of items 1–3 has executed in production.** Both runs were
+triggered and both are still QUEUED. GitHub declared a **major Actions
+outage** at 15:22 UTC on 2026-08-06; `Nightly Statcast Data #143` died
+after 15 minutes with `The job was not acquired by Runner of type
+hosted` and an internal-server-error correlation id. Zero steps ran, so
+nothing touched the archive — **the published data is intact and the
+site is fine.**
+
+Nothing in the repo caused this. The same workflow files ran clean
+twice earlier the same day.
+
+### Do these in order
+
+1. **Check <https://www.githubstatus.com>.** If Actions is not
+   Operational, stop and wait. Do not re-run anything; queued runs pile
+   up and all fire at once when capacity returns.
+2. **Cancel duplicate queued runs.** There are two of each —
+   `KBO/NPB v2 probe` #4 and #6, `Late slate refresh` #14 and #17.
+   Keep one of each. Two concurrent late-refresh runs would race each
+   other over the release asset (see item G).
+3. **Let one `Late slate refresh` finish.** Read the KBO step for:
+   - no `Traceback`, job green
+   - `KBO: homepage — N of M game cards carried a time and venue`
+   - `KBO: wrote N games`
+   Then reload the KBO board and Sync latest. **Today's slate is
+   heat-canceled, so it will still read TBD — that is correct, a
+   canceled card carries no clock.** The board only ever holds ONE slate (slate_date_kst) — there is no date picker, so this cannot be checked by clicking forward. The proof is the next slate that actually gets played: its header should show a real venue and first pitch.
+4. **Run `KBO/NPB v2 probe` once** (round 3). It now fetches
+   `/Teams/PlayerInfoPitcher/GameLogs.aspx?pcode=...` — the per-start
+   pitcher log that decides whether pitcher-vs-team H2H is buildable.
+   Send the whole log.
+5. **Only then** consider re-running the nightly. One workflow at a
+   time until item G ships.
+
+### Decisions taken today, do not re-litigate
+- **The repo stays PUBLIC.** Going private would 404 the release-asset
+  download in `app/fetch_data.py` (Render falls back to live Statcast
+  pulls and says so in a warning that fails nothing — a silent data
+  outage), and private repos stop getting free Actions minutes. If it
+  ever goes private: create a fine-grained PAT, set `GITHUB_TOKEN` in
+  Render, confirm the build log prints `[fetch_data] OK`, THEN flip.
+- **He is on GitHub's web editor**, which commits straight to `main`.
+  So the Codespace is usually BEHIND, not ahead. `git pull` first;
+  `git add`/`commit`/`push` is usually a no-op and "nothing to commit,
+  working tree clean" is expected, not a failure.
 
 ---
 
@@ -37,6 +104,9 @@ grep -c fetch_homepage_schedule kbo_precompute.py         # 2  = defined AND cal
 grep -cE '^\s+_hp, _hs =' kbo_precompute.py               # 0  = the crash is gone
                                                           #      (anchored: the docstring
                                                           #       quotes the broken line)
+grep -c _card_time_venue kbo_precompute.py                # 2  = venue/time fix in
+grep -c 'fetch failed twice' app/engines/intl_weather.py  # 1  = weather retry in
+grep -c concurrency .github/workflows/intl-late-refresh.yml  # 0 = item G still open
 wc -l wnba_precompute.py                                  # 1085 = comments restored
 grep -c intl_weather npb_precompute.py                    # >0 = NPB weather WIRED
 grep -c _weather_badges app/views/KBO.py                  # 2  = KBO shows weather
@@ -142,21 +212,6 @@ What that failure actually cost, from the run log:
 
 ## OPEN — in priority order
 
-### V1. CONFIRM THE REPAIR ACTUALLY RUNS. Do this first, it is one run.
-Everything under item V is written and tested but has **executed zero
-times in production.** Push the fix, then Actions → "Late slate refresh
-(KBO, NPB, WNBA)" → Run workflow, and read three lines:
-
-- `KBO: homepage — N of M game cards carried a time and venue` — new
-  line, from the function that was missing.
-- `KBO: repaired N venue and N start-time fields from the homepage` —
-  the `TBD · TBD KST / TBD ET` fix landing.
-- no `Traceback` in the KBO step, and the job green.
-
-Then reload KBO and Sync latest: real venue and first-pitch time in the
-header, like the NPB board already shows. **Until that run is green,
-treat every item below it as untested.**
-
 ### V2. KBO venue + time for future dates — FIXED, awaiting one run.
 **Round 1 of the probe got this wrong and nearly closed the item as
 impossible.** It fetched the CURRENT week, where every game was already
@@ -224,6 +279,37 @@ warning is the *league's actual judgement*, published in advance, and
 it is the one thing our own forecast cannot reproduce. Either wire it
 back in as a second, clearly-labelled signal or delete it and say why.
 Right now it is neither.
+
+### G. NO CONCURRENCY GUARD ON `intl-late-refresh`. Two lines, do it.
+`nightly-data.yml` has `concurrency: group: nightly-data`.
+`intl-late-refresh.yml` has **no concurrency block at all**, so:
+
+- two late-refresh runs can overlap each other, and
+- a late refresh can overlap the nightly.
+
+Both download the published archive, repack it and upload it back. If
+they interleave, the second upload silently replaces the first's work.
+The repack's `data/statcast/` check catches an outright gutted archive
+but not a STALE one. This nearly happened today: the nightly was in
+progress while a late refresh was queued, and the Actions outage left
+two of each queued to fire simultaneously.
+
+Fix: put BOTH workflows in the same group, e.g.
+`concurrency: {group: publish-archive, cancel-in-progress: false}`.
+`cancel-in-progress: false` matters — a half-finished publish is worse
+than a delayed one.
+
+### W2. Open-Meteo now retries once. Watch that it is enough.
+Run 84398190888 fetched ten dates; nine succeeded and the ONE that
+timed out was the first, which is today's — the slate actually on
+screen. So a single 25-second blip cost the displayed board every
+badge while nine days nobody looks at were forecast fine. The cost is
+not spread evenly across dates, so "it usually works" was not good
+enough for the first one.
+
+`intl_weather.forecast()` now retries once after 2 seconds, then gives
+up and prints `fetch failed twice`. **If that line ever appears, it is
+a real outage, not a blip.** Not yet observed in production.
 
 ### C. Best-games hero card — BLOCKED on recording an MLB slate.
 Ranking **DECIDED**: biggest modeled edge → highest projected run total
@@ -381,6 +467,22 @@ the site's own advance warning is a free check on this number.
     specific shape; the habit it stands for is: after any change to a
     `*_precompute.py`, run the file or read the Actions log. Do not
     ship a function whose first real execution is in production.
+
+23. **NEW — a probe that samples the wrong rows answers the wrong
+    question.** Round 1 of `intl_v2_probe` fetched the CURRENT week,
+    where every KBO game was already played or heat-canceled, and
+    reported `'pm': 0`, `'°': 0`, `datetime=: 0`. That read as "the
+    schedule page has no time or venue" and nearly closed item V2 as
+    impossible. A finished card shows a score where an upcoming one
+    shows a clock. Round 2 asked for a week two weeks out and got the
+    opposite answer. **Before believing a zero, check that the sample
+    could have produced a non-zero.**
+24. **NEW — a red workflow is not always a repo defect.** `The job was
+    not acquired by Runner of type hosted` and an internal-server-error
+    correlation id are GitHub's, not yours. Check
+    githubstatus.com before debugging, and do NOT re-run into an
+    outage — queued runs all fire at once when capacity returns, which
+    is exactly how two concurrent publishes happen.
 
 ---
 
