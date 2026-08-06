@@ -86,6 +86,26 @@ if "36" not in line or "1 at or above" not in line:
 else:
     print("PASS: summary reports max temp and flagged count")
 
+
+# A scraped venue wins; the home park is only a fallback.
+if W.venue_for_game("Sajik", "Doosan Bears") != "Sajik":
+    failures.append("a real venue string did not win over the fallback")
+elif W.venue_for_game("TBD", "Samsung Lions") != "Daegu":
+    failures.append("TBD did not fall back to the home club's park")
+elif W.venue_for_game("", "LG Twins") != "Jamsil":
+    failures.append("an empty venue did not fall back")
+elif W.venue_for_game("TBD", "Some Expansion Club") != "":
+    failures.append("an unknown club was given a park")
+else:
+    print("PASS: venue falls back to the home park, never guesses")
+
+# Every club maps to a park that has coordinates.
+_bad = [c for c, v in W.HOME_VENUE.items() if v not in W.KBO_COORDS]
+if _bad:
+    failures.append(f"clubs mapped to parks without coordinates: {_bad}")
+else:
+    print("PASS: every home park has coordinates")
+
 if failures:
     print("\n" + "=" * 68)
     for f in failures:

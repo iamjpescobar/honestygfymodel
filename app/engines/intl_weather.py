@@ -86,6 +86,49 @@ NPB_COORDS = {
     "Escon Field":         (42.9897, 141.5100),
 }
 
+# EVERY KBO CLUB HAS ONE HOME PARK, AND THAT NEVER NEEDED SCRAPING.
+#
+# On 2026-08-06 the pipeline emitted `stadium: "TBD"` for all 50
+# upcoming games: the mykbostats v3 rewrite broke the venue regex the
+# same way it broke the starters one, and nothing had consumed the
+# field since, so it failed silently for two days. The forecast then
+# correctly refused to guess and reported no coordinates, which is how
+# it surfaced at all.
+#
+# A club's home park is a fact about the league, not about anyone's
+# markup. Ten clubs, nine parks — LG and Doosan share Jamsil. Keyed on
+# both the full name _team() produces and the short code in the slug,
+# because either can reach us.
+#
+# Caveat worth knowing: this assumes the home club is playing at home.
+# KBO neutral-site games are rare but not impossible, so a real venue
+# string always WINS over this — the fallback only fires on "TBD".
+HOME_VENUE = {
+    "Doosan Bears": "Jamsil",     "LG Twins": "Jamsil",
+    "Kiwoom Heroes": "Gocheok",   "SSG Landers": "Munhak",
+    "KT Wiz": "Suwon",            "Hanwha Eagles": "Daejeon",
+    "Samsung Lions": "Daegu",     "Lotte Giants": "Sajik",
+    "KIA Tigers": "Gwangju",      "NC Dinos": "Changwon",
+    "Doosan": "Jamsil", "LG": "Jamsil", "Kiwoom": "Gocheok",
+    "SSG": "Munhak", "KT": "Suwon", "Hanwha": "Daejeon",
+    "Samsung": "Daegu", "Lotte": "Sajik", "KIA": "Gwangju",
+    "NC": "Changwon",
+}
+
+
+def venue_for_game(stadium, home_team):
+    """The venue string to forecast for, or "" when nothing is known.
+
+    A scraped venue wins; the home park is only a fallback. Returns ""
+    rather than a guess so the caller still omits genuinely unknown
+    games instead of inventing a city for them.
+    """
+    s = (stadium or "").strip()
+    if s and s.upper() != "TBD":
+        return s
+    return HOME_VENUE.get((home_team or "").strip(), "")
+
+
 # KBO venue strings are free text, so match on a distinctive substring
 # the way intl_venues.KBO_VENUE_PATTERNS does rather than by equality.
 KBO_PATTERNS = (

@@ -97,6 +97,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "app"))
 from engines.intl_weather import (  # noqa: E402
     forecast as _wx,
     summarize as _wxsum,
+    venue_for_game as _venue_for,
 )
 
 OUT = Path("build_data") / "data" / "kbo"
@@ -826,11 +827,15 @@ def main():
         _wx_by_date.setdefault(g["date"], []).append(g)
     heat_hits = 0
     for _d, _games in _wx_by_date.items():
-        _r = _wx("kbo", [g.get("stadium") or g.get("venue") or ""
-                         for g in _games], _d)
+        # stadium is "TBD" whenever the venue scrape fails, which it has
+        # been since the v3 rewrite. venue_for_game falls back to the
+        # home club's park, which no redesign can take away.
+        for g in _games:
+            g["_venue"] = _venue_for(g.get("stadium"), g.get("home"))
+        _r = _wx("kbo", [g["_venue"] for g in _games], _d)
         print("  " + _wxsum(_r))
         for g in _games:
-            c = _r.get(g.get("stadium") or g.get("venue") or "") or {}
+            c = _r.get(g.pop("_venue", "")) or {}
             g["temp_c"] = c.get("temp_c")
             g["max_temp_c"] = c.get("max_temp_c")
             g["precip_prob"] = c.get("precip_prob")
