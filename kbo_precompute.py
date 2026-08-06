@@ -51,6 +51,7 @@ import re
 import time
 from datetime import date, datetime, timedelta
 from io import StringIO
+import sys
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -84,6 +85,19 @@ KBO_TEAM_CODE = {
     "DOOSAN": "Doosan Bears", "KIWOOM": "Kiwoom Heroes", "NC": "NC Dinos",
     "SSG": "SSG Landers",
 }
+
+# app/ is not on sys.path for a script run from the repo root, and this
+# file had never needed it until the weather engine arrived. The import
+# was inside main(), so it survived a compile check AND a green test
+# suite and only failed 800 lines into a live run — after the fetch, in
+# a step nothing else could see. Hoisted here beside the path insert,
+# the same shape wnba_precompute.py uses, so a bad import is now an
+# immediate ImportError instead of a late one.
+sys.path.insert(0, str(Path(__file__).resolve().parent / "app"))
+from engines.intl_weather import (  # noqa: E402
+    forecast as _wx,
+    summarize as _wxsum,
+)
 
 OUT = Path("build_data") / "data" / "kbo"
 
@@ -806,7 +820,6 @@ def main():
     #
     # Keys are set on every upcoming game so a downstream .get() never
     # has to tell "no risk" from "not looked at".
-    from engines.intl_weather import forecast as _wx, summarize as _wxsum
     _venues = [g.get("stadium") or g.get("venue") or "" for g in upcoming]
     _wx_by_date = {}
     for g in upcoming:
