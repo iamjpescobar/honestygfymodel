@@ -215,14 +215,17 @@ def probe_kbo_player():
         return
     describe(get("player summary", absolute(base, links[0])))
 
-    # The summary page may only hold season totals. KBO's player section
-    # usually splits into tabs; if a game-log tab exists it will be a
-    # sibling link on this page. Discovery, not a guessed URL.
-    r2 = get("player summary (again, for its own links)",
-             absolute(base, links[0]))
-    if r2:
-        tabs = real_links(r2.text, "playerinfopitcher")
-        print(f"  sibling tabs on the player page: {tabs[:8]}")
+    # ROUND 2 FOUND THE TAB. The player page links
+    # /Teams/PlayerInfoPitcher/GameLogs.aspx?pcode=..., which is the
+    # per-start log pitcher-vs-team H2H needs and that no leaderboard
+    # can give. Fetch it and describe it: many <tr>, many dates and an
+    # Opponent column means buildable; few rows and many scripts means
+    # it is drawn client-side and the answer is an XHR endpoint.
+    tab = ("/Teams/PlayerInfoPitcher/GameLogs.aspx?pcode="
+           + links[0].split("pcode=")[-1])
+    print(f"  game-log tab: {tab}")
+    if tab:
+        describe(get("GAME LOGS", absolute(base, tab)))
 
 
 def probe_npb_player():

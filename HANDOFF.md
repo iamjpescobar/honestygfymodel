@@ -31,7 +31,7 @@ echo "FAILING:${fails:- none}"
 Then, for anything marked PENDING, **check it is still pending.**
 
 ```bash
-ls tests/*.py | wc -l                                     # 67
+ls tests/*.py | wc -l                                     # 68
 python tests/test_return_arity.py | tail -1               # FAILING: none
 grep -c fetch_homepage_schedule kbo_precompute.py         # 2  = defined AND called
 grep -cE '^\s+_hp, _hs =' kbo_precompute.py               # 0  = the crash is gone
@@ -157,60 +157,63 @@ Then reload KBO and Sync latest: real venue and first-pitch time in the
 header, like the NPB board already shows. **Until that run is green,
 treat every item below it as untested.**
 
-### V2. KBO venue + time for future dates — ANSWERED: NOT POSSIBLE HERE.
-Probe run 84403678537 fetched the schedule page from Actions and it
-carries **no time, no venue, no temperature**:
-
-```
-'<div class="venue"': 0     'datetime=': 0
-'pm': 0     '°': 0     '&deg;': 0
-```
-
-The `Lotte Giants KT Wiz 34° 6:30pm Suwon` block a previous session
-pasted into chat was **homepage** text, not schedule text. A parser
-written against it would have matched nothing and looked like a fifth
-dead regex. Rule 15 again, and this is the run that paid for it.
-
-So future-date venue and time need a DIFFERENT source, not a better
-regex. `eng.koreabaseball.com/Schedule/Schedule.aspx` carries both and
-is already the plan under E3 — fold this into that migration rather
-than treating it as its own item. Today's slate stays repaired off the
-homepage in the meantime.
-
-**What the probe found instead is worth more.** The schedule page
-carries probable starters in a clean span:
+### V2. KBO venue + time for future dates — FIXED, awaiting one run.
+**Round 1 of the probe got this wrong and nearly closed the item as
+impossible.** It fetched the CURRENT week, where every game was already
+played or heat-canceled, and reported `'pm': 0`, `'°': 0`,
+`datetime=: 0`. A finished card shows a score where an upcoming one
+shows a clock, so the sample answered a different question than the one
+asked. Round 2 (run 84409273265) asked for the week of 2026-08-18 and
+got the opposite:
 
 ```html
-<span class="ds-game-team__starter">Oh Won-seok</span>
+<span class="ds-game-card__state is-time ">
+  <time datetime="2026-08-18T10:00:00Z">7:00pm</time></span>
+<span class="ds-game-card__sub is-prose">Daejeon</span>
 ```
 
-The homepage carries TODAY only; the schedule page covers a window, and
-the pipeline already fetches it once per week. If an UPCOMING card
-carries that span, KBO probables extend past today for free. All three
-cards the probe dumped were 2026-08-04 — played or canceled — so
-**that is unconfirmed**, and it is question A of probe round 2.
+Card text: `Kia Tigers Hanwha Eagles 7:00pm Daejeon` — **the same shape
+the homepage uses.** So `parse_week` now reuses `HOME_TIME_VENUE` on
+schedule cards rather than adding a fifth regex to the file that has
+lost four. `datetime=` turns out to be alive, so the markup key still
+wins where it exists and the text is a fallback only.
 
-Also unsettled: `week_of/2026-08-10` served the 2026-08-04..09 window,
-so the date in the URL may clamp to the current week. Past weeks
-clearly resolve (the crawl reaches 620 games); forward ones may not.
-Round 2 asks for a window two weeks out and prints what comes back.
+**The trap, pinned by `tests/test_kbo_schedule_card.py`:**
+`ds-game-card__sub is-prose` holds the VENUE on an upcoming card and
+the words **"Extreme Heat"** on a canceled one. Keying on that class
+would put a weather note in the stadium field, and `venue_for_game()`
+would then look for coordinates for a city called Extreme Heat, miss,
+and fall back silently. Requiring a clock immediately before the venue
+is what separates them — a game with no first pitch has no venue to
+show.
 
-### F2. KBO probables — still ZERO live confirmations.
-`parse_homepage_starters()` is in and tested. Every confirming run so
-far has measured 0:
+`week_of` IS honoured: asked for 2026-08-20, served 2026-08-18..23. The
+crawl already reaches six days out, so nothing else needs to change.
 
-- 06:36 KST — twelve hours early, on a heat-canceled slate.
-- 23:04 KST (run 84386218583) — `0 of 15 game cards`, after the day's
-  games were over.
-- 13:13 KST — every card had a time and venue, **not one had a
-  starter**.
+**Outstanding:** one run. Watch `KBO: wrote N games` and then the board
+— future dates should show a real venue and first pitch. Today's slate
+still repairs off the homepage; both paths are live and the scraped
+value wins in both.
 
-None of those is evidence either way. **Watch the 18:20 KST
-`intl-late-refresh` log on a day that is actually played.** N > 0 means
-probables are back after weeks blind. N = 0 there means the line moved
-again — re-probe, do not widen the regex. Note that the crash above
-meant the 18:20 run never completed at all, so this has had fewer real
-chances than it looks.
+### F2. KBO probables — the schedule page shows them ONLY AFTER the fact.
+Round 2 counted `ds-game-team__starter` per card:
+
+```
+past/today: 10 cards, 7 carrying a starter span
+upcoming:   20 cards, 0 carrying a starter span   (current week)
+upcoming:   30 cards, 0 carrying a starter span   (two weeks out)
+```
+
+Fifty upcoming cards, zero starters — including games one day out, at
+00:30 KST, well inside any announcement window. Combined with every
+homepage measurement also reading 0, the hypothesis worth testing is no
+longer "our regex broke" but **mykbostats v3 stopped publishing
+probables in advance at all** and only fills the span once a lineup is
+actual. `parse_homepage_starters()` is correct and costs nothing, so
+leave it in; it lights up automatically if they come back.
+
+**Do not widen either regex.** If probables matter, they need a source
+that publishes them — which is item E3, and the reason to finish it.
 
 ### O1. `fetch_homepage_conditions()` is orphaned — decide, don't delete.
 It parses the site's own **`Chance of Heat Cancellation`** warning off
@@ -232,7 +235,7 @@ with network) extended to write an MLB slate in the shape `slate_guard`
 reads. Home must degrade gracefully until CI populates it. **Biggest
 remaining product item.**
 
-### PITCHER H2H — NOT BUILDABLE FROM THE CURRENT SOURCES.
+### PITCHER H2H — KBO HAS A GAME-LOG PAGE. NPB still does not.
 Requested: starters always shown, with season data and head-to-head
 against the opposing team. First two are in hand; **the third has no
 data behind it.**
@@ -257,17 +260,28 @@ equivalent on npb.jp. **Probe one player page per league first** and
 confirm the log is server-rendered before designing anything — that is
 the lesson from four probes on the starters question. The probe script
 being written when a session was cut off never got committed; it is
-replaced by section B of `intl_v2_probe.py`. Round 1 found the lead and
-then failed to follow it — the link picker took a
-`javascript:__doPostBack(...)` string and fetched an error page (my bug,
-fixed) — but the log printed the real target:
-`eng.koreabaseball.com/teams/playerinfopitcher/summary.aspx?pcode=55268`,
-a server-rendered ASP.NET player page. **Round 2 fetches it.** NPB is
-worse off: the English leaderboard links only `/bis/eng/players/`, a
-218-char stub, so round 2 tries the index and the Japanese leaderboard
-before concluding. If a log turns out to be drawn client-side, the
-answer is "find the XHR endpoint", not "write more regex" — same shape
-as the Korean schedule page's missing 선발.
+**Round 2 found the page.** The KBO leaderboard links 20 real player
+pages, and each one links a tab:
+
+```
+/Teams/PlayerInfoPitcher/GameLogs.aspx?pcode=55268
+/Teams/PlayerInfoPitcher/SplitsMonth.aspx?pcode=55268
+```
+
+The summary page it sits beside is fully server-rendered — 13 tables,
+31 rows, no JSON blobs — so a game log there is very likely readable
+with the same `pd.read_html` the leaderboards already use. **Round 3 of
+the probe fetches `GameLogs.aspx` and describes it.** Many rows plus an
+opponent column means pitcher-vs-team is buildable for KBO; few rows
+plus many scripts means an XHR endpoint, same shape as the Korean
+schedule page's missing 선발.
+
+**NPB remains a dead end.** `/bis/eng/players/` is a 218-char stub with
+no links, and the Japanese leaderboard links only `/bis/players/`, an
+index with zero tables. Nothing we fetch reaches a per-start log. If
+this ships for KBO only, the boards will disagree — see rule 21, and
+say so on the page rather than letting one board look richer for no
+stated reason.
 
 ### E3. KBO source migration — blocked on one probe.
 mykbostats clause 6 forbids betting use, so the rest should move to
@@ -379,7 +393,7 @@ the site's own advance warning is a free check on this number.
 - Pages in **`app/views/`**, deliberately NOT `pages/` — Streamlit
   auto-registers `pages/` and would expose every page pre-auth.
 - Engines in `app/engines/`. Theme in `app/styles/kc_theme.py`.
-- Tests in `tests/` — **67 files, plain scripts, not pytest.**
+- Tests in `tests/` — **68 files, plain scripts, not pytest.**
 - Data comes off disk; the nightly publishes a release asset.
 - `requirements.txt` fully pinned, including transitives.
 

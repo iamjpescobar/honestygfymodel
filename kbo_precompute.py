@@ -468,6 +468,45 @@ def fetch_homepage_schedule():
     return out
 
 
+def _card_time_venue(inner):
+    """(kst_24h, venue) read out of a schedule card's VISIBLE TEXT.
+
+    THE V3 REWRITE MOVED BOTH, AND ONE OF THEM SURVIVED. Probe run
+    84409273265 fetched the week of 2026-08-18 from Actions and dumped
+    a real upcoming card:
+
+        <span class="ds-game-card__state is-time ">
+          <time datetime="2026-08-18T10:00:00Z">7:00pm</time>
+        </span>
+        <span class="ds-game-card__sub is-prose">Daejeon</span>
+
+    So `datetime=` is alive and parse_week's time regex still works —
+    but `<div class="venue">` is gone, and the visible text now reads
+
+        Kia Tigers Hanwha Eagles 7:00pm Daejeon
+
+    which is the SAME SHAPE the homepage uses. HOME_TIME_VENUE already
+    reads that shape, so this reuses it rather than adding a fifth
+    regex to the file that has lost four (rule 18: key on the product).
+
+    WHY NOT KEY ON `ds-game-card__sub`. That class holds the venue on an
+    upcoming card and the words "Extreme Heat" on a canceled one. Keying
+    on it would put a weather note in the stadium field and then forecast
+    a city that does not exist. Requiring a CLOCK immediately before the
+    venue is what separates them, and it is the product's own logic: a
+    game with no first pitch has no venue to show.
+
+    A card with no clock — final, canceled, postponed — yields (None,
+    None) and the caller leaves both TBD. Absent stays absent.
+    """
+    text = re.sub(r"\s+", " ", _strip(inner)).strip()
+    m = HOME_TIME_VENUE.search(text)
+    if not m:
+        return None, None
+    v = m.group(2).strip(" ,-\u00b7")
+    return _kst_24h(m.group(1)), (v if 1 < len(v) <= 40 else None)
+
+
 def parse_week(html, today_str, sample_holder):
     for m in GAME_LINE.finditer(html):
         game_id, away_short, home_short, yyyymmdd, inner = m.groups()
@@ -483,14 +522,31 @@ def parse_week(html, today_str, sample_holder):
 
         venue = re.search(r'<div class="venue">\s*(.*?)\s*</div>', inner, re.S)
 
+        # The v3 rewrite killed the venue div. Card text still carries
+        # both, so read it and use it ONLY where the markup gave nothing
+        # — a scraped value always wins, and if the div ever comes back
+        # this quietly stops firing.
+        _t_kst, _t_venue = _card_time_venue(inner)
+
+        stadium = (re.sub(r"\s+", " ", _strip(venue.group(1))).strip()
+                   if venue else (_t_venue or "TBD"))
+        if dt_utc:
+            time_kst = dt_utc.astimezone(KST).strftime("%H:%M")
+            time_et = dt_utc.astimezone(EASTERN).strftime("%-I:%M %p")
+        elif _t_kst:
+            time_kst = _t_kst
+            time_et = _kbo_et(gdate, _t_kst)
+        else:
+            time_kst = time_et = "TBD"
+
         g = {
             "date": gdate,
             "away": _team(away_short), "home": _team(home_short),
             "game_id": game_id,
             "game_slug": f"{game_id}-{away_short}-vs-{home_short}-{yyyymmdd}",
-            "stadium": re.sub(r"\s+", " ", _strip(venue.group(1))).strip() if venue else "TBD",
-            "time_kst": dt_utc.astimezone(KST).strftime("%H:%M") if dt_utc else "TBD",
-            "time_et": dt_utc.astimezone(EASTERN).strftime("%-I:%M %p") if dt_utc else "TBD",
+            "stadium": stadium,
+            "time_kst": time_kst,
+            "time_et": time_et,
             "status": "scheduled",
         }
 
