@@ -16,6 +16,7 @@ from styles.table_style import style_stat_table, render_html_table
 # NOTE: no st.set_page_config here — app.py already sets it once.
 
 from engines.live_sync import sync_latest_button
+from engines.intl_weather import ATTRIBUTION as _WX_ATTRIBUTION
 
 # Theme injection lives in app.py, which renders once per script run
 # before this view is exec'd. It used to be called here as well, so the
@@ -299,6 +300,24 @@ if games is None:
 # ------------------------------------------------------------
 if generated_at:
     st.caption(f"Slate data as of {generated_at} KST \u2014 refreshed by the nightly pipeline.")
+
+    # LICENCE CONDITION, not decoration.
+    #
+    # Temperature and the heat-cancellation flag come from Open-Meteo,
+    # whose data is CC BY 4.0. That licence requires attribution with a
+    # link wherever the data is displayed. It is rendered here rather
+    # than per-game so it appears once even on a slate where no figure
+    # happens to print, and it reads from the engine constant so it
+    # cannot drift from the source it credits.
+    #
+    # Removing this is a licence violation. If the weather source ever
+    # changes, change ATTRIBUTION in engines/intl_weather.py, not here.
+    st.markdown(
+        f'<div style="font-size:var(--lc-text-tiny); '
+        f'color:{COLOR["text_faint"]}; margin-top:var(--lc-space-hair);">'
+        f'{_WX_ATTRIBUTION}</div>',
+        unsafe_allow_html=True,
+    )
 
 _render_pitching_leaders()
 _render_k_projections()
