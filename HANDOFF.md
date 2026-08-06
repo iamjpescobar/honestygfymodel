@@ -499,7 +499,37 @@ cards carried a Starters line`. N > 0 means probables are back. N = 0
 on a played slate means the line moved again — **re-probe, do not widen
 the regex.**
 
-### E1. Weather — REBUILT PROPERLY. Done.
+### E1. Weather — engine done; VENUE FALLBACK is the live thread.
+
+**Status at handoff:** `venue_fallback.py` was delivered and verified
+here but **the user had not yet reported running it.** Check first:
+`grep -c HOME_VENUE app/engines/intl_weather.py` — 0 means it never
+landed and the forecast is still returning nothing.
+
+**What the first live run found (2026-08-06).** The engine worked and
+logged `weather: no coordinates for ['TBD']` on every game. Not an
+engine bug — `kbo_precompute` line 283 sets `stadium` to the literal
+string `"TBD"` when its venue regex fails, and **the mykbostats v3
+rewrite broke that regex too**, alongside the starters one. It had
+been failing for two days on a green pipeline because nothing read the
+field.
+
+It surfaced ONLY because the forecast refuses to guess. That design
+choice — omit rather than default — paid for itself on its first live
+run and is worth defending the next time someone wants a sensible
+fallback value.
+
+**The fix:** `HOME_VENUE` + `venue_for_game()` in the engine. Ten KBO
+clubs, nine parks (LG and Doosan share Jamsil), keyed on both the full
+name and the short code. A real venue string always WINS; the club map
+only fires on `"TBD"`, so a neutral-site game still uses what was
+scraped. An unknown club returns `""`, so genuinely unknown games stay
+omitted.
+
+**Also still true:** `stadium` being broken means anything else reading
+it is degraded too. Nobody has checked what else consumes that field.
+
+### E1a. The forecast engine itself — done.
 Was read off mykbostats' rendered homepage, which inherited their
 terms, their upstream (that figure is Apple Weather) and their markup.
 Now `app/engines/intl_weather.py` fetches Open-Meteo directly:
