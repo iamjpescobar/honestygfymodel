@@ -1,0 +1,41 @@
+name: KBO/NPB v2 probe (schedule markup + per-start logs)
+
+# Manual only. Answers the two remaining open items that are blocked on
+# the same thing — looking at a page from the network that publishes the
+# slate:
+#
+#   A. Does the mykbostats SCHEDULE page carry venue and first-pitch
+#      time for FUTURE dates? (handoff item V2)
+#   B. Does either league publish a PER-START pitcher log we can reach?
+#      (handoff item PITCHER H2H)
+#
+# Run from Actions rather than a laptop: this repo has twice been misled
+# by a result from the wrong network. ESPN serves 403 to cloud ranges;
+# stats.wnba.com hangs on datacenter IPs.
+#
+# Touches nothing: no commit, no release, no deploy hook. Safe to run
+# any time, and safe to run twice.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      # The probe imports UA from kbo_precompute and SEASON_YEAR from
+      # npb_precompute rather than re-declaring them, and both import
+      # pandas at module scope. A second copy of a constant is how the
+      # live-score check ended up pointed at a host returning 403.
+      # Constrained by requirements.txt (rule 6 — never hand-write a
+      # dependency list).
+      - run: pip install -c requirements.txt requests pandas lxml beautifulsoup4
+
+      - name: Probe schedule markup and player pages
+        run: python intl_v2_probe.py
