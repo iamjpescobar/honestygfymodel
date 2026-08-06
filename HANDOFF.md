@@ -46,7 +46,7 @@ ls data/                                                  # C unblocks when mlb/
 grep -c 'class="venue"' kbo_precompute.py                 # 2  = schedule-page regex
                                                           #      still dead; TODAY is
                                                           #      repaired from the homepage
-ls .github/workflows/ | wc -l                             # 10
+ls .github/workflows/ | wc -l                             # 11
 ls wnba-lineup-probe.yml                                  # should NOT exist — stray
 ```
 
@@ -183,9 +183,14 @@ text the way `parse_homepage_schedule()` reads the homepage's, keyed on
 the product and not the styling (rule 18). **Write it against a live
 fetch, not against the block quoted above** — that text is a
 transcription from a chat window and rule 15 exists because
-transcriptions have already cost this repo an outage. Note the date
-headings are their own rows, so the parser has to carry a current date
-down the list rather than expect one per card.
+transcriptions have already cost this repo an outage.
+
+`intl_v2_probe.py` / **KBO/NPB v2 probe** does that fetch and prints the
+raw anchor markup, plus the one thing the transcription cannot show:
+whether the DATE lives inside the card or only in a heading above it. A
+week page has several dates where the homepage had one, and a card
+matched to the wrong day forecasts the wrong weather with full
+confidence. Run it, read it, then write the parser.
 
 Also visible in that same text: **`Forecast Uncertain`**, a third
 weather state alongside `Chance of Heat Cancellation`. Worth reading,
@@ -251,9 +256,14 @@ To build pitcher-vs-team you need a per-start game log per pitcher:
 KBO would need the official site's player detail pages, NPB the
 equivalent on npb.jp. **Probe one player page per league first** and
 confirm the log is server-rendered before designing anything — that is
-the lesson from four probes on the starters question. A probe script
-for this was being written when the last session was cut off; it is
-**not in the repo**, so it was never committed. Start it fresh.
+the lesson from four probes on the starters question. The probe script
+being written when a session was cut off never got committed; it is
+replaced by section B of `intl_v2_probe.py`, which discovers a player
+link off a leaderboard we already fetch rather than guessing a URL, and
+reports whether the page is server-rendered. **Run that before designing
+anything.** If the log is drawn client-side, the answer is "needs an XHR
+endpoint", not "write more regex" — same shape as the Korean schedule
+page's missing 선발.
 
 ### E3. KBO source migration — blocked on one probe.
 mykbostats clause 6 forbids betting use, so the rest should move to
