@@ -174,6 +174,28 @@ def fetch(url):
 # publishes them yet — but it means this can never fill a week ahead.
 STARTERS_LINE = re.compile(r"Starters:\s*(.+?)\s+vs\.\s+(.+?)\s*$")
 HOME_GAME_A = re.compile(r'<a[^>]*href="/games/([^"]+)"[^>]*>(.*?)</a>', re.S)
+
+# HEAT. The same stripped card text that carries "Starters:" also carries
+# a temperature and, on at-risk games, a forward-looking void warning:
+#
+#   Hanwha Eagles Samsung Lions 31° 6:30pm Daegu
+#       Chance of Heat Cancellation
+#
+# POSTPONED_PAT already catches "Canceled" once it happens, which is the
+# half that arrives too late to act on. This is the half that does not.
+# Measured live: the whole 2026-08-05 slate was heat-canceled, and the
+# Aug 6 page carried three of these warnings in advance.
+#
+# Worded loosely on purpose — "heat" near "cancel" rather than the exact
+# sentence — because the wording is the site's copy, not its data, and
+# is likelier to be reworded than dropped. Rule 18 says key on the
+# product; this keys on the two words the product cannot lose.
+HEAT_RISK_PAT = re.compile(r'chance[^.]{0,40}heat[^.]{0,40}cancell?ation',
+                           re.I)
+# Either the literal degree sign or the HTML entity: _strip() removes
+# tags, not entities, and which one a template emits is a rendering
+# detail nobody should have to re-discover.
+TEMP_PAT = re.compile(r'(\d{1,2})\s*(?:°|&deg;)')
 COMPARE_PIDS = re.compile(r'href="/stats/compare\?pids=([^"&]+)"')
 
 _STARTER_KEYS = ("away_starter", "home_starter", "away_starter_id",
@@ -228,6 +250,68 @@ def parse_homepage_starters(html):
     return out
 
 
+def parse_homepage_conditions(html):
+    """{game_id: {"temp_c": int|None, "heat_risk": bool}} off the homepage.
+
+    Deliberately a SEPARATE function from parse_homepage_starters rather
+    than more keys on the same entry. That one omits a game with no
+    "Starters:" line so a caller can tell "not announced" from
+    "announced as nothing" — and a heat warning routinely lands on a
+    game whose pitchers are not announced yet, which is exactly the game
+    a bettor most needs warned about. Merging them would have forced a
+    choice between breaking that contract and dropping the warning.
+
+    A card with neither a temperature nor a warning is omitted. Absent
+    stays absent; nothing here guesses a comfortable day.
+    """
+    out = {}
+    for slug, inner in HOME_GAME_A.findall(html):
+        text = re.sub(r"\s+", " ", _strip(inner)).strip()
+        risk = bool(HEAT_RISK_PAT.search(text))
+        tm = TEMP_PAT.search(text)
+        if not risk and not tm:
+            continue
+        gid = slug.split("-", 1)[0]
+        out[gid] = {"temp_c": int(tm.group(1)) if tm else None,
+                    "heat_risk": risk}
+    return out
+
+
+_HOMEPAGE_CACHE = {}
+
+
+def _homepage_html():
+    """The homepage, fetched at most once per process.
+
+    Both readings come off the same document, and hitting a fan-run site
+    twice for one page we already have would be rude as well as slower.
+    Caches the failure too, so a dead host costs one timeout rather than
+    two.
+    """
+    if "html" not in _HOMEPAGE_CACHE:
+        try:
+            r = requests.get("https://mykbostats.com/", headers=UA, timeout=25)
+            _HOMEPAGE_CACHE["html"] = r.text if r.status_code == 200 else ""
+            if r.status_code != 200:
+                print(f"  KBO: homepage returned HTTP {r.status_code}")
+        except Exception as exc:
+            print(f"  KBO: homepage fetch failed ({exc})")
+            _HOMEPAGE_CACHE["html"] = ""
+    return _HOMEPAGE_CACHE["html"]
+
+
+def fetch_homepage_conditions():
+    """Today's temperature and heat-void risk for the slate, or {}."""
+    html = _homepage_html()
+    if not html:
+        return {}
+    out = parse_homepage_conditions(html)
+    at_risk = sum(1 for v in out.values() if v["heat_risk"])
+    print(f"  KBO: homepage — {len(out)} game cards carried conditions, "
+          f"{at_risk} flagged Chance of Heat Cancellation")
+    return out
+
+
 def fetch_homepage_starters():
     """Today's probables for the whole slate in one request, or {}.
 
@@ -235,17 +319,13 @@ def fetch_homepage_starters():
     state the site itself shows before an announcement, and the same one
     this pipeline was already in while the old parser matched nothing.
     """
-    try:
-        r = requests.get("https://mykbostats.com/", headers=UA, timeout=25)
-    except Exception as exc:
-        print(f"  KBO: homepage fetch failed ({exc}) — no probables this run")
-        return {}
-    if r.status_code != 200:
-        print(f"  KBO: homepage HTTP {r.status_code} — no probables this run")
+    html = _homepage_html()
+    if not html:
+        print("  KBO: no homepage — no probables this run")
         return {}
 
-    found = parse_homepage_starters(r.text)
-    cards = len(HOME_GAME_A.findall(r.text))
+    found = parse_homepage_starters(html)
+    cards = len(HOME_GAME_A.findall(html))
     print(f"KBO: homepage — {len(found)} of {cards} game cards carried a "
           f"Starters line")
     if not found:
@@ -714,6 +794,25 @@ def main():
     print(f"KBO: matched probables onto {starter_hits} of {len(upcoming)} "
           f"upcoming games (homepage carries TODAY only, so anything "
           f"further out stays TBD by design)")
+
+    # HEAT RISK, from the same document. This is the item that has been
+    # costing real money: a game voided for extreme heat settles bets
+    # nobody could have avoided, and the site publishes the warning
+    # hours ahead. Keys are set on every upcoming game so a downstream
+    # .get() never has to distinguish "no risk" from "not looked at" —
+    # False means checked and clear, and temp_c stays None when the card
+    # carried no figure.
+    _hc = fetch_homepage_conditions()
+    heat_hits = 0
+    for g in upcoming:
+        _gid = str(g.get("game_slug") or "").split("-", 1)[0]
+        c = _hc.get(_gid) or {}
+        g["temp_c"] = c.get("temp_c")
+        g["heat_risk"] = bool(c.get("heat_risk"))
+        if g["heat_risk"]:
+            heat_hits += 1
+    print(f"KBO: {heat_hits} of {len(upcoming)} upcoming games flagged at "
+          f"risk of heat cancellation")
 
     stats = team_form(finals) if finals else {}
 
