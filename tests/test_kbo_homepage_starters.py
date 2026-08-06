@@ -137,9 +137,10 @@ check("an empty page yields an empty dict",
 # The key set every consumer reads. KBO.py, run_total, kbo_k_projection
 # and matchup_grades_intl all index these, so a rename here breaks four
 # boards at once.
-# Superset, not equality: entries now also carry hp_time / hp_venue,
-# which the caller consumes and does not ship. Every starter key every
-# consumer reads must still be present.
+# Superset, not equality, so adding a key here never fails this test.
+# An earlier revision carried hp_time / hp_venue on these same entries;
+# that was split into parse_homepage_schedule (below) because
+# membership of THIS map has to keep meaning "starters announced".
 check("full starter key set present", set(kp._STARTER_KEYS) <= set(g))
 check("only the starter keys reach the slate row",
       '{k: (s or {}).get(k) for k in _STARTER_KEYS}' in _src)
