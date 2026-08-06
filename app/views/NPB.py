@@ -9,6 +9,9 @@ _LEAGUE = "npb"
 
 from styles.kc_theme import (page_header, card_open, card_close,
                              badge, footer, COLOR, SPORT_ACCENTS)
+from engines.intl_weather import (weather_badges as _weather_badges,
+                                   ATTRIBUTION as _WX_ATTRIBUTION)
+from engines.intl_venues import roof as _roof
 from engines.matchup_grades_intl import grade_npb_matchup, render_matchup_grades_card
 
 # NOTE: no st.set_page_config here — app.py already sets it once.
@@ -115,6 +118,26 @@ if games is None:
 if generated_at:
     st.caption(f"Slate data as of {generated_at} JST \u2014 refreshed by the nightly pipeline.")
 
+    # LICENCE CONDITION, not decoration.
+    #
+    # Temperature and the precipitation figure come from Open-Meteo,
+    # whose data is CC BY 4.0. That licence requires attribution with a
+    # link wherever the data is displayed, so the moment this board
+    # started showing weather it also had to carry this — KBO already
+    # did, and NPB showing the same figures without it would have been
+    # a licence violation the day the badges shipped.
+    #
+    # Rendered once per page rather than per game so it appears even on
+    # a slate where no figure happens to print, and read from the engine
+    # constant so it cannot drift from the source it credits. If the
+    # source ever changes, change ATTRIBUTION in the engine, not here.
+    st.markdown(
+        f'<div style="font-size:var(--lc-text-tiny); '
+        f'color:{COLOR["text_faint"]}; margin-top:var(--lc-space-hair);">'
+        f'{_WX_ATTRIBUTION}</div>',
+        unsafe_allow_html=True,
+    )
+
 if not games and not _stale:
     st.info("No NPB games on today\'s schedule \u2014 likely a league off-day.")
 else:
@@ -205,6 +228,14 @@ else:
         else:
             badges += (badge(f'Away SP: {g.get("away_starter", "TBD")}', "neutral")
                        + badge(f'Home SP: {g.get("home_starter", "TBD")}', "neutral"))
+        # WEATHER, on the same row as the starters and in the same
+        # place on both boards. He bets KBO and NPB together, so a risk
+        # marker that appears on one and not the other cannot be read:
+        # a missing badge would mean "safe" on one page and "not
+        # measured" on the other. engines.intl_weather.weather_badges
+        # owns the wording, the thresholds and the roof rule for both.
+        for _wtxt, _wtone in _weather_badges(g, "npb", _roof):
+            badges += badge(_wtxt, _wtone)
         st.markdown(badges, unsafe_allow_html=True)
 
         # Real season lines for the announced starters — straight from

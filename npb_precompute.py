@@ -17,11 +17,31 @@ Anything the source doesn't state (e.g. starters) is TBD, never guessed.
 
 import json
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import requests
+
+# THE SAME FORECAST ENGINE KBO USES. Wiring NPB to it was the missing
+# half of "every change made to KBO should be made to NPB": the engine
+# already carried NPB_COORDS for all twelve parks and nothing called
+# them, so NPB shipped with no temperature, no precipitation and no
+# postponement signal while KBO had all three.
+#
+# NPB's risk is not KBO's. KBO games get called for heat; NPB's are far
+# more often called for RAIN, and six of its twelve parks are domed, so
+# a precipitation figure has to be read next to the roof or it will cry
+# wolf half the season. intl_venues already knows which parks are
+# roofed — that judgement stays there and is not duplicated here.
+sys.path.insert(0, str(Path(__file__).resolve().parent / "app"))
+from engines.intl_weather import (  # noqa: E402
+    ATTRIBUTION as WX_ATTRIBUTION,
+    forecast as _wx,
+    summarize as _wxsum,
+    venue_for_game as _venue_for,
+)
 
 JST = ZoneInfo("Asia/Tokyo")
 EASTERN = ZoneInfo("America/New_York")
@@ -175,7 +195,22 @@ def _en_team(jp: str) -> str:
 
 
 def _en_stadium(jp: str) -> str:
-    return STADIUMS.get(jp.strip(), jp.strip())
+    """Japanese venue -> the English key NPB_COORDS and the view expect.
+
+    WHITESPACE INSIDE THE NAME, not just around it. npb.jp renders some
+    two-character venues spaced out — Yokohama arrives as "\u6a2a \u6d5c",
+    not "\u6a2a\u6d5c" — so a .strip() alone missed the STADIUMS key and this
+    returned the raw Japanese. It looked harmless because the string
+    still rendered on the page (the screenshot showed "\u6a2a \u6d5c \u00b7 17:45
+    JST"), but that value is not a key in NPB_COORDS, so it would have
+    silently forecast nothing for every Yokohama game.
+
+    Collapsing all whitespace before the lookup fixes it for every
+    spaced name at once. Unknown venues still fall through unchanged
+    rather than being guessed at.
+    """
+    key = re.sub(r"\s+", "", jp or "")
+    return STADIUMS.get(key, (jp or "").strip())
 
 
 def _strip(html: str) -> str:
@@ -468,6 +503,32 @@ def main():
         slate_date = _future[0]["date"]
         todays = [g for g in all_games if g["date"] == slate_date]
         print(f"NPB: no games today ({today} JST) — showing next slate {slate_date}")
+    # FORECAST THE SLATE, one call per date, before building the rows.
+    #
+    # Keys are set on every game so a downstream .get() never has to
+    # tell "no risk" from "not looked at" — the same rule the KBO
+    # pipeline follows.
+    #
+    # venue_for_game falls back to the home club's park when the scraped
+    # stadium is unusable. That matters more here than it looks: npb.jp
+    # spaces some venue names ("\u6a2a \u6d5c"), which used to defeat the
+    # STADIUMS lookup and leave a string NPB_COORDS has no key for.
+    for g in todays:
+        g["_venue"] = _venue_for(g.get("stadium"), g.get("home"))
+    _wx_r = _wx("npb", [g["_venue"] for g in todays], slate_date)
+    print("  " + _wxsum(_wx_r))
+    _wet = 0
+    for g in todays:
+        c = _wx_r.get(g.pop("_venue", "")) or {}
+        g["temp_c"] = c.get("temp_c")
+        g["max_temp_c"] = c.get("max_temp_c")
+        g["precip_prob"] = c.get("precip_prob")
+        g["weather_attribution"] = c.get("attribution")
+        if (c.get("precip_prob") or 0) >= 50:
+            _wet += 1
+    print(f"NPB: {_wet} of {len(todays)} slate games at or above a 50% "
+          f"precipitation chance (roof status is applied in the view)")
+
     games_out = []
     for g in todays:
         entry = {
@@ -478,6 +539,10 @@ def main():
             "away_starter": g.get("away_sp") or "TBD",
             "home_starter": g.get("home_sp") or "TBD",
             "status": g["status"],
+            "temp_c": g.get("temp_c"),
+            "max_temp_c": g.get("max_temp_c"),
+            "precip_prob": g.get("precip_prob"),
+            "weather_attribution": g.get("weather_attribution"),
         }
         if g.get("sp_raw"):
             entry["starters_raw"] = g["sp_raw"]

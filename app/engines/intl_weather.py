@@ -116,6 +116,35 @@ HOME_VENUE = {
 }
 
 
+# NPB'S EQUIVALENT, AND IT IS NEEDED FOR A DIFFERENT REASON.
+#
+# KBO needed this because a regex broke. NPB needs it because npb.jp
+# renders some stadium names with whitespace INSIDE them — the schedule
+# page emits Yokohama as "横 浜", so STADIUMS.get() missed on a
+# .strip() alone and _en_stadium() handed back the raw Japanese. That
+# string is not a key in NPB_COORDS, so every Yokohama game would have
+# forecast nothing the moment weather was wired up.
+#
+# _en_stadium now normalises internal whitespace, which fixes the
+# common case. This map is the backstop for anything it still misses,
+# and for the same "home club plays at its own park" reason as KBO.
+# Twelve clubs, twelve parks — no sharing in NPB.
+NPB_HOME_VENUE = {
+    "Yomiuri Giants": "Tokyo Dome",
+    "Yakult Swallows": "Jingu Stadium",
+    "Hanshin Tigers": "Koshien Stadium",
+    "Chunichi Dragons": "Vantelin Dome",
+    "Hiroshima Carp": "Mazda Stadium",
+    "Yokohama DeNA BayStars": "Yokohama Stadium",
+    "Nippon-Ham Fighters": "Escon Field",
+    "SoftBank Hawks": "PayPay Dome",
+    "Rakuten Eagles": "Rakuten Mobile Park",
+    "Orix Buffaloes": "Kyocera Dome Osaka",
+    "Lotte Marines": "Zozo Marine Stadium",
+    "Seibu Lions": "Belluna Dome",
+}
+
+
 def venue_for_game(stadium, home_team):
     """The venue string to forecast for, or "" when nothing is known.
 
@@ -126,7 +155,10 @@ def venue_for_game(stadium, home_team):
     s = (stadium or "").strip()
     if s and s.upper() != "TBD":
         return s
-    return HOME_VENUE.get((home_team or "").strip(), "")
+    home = (home_team or "").strip()
+    # One lookup across both leagues: club names do not collide, and a
+    # caller that already knows its league should not have to say so.
+    return HOME_VENUE.get(home) or NPB_HOME_VENUE.get(home, "")
 
 
 # KBO venue strings are free text, so match on a distinctive substring
@@ -286,3 +318,66 @@ if __name__ == "__main__":  # pragma: no cover - manual check
     got = forecast("kbo", ["Jamsil", "Daegu", "Sajik"], today)
     print(json.dumps(got, indent=2, ensure_ascii=False))
     print(summarize(got))
+
+
+# ONE RENDERER FOR BOTH LEAGUES, ON PURPOSE.
+#
+# The standing instruction on this repo is that every change made to KBO
+# is made to NPB — the two markets are bet together, so a signal that
+# appears on one board and not the other is worse than no signal, because
+# the reader cannot tell "no risk here" from "not measured here".
+#
+# Putting the wording, the thresholds and the roof rule in ONE function
+# makes that parity structural instead of a thing someone has to
+# remember twice. The views only decide where to place what comes back.
+#
+# WHY THE ROOF GATES RAIN BUT NOT HEAT. A dome cannot be rained out, so
+# a precipitation figure under a roof is noise and is suppressed —
+# intl_venues.roof() owns that judgement and it is not duplicated here.
+# Heat is different: KBO calls games on the forecast temperature, and a
+# reading is worth showing regardless. Retractable roofs are treated as
+# covered for rain, which matches how intl_venues already reasons about
+# VOID risk.
+#
+# Returns [] when nothing is known. An empty list renders as nothing at
+# all, which is the honest state — never a "0%" or a "—" that reads like
+# a measurement.
+def weather_badges(game, league, roof_lookup=None):
+    """[(label, tone)] for a game's weather, worst risk first.
+
+    `game` is a shipped slate row; `league` is "kbo" or "npb";
+    `roof_lookup` is intl_venues.roof, injected so this engine does not
+    import a second one and so a test can pin behaviour without a venue
+    table.
+    """
+    out = []
+    temp = game.get("temp_c")
+    tmax = game.get("max_temp_c")
+    precip = game.get("precip_prob")
+    stadium = game.get("stadium") or ""
+
+    covered = False
+    if roof_lookup is not None:
+        try:
+            covered = roof_lookup(league, stadium) in ("dome", "retractable")
+        except Exception:
+            covered = False
+
+    # HEAT FIRST, and it reads the DAY'S MAX rather than first pitch: a
+    # 4pm peak easing by 18:30 is still the day a game gets called.
+    if game.get("heat_risk") and tmax is not None:
+        out.append((f"HEAT RISK {round(tmax)}\u00b0C", "bad"))
+
+    if covered:
+        # Stated rather than silent, so an absent rain figure reads as
+        # "cannot be rained out" instead of "nobody looked".
+        out.append(("ROOFED", "good"))
+    elif precip is not None:
+        if precip >= 50:
+            out.append((f"RAIN RISK {precip}%", "bad"))
+        elif precip >= 25:
+            out.append((f"MONITOR {precip}%", "neutral"))
+
+    if temp is not None:
+        out.append((f"{round(temp)}\u00b0C", "neutral"))
+    return out

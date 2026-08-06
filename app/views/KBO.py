@@ -16,7 +16,9 @@ from styles.table_style import style_stat_table, render_html_table
 # NOTE: no st.set_page_config here — app.py already sets it once.
 
 from engines.live_sync import sync_latest_button
-from engines.intl_weather import ATTRIBUTION as _WX_ATTRIBUTION
+from engines.intl_weather import (weather_badges as _weather_badges,
+                                   ATTRIBUTION as _WX_ATTRIBUTION)
+from engines.intl_venues import roof as _roof
 
 # Theme injection lives in app.py, which renders once per script run
 # before this view is exec'd. It used to be called here as well, so the
@@ -462,6 +464,14 @@ else:
         else:
             badges += (badge(f'Away SP: {g.get("away_starter", "TBD")}', "neutral")
                        + badge(f'Home SP: {g.get("home_starter", "TBD")}', "neutral"))
+        # WEATHER, on the same row as the starters and in the same
+        # place on both boards. He bets KBO and NPB together, so a risk
+        # marker that appears on one and not the other cannot be read:
+        # a missing badge would mean "safe" on one page and "not
+        # measured" on the other. engines.intl_weather.weather_badges
+        # owns the wording, the thresholds and the roof rule for both.
+        for _wtxt, _wtone in _weather_badges(g, "kbo", _roof):
+            badges += badge(_wtxt, _wtone)
         st.markdown(badges, unsafe_allow_html=True)
 
         stats_html = ""
