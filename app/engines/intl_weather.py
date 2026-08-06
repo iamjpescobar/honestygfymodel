@@ -39,6 +39,7 @@ Limits: 10,000 calls/day. One call covers the whole slate, because
 Open-Meteo accepts comma-separated coordinates and returns an array.
 """
 import json
+import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -278,11 +279,32 @@ def forecast(league, venues, date_iso, hour=18):
         "start_date": date_iso,
         "end_date": date_iso,
     }
-    try:
-        r = requests.get(API, params=params, timeout=25)
-    except Exception as exc:
-        print(f"  weather: fetch failed ({exc}) — no forecast this run")
-        return {}
+    # ONE retry on a transport failure, then give up.
+    #
+    # WHY. Run 84398190888 fetched ten dates and nine succeeded; the one
+    # that timed out was the FIRST, and the first date in the loop is
+    # today's — the slate actually on screen. So a single 25-second
+    # blip on a free API silently cost the displayed board every badge,
+    # while nine days nobody is looking at got forecast fine. The cost
+    # of the failure is not spread evenly across the dates, so "it
+    # usually works" is not good enough for the first one.
+    #
+    # Retrying ONCE, not until it works: ten dates per run against a
+    # free service, and a genuinely dead host should still cost seconds,
+    # not minutes. A second timeout is a real outage and still prints
+    # and returns {} — nothing here invents a forecast.
+    r = None
+    for _attempt in (1, 2):
+        try:
+            r = requests.get(API, params=params, timeout=25)
+            break
+        except Exception as exc:
+            if _attempt == 2:
+                print(f"  weather: fetch failed twice ({exc}) — "
+                      f"no forecast this run")
+                return {}
+            print(f"  weather: fetch failed ({exc}) — retrying once")
+            time.sleep(2)
     if r.status_code != 200:
         print(f"  weather: HTTP {r.status_code} — no forecast this run")
         return {}
