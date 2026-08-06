@@ -210,7 +210,22 @@ def _en_stadium(jp: str) -> str:
     rather than being guessed at.
     """
     key = re.sub(r"\s+", "", jp or "")
-    return STADIUMS.get(key, (jp or "").strip())
+    if key in STADIUMS:
+        return STADIUMS[key]
+    # LONGEST PREFIX, because npb.jp uses both the short and the full
+    # form of the same park. The first live run logged
+    # `no coordinates for ['\u30d0\u30f3\u30c6\u30ea\u30f3\u30c9\u30fc\u30e0',
+    # '\u30de\u30c4\u30c0\u30b9\u30bf\u30b8\u30a2\u30e0']` while the map held
+    # only "\u30d0\u30f3\u30c6\u30ea\u30f3" and "\u30de\u30c4\u30c0" — an exact
+    # lookup missed and the raw Japanese went downstream, where
+    # NPB_COORDS has no key for it.
+    #
+    # Longest first so a specific key always beats a shorter one that
+    # happens to prefix it.
+    for k in sorted(STADIUMS, key=len, reverse=True):
+        if key.startswith(k):
+            return STADIUMS[k]
+    return (jp or "").strip()
 
 
 def _strip(html: str) -> str:
@@ -514,7 +529,7 @@ def main():
     # spaces some venue names ("\u6a2a \u6d5c"), which used to defeat the
     # STADIUMS lookup and leave a string NPB_COORDS has no key for.
     for g in todays:
-        g["_venue"] = _venue_for(g.get("stadium"), g.get("home"))
+        g["_venue"] = _venue_for(g.get("stadium"), g.get("home"), "npb")
     _wx_r = _wx("npb", [g["_venue"] for g in todays], slate_date)
     print("  " + _wxsum(_wx_r))
     _wet = 0
@@ -523,6 +538,7 @@ def main():
         g["temp_c"] = c.get("temp_c")
         g["max_temp_c"] = c.get("max_temp_c")
         g["precip_prob"] = c.get("precip_prob")
+        g["heat_risk"] = bool(c.get("heat_risk"))
         g["weather_attribution"] = c.get("attribution")
         if (c.get("precip_prob") or 0) >= 50:
             _wet += 1
@@ -542,6 +558,16 @@ def main():
             "temp_c": g.get("temp_c"),
             "max_temp_c": g.get("max_temp_c"),
             "precip_prob": g.get("precip_prob"),
+            # CARRIED FOR NPB TOO, even though heat cancellation is a KBO
+            # rule. The engine already computes it for these venues —
+            # the first live run logged "3 venues, max 35C, 1 at or above
+            # 35C" on a Japanese slate — and Japanese summers reach the
+            # same temperatures. Shipping it on one board and not the
+            # other is the exact asymmetry rule 21 exists to prevent:
+            # the reader could not tell "not hot" from "not measured".
+            # The THRESHOLD's provenance is documented in the engine and
+            # is still unverified for either league.
+            "heat_risk": bool(g.get("heat_risk")),
             "weather_attribution": g.get("weather_attribution"),
         }
         if g.get("sp_raw"):

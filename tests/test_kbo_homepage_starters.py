@@ -39,6 +39,12 @@ sys.path.insert(0, str(ROOT))
 
 import kbo_precompute as kp  # noqa: E402
 
+# The module source, read once. Several checks below assert on it
+# directly: this file's whole history is regexes that matched nothing
+# and returned an empty dict without raising, so "the code still says
+# what we think it says" is itself part of the contract.
+_src = (ROOT / "kbo_precompute.py").read_text(encoding="utf-8")
+
 failures = []
 
 
@@ -131,21 +137,77 @@ check("an empty page yields an empty dict",
 # The key set every consumer reads. KBO.py, run_total, kbo_k_projection
 # and matchup_grades_intl all index these, so a rename here breaks four
 # boards at once.
-check("full key set present", set(g) == set(kp._STARTER_KEYS))
+# Superset, not equality: entries now also carry hp_time / hp_venue,
+# which the caller consumes and does not ship. Every starter key every
+# consumer reads must still be present.
+check("full starter key set present", set(kp._STARTER_KEYS) <= set(g))
+check("only the starter keys reach the slate row",
+      '{k: (s or {}).get(k) for k in _STARTER_KEYS}' in _src)
+check("the two readers are separate functions",
+      "def parse_homepage_schedule(" in _src)
 check("_no_starters matches that key set",
       set(kp._no_starters()) == set(kp._STARTER_KEYS)
       and all(v is None for v in kp._no_starters().values()))
 
 # The dead game-page parser must not come back: it matched nothing for
 # weeks without raising, and re-adding it would reinstate exactly that.
-_src = (ROOT / "kbo_precompute.py").read_text(encoding="utf-8")
 check("no live away-starter div regex remains",
       'class="{cls}"' not in _src)
 check("the caller fetches the homepage once, not per game",
       "fetch_homepage_starters()" in _src
       and "fetch_starters_for_game(" not in _src)
 
+
+# ---- 6. time and venue, read SEPARATELY from the starters ------------
+# parse_week() reads both off the schedule page keyed on
+# <div class="venue"> and a datetime= attribute. The v3 rewrite killed
+# those too, so every KBO card rendered "TBD - TBD KST / TBD ET" — the
+# third and fourth regex in that file to die to one redesign.
+#
+# They are a separate reader because membership of the starters map
+# means "this game has announced starters", and test_kbo_heat_risk
+# depends on that. Measured live at 13:13 KST: every card had a time and
+# a venue and NOT ONE had a starter, which is exactly the game a bettor
+# most needs to see.
+NO_SP = card("13792-Kiwoom-vs-Lotte-20260806",
+             "Kiwoom Heroes Lotte Giants 30&deg; 6:30pm Busan-Sajik")
+only = kp.parse_homepage_schedule(NO_SP).get("13792", {})
+check("a starterless card still yields venue", only.get("venue") == "Busan-Sajik")
+check("a starterless card still yields time", only.get("time") == "6:30pm")
+check("a starterless card stays OUT of the starters map",
+      kp.parse_homepage_starters(NO_SP) == {})
+
+# The heat warning sits between venue and starters; a greedy match would
+# ship a city called "Seoul-Jamsil Chance of Heat Cancellation".
+check("heat warning does not leak into the venue",
+      kp.parse_homepage_schedule(HOME).get("13780", {}).get("venue")
+      == "Seoul-Jamsil")
+
+# 12-hour to 24-hour, including noon and midnight — the two every naive
+# converter gets wrong.
+check("evening start converts", kp._kst_24h("6:30pm") == "18:30")
+check("noon converts", kp._kst_24h("12:00pm") == "12:00")
+check("midnight converts", kp._kst_24h("12:30am") == "00:30")
+check("junk yields None rather than an invented time",
+      kp._kst_24h("later") is None and kp._kst_24h("") is None)
+
+# KST->ET goes through real timezones. Korea has no DST and the US does,
+# so the gap is 13 hours for part of the year and 14 for the rest —
+# subtracting a constant would be wrong for half the season.
+check("summer KST->ET uses the 13-hour gap",
+      kp._kbo_et("2026-08-06", "18:30") == "5:30 AM")
+check("winter KST->ET uses the 14-hour gap",
+      kp._kbo_et("2026-01-15", "18:30") == "4:30 AM")
+check("an unparseable date stays TBD",
+      kp._kbo_et("not-a-date", "18:30") == "TBD")
+
+# A scraped value must still WIN — this is a fallback, not a takeover.
+# If parse_week ever starts working again, this quietly stops firing.
+check("the repair only fires on TBD",
+      'str(g.get("stadium") or "").upper() == "TBD"' in _src
+      and 'str(g.get("time_kst") or "").upper() == "TBD"' in _src)
+
 if failures:
     print("FAIL:", "; ".join(failures))
     sys.exit(1)
-print("PASS: KBO probables parse off the homepage; ids never guessed")
+print("PASS: homepage supplies starters, venue and start time; guess-free")

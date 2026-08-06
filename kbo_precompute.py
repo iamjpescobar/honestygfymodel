@@ -188,6 +188,12 @@ def fetch(url):
 # further out resolve to None and stay TBD, which is correct — nobody
 # publishes them yet — but it means this can never fill a week ahead.
 STARTERS_LINE = re.compile(r"Starters:\s*(.+?)\s+vs\.\s+(.+?)\s*$")
+# "... 31\u00b0 6:30pm Daegu Starters: ..." / "... 6:30pm Seoul-Jamsil Chance
+# of Heat Cancellation Starters: ...". The venue runs from the clock to
+# whichever of those two labels comes next, or to the end of the card.
+HOME_TIME_VENUE = re.compile(
+    r"(\d{1,2}:\d{2}\s*[ap]m)\s+(.+?)(?:\s+(?:Chance of|Starters:)|$)",
+    re.I)
 HOME_GAME_A = re.compile(r'<a[^>]*href="/games/([^"]+)"[^>]*>(.*?)</a>', re.S)
 
 # HEAT. The same stripped card text that carries "Starters:" also carries
@@ -325,6 +331,76 @@ def fetch_homepage_conditions():
     print(f"  KBO: homepage — {len(out)} game cards carried conditions, "
           f"{at_risk} flagged Chance of Heat Cancellation")
     return out
+
+
+def parse_homepage_schedule(html):
+    """{game_id: {"venue": str|None, "time": str|None}} off the homepage.
+
+    SEPARATE FROM THE STARTERS READER ON PURPOSE. Membership of that map
+    means "this game has announced starters", and tests depend on it —
+    a heat warning or a first-pitch time routinely lands on a game whose
+    pitchers are not posted, which is exactly the game a bettor most
+    needs to see. Folding these together would make an entry mean two
+    different things.
+
+    WHY THIS EXISTS AT ALL. parse_week() reads venue and start time off
+    the SCHEDULE page, keyed on <div class="venue"> and a datetime=
+    attribute. The mykbostats v3 rewrite killed both the same way it
+    killed away-starter, so every KBO card has rendered
+    "TBD - TBD KST / TBD ET" since. That is the third and fourth regex
+    in this file to die to one redesign.
+
+    The homepage card already says "6:30pm Daegu" in plain text, so
+    today's slate is repairable from a request we already make. It
+    cannot help FUTURE dates — the homepage carries today only.
+
+    Measured live at 13:13 KST on 2026-08-06: every card had a time and
+    a venue, and not one had a starter. That is why these are read
+    independently.
+    """
+    out = {}
+    for slug, inner in HOME_GAME_A.findall(html):
+        text = re.sub(r"\s+", " ", _strip(inner)).strip()
+        m = HOME_TIME_VENUE.search(text)
+        if not m:
+            continue
+        # Trailing junk is dropped rather than shipped: a wrong stadium
+        # is worse than a missing one, because the forecast would then
+        # describe the wrong city with full confidence.
+        v = m.group(2).strip(" ,-\u00b7")
+        out[slug.split("-", 1)[0]] = {
+            "time": m.group(1).strip(),
+            "venue": v if 1 < len(v) <= 40 else None,
+        }
+    return out
+
+
+def _kst_24h(clock):
+    """"6:30pm" -> "18:30", or None. None keeps the field TBD rather
+    than inventing a first pitch, which is the whole convention here."""
+    m = re.match(r"(\d{1,2}):(\d{2})\s*([ap])m", (clock or "").strip(), re.I)
+    if not m:
+        return None
+    h, mins, ap = int(m.group(1)), m.group(2), m.group(3).lower()
+    if h == 12:
+        h = 0
+    if ap == "p":
+        h += 12
+    return f"{h:02d}:{mins}"
+
+
+def _kbo_et(date_iso, kst_24h):
+    """KST wall clock -> the same instant in ET, or "TBD".
+
+    Goes through a real timezone conversion rather than subtracting a
+    fixed offset: Korea does not observe DST but the US does, so the gap
+    is 13 hours for part of the year and 14 for the rest.
+    """
+    try:
+        dt = datetime.strptime(f"{date_iso} {kst_24h}", "%Y-%m-%d %H:%M")
+        return dt.replace(tzinfo=KST).astimezone(EASTERN).strftime("%-I:%M %p")
+    except Exception:
+        return "TBD"
 
 
 def fetch_homepage_starters():
@@ -795,17 +871,39 @@ def main():
     upcoming = [g for g in all_games
                 if g["date"] >= today and g.get("status") != "final"
                 and g.get("game_slug")]
-    _hp = fetch_homepage_starters()
+    _hp, _hs = fetch_homepage_starters()
     starter_hits = 0
+    venue_fixes, time_fixes = [0], [0]
     for g in upcoming:
         # Match on the numeric game id, the stable half of the slug.
         _gid = str(g.get("game_slug") or "").split("-", 1)[0]
         s = _hp.get(_gid)
         # Every upcoming game gets the keys either way, so a downstream
         # .get() never sees a game that simply lacks them.
-        g.update(s or _no_starters())
+        g.update({k: (s or {}).get(k) for k in _STARTER_KEYS})
         if s:
             starter_hits += 1
+
+        # REPAIR TIME AND VENUE, but only where the schedule page failed.
+        #
+        # A scraped value always wins: if parse_week ever starts working
+        # again this quietly stops firing, which is the behaviour you
+        # want from a fallback. Only "TBD" is replaced.
+        sc = _hs.get(_gid)
+        if sc:
+            if str(g.get("stadium") or "").upper() == "TBD" and sc.get("venue"):
+                g["stadium"] = sc["venue"]
+                venue_fixes[0] += 1
+            if str(g.get("time_kst") or "").upper() == "TBD" and sc.get("time"):
+                kst = _kst_24h(sc["time"])
+                if kst:
+                    g["time_kst"] = kst
+                    g["time_et"] = _kbo_et(g["date"], kst)
+                    time_fixes[0] += 1
+    if venue_fixes[0] or time_fixes[0]:
+        print(f"KBO: repaired {venue_fixes[0]} venue and {time_fixes[0]} "
+              f"start-time fields from the homepage (the schedule page's "
+              f"own markup has been broken since the v3 rewrite)")
     print(f"KBO: matched probables onto {starter_hits} of {len(upcoming)} "
           f"upcoming games (homepage carries TODAY only, so anything "
           f"further out stays TBD by design)")
@@ -831,7 +929,7 @@ def main():
         # been since the v3 rewrite. venue_for_game falls back to the
         # home club's park, which no redesign can take away.
         for g in _games:
-            g["_venue"] = _venue_for(g.get("stadium"), g.get("home"))
+            g["_venue"] = _venue_for(g.get("stadium"), g.get("home"), "kbo")
         _r = _wx("kbo", [g["_venue"] for g in _games], _d)
         print("  " + _wxsum(_r))
         for g in _games:
@@ -893,6 +991,24 @@ def main():
             "away_starter": g.get("away_starter") or "TBD",
             "home_starter": g.get("home_starter") or "TBD",
             "status": g["status"],
+            # THE FORECAST HAS TO SURVIVE SERIALISATION.
+            #
+            # These were computed onto the in-memory game above, logged
+            # ("KBO: N of M upcoming games at or above the heat
+            # threshold"), and then DROPPED here, because this entry is
+            # a curated dict rather than a copy of the game. So the run
+            # log said the weather worked, the archive shipped without
+            # it, and the board rendered no badge at all while NPB's
+            # rendered fine — the same "computed but never reaches the
+            # reader" failure as rule 20, one step further down.
+            #
+            # Set unconditionally, so a downstream .get() never has to
+            # tell "no risk" from "not looked at".
+            "temp_c": g.get("temp_c"),
+            "max_temp_c": g.get("max_temp_c"),
+            "precip_prob": g.get("precip_prob"),
+            "heat_risk": bool(g.get("heat_risk")),
+            "weather_attribution": g.get("weather_attribution"),
         }
         # Real season line for each announced starter, straight from the
         # game page (W-L + ERA). Absent when the starter is still TBD.

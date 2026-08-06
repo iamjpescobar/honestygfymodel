@@ -56,6 +56,21 @@ for key in WX_KEYS:
     check(f"kbo pipeline sets {key}", f'"{key}"' in kbo_src)
     check(f"npb pipeline sets {key}", f'"{key}"' in npb_src)
 
+# THE KEYS MUST SURVIVE SERIALISATION, not just exist in memory.
+#
+# The first live run logged "KBO: 2 of 50 upcoming games at or above the
+# heat-cancellation threshold" and then shipped an archive with no
+# weather in it at all: games_out is a curated dict, and nobody added
+# the forecast keys to it, so the board rendered no badge while NPB's
+# rendered fine. The log said it worked. The reader saw nothing.
+#
+# So assert on the SHIPPED entry, which is what the view actually reads.
+for name, src in (("kbo", kbo_src), ("npb", npb_src)):
+    for key in ("temp_c", "max_temp_c", "precip_prob", "heat_risk",
+                "weather_attribution"):
+        check(f"{name} SHIPS {key} on the slate entry",
+              f'"{key}": g.get(' in src or f'"{key}": bool(g.get(' in src)
+
 check("npb imports the shared forecast engine",
       "engines.intl_weather" in npb_src)
 check("npb forecasts through venue_for_game",
@@ -123,6 +138,50 @@ for name, src in (("KBO", kbo_view), ("NPB", npb_view)):
     # CC BY 4.0: the credit must appear wherever the data does.
     check(f"{name} carries the Open-Meteo attribution",
           "_WX_ATTRIBUTION" in src and src.count("_WX_ATTRIBUTION") >= 2)
+
+# ---- 5. the three failures the first live run exposed ---------------
+# Every one of these logged "no coordinates" and forecast nothing, on a
+# green pipeline, because a lookup missed quietly.
+
+# (a) A capital letter decided whether a game got a forecast:
+#     kbo_precompute emits "Kia Tigers", the map said "KIA Tigers".
+check("club lookup is case-insensitive",
+      venue_for_game("TBD", "Kia Tigers", "kbo") == "Gwangju"
+      and venue_for_game("TBD", "KIA Tigers", "kbo") == "Gwangju")
+
+# Every name the KBO pipeline can emit must resolve. This is the check
+# that would have caught (a) before it shipped.
+_kbo_src = (ROOT / "kbo_precompute.py").read_text(encoding="utf-8")
+_m = re.search(r"^TEAMS\s*=\s*\{(.*?)\n\}", _kbo_src, re.S | re.M)
+_emitted = set(re.findall(r':\s*"([^"]+)"', _m.group(1))) if _m else set()
+check("every KBO club the pipeline emits has a home park",
+      _emitted and all(venue_for_game("TBD", n, "kbo") for n in _emitted))
+
+# (b) npb.jp emits both the short and the full park name; STADIUMS held
+#     only the prefix, so the full form fell through as raw Japanese.
+sys.path.insert(0, str(ROOT))
+import npb_precompute as _npb  # noqa: E402
+from engines.intl_weather import coords_for  # noqa: E402
+
+for raw in ("\u30d0\u30f3\u30c6\u30ea\u30f3\u30c9\u30fc\u30e0",
+            "\u30de\u30c4\u30c0\u30b9\u30bf\u30b8\u30a2\u30e0",
+            "\u6a2a \u6d5c", "\u6771\u4eac\u30c9\u30fc\u30e0"):
+    check(f"NPB venue {raw} resolves to coordinates",
+          bool(coords_for("npb", _npb._en_stadium(raw))))
+
+# (c) An unrecognised venue string used to WIN over the club fallback
+#     just for being non-empty, then forecast nothing.
+check("an unlocatable venue falls back to the home park",
+      venue_for_game("\u8b0e\u306e\u7403\u5834", "Hanshin Tigers", "npb")
+      == "Koshien Stadium")
+check("unknown club AND unknown venue still returns nothing",
+      venue_for_game("\u8b0e\u306e\u7403\u5834", "Nobody FC", "npb") == "")
+
+# Both pipelines must pass their league through, or (c) cannot fire.
+check("kbo passes its league to venue_for_game",
+      '_venue_for(g.get("stadium"), g.get("home"), "kbo")' in _kbo_src)
+check("npb passes its league to venue_for_game",
+      '_venue_for(g.get("stadium"), g.get("home"), "npb")' in npb_src)
 
 if failures:
     print("FAIL:", "; ".join(failures))

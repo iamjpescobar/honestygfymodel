@@ -109,6 +109,7 @@ HOME_VENUE = {
     "KT Wiz": "Suwon",            "Hanwha Eagles": "Daejeon",
     "Samsung Lions": "Daegu",     "Lotte Giants": "Sajik",
     "KIA Tigers": "Gwangju",      "NC Dinos": "Changwon",
+    "Kia Tigers": "Gwangju",
     "Doosan": "Jamsil", "LG": "Jamsil", "Kiwoom": "Gocheok",
     "SSG": "Munhak", "KT": "Suwon", "Hanwha": "Daejeon",
     "Samsung": "Daegu", "Lotte": "Sajik", "KIA": "Gwangju",
@@ -145,20 +146,52 @@ NPB_HOME_VENUE = {
 }
 
 
-def venue_for_game(stadium, home_team):
+# One lookup across both leagues, lowercased. Club names do not collide
+# between KBO and NPB, so a caller that already knows its league does not
+# have to say so.
+_HOME_BY_KEY = {k.lower(): v for k, v in
+                list(HOME_VENUE.items()) + list(NPB_HOME_VENUE.items())}
+
+
+def venue_for_game(stadium, home_team, league=None):
     """The venue string to forecast for, or "" when nothing is known.
 
     A scraped venue wins; the home park is only a fallback. Returns ""
     rather than a guess so the caller still omits genuinely unknown
     games instead of inventing a city for them.
     """
-    s = (stadium or "").strip()
-    if s and s.upper() != "TBD":
-        return s
     home = (home_team or "").strip()
-    # One lookup across both leagues: club names do not collide, and a
-    # caller that already knows its league should not have to say so.
-    return HOME_VENUE.get(home) or NPB_HOME_VENUE.get(home, "")
+    # CASE-INSENSITIVE, because the club name arrives from a different
+    # module than the one that wrote this map. The first live run logged
+    # `no coordinates for ['']` once per date: kbo_precompute emits
+    # "Kia Tigers" and this map said "KIA Tigers", so every Kia home
+    # game forecast nothing. A capital letter is not a fact about
+    # baseball and must not decide whether a game gets a forecast.
+    fallback = _HOME_BY_KEY.get(home.lower(), "")
+
+    s = (stadium or "").strip()
+    if not s or s.upper() == "TBD":
+        return fallback
+
+    # A SCRAPED VENUE ONLY WINS IF WE CAN ACTUALLY LOCATE IT.
+    #
+    # The old rule was "any non-empty string that isn't TBD wins", which
+    # let an unrecognised name through and then quietly forecast
+    # nothing. The same run logged `no coordinates for
+    # ['\u30d0\u30f3\u30c6\u30ea\u30f3\u30c9\u30fc\u30e0',
+    # '\u30de\u30c4\u30c0\u30b9\u30bf\u30b8\u30a2\u30e0']` — npb.jp
+    # sometimes emits the full park name where STADIUMS holds only the
+    # prefix, so _en_stadium handed back a string NPB_COORDS has no key
+    # for and the home-park fallback never fired because the string was
+    # "present".
+    #
+    # Now presence is not enough: when a league is given, the venue has
+    # to resolve to real coordinates or we fall back to the club's own
+    # park. Still no guessing — an unknown club with an unknown venue
+    # returns "" exactly as before.
+    if league and not coords_for(league, s):
+        return fallback
+    return s
 
 
 # KBO venue strings are free text, so match on a distinctive substring

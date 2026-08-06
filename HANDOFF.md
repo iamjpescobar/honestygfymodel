@@ -108,7 +108,81 @@ coordinates.
 
 ## OPEN — in priority order
 
-### V. THE KBO VENUE AND TIME REGEXES ARE STILL BROKEN. Do this first.
+### W. WEATHER — live on both boards. Three lookup bugs already fixed.
+The first live run (84277973593) published fine and forecast most of
+the slate, but logged three quiet misses, all now fixed and pinned by
+`tests/test_intl_weather_parity.py`:
+
+- `no coordinates for ['']`, once per future date — `kbo_precompute`
+  emits **"Kia Tigers"** and the engine map said **"KIA Tigers"**. A
+  capital letter decided whether a game got a forecast. Lookup is now
+  case-insensitive, and the test asserts every club name the pipeline
+  can emit resolves to a park.
+- `no coordinates for ['バンテリンドーム', 'マツダスタジアム']` — npb.jp
+  emits both the short and the full park name; `STADIUMS` held only the
+  prefix. `_en_stadium` now does a longest-prefix match.
+- An unrecognised venue string used to WIN over the club fallback just
+  for being non-empty, then forecast nothing. `venue_for_game` now
+  takes the league and falls back unless the venue really resolves to
+  coordinates.
+
+- **KBO shipped no weather at all.** `games_out` is a curated dict and
+  nobody added the forecast keys to it, so the pipeline computed the
+  figures, logged `2 of 50 upcoming games at or above the heat
+  threshold`, and dropped them at serialisation. The KBO board rendered
+  no badge while NPB's rendered fine. Rule 20 again, one step further
+  down: computed, logged, then lost on the way to disk. Both pipelines
+  now ship the same five keys and the parity test asserts on the
+  SHIPPED entry rather than on the in-memory game.
+
+**Watch the next run:** every `weather:` line should name venues and no
+`no coordinates for` line should appear. If one does, it names the
+string — that is the bug report.
+
+### V. KBO venue + start time — REPAIRED for today's slate.
+The board read `TBD · TBD KST / TBD ET` because `parse_week()` still
+keys on `<div class="venue">` and a `datetime=` attribute — the third
+and fourth regex in that file killed by the one mykbostats v3 rewrite.
+
+`parse_homepage_schedule()` now reads both out of the homepage card
+text (`6:30pm Daegu`), from the request the starters reader already
+makes. **A separate function on purpose:** membership of the starters
+map means "this game has announced starters" and `test_kbo_heat_risk`
+depends on that, so folding them together would make an entry mean two
+things. Measured live at 13:13 KST, every card had a time and venue and
+none had a starter — they publish at different times.
+
+Applied ONLY where the value is `TBD`, so a scraped value always wins
+and this quietly stops firing if `parse_week` is ever repaired.
+
+**Still open:** future dates. The homepage carries today only, so
+tomorrow onward keeps whatever the schedule page gave it — which is
+still TBD. Fixing that needs the schedule page's new markup, i.e. one
+probe. Do not widen the old regex on a guess.
+
+### PITCHER H2H — NOT BUILDABLE FROM THE CURRENT SOURCES.
+Requested: starters always shown, with season data and head-to-head
+against the opposing team. First two are in hand; **the third has no
+data behind it.**
+
+- KBO season lines come from `eng.koreabaseball.com` ERA/WHIP
+  **leaderboards**, which list QUALIFIED pitchers only — the live run
+  fetched 20 for a 10-team league, so most starters have no line at
+  all. That is a coverage gap, not a bug.
+- NPB fetches 59 from three npb.jp leaderboards, same shape.
+- **Neither source gives per-start logs.** Both are season aggregates,
+  so "this pitcher vs this opponent" cannot be computed from anything
+  currently fetched. `grep -c per-start kbo_precompute.py npb_precompute.py`
+  → 0/0.
+
+What exists today is TEAM h2h (`h2h()` in both pipelines), which is
+what the cards already show.
+
+To build pitcher-vs-team you need a per-start game log per pitcher:
+KBO would need the official site's player detail pages, NPB the
+equivalent on npb.jp. **Probe one player page per league first** and
+confirm the log is server-rendered before designing anything — that is
+the lesson from four probes on the starters question.
 The board currently reads **`TBD · TBD KST / TBD ET`** on every game.
 `kbo_precompute.parse_week()` still keys on the pre-rewrite markup:
 
