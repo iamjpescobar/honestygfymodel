@@ -431,6 +431,43 @@ def fetch_homepage_starters():
     return found
 
 
+def fetch_homepage_schedule():
+    """Today's first-pitch time and venue for the whole slate, or {}.
+
+    A SIBLING of fetch_homepage_starters, not part of it. Both read the
+    same cached document (_homepage_html caches, so this costs no extra
+    request), but they answer different questions and a game routinely
+    has one and not the other — measured live at 13:13 KST on
+    2026-08-06, every card had a time and a venue and NOT ONE had a
+    starter.
+
+    WHY THIS FUNCTION HAD TO EXIST. The caller in main() was written
+    against a two-value contract — `_hp, _hs = fetch_homepage_starters()`
+    — that fetch_homepage_starters never had. It returns one dict, so
+    every run since raised
+
+        ValueError: not enough values to unpack (expected 2, got 0)
+
+    and the KBO step of intl-late-refresh exited 1 (run 84386218583).
+    Worse than the crash: on a slate where exactly two games HAD
+    announced starters, unpacking would have SUCCEEDED and bound two
+    game-id strings to _hp and _hs, and every lookup after it would have
+    quietly found nothing. The loud failure was luck.
+
+    Returns {} on any failure, which leaves the schedule page's own
+    (broken since the v3 rewrite) values in place — TBD rather than a
+    guess.
+    """
+    html = _homepage_html()
+    if not html:
+        return {}
+    out = parse_homepage_schedule(html)
+    cards = len(HOME_GAME_A.findall(html))
+    print(f"KBO: homepage — {len(out)} of {cards} game cards carried a "
+          f"time and venue")
+    return out
+
+
 def parse_week(html, today_str, sample_holder):
     for m in GAME_LINE.finditer(html):
         game_id, away_short, home_short, yyyymmdd, inner = m.groups()
@@ -871,7 +908,12 @@ def main():
     upcoming = [g for g in all_games
                 if g["date"] >= today and g.get("status") != "final"
                 and g.get("game_slug")]
-    _hp, _hs = fetch_homepage_starters()
+    # Two separate reads of the SAME cached page (one request). Kept
+    # separate because membership of _hp means "this game has announced
+    # starters" and downstream tests depend on that; a time and venue
+    # land on games with no pitchers posted.
+    _hp = fetch_homepage_starters()
+    _hs = fetch_homepage_schedule()
     starter_hits = 0
     venue_fixes, time_fixes = [0], [0]
     for g in upcoming:
@@ -919,7 +961,6 @@ def main():
     #
     # Keys are set on every upcoming game so a downstream .get() never
     # has to tell "no risk" from "not looked at".
-    _venues = [g.get("stadium") or g.get("venue") or "" for g in upcoming]
     _wx_by_date = {}
     for g in upcoming:
         _wx_by_date.setdefault(g["date"], []).append(g)
