@@ -157,44 +157,43 @@ Then reload KBO and Sync latest: real venue and first-pitch time in the
 header, like the NPB board already shows. **Until that run is green,
 treat every item below it as untested.**
 
-### V2. KBO venue + time for FUTURE dates — no longer blocked on a probe.
-Today's slate is repaired from the homepage. Tomorrow onward still
-shows `TBD` because `parse_week()` keys on the pre-rewrite markup:
-
-```python
-venue = re.search(r'<div class="venue">\s*(.*?)\s*</div>', inner, re.S)
-t     = re.search(r'datetime="([0-9T:+.Z-]+)"', inner)
-```
-
-**A live fetch of the schedule page on 2026-08-06 settled the probe
-question**: the v3 schedule page carries the whole week in plain card
-text, same shape as the homepage —
+### V2. KBO venue + time for future dates — ANSWERED: NOT POSSIBLE HERE.
+Probe run 84403678537 fetched the schedule page from Actions and it
+carries **no time, no venue, no temperature**:
 
 ```
-Friday August 7
-  Lotte Giants KT Wiz 34° 6:30pm Suwon      Chance of Heat Cancellation
-  SSG Landers NC Dinos 32° 6:30pm Changwon  Forecast Uncertain
-Saturday August 8
-  Doosan Bears Samsung Lions 6:00pm Daegu
+'<div class="venue"': 0     'datetime=': 0
+'pm': 0     '°': 0     '&deg;': 0
 ```
 
-So the work is: read time and venue out of the schedule page's card
-text the way `parse_homepage_schedule()` reads the homepage's, keyed on
-the product and not the styling (rule 18). **Write it against a live
-fetch, not against the block quoted above** — that text is a
-transcription from a chat window and rule 15 exists because
-transcriptions have already cost this repo an outage.
+The `Lotte Giants KT Wiz 34° 6:30pm Suwon` block a previous session
+pasted into chat was **homepage** text, not schedule text. A parser
+written against it would have matched nothing and looked like a fifth
+dead regex. Rule 15 again, and this is the run that paid for it.
 
-`intl_v2_probe.py` / **KBO/NPB v2 probe** does that fetch and prints the
-raw anchor markup, plus the one thing the transcription cannot show:
-whether the DATE lives inside the card or only in a heading above it. A
-week page has several dates where the homepage had one, and a card
-matched to the wrong day forecasts the wrong weather with full
-confidence. Run it, read it, then write the parser.
+So future-date venue and time need a DIFFERENT source, not a better
+regex. `eng.koreabaseball.com/Schedule/Schedule.aspx` carries both and
+is already the plan under E3 — fold this into that migration rather
+than treating it as its own item. Today's slate stays repaired off the
+homepage in the meantime.
 
-Also visible in that same text: **`Forecast Uncertain`**, a third
-weather state alongside `Chance of Heat Cancellation`. Worth reading,
-not worth guessing at.
+**What the probe found instead is worth more.** The schedule page
+carries probable starters in a clean span:
+
+```html
+<span class="ds-game-team__starter">Oh Won-seok</span>
+```
+
+The homepage carries TODAY only; the schedule page covers a window, and
+the pipeline already fetches it once per week. If an UPCOMING card
+carries that span, KBO probables extend past today for free. All three
+cards the probe dumped were 2026-08-04 — played or canceled — so
+**that is unconfirmed**, and it is question A of probe round 2.
+
+Also unsettled: `week_of/2026-08-10` served the 2026-08-04..09 window,
+so the date in the URL may clamp to the current week. Past weeks
+clearly resolve (the crawl reaches 620 games); forward ones may not.
+Round 2 asks for a window two weeks out and prints what comes back.
 
 ### F2. KBO probables — still ZERO live confirmations.
 `parse_homepage_starters()` is in and tested. Every confirming run so
@@ -258,12 +257,17 @@ equivalent on npb.jp. **Probe one player page per league first** and
 confirm the log is server-rendered before designing anything — that is
 the lesson from four probes on the starters question. The probe script
 being written when a session was cut off never got committed; it is
-replaced by section B of `intl_v2_probe.py`, which discovers a player
-link off a leaderboard we already fetch rather than guessing a URL, and
-reports whether the page is server-rendered. **Run that before designing
-anything.** If the log is drawn client-side, the answer is "needs an XHR
-endpoint", not "write more regex" — same shape as the Korean schedule
-page's missing 선발.
+replaced by section B of `intl_v2_probe.py`. Round 1 found the lead and
+then failed to follow it — the link picker took a
+`javascript:__doPostBack(...)` string and fetched an error page (my bug,
+fixed) — but the log printed the real target:
+`eng.koreabaseball.com/teams/playerinfopitcher/summary.aspx?pcode=55268`,
+a server-rendered ASP.NET player page. **Round 2 fetches it.** NPB is
+worse off: the English leaderboard links only `/bis/eng/players/`, a
+218-char stub, so round 2 tries the index and the Japanese leaderboard
+before concluding. If a log turns out to be drawn client-side, the
+answer is "find the XHR endpoint", not "write more regex" — same shape
+as the Korean schedule page's missing 선발.
 
 ### E3. KBO source migration — blocked on one probe.
 mykbostats clause 6 forbids betting use, so the rest should move to
