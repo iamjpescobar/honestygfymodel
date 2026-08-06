@@ -17,23 +17,40 @@
 # way credentials never touch git or your public repo history.
 # -----------------------------------------------------------------------
 
+# -----------------------------------------------------------------------
+# WHY THERE ARE NO REAL VALUES BELOW ANY MORE
+#
+# This file used to ship a working cookie `key:` and working bcrypt
+# hashes. On 2026-08-05 the live config was found to be carrying THE
+# SAME cookie key as this template — copied across and never rotated,
+# because a plausible-looking value does not look like something you
+# still have to do.
+#
+# That key signs the session cookie. Anyone holding it can forge a
+# session for any username and role, admin included, without a
+# password. It defeats the login without going through it, and this
+# file is in a public repo.
+#
+# So every secret here is now an obvious placeholder. If a value in
+# this file ever looks usable again, that is the bug.
+# -----------------------------------------------------------------------
 credentials:
   usernames:
     admin:
       email: admin@loscappers.com
       name: Admin
       # DEMO password: ChangeMe_Admin123!  — rotate before going live
-      password: $2b$12$ilnZ53Hx1xLS22zqAB59COB5CdTgUvO7VuJ6kgaj4V3wCt8uRkJjS
+      password: REPLACE_ME__run_hash_password.py
       role: admin
     demo_subscriber:
       email: demo@loscappers.com
       name: Demo Subscriber
       # DEMO password: ChangeMe_Sub123!  — rotate before going live
-      password: $2b$12$a6gMDsG/qUgl4HXhqKYz/ePWprvVbvmXm4p3QQlnu18SRdxc6umTC
+      password: REPLACE_ME__run_hash_password.py
       role: subscriber
 
 cookie:
   name: los_cappers_auth
   # Generate your own with: python -c "import secrets; print(secrets.token_hex(32))"
-  key: 9cb3cbd572d47d5eb57c138d2c34156a557762a4f0c66d0faf2bdd57f4e62e15
+  key: REPLACE_ME__run_the_command_above
   expiry_days: 7
