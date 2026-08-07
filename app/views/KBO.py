@@ -470,6 +470,24 @@ else:
         # a missing badge would mean "safe" on one page and "not
         # measured" on the other. engines.intl_weather.weather_badges
         # owns the wording, the thresholds and the roof rule for both.
+        # THE SOURCE'S OWN VOID SIGNAL, ahead of our measurement.
+        #
+        # Two different facts, never merged:
+        #   void_reason - WHY a called game was called ("Extreme Heat")
+        #   void_risk   - a warning on a game that is STILL ON
+        #                 ("Chance of Rainout", "Forecast Uncertain")
+        #
+        # Both are mykbostats' own words, quoted rather than re-worded.
+        # Our weather badge below is a reading against a threshold whose
+        # provenance is still unverified; this is the site DECIDING, and
+        # that is the thing an actual postponement turns on.
+        #
+        # Placed first because a bettor needs "this may not be played"
+        # before any number about it.
+        if g.get("void_reason"):
+            badges += badge(f'\u2014 {g["void_reason"].upper()}', "bad")
+        if g.get("void_risk"):
+            badges += badge(g["void_risk"].upper(), "bad")
         for _wtxt, _wtone in _weather_badges(g, "kbo", _roof):
             badges += badge(_wtxt, _wtone)
         st.markdown(badges, unsafe_allow_html=True)

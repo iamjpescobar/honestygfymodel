@@ -310,7 +310,9 @@ echo "FAILING:${fails:- none}"
 Then, for anything marked PENDING, **check it is still pending.**
 
 ```bash
-ls tests/*.py | wc -l                                     # 73
+ls tests/*.py | wc -l                                     # 74
+grep -c void_risk kbo_precompute.py                       # 3  = V3 in
+grep -c void_reason app/views/KBO.py                      # 3  = board shows it
 python tests/test_return_arity.py | tail -1               # FAILING: none
 grep -c fetch_homepage_schedule kbo_precompute.py         # 2  = defined AND called
 grep -cE '^\s+_hp, _hs =' kbo_precompute.py               # 0  = the crash is gone
@@ -466,7 +468,59 @@ leave it in; it lights up automatically if they come back.
 **Do not widen either regex.** If probables matter, they need a source
 that publishes them — which is item E3, and the reason to finish it.
 
-### O1. `fetch_homepage_conditions()` is orphaned — decide, don't delete.
+### O1. CLOSED, and it uncovered a worse bug. See V3 below.
+
+### V3. A CANCELLATION WAS ONLY READ FOR GAMES ALREADY PLAYED.
+`parse_week`'s status block sat behind `if gdate < today_str:`, so a
+game called off for TODAY or any future date still shipped as
+`scheduled`. Measured on the live page 2026-08-07: mykbostats listed
+**every KBO game through 08-09 as Canceled** in a heat wave, and the
+board would have shown all fifteen as on. That is the void problem
+itself — the board saying a game is playable when the source says it is
+not — and it is the worst direction to be wrong in on a betting site.
+
+NPB never had it: `<div class="cancel">` is checked with no date gate.
+KBO was the odd one out, which is rule 21 in its quiet form.
+
+Fixed. The cancellation check now runs on every date. `FINAL_PAT` stays
+past-only on purpose (a future game has no score to parse), and a
+postponed game can no longer also be graded final.
+
+Two new fields ship on every KBO slate row, deliberately separate
+because they answer different questions and a game never has both:
+
+- **`void_reason`** — why a called game was called (`Extreme Heat`).
+  Absent on a bare `Canceled`, which is a real difference in the source
+  and not a gap to fill in.
+- **`void_risk`** — the site's forward-looking warning on a game that
+  is STILL ON. Three phrasings measured: `Chance of Heat Cancellation`,
+  `Chance of Rainout`, `Forecast Uncertain`.
+
+This is what O1 was asking for, taken off the homepage (today only) and
+onto the schedule page (the whole week). Quoted verbatim, never mapped
+onto our own scale — Open-Meteo gives a temperature against
+`HEAT_CANCEL_C`, which is still unverified; this is the site DECIDING.
+Both render on the KBO board ahead of the measured badge.
+
+`tests/test_kbo_void_signals.py` pins the separation both ways: the
+warning must never be read as a cancellation, and a decision must never
+be read as a warning. Negative controls run — the test throws on the
+pre-fix tree, and fails if the risk pattern is widened to overlap
+`Cancel`.
+
+**NPB parity is OWED here and is not done.** npb.jp has not been
+checked for a forward-looking warning of its own. Until someone looks,
+KBO shows a signal NPB does not, and a missing badge is unreadable —
+it means "no risk" on one board and "not measured" on the other. Check
+npb.jp's schedule markup before building anything else on this.
+
+**`fetch_homepage_conditions()` is still orphaned.** It duplicates
+`void_risk` for today only, off a second request. Now that the
+schedule page covers the whole week, it is redundant — delete it and
+say why, or keep it as a cross-check and wire it. Do not leave it
+neither.
+
+### O1-original (kept for the reasoning). `fetch_homepage_conditions()`
 It parses the site's own **`Chance of Heat Cancellation`** warning off
 the homepage and nothing calls it. Weather moved to Open-Meteo, which
 was right — but Open-Meteo can only give a temperature against

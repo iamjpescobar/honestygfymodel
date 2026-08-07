@@ -212,6 +212,40 @@ HOME_GAME_A = re.compile(r'<a[^>]*href="/games/([^"]+)"[^>]*>(.*?)</a>', re.S)
 # sentence — because the wording is the site's copy, not its data, and
 # is likelier to be reworded than dropped. Rule 18 says key on the
 # product; this keys on the two words the product cannot lose.
+# MYKBOSTATS' OWN FORWARD-LOOKING VOID WARNING, in its own words.
+#
+# Published on games that are still ON, from the site's Apple Weather
+# feed. Three phrasings measured on the 2026-08-06 schedule page:
+#
+#     Lotte Giants KT Wiz 34\u00b0 6:30pm Suwon    Chance of Heat Cancellation
+#     Doosan Bears Samsung Lions 32\u00b0 ... Daegu Chance of Rainout
+#     SSG Landers NC Dinos 32\u00b0 ... Changwon    Forecast Uncertain
+#
+# WHY THIS AND NOT JUST OUR OWN FORECAST. Open-Meteo gives a temperature
+# against HEAT_CANCEL_C, and that threshold is still UNVERIFIED against
+# any published KBO rule. This is the SITE'S judgement that a game is at
+# risk — the thing an actual postponement turns on, and the thing he has
+# been losing bets to. The two are shown side by side, never merged.
+#
+# Quoted verbatim rather than mapped onto our own scale, so a phrase
+# nobody has seen yet surfaces as itself instead of being silently
+# rounded to the nearest one we recognise (rule 18).
+#
+# DELIBERATELY CANNOT MATCH A DECIDED GAME. "Chance of Heat
+# Cancellation" is a warning; "Canceled Extreme Heat" is a fact. They
+# are different fields because they are different questions, and
+# POSTPONED_PAT is verified not to match the warning.
+VOID_RISK_PAT = re.compile(
+    r"(Chance of [A-Z][A-Za-z]*(?: [A-Z][A-Za-z]*)*|Forecast Uncertain)")
+
+# The reason attached to a cancellation, when the site gives one.
+# "Canceled Extreme Heat" -> "Extreme Heat"; a bare "Canceled" -> None.
+# Measured both on one page: 2026-08-07 carried the reason, 08-08 and
+# 08-09 did not.
+CANCEL_REASON_PAT = re.compile(
+    r"Cancell?ed\s+([A-Z][A-Za-z]*(?: [A-Z][A-Za-z]*)*)")
+
+
 HEAT_RISK_PAT = re.compile(r'chance[^.]{0,40}heat[^.]{0,40}cancell?ation',
                            re.I)
 # Either the literal degree sign or the HTML entity: _strip() removes
@@ -551,17 +585,46 @@ def parse_week(html, today_str, sample_holder):
             "status": "scheduled",
         }
 
+        text = re.sub(r"\s+", " ", _strip(inner))
+
+        # A CANCELLATION IS READ ON EVERY DATE, NOT JUST PAST ONES.
+        #
+        # This whole block used to sit behind `if gdate < today_str`, so
+        # a game called off for TODAY or any future date still shipped as
+        # "scheduled". On 2026-08-07 mykbostats listed every KBO game
+        # through 08-09 as Canceled during a heat wave, and the board
+        # would have shown all fifteen as on. On a betting site that is
+        # the worst direction to be wrong in — it is the void problem
+        # itself, not a cosmetic status.
+        #
+        # NPB never had this bug: it checks <div class="cancel"> with no
+        # date gate. KBO was the odd one out (rule 21).
+        #
+        # FINAL stays past-only on purpose — a future game cannot have a
+        # score, and the score regex needs one to parse.
+        if POSTPONED_PAT.search(text):
+            g["status"] = "postponed"
+            m = CANCEL_REASON_PAT.search(text)
+            if m:
+                # The site's own reason, verbatim. Absent on a bare
+                # "Canceled", which is a real difference and not a gap
+                # to fill in with a guess.
+                g["void_reason"] = m.group(1).strip()
+        elif gdate >= today_str:
+            # Still on, so the forward-looking warning is meaningful.
+            # A decided game cannot also be "at risk".
+            m = VOID_RISK_PAT.search(text)
+            if m:
+                g["void_risk"] = m.group(1).strip()
+
         if gdate < today_str:
-            text = re.sub(r"\s+", " ", _strip(inner))
             if sample_holder and sample_holder.get("sample") is None:
                 sample_holder["sample"] = text[:400]
-            if FINAL_PAT.search(text):
+            if FINAL_PAT.search(text) and g["status"] != "postponed":
                 sm = _score_pattern(g["away"], g["home"]).search(text)
                 if sm:
                     g["away_score"], g["home_score"] = int(sm.group(1)), int(sm.group(2))
                     g["status"] = "final"
-            elif POSTPONED_PAT.search(text):
-                g["status"] = "postponed"
         yield g
 
 
@@ -1089,6 +1152,12 @@ def main():
             "away_starter": g.get("away_starter") or "TBD",
             "home_starter": g.get("home_starter") or "TBD",
             "status": g["status"],
+            # The site's own void signals, kept apart on purpose:
+            # void_reason is WHY a called game was called, void_risk is
+            # a warning on a game that is still on. A game never has
+            # both, and neither is ever inferred from our forecast.
+            "void_reason": g.get("void_reason"),
+            "void_risk": g.get("void_risk"),
             # THE FORECAST HAS TO SURVIVE SERIALISATION.
             #
             # These were computed onto the in-memory game above, logged
