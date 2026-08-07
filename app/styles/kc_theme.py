@@ -431,24 +431,40 @@ def _theme_css() -> str:
            around every panel and made the page read as a grid of boxes.
            Separation now comes from a slightly lifted surface and a
            shadow, so panels read as depth rather than as frames. */
+        /* FLAT. No panel background, no shadow.
+           The card has now been through three generations: a 1px teal
+           outline with a 3px bar on top, then this gradient-plus-shadow
+           surface, now nothing. Each step removed a container, and the
+           reason is the same each time \u2014 the page carries a lot of
+           dense tables and every panel drawn behind them competes with
+           the data for contrast. A gradient plus two shadows on every
+           block turned the page into a stack of grey slabs.
+           Separation is now SPACE and a hairline, which cost no
+           contrast at all. The padding stays: content still needs room,
+           it just no longer needs a box to sit in. */
         div[class*="st-key-card_"] {{
-            background: linear-gradient(165deg, {COLOR["surface_raised"]} 0%, {COLOR["surface"]} 100%) !important;
+            background: transparent !important;
             border: none !important;
-            border-radius:var(--lc-radius-xl) !important;
-            padding:var(--lc-space-xl) var(--lc-space-xl) !important;
+            border-top: 1px solid {COLOR["text"]}12 !important;
+            border-radius: 0 !important;
+            padding:var(--lc-space-xl) var(--lc-space-none) !important;
             margin-bottom:var(--lc-space-lg) !important;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.4),
-                        0 10px 30px -14px rgba(0,0,0,0.55) !important;
+            box-shadow: none !important;
         }}
 
         /* Glossary gets its own accent — real bloody red instead of the
            page's default cyan, so it reads as a distinct reference
            section rather than another stat card. */
         div[class*="st-key-card_glossary"] {{
-            /* Still distinct from a stat card, but by TINT rather than by
-               an outline — same reasoning as the rule above. */
-            background: linear-gradient(165deg, {COLOR["error_dim"]}, {COLOR["surface"]} 70%) !important;
+            /* Every other card went flat; this one keeps a mark so the
+               reference section is still findable by eye. A left rule
+               rather than a fill \u2014 it identifies the block without
+               putting a coloured sheet behind the text. */
+            background: transparent !important;
             border: none !important;
+            border-top: none !important;
+            border-left: 2px solid {COLOR["error"]} !important;
+            padding-left: var(--lc-space-lg) !important;
         }}
 
         .pf-card {{
@@ -601,6 +617,49 @@ def _theme_css() -> str:
             background-color: {COLOR["stat_high_dim"]} !important;
             border-color: {COLOR["stat_high"]} !important;
             color: {COLOR["stat_high"]} !important;
+        }}
+
+        /* ---------------- SPORT NAV ---------------- */
+        /* PURELY VISUAL. The widget, its key (lc_sport_seg), its options
+           and its click handling are untouched \u2014 app.py and Home.py
+           both depend on that machinery (rule 4) and none of it moves
+           for a restyle.
+
+           What changed: the strip read as seven identical grey buttons,
+           so the live leagues and the not-yet-live ones looked the same
+           and the active one barely stood out. Now the active tab is a
+           filled accent with a lifted weight, and the whole strip is
+           centred with room to breathe. Bigger tap targets too \u2014 this
+           is read on an iPad, and 44px is the minimum a thumb hits
+           reliably. */
+        div[class*="st-key-lc_sport_seg"] div[data-testid="stButtonGroup"] {{
+            justify-content: center !important;
+            gap: var(--lc-space-hair) !important;
+        }}
+        div[class*="st-key-lc_sport_seg"] div[data-testid="stButtonGroup"] button {{
+            background-color: transparent !important;
+            border: 1px solid transparent !important;
+            border-radius: 999px !important;
+            min-height: 44px !important;
+            padding: var(--lc-space-xs) var(--lc-space-lg) !important;
+            letter-spacing: 0.06em !important;
+            font-weight: 700 !important;
+            color: {COLOR["text_muted"]} !important;
+        }}
+        div[class*="st-key-lc_sport_seg"] div[data-testid="stButtonGroup"] button:hover {{
+            background-color: {COLOR["text"]}0A !important;
+            border-color: transparent !important;
+            color: {COLOR["text"]} !important;
+        }}
+        /* The selected league is the one thing on this strip that has to
+           be unmistakable at a glance \u2014 it tells you which board you
+           are looking at. Filled, not outlined. */
+        div[class*="st-key-lc_sport_seg"] div[data-testid="stButtonGroup"] button[aria-checked="true"],
+        div[class*="st-key-lc_sport_seg"] div[data-testid="stButtonGroup"] button[aria-pressed="true"] {{
+            background-color: {COLOR["stat_high"]} !important;
+            border-color: {COLOR["stat_high"]} !important;
+            color: {COLOR["bg"]} !important;
+            box-shadow: 0 2px 10px -4px {COLOR["stat_high"]} !important;
         }}
 
         /* Game picker specifically: force a single scrollable row instead
