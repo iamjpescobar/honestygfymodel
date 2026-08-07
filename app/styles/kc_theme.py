@@ -472,21 +472,27 @@ def _theme_css() -> str:
             padding-left: var(--lc-space-lg) !important;
         }}
 
+        /* FLAT, matching st-key-card_ above.
+           THIS is why KBO and NPB kept the old look after everything
+           else went flat. Those two boards render cards through
+           card_open()/card_close(), which emit raw <div class="pf-card">
+           HTML — a different selector from the st.container(key=...)
+           cards the MLB views use. Flattening one and not the other
+           left the international boards in the previous generation of
+           the design while every other page moved on, and nothing in
+           the code said the two selectors had to agree.
+
+           They do have to agree: it is the same object to a reader.
+           Same rules as the container card — no fill, no shadow,
+           separation by space and a hairline. */
         .pf-card {{
-            /* Soft raised surface, not a boxed frame.
-               The old card had a 1px teal border AND a 3px teal bar
-               across the top, which drew a hard rectangle around every
-               panel and made the page read as a stack of boxes. Depth
-               now comes from a lifted background and a shadow — the same
-               language as the score bars — so the panel reads as a
-               surface rather than an outline. */
-            background: linear-gradient(165deg, {COLOR["surface_raised"]} 0%, {COLOR["surface"]} 100%);
-            border: 1px solid {COLOR["border_soft"]};
-            border-radius:var(--lc-radius-xl);
-            padding:var(--lc-space-xl) var(--lc-space-xl);
+            background: transparent;
+            border: none;
+            border-top: 1px solid {COLOR["text"]}12;
+            border-radius: 0;
+            padding:var(--lc-space-xl) var(--lc-space-none);
             margin-bottom:var(--lc-space-lg);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.35),
-                        0 8px 24px -12px rgba(0,0,0,0.5);
+            box-shadow: none;
         }}
         .pf-card-title {{
             font-weight: 700;
@@ -891,10 +897,45 @@ def _theme_css() -> str:
             border-radius:var(--lc-radius-lg) !important;
             color: {COLOR["text"]} !important;
         }}
+        /* EXPANDERS. "Every pick from last night", "Weak spots", the
+           glossary — these are the one control the site has that opens
+           something, and they were still a filled grey slab with a hard
+           border while every other control had gone quiet-until-active.
+
+           Treated as what they are: a wide button. Transparent by
+           default, the faintest wash on hover, a hairline above and
+           below so it reads as a band rather than a floating box, and a
+           44px target like everything else. When it is OPEN the header
+           takes the accent, because "this one is expanded" is the same
+           question a selected pill answers and deserves the same
+           answer. */
         div[data-testid="stExpander"] {{
-            background: {COLOR["surface"]};
-            border: 1px solid {COLOR["border"]};
-            border-radius:var(--lc-radius-lg);
+            background: transparent;
+            border: none;
+            border-top: 1px solid {COLOR["text"]}12;
+            border-bottom: 1px solid {COLOR["text"]}12;
+            border-radius: 0;
+        }}
+        div[data-testid="stExpander"] summary,
+        div[data-testid="stExpander"] details > summary {{
+            min-height: 44px;
+            border-radius: 0 !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.02em;
+            color: {COLOR["text_muted"]} !important;
+            transition: background-color 0.14s ease, color 0.14s ease;
+        }}
+        div[data-testid="stExpander"] summary:hover {{
+            background-color: {COLOR["text"]}0A;
+            color: {COLOR["text"]} !important;
+        }}
+        /* Open state. details[open] is the browser's own flag, so this
+           needs no Streamlit internals and cannot drift with a release. */
+        div[data-testid="stExpander"] details[open] > summary {{
+            color: {COLOR["stat_high"]} !important;
+        }}
+        div[data-testid="stExpander"] details[open] {{
+            background-color: {COLOR["text"]}05;
         }}
 
         /* Divider */
