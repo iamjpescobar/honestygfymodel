@@ -226,6 +226,37 @@ ANY rule for this selector declare the property" rather than "does the
 first one" — a test that parses CSS has to know the difference between
 a rule and an override.
 
+### Why KBO, NPB and Home missed the restyle — 2026-08-07
+
+**Three selectors draw cards, and only one of them was flattened.**
+
+- `div[class*="st-key-card_"]` — container cards, what the MLB views use.
+  Flattened first.
+- `.pf-card` — raw HTML from `card_open()`/`card_close()`. **This is what
+  KBO and NPB render**, so both international boards kept the previous
+  generation of the design while every other page moved on.
+- A local override in `Home.py` for `st-key-card_home_`, which outlived
+  the global rule it was overriding — the home page was the only page
+  still drawing gradients and shadows.
+
+Nothing in the code said the three had to agree, and they do: it is the
+same object to a reader. `tests/test_control_language.py` now asserts
+none of them paints a gradient or a shadow, wherever it is defined,
+including the copy inside Home.py.
+
+**What survived on Home, deliberately:** the coloured top rule and the
+hover lift. Those carry information — which board is live, and that the
+card is clickable. The fill and the shadow said nothing.
+
+**Expanders joined the control language.** "Every pick from last night",
+"Weak spots", the glossary — the one control that opens something, and
+still a filled grey slab with a hard border while everything else had
+gone quiet-until-active. Now a wide button: transparent, faint wash on
+hover, hairlines above and below, 44px target, and the header takes the
+accent when open. The open state keys off `details[open]` — the
+browser's own flag — so it cannot drift with a Streamlit release the way
+an internal class name would (rule 9).
+
 ### Do these in order
 
 1. Upload this batch, `git pull`, run the suite. Expect
