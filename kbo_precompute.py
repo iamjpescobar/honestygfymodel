@@ -94,6 +94,7 @@ KBO_TEAM_CODE = {
 # the same shape wnba_precompute.py uses, so a bad import is now an
 # immediate ImportError instead of a late one.
 sys.path.insert(0, str(Path(__file__).resolve().parent / "app"))
+from engines.intl_slate import coverage_line  # noqa: E402
 from engines.intl_weather import (  # noqa: E402
     forecast as _wx,
     summarize as _wxsum,
@@ -1157,32 +1158,15 @@ def main():
     }, ensure_ascii=False, indent=2))
     print(f"KBO: wrote {len(games_out)} games for {today} KST")
 
-    # COVERAGE OF THE SLATE THAT ACTUALLY SHIPS.
-    #
-    # Every board field this pipeline fills has, at some point, been
-    # complete and correct one step short of the page: the weather ran
-    # for days while no view rendered it, and venue and first pitch read
-    # TBD for weeks after a markup rewrite while every test stayed
-    # green. Both were invisible because nothing counted the OUTPUT.
-    # This line does, on the games the reader will actually see, so a
-    # dead field shows up in the log the same day it dies rather than
-    # in a screenshot weeks later. Rule 20, made cheap.
-    #
-    # TBD is the pipeline's honest "not known", so it is counted as
-    # missing here on purpose — this measures what reaches the page,
-    # not whether the code ran.
-    if games_out:
-        _have_v = sum(1 for g in games_out
-                      if (g.get("stadium") or "TBD") != "TBD")
-        _have_t = sum(1 for g in games_out
-                      if (g.get("time_kst") or "TBD") != "TBD")
-        _have_p = sum(1 for g in games_out
-                      if g.get("away_starter") or g.get("home_starter"))
-        print(f"KBO: slate {slate_date} coverage — venue {_have_v}/"
-              f"{len(games_out)}, first pitch {_have_t}/{len(games_out)}, "
-              f"a named starter {_have_p}/{len(games_out)}")
-    else:
-        print("KBO: empty slate — off-day or break. That is the honest state.")
+    # COVERAGE OF THE SLATE THAT ACTUALLY SHIPS. Shared with NPB in
+    # engines/intl_slate — rule 21. The first version of this lived
+    # here and in npb_precompute separately, and the two copies
+    # disagreed inside one run: this one tested the starter field for
+    # truthiness while NPB tested it against "TBD", and since the
+    # entry above writes `or "TBD"`, that string is always truthy. It
+    # reported "a named starter 5/5" on a slate with no probables at
+    # all. A counter that lies is worse than no counter.
+    print(coverage_line("KBO", slate_date, games_out, "time_kst"))
 
     def _era_key(p):
         try:
