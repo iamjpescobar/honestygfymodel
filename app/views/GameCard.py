@@ -102,42 +102,96 @@ st.markdown(
 # from inside `with content_col:` still renders into that column.
 # ======================================================================
 
-def _render_matchup_nav(_labels, nav_pills, visible_games, visible_labels):
-    """Clickable logo matchup cards — the one game selector."""
-    with nav_pills:
-        # ONE control: clickable logo matchup cards. Each card is the
-        # official away/home logos (MLB's own CDN, text fallback) over
-        # a button carrying the unique G1/G2-safe label. on_click
-        # callbacks run BEFORE the rerun renders, so the selection AND
-        # the teal highlight update together on the first click.
-        st.markdown(
-            "<style>"
-            "div[data-testid='stHorizontalBlock']:has(.lc-gamecard)"
-            ":not(:has(div[data-testid='stHorizontalBlock'])) button {"
-            "  padding:var(--lc-space-hair) var(--lc-space-xs) !important; min-height: 26px !important; }"
-            "div[data-testid='stHorizontalBlock']:has(.lc-gamecard)"
-            ":not(:has(div[data-testid='stHorizontalBlock'])) button p {"
-            "  font-size:var(--lc-text-tiny) !important; }"
-            "</style>",
-            unsafe_allow_html=True,
-        )
+def _render_game_carousel(_labels, games):
+    """The whole slate in ONE swipeable row. No pages.
 
-        _card_cols = st.columns(len(visible_labels)) if visible_labels else []
-        for _ci, (_lbl, _vg) in enumerate(zip(visible_labels, visible_games)):
-            _gidx = _labels.index(_lbl)
+    WHY THIS REPLACED PAGINATION
+
+    It used to show five games at a time behind a prev/next pager and a
+    "Page 1 of 3" caption. On an eleven-game slate that meant three
+    clicks to see everything and no way to compare the ends of the
+    slate. Paging is a desktop compromise; this app is read on an iPad,
+    where a horizontal swipe is the native gesture and a pager is two
+    small targets to hit.
+
+    HOW IT WORKS WITHOUT LEAVING STREAMLIT
+
+    Streamlit has no carousel, and buttons cannot live inside raw HTML —
+    so the row is still st.columns of real st.buttons, and the SCROLLING
+    is pure CSS on the container: flex-wrap:nowrap, overflow-x:auto, and
+    scroll-snap so each card settles under the thumb instead of stopping
+    half-way. Momentum scrolling comes free on iOS.
+
+    The CSS is scoped to this container's own key (st-key-gc_gamestrip),
+    the same mechanism every card on the site already uses, so it cannot
+    leak into another horizontal block. Rule 9 still holds: nothing here
+    depends on a Streamlit-generated class NAME, only on the key we
+    ourselves set and the two stable data-testids this file already
+    targets elsewhere.
+
+    Selection state is unchanged — same _pick_game callback, same
+    gc_selected_game_idx — so nothing downstream had to know about this.
+    """
+    import streamlit as st
+
+    if not _labels:
+        return
+
+    # min-width is what actually makes it scroll: without it Streamlit
+    # divides the row evenly and eleven games become eleven slivers.
+    # 116px fits a logo pair and an abbreviated matchup without
+    # truncating, and shows about four and a half cards on an iPad —
+    # the half card being the point, since a row that ends flush looks
+    # like the end of the list.
+    st.markdown(
+        "<style>"
+        'div[class*="st-key-gc_gamestrip"] div[data-testid="stHorizontalBlock"] {'
+        "  flex-wrap: nowrap !important;"
+        "  overflow-x: auto !important;"
+        "  scroll-snap-type: x proximity;"
+        "  -webkit-overflow-scrolling: touch;"
+        "  gap: var(--lc-space-xs) !important;"
+        "  padding-bottom: var(--lc-space-xs);"
+        "  scrollbar-width: none;"
+        "}"
+        'div[class*="st-key-gc_gamestrip"] div[data-testid="stHorizontalBlock"]::-webkit-scrollbar {'
+        "  display: none;"
+        "}"
+        'div[class*="st-key-gc_gamestrip"] div[data-testid="stColumn"] {'
+        "  flex: 0 0 auto !important;"
+        "  width: 116px !important;"
+        "  min-width: 116px !important;"
+        "  scroll-snap-align: center;"
+        "}"
+        'div[class*="st-key-gc_gamestrip"] button {'
+        "  padding: var(--lc-space-hair) var(--lc-space-xs) !important;"
+        "  min-height: 26px !important;"
+        "}"
+        'div[class*="st-key-gc_gamestrip"] button p {'
+        "  font-size: var(--lc-text-tiny) !important;"
+        "}"
+        "</style>",
+        unsafe_allow_html=True,
+    )
+
+    with st.container(key="gc_gamestrip"):
+        _cols = st.columns(len(_labels))
+        for _gidx, (_lbl, _g) in enumerate(zip(_labels, games)):
             _sel = _gidx == st.session_state["gc_selected_game_idx"]
-            _a, _h = logo_for(_vg.get("away")), logo_for(_vg.get("home"))
+            _a, _h = logo_for(_g.get("away")), logo_for(_g.get("home"))
             _ai = (f'<img src="{_a}" width="21" height="21" style="vertical-align:middle;">'
-                   if _a else f'<b style="font-size:var(--lc-text-caption);">{team_abbr(_vg.get("away", "?"))}</b>')
+                   if _a else f'<b style="font-size:var(--lc-text-caption);">{team_abbr(_g.get("away", "?"))}</b>')
             _hi = (f'<img src="{_h}" width="21" height="21" style="vertical-align:middle;">'
-                   if _h else f'<b style="font-size:var(--lc-text-caption);">{team_abbr(_vg.get("home", "?"))}</b>')
-            with _card_cols[_ci]:
+                   if _h else f'<b style="font-size:var(--lc-text-caption);">{team_abbr(_g.get("home", "?"))}</b>')
+            with _cols[_gidx]:
                 st.markdown(
-                    f'<div class="lc-gamecard" style="text-align:center; padding:var(--lc-space-hair) var(--lc-space-hair) var(--lc-space-hair) var(--lc-space-hair); border-radius:8px 8px 0 0; '
+                    f'<div class="lc-gamecard" style="text-align:center; '
+                    f'padding:var(--lc-space-hair); border-radius:8px 8px 0 0; '
                     f'border:{"2px solid " + COLOR["stat_high"] if _sel else "1px solid " + COLOR["text"] + "22"}; '
-                    f'border-bottom:none; background:{COLOR["stat_high"] + "14" if _sel else "transparent"};">'
-                    f'{_ai}<span style="margin:var(--lc-space-none) var(--lc-space-xs); color:{COLOR["text"]}; opacity:0.55; '
-                    f'font-size:var(--lc-text-micro);">@</span>{_hi}</div>',
+                    f'border-bottom:none; '
+                    f'background:{COLOR["stat_high"] + "14" if _sel else "transparent"};">'
+                    f'{_ai}<span style="margin:var(--lc-space-none) var(--lc-space-xs); '
+                    f'color:{COLOR["text"]}; opacity:0.55; font-size:var(--lc-text-micro);">@</span>{_hi}</div>',
                     unsafe_allow_html=True,
                 )
                 st.button(
@@ -145,6 +199,7 @@ def _render_matchup_nav(_labels, nav_pills, visible_games, visible_labels):
                     type="primary" if _sel else "secondary",
                     on_click=_pick_game, args=(_gidx,),
                 )
+
 
 def _render_game_headline(game):
     """Centred headline: teams, start time, venue."""
@@ -258,112 +313,165 @@ def _render_pitcher_detail(pitcher_id):
             if _ws.get("error"):
                 st.caption(_ws["error"])
             else:
-                st.markdown(
-                    f'<div class="pf-card-subtitle">xSLG allowed on contact \u00b7 '
-                    f'red = hitters do real damage, blue = he wins there \u00b7 '
-                    f'anything below its sample floor shows \u2014 instead of a number, '
-                    f'because a rate off a thin bucket is noise. Formula and floors in '
-                    f'engines/pitcher_weakspots.py.</div>',
-                    unsafe_allow_html=True,
-                )
+                _render_weak_spots(_ws)
 
-                _pitches = [p for p in _ws.get("pitches", []) if p["usage"] >= 3]
-                if _pitches:
-                    st.markdown(
-                        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["text_muted"]}; '
-                        f'margin-top:var(--lc-space-md);">By pitch type</div>', unsafe_allow_html=True)
-                    _rows = "".join(
-                        f'<tr><td style="padding:var(--lc-space-hair) var(--lc-space-md) var(--lc-space-hair) var(--lc-space-none); font-size:var(--lc-text-caption); '
-                        f'color:{COLOR["text"]};">{p["name"]}</td>'
-                        f'<td style="padding:var(--lc-space-hair) var(--lc-space-md); font-size:var(--lc-text-caption); color:{COLOR["text"]}; '
-                        f'opacity:0.6;">{p["usage"]:.0f}% usage</td>'
-                        f'<td style="padding:var(--lc-space-hair) var(--lc-space-md); font-size:var(--lc-text-small);">{_xslg_chip(p.get("xslg"))}</td>'
-                        f'<td style="padding:var(--lc-space-hair) var(--lc-space-none); font-size:var(--lc-text-tiny); color:{COLOR["text"]}; '
-                        f'opacity:0.5;">{p.get("reason", str(p["bbe"]) + " batted balls")}</td></tr>'
-                        for p in _pitches
-                    )
-                    st.markdown(f'<table style="width:100%;">{_rows}</table>',
-                                unsafe_allow_html=True)
 
-                _bands = _ws.get("bands", [])
-                if _bands:
-                    st.markdown(
-                        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["text_muted"]}; '
-                        f'margin-top:var(--lc-space-md);">By zone band</div>', unsafe_allow_html=True)
-                    _cells = "".join(
-                        f'<td style="text-align:center; padding:var(--lc-space-sm); border:1px solid '
-                        f'{COLOR["text"]}1E; border-radius:var(--lc-radius-md);">'
-                        f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["text"]}; opacity:0.6;">{b["band"]}</div>'
-                        f'<div style="font-size:var(--lc-text-body);">{_xslg_chip(b.get("xslg"))}</div>'
-                        f'<div style="font-size:var(--lc-text-micro); color:{COLOR["text"]}; opacity:0.45;">'
-                        f'{b["bbe"]} bbe</div></td>'
-                        for b in _bands
-                    )
-                    st.markdown(
-                        f'<table style="width:100%; border-spacing:4px; '
-                        f'border-collapse:separate;"><tr>{_cells}</tr></table>',
-                        unsafe_allow_html=True)
+# ONE VISUAL LANGUAGE FOR THE WHOLE WEAK-SPOTS SECTION.
+#
+# This section used to render in four different idioms stacked on top of
+# each other: a borderless HTML table for pitch types, bordered box
+# grids for zone bands / times-through-order / batting-order slots, and
+# two st.caption prose blobs for halves and caveats. Nothing shared a
+# cell size, an alignment, or a legend, and the one sentence explaining
+# what red, blue and the em dash meant sat in a paragraph above all of
+# it. The reader had to re-learn how to read every block.
+#
+# Everything below is now the same unit: a labelled row with a
+# left-anchored bar whose LENGTH is the xSLG and whose COLOUR is the
+# verdict. Length gives you the comparison at a glance — which is the
+# actual question, "where is he worst" — and colour gives you the
+# threshold. One legend at the top covers every group because every
+# group reads identically.
+#
+# WHY A BAR AND NOT A HEATMAP GRID. A grid of coloured squares makes you
+# compare hues, which is slow and defeats anyone colour-blind. A bar
+# encodes the same number as length first; colour is confirmation, not
+# the only channel. The em-dash cases keep a visible empty track rather
+# than vanishing, so "not measured" reads as a real state instead of a
+# gap in the layout.
 
-                _tto = _ws.get("tto", [])
-                if _tto:
-                    st.markdown(
-                        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["text_muted"]}; '
-                        f'margin-top:var(--lc-space-md);">Times through the order</div>', unsafe_allow_html=True)
-                    _cells = "".join(
-                        f'<td style="text-align:center; padding:var(--lc-space-sm); border:1px solid '
-                        f'{COLOR["text"]}1E; border-radius:var(--lc-radius-md);">'
-                        f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["text"]}; opacity:0.6;">'
-                        f'{t["pass"]}{"st" if t["pass"]==1 else "nd" if t["pass"]==2 else "rd"} time</div>'
-                        f'<div style="font-size:var(--lc-text-body);">{_xslg_chip(t.get("xslg"))}</div>'
-                        f'<div style="font-size:var(--lc-text-micro); color:{COLOR["text"]}; opacity:0.45;">'
-                        f'{t["bbe"]} bbe</div></td>'
-                        for t in _tto
-                    )
-                    st.markdown(
-                        f'<table style="width:100%; border-spacing:4px; '
-                        f'border-collapse:separate;"><tr>{_cells}</tr></table>',
-                        unsafe_allow_html=True)
-                    st.caption("Most starters decline the third time through a lineup \u2014 "
-                               "a steep jump here is a real bullpen and late-innings angle.")
+# The bar scale. xSLG below .250 is essentially unheard of and above
+# .800 is a disaster, so anchoring the track there spends the full width
+# on the range that actually varies instead of wasting half of it.
+_WS_FLOOR, _WS_CEIL = 0.250, 0.800
 
-                _halves = _ws.get("halves", [])
-                if any(h.get("xslg") is not None for h in _halves):
-                    _txt = " \u00b7 ".join(
-                        f'{h["half"]}: ' + (f'{h["xslg"]:.3f}' if h.get("xslg") is not None else "\u2014")
-                        for h in _halves
-                    )
-                    st.caption(
-                        f"Top vs bottom of order \u2014 {_txt}. Shown for context only and "
-                        f"deliberately not scored: a gap here mostly reflects that better hitters "
-                        f"bat at the top, not a repeatable weakness."
-                    )
 
-                # Per batting-order slot (1-9) — the granular version, each
-                # slot flagged only above its sample floor. Aligned to
-                # tonight's actual hitters in the "vs this lineup" section
-                # below the lineup table.
-                _slots = _ws.get("slots", [])
-                if any(s.get("xslg") is not None for s in _slots):
-                    st.markdown(
-                        f'<div style="font-size:var(--lc-text-small); font-weight:700; color:{COLOR["text_muted"]}; '
-                        f'margin-top:var(--lc-space-md);">By batting-order slot</div>', unsafe_allow_html=True)
-                    _cells = "".join(
-                        f'<td style="text-align:center; padding:var(--lc-space-xs); border:1px solid '
-                        f'{COLOR["text"]}1E; border-radius:var(--lc-radius-md);">'
-                        f'<div style="font-size:var(--lc-text-tiny); color:{COLOR["text"]}; opacity:0.6;">{s["slot"]}</div>'
-                        f'<div style="font-size:var(--lc-text-small);">{_xslg_chip(s.get("xslg"))}</div>'
-                        f'<div style="font-size:var(--lc-text-micro); color:{COLOR["text"]}; opacity:0.45;">'
-                        f'{s["bbe"]}</div></td>'
-                        for s in _slots
-                    )
-                    st.markdown(
-                        f'<table style="width:100%; border-spacing:3px; '
-                        f'border-collapse:separate;"><tr>{_cells}</tr></table>',
-                        unsafe_allow_html=True)
-                    st.caption("Per-slot splits carry a real caveat \u2014 a slot's line partly "
-                               "reflects which hitters happened to bat there across his starts, "
-                               "not only his own skill. Slots below the sample floor show \u2014 "
-                               "and are never flagged. Read it alongside the lineup mapping below.")
+def _ws_bar(v, sample_note=""):
+    """One measurement, as a bar. Returns HTML for a table cell."""
+    if v is None:
+        return (f'<div style="height:14px; border-radius:7px; '
+                f'background:{COLOR["text"]}0F;"></div>'
+                f'<div style="font-size:var(--lc-text-micro); color:{COLOR["text"]}; '
+                f'opacity:0.45; margin-top:2px;">\u2014 {sample_note}</div>')
+    pct = max(4.0, min(100.0, (v - _WS_FLOOR) / (_WS_CEIL - _WS_FLOOR) * 100.0))
+    c = (COLOR["error"] if v >= XSLG_HOT
+         else COLOR["stat_high"] if v <= XSLG_COLD else COLOR["warn"])
+    return (f'<div style="height:14px; border-radius:7px; background:{COLOR["text"]}0F; '
+            f'position:relative; overflow:hidden;">'
+            f'<div style="position:absolute; left:0; top:0; bottom:0; width:{pct:.1f}%; '
+            f'background:{c}; opacity:0.85; border-radius:7px;"></div></div>'
+            f'<div style="font-size:var(--lc-text-micro); margin-top:2px;">'
+            f'<b style="color:{c};">{v:.3f}</b>'
+            f'<span style="color:{COLOR["text"]}; opacity:0.45;"> {sample_note}</span></div>')
+
+
+def _ws_group(title, rows, note=None):
+    """A titled block of identical label/bar rows."""
+    import streamlit as st
+    if not rows:
+        return
+    st.markdown(
+        f'<div style="font-size:var(--lc-text-small); font-weight:700; '
+        f'color:{COLOR["text_muted"]}; margin-top:var(--lc-space-lg); '
+        f'margin-bottom:var(--lc-space-xs);">{title}</div>',
+        unsafe_allow_html=True)
+    _tr = "".join(
+        f'<tr>'
+        f'<td style="width:34%; padding:var(--lc-space-hair) var(--lc-space-md) '
+        f'var(--lc-space-hair) 0; font-size:var(--lc-text-caption); '
+        f'color:{COLOR["text"]}; vertical-align:top; white-space:nowrap;">{lbl}'
+        + (f'<span style="opacity:0.45; font-size:var(--lc-text-micro);"> {sub}</span>'
+           if sub else "")
+        + f'</td>'
+        f'<td style="padding:var(--lc-space-hair) 0; vertical-align:top;">{bar}</td>'
+        f'</tr>'
+        for lbl, sub, bar in rows
+    )
+    st.markdown(f'<table style="width:100%; border-collapse:collapse;">{_tr}</table>',
+                unsafe_allow_html=True)
+    if note:
+        st.caption(note)
+
+
+def _render_weak_spots(_ws):
+    """Every weak-spot group, one visual language, one legend."""
+    import streamlit as st
+
+    # THE LEGEND IS SHOWN, NOT DESCRIBED.
+    #
+    # The old version explained red/blue/em-dash in a sentence and then
+    # asked you to hold it in your head through four differently-shaped
+    # blocks. Three chips cost less space than the sentence did and
+    # cannot be misremembered halfway down.
+    st.markdown(
+        f'<div style="display:flex; gap:var(--lc-space-md); flex-wrap:wrap; '
+        f'align-items:center; margin-bottom:var(--lc-space-xs);">'
+        + "".join(
+            f'<span style="display:inline-flex; align-items:center; gap:6px; '
+            f'font-size:var(--lc-text-micro); color:{COLOR["text"]}; opacity:0.8;">'
+            f'<span style="width:18px; height:8px; border-radius:4px; '
+            f'background:{c}; opacity:0.85; display:inline-block;"></span>{t}</span>'
+            for c, t in (
+                (COLOR["error"], f"hitters do real damage (\u2265{XSLG_HOT:.3f})"),
+                (COLOR["warn"], "middling"),
+                (COLOR["stat_high"], f"he wins here (\u2264{XSLG_COLD:.3f})"),
+            ))
+        + f'<span style="font-size:var(--lc-text-micro); color:{COLOR["text"]}; '
+          f'opacity:0.55;">\u2014 = below its sample floor, not measured</span>'
+        + '</div>',
+        unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="pf-card-subtitle" style="margin-bottom:var(--lc-space-none);">'
+        f'xSLG allowed on contact \u00b7 longer bar = more damage. A rate off a thin '
+        f'bucket is noise, so anything under its floor shows an empty track rather '
+        f'than a number. Formula and floors in engines/pitcher_weakspots.py.</div>',
+        unsafe_allow_html=True)
+
+    _ws_group(
+        "By pitch type",
+        [(p["name"], f'{p["usage"]:.0f}% usage',
+          _ws_bar(p.get("xslg"), p.get("reason", f'{p["bbe"]} batted balls')))
+         for p in _ws.get("pitches", []) if p["usage"] >= 3])
+
+    _ws_group(
+        "By zone band",
+        [(b["band"], "", _ws_bar(b.get("xslg"), f'{b["bbe"]} bbe'))
+         for b in _ws.get("bands", [])])
+
+    _tto = _ws.get("tto", [])
+    _ws_group(
+        "Times through the order",
+        [(f'{t["pass"]}{"st" if t["pass"] == 1 else "nd" if t["pass"] == 2 else "rd"} time',
+          "", _ws_bar(t.get("xslg"), f'{t["bbe"]} bbe'))
+         for t in _tto],
+        note=("Most starters decline the third time through a lineup \u2014 a steep "
+              "jump here is a real bullpen and late-innings angle.") if _tto else None)
+
+    # Halves stay prose-free but join the same grid, so the one group
+    # that used to be a sentence now compares directly against the rest.
+    _halves = _ws.get("halves", [])
+    if any(h.get("xslg") is not None for h in _halves):
+        _ws_group(
+            "Top vs bottom of the order",
+            [(h["half"], "", _ws_bar(h.get("xslg"), "")) for h in _halves],
+            note=("Context only, deliberately not scored: a gap here mostly reflects "
+                  "that better hitters bat at the top, not a repeatable weakness."))
+
+    # Per batting-order slot (1-9) — the granular version, each slot
+    # flagged only above its sample floor. Aligned to tonight's actual
+    # hitters in the "vs this lineup" section below the lineup table.
+    _slots = _ws.get("slots", [])
+    if any(s.get("xslg") is not None for s in _slots):
+        _ws_group(
+            "By batting-order slot",
+            [(f'Slot {s["slot"]}', "", _ws_bar(s.get("xslg"), f'{s["bbe"]} bbe'))
+             for s in _slots],
+            note=("Per-slot splits carry a real caveat \u2014 a slot's line partly "
+                  "reflects which hitters happened to bat there across his starts, "
+                  "not only his own skill. Slots below the sample floor show an "
+                  "empty track and are never flagged. Read it alongside the lineup "
+                  "mapping below."))
+
 
 def _render_dual_arsenal(_arsenal_bars, game):
     """Both starters side by side for arsenal comparison."""
@@ -442,7 +550,20 @@ def _render_bullpen_browser(_arsenal_bars, game):
                                 )
                                 render_html_table(
                                     style_stat_table(
-                                        pd.DataFrame(bp_rows).set_index("Player"),
+                                        # NOT set_index("Player").
+                                        #
+                                        # _base_styler calls .hide(axis="index"),
+                                        # so anything left in the index is dropped
+                                        # before render_html_table ever sees it —
+                                        # its own docstring says the row label must
+                                        # be a real COLUMN. Indexing by Player
+                                        # deleted the batter names from this table
+                                        # and left nine anonymous stat rows, which
+                                        # is exactly as useful as no table. Keeping
+                                        # Player as a column also gets it the
+                                        # identity colouring _player_name_column
+                                        # applies for free.
+                                        pd.DataFrame(bp_rows),
                                         favor_high=["BA", "Brl %", "HH %"],
                                         favor_low=["Whiff %", "SwStr %"],
                                         gradient=True,
@@ -877,38 +998,20 @@ content_col = st.container()
 
 with content_col:
     # -----------------------------------------------------
-    # GAME PICKER \u2014 paginated carousel, fixed height no matter
-    # how many games are on the slate (was wrapping into a tall
-    # multi-row block before; this caps it at one row, always)
+    # GAME PICKER — one swipeable row, the whole slate, no pages.
     # -----------------------------------------------------
-    PAGE_SIZE = 5
-    total_pages = max(1, (len(games) + PAGE_SIZE - 1) // PAGE_SIZE)
-    st.session_state.setdefault("gc_page", 0)
     st.session_state.setdefault("gc_selected_game_idx", 0)
-    st.session_state["gc_page"] = min(st.session_state["gc_page"], total_pages - 1)
-    # Clamp the SELECTED GAME too, not just the page.
+    # Clamp the SELECTED GAME.
     #
     # This index survives reruns, but `games` does not stay the same
     # length: the slate shrinks as games go final and rebuilds shorter on
     # the next data refresh. Someone sitting on game 8 of a 9-game slate
-    # would come back to a 6-game slate and hit an IndexError on the two
+    # would come back to a 6-game slate and hit an IndexError on the
     # lookups below — a hard crash on page load, and an intermittent one,
     # since it depends entirely on which game you last looked at.
     st.session_state["gc_selected_game_idx"] = min(
         st.session_state["gc_selected_game_idx"], len(games) - 1)
 
-    nav_prev, nav_pills, nav_next = st.columns([0.6, 8, 0.6])
-    with nav_prev:
-        if st.button("\u25c0", key="gc_prev_page", disabled=st.session_state["gc_page"] == 0):
-            st.session_state["gc_page"] -= 1
-            st.rerun()
-    with nav_next:
-        if st.button("\u25b6", key="gc_next_page", disabled=st.session_state["gc_page"] >= total_pages - 1):
-            st.session_state["gc_page"] += 1
-            st.rerun()
-
-    page = st.session_state["gc_page"]
-    visible_games = games[page * PAGE_SIZE: page * PAGE_SIZE + PAGE_SIZE]
     # Doubleheader-safe labels: two games with the same teams used to
     # produce IDENTICAL pills, so selecting by label could only ever
     # reach game 1 of a doubleheader. Append G1/G2 (schedule order)
@@ -923,15 +1026,18 @@ with content_col:
             _labels.append(f"{_lbl} \u00b7 G{_dh_counter[_lbl]}")
         else:
             _labels.append(_lbl)
-    visible_labels = _labels[page * PAGE_SIZE: page * PAGE_SIZE + PAGE_SIZE]
-    current_global_label = _labels[st.session_state["gc_selected_game_idx"]]
 
+    _render_game_carousel(_labels, games)
 
-    _render_matchup_nav(_labels, nav_pills, visible_games, visible_labels)
-
+    # No "Page 1 of 3" any more — there are no pages. The count still
+    # earns its place: it tells you how far the strip scrolls, which a
+    # row with a half-visible card at the edge only hints at.
     st.markdown(
-        f'<div style="color:{COLOR["text"]}; font-size:var(--lc-text-body); font-weight:600; margin:var(--lc-space-xs) var(--lc-space-none) var(--lc-space-lg) var(--lc-space-none);">'
-        f'Page {page + 1} of {total_pages} \u2014 {len(games)} game{"s" if len(games) != 1 else ""} today</div>',
+        f'<div style="color:{COLOR["text"]}; font-size:var(--lc-text-body); font-weight:600; '
+        f'margin:var(--lc-space-xs) var(--lc-space-none) var(--lc-space-lg) var(--lc-space-none);">'
+        f'{len(games)} game{"s" if len(games) != 1 else ""} today '
+        f'<span style="opacity:0.5; font-weight:400; font-size:var(--lc-text-small);">'
+        f'\u2014 swipe to see them all</span></div>',
         unsafe_allow_html=True,
     )
     game = games[st.session_state["gc_selected_game_idx"]]
@@ -1349,7 +1455,8 @@ with content_col:
                         "Window",
                         [
                             "Season",
-                            "Last 15 Games", "Last 10 Games", "Last 5 Games",
+                            "Last 25 Games", "Last 15 Games", "Last 10 Games",
+                            "Last 5 Games",
                             "Last 60 PA", "Last 25 PA", "Last 15 PA",
                             "Last 60 BBE", "Last 25 BBE", "Last 15 BBE", "Last 5 BBE",
                         ],
@@ -1361,6 +1468,11 @@ with content_col:
                 # recent-form read; BBE zooms in on contact quality only.
                 window_unit_map = {
                     "Season": ("season", "bbe"),
+                    # l25 has always been supported by apply_window and by
+                    # every OTHER window control in the app (Bullpen Board,
+                    # Player of the Day, WNBA form, the grade window right
+                    # above). This one list was the only place missing it.
+                    "Last 25 Games": ("l25", "games"),
                     "Last 15 Games": ("l15", "games"),
                     "Last 10 Games": ("l10", "games"),
                     "Last 5 Games": ("l5", "games"),
@@ -1531,7 +1643,38 @@ with content_col:
 
                     # Primary row: tonight's matchup side (or plain side for
                     # non-switch). Carries the real scores/matchup.
-                    _primary_label = (f'S\u2192{_tonight}' if _tonight else r["bats"])
+                    # EVERY SWITCH-HITTER ROW SAYS WHAT IT IS.
+                    #
+                    # A switch hitter produces two or three rows here,
+                    # because his two sides are often two different
+                    # hitters and blending them hides the split that
+                    # decides the matchup. The rows were not labelled
+                    # well enough to tell apart:
+                    #
+                    #   probable posted -> "S->L" primary, "S (R)" split.
+                    #     Readable.
+                    #   NO probable     -> "S" primary, then "S (L)" and
+                    #     "S (R)". Three rows, same name, same batting
+                    #     order, different numbers — and the first one
+                    #     labelled with a bare "S" that looks like a
+                    #     third platoon side.
+                    #
+                    # The bare row is NOT a side. windowed_profile_cache
+                    # builds it with stand=None, so it is every plate
+                    # appearance from BOTH sides combined. Labelling it
+                    # "S (L)" would have been a straight lie about which
+                    # numbers those are; labelling it "S" left the reader
+                    # to guess. It now says so: "S (both)".
+                    #
+                    # _bats_column colours any label naming a side, and
+                    # "both" names none, so the combined row stays neutral
+                    # while its two split siblings take platoon colours —
+                    # which is the right visual hierarchy anyway.
+                    if _is_switch:
+                        _primary_label = (f'S\u2192{_tonight}' if _tonight
+                                          else "S (both)")
+                    else:
+                        _primary_label = r["bats"]
                     table_rows.append(_stat_row(
                         r["name"], _primary_label, profile,
                         matchup=tier, slam=slam,
@@ -1947,7 +2090,7 @@ with content_col:
                             from datetime import datetime as _dtn
                             _yr = _dtn.now().year
                             _bt_win = st.segmented_control(
-                                "Window", [str(_yr), str(_yr - 1), "H2H", "L25", "L15", "L5"],
+                                "Window", [str(_yr), str(_yr - 1), "H2H", "L25", "L15", "L10", "L5"],
                                 default="L15", key="bt_window", label_visibility="collapsed",
                             )
                             # Line options follow the stat, and the key

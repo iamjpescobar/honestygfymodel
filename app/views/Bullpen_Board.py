@@ -85,7 +85,12 @@ _pick = st.selectbox("Bullpen", _labels, key="pen_board_team",
 _sel = next((o for o in _opts if o[0] == _pick), _opts[0])
 _label, team, starter_pid = _sel
 
-_win_opts = {"Season": "season", "L25": "l25", "L15": "l15"}
+# Same window set as every other control in the app. L10 and L5 were
+# missing here for no reason — apply_window has always supported them,
+# and a reliever's last five outings is exactly the read this board is
+# for.
+_win_opts = {"Season": "season", "L25": "l25", "L15": "l15",
+             "L10": "l10", "L5": "l5"}
 _win_label = st.segmented_control(
     "Window", list(_win_opts), default="Season", key="pen_board_window",
     label_visibility="collapsed",

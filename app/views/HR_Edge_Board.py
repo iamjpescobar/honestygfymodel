@@ -104,7 +104,11 @@ else:
                 "Confirmed": "\u2713" if r.get("confirmed") else "proj",
             })
 
-        df = pd.DataFrame(table).set_index("#")
+        # NOT set_index("#") — _base_styler hides the index, so the rank
+        # column vanished from the rendered board exactly the way the
+        # batter names vanished from the bullpen arsenal table. Same
+        # cause, same fix: keep the row label as a real column.
+        df = pd.DataFrame(table)
         # Sort BEFORE the styler is built. style_stat_table computes its
         # gradients from the frame it is handed, so sorting afterwards
         # reordered nothing — the styled object already held the old
