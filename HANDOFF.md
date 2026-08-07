@@ -157,6 +157,37 @@ fixed four-column grid with hairline dividers, ordered
 condition/temp/wind/park — the three that change hourly first, the
 constant anchoring the end.
 
+### Two-layer bug: the switch-hitter label, 2026-08-07
+
+The label fix shipped earlier was correct and **still showed a bare "S"
+on screen.** `bats_chip()` in table_style.py rendered
+`str(v).strip().upper()[:1]` — right for "L" and "R", silently
+destructive for every qualified label. "S (both)", "S (L)" and "S (R)"
+all came out as "S", so the lineup showed the same player twice at the
+same batting order with different numbers and nothing telling the rows
+apart. The view was fixed; the formatter threw the fix away one layer
+later.
+
+**Rule 20 again — follow the signal to the pixel.** A correct value that
+a downstream formatter truncates is indistinguishable from never having
+fixed it. `tests/test_gamecard_ui.py` now asserts the chip returns what
+it was handed, for every label the view can produce.
+
+The chip also no longer uppercases the whole string (that turned
+"S (both)" into a shouted "S (BOTH)"), sizes to its content instead of a
+fixed 17px box, and cannot wrap inside a narrow Bats column.
+
+### Tables use the whole window
+
+`.block-container` had Streamlit's default side gutters even under
+`layout="wide"`. On a page whose main content is fourteen-column stat
+tables, that gutter was the difference between reading five columns and
+reading nine — every pixel of it came straight off the data. Now
+`max-width: 100%` with minimal side padding, and `.lc-tbl-wrap` cells
+carry tighter HORIZONTAL padding only. Vertical padding is untouched on
+purpose: row height is what makes a dense table scannable, and squeezing
+it turns the board into a spreadsheet.
+
 ### Do these in order
 
 1. Upload this batch, `git pull`, run the suite. Expect
