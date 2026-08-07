@@ -1156,7 +1156,32 @@ def main():
         "games": games_out,
     }, ensure_ascii=False, indent=2))
     print(f"KBO: wrote {len(games_out)} games for {today} KST")
-    if not games_out:
+
+    # COVERAGE OF THE SLATE THAT ACTUALLY SHIPS.
+    #
+    # Every board field this pipeline fills has, at some point, been
+    # complete and correct one step short of the page: the weather ran
+    # for days while no view rendered it, and venue and first pitch read
+    # TBD for weeks after a markup rewrite while every test stayed
+    # green. Both were invisible because nothing counted the OUTPUT.
+    # This line does, on the games the reader will actually see, so a
+    # dead field shows up in the log the same day it dies rather than
+    # in a screenshot weeks later. Rule 20, made cheap.
+    #
+    # TBD is the pipeline's honest "not known", so it is counted as
+    # missing here on purpose — this measures what reaches the page,
+    # not whether the code ran.
+    if games_out:
+        _have_v = sum(1 for g in games_out
+                      if (g.get("stadium") or "TBD") != "TBD")
+        _have_t = sum(1 for g in games_out
+                      if (g.get("time_kst") or "TBD") != "TBD")
+        _have_p = sum(1 for g in games_out
+                      if g.get("away_starter") or g.get("home_starter"))
+        print(f"KBO: slate {slate_date} coverage — venue {_have_v}/"
+              f"{len(games_out)}, first pitch {_have_t}/{len(games_out)}, "
+              f"a named starter {_have_p}/{len(games_out)}")
+    else:
         print("KBO: empty slate — off-day or break. That is the honest state.")
 
     def _era_key(p):
