@@ -65,6 +65,58 @@ buildable for KBO.** Two landmines are recorded under the item below —
 read them before writing the parser, one of them silently corrupts
 dates.
 
+### UI batch, 2026-08-07 — seven changes, all shipped together
+
+1. **Game picker is a carousel.** Pagination removed entirely
+   (`gc_page`, `PAGE_SIZE`, "Page 1 of 3"). The whole slate is now one
+   horizontally scrollable, scroll-snapped row of real `st.button`s.
+   Streamlit has no carousel and buttons cannot live in raw HTML, so
+   the scrolling is CSS on a keyed container (`st-key-gc_gamestrip`) —
+   the same mechanism every card already uses. Selection state and the
+   `_pick_game` callback are untouched.
+2. **Weak spots rebuilt.** It rendered in FOUR visual languages stacked
+   (borderless table, two bordered box-grids, prose captions) with the
+   colour key described in a sentence above all of it. Now one unit
+   everywhere: a labelled row with a bar whose LENGTH is the xSLG and
+   whose COLOUR is the verdict, one drawn legend at the top. Length
+   first, colour as confirmation — a colour-only heatmap is unreadable
+   to anyone colour-blind and slow for everyone else.
+3. **Missing batter names — fixed.** The bullpen "vs this arsenal"
+   table called `.set_index("Player")`, and `_base_styler` calls
+   `.hide(axis="index")`, so the names were dropped before rendering.
+   `HR_Edge_Board` lost its rank column to the identical mistake.
+   `tests/test_gamecard_ui.py` now fails on ANY `.set_index()` in a
+   view, because this is a class of bug and not two instances.
+4. **Switch hitters labelled.** A switch hitter renders two or three
+   rows. The combined row (no probable posted, `stand=None`, i.e. every
+   PA from both sides) was labelled with a bare "S" while its siblings
+   read "S (L)" / "S (R)" — same player, same batting order, different
+   numbers, nothing to tell them apart. It now reads **"S (both)"**.
+   It is deliberately NOT labelled with a side: that row is a blend,
+   and naming a side would have been a confident wrong answer.
+5. **L25 everywhere.** `apply_window` always supported `l25`; the Game
+   Card's lineup Window was the only control missing it. Also filled
+   the gaps in Bullpen Board (L10, L5) and batter trends (L10).
+6. **Cards flattened.** `div[class*="st-key-card_"]` had a gradient and
+   two shadows on every panel — the page read as a stack of grey slabs
+   competing with dense tables for contrast. Now transparent, separated
+   by space and a hairline. Third generation of this card: outline →
+   surface+shadow → flat. Glossary keeps a red left rule so the
+   reference block stays findable.
+7. **League nav restyled, wiring untouched.** Still
+   `st.segmented_control` with key `lc_sport_seg` — `app.py` and
+   `Home.py` both depend on that machinery (rule 4) and none of it
+   moved. Purely CSS: pill shape, 44px tap targets for iPad, and the
+   active league filled rather than outlined so you can tell at a
+   glance which board you are on.
+
+**One test needed updating, not weakening.** `test_stale_state.py`
+named two call sites by hand and one of them stopped existing in the
+rewrite. It now finds every subscript using `gc_selected_game_idx` by
+pattern and asserts each runs after the clamp, plus asserts `gc_page`
+stays gone — a half-removed pager whose state survives unclamped is
+precisely the stale-index crash that file exists for.
+
 ### Do these in order
 
 1. Upload this batch, `git pull`, run the suite. Expect
@@ -118,7 +170,7 @@ echo "FAILING:${fails:- none}"
 Then, for anything marked PENDING, **check it is still pending.**
 
 ```bash
-ls tests/*.py | wc -l                                     # 70
+ls tests/*.py | wc -l                                     # 71
 python tests/test_return_arity.py | tail -1               # FAILING: none
 grep -c fetch_homepage_schedule kbo_precompute.py         # 2  = defined AND called
 grep -cE '^\s+_hp, _hs =' kbo_precompute.py               # 0  = the crash is gone
@@ -483,7 +535,7 @@ the site's own advance warning is a free check on this number.
 - Pages in **`app/views/`**, deliberately NOT `pages/` — Streamlit
   auto-registers `pages/` and would expose every page pre-auth.
 - Engines in `app/engines/`. Theme in `app/styles/kc_theme.py`.
-- Tests in `tests/` — **70 files, plain scripts, not pytest.**
+- Tests in `tests/` — **71 files, plain scripts, not pytest.**
 - Data comes off disk; the nightly publishes a release asset.
 - `requirements.txt` fully pinned, including transitives.
 
