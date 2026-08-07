@@ -23,8 +23,15 @@ permissions:
 #
 # cancel-in-progress is FALSE on purpose. The Statcast fetch is ~15
 # minutes; killing one mid-flight is worse than making the second wait.
+#
+# THE GROUP NAME IS SHARED WITH intl-late-refresh (2026-08-06). Both
+# workflows republish the same release asset, and the old name scoped
+# this guard to the nightly alone — so it protected the nightly from
+# itself and did nothing about the refresh overwriting it. Named after
+# the RESOURCE now, so anything else that republishes the archive joins
+# by using the same string.
 concurrency:
-  group: nightly-data
+  group: publish-archive
   cancel-in-progress: false
 
 jobs:
