@@ -1031,19 +1031,29 @@ def _inject_card_css():
         # that appears when you are already pointing at the card tells you
         # something you have found out; a rule that is there tells you
         # which cards are worth pointing at.
+        # FLAT, like every other card on the site.
+        #
+        # This block is a LOCAL OVERRIDE of the global card rule, so when
+        # the rest of the app went flat the home page did not — it kept
+        # its gradient, its border and its shadow, and was the only page
+        # still drawing panels. An override that outlives the thing it
+        # was overriding is worse than no override.
+        #
+        # What survives is the part that carries INFORMATION: the
+        # coloured top rule, which says whether a card is a live board or
+        # a secondary one, and the hover lift, which says a card is
+        # clickable. The fill and the shadow said nothing and are gone.
         "[class*='st-key-card_home_'] {"
         f"  --lc-edge: {COLOR['accent']};"
         f"  --lc-edge-dim: {COLOR['accent_dim']};"
         f"  --lc-edge-border: {COLOR['accent_border']};"
-        f"  background: linear-gradient(158deg, {COLOR['surface_raised']} 0%,"
-        f"    {COLOR['surface']} 62%);"
-        f"  border: 1px solid {COLOR['border']};"
-        "  border-radius: var(--lc-radius-lg);"
-        "  padding: var(--lc-space-lg) var(--lc-space-xl);"
+        "  background: transparent;"
+        "  border: none;"
+        "  border-radius: 0;"
+        "  padding: var(--lc-space-lg) var(--lc-space-none);"
         "  position: relative; overflow: hidden;"
-        "  box-shadow: 0 1px 2px rgba(0,0,0,.35);"
-        "  transition: border-color .18s ease, transform .18s ease,"
-        "    box-shadow .18s ease; }"
+        "  box-shadow: none;"
+        "  transition: transform .18s ease; }"
 
         "[class*='st-key-card_home_other_'] {"
         f"  --lc-edge: {COLOR['cold']};"
@@ -1057,22 +1067,29 @@ def _inject_card_css():
         "  content: ''; position: absolute; top: 0; left: 0; right: 0;"
         "  height: 2px; background: var(--lc-edge);"
         "  opacity: .55; transition: opacity .18s ease; }"
+        # The wash existed to stop the gradient reading as a flat panel
+        # with a stripe glued on top. There is no gradient any more, so
+        # the wash has nothing to soften — and against a transparent
+        # card it IS the panel it was invented to hide. Kept at a
+        # fraction of its old strength purely so the rule has something
+        # to sit on rather than floating over the page background.
         "[class*='st-key-card_home_']::after {"
         "  content: ''; position: absolute; top: 0; left: 0; right: 0;"
-        "  height: 96px; pointer-events: none;"
+        "  height: 48px; pointer-events: none;"
         "  background: linear-gradient(180deg, var(--lc-edge-dim),"
-        "    transparent 78%);"
-        "  opacity: .7; transition: opacity .18s ease; }"
+        "    transparent 90%);"
+        "  opacity: .25; transition: opacity .18s ease; }"
         "[class*='st-key-card_home_']:hover::before { opacity: 1; }"
         "[class*='st-key-card_home_']:hover::after { opacity: 1; }"
         "[class*='st-key-card_home_']:hover {"
-        "  border-color: var(--lc-edge-border);"
-        "  box-shadow: 0 6px 18px rgba(0,0,0,.45);"
         "  transform: translateY(-2px); }"
 
         # Keyboard users get the same signal mouse users do.
-        "[class*='st-key-card_home_']:focus-within {"
-        "  border-color: var(--lc-edge-border); }"
+        # Keyboard users get the same signal mouse users do. With no
+        # border left to colour, the rule above the card brightens
+        # instead — same cue, one that still exists.
+        "[class*='st-key-card_home_']:focus-within::before {"
+        "  opacity: 1; }"
         "[class*='st-key-card_home_']:focus-within::before { opacity: 1; }"
 
         # The sport badge on a cross-sport card. Small, uppercase, tracked
