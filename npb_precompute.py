@@ -36,6 +36,7 @@ import requests
 # wolf half the season. intl_venues already knows which parks are
 # roofed — that judgement stays there and is not duplicated here.
 sys.path.insert(0, str(Path(__file__).resolve().parent / "app"))
+from engines.intl_slate import coverage_line  # noqa: E402
 from engines.intl_weather import (  # noqa: E402
     ATTRIBUTION as WX_ATTRIBUTION,
     forecast as _wx,
@@ -628,31 +629,12 @@ def main():
     (OUT / "games.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2))
     print(f"NPB: wrote {len(games_out)} games for {today} JST")
 
-    # COVERAGE OF THE SLATE THAT ACTUALLY SHIPS. Identical to the line
-    # KBO prints, deliberately (rule 21) — the two boards are read
-    # together, so a diagnostic on one and not the other makes them
-    # incomparable at exactly the moment you need to compare them.
-    #
-    # Every field this pipeline fills has, somewhere, been complete and
-    # correct one step short of the page: the weather ran for days while
-    # no view rendered it, and KBO's venue and first pitch read TBD for
-    # weeks after a markup rewrite while every test stayed green. Both
-    # were invisible because nothing counted the OUTPUT. TBD is counted
-    # as missing on purpose — this measures what reaches the reader, not
-    # whether the code ran.
-    if games_out:
-        _have_v = sum(1 for g in games_out
-                      if (g.get("stadium") or "TBD") != "TBD")
-        _have_t = sum(1 for g in games_out
-                      if (g.get("time_jst") or "TBD") != "TBD")
-        _have_p = sum(1 for g in games_out
-                      if (g.get("away_starter") or "TBD") != "TBD"
-                      or (g.get("home_starter") or "TBD") != "TBD")
-        print(f"NPB: slate {slate_date} coverage — venue {_have_v}/"
-              f"{len(games_out)}, first pitch {_have_t}/{len(games_out)}, "
-              f"a named starter {_have_p}/{len(games_out)}")
-    else:
-        print("NPB: empty slate — likely a league off-day. That is the honest state.")
+    # COVERAGE OF THE SLATE THAT ACTUALLY SHIPS. Same engine call KBO
+    # makes, deliberately (rule 21) — the two boards are read together,
+    # so a diagnostic that means different things on each is worse than
+    # none. That is not hypothetical: the first version was duplicated
+    # in both pipelines and the copies disagreed within one run.
+    print(coverage_line("NPB", slate_date, games_out, "time_jst"))
 
 
 if __name__ == "__main__":
