@@ -3032,7 +3032,7 @@
           "team": "Portland Fire",
           "stat": "pts",
           "line": 7.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2529205",
@@ -3120,7 +3120,7 @@
           "team": "Toronto Tempo",
           "stat": "reb",
           "line": 4.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3142255",
@@ -3136,7 +3136,7 @@
           "team": "Portland Fire",
           "stat": "reb",
           "line": 2.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3906972",
@@ -3160,7 +3160,7 @@
           "team": "Portland Fire",
           "stat": "reb",
           "line": 5.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4001679",
@@ -3192,7 +3192,7 @@
           "team": "Toronto Tempo",
           "stat": "ast",
           "line": 2.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4001679",
@@ -3216,7 +3216,7 @@
           "team": "Toronto Tempo",
           "stat": "ast",
           "line": 1.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3906972",
@@ -3264,7 +3264,7 @@
           "team": "Portland Fire",
           "stat": "ast",
           "line": 1.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2491214",
@@ -3328,7 +3328,7 @@
           "team": "Toronto Tempo",
           "stat": "pra",
           "line": 20.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "1068",
@@ -3400,7 +3400,7 @@
           "team": "Toronto Tempo",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433403",
@@ -3424,10 +3424,10 @@
           "team": "Portland Fire",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -3854,7 +3854,7 @@
           "team": "Toronto Tempo",
           "stat": "pts",
           "line": 6.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4398776",
@@ -3886,7 +3886,7 @@
           "team": "Toronto Tempo",
           "stat": "reb",
           "line": 5.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3934218",
@@ -3902,7 +3902,7 @@
           "team": "Portland Fire",
           "stat": "reb",
           "line": 5.7,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4001679",
@@ -3926,7 +3926,7 @@
           "team": "Toronto Tempo",
           "stat": "ast",
           "line": 3.9,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2529130",
@@ -3942,10 +3942,10 @@
           "team": "Toronto Tempo",
           "stat": "ast",
           "line": 2.9,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
