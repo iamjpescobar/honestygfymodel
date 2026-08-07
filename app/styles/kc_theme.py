@@ -573,9 +573,38 @@ def _theme_css() -> str:
         div[data-testid="stVerticalBlock"] > div[data-testid="stElementContainer"] {{
             margin-bottom:var(--lc-space-xs) !important;
         }}
+        /* GIVE THE TABLES THE WHOLE WINDOW.
+           layout="wide" is already set, but Streamlit still reserves a
+           generous gutter down both sides of the block container. On a
+           page whose main content is 14-column stat tables that gutter
+           is the difference between reading five columns and reading
+           nine \u2014 every pixel it takes comes straight off the data.
+           The tables are the product; the margin is not. */
         .block-container {{
             padding-top: 1.5rem !important;
             padding-bottom: 1.5rem !important;
+            padding-left: var(--lc-space-md) !important;
+            padding-right: var(--lc-space-md) !important;
+            max-width: 100% !important;
+        }}
+
+        /* TIGHTER CELLS ON WIDE TABLES.
+           Padding was tuned when these tables were narrow. Trimming the
+           horizontal padding and letting numbers sit closer buys two to
+           three more visible columns before anything has to scroll,
+           which is worth more than the whitespace was. Vertical padding
+           is untouched \u2014 row height is what makes a dense table
+           scannable, and squeezing that makes it a spreadsheet. */
+        .lc-tbl-wrap th, .lc-tbl-wrap td {{
+            padding-left: var(--lc-space-sm) !important;
+            padding-right: var(--lc-space-sm) !important;
+            white-space: nowrap;
+        }}
+        /* The row label is the one column allowed to be roomy: it is
+           what you scan down, and a wrapped player name costs more than
+           the space it saves. */
+        .lc-tbl-wrap td:first-child, .lc-tbl-wrap th:first-child {{
+            padding-right: var(--lc-space-lg) !important;
         }}
 
         /* Subtle icon motion \u2014 tasteful, not distracting on a data product */
