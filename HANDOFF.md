@@ -15,66 +15,68 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 **Everything below the next divider is background. This block is what
 you do first.**
 
-### The Actions outage cleared and all three runs went green.
-`Slate Picks`, `Late slate refresh` and `KBO/NPB v2 probe` all
-completed on 2026-08-06 evening UTC. No errors in any of them. Nothing
-from the outage needs redoing.
+### V2 IS DONE. F2 is answered. Pitcher H2H is unblocked but useless yet.
 
-### What the runs settled
+Runs 84488187205 (late refresh) and 84488729291 (probe) closed three
+items between them. No errors in either.
 
-- **KBO slate rolled to 2026-08-07** — `KBO: wrote 5 games`. Weather
-  ran on all ten dates with **no timeout**, so the retry has not yet
-  been exercised in production.
-- **The homepage is empty of both signals**: `0 of 15 game cards
-  carried a Starters line` and `0 of 15 carried a time and venue`. The
-  homepage repair path is therefore doing nothing, and everything on
-  the board now comes from the schedule page.
-- **The schedule-card fix cannot be confirmed from these logs**, which
-  is why the coverage line below was added.
-- **KBO publishes per-start pitcher logs.**
-  `/Teams/PlayerInfoPitcher/GameLogs.aspx?pcode=...` returned HTTP 200,
-  4 tables, 23 `<tr>`, 23 IP and 23 ERA values, dates `04.02` `04.08`
-  `04.14`, **0 json blobs** — server-rendered, one row per appearance.
-- **NPB has nothing.** `/bis/eng/players/` is a 218-char stub with no
-  links; the Japanese leaderboard links only `/bis/players/`, which has
-  **0 tables**. No per-start log is reachable from any source we fetch.
+### The coverage counter earned itself on its first run
+It printed:
 
-### Shipped in this batch (verify, then run)
+```
+KBO: slate 2026-08-07 coverage — venue 0/5, first pitch 0/5, a named starter 5/5
+NPB: slate 2026-08-07 coverage — venue 6/6, first pitch 6/6, a named starter 6/6
+```
 
-1. **Slate coverage line, both leagues.** KBO and NPB now print, on
-   every run, how many of the games that ACTUALLY SHIP carry a venue, a
-   first pitch and a named starter. Every field this app fills has at
-   some point been correct one step short of the page; nothing counted
-   the output. Now something does.
-2. **Item G closed — one concurrency group.** `nightly-data` and
-   `intl-late-refresh` both republish the same release asset and were
-   in different groups, so the guard protected the nightly from itself
-   and nothing else. Both are now `group: publish-archive`,
-   `cancel-in-progress: false`, and
-   `tests/test_publish_concurrency.py` finds publishers by their upload
-   verbs rather than by name — a third publisher fails the test until
-   it joins.
-3. **Probe round 4** prints the game-log table's real column headers.
+Two things wrong in that line, and **only one of them was in the
+scraper**:
+
+- **`venue 0/5` was CORRECT.** Every KBO game on 2026-08-07 was called
+  for extreme heat. The probe dumped the card:
+  `Kia Tigers LG Twins Canceled Extreme Heat` — no `<time>` element at
+  all. A called game has no clock, `_card_time_venue` correctly refused
+  to read "Extreme Heat" as a venue, and NPB's 6/6 on the same run
+  proves the pipeline path works. **The schedule-card fix is working;
+  KBO has simply been heat-canceled two days running.**
+- **`a named starter 5/5` was a LIE.** KBO writes
+  `g.get("away_starter") or "TBD"`, so the field is never falsy. The
+  KBO copy of the counter tested truthiness while the NPB copy tested
+  against "TBD" — two copies of one idea, disagreeing inside a single
+  run, on a slate the homepage had just reported `0 of 15` starters
+  for.
+
+Both are fixed in this batch: the counter now lives in
+`app/engines/intl_slate.py`, both pipelines import it (rule 21), a
+called-off slate explains its own zeros, and
+`tests/test_slate_coverage.py` pins all of it.
+
+### Pitcher game logs: the OPP column is there
+Round 4 parsed `GameLogs.aspx` with `pd.read_html` — four tables, one
+per month, 19 starts:
+
+```
+columns: ['APR','OPP','ERA','RES','PA','IP','H','HR','BB','HBP','K','R','ER','OAVG']
+first row: [4.02, 'SAMSUNG', 0.0, nan, 25, '6', 2, 0, 5, 0, 4, 1, 0, 0.1]
+```
+
+Per-start, per-opponent, server-rendered, and readable with the same
+`pd.read_html` the leaderboards already use. **Pitcher-vs-team H2H is
+buildable for KBO.** Two landmines are recorded under the item below —
+read them before writing the parser, one of them silently corrupts
+dates.
 
 ### Do these in order
 
-1. `git pull` in the Codespace, then the suite. Expect
-   **`TESTS:69 FAILING: none`**.
-2. **Run `Late slate refresh`.** The line that matters is new:
-   `KBO: slate <date> coverage — venue N/5, first pitch N/5, a named
-   starter N/5`, and the matching `NPB:` line.
-   - **venue 5/5 and first pitch 5/5 → the schedule-card fix works and
-     item V2 is done.** This is the last unverified piece of the
-     2026-08-06 work.
-   - **venue 0/5 → `_card_time_venue` is not firing.** Do not widen a
-     regex; re-run the probe and compare a live card against
-     `tests/test_kbo_schedule_card.py`, which holds the markup the fix
-     was written against.
-   - `a named starter 0/5` is EXPECTED — see F2.
-3. **Run `KBO/NPB v2 probe`** once and send the log. If the game-log
-   table has an opponent column, pitcher-vs-team H2H is buildable for
-   KBO; if not, it is a per-start log with nothing to group by and the
-   item closes.
+1. Upload this batch, `git pull`, run the suite. Expect
+   **`TESTS:70 FAILING: none`**.
+2. **Run `Late slate refresh` on a day KBO actually plays.** The line
+   to read is the coverage line. On a played slate, `venue 5/5,
+   first pitch 5/5` closes V2 for good. `a named starter 0/5` is
+   EXPECTED and is not a defect — see F2.
+3. Everything else is a build decision, not a verification. The
+   biggest open product item is still **C** (best-games hero card),
+   which is blocked on recording an MLB slate and has been the whole
+   time.
 
 ### Decisions taken, do not re-litigate
 - **The repo stays PUBLIC.** Going private would 404 the release-asset
@@ -116,7 +118,7 @@ echo "FAILING:${fails:- none}"
 Then, for anything marked PENDING, **check it is still pending.**
 
 ```bash
-ls tests/*.py | wc -l                                     # 69
+ls tests/*.py | wc -l                                     # 70
 python tests/test_return_arity.py | tail -1               # FAILING: none
 grep -c fetch_homepage_schedule kbo_precompute.py         # 2  = defined AND called
 grep -cE '^\s+_hp, _hs =' kbo_precompute.py               # 0  = the crash is gone
@@ -125,7 +127,8 @@ grep -cE '^\s+_hp, _hs =' kbo_precompute.py               # 0  = the crash is go
 grep -c _card_time_venue kbo_precompute.py                # 2  = venue/time fix in
 grep -c 'fetch failed twice' app/engines/intl_weather.py  # 1  = weather retry in
 grep -rc publish-archive .github/workflows/nightly-data.yml  # 1  = item G closed
-grep -c 'coverage —' kbo_precompute.py                    # 1  = slate counter in
+grep -c coverage_line kbo_precompute.py                    # 2  = shared counter in
+grep -c coverage_line npb_precompute.py                    # 2  = and on both boards
 wc -l wnba_precompute.py                                  # 1085 = comments restored
 grep -c intl_weather npb_precompute.py                    # >0 = NPB weather WIRED
 grep -c _weather_badges app/views/KBO.py                  # 2  = KBO shows weather
@@ -231,43 +234,25 @@ What that failure actually cost, from the run log:
 
 ## OPEN — in priority order
 
-### V2. KBO venue + time for future dates — FIXED, awaiting one run.
-**Round 1 of the probe got this wrong and nearly closed the item as
-impossible.** It fetched the CURRENT week, where every game was already
-played or heat-canceled, and reported `'pm': 0`, `'°': 0`,
-`datetime=: 0`. A finished card shows a score where an upcoming one
-shows a clock, so the sample answered a different question than the one
-asked. Round 2 (run 84409273265) asked for the week of 2026-08-18 and
-got the opposite:
+### V2. KBO venue + time for future dates — CLOSED.
+`parse_week` reads both off schedule-card text via `_card_time_venue`,
+which reuses `HOME_TIME_VENUE` rather than adding a fifth regex to the
+file that has lost four. `datetime=` is still alive so the markup key
+wins where it exists; the text is a fallback only.
 
-```html
-<span class="ds-game-card__state is-time ">
-  <time datetime="2026-08-18T10:00:00Z">7:00pm</time></span>
-<span class="ds-game-card__sub is-prose">Daejeon</span>
-```
+Confirmed working on 2026-08-07 by **NPB reporting 6/6 venue and 6/6
+first pitch on the same run** KBO reported 0/5 — because every KBO game
+that day was heat-canceled and a called card carries no `<time>`
+element at all. See `tests/test_kbo_schedule_card.py`, which pins the
+trap: `ds-game-card__sub is-prose` holds the VENUE on an upcoming card
+and the words **"Extreme Heat"** on a canceled one, so requiring a
+clock immediately before the venue is what separates them. Without
+that, `venue_for_game()` would hunt for coordinates for a city called
+Extreme Heat, miss, and fall back silently.
 
-Card text: `Kia Tigers Hanwha Eagles 7:00pm Daejeon` — **the same shape
-the homepage uses.** So `parse_week` now reuses `HOME_TIME_VENUE` on
-schedule cards rather than adding a fifth regex to the file that has
-lost four. `datetime=` turns out to be alive, so the markup key still
-wins where it exists and the text is a fallback only.
-
-**The trap, pinned by `tests/test_kbo_schedule_card.py`:**
-`ds-game-card__sub is-prose` holds the VENUE on an upcoming card and
-the words **"Extreme Heat"** on a canceled one. Keying on that class
-would put a weather note in the stadium field, and `venue_for_game()`
-would then look for coordinates for a city called Extreme Heat, miss,
-and fall back silently. Requiring a clock immediately before the venue
-is what separates them — a game with no first pitch has no venue to
-show.
-
-`week_of` IS honoured: asked for 2026-08-20, served 2026-08-18..23. The
-crawl already reaches six days out, so nothing else needs to change.
-
-**Outstanding:** one run. Watch `KBO: wrote N games` and then the board
-— future dates should show a real venue and first pitch. Today's slate
-still repairs off the homepage; both paths are live and the scraped
-value wins in both.
+`week_of` is honoured for forward dates (asked 2026-08-20, served
+2026-08-18..23). **One thing left:** watch the coverage line on a day
+KBO actually plays. 5/5 there and this never needs looking at again.
 
 ### F2. KBO probables — the schedule page shows them ONLY AFTER the fact.
 Round 2 counted `ds-game-team__starter` per card:
@@ -321,38 +306,56 @@ with network) extended to write an MLB slate in the shape `slate_guard`
 reads. Home must degrade gracefully until CI populates it. **Biggest
 remaining product item.**
 
-### PITCHER H2H — KBO's log EXISTS. One column decides it.
-Requested: starters always shown, with season data and head-to-head
-against the opposing team. First two are in hand; the third turned on
-whether a per-start log exists anywhere.
+### PITCHER H2H — BUILDABLE FOR KBO. Blocked on knowing who starts.
+Probe round 4 parsed
+`eng.koreabaseball.com/Teams/PlayerInfoPitcher/GameLogs.aspx?pcode=55268`
+with `pd.read_html`: **four tables, one per month, 19 starts.**
 
-**It does, for KBO.** Probe run 84476791490 fetched
-`eng.koreabaseball.com/Teams/PlayerInfoPitcher/GameLogs.aspx?pcode=55268`:
-HTTP 200, 4 tables, 23 `<tr>`, 23 IP and 23 ERA values, dates `04.02`
-`04.08` `04.14`, **0 json blobs**, scripts only Google Analytics and
-ASP.NET chrome. Server-rendered, one row per appearance, reachable from
-a leaderboard the pipeline already fetches. The 20 player links come
-straight off `PitchingLeaders.aspx`.
+```
+columns: ['APR','OPP','ERA','RES','PA','IP','H','HR','BB','HBP','K','R','ER','OAVG']
+first row: [4.02, 'SAMSUNG', 0.0, nan, 25, '6', 2, 0, 5, 0, 4, 1, 0, 0.1]
+```
 
-**The one thing not yet known: is there an OPPONENT column?** The probe
-matched `Opponent` zero times. A per-start log with no opponent is
-useless for pitcher-vs-team — per-start lines with nothing to group by.
-Round 4 of the probe stops guessing at the spelling and prints the real
-column headers via `pd.read_html`, which is how the leaderboards are
-already read; if that parses, the build is an extension of existing
-code rather than a new parser.
+Per-start, per-opponent, server-rendered, no JSON blobs, reachable from
+the 20 player links on `PitchingLeaders.aspx` — a page the pipeline
+already fetches. Read with the same `pd.read_html` the leaderboards use,
+so this is an extension of existing code, not a new parser.
 
-**NPB is a dead end and should be stated as one.** `/bis/eng/players/`
-is a 218-char stub with no links; the Japanese leaderboard links only
-`/bis/players/`, which has **0 tables**. Nothing we fetch reaches a
-per-start log. If this ships for KBO only the boards will disagree —
-rule 21 — so say so on the page rather than letting one board look
-richer for no stated reason.
+**TWO LANDMINES. Read before writing anything.**
 
-Also unchanged: both leagues' season lines come from leaderboards that
-list QUALIFIED pitchers only — 20 for a 10-team league — so most
-starters have no season line at all. That is a coverage gap in the
-source, not a parse failure, and it is separate from the H2H question.
+1. **The date column is a FLOAT and it collides.** The header is the
+   month (`APR`), the value is `4.02` = April 2. But `6.3` appears in
+   the June table, and as a float that is indistinguishable from June 3
+   (`6.03` → `6.03`) versus June 30 (`6.30` → `6.3`). **Pandas has
+   already destroyed the distinction by the time you see it.** Take the
+   month from the column header and the day from the RAW STRING, not
+   the parsed float. A wrong date silently mis-orders a pitcher's
+   season and mis-attributes starts.
+2. **`IP` mixes types** — `'6'`, `4`, `'4 1/3'` in the same column.
+   `_parse_ip()` already exists in `kbo_precompute`; use it rather than
+   float().
+
+Also: `RES` is `nan` for a no-decision, which is a real outcome and not
+missing data.
+
+**WHY IT IS STILL BLOCKED.** Pitcher-vs-team H2H answers "how has
+tonight's starter done against tonight's opponent" — and **we do not
+know who is starting.** F2 established that mykbostats no longer
+publishes probables in advance, and 50 upcoming schedule cards carried
+zero starter spans. Building this now yields a lookup with nothing to
+key on. **Finish E3 first**, or accept that the feature only lights up
+retroactively.
+
+**NPB remains a dead end.** `/bis/eng/players/` is a 218-char stub with
+no links; the Japanese leaderboard links only `/bis/players/`, which has
+**0 tables**. Nothing we fetch reaches a per-start log. If this ships
+for KBO only the boards will disagree — rule 21 — so say so on the page
+rather than letting one board look richer for no stated reason.
+
+Separately, both leagues' season lines come from leaderboards listing
+QUALIFIED pitchers only — 20 for a 10-team league — so most starters
+have no season line at all. Coverage gap in the source, not a parse
+failure.
 
 ### E3. KBO source migration — blocked on one probe.
 mykbostats clause 6 forbids betting use, so the rest should move to
@@ -480,7 +483,7 @@ the site's own advance warning is a free check on this number.
 - Pages in **`app/views/`**, deliberately NOT `pages/` — Streamlit
   auto-registers `pages/` and would expose every page pre-auth.
 - Engines in `app/engines/`. Theme in `app/styles/kc_theme.py`.
-- Tests in `tests/` — **69 files, plain scripts, not pytest.**
+- Tests in `tests/` — **70 files, plain scripts, not pytest.**
 - Data comes off disk; the nightly publishes a release asset.
 - `requirements.txt` fully pinned, including transitives.
 
