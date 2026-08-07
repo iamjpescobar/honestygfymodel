@@ -32,6 +32,7 @@ def _st_cache_1h():
 
 
 from .kc_theme import COLOR, pitch_color_by_name
+from .stat_scales import has_scale, tier_fraction
 
 BG = COLOR["bg"]
 CYAN = COLOR["stat_high"]
@@ -179,9 +180,42 @@ def _gradient_fill(t: float, bold: bool = False) -> str:
 
 
 def _magnitude_column(col: pd.Series, invert: bool, use_gradient: bool = False):
+    """Cell fills for one column.
+
+    ABSOLUTE FIRST. If the column's header has a fixed scale in
+    styles/stat_scales.py, every cell is coloured from its OWN value
+    against that scale and nothing else on screen matters. A .285 is the
+    same colour in the lineup table, on the HR board, and after any
+    filter change.
+
+    That is the behaviour this used to lack. Colour came from the
+    column's own min and max, so the SAME number changed tier when you
+    switched Bats or Window and no value had moved. It answered "where
+    does this sit among the rows on screen", which nobody reads it as —
+    a colour reads as a verdict.
+
+    RELATIVE ONLY AS A FALLBACK, for columns with no scale defined
+    (counting stats, one-off composites). Better an obviously
+    column-relative colour than a fixed one invented on the spot; the
+    honest fix for a column that lands here is to add its cut points to
+    stat_scales.SCALES, not to special-case it.
+    """
     numeric = pd.to_numeric(col, errors="coerce")
     if numeric.isna().all():
         return [""] * len(col)
+
+    if has_scale(col.name):
+        out = []
+        for v in numeric:
+            t = tier_fraction(col.name, v, invert=invert)
+            if t is None:
+                out.append("")
+            elif use_gradient:
+                out.append(_gradient_fill(t, bold=(t >= 0.75)))
+            else:
+                opacity = _MIN_OPACITY + (_MAX_OPACITY - _MIN_OPACITY) * t
+                out.append(_cyan(opacity, bold=(t >= 0.7)))
+        return out
 
     vmin, vmax = numeric.min(), numeric.max()
     if vmin == vmax:
@@ -468,6 +502,52 @@ div[data-testid="column"]:has(.lc-tbl-wrap) {{
   box-shadow: 1px 0 0 0 {COLOR['stat_high']}33;
 }}
 .lc-tbl-wrap thead th:first-child {{ z-index: 4; }}
+
+/* ---------------- THE GRID ----------------
+   Organisation only — no column gains or loses anything here.
+
+   These tables are wide and dense, and until now the only structure in
+   them was horizontal: a rule under the header and a rule under each
+   row. Nothing separated one COLUMN from the next, so a run of eight
+   numbers read as a stripe and your eye had to track back up to the
+   header to work out which stat it was on. That is the actual
+   complaint about these tables, and it is a ruling problem, not a
+   content problem.
+
+   Vertical hairlines fix it, at one twelfth the strength of the
+   horizontal ones. They have to be nearly invisible: a full-strength
+   grid turns the table into graph paper and competes with the cell
+   fills, which are the signal. You should feel the columns, not see
+   the lines.
+
+   The label column keeps its accent edge (above) so the boundary
+   between "who" and "how much" stays the strongest line in the table.  */
+.lc-tbl-wrap td, .lc-tbl-wrap th {{
+  border-right: 1px solid {COLOR['text']}0D;
+}}
+.lc-tbl-wrap td:last-child, .lc-tbl-wrap th:last-child {{
+  border-right: none;
+}}
+
+/* Column hover. On a table this wide the hard part is staying on the
+   right stat while reading down; the row hover already handles the
+   other axis. Pure CSS, no JS: :has() lets a cell light its own column
+   header when the pointer is anywhere in the table body. Browsers
+   without :has() simply do not get the effect and nothing breaks. */
+.lc-tbl-wrap tbody td:hover {{
+  box-shadow: inset 0 0 0 999px rgba(255,255,255,0.05);
+}}
+
+/* Alignment: labels left, numbers right. Right-aligned digits put the
+   ones column under the ones column, which is the only way a stack of
+   numbers is comparable at a glance. Left-aligned numerics were
+   ragged wherever a value lost a decimal place. */
+.lc-tbl-wrap td, .lc-tbl-wrap th {{
+  text-align: right;
+}}
+.lc-tbl-wrap td:first-child, .lc-tbl-wrap th:first-child {{
+  text-align: left;
+}}
 
 /* Phones: tighter padding and smaller type so more columns fit before
    any scrolling is needed. Desktop keeps the roomier sizing above. */
