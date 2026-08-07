@@ -286,12 +286,17 @@ def _theme_css() -> str:
                targets on mobile — the desktop sizing (0.5rem padding)
                is too small to reliably tap. */
             .stButton > button, .stDownloadButton > button {{
-                min-height: 40px !important;
+                min-height: 44px !important;
                 padding: 0.55rem 1rem !important;
                 font-size:var(--lc-text-body-lg) !important;
             }}
+            /* 44, not 38. This override predates the unified control
+               language and was SHRINKING the pills on the one device
+               where the target matters most \u2014 a phone. Touch targets
+               go up on small screens, never down. */
             div[data-testid="stButtonGroup"] button {{
-                min-height: 38px !important;
+                min-height: 44px !important;
+                padding: var(--lc-space-xs) var(--lc-space-md) !important;
                 font-size:var(--lc-text-body) !important;
             }}
             .st-key-gc_view_nav label {{
@@ -630,22 +635,57 @@ def _theme_css() -> str:
            Default Streamlit styling renders plain white text on a flat
            background here, which clashes with the dark theme \u2014 give it
            the same card/accent treatment as everything else. */
+        /* ONE CONTROL LANGUAGE FOR THE WHOLE SITE.
+           This treatment started life scoped to the league nav, where it
+           obviously worked: an unselected option is a quiet ghost pill
+           and the selected one is a solid block of accent. Every other
+           segmented control and pill group on the site \u2014 Bats, Window,
+           sort, the pitcher picker, the WNBA prop tabs, every board's
+           filters \u2014 was still the older bordered-grey style, so the
+           same widget looked like two different things depending which
+           page you were on.
+
+           The rule now lives here, unscoped, so a filter on the KBO
+           board reads exactly like a filter on the Game Card. Three
+           states and no ambiguity between them:
+
+             unselected  transparent, muted text, no border. A row of
+                         options should not look like a row of buttons
+                         demanding to be pressed.
+             hover       the faintest wash, so the target is confirmed
+                         without implying selection.
+             selected    filled accent with dark text. The only strong
+                         thing in the group, because "which one is on"
+                         is the single question a control answers.
+
+           44px minimum height throughout \u2014 this is read on an iPad and
+           that is the smallest target a thumb hits reliably. */
+        div[data-testid="stButtonGroup"] {{
+            gap: var(--lc-space-hair) !important;
+            flex-wrap: wrap;
+        }}
         div[data-testid="stButtonGroup"] button {{
-            background-color: {COLOR["surface_raised"]} !important;
-            color: {COLOR["text"]} !important;
-            border: 1px solid {COLOR["border"]} !important;
-            border-radius:var(--lc-radius-md) !important;
-            font-weight: 600 !important;
+            background-color: transparent !important;
+            color: {COLOR["text_muted"]} !important;
+            border: 1px solid transparent !important;
+            border-radius: 999px !important;
+            min-height: 40px !important;
+            padding: var(--lc-space-xs) var(--lc-space-lg) !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.04em !important;
+            transition: background-color 0.14s ease, color 0.14s ease;
         }}
         div[data-testid="stButtonGroup"] button:hover {{
-            border-color: {COLOR["stat_high"]} !important;
-            color: {COLOR["stat_high"]} !important;
+            background-color: {COLOR["text"]}0A !important;
+            border-color: transparent !important;
+            color: {COLOR["text"]} !important;
         }}
         div[data-testid="stButtonGroup"] button[aria-checked="true"],
         div[data-testid="stButtonGroup"] button[aria-pressed="true"] {{
-            background-color: {COLOR["stat_high_dim"]} !important;
+            background-color: {COLOR["stat_high"]} !important;
             border-color: {COLOR["stat_high"]} !important;
-            color: {COLOR["stat_high"]} !important;
+            color: {COLOR["bg"]} !important;
+            box-shadow: 0 2px 10px -4px {COLOR["stat_high"]} !important;
         }}
 
         /* ---------------- SPORT NAV ---------------- */
@@ -661,34 +701,16 @@ def _theme_css() -> str:
            centred with room to breathe. Bigger tap targets too \u2014 this
            is read on an iPad, and 44px is the minimum a thumb hits
            reliably. */
+        /* The league nav keeps only what is genuinely nav-specific now
+           that its look is the site default: centred, and a taller
+           target because it is the first thing touched on every page. */
         div[class*="st-key-lc_sport_seg"] div[data-testid="stButtonGroup"] {{
             justify-content: center !important;
-            gap: var(--lc-space-hair) !important;
+            flex-wrap: wrap;
         }}
         div[class*="st-key-lc_sport_seg"] div[data-testid="stButtonGroup"] button {{
-            background-color: transparent !important;
-            border: 1px solid transparent !important;
-            border-radius: 999px !important;
             min-height: 44px !important;
-            padding: var(--lc-space-xs) var(--lc-space-lg) !important;
             letter-spacing: 0.06em !important;
-            font-weight: 700 !important;
-            color: {COLOR["text_muted"]} !important;
-        }}
-        div[class*="st-key-lc_sport_seg"] div[data-testid="stButtonGroup"] button:hover {{
-            background-color: {COLOR["text"]}0A !important;
-            border-color: transparent !important;
-            color: {COLOR["text"]} !important;
-        }}
-        /* The selected league is the one thing on this strip that has to
-           be unmistakable at a glance \u2014 it tells you which board you
-           are looking at. Filled, not outlined. */
-        div[class*="st-key-lc_sport_seg"] div[data-testid="stButtonGroup"] button[aria-checked="true"],
-        div[class*="st-key-lc_sport_seg"] div[data-testid="stButtonGroup"] button[aria-pressed="true"] {{
-            background-color: {COLOR["stat_high"]} !important;
-            border-color: {COLOR["stat_high"]} !important;
-            color: {COLOR["bg"]} !important;
-            box-shadow: 0 2px 10px -4px {COLOR["stat_high"]} !important;
         }}
 
         /* Game picker specifically: force a single scrollable row instead
@@ -750,35 +772,48 @@ def _theme_css() -> str:
         }}
 
         /* ---------------- BUTTONS ---------------- */
+        /* Plain buttons match the pills: same pill radius, same quiet
+           default, same filled accent when they are the active thing.
+           A st.button and a segmented option sitting next to each other
+           \u2014 which happens on the game picker and on every board with
+           a Sync control \u2014 previously came out as two different
+           shapes, and the eye reads that as two different KINDS of
+           thing when they are both just "tap this". */
         .stButton > button, .stDownloadButton > button {{
-            background-color: {COLOR["surface_raised"]};
-            color: {COLOR["text"]};
-            border: 1px solid {COLOR["border"]};
-            border-radius:var(--lc-radius-md);
-            font-weight: 600;
+            background-color: transparent;
+            color: {COLOR["text_muted"]};
+            border: 1px solid {COLOR["text"]}1A;
+            border-radius: 999px;
+            font-weight: 700;
             font-size:var(--lc-text-body);
-            padding: 0.5rem 1.1rem;
-            transition: border-color 0.15s ease, color 0.15s ease;
+            min-height: 40px;
+            padding: 0.4rem 1.1rem;
+            transition: background-color 0.14s ease, color 0.14s ease,
+                        border-color 0.14s ease;
         }}
         .stButton > button:hover, .stDownloadButton > button:hover {{
-            border-color: {COLOR["accent"]};
-            color: {COLOR["accent"]};
-            background-color: {COLOR["surface_raised"]};
+            border-color: {COLOR["stat_high"]}55;
+            color: {COLOR["text"]};
+            background-color: {COLOR["text"]}0A;
         }}
         .stButton > button:focus:not(:active) {{
-            border-color: {COLOR["accent"]};
-            color: {COLOR["accent"]};
+            border-color: {COLOR["stat_high"]};
+            color: {COLOR["stat_high"]};
         }}
-        /* primary (type="primary") buttons */
+        /* primary (type="primary") buttons \u2014 the selected state,
+           identical to a checked pill so "this one is active" looks the
+           same everywhere. The game picker relies on this: its cards are
+           st.buttons switched to primary when selected. */
         .stButton > button[kind="primary"] {{
-            background-color: {COLOR["accent"]};
-            color: #06110f;
-            border: 1px solid {COLOR["accent"]};
+            background-color: {COLOR["stat_high"]};
+            color: {COLOR["bg"]};
+            border: 1px solid {COLOR["stat_high"]};
+            box-shadow: 0 2px 10px -4px {COLOR["stat_high"]};
         }}
         .stButton > button[kind="primary"]:hover {{
-            background-color: {COLOR["accent"]};
-            color: #06110f;
-            opacity: 0.9;
+            background-color: {COLOR["stat_high"]};
+            color: {COLOR["bg"]};
+            opacity: 0.92;
         }}
 
         /* ---------------- INPUTS / SELECTS ---------------- */
