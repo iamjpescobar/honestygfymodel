@@ -10,71 +10,89 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
-## PICK UP HERE — state as of 2026-08-06 ~17:00 UTC
+## PICK UP HERE — state as of 2026-08-07
 
 **Everything below the next divider is background. This block is what
 you do first.**
 
-### What is on main and verified green
-`TESTS:68 FAILING: none` in the Codespace, everything pushed. Four
-things shipped today:
+### The Actions outage cleared and all three runs went green.
+`Slate Picks`, `Late slate refresh` and `KBO/NPB v2 probe` all
+completed on 2026-08-06 evening UTC. No errors in any of them. Nothing
+from the outage needs redoing.
 
-1. **The KBO crash fix.** `fetch_homepage_schedule()` now exists;
-   `main()` calls it and `fetch_homepage_starters()` separately instead
-   of unpacking two values from a one-value function.
-2. **`parse_week` reads venue and first pitch off schedule-card text**
-   via `_card_time_venue()`, which reuses `HOME_TIME_VENUE`. This is
-   the `TBD · TBD KST / TBD ET` fix for FUTURE dates.
-3. **Open-Meteo retries once** on a transport failure.
-4. **`intl_v2_probe.py`** + its workflow, plus two new tests
-   (`test_return_arity.py`, `test_kbo_schedule_card.py`).
+### What the runs settled
 
-### What is NOT verified, and why
-**None of items 1–3 has executed in production.** Both runs were
-triggered and both are still QUEUED. GitHub declared a **major Actions
-outage** at 15:22 UTC on 2026-08-06; `Nightly Statcast Data #143` died
-after 15 minutes with `The job was not acquired by Runner of type
-hosted` and an internal-server-error correlation id. Zero steps ran, so
-nothing touched the archive — **the published data is intact and the
-site is fine.**
+- **KBO slate rolled to 2026-08-07** — `KBO: wrote 5 games`. Weather
+  ran on all ten dates with **no timeout**, so the retry has not yet
+  been exercised in production.
+- **The homepage is empty of both signals**: `0 of 15 game cards
+  carried a Starters line` and `0 of 15 carried a time and venue`. The
+  homepage repair path is therefore doing nothing, and everything on
+  the board now comes from the schedule page.
+- **The schedule-card fix cannot be confirmed from these logs**, which
+  is why the coverage line below was added.
+- **KBO publishes per-start pitcher logs.**
+  `/Teams/PlayerInfoPitcher/GameLogs.aspx?pcode=...` returned HTTP 200,
+  4 tables, 23 `<tr>`, 23 IP and 23 ERA values, dates `04.02` `04.08`
+  `04.14`, **0 json blobs** — server-rendered, one row per appearance.
+- **NPB has nothing.** `/bis/eng/players/` is a 218-char stub with no
+  links; the Japanese leaderboard links only `/bis/players/`, which has
+  **0 tables**. No per-start log is reachable from any source we fetch.
 
-Nothing in the repo caused this. The same workflow files ran clean
-twice earlier the same day.
+### Shipped in this batch (verify, then run)
+
+1. **Slate coverage line, both leagues.** KBO and NPB now print, on
+   every run, how many of the games that ACTUALLY SHIP carry a venue, a
+   first pitch and a named starter. Every field this app fills has at
+   some point been correct one step short of the page; nothing counted
+   the output. Now something does.
+2. **Item G closed — one concurrency group.** `nightly-data` and
+   `intl-late-refresh` both republish the same release asset and were
+   in different groups, so the guard protected the nightly from itself
+   and nothing else. Both are now `group: publish-archive`,
+   `cancel-in-progress: false`, and
+   `tests/test_publish_concurrency.py` finds publishers by their upload
+   verbs rather than by name — a third publisher fails the test until
+   it joins.
+3. **Probe round 4** prints the game-log table's real column headers.
 
 ### Do these in order
 
-1. **Check <https://www.githubstatus.com>.** If Actions is not
-   Operational, stop and wait. Do not re-run anything; queued runs pile
-   up and all fire at once when capacity returns.
-2. **Cancel duplicate queued runs.** There are two of each —
-   `KBO/NPB v2 probe` #4 and #6, `Late slate refresh` #14 and #17.
-   Keep one of each. Two concurrent late-refresh runs would race each
-   other over the release asset (see item G).
-3. **Let one `Late slate refresh` finish.** Read the KBO step for:
-   - no `Traceback`, job green
-   - `KBO: homepage — N of M game cards carried a time and venue`
-   - `KBO: wrote N games`
-   Then reload the KBO board and Sync latest. **Today's slate is
-   heat-canceled, so it will still read TBD — that is correct, a
-   canceled card carries no clock.** The board only ever holds ONE slate (slate_date_kst) — there is no date picker, so this cannot be checked by clicking forward. The proof is the next slate that actually gets played: its header should show a real venue and first pitch.
-4. **Run `KBO/NPB v2 probe` once** (round 3). It now fetches
-   `/Teams/PlayerInfoPitcher/GameLogs.aspx?pcode=...` — the per-start
-   pitcher log that decides whether pitcher-vs-team H2H is buildable.
-   Send the whole log.
-5. **Only then** consider re-running the nightly. One workflow at a
-   time until item G ships.
+1. `git pull` in the Codespace, then the suite. Expect
+   **`TESTS:69 FAILING: none`**.
+2. **Run `Late slate refresh`.** The line that matters is new:
+   `KBO: slate <date> coverage — venue N/5, first pitch N/5, a named
+   starter N/5`, and the matching `NPB:` line.
+   - **venue 5/5 and first pitch 5/5 → the schedule-card fix works and
+     item V2 is done.** This is the last unverified piece of the
+     2026-08-06 work.
+   - **venue 0/5 → `_card_time_venue` is not firing.** Do not widen a
+     regex; re-run the probe and compare a live card against
+     `tests/test_kbo_schedule_card.py`, which holds the markup the fix
+     was written against.
+   - `a named starter 0/5` is EXPECTED — see F2.
+3. **Run `KBO/NPB v2 probe`** once and send the log. If the game-log
+   table has an opponent column, pitcher-vs-team H2H is buildable for
+   KBO; if not, it is a per-start log with nothing to group by and the
+   item closes.
 
-### Decisions taken today, do not re-litigate
+### Decisions taken, do not re-litigate
 - **The repo stays PUBLIC.** Going private would 404 the release-asset
-  download in `app/fetch_data.py` (Render falls back to live Statcast
-  pulls and says so in a warning that fails nothing — a silent data
-  outage), and private repos stop getting free Actions minutes. If it
+  download in `app/fetch_data.py` — Render falls back to live Statcast
+  pulls and says so in a warning that fails nothing, i.e. a silent data
+  outage — and private repos stop getting free Actions minutes. If it
   ever goes private: create a fine-grained PAT, set `GITHUB_TOKEN` in
   Render, confirm the build log prints `[fetch_data] OK`, THEN flip.
-- **He is on GitHub's web editor**, which commits straight to `main`.
-  So the Codespace is usually BEHIND, not ahead. `git pull` first;
-  `git add`/`commit`/`push` is usually a no-op and "nothing to commit,
-  working tree clean" is expected, not a failure.
+- **He commits via GitHub's web editor**, which writes straight to
+  `main`. The Codespace is therefore usually BEHIND, not ahead.
+  `git pull` first; "nothing to commit, working tree clean" is the
+  expected result there, not a failure.
+- **A red workflow is not automatically a repo defect.** `The job was
+  not acquired by Runner of type hosted` plus an internal-server-error
+  correlation id is GitHub's. Check githubstatus.com before debugging,
+  and do not re-run into an outage — queued runs all fire at once when
+  capacity returns, which is exactly how two concurrent publishes
+  happen.
 
 ---
 
@@ -98,7 +116,7 @@ echo "FAILING:${fails:- none}"
 Then, for anything marked PENDING, **check it is still pending.**
 
 ```bash
-ls tests/*.py | wc -l                                     # 68
+ls tests/*.py | wc -l                                     # 69
 python tests/test_return_arity.py | tail -1               # FAILING: none
 grep -c fetch_homepage_schedule kbo_precompute.py         # 2  = defined AND called
 grep -cE '^\s+_hp, _hs =' kbo_precompute.py               # 0  = the crash is gone
@@ -106,7 +124,8 @@ grep -cE '^\s+_hp, _hs =' kbo_precompute.py               # 0  = the crash is go
                                                           #       quotes the broken line)
 grep -c _card_time_venue kbo_precompute.py                # 2  = venue/time fix in
 grep -c 'fetch failed twice' app/engines/intl_weather.py  # 1  = weather retry in
-grep -c concurrency .github/workflows/intl-late-refresh.yml  # 0 = item G still open
+grep -rc publish-archive .github/workflows/nightly-data.yml  # 1  = item G closed
+grep -c 'coverage —' kbo_precompute.py                    # 1  = slate counter in
 wc -l wnba_precompute.py                                  # 1085 = comments restored
 grep -c intl_weather npb_precompute.py                    # >0 = NPB weather WIRED
 grep -c _weather_badges app/views/KBO.py                  # 2  = KBO shows weather
@@ -280,25 +299,6 @@ it is the one thing our own forecast cannot reproduce. Either wire it
 back in as a second, clearly-labelled signal or delete it and say why.
 Right now it is neither.
 
-### G. NO CONCURRENCY GUARD ON `intl-late-refresh`. Two lines, do it.
-`nightly-data.yml` has `concurrency: group: nightly-data`.
-`intl-late-refresh.yml` has **no concurrency block at all**, so:
-
-- two late-refresh runs can overlap each other, and
-- a late refresh can overlap the nightly.
-
-Both download the published archive, repack it and upload it back. If
-they interleave, the second upload silently replaces the first's work.
-The repack's `data/statcast/` check catches an outright gutted archive
-but not a STALE one. This nearly happened today: the nightly was in
-progress while a late refresh was queued, and the Actions outage left
-two of each queued to fire simultaneously.
-
-Fix: put BOTH workflows in the same group, e.g.
-`concurrency: {group: publish-archive, cancel-in-progress: false}`.
-`cancel-in-progress: false` matters — a half-finished publish is worse
-than a delayed one.
-
 ### W2. Open-Meteo now retries once. Watch that it is enough.
 Run 84398190888 fetched ten dates; nine succeeded and the ONE that
 timed out was the first, which is today's — the slate actually on
@@ -321,53 +321,38 @@ with network) extended to write an MLB slate in the shape `slate_guard`
 reads. Home must degrade gracefully until CI populates it. **Biggest
 remaining product item.**
 
-### PITCHER H2H — KBO HAS A GAME-LOG PAGE. NPB still does not.
+### PITCHER H2H — KBO's log EXISTS. One column decides it.
 Requested: starters always shown, with season data and head-to-head
-against the opposing team. First two are in hand; **the third has no
-data behind it.**
+against the opposing team. First two are in hand; the third turned on
+whether a per-start log exists anywhere.
 
-- KBO season lines come from `eng.koreabaseball.com` ERA/WHIP
-  **leaderboards**, which list QUALIFIED pitchers only — the live run
-  fetched 20 for a 10-team league, so most starters have no line at
-  all. That is a coverage gap, not a bug.
-- NPB fetches 59 from three npb.jp leaderboards, same shape. Run
-  84386218583 shows the gap on the board: across five games, only one
-  of ten listed starters had season stats attached.
-- **Neither source gives per-start logs.** Both are season aggregates,
-  so "this pitcher vs this opponent" cannot be computed from anything
-  currently fetched.
+**It does, for KBO.** Probe run 84476791490 fetched
+`eng.koreabaseball.com/Teams/PlayerInfoPitcher/GameLogs.aspx?pcode=55268`:
+HTTP 200, 4 tables, 23 `<tr>`, 23 IP and 23 ERA values, dates `04.02`
+`04.08` `04.14`, **0 json blobs**, scripts only Google Analytics and
+ASP.NET chrome. Server-rendered, one row per appearance, reachable from
+a leaderboard the pipeline already fetches. The 20 player links come
+straight off `PitchingLeaders.aspx`.
 
-What exists today is TEAM h2h (`h2h()` in both pipelines), which is
-what the cards already show.
+**The one thing not yet known: is there an OPPONENT column?** The probe
+matched `Opponent` zero times. A per-start log with no opponent is
+useless for pitcher-vs-team — per-start lines with nothing to group by.
+Round 4 of the probe stops guessing at the spelling and prints the real
+column headers via `pd.read_html`, which is how the leaderboards are
+already read; if that parses, the build is an extension of existing
+code rather than a new parser.
 
-To build pitcher-vs-team you need a per-start game log per pitcher:
-KBO would need the official site's player detail pages, NPB the
-equivalent on npb.jp. **Probe one player page per league first** and
-confirm the log is server-rendered before designing anything — that is
-the lesson from four probes on the starters question. The probe script
-being written when a session was cut off never got committed; it is
-**Round 2 found the page.** The KBO leaderboard links 20 real player
-pages, and each one links a tab:
+**NPB is a dead end and should be stated as one.** `/bis/eng/players/`
+is a 218-char stub with no links; the Japanese leaderboard links only
+`/bis/players/`, which has **0 tables**. Nothing we fetch reaches a
+per-start log. If this ships for KBO only the boards will disagree —
+rule 21 — so say so on the page rather than letting one board look
+richer for no stated reason.
 
-```
-/Teams/PlayerInfoPitcher/GameLogs.aspx?pcode=55268
-/Teams/PlayerInfoPitcher/SplitsMonth.aspx?pcode=55268
-```
-
-The summary page it sits beside is fully server-rendered — 13 tables,
-31 rows, no JSON blobs — so a game log there is very likely readable
-with the same `pd.read_html` the leaderboards already use. **Round 3 of
-the probe fetches `GameLogs.aspx` and describes it.** Many rows plus an
-opponent column means pitcher-vs-team is buildable for KBO; few rows
-plus many scripts means an XHR endpoint, same shape as the Korean
-schedule page's missing 선발.
-
-**NPB remains a dead end.** `/bis/eng/players/` is a 218-char stub with
-no links, and the Japanese leaderboard links only `/bis/players/`, an
-index with zero tables. Nothing we fetch reaches a per-start log. If
-this ships for KBO only, the boards will disagree — see rule 21, and
-say so on the page rather than letting one board look richer for no
-stated reason.
+Also unchanged: both leagues' season lines come from leaderboards that
+list QUALIFIED pitchers only — 20 for a 10-team league — so most
+starters have no season line at all. That is a coverage gap in the
+source, not a parse failure, and it is separate from the H2H question.
 
 ### E3. KBO source migration — blocked on one probe.
 mykbostats clause 6 forbids betting use, so the rest should move to
@@ -495,7 +480,7 @@ the site's own advance warning is a free check on this number.
 - Pages in **`app/views/`**, deliberately NOT `pages/` — Streamlit
   auto-registers `pages/` and would expose every page pre-auth.
 - Engines in `app/engines/`. Theme in `app/styles/kc_theme.py`.
-- Tests in `tests/` — **68 files, plain scripts, not pytest.**
+- Tests in `tests/` — **69 files, plain scripts, not pytest.**
 - Data comes off disk; the nightly publishes a release asset.
 - `requirements.txt` fully pinned, including transitives.
 
