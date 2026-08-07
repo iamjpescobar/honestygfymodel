@@ -183,15 +183,36 @@ def _render_game_carousel(_labels, games):
                    if _a else f'<b style="font-size:var(--lc-text-caption);">{team_abbr(_g.get("away", "?"))}</b>')
             _hi = (f'<img src="{_h}" width="21" height="21" style="vertical-align:middle;">'
                    if _h else f'<b style="font-size:var(--lc-text-caption);">{team_abbr(_g.get("home", "?"))}</b>')
+            # First pitch on the card itself. The picker used to carry
+            # only the matchup, so choosing between an early game and a
+            # night game meant selecting one, reading the breadcrumb,
+            # and going back. The time is the second thing anyone wants
+            # here and it costs one line.
+            try:
+                _t = (datetime.fromisoformat(_g["game_time"].replace("Z", "+00:00"))
+                      .astimezone(EASTERN).strftime("%-I:%M %p")
+                      if _g.get("game_time") else "")
+            except Exception:
+                _t = ""
             with _cols[_gidx]:
                 st.markdown(
                     f'<div class="lc-gamecard" style="text-align:center; '
-                    f'padding:var(--lc-space-hair); border-radius:8px 8px 0 0; '
-                    f'border:{"2px solid " + COLOR["stat_high"] if _sel else "1px solid " + COLOR["text"] + "22"}; '
+                    f'padding:var(--lc-space-xs) var(--lc-space-hair) var(--lc-space-hair); '
+                    f'border-radius:var(--lc-radius-lg) var(--lc-radius-lg) 0 0; '
+                    f'border:{"1px solid " + COLOR["stat_high"] if _sel else "1px solid " + COLOR["text"] + "1A"}; '
                     f'border-bottom:none; '
-                    f'background:{COLOR["stat_high"] + "14" if _sel else "transparent"};">'
-                    f'{_ai}<span style="margin:var(--lc-space-none) var(--lc-space-xs); '
-                    f'color:{COLOR["text"]}; opacity:0.55; font-size:var(--lc-text-micro);">@</span>{_hi}</div>',
+                    f'background:{COLOR["stat_high"] + "1F" if _sel else "transparent"}; '
+                    # The selected card lifts instead of thickening its
+                    # border. A 2px border on select and 1px otherwise
+                    # shifted every neighbour by a pixel as you moved
+                    # along the strip, which reads as jitter on a swipe.
+                    f'box-shadow:{"0 0 0 1px " + COLOR["stat_high"] + ", 0 4px 16px -8px " + COLOR["stat_high"] if _sel else "none"};">'
+                    f'<div style="white-space:nowrap;">{_ai}'
+                    f'<span style="margin:var(--lc-space-none) var(--lc-space-xs); '
+                    f'color:{COLOR["text"]}; opacity:0.5; font-size:var(--lc-text-micro);">@</span>{_hi}</div>'
+                    f'<div style="font-size:var(--lc-text-micro); margin-top:2px; '
+                    f'color:{COLOR["stat_high"] if _sel else COLOR["text"]}; '
+                    f'opacity:{1 if _sel else 0.45};">{_t}</div></div>',
                     unsafe_allow_html=True,
                 )
                 st.button(
@@ -202,40 +223,79 @@ def _render_game_carousel(_labels, games):
 
 
 def _render_game_headline(game):
-    """Centred headline: teams, start time, venue."""
+    """Centred headline: teams, then one meta line.
+
+    The venue used to sit on its own gold line under the matchup, which
+    made two headlines where there is one piece of information. Venue,
+    first pitch and the park's HR factor are all context for the same
+    game, so they read as one line separated by rules — the eye takes it
+    in as a single band instead of three stacked announcements.
+    """
+    _bits = [game.get("venue") or ""]
+    try:
+        _bits.append(datetime.fromisoformat(
+            game["game_time"].replace("Z", "+00:00")).astimezone(EASTERN)
+            .strftime("%-I:%M %p ET") if game.get("game_time") else "")
+    except Exception:
+        _bits.append("")
+    _meta = "".join(
+        (f'<span style="color:{COLOR["text"]}; opacity:0.28; '
+         f'margin:var(--lc-space-none) var(--lc-space-md);">|</span>' if i else "")
+        + f'<span>{b}</span>'
+        for i, b in enumerate([x for x in _bits if x])
+    )
     st.markdown(
-        f"""
-        <div style="text-align:center; margin-bottom:var(--lc-space-sm);">
-            <span style="font-size:var(--lc-text-display); font-weight:800; color:{COLOR['headline']};">
-                {game['away']} @ {game['home']}
-            </span>
-        </div>
-        <div style="text-align:center; color:{COLOR['gold']}; font-size:var(--lc-text-body); margin-bottom:var(--lc-space-xl);">
-            {game['venue']}
-        </div>
-        """,
+        f'<div style="text-align:center; margin-bottom:var(--lc-space-xs);">'
+        f'<span style="font-size:var(--lc-text-display); font-weight:800; '
+        f'color:{COLOR["headline"]};">{game["away"]} @ {game["home"]}</span></div>'
+        f'<div style="text-align:center; color:{COLOR["gold"]}; '
+        f'font-size:var(--lc-text-body); margin-bottom:var(--lc-space-xl);">{_meta}</div>',
         unsafe_allow_html=True,
     )
 
+
 def _render_conditions_strip(_cond_display, _wind_display, park_display, temp_display):
-    """Weather and park-factor strip under the headline."""
+    """Weather and park factor as one divided band.
+
+    Was four blocks floating in a card with space-around, so the cells
+    drifted apart on a wide screen and collided on a narrow one, and
+    nothing said where one metric ended and the next began. Now it is a
+    fixed four-column grid with hairline rules between the cells: equal
+    widths, aligned baselines, and a visible boundary doing the work
+    that whitespace was failing to do.
+
+    Order is deliberate — condition, temp, wind, park. The first three
+    change every hour and the last one never changes at all, so the
+    thing you re-read sits first and the constant anchors the end.
+    """
+    _cells = (
+        ("Condition", f'<div class="lc-weather-icon" style="height:28px;">'
+                      f'{weather_icon(_cond_display)}</div>', _cond_display),
+        ("Temp", f'<div style="height:28px;">{temp_icon(temp_display)}</div>',
+         f"{temp_display}\u00b0F"),
+        ("Wind", f'<div class="lc-wind-icon" style="height:28px;">'
+                 f'{wind_arrow(_wind_display)}</div>', _wind_display),
+        ("Park Factor", f'<div style="height:28px;">{park_icon(park_display)}</div>',
+         park_display),
+    )
     st.markdown(
-        f'<div class="pf-card" style="display:flex; justify-content:space-around; text-align:center; padding:var(--lc-space-md) var(--lc-space-xl);">'
-        f'<div><div class="pf-metric-label" style="color:{COLOR["text_muted"]};">Condition</div>'
-        f'<div style="margin:var(--lc-space-hair) var(--lc-space-none); height:30px;" class="lc-weather-icon">{weather_icon(_cond_display)}</div>'
-        f'<div style="font-size:var(--lc-text-body); color:{COLOR["text"]}; font-weight:600;">{_cond_display}</div></div>'
-        f'<div><div class="pf-metric-label" style="color:{COLOR["text_muted"]};">Temp</div>'
-        f'<div style="margin:var(--lc-space-hair) var(--lc-space-none); height:30px;">{temp_icon(temp_display)}</div>'
-        f'<div style="font-size:var(--lc-text-body); color:{COLOR["text"]}; font-weight:600;">{temp_display}\u00b0F</div></div>'
-        f'<div><div class="pf-metric-label" style="color:{COLOR["text_muted"]};">Wind</div>'
-        f'<div style="margin:var(--lc-space-hair) var(--lc-space-none); height:30px;" class="lc-wind-icon">{wind_arrow(_wind_display)}</div>'
-        f'<div style="font-size:var(--lc-text-body); color:{COLOR["text"]}; font-weight:600;">{_wind_display}</div></div>'
-        f'<div><div class="pf-metric-label" style="color:{COLOR["text_muted"]};">Park Factor</div>'
-        f'<div style="margin:var(--lc-space-hair) var(--lc-space-none); height:30px;">{park_icon(park_display)}</div>'
-        f'<div style="font-size:var(--lc-text-body); color:{COLOR["text"]}; font-weight:600;">{park_display}</div></div>'
-        f'</div>',
+        f'<div style="display:grid; grid-template-columns:repeat(4, 1fr); '
+        f'border-top:1px solid {COLOR["text"]}14; border-bottom:1px solid {COLOR["text"]}14; '
+        f'margin-bottom:var(--lc-space-lg);">'
+        + "".join(
+            f'<div style="text-align:center; padding:var(--lc-space-md) var(--lc-space-xs); '
+            f'{"border-left:1px solid " + COLOR["text"] + "14;" if i else ""}">'
+            f'<div style="font-size:var(--lc-text-micro); letter-spacing:0.12em; '
+            f'text-transform:uppercase; color:{COLOR["text_muted"]};">{label}</div>'
+            f'<div style="margin:var(--lc-space-hair) var(--lc-space-none);">{icon}</div>'
+            f'<div style="font-size:var(--lc-text-body); color:{COLOR["text"]}; '
+            f'font-weight:700;">{value}</div></div>'
+            for i, (label, icon, value) in enumerate(_cells)
+        )
+        + '</div>',
         unsafe_allow_html=True,
     )
+
 
 def _pick_starting_pitcher(pitcher_options):
     """Starting-pitcher segmented control."""
