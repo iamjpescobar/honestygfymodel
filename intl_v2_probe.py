@@ -224,8 +224,39 @@ def probe_kbo_player():
     tab = ("/Teams/PlayerInfoPitcher/GameLogs.aspx?pcode="
            + links[0].split("pcode=")[-1])
     print(f"  game-log tab: {tab}")
-    if tab:
-        describe(get("GAME LOGS", absolute(base, tab)))
+    if not tab:
+        return
+    rlog = get("GAME LOGS", absolute(base, tab))
+    describe(rlog)
+    if not rlog:
+        return
+
+    # ROUND 3 CONFIRMED THE PAGE, AND LEFT ONE THING UNANSWERED.
+    # 4 tables, 23 <tr>, 23 IP and 23 ERA, dates 04.02 / 04.08 / 04.14,
+    # 0 json blobs — a server-rendered per-start log, one row per
+    # appearance. But 'Opponent' matched ZERO times, and a game log
+    # without an opponent column is useless for pitcher-vs-team H2H:
+    # it would give per-start lines with nothing to group them by.
+    #
+    # So stop guessing at the header's spelling and PRINT IT. The
+    # leaderboards are already read with pd.read_html, so if that works
+    # here the build is a small extension of code that exists rather
+    # than a new parser.
+    try:
+        import pandas as pd
+        tables = pd.read_html(rlog.text)
+        print(f"    pd.read_html parsed {len(tables)} tables")
+        for n, t in enumerate(tables):
+            print(f"    --- table {n}: {t.shape[0]} rows x {t.shape[1]} cols")
+            print(f"        columns: {list(t.columns)}")
+            if t.shape[0]:
+                print(f"        first row: {t.iloc[0].tolist()}")
+                if t.shape[0] > 1:
+                    print(f"        last row:  {t.iloc[-1].tolist()}")
+    except Exception as exc:
+        print(f"    pd.read_html FAILED: {type(exc).__name__}: {exc}")
+        print("    -> the log is a real table to the eye but not to pandas;"
+              " that is a parser decision, not a source problem.")
 
 
 def probe_npb_player():
