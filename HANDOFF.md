@@ -188,6 +188,44 @@ carry tighter HORIZONTAL padding only. Vertical padding is untouched on
 purpose: row height is what makes a dense table scannable, and squeezing
 it turns the board into a spreadsheet.
 
+### One control language, site-wide — 2026-08-07
+
+The pill treatment was written scoped to the league nav. Every other
+segmented control and pill group kept the older bordered-grey style, so
+the SAME widget looked like two different things depending which page
+you were on — Bats and Window on the Game Card, form window on WNBA,
+prop tabs, every board's filters.
+
+That is not a taste problem. A control's whole job is to answer "which
+one is on", and when the answer is styled differently in two places the
+reader re-learns it on every page.
+
+The rule now lives **unscoped** in `kc_theme`. Three states, no
+ambiguity: unselected is transparent with muted text and no border (a
+row of options should not look like a row of buttons demanding to be
+pressed), hover is the faintest wash, selected is filled accent with
+dark text and is the only strong thing in the group. Plain `st.button`
+matches — same pill radius, same quiet default, same filled accent at
+`type="primary"`, which is what the game picker's cards use.
+
+The nav keeps only what is genuinely nav-specific: centred, and 44px
+instead of 40 because it is the first thing touched on every page.
+
+**A real bug fell out of this.** The mobile block was setting
+`stButtonGroup` to `min-height: 38px` — SHRINKING touch targets on the
+one device where they matter most. Now 44px there too.
+`tests/test_control_language.py` asserts no control anywhere is under
+40px, that the selected state is defined unscoped, and that scoped
+overrides set layout only and never a background colour — a per-board
+colour override is exactly how the drift started.
+
+**The test needed two goes.** Its first version read the MOBILE override
+of `.stButton > button` because that rule appears earlier in the sheet,
+and reported the base rule missing when it was fine. It now asks "does
+ANY rule for this selector declare the property" rather than "does the
+first one" — a test that parses CSS has to know the difference between
+a rule and an override.
+
 ### Do these in order
 
 1. Upload this batch, `git pull`, run the suite. Expect
@@ -241,7 +279,7 @@ echo "FAILING:${fails:- none}"
 Then, for anything marked PENDING, **check it is still pending.**
 
 ```bash
-ls tests/*.py | wc -l                                     # 72
+ls tests/*.py | wc -l                                     # 73
 python tests/test_return_arity.py | tail -1               # FAILING: none
 grep -c fetch_homepage_schedule kbo_precompute.py         # 2  = defined AND called
 grep -cE '^\s+_hp, _hs =' kbo_precompute.py               # 0  = the crash is gone
@@ -606,7 +644,7 @@ the site's own advance warning is a free check on this number.
 - Pages in **`app/views/`**, deliberately NOT `pages/` — Streamlit
   auto-registers `pages/` and would expose every page pre-auth.
 - Engines in `app/engines/`. Theme in `app/styles/kc_theme.py`.
-- Tests in `tests/` — **72 files, plain scripts, not pytest.**
+- Tests in `tests/` — **73 files, plain scripts, not pytest.**
 - Data comes off disk; the nightly publishes a release asset.
 - `requirements.txt` fully pinned, including transitives.
 
