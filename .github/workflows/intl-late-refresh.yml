@@ -25,6 +25,28 @@ name: Late slate refresh (KBO, NPB, WNBA)
 # uploading the new one, and the failure was total and silent. A stale
 # slate is a bad afternoon; a destroyed archive is an outage.
 
+# CONCURRENCY — SHARED WITH THE NIGHTLY, ON PURPOSE.
+#
+# Both workflows download the SAME published archive, repack it and
+# upload it back to the same release asset. Nothing in that sequence is
+# atomic, so if two runs overlap the second upload silently replaces the
+# first's work. The repack's data/statcast/ check catches an archive
+# that is GUTTED; it cannot tell a STALE one from a fresh one.
+#
+# This nearly happened on 2026-08-06: the nightly was mid-run while a
+# late refresh sat queued, and then a GitHub Actions outage left two of
+# EACH queued to fire the moment capacity returned. Nothing protected
+# the asset but timing.
+#
+# The group name is deliberately about the RESOURCE, not the workflow —
+# anything else that republishes the archive joins this group.
+#
+# cancel-in-progress is FALSE for the same reason the nightly sets it
+# false: a half-finished publish is worse than a delayed one.
+concurrency:
+  group: publish-archive
+  cancel-in-progress: false
+
 on:
   schedule:
     # 09:20 UTC = 18:20 KST / JST. KBO first pitch is typically 18:30
