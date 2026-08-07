@@ -117,6 +117,46 @@ pattern and asserts each runs after the clamp, plus asserts `gc_page`
 stays gone — a half-removed pager whose state survives unclamped is
 precisely the stale-index crash that file exists for.
 
+### Visual batch 2, 2026-08-07 — colour meaning, grid, picker, header
+
+**Cell colour is now ABSOLUTE.** `app/styles/stat_scales.py` (new) holds
+four cut points per stat in raw units; `_magnitude_column` uses them
+when the column has a scale and only falls back to the old
+column-relative normalisation when it does not. Before this, colour came
+from each column's own min and max — the same .285 was gold in one table
+and violet in another, and changing a filter recoloured every cell
+without a value moving. **Direction is still the caller's**
+(`favor_high` / `favor_low`), because 26% whiff is elite for a pitcher
+and awful for a hitter; the number carries no verdict of its own, so the
+scale must not invent one.
+
+**Those cut points are calibration constants, not measurements.** They
+are judgements about where a stat stops being average, anchored on
+ordinary league ranges, and nothing recomputes them. Argue with them in
+that one file — never special-case a scale at a call site, which is how
+an app ends up with five definitions of "good".
+`tests/test_stat_scales.py` pins the property that matters: the same
+value renders identically regardless of what else is in the column.
+
+**Tables got vertical rules.** The only structure was horizontal, so a
+run of eight numbers read as a stripe and you had to track back to the
+header to know which stat you were on. Hairlines at a twelfth the
+strength of the row rules — you should feel the columns, not see them;
+a full-strength grid becomes graph paper and fights the cell fills,
+which are the signal. Numbers right-aligned so the ones column stacks.
+No column gained or lost anything.
+
+**Picker cards carry first pitch**, and the selected card lifts via
+box-shadow rather than thickening its border — a 2px-on-select border
+shifted every neighbour by a pixel as you moved along the strip, which
+reads as jitter on a swipe.
+
+**Headline and conditions.** Venue, first pitch and time are one meta
+line with rules instead of a second gold headline. The weather band is a
+fixed four-column grid with hairline dividers, ordered
+condition/temp/wind/park — the three that change hourly first, the
+constant anchoring the end.
+
 ### Do these in order
 
 1. Upload this batch, `git pull`, run the suite. Expect
@@ -170,7 +210,7 @@ echo "FAILING:${fails:- none}"
 Then, for anything marked PENDING, **check it is still pending.**
 
 ```bash
-ls tests/*.py | wc -l                                     # 71
+ls tests/*.py | wc -l                                     # 72
 python tests/test_return_arity.py | tail -1               # FAILING: none
 grep -c fetch_homepage_schedule kbo_precompute.py         # 2  = defined AND called
 grep -cE '^\s+_hp, _hs =' kbo_precompute.py               # 0  = the crash is gone
@@ -535,7 +575,7 @@ the site's own advance warning is a free check on this number.
 - Pages in **`app/views/`**, deliberately NOT `pages/` — Streamlit
   auto-registers `pages/` and would expose every page pre-auth.
 - Engines in `app/engines/`. Theme in `app/styles/kc_theme.py`.
-- Tests in `tests/` — **71 files, plain scripts, not pytest.**
+- Tests in `tests/` — **72 files, plain scripts, not pytest.**
 - Data comes off disk; the nightly publishes a release asset.
 - `requirements.txt` fully pinned, including transitives.
 
