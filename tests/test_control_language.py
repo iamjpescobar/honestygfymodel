@@ -134,5 +134,50 @@ _heights = [int(m) for m in re.findall(r"min-height:\s*(\d+)px", CSS)]
 _small = [h for h in _heights if h < 40]
 check(f"no control is under 40px tall (found: {_small or 'none'})", not _small)
 
+
+# ---- 5. every card selector is flat, wherever it is defined ----------
+# THE FAILURE THIS CATCHES. Cards are drawn by three different
+# selectors: `st-key-card_` (container cards, MLB views), `.pf-card`
+# (raw HTML via card_open(), which is what KBO and NPB use), and a
+# local override in Home.py. Flattening the first one left the other
+# two in the previous generation of the design — so the international
+# boards and the home page were the only pages still drawing panels,
+# and nothing in the code said the three had to agree.
+#
+# They do have to agree: it is the same object to a reader. This
+# asserts none of them paints a fill or a shadow, no matter which file
+# defines it.
+_HOME = open(os.path.join(ROOT, "app", "views", "Home.py"),
+             encoding="utf-8").read()
+_ALL_CSS = FLAT + " " + re.sub(r"\s+", " ", _HOME)
+
+for _sel in ('div[class*="st-key-card_"]', ".pf-card {",
+             "[class*='st-key-card_home_'] {"):
+    _i = _ALL_CSS.find(_sel)
+    check(f"{_sel} is defined somewhere", _i >= 0)
+    if _i < 0:
+        continue
+    _body = _ALL_CSS[_ALL_CSS.index("{", _i):]
+    _body = _body[:_body.index("}")]
+    check(f"{_sel} paints no gradient", "linear-gradient" not in _body)
+    check(f"{_sel} casts no shadow",
+          "box-shadow: 0" not in _body and "box-shadow:0" not in _body)
+
+
+# ---- 6. expanders speak the control language ------------------------
+_exp = rule_bodies('div[data-testid="stExpander"]')
+check("the expander shell is transparent",
+      any("background: transparent" in b for b in _exp))
+check("expander headers get a real touch target",
+      declares('div[data-testid="stExpander"] summary, '
+               'div[data-testid="stExpander"] details > summary',
+               "min-height: 44px"))
+# Open state must be visible. It keys off details[open], the browser's
+# own flag, so it cannot drift with a Streamlit release the way an
+# internal class name would (rule 9).
+check("an open expander is marked, and by a standard flag not an "
+      "internal class",
+      "details[open]" in FLAT)
+
 print("FAILING:" + (" " + ", ".join(failures) if failures else " none"))
 sys.exit(1 if failures else 0)
