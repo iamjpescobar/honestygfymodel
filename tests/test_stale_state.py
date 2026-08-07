@@ -20,16 +20,44 @@ assert 'st.session_state["gc_selected_game_idx"] = min(' in GC, (
     "someone sitting on game 8 of a 9-game slate hits IndexError when the "
     "slate rebuilds shorter — a hard crash on page load")
 _clamp = GC.index('st.session_state["gc_selected_game_idx"] = min(')
-for use in ('_labels[st.session_state["gc_selected_game_idx"]]',
-            'games[st.session_state["gc_selected_game_idx"]]'):
-    assert GC.index(use) > _clamp, (
-        f"{use} is read BEFORE the clamp — the clamp has to happen first or "
-        f"it protects nothing")
-print("PASS: GameCard clamps the stored game index before using it")
 
-# The page index was already clamped; both must stay that way.
-assert 'st.session_state["gc_page"] = min(' in GC
-print("PASS: GameCard clamps the stored page index too")
+# FIND THE USES, DON'T NAME THEM.
+#
+# This used to list the two subscripts by hand
+# (_labels[...] and games[...]). When the game picker was rebuilt as a
+# swipeable carousel, one of those two expressions stopped existing and
+# the test failed on a ValueError from .index() — flagging a rewrite,
+# not a regression. A hardcoded list of call sites tests the shape of
+# today's code; what actually matters is the PROPERTY that no subscript
+# using this index runs before the clamp. Finding them by pattern
+# survives the next rewrite too.
+import re as _re
+_uses = [m.start() for m in _re.finditer(
+    r'\w+\[st\.session_state\["gc_selected_game_idx"\]\]', GC)]
+assert _uses, (
+    "nothing indexes with gc_selected_game_idx any more — if the picker "
+    "was rewritten again, point this test at whatever replaced it rather "
+    "than deleting the check; the crash it guards is real")
+for _pos in _uses:
+    assert _pos > _clamp, (
+        "something indexes with gc_selected_game_idx BEFORE the clamp — "
+        "the clamp has to happen first or it protects nothing")
+print(f"PASS: GameCard clamps the stored game index before all "
+      f"{len(_uses)} use(s)")
+
+# PAGINATION IS GONE ON PURPOSE.
+#
+# The picker was a five-per-page pager with its own clamped gc_page
+# index; it is now one swipeable row holding the whole slate, so there
+# is no page state left to go stale. Assert it stays gone rather than
+# asserting it stays clamped — a half-removed pager, where the state
+# survives but nothing clamps it, is exactly the stale-index bug this
+# file exists for.
+assert 'st.session_state["gc_page"]' not in GC, (
+    "gc_page is back. If pagination returns it must be clamped to "
+    "total_pages the way gc_selected_game_idx is clamped to the slate "
+    "length, and this assertion should become that check")
+print("PASS: no page state left in the game picker to go stale")
 
 # --- 2. Without_Player: stale player must not KeyError ---------------
 WP = (ROOT / "app" / "views" / "Without_Player.py").read_text()
