@@ -247,7 +247,7 @@ def _bats_column(col: pd.Series):
     rows read in their platoon colors rather than falling back to grey."""
     styles = []
     for v in col:
-        raw = str(v).strip().upper()
+        raw = str(v).strip()          # displayed AS GIVEN
         c = _BATS_COLORS.get(raw)
         if not c:
             # switch label naming a side: pick the last L/R after the S
@@ -709,14 +709,38 @@ def bats_chip():
     def _fmt(v):
         if not v or (isinstance(v, float) and pd.isna(v)):
             return "\u2014"
-        k = str(v).strip().upper()[:1]
+        raw = str(v).strip()          # displayed AS GIVEN
+
+        # THE CHIP MUST KEEP THE SIDE. This took `[:1]` and rendered the
+        # first character, which is right for "L" and "R" and silently
+        # destructive for a switch hitter: "S (L)", "S (R)" and
+        # "S (BOTH)" all came out as a bare "S".
+        #
+        # That is the bug the caller had already been fixed for. The
+        # lineup table renders a switch hitter as two or three rows —
+        # one per platoon side plus a combined one — with genuinely
+        # different numbers, and the LABEL is the only thing telling
+        # them apart. The formatter threw it away after the fact, so the
+        # table showed the same player twice at the same batting order
+        # with no way to tell which row was which side.
+        #
+        # Now the chip keeps whatever the caller sent and only uses the
+        # leading letter to pick the colour.
+        # Upper only to look up the colour — uppercasing the whole
+        # label turned "S (both)" into a shouted "S (BOTH)".
+        k = raw[:1].upper()
         c = tone.get(k)
         if not c:
             return str(v)
+
+        # A qualified label is longer than a letter, so the chip has to
+        # size to its content rather than to a fixed 17px box, and it
+        # must not wrap inside a narrow Bats column.
         return (f'<span style="display:inline-block; min-width:17px; '
-                f'text-align:center; padding:var(--lc-space-hair) var(--lc-space-xs); border-radius:var(--lc-radius-sm); '
+                f'text-align:center; white-space:nowrap; '
+                f'padding:var(--lc-space-hair) var(--lc-space-xs); border-radius:var(--lc-radius-sm); '
                 f'background:{c}26; color:{c}; font-weight:700; '
-                f'font-size:var(--lc-text-caption);">{k}</span>')
+                f'font-size:var(--lc-text-caption);">{raw}</span>')
     return _fmt
 
 
