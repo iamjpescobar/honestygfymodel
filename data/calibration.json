@@ -3429,6 +3429,412 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-08-07": {
+      "picks": [
+        {
+          "id": "4398966",
+          "name": "O. Nelson-Ododa",
+          "team": "Connecticut Sun",
+          "stat": "pts",
+          "line": 11.5,
+          "result": null
+        },
+        {
+          "id": "2529140",
+          "name": "A. Thomas",
+          "team": "Phoenix Mercury",
+          "stat": "pts",
+          "line": 16.0,
+          "result": null
+        },
+        {
+          "id": "4398911",
+          "name": "S. Austin",
+          "team": "Washington Mystics",
+          "stat": "pts",
+          "line": 17.0,
+          "result": null
+        },
+        {
+          "id": "4433635",
+          "name": "D. Miller",
+          "team": "Connecticut Sun",
+          "stat": "pts",
+          "line": 10.0,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 18.0,
+          "result": null
+        },
+        {
+          "id": "2590093",
+          "name": "K. Stokes",
+          "team": "Golden State Valkyries",
+          "stat": "pts",
+          "line": 4.0,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 15.5,
+          "result": null
+        },
+        {
+          "id": "869",
+          "name": "D. Bonner",
+          "team": "Phoenix Mercury",
+          "stat": "pts",
+          "line": 12.5,
+          "result": null
+        },
+        {
+          "id": "2998938",
+          "name": "K. Copper",
+          "team": "Phoenix Mercury",
+          "stat": "pts",
+          "line": 22.0,
+          "result": null
+        },
+        {
+          "id": "5208981",
+          "name": "L. Lacan",
+          "team": "Connecticut Sun",
+          "stat": "pts",
+          "line": 12.5,
+          "result": null
+        },
+        {
+          "id": "869",
+          "name": "D. Bonner",
+          "team": "Phoenix Mercury",
+          "stat": "reb",
+          "line": 7.5,
+          "result": null
+        },
+        {
+          "id": "4398966",
+          "name": "O. Nelson-Ododa",
+          "team": "Connecticut Sun",
+          "stat": "reb",
+          "line": 7.5,
+          "result": null
+        },
+        {
+          "id": "4433635",
+          "name": "D. Miller",
+          "team": "Connecticut Sun",
+          "stat": "reb",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "5208981",
+          "name": "L. Lacan",
+          "team": "Connecticut Sun",
+          "stat": "reb",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 11.0,
+          "result": null
+        },
+        {
+          "id": "2590093",
+          "name": "K. Stokes",
+          "team": "Golden State Valkyries",
+          "stat": "reb",
+          "line": 5.5,
+          "result": null
+        },
+        {
+          "id": "4583144",
+          "name": "C. McMahon",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "4703609",
+          "name": "C. Leger-Walker",
+          "team": "Connecticut Sun",
+          "stat": "reb",
+          "line": 3.0,
+          "result": null
+        },
+        {
+          "id": "2529140",
+          "name": "A. Thomas",
+          "team": "Phoenix Mercury",
+          "stat": "reb",
+          "line": 7.5,
+          "result": null
+        },
+        {
+          "id": "2998938",
+          "name": "K. Copper",
+          "team": "Phoenix Mercury",
+          "stat": "reb",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "4398966",
+          "name": "O. Nelson-Ododa",
+          "team": "Connecticut Sun",
+          "stat": "ast",
+          "line": 2.0,
+          "result": null
+        },
+        {
+          "id": "5105737",
+          "name": "L. Betts",
+          "team": "Washington Mystics",
+          "stat": "ast",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "4703609",
+          "name": "C. Leger-Walker",
+          "team": "Connecticut Sun",
+          "stat": "ast",
+          "line": 4.0,
+          "result": null
+        },
+        {
+          "id": "869",
+          "name": "D. Bonner",
+          "team": "Phoenix Mercury",
+          "stat": "ast",
+          "line": 2.0,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 8.0,
+          "result": null
+        },
+        {
+          "id": "4583144",
+          "name": "C. McMahon",
+          "team": "Washington Mystics",
+          "stat": "ast",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "1054",
+          "name": "T. Hayes",
+          "team": "Golden State Valkyries",
+          "stat": "ast",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "3065570",
+          "name": "K. Plum",
+          "team": "Phoenix Mercury",
+          "stat": "ast",
+          "line": 6.0,
+          "result": null
+        },
+        {
+          "id": "869",
+          "name": "D. Bonner",
+          "team": "Phoenix Mercury",
+          "stat": "pra",
+          "line": 22.0,
+          "result": null
+        },
+        {
+          "id": "4433635",
+          "name": "D. Miller",
+          "team": "Connecticut Sun",
+          "stat": "pra",
+          "line": 14.5,
+          "result": null
+        },
+        {
+          "id": "4398911",
+          "name": "S. Austin",
+          "team": "Washington Mystics",
+          "stat": "pra",
+          "line": 30.0,
+          "result": null
+        },
+        {
+          "id": "3904577",
+          "name": "A. Ogunbowale",
+          "team": "Dallas Wings",
+          "stat": "pra",
+          "line": 21.5,
+          "result": null
+        },
+        {
+          "id": "4398966",
+          "name": "O. Nelson-Ododa",
+          "team": "Connecticut Sun",
+          "stat": "pra",
+          "line": 21.0,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "pra",
+          "line": 29.0,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "pra",
+          "line": 23.5,
+          "result": null
+        },
+        {
+          "id": "3906949",
+          "name": "J. Shepard",
+          "team": "Dallas Wings",
+          "stat": "pra",
+          "line": 32.5,
+          "result": null
+        },
+        {
+          "id": "2529140",
+          "name": "A. Thomas",
+          "team": "Phoenix Mercury",
+          "stat": "pra",
+          "line": 32.0,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "pra",
+          "line": 23.0,
+          "result": null
+        },
+        {
+          "id": "3922628",
+          "name": "K. Burke",
+          "team": "Connecticut Sun",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "4433790",
+          "name": "A. Fudd",
+          "team": "Dallas Wings",
+          "stat": "tpm",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "4398915",
+          "name": "N. Hillmon",
+          "team": "Atlanta Dream",
+          "stat": "tpm",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "4790264",
+          "name": "J. Salaun",
+          "team": "Golden State Valkyries",
+          "stat": "tpm",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "3913881",
+          "name": "A. Smith",
+          "team": "Dallas Wings",
+          "stat": "tpm",
+          "line": 0.5,
+          "result": null
+        },
+        {
+          "id": "2590093",
+          "name": "K. Stokes",
+          "team": "Golden State Valkyries",
+          "stat": "tpm",
+          "line": 0.5,
+          "result": null
+        },
+        {
+          "id": "4433635",
+          "name": "D. Miller",
+          "team": "Connecticut Sun",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "4433730",
+          "name": "P. Bueckers",
+          "team": "Dallas Wings",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "tpm",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "tpm",
+          "line": 0.0,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "wnba_defense": {
@@ -3946,6 +4352,132 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-07": {
+      "picks": [
+        {
+          "id": "3065570",
+          "name": "K. Plum",
+          "team": "Phoenix Mercury",
+          "stat": "pts",
+          "line": 21.9,
+          "result": null
+        },
+        {
+          "id": "2998938",
+          "name": "K. Copper",
+          "team": "Phoenix Mercury",
+          "stat": "pts",
+          "line": 19.6,
+          "result": null
+        },
+        {
+          "id": "5208981",
+          "name": "L. Lacan",
+          "team": "Connecticut Sun",
+          "stat": "pts",
+          "line": 12.1,
+          "result": null
+        },
+        {
+          "id": "2590093",
+          "name": "K. Stokes",
+          "team": "Golden State Valkyries",
+          "stat": "pts",
+          "line": 4.3,
+          "result": null
+        },
+        {
+          "id": "3922628",
+          "name": "K. Burke",
+          "team": "Connecticut Sun",
+          "stat": "pts",
+          "line": 8.1,
+          "result": null
+        },
+        {
+          "id": "2590093",
+          "name": "K. Stokes",
+          "team": "Golden State Valkyries",
+          "stat": "reb",
+          "line": 6.0,
+          "result": null
+        },
+        {
+          "id": "4398966",
+          "name": "O. Nelson-Ododa",
+          "team": "Connecticut Sun",
+          "stat": "reb",
+          "line": 7.4,
+          "result": null
+        },
+        {
+          "id": "2998938",
+          "name": "K. Copper",
+          "team": "Phoenix Mercury",
+          "stat": "reb",
+          "line": 3.2,
+          "result": null
+        },
+        {
+          "id": "3065570",
+          "name": "K. Plum",
+          "team": "Phoenix Mercury",
+          "stat": "reb",
+          "line": 2.6,
+          "result": null
+        },
+        {
+          "id": "4065780",
+          "name": "K. Charles",
+          "team": "Golden State Valkyries",
+          "stat": "reb",
+          "line": 4.3,
+          "result": null
+        },
+        {
+          "id": "4703609",
+          "name": "C. Leger-Walker",
+          "team": "Connecticut Sun",
+          "stat": "ast",
+          "line": 4.5,
+          "result": null
+        },
+        {
+          "id": "5208981",
+          "name": "L. Lacan",
+          "team": "Connecticut Sun",
+          "stat": "ast",
+          "line": 4.3,
+          "result": null
+        },
+        {
+          "id": "4398966",
+          "name": "O. Nelson-Ododa",
+          "team": "Connecticut Sun",
+          "stat": "ast",
+          "line": 2.2,
+          "result": null
+        },
+        {
+          "id": "4398911",
+          "name": "S. Austin",
+          "team": "Washington Mystics",
+          "stat": "ast",
+          "line": 2.0,
+          "result": null
+        },
+        {
+          "id": "4433514",
+          "name": "S. Rivers",
+          "team": "Connecticut Sun",
+          "stat": "ast",
+          "line": 2.4,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
