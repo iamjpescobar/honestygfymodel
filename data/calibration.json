@@ -1209,6 +1209,116 @@
       ],
       "graded": false,
       "source": "ci"
+    },
+    "2026-08-07": {
+      "picks": [
+        {
+          "id": "518692",
+          "name": "Freddie Freeman",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "660271",
+          "name": "Shohei Ohtani",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "681624",
+          "name": "Andy Pages",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691458",
+          "name": "Blaze Jordan",
+          "team": "STL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "650489",
+          "name": "Willi Castro",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691023",
+          "name": "Jordan Walker",
+          "team": "STL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664983",
+          "name": "Jake McCarthy",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "655316",
+          "name": "Andruw Monasterio",
+          "team": "BOS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "680757",
+          "name": "Steven Kwan",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "676475",
+          "name": "Alec Burleson",
+          "team": "STL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701675",
+          "name": "Nathan Church",
+          "team": "STL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666160",
+          "name": "Mickey Moniak",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "693307",
+          "name": "Dillon Dingler",
+          "team": "DET",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -1358,6 +1468,20 @@
           "id": "624413",
           "name": "Pete Alonso",
           "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    },
+    "2026-08-07": {
+      "picks": [
+        {
+          "id": "660271",
+          "name": "Shohei Ohtani",
+          "team": "Los Angeles Dodgers",
           "stat": null,
           "line": null,
           "result": null
@@ -4050,6 +4174,52 @@
           "team": "SEA",
           "stat": "strikeOuts",
           "line": 5.9,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    },
+    "2026-08-07": {
+      "picks": [
+        {
+          "id": 543135,
+          "name": "Nathan Eovaldi (RHP)",
+          "team": "TEX",
+          "stat": "strikeOuts",
+          "line": 6.8,
+          "result": null
+        },
+        {
+          "id": 554430,
+          "name": "Zack Wheeler (RHP)",
+          "team": "PHI",
+          "stat": "strikeOuts",
+          "line": 6.2,
+          "result": null
+        },
+        {
+          "id": 801139,
+          "name": "Payton Tolle (LHP)",
+          "team": "BOS",
+          "stat": "strikeOuts",
+          "line": 6.2,
+          "result": null
+        },
+        {
+          "id": 800048,
+          "name": "Parker Messick (LHP)",
+          "team": "CLE",
+          "stat": "strikeOuts",
+          "line": 6.2,
+          "result": null
+        },
+        {
+          "id": 676917,
+          "name": "Cade Cavalli (RHP)",
+          "team": "WSH",
+          "stat": "strikeOuts",
+          "line": 6.1,
           "result": null
         }
       ],
