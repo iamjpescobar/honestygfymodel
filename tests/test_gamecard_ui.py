@@ -159,5 +159,26 @@ if _fn:
     check("the scale is clamped, not overflowing",
           float(_w(0.950)) <= 100.0 and float(_w(0.100)) >= 0.0)
 
+
+# ---- 6. the chip must not discard the label it was given -------------
+# The label fix above was correct and STILL showed a bare "S" on screen,
+# because bats_chip() rendered `str(v)[:1]`. Two layers, and fixing one
+# without the other changes nothing a reader can see — rule 20: follow
+# the signal to the pixel.
+from styles.table_style import bats_chip  # noqa: E402
+_chip = bats_chip()
+_strip = lambda h: re.sub(r"<[^>]+>", "", h)  # noqa: E731
+for _lbl in ("S (both)", "S (L)", "S (R)"):
+    check(f"the chip keeps {_lbl!r} intact", _strip(_chip(_lbl)) == _lbl)
+check("a plain L still renders as L", _strip(_chip("L")) == "L")
+check("the chip does not shout the label", _strip(_chip("S (both)")) != "S (BOTH)")
+check("a missing hand renders an em dash", _strip(_chip(None)) == "\u2014")
+# Colour still keys off the leading letter, so a qualified switch label
+# is coloured as a switch hitter rather than falling through uncoloured.
+check("a qualified switch label is still coloured",
+      "background:" in _chip("S (L)"))
+check("the chip cannot wrap inside a narrow column",
+      "white-space:nowrap" in _chip("S (both)"))
+
 print("FAILING:" + (" " + ", ".join(failures) if failures else " none"))
 sys.exit(1 if failures else 0)
