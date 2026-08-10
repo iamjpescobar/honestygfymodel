@@ -290,6 +290,157 @@ BUILDERS = {"daily13": _rows_daily13, "potd": _rows_potd,
             "wnba_defense": _rows_wnba_defense}
 
 
+# ======================================================================
+# ITEM C — the MLB slate on disk, so Home can lead with the best games.
+# ======================================================================
+#
+# WHY THIS LIVES HERE AND NOT IN precompute.py
+#
+# The hero card ranks on the modeled edge, and the modeled edge needs
+# both starters' Statcast splits — which needs both starters to be
+# POSTED. MLB posts probables 1-3 hours before first pitch. The nightly
+# runs at 6 AM ET, when no probable exists for anything, so a slate built
+# there would carry no edge on any game and the card would rank three
+# games alphabetically and look exactly like a recommendation.
+#
+# This script already runs at 1, 5 and 7 PM ET with network, already
+# fetches the same slate, and is already idempotent-by-retry. The card's
+# data belongs on the same clock as the picks it sits above.
+#
+# WHY IT IS NOT PART OF BUILDERS
+#
+# BUILDERS write graded PICKS into calibration.json. This writes a SLATE
+# into data/mlb/games.json. Different file, different shape, different
+# consumer, and it must run even on a day every board comes back empty —
+# a slate with no edges yet is still the honest answer to "what is on
+# tonight", and it is what lets Home say "3 games, starters not posted"
+# instead of nothing at all.
+MLB_SLATE_PATH = ROOT / "data" / "mlb" / "games.json"
+
+
+def _write_mlb_slate(date_str: str) -> int:
+    """Write tonight's MLB slate with per-game ranking inputs.
+
+    Returns the number of games written. Never raises: this runs beside
+    six pick builders and a slate failure must not cost the day's picks.
+
+    EVERY NUMBER HERE COMES FROM AN ENGINE THE SITE ALREADY USES. There
+    is no second copy of the ranking logic and no new baseball computed:
+    the schedule and weather are weather_engine's, the edge is
+    matchup_grades', the park is park_factors', the wind is
+    wind_engine's. engines/best_games.py only sorts what this writes,
+    which is why it can be tested headlessly with no network.
+    """
+    from engines.weather_engine import get_todays_games_with_weather
+    from engines.matchup_grades import grade_matchup
+    from engines.park_factors import get_park_factor
+    from engines.park_weather import is_roofed
+    from engines.team_abbreviations import team_abbr
+    from engines.wind_engine import wind_hr_adj
+
+    games, err = get_todays_games_with_weather(date_str)
+    if err:
+        print(f"mlb slate: schedule fetch failed ({err}) - no slate written.",
+              flush=True)
+        return 0
+    if not games:
+        print(f"mlb slate: no games on {date_str} - no slate written.",
+              flush=True)
+        return 0
+
+    rows, graded, roofed = [], 0, 0
+    for g in games:
+        home = g.get("home") or "TBD"
+        park = get_park_factor(home)
+        # verified is carried through UNTOUCHED and best_games checks it
+        # before reading park_factor. The Athletics have no re-verified
+        # number and the Rays' rolling figure spans three buildings; the
+        # flag is the whole reason those two do not quietly poison a
+        # ranking.
+        row = {
+            "game_pk": g.get("game_pk"),
+            "away": g.get("away"), "home": home,
+            "away_pitcher": g.get("away_pitcher"),
+            "home_pitcher": g.get("home_pitcher"),
+            "venue": g.get("venue"),
+            "game_time": g.get("game_time"),
+            "weather_condition": g.get("weather_condition"),
+            "weather_temp": g.get("weather_temp"),
+            "weather_wind": g.get("weather_wind"),
+            "park_factor": park.get("park_factor"),
+            "park_verified": bool(park.get("verified")),
+        }
+
+        # WIND, resolved against the park's real orientation. A closed
+        # roof yields (0, None) from the engine itself, so there is no
+        # branch here deciding what a dome means — that judgement stays
+        # in one place (rule 21).
+        _roof = is_roofed(g.get("venue") or "")
+        if _roof:
+            roofed += 1
+        _adj, _note = wind_hr_adj(team_abbr(home), g.get("weather_wind"),
+                                  roof_closed=_roof)
+        row["wind_adj"] = _adj
+        row["wind_note"] = _note
+
+        # MODELED EDGE. grade_matchup returns {"ml": ..., "ou": ...} and
+        # ml is None when it cannot grade — no starters posted, or splits
+        # missing for one of them. That absence is written as an ABSENT
+        # FIELD, not as a zero: best_games sorts unmeasured below
+        # measured, and a zero would claim the model looked and found
+        # nothing to say.
+        grades = grade_matchup(
+            g.get("away_pitcher_id"), g.get("home_pitcher_id"),
+            g.get("away"), home,
+            park_factor=park.get("park_factor"),
+            park_verified=bool(park.get("verified")),
+            temp=g.get("weather_temp"),
+        ) or {}
+        ml = grades.get("ml") or {}
+        if ml.get("lean") and ml.get("grade"):
+            # score reads "3-1 signals"; the net is what the ranking
+            # wants and what the grade was derived from.
+            try:
+                _hi, _lo = str(ml.get("score", "")).split()[0].split("-")
+                row["edge_net"] = int(_hi) - int(_lo)
+            except (ValueError, IndexError):
+                row["edge_net"] = None
+            row["edge_lean"] = ml.get("lean")
+            row["edge_grade"] = ml.get("grade")
+            row["edge_signals"] = ml.get("signals") or []
+            if row["edge_net"] is not None:
+                graded += 1
+        ou = grades.get("ou") or {}
+        if ou.get("lean"):
+            row["ou_lean"] = ou.get("lean")
+            row["ou_grade"] = ou.get("grade")
+            row["ou_signals"] = ou.get("signals") or []
+
+        # proj_total IS DELIBERATELY NOT SET. engines/run_total needs each
+        # team's runs scored and runs allowed per game and nothing on disk
+        # carries those for MLB. best_games' tier 2 is wired and tested
+        # and simply never fires until this field exists — writing a total
+        # derived from something else would be a different quantity
+        # wearing the decided label. See that module's docstring.
+
+        rows.append(row)
+
+    MLB_SLATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    MLB_SLATE_PATH.write_text(json.dumps({
+        # Keys chosen to match slate_guard._LEAGUES["mlb"] exactly. A
+        # slate the guard cannot date is a slate the guard rejects, which
+        # reads on the page as "the nightly died".
+        "generated_at_et": datetime.now(EASTERN).strftime("%Y-%m-%d %H:%M"),
+        "slate_date_et": date_str,
+        "source": "statsapi.mlb.com schedule + this app's own engines",
+        "games": rows,
+    }, indent=2))
+    print(f"mlb slate: wrote {len(rows)} game(s) for {date_str} "
+          f"({graded} with a modeled edge, {roofed} roofed) to "
+          f"{MLB_SLATE_PATH}.", flush=True)
+    return len(rows)
+
+
 def main() -> int:
     date_str = datetime.now(EASTERN).strftime("%Y-%m-%d")
     record = _load()
@@ -302,6 +453,26 @@ def main() -> int:
     # minute. flush=True plus an elapsed figure per board turns the log
     # into the profile, at the cost of nothing.
     timings = []
+
+    # THE SLATE FIRST, and outside the per-board try.
+    #
+    # It runs before the builders because it is the cheapest thing here
+    # (one schedule fetch plus the splits already being fetched anyway)
+    # and because Home reads it whether or not a single pick gets logged.
+    # A day where no board is ready yet still has games on it, and the
+    # hero card saying "4 games, starters not posted" is a true and
+    # useful answer that the old blank Home could not give.
+    #
+    # Its own try/except for the same reason each builder has one: a slate
+    # failure must not cost the picks, and a pick failure must not cost
+    # the slate.
+    _t0 = time.monotonic()
+    try:
+        _n = _write_mlb_slate(date_str)
+        timings.append(("mlb_slate", time.monotonic() - _t0))
+    except Exception as exc:
+        print(f"mlb slate: could not build after {time.monotonic() - _t0:.1f}s "
+              f"({type(exc).__name__}: {exc})", flush=True)
 
     for board, build in BUILDERS.items():
         # SKIP PER MARKET, NOT PER DAY — mirrors the same change in
