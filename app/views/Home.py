@@ -28,9 +28,16 @@ from zoneinfo import ZoneInfo
 
 import streamlit as st
 
-from styles.kc_theme import page_header, card, footer, data_timestamp, COLOR
+from styles.kc_theme import (page_header, card, footer, data_timestamp, COLOR,
+                             card_open, card_close)
 from engines.calibration import BOARDS, _load, summary
-from engines.slate_guard import load_slate
+from engines.slate_guard import load_slate, staleness_note
+from engines.best_games import rank_games, why_first, park_swing, has_any_signal
+
+# Same separator KBO and NPB use. Defined here rather than imported from
+# a view: views do not import each other, and one character is not worth
+# a shared module.
+DOT = " \u00b7 "
 
 EASTERN = ZoneInfo("America/New_York")
 
@@ -463,6 +470,131 @@ def _goto_sport(sport, page_title, key, label):
 # ----------------------------------------------------------------------
 # Sections
 # ----------------------------------------------------------------------
+def _render_best_games():
+    """ITEM C — the slate's best games, at the very top of the page.
+
+    RULE 10, WHICH IS WHY THIS IS THE HERO AND LAST NIGHT'S RESULTS ARE
+    NOT. Above the "Today" tag everything must be about today. A large
+    headline naming a player and an outcome reads as a recommendation no
+    matter what label sits above it, so the top of a betting site's
+    landing page has to be FORWARD-looking. This card is: three games
+    that have not been played yet, ranked by what the model says about
+    them.
+
+    RULE 5 HOLDS. Zero network calls. calibration_picks writes the MLB
+    slate in CI at 1, 5 and 7 PM ET with every ranking input already
+    computed; this reads it through slate_guard.load_slate and sorts.
+    Nothing here fetches, and nothing here computes baseball.
+
+    The path is deliberately NOT written down anywhere in this file.
+    slate_guard owns where a slate lives and what its date key is called,
+    and holding a second copy of either here is precisely how four
+    readers drifted out from under the guard — including this page, which
+    was advertising game counts off whatever happened to be on disk.
+    tests/test_slate_guard.py fails on any view that names the file.
+
+    DEGRADES IN THREE DISTINCT WAYS, because they are three different
+    facts and a subscriber can act on them differently:
+
+      no slate file          CI has not built one yet, or it is stale.
+                             slate_guard's own sentence says which.
+      slate, no signals      games are on, starters are not posted.
+                             Ranking them anyway would be alphabetical
+                             order wearing the costume of a ranking.
+      slate with signals     the card proper.
+
+    The middle case is the one worth the extra branch. It is what every
+    morning looks like, and "4 games tonight, starters not posted yet" is
+    a true and useful answer where an empty space is not.
+    """
+    games, slate_date, is_current = load_slate("mlb")
+
+    if not games:
+        note = staleness_note("mlb")
+        if note:
+            st.caption(note)
+        return
+
+    ranked = rank_games(games, limit=3)
+    lead = ranked[0] if ranked else None
+
+    if not has_any_signal(games):
+        # NO RANKING CLAIMED. Deliberately does not list the games in any
+        # order that could read as one — it states the count and the
+        # reason, and stops.
+        st.markdown(card_open(
+            "Tonight's slate",
+            f"{len(games)} MLB game{'s' if len(games) != 1 else ''}"
+            + ("" if is_current else f" \u2014 for {slate_date}")),
+            unsafe_allow_html=True)
+        st.markdown(
+            f'<div style="color:{COLOR["text_muted"]}; font-size:var(--lc-text-body);">'
+            f'Starters are not posted yet, so there is nothing to rank on. '
+            f'The board fills in through the afternoon as MLB publishes '
+            f'probables \u2014 usually one to three hours before first pitch.'
+            f'</div>', unsafe_allow_html=True)
+        st.markdown(card_close(), unsafe_allow_html=True)
+        return
+
+    st.markdown(card_open(
+        "Tonight's best games",
+        "Ranked by this app's own modeled edge \u2014 not a prediction, "
+        "and not a betting line"), unsafe_allow_html=True)
+
+    if not is_current and slate_date:
+        st.caption(f"Showing the slate for {slate_date}.")
+
+    reason = why_first(lead) if lead else None
+    if reason:
+        # The lead game's reason is stated ONCE, in words, above the row.
+        # The swing score behind tier 3 is never printed: it is an
+        # ordering quantity built from weighted constants, not a
+        # measurement, and a number on screen invites being read as one.
+        st.markdown(
+            f'<div style="color:{COLOR["accent"]}; font-size:var(--lc-text-small); '
+            f'font-weight:700; margin-bottom:var(--lc-space-sm);">{reason}</div>',
+            unsafe_allow_html=True)
+
+    for i, g in enumerate(ranked):
+        away, home = g.get("away") or "TBD", g.get("home") or "TBD"
+        bits = []
+        if g.get("edge_lean") and g.get("edge_grade"):
+            bits.append(f'Edge {g["edge_grade"]} \u2014 {g["edge_lean"]}')
+        if g.get("ou_lean") and g.get("ou_grade"):
+            bits.append(f'{g["ou_lean"]} {g["ou_grade"]}')
+        _swing, _reasons = park_swing(g)
+        bits.extend(_reasons[:2])
+        # An unscored game says so rather than showing an empty right
+        # column, which reads as "nothing notable here" — a claim the
+        # data does not support.
+        meta = DOT.join(bits) if bits else "Starters not posted"
+
+        st.markdown(
+            f'<div style="display:flex; justify-content:space-between; '
+            f'align-items:baseline; gap:12px; flex-wrap:wrap; '
+            f'padding:var(--lc-space-sm) var(--lc-space-none); '
+            f'border-top:1px solid {COLOR["border"]};">'
+            f'<span style="font-weight:700; color:{COLOR["text"]}; '
+            f'white-space:nowrap;">{away} @ {home}</span>'
+            f'<span style="font-size:var(--lc-text-small); '
+            f'color:{COLOR["text_muted"]}; text-align:right;">{meta}</span>'
+            f'</div>', unsafe_allow_html=True)
+
+    # THE JUMP IS SPORT-AWARE. Home cannot write lc_sport_seg (rule 4),
+    # so opening an MLB page from a page currently showing KBO has to go
+    # through _goto_sport, which records the intent for app.py to apply
+    # on the next run. _goto would silently write the MLB nav key while
+    # leaving the switcher on KBO.
+    if CURRENT_SPORT == "MLB":
+        _goto("Game Card", "home_best_games_jump",
+              label="Open the Game Card \u2192", compact=True)
+    else:
+        _goto_sport("MLB", "Game Card", "home_best_games_jump",
+                    "Open the MLB Game Card \u2192")
+
+    st.markdown(card_close(), unsafe_allow_html=True)
+
+
 def _render_pulse(record, today):
     """One line of true things about right now: which leagues are on, and
     how much has actually been published."""
@@ -1169,6 +1301,18 @@ def render():
 
     record = _load()
     _RECORD = record
+
+    # THE HERO IS FIRST, AND IT IS FORWARD-LOOKING.
+    #
+    # This is the position the design rule reserves: above the "Today"
+    # tag, everything must be about today, and the top of the page is the
+    # strongest claim the site makes. It was previously the pulse rail —
+    # true, but a status line, not an argument. Last night's results are
+    # deliberately still four sections down, because a headline naming a
+    # player and an outcome reads as a suggestion for tonight no matter
+    # what label sits above it.
+    _render_best_games()
+
     _render_pulse(record, today)
 
     st.markdown(_section_tag(f"Today \u00b7 {today}"), unsafe_allow_html=True)
