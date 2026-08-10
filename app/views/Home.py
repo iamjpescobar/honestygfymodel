@@ -510,9 +510,33 @@ def _render_best_games():
     games, slate_date, is_current = load_slate("mlb")
 
     if not games:
+        # A CARD, NOT A BARE CAPTION.
+        #
+        # This branch used to be st.caption(note) and return, which
+        # renders as loose grey text floating above the chip rail with no
+        # frame around it. Honest words in a presentation that reads as
+        # "something failed to load" — and this is the state a reader
+        # sees for most of the day, because MLB's slate does not exist
+        # until the afternoon.
+        #
+        # The model is "Today's board isn't published yet" further down
+        # this same page: a proper card that explains the timing and the
+        # reason. The top of the page should not carry less weight than
+        # the middle of it.
+        #
+        # No "build it live" button here, unlike that card. Rule 5: Home
+        # makes zero network calls. The boards below already offer that
+        # path, and offering it twice from a page that cannot perform it
+        # is how rule 5 gets broken by a later edit.
         note = staleness_note("mlb")
-        if note:
-            st.caption(note)
+        if not note:
+            return
+        st.markdown(card_open("Tonight's best games"), unsafe_allow_html=True)
+        st.markdown(
+            f'<div style="color:{COLOR["text_muted"]}; '
+            f'font-size:var(--lc-text-body);">{note}</div>',
+            unsafe_allow_html=True)
+        st.markdown(card_close(), unsafe_allow_html=True)
         return
 
     ranked = rank_games(games, limit=3)
