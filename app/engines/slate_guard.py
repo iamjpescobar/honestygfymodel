@@ -36,7 +36,26 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 EASTERN = ZoneInfo("America/New_York")
-_DATA = Path(__file__).resolve().parent.parent / "data"
+# TWO PLACES A SLATE CAN LIVE, and they arrive by different routes.
+#
+# _PUBLISHED is app/data/, where fetch_data.py extracts the nightly
+# release archive. That is how WNBA, KBO and NPB slates reach Render, and
+# app/data/ is gitignored — it exists only after a build.
+#
+# _REPO is the repository's own data/, which CI commits to and Render
+# gets in the checkout. calibration.json already travels this way; see
+# engines/calibration._repo_path(), which documents the same split and
+# the bug that came from reading only one of them.
+#
+# MLB uses the repo path because its slate is written by
+# calibration_picks.py at 1, 5 and 7 PM ET — the only clock on which
+# probable starters exist — and that job publishes no archive. Writing it
+# to app/data/ would have left it on the Actions runner to die with the
+# job: correct-looking code, a green run, and a file production never
+# sees. Reading only app/data/ here would have done the same thing one
+# layer later.
+_PUBLISHED = Path(__file__).resolve().parent.parent / "data"
+_REPO = Path(__file__).resolve().parents[2] / "data"
 
 # Per-league slate vocabulary.
 #
@@ -51,6 +70,37 @@ _LEAGUES = {
     "wnba": ("slate_date_et",  "generated_at_et",  "America/New_York"),
     "kbo":  ("slate_date_kst", "generated_at_kst", "Asia/Seoul"),
     "npb":  ("slate_date_jst", "generated_at_jst", "Asia/Tokyo"),
+    # MLB arrives last and is the odd one: its schedule is a live API
+    # call, so for a long time no MLB slate existed on disk at all and
+    # every board built one on demand. Home cannot do that (rule 5), so
+    # calibration_picks now writes one in CI at 1, 5 and 7 PM ET, and it
+    # goes through the same guard as every other league rather than
+    # getting its own private staleness check.
+    #
+    # Eastern, like WNBA: an MLB schedule day IS an Eastern day. A game
+    # at 10 PM ET on the 8th is the 8th's slate even though it is already
+    # the 9th in UTC, which is the exact bug weather_engine documents in
+    # its own EASTERN comment.
+    "mlb":  ("slate_date_et",  "generated_at_et",  "America/New_York"),
+}
+
+# WHICH JOB PUBLISHES EACH SLATE — for the staleness sentence only.
+#
+# The message used to say "the nightly build hasn't published since" for
+# every league. True for three of them and WRONG for MLB, whose slate is
+# written by slate-picks at 1, 5 and 7 PM ET because that is the only
+# clock on which probable starters exist. A stale MLB board would have
+# sent whoever read it to debug nightly-data, which is working.
+#
+# The codebase already learned this once: the WNBA staleness threshold
+# was reworded because "the nightly fetch may be failing" fired during
+# the All-Star break when the fetch was fine. A confident wrong diagnosis
+# is worse than no message.
+_WRITER = {
+    "wnba": "the nightly build",
+    "kbo":  "the nightly build",
+    "npb":  "the nightly build",
+    "mlb":  "the slate-picks job",
 }
 
 
@@ -81,13 +131,37 @@ def today_et() -> str:
 
 
 def _read(league: str):
-    """(payload, date_key, generated_key) or (None, ...) if unreadable."""
+    """(payload, date_key, generated_key) or (None, ...) if unreadable.
+
+    Reads BOTH locations and returns whichever carries the LATER slate
+    date. Not "first one that exists": on the day the nightly archive
+    starts carrying a league the repo path also has, first-wins would
+    pin the app to whichever path happened to be checked first and the
+    staleness would be invisible — the exact class of bug this whole
+    module exists for.
+
+    Comparing dates rather than mtimes on purpose. An mtime says when a
+    file was touched; the slate date says which night it describes, and
+    that is the only one of the two a reader cares about. A checkout
+    rewrites every mtime.
+    """
     date_key, gen_key, _tz = _cfg(league)
-    path = _DATA / league.lower() / "games.json"
-    try:
-        return (json.loads(path.read_text()) or {}), date_key, gen_key
-    except Exception:
-        return None, date_key, gen_key
+
+    best = None
+    for root in (_PUBLISHED, _REPO):
+        try:
+            payload = json.loads((root / league.lower() / "games.json").read_text()) or {}
+        except Exception:
+            continue
+        if best is None:
+            best = payload
+            continue
+        # A payload with no declared date never wins. load_slate rejects
+        # an undated slate anyway, so preferring one here would only
+        # convert a usable slate into a rejected one.
+        if (payload.get(date_key) or "") > (best.get(date_key) or ""):
+            best = payload
+    return best, date_key, gen_key
 
 
 def load_slate(league: str, on_date: str = None):
@@ -163,6 +237,6 @@ def staleness_note(league: str, on_date: str = None) -> str:
         return (f"No {league.upper()} games on {on_date} — showing the next "
                 f"slate, {slate_date}.")
     return (f"The most recent {league.upper()} slate on disk is for "
-            f"{slate_date}, not {on_date} — the nightly build hasn't "
-            f"published since. Those games have already been played, so "
-            f"they aren't shown as tonight's board.")
+            f"{slate_date}, not {on_date} — {_WRITER.get(league.lower(), 'the nightly build')} "
+            f"hasn't published since. Those games have already been "
+            f"played, so they aren't shown as tonight's board.")
