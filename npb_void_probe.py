@@ -80,6 +80,28 @@ RISK_WORDS = ["中止", "雨天", "順延", "延期", "恐れ", "見込み",
 
 CANCEL_DIV = '<div class="cancel">'
 SCORE_DIV = '<div class="score1">'
+# THE PLAYED TEST IS A REGEX, NOT A SUBSTRING, and the difference is the
+# whole reason v2's verdict was wrong.
+#
+# v2 used `SCORE_DIV in row` — the mere PRESENCE of the opening tag. It
+# reported "3 unplayed rows dated 0811 or later" out of 157, which is
+# absurd on its face: roughly 90 NPB games remain in August. Scheduled
+# games carry an EMPTY <div class="score1"></div> as a placeholder, so
+# presence matched everything and almost every future game was discarded
+# as already played.
+#
+# npb_precompute.parse_games() — which has worked in production for
+# months — requires DIGITS INSIDE the div:
+#
+#     re.search(r'<div class="score1">(\d+)</div>', row)
+#
+# This is now that exact expression. v2's header comment already claimed
+# to use "the selector npb_precompute uses in production", and it did
+# use the same STRING while applying a different TEST. Copying a selector
+# is not copying a parser; the sibling of the rule this probe was written
+# under is that a probe which reimplements the check can manufacture
+# either answer just as easily as one that reimplements the parse.
+SCORE_RE = re.compile(r'<div class="score1">\s*(\d+)\s*</div>')
 PIT_DIV = '<div class="pit">'
 
 
@@ -106,8 +128,19 @@ def main() -> int:
     # STRUCTURE FIRST. v1's whole failure was reporting a verdict on a
     # page it had not actually parsed, so this line comes before any
     # conclusion and is the first thing to read.
+    #
+    # BOTH score counts are printed on purpose. "score1 tags" counts the
+    # opening tag; "with digits" counts the ones that actually hold a
+    # result. v2 conflated them and threw away almost every future game
+    # as already played — 3 upcoming out of 157 rows, when ~90 NPB games
+    # remain in a normal August. If those two numbers are far apart, the
+    # gap IS the empty placeholders on scheduled games, and any check
+    # using presence rather than digits is measuring the wrong thing.
+    _score_tags = html.count(SCORE_DIV)
+    _score_real = len(SCORE_RE.findall(html))
     print(f"STRUCTURE: {len(rows)} dated rows | "
           f"{html.count(CANCEL_DIV)} cancel | "
+          f"{_score_tags} score1 tags ({_score_real} with digits) | "
           f"{html.count(PIT_DIV)} starter | {len(html)}b | JST {today_mmdd}")
 
     if not rows:
@@ -124,7 +157,7 @@ def main() -> int:
     for mmdd, row in rows:
         if mmdd < today_mmdd:
             continue          # settled game — not a forward warning
-        if SCORE_DIV in row:
+        if SCORE_RE.search(row):
             continue          # already played, inside today's block
         upcoming += 1
 
