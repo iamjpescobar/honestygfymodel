@@ -38,7 +38,6 @@ import requests
 sys.path.insert(0, str(Path(__file__).resolve().parent / "app"))
 from engines.intl_slate import coverage_line  # noqa: E402
 from engines.intl_weather import (  # noqa: E402
-    ATTRIBUTION as WX_ATTRIBUTION,
     forecast as _wx,
     summarize as _wxsum,
     venue_for_game as _venue_for,
