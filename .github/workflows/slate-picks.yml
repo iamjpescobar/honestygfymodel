@@ -53,7 +53,7 @@ jobs:
       - name: Log today's picks
         run: python calibration_picks.py
 
-      - name: Commit the pick record
+      - name: Commit the pick record and the MLB slate
         run: |
           # git status --porcelain, NOT git diff.
           #
@@ -64,14 +64,22 @@ jobs:
           # directly above it said the picks had just been written.
           # Silent, green, and the reason the record never grew past the
           # one day that came from a page view.
-          if [ -z "$(git status --porcelain -- data/calibration.json)" ]; then
-            echo "No new picks to commit."
+          #
+          # data/mlb/games.json rides along for the same reason it is
+          # written at all: Render gets the repository in its checkout but
+          # only gets app/data/ from the nightly release archive, and this
+          # job publishes no archive. Uncommitted, the slate would live on
+          # this runner and die with it, and Home's hero card would never
+          # once see the file the log says was just written.
+          PATHS="data/calibration.json data/mlb/games.json"
+          if [ -z "$(git status --porcelain -- $PATHS)" ]; then
+            echo "Nothing new to commit."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/calibration.json
-          git commit -m "chore: log slate picks for calibration [skip ci]"
+          git add $PATHS
+          git commit -m "chore: log slate picks and MLB slate [skip ci]"
           # Another scheduled run may have pushed since checkout; rebase
           # rather than fail, so a race costs a retry and not a day.
           git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
