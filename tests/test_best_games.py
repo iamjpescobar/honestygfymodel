@@ -30,7 +30,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "app"))
 
 from engines.best_games import (  # noqa: E402
-    rank_games, why_first, park_swing, has_any_signal,
+    rank_games, why_first, park_swing, has_any_signal, edge_reasons,
 )
 
 
@@ -186,6 +186,58 @@ print("PASS: the stated reason is the tier the sort used")
 assert rank_games([{}, None, g("ok", edge_net=1)])[0]["away"] == "ok"
 assert rank_games(None) == []
 print("PASS: a malformed slate row costs a card, not the page")
+
+# ----------------------------------------------------------------------
+# THE TIER-3 LABEL NAMES ONLY WHAT WAS MEASURED.
+#
+# This said "Biggest weather and park swing" unconditionally. Measured on
+# the real 2026-08-10 slate: ten games, NOT ONE with a temperature or a
+# wind, because MLB does not post either until close to first pitch and
+# the 1 PM build ran six hours early. The swing came from the park factor
+# alone, and the sentence claimed weather that had never been read.
+#
+# A wrong number is catchable. A right number under a wrong label is not
+# — nothing on screen tells the reader which signals went into it.
+# ----------------------------------------------------------------------
+_park_only = g("a-park", park_factor=108, park_verified=True, venue="Fenway Park")
+_why = why_first(_park_only)
+assert "park" in _why and "weather" not in _why, (
+    f"tier 3 measured the park and nothing else; the label must not say "
+    f"weather. Got: {_why!r}")
+
+_with_wind = g("a-wind", park_factor=108, park_verified=True, venue="Fenway Park",
+               wind_adj=5.0, wind_note="14 mph blowing out (+5.0)")
+assert "weather and park" in why_first(_with_wind), why_first(_with_wind)
+
+_wind_only = g("a-w", park_verified=False, wind_adj=5.0,
+               wind_note="14 mph blowing out (+5.0)")
+_why = why_first(_wind_only)
+assert "weather" in _why and "park" not in _why, (
+    f"an unverified park contributes nothing, so the label must not claim "
+    f"it. Got: {_why!r}")
+print("PASS: the tier-3 label names only the signals it measured")
+
+# park_swing's PUBLIC shape is unchanged — it still returns (score,
+# reasons). The third value lives on _swing, so every existing caller and
+# the four assertions above keep working.
+assert len(park_swing(_park_only)) == 2
+print("PASS: park_swing's public 2-tuple is unchanged")
+
+# ----------------------------------------------------------------------
+# edge_reasons — the signals were published and read by NOTHING.
+#
+# calibration_picks writes the real comparisons behind each grade
+# ("WHIP: edge Boston Red Sox (1.28 vs 1.55)"). The card showed the
+# letter and the lean — the conclusion — while the reasoning sat unread
+# in the file. Rule 20, on the one page whose whole claim is "here is
+# where the model has an opinion".
+# ----------------------------------------------------------------------
+assert edge_reasons({"edge_signals": ["a", "b", "c", "d"]}) == ["a", "b", "c"], \
+    "capped at three: the hero card is a summary, not the Game Card"
+assert edge_reasons({}) == []
+assert edge_reasons({"edge_signals": "not a list"}) == [], \
+    "a malformed field costs the reasons, not the page"
+print("PASS: the edge signals reach the card instead of dying in the file")
 
 # ----------------------------------------------------------------------
 # HOME WIRING — the hero is FIRST, and it is the forward-looking one.
