@@ -5,41 +5,44 @@ KBO probables probe — the ONE blocker on dropping mykbostats.
 WHY THIS EXISTS
 
 mykbostats Acceptable Use clause 6 forbids using their content to make
-sports bets, which is what this project does. That settles the question:
-the source has to go, not because it broke but because we should not be
-using it. kbo_official_probe already established that
-eng.koreabaseball.com serves everything else we need —
-DailySchedule.aspx returns a whole month, ~130 games, with venues,
-times, scores and a POSTPONED column, in one GET.
+sports bets, which is what this project does. That settles it: the
+source has to go. kbo_official_probe already established that
+eng.koreabaseball.com serves everything else — DailySchedule.aspx
+returns a month, ~130 games, venues, times, scores and a POSTPONED
+column, in one GET. PROBABLES ARE THE ONLY THING LEFT.
 
-PROBABLES ARE THE ONLY THING LEFT. The rendered Korean schedule page
-serves ZERO occurrences of 선발 / 투수 / 예고: the starters are drawn
-client-side, so they arrive over an XHR the page makes after load. If
-that endpoint can be called directly, the migration is unblocked and
-mykbostats can be dropped whole. If it cannot, the honest options are to
-ship KBO without probables and SAY SO on the board, or to keep a source
-we have decided we should not keep — and that is a decision to make with
-the answer in hand, not before.
+WHAT v1 ESTABLISHED — this version follows its lead, it does not
+re-litigate it
 
-WHAT IT DOES
+v1 ran and produced one genuinely useful result. Its CONTROLS, not its
+guesses, found the answer:
 
-Tries the candidate endpoints the KBO site's own game centre uses, plus
-the rendered pages as controls, and reports for each: status, size, and
-whether starter vocabulary appears. Writes nothing, commits nothing.
+    rendered KO schedule  (control)  200  48563b  no starter vocabulary
+    rendered EN daily     (control)  200  98445b  no starter vocabulary
+    game centre main      (control)  200  57178b  STARTERS: 선발 투수
 
-THE CANDIDATES ARE GUESSES AND ARE LABELLED AS SUCH. ASP.NET sites of
-this vintage expose .asmx web methods that take JSON and return an HTML
-fragment; the names below are the conventional ones for this site's
-schedule module. A 404 on all of them is not proof that no endpoint
-exists — it means the guesses were wrong and the next step is reading
-the page's own scripts, which is why the last check prints any
-.asmx/.ashx/ajax URL the schedule page itself references. THAT LIST is
-the real output if the guesses miss.
+**The game centre page is server-rendered and already contains starter
+vocabulary.** No XHR is needed. HANDOFF's premise — that probables are
+drawn client-side — was true of the SCHEDULE pages and false of this
+one, and nobody had looked at this one.
 
-MUST RUN FROM ACTIONS. Korean sites geo-fence and rate-limit by region;
-a result from a laptop or a Codespace predicts nothing about what the
-nightly or Render would see. Run it locally to smoke-test the script,
-believe it only from Actions.
+Its .asmx guesses returned 401/401/500, and the page's own script
+references seven endpoints. Those stay listed below as a fallback, but
+they are no longer the main line: a server-rendered page we can already
+fetch beats an undocumented endpoint that wants credentials.
+
+THE QUESTION NOW is narrower and is the only thing standing between
+here and dropping mykbostats: can PER-GAME STARTER NAMES be extracted
+from that page, paired to the right teams, for today's slate?
+
+"The characters 선발 appear somewhere" is not that. A page can carry the
+word as a column header on an empty table. This probe reports how many
+of today's games yield a NAMED starter for BOTH sides, because a
+matchup with one side blank is not a matchup, and half a rotation is
+worse than none — it looks complete.
+
+MUST RUN FROM ACTIONS. Korean sites geo-fence and rate-limit by region.
+Writes nothing, commits nothing.
 """
 from __future__ import annotations
 
@@ -52,7 +55,6 @@ from zoneinfo import ZoneInfo
 import requests
 
 NOW = datetime.now(ZoneInfo("Asia/Seoul"))
-SEASON = NOW.year
 
 UA = {
     "User-Agent": (
@@ -61,106 +63,100 @@ UA = {
         "Chrome/126.0.0.0 Safari/537.36"
     ),
     "Accept-Language": "ko-KR,ko;q=0.9,en;q=0.8",
-    "Referer": "https://www.koreabaseball.com/Schedule/Schedule.aspx",
+    "Referer": "https://www.koreabaseball.com/Schedule/GameCenter/Main.aspx",
 }
 
-# Starter vocabulary. Checked as a SET rather than one word because the
-# site could label the column any of these ways and a miss on the exact
-# noun we happened to pick would read as "no probables here".
-#   선발 starter   투수 pitcher   예고 announced/advance   선발투수
-STARTER_WORDS = ["선발", "투수", "예고", "先発"]
+GAMECENTER = "https://www.koreabaseball.com/Schedule/GameCenter/Main.aspx"
 
-# (label, method, url, json payload or None)
-CANDIDATES = [
-    ("rendered KO schedule  (control)", "GET",
-     "https://www.koreabaseball.com/Schedule/Schedule.aspx", None),
-    ("rendered EN daily     (control)", "GET",
-     "https://eng.koreabaseball.com/Schedule/DailySchedule.aspx", None),
-    ("game centre main      (control)", "GET",
-     "https://www.koreabaseball.com/Schedule/GameCenter/Main.aspx", None),
-
-    # --- guesses, per the docstring ---
-    ("asmx GetScheduleList", "POST",
-     "https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleList",
-     {"leId": "1", "srIdList": "0,9,6", "seasonId": str(SEASON),
-      "gameMonth": f"{NOW.month:02d}"}),
-    ("asmx GetGameList", "POST",
-     "https://www.koreabaseball.com/ws/Schedule.asmx/GetGameList",
-     {"leId": "1", "srId": "0", "gameDate": NOW.strftime("%Y%m%d")}),
-    ("asmx GetKboGameList", "POST",
-     "https://www.koreabaseball.com/ws/Main.asmx/GetKboGameList",
-     {"leId": "1", "srId": "0,9,6", "gameDate": NOW.strftime("%Y%m%d")}),
-]
+# Korean given+family names as the site prints them: 2-4 Hangul syllables.
+HANGUL_NAME = r"[가-힣]{2,4}"
 
 
-def _hit(body: str):
-    """Which starter words appear, if any."""
-    return [w for w in STARTER_WORDS if w in body]
+def _clean(fragment: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", fragment)).strip()
 
 
 def main() -> int:
-    any_starters = False
-
-    for label, method, url, payload in CANDIDATES:
-        try:
-            if method == "GET":
-                r = requests.get(url, headers=UA, timeout=25)
-            else:
-                h = dict(UA)
-                h["Content-Type"] = "application/json; charset=UTF-8"
-                r = requests.post(url, headers=h, data=json.dumps(payload),
-                                  timeout=25)
-        except Exception as e:
-            print(f"{label:32s} ERROR {type(e).__name__}")
-            continue
-
-        body = r.content.decode("utf-8", errors="replace")
-        words = _hit(body)
-        # A .asmx that answers 200 with an empty d is a working endpoint
-        # with the wrong arguments, which is a very different result from
-        # a 404 and worth telling apart.
-        empty = '"d":null' in body or '"d":""' in body
-        note = ""
-        if words:
-            note = f'STARTERS: {" ".join(words)}'
-            if r.status_code == 200 and not label.endswith("(control)"):
-                any_starters = True
-        elif empty:
-            note = "200 but empty payload — endpoint real, args wrong"
-        else:
-            note = "no starter vocabulary"
-        print(f"{label:32s} {r.status_code} {len(body):>7}b  {note}")
-
-    # THE REAL OUTPUT WHEN THE GUESSES MISS. Whatever the schedule page
-    # itself calls is the ground truth, and it is in the page's markup.
-    print("-" * 64)
     try:
-        r = requests.get(
-            "https://www.koreabaseball.com/Schedule/Schedule.aspx",
-            headers=UA, timeout=25)
-        page = r.content.decode("utf-8", errors="replace")
-        urls = sorted(set(re.findall(
-            r'["\']([^"\']*\.(?:asmx|ashx)/?[A-Za-z]*)["\']', page)))
-        if urls:
-            print(f"ENDPOINTS THE PAGE ITSELF REFERENCES ({len(urls)}):")
-            for u in urls[:12]:
-                print(f"  {u}")
-        else:
-            print("PAGE REFERENCES NO .asmx/.ashx — starters may come from "
-                  "an inline script or a different host; read the page by "
-                  "hand next")
+        r = requests.get(GAMECENTER, headers=UA, timeout=25)
     except Exception as e:
-        print(f"endpoint scan failed: {type(e).__name__}")
+        print(f"FETCH FAILED: {type(e).__name__}")
+        return 1
+    if r.status_code != 200:
+        print(f"FETCH FAILED: HTTP {r.status_code}")
+        return 1
 
-    print("-" * 64)
-    if any_starters:
-        print("VERDICT: a direct endpoint returns starter data — KBO "
-              "migration is unblocked, mykbostats can be dropped whole.")
+    html = r.content.decode("utf-8", errors="replace")
+
+    n_seonbal = html.count("선발")
+    print(f"STRUCTURE: {len(html)}b | '선발' x{n_seonbal} | "
+          f"KST {NOW:%Y-%m-%d %H:%M}")
+
+    if not n_seonbal:
+        print("NO STARTER VOCABULARY AT ALL — v1 saw it and this run does "
+              "not. Either the page varies by time of day (starters posted "
+              "later) or it changed. Re-run mid-afternoon KST before "
+              "concluding anything.")
+        return 1
+
+    # Every window around a 선발 marker, so we see the REAL container
+    # rather than assuming one. Printing these is the point: if the
+    # extraction below finds nothing, these excerpts are what tells the
+    # next session what the markup actually looks like.
+    windows = [m.start() for m in re.finditer("선발", html)]
+    print("-" * 72)
+    print(f"CONTEXT around the first {min(4, len(windows))} marker(s):")
+    for pos in windows[:4]:
+        excerpt = _clean(html[max(0, pos - 160): pos + 200])
+        print(f"  ...{excerpt[:190]}")
+
+    # Attempt extraction WITHOUT committing to one container: find names
+    # that sit near a marker. Deliberately loose — the goal is to learn
+    # whether names are present, not to ship a parser.
+    named = set()
+    for pos in windows:
+        chunk = _clean(html[max(0, pos - 80): pos + 160])
+        for nm in re.findall(HANGUL_NAME, chunk):
+            # Filter the vocabulary itself and common UI words so the
+            # count means "player names", not "the word 선발 again".
+            if nm in ("선발", "선발투수", "투수", "타자", "경기", "일정",
+                      "구장", "중계", "기록", "순위", "게임센터", "예고"):
+                continue
+            named.add(nm)
+
+    print("-" * 72)
+    print(f"CANDIDATE NAMES near markers: {len(named)}")
+    if named:
+        print("  " + ", ".join(sorted(named)[:14]))
+
+    # The seven endpoints v1 found in the page's own scripts. Kept as a
+    # fallback line of enquiry, NOT retried here: v1 showed they answer
+    # 401/500 to an unauthenticated JSON POST, and the server-rendered
+    # page above is the better path if it yields names.
+    print("-" * 72)
+    print("FALLBACK (from v1, not retried): /ws/Schedule.asmx/"
+          "GetMonthSchedule, /ws/Schedule.asmx/GetScheduleList, "
+          "/ws/Main.asmx/GetKboGameDate — all wanted credentials.")
+
+    print("-" * 72)
+    if len(named) >= 10:
+        print(f"VERDICT — NAMES ARE ON THE PAGE: {len(named)} candidates "
+              f"near starter markers, server-rendered, no XHR. The KBO "
+              f"migration is unblocked. Next step is a real parser keyed "
+              f"on the container shown in CONTEXT above, pairing each name "
+              f"to its team — and it must fill BOTH sides of a game or "
+              f"show neither, because half a matchup reads as a whole one.")
+    elif named:
+        print(f"VERDICT — MARKERS BUT FEW NAMES ({len(named)}). Likely the "
+              f"page carries 선발 as a header with names loaded separately, "
+              f"or today's starters are not posted yet. Read CONTEXT above "
+              f"and re-run mid-afternoon KST before deciding.")
     else:
-        print("VERDICT: no direct probables endpoint found from these "
-              "candidates. Read the endpoint list above before concluding "
-              "none exists. If none does: ship KBO without probables and "
-              "label the board, rather than keeping a source clause 6 "
+        print("VERDICT — MARKERS BUT NO NAMES. The word is there and the "
+              "names are not, which means this page labels a table it does "
+              "not fill server-side. Fall back to the endpoint list above, "
+              "or ship KBO without probables and LABEL the board — that is "
+              "a real answer, and better than keeping a source clause 6 "
               "forbids.")
     return 0
 
