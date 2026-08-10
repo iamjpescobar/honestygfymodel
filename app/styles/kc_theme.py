@@ -1049,8 +1049,12 @@ def sport_switcher(active: str = "MLB"):
     so it exists on every page. Uses st.segmented_control (the same
     native component the Game Card's pitcher picker uses) so it renders
     compact and consistent on any Streamlit version, with no CSS hacks.
-    Only MLB is wired to real data; the other sports lead to their own
-    "coming soon" pages rather than pretending to be live.
+    MLB, KBO, NPB and WNBA are wired to real data; NBA, NHL and NFL lead
+    to their own "coming soon" pages rather than pretending to be live.
+    This said "only MLB" long after three more leagues shipped, which
+    contradicted the caption rendered twenty lines below it in this same
+    function — a reader checking which boards were live got opposite
+    answers from the code and the screen. Keep the two in step.
     Clicking sets st.session_state["lc_sport"] and reruns; app.py reads
     that to decide whether to render MLB navigation or a sport page.
     """
