@@ -42,7 +42,7 @@ SEASON_START = date(2026, 4, 3)
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "app"))
 from engines.espn_wnba import (  # noqa: E402
-    BASE, SCOREBOARD_SOURCES, STATUS_MAP, UA, fetch_scoreboard, get_json,
+    BASE, SCOREBOARD_SOURCES, STATUS_MAP, fetch_scoreboard, get_json,
     _is_scoreboard, _normalize_header_events,
 )
 
