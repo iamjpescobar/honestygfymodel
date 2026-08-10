@@ -246,12 +246,11 @@ CANCEL_REASON_PAT = re.compile(
     r"Cancell?ed\s+([A-Z][A-Za-z]*(?: [A-Z][A-Za-z]*)*)")
 
 
-HEAT_RISK_PAT = re.compile(r'chance[^.]{0,40}heat[^.]{0,40}cancell?ation',
-                           re.I)
-# Either the literal degree sign or the HTML entity: _strip() removes
-# tags, not entities, and which one a template emits is a rendering
-# detail nobody should have to re-discover.
-TEMP_PAT = re.compile(r'(\d{1,2})\s*(?:°|&deg;)')
+# HEAT_RISK_PAT and TEMP_PAT lived here and are DELETED, together with
+# parse_homepage_conditions() and fetch_homepage_conditions(). The
+# reasoning is on parse_homepage_schedule() below, which is the reader
+# that survived. VOID_RISK_PAT, on the SCHEDULE page, is the live reader
+# for the same warning and covers the whole week rather than today only.
 COMPARE_PIDS = re.compile(r'href="/stats/compare\?pids=([^"&]+)"')
 
 _STARTER_KEYS = ("away_starter", "home_starter", "away_starter_id",
@@ -306,33 +305,6 @@ def parse_homepage_starters(html):
     return out
 
 
-def parse_homepage_conditions(html):
-    """{game_id: {"temp_c": int|None, "heat_risk": bool}} off the homepage.
-
-    Deliberately a SEPARATE function from parse_homepage_starters rather
-    than more keys on the same entry. That one omits a game with no
-    "Starters:" line so a caller can tell "not announced" from
-    "announced as nothing" — and a heat warning routinely lands on a
-    game whose pitchers are not announced yet, which is exactly the game
-    a bettor most needs warned about. Merging them would have forced a
-    choice between breaking that contract and dropping the warning.
-
-    A card with neither a temperature nor a warning is omitted. Absent
-    stays absent; nothing here guesses a comfortable day.
-    """
-    out = {}
-    for slug, inner in HOME_GAME_A.findall(html):
-        text = re.sub(r"\s+", " ", _strip(inner)).strip()
-        risk = bool(HEAT_RISK_PAT.search(text))
-        tm = TEMP_PAT.search(text)
-        if not risk and not tm:
-            continue
-        gid = slug.split("-", 1)[0]
-        out[gid] = {"temp_c": int(tm.group(1)) if tm else None,
-                    "heat_risk": risk}
-    return out
-
-
 _HOMEPAGE_CACHE = {}
 
 
@@ -356,20 +328,60 @@ def _homepage_html():
     return _HOMEPAGE_CACHE["html"]
 
 
-def fetch_homepage_conditions():
-    """Today's temperature and heat-void risk for the slate, or {}."""
-    html = _homepage_html()
-    if not html:
-        return {}
-    out = parse_homepage_conditions(html)
-    at_risk = sum(1 for v in out.values() if v["heat_risk"])
-    print(f"  KBO: homepage — {len(out)} game cards carried conditions, "
-          f"{at_risk} flagged Chance of Heat Cancellation")
-    return out
-
-
 def parse_homepage_schedule(html):
     """{game_id: {"venue": str|None, "time": str|None}} off the homepage.
+
+    THE OTHER TWO HOMEPAGE READERS ARE GONE. parse_homepage_conditions()
+    and fetch_homepage_conditions() read a temperature and a heat warning
+    off these same cards, and are DELETED. This item sat open across four
+    sessions as "delete it and say why, or keep it as a cross-check and
+    wire it — do not leave it neither." Deleting, and here is why.
+
+    fetch_homepage_conditions() had NO CALLER. main() never invoked it,
+    so its parser had never run against a live page in production. Its
+    tests passed for years by exercising a function nothing ran, which
+    proves the regex matches a fixture and says nothing about the site.
+
+    Wiring it instead was the alternative, and it fails on both counts:
+
+    1. BOTH READINGS ARE ALREADY PRODUCED, BETTER, ELSEWHERE. Wiring it
+       would have created a second source of truth for the same two
+       facts, with no rule for which wins when they disagree.
+
+       - The warning: parse_week() reads VOID_RISK_PAT off the SCHEDULE
+         page, covering THE WHOLE WEEK. The homepage carries today only.
+       - The temperature: temp_c / max_temp_c / heat_risk on every slate
+         row come from engines/intl_weather against HEAT_CANCEL_C, per
+         venue, for every upcoming date (see the block near the end of
+         main()). The homepage number is one integer for today.
+
+    2. IT COST A SECOND REQUEST to a fan-run site, for a page we already
+       have, to recompute something we already know.
+
+    WHAT THE DELETED TEST WAS PROTECTING, and where it lives now.
+    tests/test_kbo_heat_risk.py went with them — it tested only those
+    two functions, so keeping it would have meant keeping dead code to
+    keep a test green, which is the tail wagging the dog. Its properties
+    were checked one by one first, not assumed:
+
+      - warning is never read as a decision  -> test_kbo_void_signals,
+        and against the LIVE schedule-page reader rather than a dead
+        homepage one, which is strictly better
+      - a starterless card stays out of the starters map
+        -> test_kbo_homepage_starters ("a starterless card stays OUT of
+           the starters map")
+      - a heat warning does not leak into an adjacent field
+        -> test_kbo_homepage_starters, twice (into the name, into the
+           venue)
+      - absent stays absent, nothing guesses a comfortable day
+        -> test_kbo_homepage_starters ("a card with no Starters line is
+           omitted", "an empty page yields an empty dict")
+
+    One property had NO home elsewhere and was moved rather than
+    dropped: "the two readers are separate functions" asserted on the
+    literal string `def parse_homepage_schedule(` — which is this
+    function, and which now carries that contract alone. See
+    test_kbo_homepage_starters for the assertion.
 
     SEPARATE FROM THE STARTERS READER ON PURPOSE. Membership of that map
     means "this game has announced starters", and tests depend on it —
