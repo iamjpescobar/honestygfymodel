@@ -209,6 +209,22 @@ _MLB.mkdir(parents=True, exist_ok=True)
 _mf = _MLB / "games.json"
 _mprev = _mf.read_text() if _mf.exists() else None
 
+# staleness_note() reads BOTH _PUBLISHED (app/data/mlb, stubbed above)
+# and _REPO (data/mlb, CI's real path) and keeps whichever slate date is
+# later — see slate_guard._read(). Once calibration_picks starts writing
+# a real, dated MLB slate to data/mlb/games.json (it now does), that
+# real file can out-date every fixture this test writes above and win
+# the comparison, silently turning every case below into a pass-through
+# no matter what _note_at() intends. Neutralizing only _mf caught that
+# for months because no real file lived at the repo path yet to collide
+# with it. Same backup/blank/restore pattern, same reason.
+_MLB_REPO = ROOT / "data" / "mlb"
+_MLB_REPO.mkdir(parents=True, exist_ok=True)
+_rf = _MLB_REPO / "games.json"
+_rprev = _rf.read_text() if _rf.exists() else None
+if _rf.exists():
+    _rf.unlink()
+
 
 def _note_at(hour, slate_date, league="mlb", on="2026-08-10"):
     """staleness_note() as if the clock read `hour` in the league's tz."""
@@ -294,6 +310,10 @@ finally:
         _mf.write_text(_mprev)
     elif _mf.exists():
         _mf.unlink()
+    if _rprev is not None:
+        _rf.write_text(_rprev)
+    elif _rf.exists():
+        _rf.unlink()
 
 # THE CONSTANT AND THE CRON MUST NOT DRIFT APART.
 #
