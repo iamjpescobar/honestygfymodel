@@ -114,11 +114,57 @@ mod.get_daily_13 = lambda: ([["not", "a", "dict"], {"id": 4, "name": "D"}], {})
 assert len(cp._rows_daily13()) == 1, "non-dict rows should be skipped, not crash"
 print("PASS: malformed rows skipped rather than crashing the board")
 
+def _commands_only(text):
+    """The workflow with comment lines removed.
+
+    A substring search over the whole file matches the long explanatory
+    comments this repo puts above every tricky step — so an assertion
+    that `data/mlb/games.json` appears passed even after the path was
+    deleted from the git-add, because the comment ABOVE it still named
+    the file. Caught by deleting the path on purpose and watching the
+    test stay green. Anything asserting what a workflow DOES has to read
+    what it runs.
+    """
+    return "\n".join(ln for ln in text.splitlines()
+                     if not ln.lstrip().startswith("#"))
+
+
 # --- 9. The workflow guard must detect an UNTRACKED file --------------
+#
+# ASSERTS THE PROPERTY, NOT THE SPELLING (rule 11). This used to pin the
+# exact string `git status --porcelain -- data/calibration.json`, which
+# went red the moment slate-picks started committing a second file and
+# moved the paths into a shell variable — a correct change failing a
+# test that was checking the wording of the guard rather than the guard.
+#
+# The property is what matters and is unchanged: git STATUS, never git
+# diff, because git diff only compares TRACKED files and both of these
+# were new untracked files on their first run. That is the bug that kept
+# the record frozen at one day while the log said picks had been written.
 for wf in ("slate-picks", "nightly-data"):
-    y = open(f".github/workflows/{wf}.yml").read()
-    assert "git status --porcelain -- data/calibration.json" in y, \
+    y = _commands_only(open(f".github/workflows/{wf}.yml").read())
+    assert "git status --porcelain" in y, \
         f"{wf}.yml must use git status, not git diff"
-    assert "git diff --quiet -- data/calibration.json" not in y, \
+    assert "git diff --quiet" not in y, \
         f"{wf}.yml still uses git diff, which ignores untracked files"
+    assert "data/calibration.json" in y, \
+        f"{wf}.yml no longer commits the pick record at all"
 print("PASS: both workflows detect a first-time (untracked) record file")
+
+# The MLB slate must be committed too, and ONLY slate-picks writes it.
+#
+# Home's hero card reads the repository copy: Render gets the repo in its
+# checkout but gets app/data/ only from the nightly release archive, and
+# this job publishes no archive. Uncommitted, the slate would live on the
+# Actions runner and die with it — a green run, a log line saying the
+# file was written, and a card that never once sees it. That is the same
+# shape as every other silent-outage bug in this repo's history, one
+# layer further out.
+_sp = _commands_only(open(".github/workflows/slate-picks.yml").read())
+assert "data/mlb/games.json" in _sp, (
+    "slate-picks.yml must commit data/mlb/games.json — calibration_picks "
+    "writes it and nothing else publishes it, so an uncommitted slate "
+    "never reaches production")
+assert "git add" in _sp and "git push" in _sp, \
+    "slate-picks.yml must still commit and push what it wrote"
+print("PASS: slate-picks commits the MLB slate the hero card reads")
