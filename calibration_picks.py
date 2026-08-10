@@ -334,9 +334,10 @@ def _write_mlb_slate(date_str: str) -> int:
     from engines.weather_engine import get_todays_games_with_weather
     from engines.matchup_grades import grade_matchup
     from engines.park_factors import get_park_factor
-    from engines.park_weather import is_roofed
+    from engines.park_weather import is_roofed, get_park_forecast
     from engines.team_abbreviations import team_abbr
     from engines.wind_engine import wind_hr_adj
+    from engines.player_of_the_day import _wind_hr_adj as _field_wind_adj
 
     games, err = get_todays_games_with_weather(date_str)
     if err:
@@ -348,7 +349,7 @@ def _write_mlb_slate(date_str: str) -> int:
               flush=True)
         return 0
 
-    rows, graded, roofed = [], 0, 0
+    rows, graded, roofed, forecast_filled = [], 0, 0, 0
     for g in games:
         home = g.get("home") or "TBD"
         park = get_park_factor(home)
@@ -371,15 +372,86 @@ def _write_mlb_slate(date_str: str) -> int:
             "park_verified": bool(park.get("verified")),
         }
 
-        # WIND, resolved against the park's real orientation. A closed
-        # roof yields (0, None) from the engine itself, so there is no
-        # branch here deciding what a dome means — that judgement stays
-        # in one place (rule 21).
         _roof = is_roofed(g.get("venue") or "")
         if _roof:
             roofed += 1
-        _adj, _note = wind_hr_adj(team_abbr(home), g.get("weather_wind"),
-                                  roof_closed=_roof)
+
+        # THE NWS FALLBACK, WHICH THIS FUNCTION WAS MISSING ENTIRELY.
+        #
+        # MLB does not post park weather until close to first pitch. This
+        # job's FIRST and most important run is 1 PM ET — six hours before
+        # a 7 PM game — so on the run that matters most, every weather
+        # field came back null. Measured on the 2026-08-10 slate: 10 games,
+        # 0 with a temperature, 0 with a wind, wind_adj 0 for every single
+        # one. Two of the ranking's three tier-3 signals were dead and
+        # nothing said so.
+        #
+        # GameCard has done the right thing all along — see its "in-house
+        # weather desk" block, whose comment says MLB's posted weather is
+        # the truth "the moment it exists" and that until then, "most of
+        # the day", it fills the card from the National Weather Service.
+        # So the app already had the answer; the slate builder just never
+        # asked for it. Two parts of one app disagreeing about the weather
+        # for the same game is rule 21, and this side was the wrong one.
+        #
+        # Roofed parks are skipped rather than forecast: a dome's outdoor
+        # temperature is a real number about the wrong place. Weather_Board
+        # makes the same call (`None if roofed else get_park_forecast`).
+        #
+        # weather_source records WHICH of the two it is, because a
+        # forecast and a posted observation are not the same claim.
+        # GameCard marks forecasts with an asterisk on screen for exactly
+        # this reason; a file that keeps no such mark forces every reader
+        # to guess.
+        row["weather_source"] = "mlb_posted" if row["weather_temp"] else None
+        if not _roof and not row["weather_temp"]:
+            _fc = get_park_forecast(g.get("venue"), g.get("game_time"))
+            if _fc:
+                if _fc.get("temp") is not None:
+                    row["weather_temp"] = _fc["temp"]
+                if _fc.get("short"):
+                    row["weather_condition"] = _fc["short"]
+                if _fc.get("wind"):
+                    row["weather_wind"] = _fc["wind"]
+                row["weather_source"] = "nws_forecast"
+                forecast_filled += 1
+
+        # WIND, THROUGH WHICHEVER ENGINE CAN ACTUALLY READ THE STRING.
+        #
+        # There are two, and they are not interchangeable. This called
+        # only the first, on a string that is usually the second's:
+        #
+        #   wind_engine.wind_hr_adj      compass  "12 mph SW"
+        #                                resolves against the park's real
+        #                                CF bearing. What NWS gives.
+        #   player_of_the_day._wind_hr_adj  field-relative  "8 mph Out To CF"
+        #                                MLB's own format, already stated
+        #                                relative to the field.
+        #
+        # _parse_wind returns None for "Out To CF" ON PURPOSE — its
+        # docstring says so and points at the other function. So every
+        # time MLB DID post weather, this wrote wind_adj 0 and wind_note
+        # None, silently, and tier 3 lost its wind signal on exactly the
+        # runs that had the best data. Verified against the real formats:
+        # "8 mph Out To CF", "15 mph In From CF" and "8 mph L To R" all
+        # returned (0, None) from the compass parser.
+        #
+        # Field-relative FIRST, because when MLB has posted a string it
+        # is the better source: it states which way the ball carries at
+        # this park tonight, where a compass bearing has to infer it. The
+        # compass path is the fallback for NWS.
+        #
+        # Not merged into one function: they answer with different
+        # confidence from different inputs, and collapsing them would
+        # mean picking one set of cut points for both. Two engines with
+        # one router is honest; two engines with one caller that only
+        # knows about one of them is the bug being fixed.
+        _adj, _note = _field_wind_adj(row.get("weather_wind"))
+        if _roof:
+            _adj, _note = 0, None
+        elif not _note:
+            _adj, _note = wind_hr_adj(team_abbr(home), row.get("weather_wind"),
+                                      roof_closed=_roof)
         row["wind_adj"] = _adj
         row["wind_note"] = _note
 
@@ -394,7 +466,10 @@ def _write_mlb_slate(date_str: str) -> int:
             g.get("away"), home,
             park_factor=park.get("park_factor"),
             park_verified=bool(park.get("verified")),
-            temp=g.get("weather_temp"),
+            # The forecast temperature feeds the O/U checklist too. It was
+            # passing None here on every 1 PM run, so the >=80F / <=65F
+            # signals could never fire on the build that matters most.
+            temp=row.get("weather_temp"),
         ) or {}
         ml = grades.get("ml") or {}
         if ml.get("lean") and ml.get("grade"):
@@ -436,7 +511,8 @@ def _write_mlb_slate(date_str: str) -> int:
         "games": rows,
     }, indent=2))
     print(f"mlb slate: wrote {len(rows)} game(s) for {date_str} "
-          f"({graded} with a modeled edge, {roofed} roofed) to "
+          f"({graded} with a modeled edge, {roofed} roofed, "
+          f"{forecast_filled} weather from NWS forecast) to "
           f"{MLB_SLATE_PATH}.", flush=True)
     return len(rows)
 
