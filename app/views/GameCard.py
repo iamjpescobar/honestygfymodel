@@ -1203,8 +1203,13 @@ with content_col:
     if pitcher_id is None:
         st.warning(f"Couldn't resolve a player ID for {selected_pitcher_name} \u2014 stats below will be empty.")
 
-    splits_vs_r = get_pitcher_advanced_splits(pitcher_id, side="R") if pitcher_id else None
-    splits_vs_l = get_pitcher_advanced_splits(pitcher_id, side="L") if pitcher_id else None
+    # The season-only splits_vs_r / splits_vs_l fetches that used to sit
+    # here are GONE. They were the Matchup table's only consumers, and
+    # that table now fetches per selected window instead — so leaving
+    # them would have been two cached calls whose results nothing read,
+    # which is rule 20 in its plainest form. The Matchup branch does its
+    # own fetch; get_pitcher_advanced_splits is cached on (id, side,
+    # window), so the Season selection costs exactly what this did.
 
     # -----------------------------------------------------
     # PITCHER HEADER + PITCH MIX (colored bars, real usage%)
@@ -1340,13 +1345,52 @@ with content_col:
     # VIEW: MATCHUP
     # =======================================================
     if view == "\U0001F3E0 Matchup":
+        # SPLITS WINDOW — the missing piece on this table.
+        #
+        # These three rows were season-only, on a page whose whole job is
+        # tonight's matchup. A starter's season line can be four months
+        # old and still be the only thing shown; "what has he looked like
+        # lately" had no answer here even though every other window
+        # control in the app (grade window, lineup, Bullpen Board, Player
+        # of the Day) already offered one.
+        #
+        # Nothing is estimated. get_pitcher_advanced_splits slices the
+        # pitcher's raw Statcast rows through recency_windows BEFORE any
+        # metric is computed, so IP, the games count and every rate are
+        # honest for the window rather than a season figure with a label
+        # on it.
+        #
+        # WHY L3 AND LAST GAME EXIST AT ALL, given the sample problem
+        # below: for a starter, L5 can span five weeks. The question a
+        # bettor actually has the night of a start is "is he right, right
+        # now" — coming off the IL, after a mechanical change, on short
+        # rest. That question needs a window shorter than a month, and
+        # the data supports it. What it does not support is reading a
+        # rate off it without seeing the denominator.
+        _sw_opts = {"Season": "season", "L10": "l10", "L5": "l5",
+                    "L3": "l3", "Last game": "l1"}
+        _sw_choice = st.segmented_control(
+            "Splits window", list(_sw_opts.keys()), default="Season",
+            key="gc_splits_window", label_visibility="collapsed",
+        )
+        _sw_label = _sw_choice or "Season"
+        _splits_window = _sw_opts.get(_sw_label, "season")
+
         st.markdown(
             f'<div class="pf-card-title" style="margin-top:var(--lc-space-sm); color:{COLOR["gold"]};">Splits</div>'
             f'<div class="pf-card-subtitle" style="color:{COLOR["text_muted"]};">Blue = favorable for batter, red = favorable for pitcher \u00b7 IP estimated from Statcast out events (no official box-score feed)</div>',
             unsafe_allow_html=True,
         )
-        splits_overall = get_pitcher_advanced_splits(pitcher_id) if pitcher_id else None
-        rows = {"Overall": splits_overall, "vs RHB": splits_vs_r, "vs LHB": splits_vs_l}
+        # Re-fetched per window, per side. All three arguments are
+        # hashable and the function is cached, so switching back to a
+        # window you already viewed costs nothing.
+        splits_overall = (get_pitcher_advanced_splits(pitcher_id, window=_splits_window)
+                          if pitcher_id else None)
+        _sv_r = (get_pitcher_advanced_splits(pitcher_id, side="R", window=_splits_window)
+                 if pitcher_id else None)
+        _sv_l = (get_pitcher_advanced_splits(pitcher_id, side="L", window=_splits_window)
+                 if pitcher_id else None)
+        rows = {"Overall": splits_overall, "vs RHB": _sv_r, "vs LHB": _sv_l}
         rows = {k: v for k, v in rows.items() if v is not None}
 
         if rows:
@@ -1366,8 +1410,48 @@ with content_col:
             # it. st.dataframe is canvas-drawn and CSS cannot reach it.
             full_df = pd.DataFrame(rows).T.reset_index().rename(
                 columns={"index": "Split"})
-            stats_cols = ["Split", "IP", "BA", "SLG", "ISO", "WHIP", "HR", "HR/9"]
-            strikes_cols = ["Split", "BB%", "Whiff%", "K%", "Putaway%", "SwStr%", "K/9", "1stPS%", "Meatball%"]
+
+            # THE DENOMINATOR RIDES WITH THE RATES.
+            #
+            # get_pitcher_advanced_splits already returns _games and it
+            # was never rendered — the table showed BA and SLG with no
+            # way to see what they were computed over. Season-only, that
+            # was survivable. With a Last-game option it is not: one
+            # start is roughly 25 batters faced, and .400 against on one
+            # night sits in the same column, same font, as a .240 over
+            # 700 at-bats.
+            #
+            # G goes second, immediately after Split, because a
+            # denominator read AFTER the number it qualifies has already
+            # done its damage. IP was always there and stays — G is the
+            # cheaper read for "how thin is this".
+            if "_games" in full_df.columns:
+                full_df = full_df.rename(columns={"_games": "G"})
+            else:
+                full_df["G"] = None
+            stats_cols = ["Split", "G", "IP", "BA", "SLG", "ISO", "WHIP", "HR", "HR/9"]
+            strikes_cols = ["Split", "G", "BB%", "Whiff%", "K%", "Putaway%", "SwStr%", "K/9", "1stPS%", "Meatball%"]
+
+            # A THIN WINDOW SAYS SO, ABOVE THE TABLE.
+            #
+            # Not a disclaimer for its own sake: THIN_WINDOWS is defined
+            # in recency_windows next to the slicing itself, so the list
+            # of windows that need this warning cannot drift away from
+            # the list of windows that exist. The platoon rows are called
+            # out separately because they are the sharpest case — a
+            # starter can face three lefties in a game, and "vs LHB" over
+            # three at-bats is not a split, it is an anecdote.
+            from engines.recency_windows import THIN_WINDOWS
+            if _splits_window in THIN_WINDOWS:
+                _g = full_df.loc[full_df["Split"] == "Overall", "G"]
+                _gn = int(_g.iloc[0]) if len(_g) and pd.notna(_g.iloc[0]) else 0
+                st.markdown(
+                    f'<div style="color:{COLOR["warn"]}; font-size:var(--lc-text-tiny); '
+                    f'margin-bottom:var(--lc-space-xs);">'
+                    f'Small sample \u2014 {_sw_label} is {_gn} game'
+                    f'{"" if _gn == 1 else "s"} of real data, not a rate to lean on. '
+                    f'The platoon rows are thinner still.</div>',
+                    unsafe_allow_html=True)
             g1, g2 = st.columns(2)
             with g1:
                 with card("stats_table"):
