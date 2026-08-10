@@ -7,42 +7,47 @@ WHY THIS EXISTS
 The ranking is three strict tiers: biggest modeled edge -> highest
 projected run total -> biggest weather/park swing. TIER 2 NEVER FIRES.
 engines/run_total needs each team's runs scored and runs allowed per
-game, nothing on disk carries those for MLB, so proj_total is
-deliberately never written and the sort falls through to tier 3.
+game; nothing on disk carries those for MLB, so proj_total is never
+written and the sort falls through to tier 3.
 
 HANDOFF is explicit about the two ways to get this wrong:
 
   1. DO NOT substitute the O/U signal count. It counts signals toward
      Over. It is not a number of runs, and ranking by it would be a
      different quantity wearing the decided label.
-  2. A new source is a new failure mode — PROBE IT FIRST. This repo has
-     shipped correct-and-tested code with no working source behind it
-     (rule 22, parse_homepage_schedule) and paid for it.
+  2. A new source is a new failure mode — PROBE IT FIRST.
 
-This probe answers one question and writes nothing: does the MLB Stats
-API this app ALREADY depends on expose season runs-scored and
-runs-allowed per team, for all 30 clubs, in one call?
+WHY THIS IS THE SECOND VERSION — READ BEFORE TRUSTING ANY VERDICT
 
-Using statsapi rather than a new scraper on purpose. calibration.py,
-roster.py and weather_engine already call it, so it carries no new
-dependency, no new terms question, and no new IP-blocking risk — the
-three things that have sunk source additions here before.
+v1 tried ONE query shape (`hydrate=stats(group=[hitting,pitching],
+type=season)`), got zero clubs with runs, and printed "NOT BUILDABLE
+HERE: tier 2 needs a different source".
 
-HOW TO READ THE RESULT
+**That verdict was not earned.** Zero out of thirty is the signature of
+a malformed query, not of a missing field — a real absence would more
+likely show partial or odd data. v1 could not tell "the API does not
+carry this" apart from "my hydrate syntax was wrong", because it never
+checked whether ANY stats block came back. It reported the first as if
+it had ruled out the second.
 
-  TIER 2 BUILDABLE     all 30 clubs returned RS and RA. The follow-on
-                       work is writing those into the slate and letting
-                       run_total compute proj_total; the ranking is
-                       already wired and tested for it.
-  PARTIAL              says how many clubs are missing. Missing is not
-                       zero (best_games' own rule) — a partial source
-                       means tier 2 stays dark, not that it half-fires.
-  NOT BUILDABLE HERE   the fields are absent. Tier 2 needs a different
-                       source and this probe was the cheap way to find
-                       out.
+That is precisely the confident wrong diagnosis this repo has a rule
+against, and recording it would have closed tier 2 as impossible on the
+strength of a typo.
+
+v2 therefore tries SEVERAL documented query shapes and, for each,
+reports what actually came back — team count, whether stats blocks are
+present at all, and whether a runs field exists. **The diagnostics are
+the output; the verdict is a summary of them.** If every shape fails
+identically, that is finally evidence about the API rather than about
+this script.
+
+Using statsapi rather than a new scraper on purpose: calibration.py,
+roster.py and weather_engine already call it, so it adds no dependency,
+no terms question, and no new IP-blocking risk.
 """
 from __future__ import annotations
 
+import json
 import sys
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -51,74 +56,126 @@ import requests
 
 SEASON = datetime.now(ZoneInfo("America/New_York")).year
 
-# hydrate=stats(...) returns season totals inline with the team list, so
-# this is ONE call for all 30 clubs rather than 30 calls — the version
-# that gets rate-limited in CI is the one that loops.
-URL = (
-    "https://statsapi.mlb.com/api/v1/teams"
-    f"?sportId=1&season={SEASON}"
-    "&hydrate=stats(group=[hitting,pitching],type=season)"
-)
+# Several documented shapes for the same question. Named so the log says
+# which one worked rather than just that something did.
+CANDIDATES = [
+    ("teams/stats hitting",
+     f"https://statsapi.mlb.com/api/v1/teams/stats"
+     f"?season={SEASON}&sportId=1&stats=season&group=hitting"),
+    ("teams/stats pitching",
+     f"https://statsapi.mlb.com/api/v1/teams/stats"
+     f"?season={SEASON}&sportId=1&stats=season&group=pitching"),
+    ("teams hydrate combined (v1's shape)",
+     f"https://statsapi.mlb.com/api/v1/teams"
+     f"?sportId=1&season={SEASON}"
+     f"&hydrate=stats(group=[hitting,pitching],type=season)"),
+    ("teams hydrate hitting only",
+     f"https://statsapi.mlb.com/api/v1/teams"
+     f"?sportId=1&season={SEASON}&hydrate=stats(type=season,group=hitting)"),
+]
 
 
-def _runs(team: dict, group: str):
-    """Season runs for one stat group, or None.
+def _walk_for_runs(node, depth=0):
+    """Find any dict carrying a 'runs' value. Returns (runs, gamesPlayed).
 
-    Returns None rather than 0 for an absent field. MISSING IS NOT ZERO
-    is the rule the whole ranking module is built on: a club with no
-    measured runs must not read as a club that scored none.
+    Walks rather than assuming a shape, because the shape is exactly
+    what v1 got wrong. Depth-capped so a deep payload cannot hang.
     """
-    for block in team.get("stats") or []:
-        gname = ((block.get("group") or {}).get("displayName")
-                 or (block.get("group") or {}).get("name") or "")
-        if gname.lower() != group:
-            continue
-        for split in block.get("splits") or []:
-            stat = split.get("stat") or {}
-            if stat.get("runs") is not None:
-                return stat["runs"], stat.get("gamesPlayed")
+    if depth > 8:
+        return None
+    if isinstance(node, dict):
+        if node.get("runs") is not None:
+            return node.get("runs"), node.get("gamesPlayed")
+        for v in node.values():
+            hit = _walk_for_runs(v, depth + 1)
+            if hit:
+                return hit
+    elif isinstance(node, list):
+        for v in node:
+            hit = _walk_for_runs(v, depth + 1)
+            if hit:
+                return hit
     return None
 
 
+def _diagnose(payload):
+    """What actually came back — the part v1 never printed."""
+    if not isinstance(payload, dict):
+        return "payload is not an object", 0, 0
+    top = ", ".join(sorted(payload.keys())[:5]) or "(no keys)"
+    teams = payload.get("teams") or payload.get("stats") or []
+    if not isinstance(teams, list):
+        teams = []
+    with_stats = sum(
+        1 for t in teams
+        if isinstance(t, dict) and (t.get("stats") or t.get("splits")))
+    return f"top keys: {top}", len(teams), with_stats
+
+
 def main() -> int:
-    try:
-        r = requests.get(URL, timeout=25)
-    except Exception as e:
-        print(f"FETCH FAILED: {type(e).__name__}")
-        return 1
-    if r.status_code != 200:
-        print(f"FETCH FAILED: HTTP {r.status_code}")
-        return 1
+    verdict_shape = None
+    verdict_count = 0
 
-    teams = (r.json() or {}).get("teams") or []
-    if not teams:
-        print("FETCH OK but zero teams returned — payload shape changed")
-        return 1
+    for label, url in CANDIDATES:
+        try:
+            r = requests.get(url, timeout=25)
+        except Exception as e:
+            print(f"{label:36s} ERROR {type(e).__name__}")
+            continue
 
-    complete, missing = [], []
-    for t in teams:
-        rs = _runs(t, "hitting")
-        ra = _runs(t, "pitching")
-        if rs and ra and rs[1] and ra[1]:
-            complete.append((t.get("name"), rs[0], ra[0], rs[1]))
-        else:
-            missing.append(t.get("name") or "?")
+        if r.status_code != 200:
+            print(f"{label:36s} HTTP {r.status_code}")
+            continue
 
-    if len(complete) == len(teams) == 30:
-        sample = complete[0]
-        print(f"TIER 2 BUILDABLE: {len(complete)}/30 clubs have RS and RA. "
-              f"e.g. {sample[0]}: {sample[1]} RS / {sample[2]} RA in "
-              f"{sample[3]} G")
-        return 0
+        try:
+            payload = r.json()
+        except Exception:
+            print(f"{label:36s} 200 but body is not JSON ({len(r.content)}b)")
+            continue
 
-    if complete:
-        print(f"PARTIAL: {len(complete)}/{len(teams)} clubs complete, "
-              f"missing {', '.join(missing[:4])}"
-              f"{'...' if len(missing) > 4 else ''} — tier 2 stays dark")
-        return 0
+        shape, n_entries, n_with_stats = _diagnose(payload)
+        entries = payload.get("teams") or payload.get("stats") or []
+        if not isinstance(entries, list):
+            entries = []
 
-    print(f"NOT BUILDABLE HERE: 0/{len(teams)} clubs carry season runs; "
-          f"tier 2 needs a different source")
+        with_runs = 0
+        sample = None
+        for e in entries:
+            hit = _walk_for_runs(e)
+            if hit and hit[0] is not None:
+                with_runs += 1
+                if sample is None:
+                    nm = (e.get("team") or {}).get("name") if isinstance(
+                        e.get("team"), dict) else e.get("name")
+                    sample = (nm or "?", hit[0], hit[1])
+
+        print(f"{label:36s} 200 | {n_entries:>3} entries | "
+              f"{n_with_stats:>3} w/stats | {with_runs:>3} w/runs | {shape}")
+        if sample:
+            print(f"{'':36s}      e.g. {sample[0]}: {sample[1]} runs "
+                  f"in {sample[2]} G")
+
+        if with_runs > verdict_count:
+            verdict_count, verdict_shape = with_runs, label
+
+    print("-" * 72)
+    if verdict_count >= 30:
+        print(f"TIER 2 BUILDABLE: {verdict_count} clubs carry season runs via "
+              f"'{verdict_shape}'. Next step is writing RS/RA into the slate "
+              f"and letting run_total compute proj_total — the ranking is "
+              f"already wired and tested for it.")
+    elif verdict_count:
+        print(f"PARTIAL: best shape '{verdict_shape}' returned {verdict_count} "
+              f"club(s) with runs, not 30. MISSING IS NOT ZERO — tier 2 stays "
+              f"dark rather than half-firing. Find why the rest are absent "
+              f"before building on this.")
+    else:
+        print("NO SHAPE RETURNED RUNS. Read the per-row diagnostics above "
+              "before concluding the API lacks this: if the rows show "
+              "entries but 0 w/stats, the query is still wrong and the next "
+              "step is the endpoint docs, NOT a new source. Only if entries "
+              "arrive WITH stats blocks and still no runs field is this "
+              "evidence about statsapi itself.")
     return 0
 
 
