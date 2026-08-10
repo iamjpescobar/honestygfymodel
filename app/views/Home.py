@@ -32,7 +32,8 @@ from styles.kc_theme import (page_header, card, footer, data_timestamp, COLOR,
                              card_open, card_close)
 from engines.calibration import BOARDS, _load, summary
 from engines.slate_guard import load_slate, staleness_note
-from engines.best_games import rank_games, why_first, park_swing, has_any_signal
+from engines.best_games import (rank_games, why_first, park_swing,
+                                has_any_signal, edge_reasons)
 
 # Same separator KBO and NPB use. Defined here rather than imported from
 # a view: views do not import each other, and one character is not worth
@@ -578,6 +579,23 @@ def _render_best_games():
             f'<div style="color:{COLOR["accent"]}; font-size:var(--lc-text-small); '
             f'font-weight:700; margin-bottom:var(--lc-space-sm);">{reason}</div>',
             unsafe_allow_html=True)
+
+    # THE REASONING, not just the conclusion.
+    #
+    # calibration_picks publishes the actual comparisons behind the grade
+    # ("WHIP: edge Boston Red Sox (1.28 vs 1.55)") and nothing read them,
+    # while the card showed a bare letter. On a page whose entire claim is
+    # "here is where the model has an opinion", the opinion's basis is the
+    # product — a B with no reasons is asking to be trusted, and this site
+    # exists not to do that.
+    _why = edge_reasons(lead) if lead else []
+    if _why:
+        st.markdown(
+            f'<div style="color:{COLOR["text_muted"]}; '
+            f'font-size:var(--lc-text-tiny); line-height:1.5; '
+            f'margin-bottom:var(--lc-space-sm);">'
+            + "<br>".join(f"\u00b7 {w}" for w in _why) +
+            f'</div>', unsafe_allow_html=True)
 
     for i, g in enumerate(ranked):
         away, home = g.get("away") or "TBD", g.get("home") or "TBD"
