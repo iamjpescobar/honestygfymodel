@@ -2,9 +2,6 @@
 WNBA Defense Matchup — the board of who's facing the softest defense
 tonight, by position. Formula and floors in engines/wnba_defense.py.
 """
-import json
-from pathlib import Path
-
 import pandas as pd
 import streamlit as st
 from engines.slate_guard import load_slate, staleness_note
