@@ -10,6 +10,94 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — 2026-08-10, KBO probe filter
+
+**Suite 79 files, FAILING: none.** One file changed, one added.
+
+### THE KBO PROBE COULD NOT HAVE ANSWERED ITS OWN QUESTION
+
+v2 reported *"NAMES ARE ON THE PAGE: 10 candidates near starter markers,
+server-rendered, no XHR. The KBO migration is unblocked."* It was not.
+The ten were:
+
+    기록이 됩니다 등록 라인업 선택 업데이트 전력 전력분석 전력비교 키플레이
+
+"is recorded", "will be", "register", "lineup", "select", "update",
+"power", "power analysis", "power comparison", "key play". UI vocabulary,
+every one. **Two independent causes, both now fixed.**
+
+**1. THE CORPUS.** The probe counted 선발 in RAW html, so eight
+occurrences inside a `setPreview()` function and a **commented-out alert
+string** were read as a server-rendered table. A commented-out alert is
+not even executed. It now strips `<script>`/`<style>` and prints BOTH
+counts, because the gap is the finding: raw high + rendered zero means
+the page references starters and fetches them over AJAX — a completely
+different next step from "parse the table".
+
+**2. THE FILTER.** `[가-힣]{2,4}` plus a hand-written stoplist. A
+stoplist cannot win: it needs the word foreseen, and rendered content has
+its own nav labels and headers, so the same false positive would return
+from a different corpus. Now structural — **exactly three syllables, and
+the first is a common Korean surname.** Korean names are overwhelmingly
+surname + two-syllable given name; surnames are a small closed set.
+
+Syllable count must come first: 전 is a genuine surname, so 전력 and
+전력분석 sail through a surname check alone.
+
+**Precision over recall, deliberately.** Rare two- and four-syllable
+names are dropped. For a probe that is the right trade — a missed name
+understates, an invented one misdirects and cost a session here.
+
+**MY FIRST VERSION LEAKED and I only caught it by testing against the
+actual ten.** 기록이 passed: 기 IS a surname, and the word is a noun plus
+a subject particle. The rare surname tail (기 반 왕 금 옥 육 맹 제 모 탁
+국 어 은 편 용) is all genuine surnames AND common noun syllables — it
+buys almost no recall and costs precision on every noun starting with
+one. Dropped. Result: **0/10 UI words accepted, 11/11 real KBO pitcher
+names caught.**
+
+**It is still a heuristic.** 이용자 ("user") is three syllables starting
+with the commonest surname in Korea; no syllable rule separates that from
+a person. That is why the probe now prints the ACCEPTED names *and* the
+REJECTS, and why the verdict says to check them against tonight's actual
+probables. A count can be wrong in silence; a list cannot.
+
+### `tests/test_kbo_name_filter.py` (NEW, #79)
+
+Pins the exact ten verbatim, asserts real names still pass (a filter
+rejecting everything would satisfy the first half alone), and asserts the
+DATA FLOW rather than the presence of a line.
+
+**That last part was a bug in my own test.** It first checked only that a
+`re.sub(r"<script` call existed somewhere. Setting `rendered = html` on
+the line above left that call in place doing nothing and the assertion
+stayed green — the same failure as rule 26, where an assertion matched a
+workflow's comment instead of its command. It now walks the AST: every
+`rendered` assignment must be a Call, and nothing may slice raw `html`
+afterwards. Six negative controls, all confirmed red.
+
+### NOT DONE, and needs your other session
+
+**The NPB label is NOT in this repo.** `grep -c "NO ADVANCE" app/views/NPB.py`
+returns 0. A version of it existed in my workspace — well written, citing
+run 85245341493 and correctly distinguishing "no forward WARNING"
+(measured: 109 upcoming games, zero risk vocabulary) from "never cancels
+in advance" (NOT measured: zero `<div class="cancel">` anywhere on the
+page, so the case had no chance to appear). It was never committed. Find
+it in that session or re-write it — do NOT let the two of you write it
+twice.
+
+### Still open
+- **Tier 2 (`proj_total`)** — MLB probe correctly refused to half-fire:
+  the one entry with runs is the LEAGUE AGGREGATE (591 runs in 118 G),
+  not a club. Standings endpoint is the untested lead.
+- **KBO AJAX** — `setPreview(... awayPit, homePit)` and
+  `S2iAjaxHtml({url: "/Schedule/GameCenter..."})` are in the CONTEXT
+  output. Extract the URL verbatim and call it with a real gameId. Do not
+  guess `.asmx` names again — v1 did and got 401/401/500.
+
+---
+
 ## PICK UP HERE — state as of 2026-08-10 (evening)
 
 Perf audit + correctness sweep on the shipped item C. **Suite 77 files**
@@ -1413,7 +1501,7 @@ the site's own advance warning is a free check on this number.
 - Pages in **`app/views/`**, deliberately NOT `pages/` — Streamlit
   auto-registers `pages/` and would expose every page pre-auth.
 - Engines in `app/engines/`. Theme in `app/styles/kc_theme.py`.
-- Tests in `tests/` — **78 files, plain scripts, not pytest.**
+- Tests in `tests/` — **79 files, plain scripts, not pytest.**
 - Data comes off disk; the nightly publishes a release asset.
 - `requirements.txt` fully pinned, including transitives.
 
