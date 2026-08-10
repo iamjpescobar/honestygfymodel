@@ -1,0 +1,68 @@
+name: Open-question probes
+
+# Manual only. Runs the three probes that stand between HANDOFF's
+# remaining open items and a decision on each.
+#
+# WHY THESE CANNOT RUN IN THE CODESPACE. npb.jp and koreabaseball.com
+# geo-fence and rate-limit by region, and ESPN already taught this repo
+# that an IP-range result from one machine predicts nothing about what
+# the nightly or Render sees. A green run here is evidence; a green run
+# on an iPad is a rumour.
+#
+# THREE SEPARATE JOBS, ON PURPOSE. They share nothing and answer
+# unrelated questions. As sequential steps, a Japanese site being down
+# would hide the MLB answer, and the whole point is to come away with
+# three verdicts rather than the first failure.
+#
+# Each probe writes nothing, commits nothing, and prints a verdict line.
+# Read the verdict, then update HANDOFF with what it said — including
+# when it says the feature cannot be built, which is a real answer and
+# closes the item just as well as a yes.
+#
+# Touches nothing: no commit, no release, no deploy hook.
+on:
+  workflow_dispatch:
+
+jobs:
+  npb-void:
+    name: NPB forward-looking cancellation warning?
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      # Only requests. These probes import nothing from the app on
+      # purpose: they are reconnaissance on outside sources, and
+      # coupling them to the pipeline would let a change here break the
+      # nightly.
+      - run: pip install -c requirements.txt requests
+      - name: Probe npb.jp
+        run: python npb_void_probe.py
+
+  mlb-rsra:
+    name: Team RS/RA for ranking tier 2?
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: pip install -c requirements.txt requests
+      - name: Probe statsapi
+        run: python mlb_rsra_probe.py
+
+  kbo-probables:
+    name: KBO probables endpoint?
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: pip install -c requirements.txt requests
+      - name: Probe koreabaseball.com
+        run: python kbo_probables_probe.py
