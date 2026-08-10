@@ -293,7 +293,13 @@ if games is None:
         )
     st.markdown(card_close(), unsafe_allow_html=True)
     st.markdown(badge("MLB \u2014 live now", "good") + badge("KBO \u2014 in development", "accent"), unsafe_allow_html=True)
+    # Both cards here too. Leaderboards are SEASON data — they do not
+    # depend on tonight's slate existing, which is exactly why they are
+    # worth showing on the day the slate hasn't shipped. Each renderer
+    # already returns early when its own file is empty, so this cannot
+    # draw a card with nothing in it.
     _render_pitching_leaders()
+    _render_batting_leaders()
     footer()
     st.stop()
 
@@ -321,7 +327,21 @@ if generated_at:
         unsafe_allow_html=True,
     )
 
+# BOTH leaders cards, not one.
+#
+# _render_batting_leaders() was written, correct, and had NO CALL SITE.
+# kbo_precompute has been fetching, sorting and writing batters.json on
+# every single run — it even prints "wrote N batters to batters.json" —
+# and the board showed nobody. Pitching rendered; batting was published
+# into silence.
+#
+# Rule 20, in its third disguise on this repo: not "computed and never
+# rendered" and not "written and never called", but a finished RENDERER
+# that nothing invokes. tests/test_no_dead_renderers.py now fails on any
+# _render_* in a view without a call site in that file, because this is
+# a class of bug and not one instance.
 _render_pitching_leaders()
+_render_batting_leaders()
 _render_k_projections()
 if not games and not _stale:
     st.info("No KBO games on today\'s schedule \u2014 likely a league off-day.")
