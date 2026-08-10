@@ -20,6 +20,7 @@ gets quieter the worse it is. A completely broken nightly leaves a site
 that looks entirely normal and is entirely wrong.
 """
 import json
+import re
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -183,6 +184,139 @@ finally:
         _f.write_text(_prev)
     elif _f.exists():
         _f.unlink()
+
+# --- "not built yet" is not "the build is broken" ---------------------
+#
+# MLB's slate needs probable starters, so slate-picks runs at 1, 5 and 7
+# PM ET. From midnight to 1 PM — THIRTEEN HOURS, over half the day —
+# there is legitimately no MLB slate for today, and the page was
+# reporting it with the sentence for a broken workflow: "the slate-picks
+# job hasn't published since". Fired daily, at a workflow that is fine.
+#
+# The repo already learned this once. The WNBA warning said "the nightly
+# fetch may be failing" through the All-Star break, when the fetch was
+# perfect and the league was not playing. A CONFIDENT WRONG DIAGNOSIS IS
+# WORSE THAN NO MESSAGE.
+#
+# The danger in the fix is that it quietly becomes "suppress the warning
+# when it is inconvenient", so these cases pin BOTH directions: when the
+# gentle message must appear, and — more importantly — when the loud one
+# must survive.
+import engines.slate_guard as _sg
+
+_MLB = ROOT / "app" / "data" / "mlb"
+_MLB.mkdir(parents=True, exist_ok=True)
+_mf = _MLB / "games.json"
+_mprev = _mf.read_text() if _mf.exists() else None
+
+
+def _note_at(hour, slate_date, league="mlb", on="2026-08-10"):
+    """staleness_note() as if the clock read `hour` in the league's tz."""
+    if slate_date:
+        _mf.write_text(json.dumps({"slate_date_et": slate_date,
+                                   "games": [{"away": "A", "home": "B"}]}))
+    elif _mf.exists():
+        _mf.unlink()
+    _real = _sg.datetime
+
+    class _Fake(_real):
+        @classmethod
+        def now(cls, tz=None):
+            return _real(2026, 8, 10, hour, 0, tzinfo=tz)
+
+    _sg.datetime = _Fake
+    try:
+        return _sg.staleness_note(league, on)
+    finally:
+        _sg.datetime = _real
+
+
+try:
+    _cases = [
+        # hour, on disk,       must contain,        must NOT contain
+        (6,  None,         "builds around",     "hasn't published"),
+        (6,  "2026-08-09", "builds around",     "hasn't published"),
+        # A THREE-DAY-OLD SLATE IS A REAL OUTAGE AT ANY HOUR. This is the
+        # case that stops the branch becoming a blanket mute.
+        (6,  "2026-08-07", "hasn't published",  "builds around"),
+        # After the build hour, nothing is excused.
+        (15, None,         "No MLB slate",      "builds around"),
+        (15, "2026-08-09", "hasn't published",  "builds around"),
+    ]
+    for _h, _sd, _want, _not in _cases:
+        _n = _note_at(_h, _sd)
+        _label = f"{_h:02d}:00 with {_sd or 'no slate'}"
+        if _want not in _n:
+            failures.append(f"{_label}: expected {_want!r} in the note, got {_n!r}")
+        elif _not in _n:
+            failures.append(f"{_label}: note still says {_not!r} — {_n!r}")
+        else:
+            print(f"PASS: {_label} reads as "
+                  f"{'not due yet' if 'builds' in _want else 'a fault'}")
+
+    # THE OTHER THREE LEAGUES MUST BE UNTOUCHED. They come off the
+    # nightly, which runs before anyone is awake, so "no slate today" at
+    # 6 AM really is a fault for them. _FIRST_BUILD_HOUR having only an
+    # mlb key is the mechanism — this fails if anyone gives it a default.
+    for _lg, _key in (("kbo", "slate_date_kst"), ("npb", "slate_date_jst"),
+                      ("wnba", "slate_date_et")):
+        _d = ROOT / "app" / "data" / _lg
+        _d.mkdir(parents=True, exist_ok=True)
+        _lf = _d / "games.json"
+        _lprev = _lf.read_text() if _lf.exists() else None
+        try:
+            _lf.write_text(json.dumps({_key: "2026-08-09",
+                                       "games": [{"away": "A", "home": "B"}]}))
+            _real = _sg.datetime
+
+            class _F(_real):
+                @classmethod
+                def now(cls, tz=None):
+                    return _real(2026, 8, 10, 6, 0, tzinfo=tz)
+
+            _sg.datetime = _F
+            try:
+                _n = _sg.staleness_note(_lg, "2026-08-10")
+            finally:
+                _sg.datetime = _real
+            if "builds around" in _n:
+                failures.append(f"{_lg} got MLB's not-due-yet message; only "
+                                f"MLB has a mid-day build clock")
+            else:
+                print(f"PASS: {_lg} at 06:00 still reports a stale slate as a fault")
+        finally:
+            if _lprev is not None:
+                _lf.write_text(_lprev)
+            elif _lf.exists():
+                _lf.unlink()
+finally:
+    if _mprev is not None:
+        _mf.write_text(_mprev)
+    elif _mf.exists():
+        _mf.unlink()
+
+# THE CONSTANT AND THE CRON MUST NOT DRIFT APART.
+#
+# _FIRST_BUILD_HOUR["mlb"] = 13 duplicates the first cron in
+# slate-picks.yml ("0 17 * * *" UTC = 1 PM EDT). Reading a workflow file
+# at request time to render a sentence would be worse than duplicating
+# it, so the duplication is deliberate — and pinned here, because an
+# unpinned duplicate is just two things that will disagree later.
+_cron = re.findall(r'cron:\s*"(\d+)\s+(\d+)', 
+                   open(ROOT / ".github" / "workflows" / "slate-picks.yml").read())
+if not _cron:
+    failures.append("could not read slate-picks.yml's cron schedule")
+else:
+    _utc_hour = int(_cron[0][1])
+    _expected = (_utc_hour - 4) % 24          # UTC -> EDT
+    if _sg._FIRST_BUILD_HOUR.get("mlb") != _expected:
+        failures.append(
+            f"slate-picks' first run is {_utc_hour}:00 UTC ({_expected}:00 ET) "
+            f"but _FIRST_BUILD_HOUR['mlb'] is "
+            f"{_sg._FIRST_BUILD_HOUR.get('mlb')}. The message tells readers "
+            f"when to come back; if the cron moved, that time is now a lie.")
+    else:
+        print("PASS: the build-hour constant still matches slate-picks' cron")
 
 if failures:
     print("\n" + "=" * 68)
