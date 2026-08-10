@@ -31,7 +31,7 @@ list and the real date, so they can say what is actually true — "the
 slate we have is from the 2nd" — instead of presenting it as tonight's.
 """
 import json
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -102,6 +102,43 @@ _WRITER = {
     "npb":  "the nightly build",
     "mlb":  "the slate-picks job",
 }
+
+# WHEN EACH LEAGUE'S SLATE FIRST EXISTS, in the league's own timezone.
+#
+# Only MLB has an entry, and the absence of the others is the mechanism —
+# NOT an oversight. KBO, NPB and WNBA come off the nightly, which runs
+# before anyone is awake, so for them "no slate today" at any hour really
+# is a fault and the loud message is right.
+#
+# MLB is different because its slate needs PROBABLE STARTERS, and MLB
+# posts those one to three hours before first pitch. slate-picks
+# therefore runs at 1, 5 and 7 PM ET. Which means that from midnight
+# until 1 PM — THIRTEEN HOURS, over half the day — there is legitimately
+# no MLB slate for today, and the page was reporting it as
+# "the slate-picks job hasn't published since": the sentence for a broken
+# workflow, fired daily at a workflow that is fine, sending whoever read
+# it to debug something green.
+#
+# This codebase has already made this mistake once. The WNBA staleness
+# warning said "the nightly fetch may be failing" through the All-Star
+# break, when the fetch was perfect and the league simply was not
+# playing. The rule left behind: A CONFIDENT WRONG DIAGNOSIS IS WORSE
+# THAN NO MESSAGE.
+#
+# 13 duplicates the first cron in .github/workflows/slate-picks.yml
+# ("0 17 * * *" UTC). The duplication is real and deliberate — reading a
+# workflow file at request time to render a sentence is worse — so
+# tests/test_slate_guard.py pins the two together and fails if the cron
+# moves without this constant following.
+#
+# DST caveat, stated because it is a real one-hour hole: the cron is
+# fixed in UTC, so 17:00 UTC is 1 PM in EDT and noon in EST. Under EST
+# the job runs an hour before this threshold, so a job that RUNS AND
+# FAILS at noon gets the gentle message for one hour instead of the loud
+# one. That is the safe direction to be wrong in — an hour late to shout
+# beats shouting every morning — but it is not free, so it is written
+# down rather than discovered.
+_FIRST_BUILD_HOUR = {"mlb": 13}
 
 
 def _cfg(league: str):
@@ -217,6 +254,40 @@ def generated_at(league: str):
     return (payload or {}).get(gen_key) or None
 
 
+def _not_built_yet(league: str, on_date: str, slate_date):
+    """True when today's slate is simply not due yet — a fact about the
+    clock, not a fault.
+
+    Deliberately narrow. It fires ONLY when all three hold:
+
+      1. the league has a known daily build hour (MLB alone);
+      2. that hour has not come round yet today, in the league's own
+         timezone;
+      3. what is on disk is either nothing at all, or EXACTLY yesterday's
+         slate.
+
+    Condition 3 is the one that keeps this honest. Overnight, holding
+    yesterday's slate is the normal, expected, healthy state. Holding a
+    slate from three days ago is a real outage at any hour of any day,
+    and must keep the loud message — otherwise this branch quietly
+    becomes "suppress the warning when it is inconvenient", which is the
+    opposite of what it is for.
+    """
+    hour = _FIRST_BUILD_HOUR.get(league.lower())
+    if hour is None:
+        return False
+    _dk, _gk, tz = _cfg(league)
+    if datetime.now(ZoneInfo(tz)).hour >= hour:
+        return False
+    if slate_date is None:
+        return True
+    try:
+        gap = (date.fromisoformat(on_date) - date.fromisoformat(slate_date)).days
+    except (TypeError, ValueError):
+        return False
+    return gap == 1
+
+
 def staleness_note(league: str, on_date: str = None) -> str:
     """A sentence for the user when the slate isn't tonight's, or ''.
 
@@ -228,14 +299,23 @@ def staleness_note(league: str, on_date: str = None) -> str:
     _games, slate_date, ok = load_slate(league, on_date)
     if ok:
         return ""
+    if slate_date is not None and slate_date > on_date:
+        # Not a fault. Say so plainly, or a lookahead reads as a failure.
+        return (f"No {league.upper()} games on {on_date} — showing the next "
+                f"slate, {slate_date}.")
+    if _not_built_yet(league, on_date, slate_date):
+        # Checked BEFORE the two fault branches below, because both of
+        # those describe something going wrong and nothing has.
+        hour = _FIRST_BUILD_HOUR[league.lower()]
+        clock = f"{hour - 12} PM" if hour > 12 else f"{hour} AM"
+        return (f"Tonight's {league.upper()} slate builds around {clock} ET, "
+                f"once MLB posts probable starters. Nothing is shown before "
+                f"then rather than ranking games on data that doesn't exist "
+                f"yet.")
     if slate_date is None:
         return (f"No {league.upper()} slate on disk for {on_date}. Nothing is "
                 f"shown rather than showing an older night's games as "
                 f"tonight's.")
-    if slate_date > on_date:
-        # Not a fault. Say so plainly, or a lookahead reads as a failure.
-        return (f"No {league.upper()} games on {on_date} — showing the next "
-                f"slate, {slate_date}.")
     return (f"The most recent {league.upper()} slate on disk is for "
             f"{slate_date}, not {on_date} — {_WRITER.get(league.lower(), 'the nightly build')} "
             f"hasn't published since. Those games have already been "
