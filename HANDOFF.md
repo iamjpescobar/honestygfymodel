@@ -10,6 +10,106 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — state as of 2026-08-10 (afternoon)
+
+**Everything below this block is still accurate. This is the delta.**
+
+### The red test was the test's own bug, not a leaked fixture
+
+`tests/test_slate_guard.py` was the only failing test. FIX-THIS-NEXT.md
+ranked "a stale fixture on disk" first; **it was wrong, and the way it
+was wrong is the interesting part.**
+
+`staleness_note()` for MLB reads BOTH locations and keeps whichever
+declares the later slate date — `app/data/mlb/games.json` (which the
+test stubbed) and repo-root `data/mlb/games.json` (which it did not
+touch at all). That second path was empty for months, so the omission
+was invisible. The moment `calibration_picks` wrote a REAL dated slate
+there, that file out-dated every fixture the test wrote, every MLB case
+returned `ok=True`, and `staleness_note` returned `''` for all five.
+
+**The test was defeated by the feature it was written to protect.** The
+five assertions were fine; they were never reached. Fixed by backing up,
+blanking and restoring the repo-root path too — the same
+backup/blank/restore the other three leagues already had. Verified with
+a real dated slate in place, and the real file is byte-identical
+afterwards.
+
+Generalises, and it is now rule 27: **a test that stubs a path must stub
+every path the code under test reads.** `_read()` deliberately reads two
+locations; a fixture covering one of them is a fixture covering none.
+
+### Item C's before-1PM state is CONFIRMED LIVE
+
+Screenshot at 11:02 ET: "Tonight's MLB slate builds around 1 PM ET, once
+MLB posts probable starters." Framed section, hairline rule, no false
+alarm. Verify-list step 2 is closed. **Step 3 — the ranked card itself —
+is still unseen**, and needs a look after a same-day `slate-picks` run.
+
+### Decisions taken, so nobody re-opens them
+
+- **Dome flags stay in `intl_venues.py`. CLOSED, decided against.**
+  Moving them to published data would break the "unknown ≠ open"
+  guarantee that `roof()` exists to provide: a fetch failure or partial
+  write would silently return `None` for every venue, where source code
+  cannot fail to load. It also makes a fallback depend on the network
+  that its caller already fell back FROM. And it buys nothing — 12 NPB
+  venues and 11 KBO patterns that change about once a decade are a
+  constant, not data. Same reasoning as `park_factors.py`. **Do not
+  re-propose this as a cold-start fix.**
+- **WNBA Volume now carries season AND L5, paired.** Not a swap. A bare
+  "FTA L5" of 6 is unreadable — the reader cannot tell a player who
+  always draws six from one whose attempts just doubled, and the
+  doubling is the only reason to open the tab. The pair is the signal.
+  L10 deliberately not added: six columns for two stats on a tab already
+  carrying ten, read on an iPad, and L10 sits between two numbers the
+  reader already has.
+  **Stocks stays season-only on purpose** — the precompute windows the
+  COMBINED `stocks` figure but not `stl`/`blk` separately, so there is no
+  `l5_stl` to show, and deriving one from the combined number would put a
+  label on a quantity that isn't what it says. Rule 21 cuts the other
+  way here: the asymmetry is honest because the data is asymmetric.
+- **mykbostats is going, not staying.** Clause 6 forbids betting use.
+  This is no longer "unexamined" — it is decided. See E3 below; the only
+  thing standing between here and dropping it is probables.
+
+### Three probes delivered, NONE of them run yet
+
+All three write nothing, commit nothing, and print a verdict line. **Run
+them before building anything on top of what they ask about** — rule 22
+exists because this repo has shipped correct, tested code with no
+working source behind it.
+
+| script | answers | if the answer is "no" |
+|---|---|---|
+| `npb_void_probe.py` | does npb.jp publish a forward-looking cancellation warning like KBO's? | ship a LABEL saying NPB publishes none, not an invented badge. That still closes the parity gap — rule 21 is about the reader being able to tell, not about both boards having the same badge |
+| `mlb_rsra_probe.py` | can tier 2 (`proj_total`) be built from team RS/RA on statsapi, which we already depend on? | tier 2 stays dark. **Still do not substitute the O/U signal count** — it counts signals toward Over and is not a number of runs |
+| `kbo_probables_probe.py` | is there a direct endpoint for KBO probables, which the rendered page draws client-side? | ship KBO without probables and label the board, rather than keeping a source clause 6 forbids |
+
+`kbo_probables_probe` prints the `.asmx`/`.ashx` URLs the schedule page
+itself references. **If the guessed endpoints 404, that list is the real
+output** — it is ground truth and the guesses are not.
+
+All three must run from **Actions**, not a Codespace: Korean and
+Japanese sites geo-fence and rate-limit by region, and ESPN already
+taught this repo that an IP-range result from a laptop predicts nothing.
+
+### Suite
+
+**76 files** (was 75; `tests/test_wnba_context_windows.py` is new).
+Same five streamlit-only failures in a bare container, green in the
+Codespace.
+
+`test_wnba_context_windows` asserts the PROPERTY, not the columns: for
+every context column, the window named in the header and the window of
+the key behind it must agree, and no recent-form column ships without
+its season baseline. Rename or drop a column and it stays quiet; feed
+"FTA L5" the season key and it goes red. **Three negative controls
+confirmed red** — label/key mismatch, orphaned L5 with no baseline, and
+a windowed key with the window stripped from its header.
+
+---
+
 ## PICK UP HERE — state as of 2026-08-10
 
 **Item C is LIVE and its CI half has really executed.** First real run of
@@ -941,7 +1041,13 @@ QUALIFIED pitchers only — 20 for a 10-team league — so most starters
 have no season line at all. Coverage gap in the source, not a parse
 failure.
 
-### E3. KBO source migration — blocked on one probe.
+### E3. KBO source migration — probe DELIVERED, not yet run.
+**Decided 08-10: mykbostats is going.** `kbo_probables_probe.py` is the
+probe this section asked for. Run it from Actions and read the verdict
+line; if no endpoint exists, ship KBO without probables and label the
+board. See the top block.
+
+### E3 (original note).
 mykbostats clause 6 forbids betting use, so the rest should move to
 `eng.koreabaseball.com`. `DailySchedule.aspx` returns a whole month
 (98KB, ~130 games, a POSTPONED column) in one GET. **Probables are the
@@ -949,9 +1055,12 @@ blocker** — the Korean schedule serves 0 occurrences of 선발/투수/예고,
 drawn client-side. One probe to find the XHR endpoint settles it. Until
 then: keep mykbostats for probables only, or drop them.
 
-### D. Daily cold start — his call needed.
-Dome flags out of `intl_venues.py` into published data so the late
-refresh stops triggering a Render deploy. Not started.
+### D. Daily cold start — CLOSED 08-10, decided against.
+Dome flags STAY in `intl_venues.py`. Reasoning in the top block: it
+would break the "unknown is not open" guarantee, make a fallback depend
+on the network its caller fell back from, and buy nothing on a table
+that changes about once a decade. **Do not re-propose.** The cold-start
+problem itself, if it still bites, needs a different fix.
 
 ### HEAT_CANCEL_C = 35.0 is still UNVERIFIED.
 Matches the commonly cited figure and 폭염경보 criteria but was never
@@ -1067,6 +1176,19 @@ the site's own advance warning is a free check on this number.
     and watch the case go red. This generalises: whenever a sort has a
     fallback, a test of the primary key must be constructed so the
     fallback cannot supply the same answer.
+27. **NEW — a test must stub every path the code under test reads.**
+    `slate_guard._read()` deliberately reads TWO locations and keeps the
+    later-dated one. `test_slate_guard` stubbed only `app/data/`, which
+    was invisible for months because the repo-root path was empty. The
+    day `calibration_picks` wrote a real dated slate there, that file
+    out-dated every fixture, every MLB case returned ok, and five
+    load-bearing assertions passed without ever being reached. **The
+    test was defeated by the feature it was written to protect.** A
+    fixture covering one of two read paths covers neither. Sibling of
+    rule 25: both are a test going green for a reason that has nothing
+    to do with the thing it asserts.
+
+---
 26. **NEW — an assertion about a workflow must read what it RUNS.**
     A test asserting slate-picks commits `data/mlb/games.json` stayed
     green after the path was deleted from the git-add, because the
@@ -1087,7 +1209,7 @@ the site's own advance warning is a free check on this number.
 - Pages in **`app/views/`**, deliberately NOT `pages/` — Streamlit
   auto-registers `pages/` and would expose every page pre-auth.
 - Engines in `app/engines/`. Theme in `app/styles/kc_theme.py`.
-- Tests in `tests/` — **75 files, plain scripts, not pytest.**
+- Tests in `tests/` — **76 files, plain scripts, not pytest.**
 - Data comes off disk; the nightly publishes a release asset.
 - `requirements.txt` fully pinned, including transitives.
 
