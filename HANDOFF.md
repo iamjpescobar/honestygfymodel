@@ -710,7 +710,8 @@ What that failure actually cost, from the run log:
    still one HTTP request — and `main()` calls the two separately. Kept
    separate rather than merged into a tuple return because membership
    of the starters map has to keep meaning "this game has announced
-   starters"; `test_kbo_heat_risk` depends on it.
+   starters"; `test_kbo_homepage_starters` depends on it. (This used to
+   name `test_kbo_heat_risk`, which is DELETED — see O1-original.)
 2. **`tests/test_return_arity.py` (NEW, test #67).** Static, no imports,
    no network. Parses each pipeline file, works out how many values each
    module-level function can return, and flags any call site in that file
@@ -819,21 +820,41 @@ KBO shows a signal NPB does not, and a missing badge is unreadable —
 it means "no risk" on one board and "not measured" on the other. Check
 npb.jp's schedule markup before building anything else on this.
 
-**`fetch_homepage_conditions()` is still orphaned.** It duplicates
-`void_risk` for today only, off a second request. Now that the
-schedule page covers the whole week, it is redundant — delete it and
-say why, or keep it as a cross-check and wire it. Do not leave it
-neither.
+**`fetch_homepage_conditions()` — RESOLVED 2026-08-10, deleted.** See
+O1-original below for the reasoning and for where its test's properties
+went.
 
-### O1-original (kept for the reasoning). `fetch_homepage_conditions()`
-It parses the site's own **`Chance of Heat Cancellation`** warning off
-the homepage and nothing calls it. Weather moved to Open-Meteo, which
-was right — but Open-Meteo can only give a temperature against
-`HEAT_CANCEL_C`, and that threshold is UNVERIFIED (below). The site's
-warning is the *league's actual judgement*, published in advance, and
-it is the one thing our own forecast cannot reproduce. Either wire it
-back in as a second, clearly-labelled signal or delete it and say why.
-Right now it is neither.
+### O1-original — CLOSED 2026-08-10. Deleted, and here is the why.
+Open across four sessions as "delete it and say why, or keep it as a
+cross-check and wire it — do not leave it neither." Deleted.
+
+The argument FOR wiring it was real and is worth recording, because it
+is why this sat open so long: Open-Meteo only gives a temperature
+against `HEAT_CANCEL_C`, and that threshold is still UNVERIFIED, whereas
+the site's own warning is the *league's actual judgement*, published in
+advance. That is a thing our forecast genuinely cannot reproduce.
+
+It was answered by V3. `parse_week()` now reads `VOID_RISK_PAT` off the
+SCHEDULE page — the same league judgement, quoted verbatim, for THE
+WHOLE WEEK instead of today only. So the signal was never lost; it was
+already being read better, from a page already fetched. Wiring the
+orphan would have meant two answers to one question from two requests,
+with no rule for which wins.
+
+Deleted with it: `parse_homepage_conditions()`, `HEAT_RISK_PAT`,
+`TEMP_PAT`, and `tests/test_kbo_heat_risk.py` (**76 -> 75 test files**;
+it tested only those two functions, so keeping it meant keeping dead
+code to keep a test green).
+
+**Every property that test held was checked for a home before deleting,
+not assumed.** All but one were already covered — warning-vs-decision by
+`test_kbo_void_signals` (and against the LIVE reader, which is strictly
+better), and the leak/absent/independence checks by
+`test_kbo_homepage_starters`. The one exception, "the two readers are
+separate functions", was MOVED into `test_kbo_homepage_starters` along
+with a new check that the deleted readers stay deleted. Deleting a test
+that guards a real property, because the code it happened to name went
+away, is how a guarantee evaporates without anyone deciding to drop it.
 
 ### W2. Open-Meteo now retries once. Watch that it is enough.
 Run 84398190888 fetched ten dates; nine succeeded and the ONE that
@@ -1066,7 +1087,7 @@ the site's own advance warning is a free check on this number.
 - Pages in **`app/views/`**, deliberately NOT `pages/` — Streamlit
   auto-registers `pages/` and would expose every page pre-auth.
 - Engines in `app/engines/`. Theme in `app/styles/kc_theme.py`.
-- Tests in `tests/` — **76 files, plain scripts, not pytest.**
+- Tests in `tests/` — **75 files, plain scripts, not pytest.**
 - Data comes off disk; the nightly publishes a release asset.
 - `requirements.txt` fully pinned, including transitives.
 
