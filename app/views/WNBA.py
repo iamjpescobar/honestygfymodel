@@ -11,7 +11,11 @@ from engines.matchup_grades_intl import grade_wnba_matchup, render_matchup_grade
 from engines.live_sync import sync_latest_button
 from engines.trend_chart import window_hit_chips, render_trend_bars
 from engines.wnba_logos import logo_url_by_id
-from engines.slate_guard import (load_slate, staleness_note,
+# today_for comes from slate_guard rather than a datetime.now() here on
+# purpose: the guard owns each league's timezone vocabulary, and a
+# second copy of "what is today for the WNBA" in a view is precisely how
+# a reader drifts out from under the guard (see slate_guard's docstring).
+from engines.slate_guard import (load_slate, staleness_note, today_for,
                                  generated_at as slate_guard_generated_at)
 
 # Theme injection lives in app.py, which renders once per script run
@@ -482,8 +486,13 @@ TAB_NOTES = {
     "Pts+Reb": "Points + rebounds combined \u2014 a standard sportsbook combo market (PR).",
     "Pts+Ast": "Points + assists combined \u2014 a standard sportsbook combo market (PA).",
     "Reb+Ast": "Rebounds + assists combined \u2014 a standard sportsbook combo market (RA).",
-    "Stocks": "Stocks = steals + blocks combined \u2014 the STL/BLK columns show the season split.",
-    "Volume": "FGA per game \u2014 shot volume drives points props; FTA and TO shown for context.",
+    # These two used to carry the window for their context columns in
+    # prose ("the STL/BLK columns show the season split"). The window now
+    # rides in the column header instead, where it travels with the
+    # number — a caption under a table is not attached to anything, and
+    # is read after the columns it was meant to qualify, if at all.
+    "Stocks": "Stocks = steals + blocks combined \u2014 STL and BLK are the season split.",
+    "Volume": "FGA per game \u2014 shot volume drives points props; FTA and TO are season rates, for context.",
 }
 
 
@@ -851,12 +860,41 @@ def _render_slate():
                                     "L5": p.get(l5_k), "L10": p.get(l10_k),
                                     "vs OPP": p.get(h2h_k), "H2H GP": p.get("h2h_gp"),
                                 }
+                                # CONTEXT COLUMNS CARRY THEIR WINDOW IN THE
+                                # HEADER.
+                                #
+                                # The four columns above are explicitly
+                                # Season / L5 / L10 / vs OPP. These sit
+                                # immediately to their right and were bare
+                                # "FTA", "TO", "STL", "BLK" — all SEASON
+                                # values, with nothing saying so. Read left
+                                # to right, a season FTA lands one column
+                                # after an L10 FGA and inherits its window
+                                # in the reader's head.
+                                #
+                                # That is the same failure as the switch
+                                # hitter's bare "S": two different things
+                                # rendered identically, and the reader has
+                                # no way to tell them apart from what is on
+                                # screen. Only the Stocks tab's caption
+                                # mentioned it, and a caption under a table
+                                # does not travel with a column.
+                                #
+                                # NOTE for whoever wants these windowed:
+                                # wnba_precompute already publishes l5_fta,
+                                # l10_fta, l5_to and l10_to — computed every
+                                # night, read by nothing. Switching these to
+                                # recent form is a data-free change. It is
+                                # left as a deliberate choice rather than
+                                # made here, because it costs columns on an
+                                # iPad and the primary stat is what the tab
+                                # is for.
                                 if label == "Stocks":
-                                    row["STL"] = p.get("stl")
-                                    row["BLK"] = p.get("blk")
+                                    row["STL szn"] = p.get("stl")
+                                    row["BLK szn"] = p.get("blk")
                                 if label == "Volume":
-                                    row["FTA"] = p.get("fta")
-                                    row["TO"] = p.get("to")
+                                    row["FTA szn"] = p.get("fta")
+                                    row["TO szn"] = p.get("to")
                                     row["FG%"] = p.get("fg_pct")
                                 if label == "Points":
                                     row["FG%"] = p.get("fg_pct")
@@ -964,13 +1002,50 @@ def _render_slate():
     return any_live
 
 
-any_live_now = bool(_live_overrides()) and any(
-    (_live_overrides().get((g.get("away", ""), g.get("home", ""))) or {}).get("status") == "in progress"
+# WHY THE POLL CONDITION IS "COULD GO LIVE", NOT "IS LIVE"
+#
+# This used to read: poll every 75s if any game is ALREADY in progress.
+# st.fragment fixes run_every at the moment the fragment is created, and
+# a fragment auto-rerun does not re-run module scope — so the interval
+# was decided once, from a snapshot taken before the fragment ever ran,
+# and nothing could change it afterwards.
+#
+# The consequence was that live tracking only worked if you happened to
+# load the page AFTER tipoff. Open the board at 6:55 for a 7:00 game and
+# it polled never: the condition was false when the module ran, the
+# fragment inherited run_every=None, and the only way to start it was a
+# manual reload. That is exactly the "live scores don't work" report,
+# and it is a starting problem, not a fetching one — engines/espn_wnba
+# was fine the whole time.
+#
+# So the condition is now the one that can be answered correctly BEFORE
+# the fact: is there a game tonight that has not finished yet. That
+# covers pre-tipoff through the last final, which is the whole window
+# where a refresh could tell you something new.
+#
+# The cost is bounded and small. _live_overrides is cache_data with a
+# 60s TTL shared across sessions, so N viewers still produce at most one
+# real fetch a minute; a 75s fragment on an evening slate is a handful
+# of cache hits. Once every game is final the next full rerun drops the
+# polling, and a slate that is not today's never starts it.
+_all_final = all(
+    (g.get("status") or "scheduled") in ("final", "final (tie)") or g.get("final")
     for g in games
 )
+_slate_is_tonight = slate_date == today_for("wnba")
+_could_go_live = bool(games) and _slate_is_tonight and not _all_final
 
-slate = st.fragment(run_every="75s" if any_live_now else None)(_render_slate)
-slate()
+slate = st.fragment(run_every="75s" if _could_go_live else None)(_render_slate)
+
+# THE FRAGMENT'S OWN ANSWER, not a second one computed out here.
+#
+# _render_slate already works out whether anything is in progress, from
+# the same live payload it just drew the cards with — and its return
+# value was being thrown away while this file recomputed the same fact
+# separately at module scope. Two answers to one question, from two
+# reads at two different times, is how they drift. The caption below now
+# says what the board actually rendered.
+any_live_now = bool(slate())
 
 if generated_at:
     live_note = (" \u00b7 Live scores refresh about every minute while games are in progress."
