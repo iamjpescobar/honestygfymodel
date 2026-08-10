@@ -391,8 +391,23 @@ def get_last_starting_lineup(team_name: str):
 
     # Real schedule, last 14 real days through today — finds the most
     # recent actually-played (Final) game, never guesses one.
+    #
+    # EASTERN, not UTC. This was datetime.utcnow() — the only
+    # timezone-naive call left in a codebase that is otherwise exact
+    # about ET/KST/JST, and the reason it never bit is luck: UTC runs
+    # AHEAD of Eastern, so the window's end date was generous rather
+    # than short, and a 14-day span absorbs an off-by-one at the far
+    # end anyway. It would stop being luck the moment anyone narrowed
+    # the window or reused this date for a same-day lookup.
+    #
+    # utcnow() is also deprecated from Python 3.12. Everything here is
+    # pinned to 3.11 (requirements.txt, every workflow, the
+    # devcontainer image), so this is a bump away from a DeprecationWarning
+    # rather than a live defect — but MLB's schedule day is an Eastern
+    # day, so ET is what this actually meant all along.
     from datetime import datetime, timedelta
-    today = datetime.utcnow().date()
+    from zoneinfo import ZoneInfo
+    today = datetime.now(ZoneInfo("America/New_York")).date()
     start = today - timedelta(days=14)
     sched_url = (
         "https://statsapi.mlb.com/api/v1/schedule"
