@@ -880,21 +880,52 @@ def _render_slate():
                                 # mentioned it, and a caption under a table
                                 # does not travel with a column.
                                 #
-                                # NOTE for whoever wants these windowed:
-                                # wnba_precompute already publishes l5_fta,
-                                # l10_fta, l5_to and l10_to — computed every
-                                # night, read by nothing. Switching these to
-                                # recent form is a data-free change. It is
-                                # left as a deliberate choice rather than
-                                # made here, because it costs columns on an
-                                # iPad and the primary stat is what the tab
-                                # is for.
+                                # VOLUME CARRIES SEASON *AND* L5, PAIRED.
+                                #
+                                # These were season-only. wnba_precompute
+                                # has published l5_fta and l5_to every
+                                # night since the windowing work, read by
+                                # nothing — so this costs no new data.
+                                #
+                                # SEASON IS KEPT RATHER THAN REPLACED, and
+                                # that is the whole point. A bare "FTA L5"
+                                # of 6 cannot be read: the reader has no
+                                # way to tell a player who always draws six
+                                # from one whose attempts just doubled, and
+                                # the doubling is the only reason to look
+                                # at this tab. The PAIR is the signal; one
+                                # number on its own is trivia. They sit
+                                # adjacent for the same reason — a
+                                # comparison the eye has to travel to is a
+                                # comparison most readers skip.
+                                #
+                                # L10 deliberately NOT added. Season/L5/L10
+                                # for two stats is six columns on a tab
+                                # that already carries ten and is read on
+                                # an iPad, and L10 sits between two numbers
+                                # the reader already has. The cost is real
+                                # and the third window earns least.
+                                #
+                                # STOCKS IS LEFT SEASON-ONLY, on purpose
+                                # and not by oversight. The precompute
+                                # windows the COMBINED stocks figure
+                                # (l5_stocks) but not stl and blk
+                                # separately, so there is no l5_stl to
+                                # show. Inventing the window from the
+                                # combined number would put a label on a
+                                # quantity that isn't what it says —
+                                # exactly the bug the "szn" suffixes were
+                                # added to fix. Rule 21 cuts the other way
+                                # here: the asymmetry is honest because the
+                                # underlying data really is asymmetric.
                                 if label == "Stocks":
                                     row["STL szn"] = p.get("stl")
                                     row["BLK szn"] = p.get("blk")
                                 if label == "Volume":
                                     row["FTA szn"] = p.get("fta")
+                                    row["FTA L5"] = p.get("l5_fta")
                                     row["TO szn"] = p.get("to")
+                                    row["TO L5"] = p.get("l5_to")
                                     row["FG%"] = p.get("fg_pct")
                                 if label == "Points":
                                     row["FG%"] = p.get("fg_pct")
