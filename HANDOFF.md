@@ -10,6 +10,300 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — state as of 2026-08-10
+
+**Item C is LIVE and its CI half has really executed.** First real run of
+`calibration_picks._write_mlb_slate()` produced:
+
+```
+2026-08-09 | 15 games | 14 with an edge
+```
+
+Tier 1 of the ranking is alive on a real slate — `grade_matchup`
+resolved both starters' splits on 14 of 15 games. That was the single
+biggest unknown in the whole item and it is closed. Suite in the
+Codespace: **76 files, FAILING: none.** (My container shows 5 failing;
+they are the streamlit-only ones documented below and are expected.)
+
+**Still never seen: the ranked card itself.** Every load so far has hit
+a degrade path, because the slate is only current on the ET day it was
+built. First sighting will be after a `slate-picks` run, on that same
+day.
+
+### Two Home defects found by looking at the live page, both now fixed
+
+Neither was in the item. Both showed up only once real screenshots
+existed, which is the argument for looking at the page rather than the
+suite.
+
+**1. THE THIRTEEN-HOUR DEAD ZONE.** slate-picks runs at 1, 5 and 7 PM ET
+because probables don't exist before midday. So from midnight to 1 PM —
+over half of every day — there is legitimately no MLB slate for today,
+and Home's top card was saying *"the slate-picks job hasn't published
+since"*: the sentence for a broken workflow, fired daily at a workflow
+that is fine, pointing whoever read it at something green.
+
+Same mistake this repo already made once, with the WNBA warning that
+said "the nightly fetch may be failing" through the All-Star break. The
+rule left behind: **a confident wrong diagnosis is worse than no
+message.**
+
+`slate_guard._not_built_yet()` now separates *not due yet* from *broken*.
+It is deliberately narrow and fires only when all three hold: the league
+has a known build hour (`_FIRST_BUILD_HOUR`, **MLB alone** — the absence
+of the other three is the mechanism, not an oversight); that hour hasn't
+come round yet in the league's own timezone; and what's on disk is
+either nothing or **exactly yesterday's** slate. That last clause is
+what stops this becoming "mute the warning when it's inconvenient" — a
+three-day-old slate is a real outage at any hour and keeps shouting.
+
+`_FIRST_BUILD_HOUR["mlb"] = 13` duplicates slate-picks' first cron
+(`0 17 * * *` UTC). The duplication is deliberate — reading a workflow
+file at request time to render a sentence would be worse — and
+`test_slate_guard` now **pins the constant to the cron** and fails if
+either moves without the other. A known one-hour hole under EST is
+written down in the constant's comment rather than left to be
+discovered.
+
+**2. THE EMPTY STATE WASN'T A CARD.** The no-slate branch was
+`st.caption(note)` — loose grey text floating above the chip rail with
+no frame, at the top of the landing page. Honest words in a presentation
+that reads as "something failed to load", and it's the state a reader
+sees for most of the day. It's a proper card now, matching "Today's
+board isn't published yet" further down the same page. No "build it
+live" button, unlike that card: rule 5, Home makes zero network calls.
+
+### Five negative controls, all confirmed red
+
+After two tests shipped last session that passed without proving
+anything (rules 25 and 26), every case here was verified by breaking the
+code on purpose:
+
+| mutation | caught by |
+|---|---|
+| give the other leagues a build hour | kbo/npb/wnba each get MLB's message |
+| drop the "exactly yesterday" guard | 3-day-old slate stops being a fault |
+| drop the hour check | 15:00 gets the gentle message |
+| revert the branch entirely | 06:00 gets the outage message |
+| move the cron, not the constant | the cron/constant pin |
+
+One note on method: the first mutation initially failed via a `KeyError`
+crash in an unrelated earlier test rather than via its own assertion —
+an artifact of an inconsistent mutation, not a weak test. Re-run in the
+realistic shape (all four leagues given an hour) it fails on the three
+intended assertions by name.
+
+### Verify, in order
+
+1. `git pull`, run the suite. **76 files, FAILING: none** in the
+   Codespace.
+2. Load Home **before 1 PM ET** → "Tonight's MLB slate builds around
+   1 PM ET…", inside a card, not floating.
+3. Load Home **after a slate-picks run, same ET day** → the ranked card.
+   **Nobody has seen this yet.** Check three games, a one-line reason
+   above them naming the tier the sort used, and the lead game genuinely
+   holding the biggest `edge_net` in `data/mlb/games.json`.
+4. KBO and NPB chips unchanged.
+
+---
+
+## PICK UP HERE — state as of 2026-08-09
+
+**Everything below the NEXT "PICK UP HERE" is background from 08-07 and
+is still accurate. This block is what changed today.**
+
+### ITEM C IS BUILT. It has never executed. Read the next paragraph.
+
+The best-games hero card is shipped, tested and wired end to end, and
+**not one line of the CI half has run in production.** Rule 22 exists
+because of exactly this: `parse_homepage_schedule()` was correct and
+tested and had no caller, and KBO died every run while 66 tests stayed
+green. `_write_mlb_slate()` is a new function whose first real execution
+will be a scheduled job. Read the slate-picks log before believing it.
+
+**The near-miss, recorded because it is the same bug twice.** The slate
+was first written to repo-root `data/mlb/` while `slate_guard` read only
+`app/data/`. That is a green run, a log line saying the file was
+written, and a card that never sees it. Worse: `app/data/` is
+GITIGNORED and only arrives via the nightly release archive, and
+slate-picks publishes no archive — so writing there would have left the
+file on the Actions runner to die with the job.
+
+The repo had already solved this and I nearly missed it.
+`engines/calibration._repo_path()` documents the identical split:
+Render checks out the whole repository, so repo-root `data/` resolves in
+production, and `app/` is the service root, not the checkout root.
+`slate_guard._read` now reads BOTH locations and prefers whichever
+declares the later slate date — not first-wins, because on the day both
+exist first-wins would pin the app to whichever path was checked first
+and the staleness would be invisible.
+
+### The pieces
+
+- **`app/engines/best_games.py` (NEW).** The ranking, and nothing else.
+  No streamlit, no network, no file reads — which is the whole reason it
+  is an engine and not code inside the view: it can be tested headlessly.
+- **`slate_guard`** gains `mlb` (Eastern; an MLB schedule day IS an
+  Eastern day) and the two-location read above.
+- **`calibration_picks._write_mlb_slate()`** runs FIRST in `main()`,
+  before the pick builders, in its own try. A slate failure must not cost
+  the picks and a pick failure must not cost the slate. Every number it
+  writes comes from an engine the site already uses — weather_engine for
+  the schedule, matchup_grades for the edge, park_factors, wind_engine.
+  There is no second copy of any ranking logic.
+- **`Home._render_best_games()`** at the very top of `render()`.
+- **`tests/test_best_games.py` (NEW, #76).**
+
+### The ranking, as decided, and one thing it cannot do yet
+
+Strict tiers: **biggest modeled edge → highest projected run total →
+biggest weather/park swing.** Closest matchup rejected — a coin flip is
+the ABSENCE of a modeled opinion. Tiers, not a weighted composite: the
+weights would be invented, and the card can always say why a game is
+first in one true clause.
+
+**TIER 2 NEVER FIRES AND THAT IS NOT A BUG.** `engines/run_total` needs
+each team's runs scored and allowed per game; nothing on disk carries
+those for MLB. So `proj_total` is deliberately never written, ranking
+falls through to tier 3, and the tier is wired and tested so it lights up
+the day the field exists — same posture as `announced_starters()` for
+WNBA. **Do not substitute the O/U signal count for it.** That counts
+signals toward Over; it is not a number of runs, and ranking by it would
+be a different quantity wearing the decided label. If you want tier 2
+live, the work is a team RS/RA source for MLB, and it is a new scraper
+with a new failure mode — probe it first.
+
+**MISSING IS NOT ZERO**, per tier. A game with no posted starters has no
+edge; that is not an edge of zero and must not outrank a game measured at
+zero, nor be treated as the worst game on the slate. A game missing only
+the total still competes normally on edge and on swing.
+
+The weather/park swing weights in `best_games` are **calibration
+constants, not measurements** — judgements about how much each signal
+moves a game, in one file, like `styles/stat_scales.py`. The score is an
+ORDERING quantity used to break a tie and is never displayed; the card
+names the signals that fired, because those are real.
+
+### Three degrade paths, all exercised by hand
+
+| on disk | card shows |
+|---|---|
+| nothing, or a past date | slate_guard's own sentence, naming the date |
+| slate, no starters posted | "N games — starters not posted yet" |
+| slate with signals | the ranked card |
+
+The middle one earns its branch: it is what every morning looks like, and
+ranking an unscored slate produces ALPHABETICAL ORDER WEARING THE COSTUME
+OF A RANKING. `has_any_signal()` is the guard.
+
+### Rules held
+
+Rule 5 (Home makes zero network calls) — the card reads CI's file;
+`test_best_games` fails on `requests`/`urlopen`/`httpx`/
+`get_todays_games_with_weather` appearing in Home.py. Rule 4 (Home cannot
+write `lc_sport_seg`) — the jump uses `_goto_sport` when the switcher is
+not on MLB. Rule 10 and the design rule — the hero is forward-looking and
+last night's graded outcome stays below it; the test asserts the ORDER of
+the `_render_*` calls by parsing `render()`, because a substring search
+cannot see order.
+
+### TWO TESTS THAT PASSED WITHOUT PROVING ANYTHING
+
+Both caught by breaking the code on purpose. Both are the same lesson.
+
+**1. The alphabetical tiebreak was rescuing broken tiers.**
+`rank_games` ends with a team-name tiebreak so the card does not reshuffle
+between refreshes. When a tier stops discriminating the sort falls
+through to it — and three of the six ranking fixtures were named such
+that alphabetical produced the RIGHT answer anyway. Re-introducing the
+exact bug the module exists to prevent (missing edge sorting as zero)
+left every assertion green.
+
+Fixed by naming every expected winner `z-...` and every loser `a-...`, so
+a broken tier now falls through to alphabetical and puts the LOSER first.
+**Seven negative controls now run**: missing-as-zero, each tier deleted,
+tiers 1 and 2 swapped, unverified park factor read, hero moved below Last
+night, `has_any_signal` forced true. All seven go red.
+
+**2. A workflow assertion matched the COMMENT, not the command.**
+`test_calibration_picks` asserts slate-picks commits `data/mlb/games.json`.
+Deleting the path from the git-add left the test green — because the long
+explanatory comment above the step still named the file. This repo puts a
+paragraph above every tricky step, so any assertion about what a workflow
+DOES has to strip comment lines first. `_commands_only()` now does.
+
+That test also had to change for a legitimate reason: it pinned the exact
+string `git status --porcelain -- data/calibration.json`, and moving two
+paths into a shell variable broke the spelling while keeping the
+property. Rule 11. It now asserts git status / never git diff / both
+paths present, and four controls confirm each clause bites.
+
+### The rest of the batch (see the 08-07 block for context)
+
+- **KBO was publishing a leaderboard to nobody.**
+  `_render_batting_leaders()` was written in full and never called, while
+  `kbo_precompute` wrote `batters.json` every run. Rule 20's third
+  disguise: computed-never-rendered, written-never-called, and now
+  **rendered-never-invoked**. `tests/test_no_dead_renderers.py` (NEW,
+  #75) fails on any `_render_*` in a view without a call site in its own
+  file. Exact rather than heuristic because nothing imports a view.
+- **WNBA live tracking was a STARTING problem, not a fetching one.**
+  `st.fragment` fixes `run_every` at creation and a fragment rerun does
+  not re-run module scope, so the poll interval was decided from a
+  snapshot taken before the fragment ever ran. Open the board at 6:55 for
+  a 7:00 tip and it polled NEVER. The condition is now "is there a game
+  tonight that has not finished". Also: `_render_slate` already returned
+  the right answer and the caller threw it away while recomputing it.
+- **WNBA context columns carry their window** — `FTA szn`, `TO szn`,
+  `STL szn`, `BLK szn`. Zero columns added. `l5_fta`/`l10_fta`/`l5_to`/
+  `l10_to` are published nightly and still read by nothing; switching to
+  them is data-free and is HIS call, not a cleanup.
+- `roster.py`'s `utcnow()` → ET, the only naive datetime in the repo.
+- `sport_switcher()`'s docstring said "Only MLB is wired to real data",
+  contradicting the caption twenty lines below it.
+- `staleness_note` named the wrong job for MLB ("the nightly build"),
+  which would have sent you to debug `nightly-data` while `slate-picks`
+  was the one down.
+- Four unused imports.
+
+### A WRONG CALL IN THIS SESSION, recorded so it isn't repeated
+
+A crude sweep for "fields a pipeline writes that no view reads" reported
+KBO's **home/away splits and H2H run averages as unrendered.** Both are
+rendered fine. The sweep collected dict-key literals and grepped `app/`,
+so it could not follow keys consumed inside the same function
+(`home_w`/`away_l` build `home_record`, which KBO.py draws) or keys
+renamed at the publish boundary (`a_avg_runs` ships as `away_avg_runs`).
+It also flagged `l15_pra`, which `player_of_the_day` builds with an
+f-string. **A key-literal grep cannot see a rename or a dynamic access**,
+and dynamic access is the normal idiom here for anything windowed.
+
+What survived verification: `quality_starts`, `earned_runs`, `risp_avg`,
+`high_total`, `low_total` are genuinely published and read by nothing.
+Leaf stat fields, not features.
+
+### Do these in order
+
+1. Upload the batch, `git pull`, run the suite. Expect **`TESTS:76`**
+   with the same five streamlit-only failures.
+2. **Watch the next `slate-picks` run and read one line:**
+   `mlb slate: wrote N game(s) for <date> (M with a modeled edge, ...)`.
+   `M` will be 0 on an early run and that is expected — probables post
+   one to three hours before first pitch. If the line is ABSENT, the
+   slate step failed and the message above it says why.
+3. **Then confirm the commit landed** — `data/mlb/games.json` must appear
+   in the repo. If the log says it wrote the file and the repo has no such
+   file, the commit step is the problem, not the writer. That distinction
+   is the whole reason step 2 and step 3 are separate.
+4. **Open Home after a slate-picks run.** Before probables: "N games —
+   starters not posted yet". After: the ranked card.
+5. **Open the WNBA board BEFORE a tipoff and leave it.** Scores should
+   start moving within ~75s with no reload.
+6. KBO board should show a **Batting Leaders** card.
+7. Still watch the KBO coverage line on a day KBO actually plays (V2).
+
+---
+
 ## PICK UP HERE — state as of 2026-08-07
 
 **Everything below the next divider is background. This block is what
@@ -310,7 +604,18 @@ echo "FAILING:${fails:- none}"
 Then, for anything marked PENDING, **check it is still pending.**
 
 ```bash
-ls tests/*.py | wc -l                                     # 74
+ls tests/*.py | wc -l                                     # 76
+python tests/test_no_dead_renderers.py | tail -1          # both leaderboards draw
+python tests/test_best_games.py | tail -1                 # Home makes no network calls
+grep -c _render_batting_leaders app/views/KBO.py          # 3 = def + 2 call sites
+grep -c _could_go_live app/views/WNBA.py                  # 2 = live poll starts pre-tip
+grep -c utcnow app/engines/roster.py                      # 0 = no naive datetimes left
+grep -c \'"mlb"\' app/engines/slate_guard.py               # 2 = item C UNBLOCKED
+grep -c _write_mlb_slate calibration_picks.py             # 2 = defined AND called
+grep -c _render_best_games app/views/Home.py              # 2 = def + call
+grep -c _not_built_yet app/engines/slate_guard.py         # 2 = def + call
+grep -c 'st.caption(note)' app/views/Home.py              # 1 = the comment only
+ls data/mlb/games.json                                    # appears after a slate-picks run
 grep -c void_risk kbo_precompute.py                       # 3  = V3 in
 grep -c void_reason app/views/KBO.py                      # 3  = board shows it
 python tests/test_return_arity.py | tail -1               # FAILING: none
@@ -327,8 +632,8 @@ wc -l wnba_precompute.py                                  # 1085 = comments rest
 grep -c intl_weather npb_precompute.py                    # >0 = NPB weather WIRED
 grep -c _weather_badges app/views/KBO.py                  # 2  = KBO shows weather
 grep -c _weather_badges app/views/NPB.py                  # 2  = NPB shows weather
-grep -c '"mlb"' app/engines/slate_guard.py                # 0  = item C still blocked
-ls data/                                                  # C unblocks when mlb/ appears
+# (item C is now BUILT — see the 08-09 block. The two greps above
+#  replace these; they said 0 when C was blocked.)
 grep -c 'class="venue"' kbo_precompute.py                 # 2  = schedule-page regex
                                                           #      still dead; TODAY is
                                                           #      repaired from the homepage
@@ -542,15 +847,27 @@ enough for the first one.
 up and prints `fetch failed twice`. **If that line ever appears, it is
 a real outage, not a blip.** Not yet observed in production.
 
-### C. Best-games hero card — BLOCKED on recording an MLB slate.
-Ranking **DECIDED**: biggest modeled edge → highest projected run total
-→ weather/park swing. Closest-matchup rejected. Goes at the **top of
-Home** (rule 10 — the hero must be forward-looking). Blocked on: no
-`data/mlb/games.json`, `slate_guard._LEAGUES` has `wnba`/`kbo`/`npb`
-and no `mlb`. Needs `calibration_picks.py` (already runs 1/5/7 PM ET
-with network) extended to write an MLB slate in the shape `slate_guard`
-reads. Home must degrade gracefully until CI populates it. **Biggest
-remaining product item.**
+### C. Best-games hero card — BUILT 2026-08-09, NOT YET EXECUTED.
+Everything this item asked for is on disk: `slate_guard` knows `mlb`,
+`calibration_picks._write_mlb_slate()` writes the slate at 1/5/7 PM ET,
+`engines/best_games.py` ranks it, Home leads with it and degrades three
+ways. Details, the near-miss on WHERE the file goes, and the two tests
+that passed without proving anything are all in the 08-09 block at the
+top of this file.
+
+**What is left is verification, not building.** The CI half has never
+run. Read the `mlb slate: wrote N game(s)` line in the next slate-picks
+log, then confirm `data/mlb/games.json` actually appears in the repo —
+those are two separate failures and step 2 and step 3 of the top block
+keep them apart on purpose.
+
+**The one piece genuinely still missing is TIER 2.** `proj_total` is
+never written because `engines/run_total` needs per-team runs scored and
+allowed and nothing on disk carries them for MLB. The tier is wired and
+tested and fires the day the field exists. Building it means a new MLB
+team RS/RA source — a new scraper with a new failure mode, so probe it
+before writing a parser. **Do not** substitute the O/U signal count:
+that counts signals toward Over and is not a number of runs.
 
 ### PITCHER H2H — BUILDABLE FOR KBO. Blocked on knowing who starts.
 Probe round 4 parsed
@@ -719,6 +1036,26 @@ the site's own advance warning is a free check on this number.
     is exactly how two concurrent publishes happen.
 
 ---
+25. **NEW — a ranking test can pass on its tiebreak.** `rank_games`
+    ends with an alphabetical tiebreak so the card does not reshuffle
+    between refreshes. Break a tier and the sort falls through to it —
+    and three of six fixtures were named so that alphabetical produced
+    the RIGHT answer anyway. Re-introducing the exact bug the module
+    exists to prevent left every assertion green. **Name the expected
+    winner so it loses the tiebreak**, then break the tier on purpose
+    and watch the case go red. This generalises: whenever a sort has a
+    fallback, a test of the primary key must be constructed so the
+    fallback cannot supply the same answer.
+26. **NEW — an assertion about a workflow must read what it RUNS.**
+    A test asserting slate-picks commits `data/mlb/games.json` stayed
+    green after the path was deleted from the git-add, because the
+    explanatory comment above the step still named the file. This repo
+    puts a paragraph above every tricky step, so a substring search over
+    a workflow matches prose far more often than code. Strip comment
+    lines first. Sibling of rule 17: a substring is not an element, and
+    a comment is not a command.
+
+---
 
 ## The repo
 
@@ -729,7 +1066,7 @@ the site's own advance warning is a free check on this number.
 - Pages in **`app/views/`**, deliberately NOT `pages/` — Streamlit
   auto-registers `pages/` and would expose every page pre-auth.
 - Engines in `app/engines/`. Theme in `app/styles/kc_theme.py`.
-- Tests in `tests/` — **73 files, plain scripts, not pytest.**
+- Tests in `tests/` — **76 files, plain scripts, not pytest.**
 - Data comes off disk; the nightly publishes a release asset.
 - `requirements.txt` fully pinned, including transitives.
 
