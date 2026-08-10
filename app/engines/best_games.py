@@ -136,13 +136,33 @@ def park_swing(game):
     the order they were measured. The card shows these; it never shows
     the score.
     """
+    return _swing(game)[:2]
+
+
+def _swing(game):
+    """(score, reasons, measured_signals) — park_swing plus WHICH of the
+    three signals actually contributed.
+
+    The third value exists because a swing built from the park factor
+    alone was being described to the reader as a "weather and park"
+    swing. Measured on the 2026-08-10 slate: ten games, not one with a
+    temperature or a wind, because MLB does not post either until close
+    to first pitch and the 1 PM build ran six hours early. The number was
+    real; the label on it was not.
+
+    calibration_picks now fills the gap from the National Weather Service
+    the way GameCard always has, so weather should normally be present —
+    but "should normally be" is exactly the assumption that produced the
+    wrong label in the first place. why_first() reads this and names only
+    what it measured.
+    """
     total = 0.0
     reasons = []
-    measured = False
+    measured = []
 
     pf = _num(game.get("park_factor"))
     if pf is not None and game.get("park_verified"):
-        measured = True
+        measured.append("park")
         dev = pf - 100.0
         total += abs(dev) * PARK_WEIGHT
         if abs(dev) >= 2:
@@ -152,7 +172,7 @@ def park_swing(game):
 
     wind = _num(game.get("wind_adj"))
     if wind is not None:
-        measured = True
+        measured.append("wind")
         total += abs(wind) * WIND_WEIGHT
         note = game.get("wind_note")
         if note and abs(wind) >= 0.5:
@@ -160,7 +180,7 @@ def park_swing(game):
 
     temp = _num(game.get("weather_temp"))
     if temp is not None:
-        measured = True
+        measured.append("temp")
         if temp > TEMP_NEUTRAL_HI:
             out = temp - TEMP_NEUTRAL_HI
         elif temp < TEMP_NEUTRAL_LO:
@@ -172,8 +192,8 @@ def park_swing(game):
             reasons.append(f"{temp:g}\u00b0F")
 
     if not measured:
-        return None, []
-    return round(total, 2), reasons
+        return None, [], []
+    return round(total, 2), reasons, measured
 
 
 def _sort_key(game):
@@ -224,11 +244,42 @@ def why_first(game):
     if total is not None:
         return f"Highest projected run total on the slate \u2014 {total:g} runs"
 
-    swing, reasons = park_swing(game)
+    swing, reasons, measured = _swing(game)
     if swing is not None and reasons:
-        return "Biggest weather and park swing \u2014 " + ", ".join(reasons)
+        # NAME ONLY WHAT WAS MEASURED. This said "weather and park swing"
+        # unconditionally, including on a slate where no game had a
+        # temperature or a wind and the number came from the park factor
+        # alone. Saying "weather" about a reading that never looked at
+        # any is the plainest kind of wrong label, and it is the one a
+        # reader has no way to catch.
+        parts = [p for p in ("weather", "park") if
+                 (p == "park" and "park" in measured) or
+                 (p == "weather" and ("wind" in measured or "temp" in measured))]
+        # "weather and park", matching the decided ranking's own wording
+        # rather than inventing a second phrasing for the same tier.
+        what = " and ".join(parts) if parts else "environment"
+        return f"Biggest {what} swing \u2014 " + ", ".join(reasons)
 
     return None
+
+
+def edge_reasons(game, limit=3):
+    """The actual signals behind this game's edge grade.
+
+    calibration_picks publishes `edge_signals` — the real comparisons
+    grade_matchup made, like "WHIP: edge Boston Red Sox (1.28 vs 1.55)" —
+    and for a while NOTHING read them. The card showed the grade and the
+    lean, which is the conclusion, while the file held the reasoning and
+    nobody saw it. Rule 20: a computed field nobody renders is not a
+    feature, and on a page whose whole claim is "here is where the model
+    has an opinion", the reasons ARE the product.
+
+    Capped because the card is a summary, not the Game Card.
+    """
+    sigs = game.get("edge_signals")
+    if not isinstance(sigs, list):
+        return []
+    return [str(s) for s in sigs if s][:limit]
 
 
 def rank_games(games, limit=3):
