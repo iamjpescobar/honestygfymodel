@@ -80,6 +80,42 @@ them before building anything on top of what they ask about** — rule 22
 exists because this repo has shipped correct, tested code with no
 working source behind it.
 
+**FIRST RUN 08-10, run 85209788549 — two probes were WRONG and were
+rewritten. Read this before trusting any verdict from them.**
+
+- **KBO: a real finding, from the CONTROLS rather than the guesses.**
+  `Schedule/GameCenter/Main.aspx` is **server-rendered and already
+  contains 선발 투수** (200, 57KB). The rendered schedule pages carry
+  none, which is what this file already said — but nobody had looked at
+  the game centre. **The premise that probables are only client-side was
+  true of the schedule pages and false of this one.** The `.asmx`
+  guesses returned 401/401/500; the seven endpoints the page references
+  are recorded in the probe as a fallback, not the main line. v2 now
+  asks the narrower question: can per-game starter NAMES be paired to
+  both teams for today's slate? "The characters appear somewhere" is not
+  that — a page can carry the word as a header on an empty table.
+- **NPB: the probe was wrong, not the site.** v1 split on
+  `<div class="date">`, which does not exist on that page, found zero
+  dated blocks, and reported "no forward-looking warnings" — a verdict
+  it had never measured. `npb_precompute.parse_games()` has parsed this
+  exact page in production for months using `<tr id="dateMMDD">`. v2
+  uses its selectors verbatim and prints a STRUCTURE line first; if that
+  says zero rows, the NPB build is already broken and nothing after it
+  is an answer.
+- **MLB: verdict NOT earned, do not record it.** v1 tried one hydrate
+  shape, got 0/30 and printed "NOT BUILDABLE HERE". **Zero out of thirty
+  is the signature of a malformed query, not a missing field**, and v1
+  could not tell those apart because it never checked whether any stats
+  block came back. v2 tries four documented shapes and prints entries /
+  w-stats / w-runs per shape. **Tier 2 is not closed.**
+
+The generalisation, and it is the same one as rule 27: **a probe that
+invents the structure it parses can manufacture either answer.** When
+the pipeline already parses a page, the probe reads it the same way — a
+second parser is a second thing to be wrong. Two of three v1 probes
+guessed; both guessed wrong; one of them would have shipped a label
+asserting something never checked.
+
 | script | answers | if the answer is "no" |
 |---|---|---|
 | `npb_void_probe.py` | does npb.jp publish a forward-looking cancellation warning like KBO's? | ship a LABEL saying NPB publishes none, not an invented badge. That still closes the parity gap — rule 21 is about the reader being able to tell, not about both boards having the same badge |
@@ -93,6 +129,14 @@ output** — it is ground truth and the guesses are not.
 All three must run from **Actions**, not a Codespace: Korean and
 Japanese sites geo-fence and rate-limit by region, and ESPN already
 taught this repo that an IP-range result from a laptop predicts nothing.
+
+`.github/workflows/open-question-probes.yml` runs all three on manual
+dispatch — Actions tab, "Open-question probes", Run workflow. Three
+SEPARATE jobs on purpose: they answer unrelated questions, and as
+sequential steps a Japanese site being down would hide the MLB answer.
+**Record what each verdict said in this file**, including a "cannot be
+built" — that closes an item just as well as a yes, and an unrecorded
+probe result means somebody runs it again in three weeks.
 
 ### Suite
 
