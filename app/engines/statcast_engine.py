@@ -1480,6 +1480,15 @@ def get_pitcher_advanced_splits(pitcher_id, side: str = None, window: str = "sea
         "HR": None, "HR/9": None,
         "BB%": None, "K%": None, "Whiff%": None, "SwStr%": None, "K/9": None,
         "Putaway%": None, "1stPS%": None, "Meatball%": None, "_error": None,
+        # _games BELONGS IN THE EMPTY DICT TOO.
+        #
+        # The populated return has carried it since windows were added,
+        # but this one did not — so a caller reading splits["_games"] to
+        # show the reader how thin a window is got a KeyError on exactly
+        # the case where the sample matters most: nothing measured at
+        # all. Zero games is the true answer and the honest one to
+        # render; a missing key forces the caller to guess or crash.
+        "_games": 0,
     }
 
     df, error = _get_pitcher_df(pitcher_id)
