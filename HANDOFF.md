@@ -10,6 +10,166 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — state as of 2026-08-10 (evening)
+
+Perf audit + correctness sweep on the shipped item C. **Suite 77 files**
+(one new). Everything below was MEASURED, not inferred.
+
+### PERFORMANCE — no action needed, and here are the numbers
+
+Benchmarked against real data with a cache shim standing in for
+streamlit, so these reflect what the app does including cache hits:
+
+| path | cold | warm |
+|---|---|---|
+| calibration record (162 KB) | 5.82 ms | **0.07 ms** |
+| `summary()` | — | 0.09 ms |
+| `load_slate("mlb")` | — | 0.08 ms |
+| `rank_games()` over 10 real games | — | 0.03 ms |
+
+One Home paint = **10 file reads, 0.6 ms**. `_load_cached(stamp)` is
+earning its keep at 83x on the record.
+
+- **`slate_guard` has no caching and reads two paths per call. Checked
+  before flagging: 0.08 ms. Leave it.** A cache there would need the same
+  mtime-stamp treatment or it would serve a stale slate.
+- **Growth is the only thing to watch.** 158 KB over 15 days = 10.6
+  KB/day, ~1.9 MB by season end. The cold merge is linear, so ~70 ms
+  cold at 2 MB. Not urgent; know it before it surprises you.
+- Cold start ~500 ms, essentially all pandas/requests/bs4 pulled through
+  `statcast_engine`. Per PROCESS, not per request. Not worth restructuring.
+
+### THREE REAL BUGS, all found by looking at the produced file
+
+The 2026-08-10 slate looked complete — 10 games, both starters, 8 edges.
+It was not. **Read the artifact your pipeline writes, not just its exit
+code.**
+
+**1. Weather was null on all ten games.** `weather_temp`, `weather_wind`,
+`weather_condition` — zero of ten. `wind_adj` was 0 on every game (one
+distinct value in the whole file). MLB does not post park weather until
+close to first pitch, and slate-picks' FIRST and most important run is
+1 PM ET, six hours early.
+
+GameCard has done the right thing all along — its "in-house weather
+desk" falls back to the National Weather Service and its own comment
+says MLB posts late and it fills the gap "most of the day".
+`_write_mlb_slate` never asked. **Two parts of one app disagreeing about
+the weather for one game — rule 21, and the slate was the wrong side.**
+
+Fixed: NWS fallback (roofed parks skipped, as Weather_Board does),
+`weather_source` recorded so a forecast is never mistaken for an
+observation, and the temperature now feeds `grade_matchup` so the
+>=80F/<=65F O/U signals can fire on the 1 PM build at all.
+
+**2. TWO WIND ENGINES, and the slate called the one that can't read
+MLB's format.** `wind_engine.wind_hr_adj` handles compass
+("12 mph SW", what NWS gives). `player_of_the_day._wind_hr_adj` handles
+field-relative ("8 mph Out To CF", MLB's own). `_parse_wind` returns None
+for field-relative ON PURPOSE — its docstring says so and names the other
+function. So on the 5 and 7 PM runs, where MLB HAS posted a wind, the
+slate wrote `wind_adj` 0 and `wind_note` None. Silently. Measured:
+
+    "8 mph Out To CF"   -> (0, None)      "15 mph In From CF" -> (0, None)
+
+Fixed with a router: field-relative first (it states which way the ball
+carries), compass as fallback. Not merged into one function — they answer
+with different confidence from different inputs. **`tests/test_mlb_slate_wind.py`
+(NEW, #77)** asserts both engines are CALLED, not merely imported; two
+negative controls confirm it catches the revert.
+
+**3. `why_first` said "weather and park swing" having read no weather.**
+Consequence of 1 and 2: the swing was real but came from the park factor
+alone. A wrong number is catchable; **a right number under a wrong label
+is not.** `_swing()` now returns which signals it measured and the label
+names only those.
+
+### Also fixed
+- **`edge_signals` were published and read by nothing.** The file holds
+  `"WHIP: edge Boston Red Sox (1.28 vs 1.55)"`; the card showed a bare
+  letter. Rule 20, on the one page whose claim is "here is where the
+  model has an opinion" — the reasoning IS the product. `edge_reasons()`
+  now renders the lead game's signals.
+- **NPB probe's played-check was wrong, and it is why v2's verdict was
+  absurd.** Production requires DIGITS inside `<div class="score1">`;
+  the probe tested for the tag's PRESENCE. Scheduled games carry an empty
+  placeholder, so 154 of 157 future rows were discarded as played —
+  that is the "3 upcoming" number. Now uses production's regex, and
+  STRUCTURE prints both counts so the gap is visible. **Copying a
+  selector is not copying a parser.**
+
+### Two handoff items were stale
+- `wnba-lineup-probe.yml` is ALREADY gone from the root.
+- The admin-credential check cannot work as written: `auth_config.yaml`
+  is gitignored and lives on Render's disk, so it never appears in a zip
+  or a fresh clone. **It has to be checked on Render**, not from the repo.
+
+### PITCHER SPLITS WINDOW — new, his request
+
+The Game Card's STATS / STRIKES tables were **season only**, on a page
+whose whole job is tonight's matchup. A starter's season line can be four
+months old, and every other window control in the app — the grade window
+ten lines above it, the lineup filter, Bullpen Board, Player of the Day
+— already offered one.
+
+Now: **Season / L10 / L5 / L3 / Last game**. Nothing estimated —
+`get_pitcher_advanced_splits` slices raw Statcast rows through
+`recency_windows` BEFORE any metric is computed, so IP, the games count
+and every rate are honest for the window.
+
+`l3` and `l1` are new keys in `recency_windows`, the ONE shared
+definition — not a second map in the view.
+
+**THE SAMPLE PROBLEM, and what was done about it.** `Last game` is about
+25 batters faced. A .400 BA against on one night renders in the same
+column, font and colour scale as a .240 over 700. statcast_engine already
+carried a long comment about the empty-split case rendering "BA .000,
+SLG .000, WHIP 0.00" — a line describing the most dominant pitcher who
+ever lived — whose stated reason was that **"the table has no sample
+column to contradict it."**
+
+Three things fix that and are pinned by
+`tests/test_pitcher_splits_window.py` (NEW, #78):
+
+- **`G` (games) is now a column in BOTH tables**, second, right after
+  Split — a denominator read after the number it qualifies has already
+  done its damage. STRIKES had no IP either, so it previously had no
+  sample at all.
+- **`G` is never colour-ranked.** It is a sample size; shading it would
+  claim more games is better or worse.
+- **`THIN_WINDOWS` lives in `recency_windows`**, beside the slicing, so
+  the warn-list cannot drift from the window list. A thin window prints
+  a small-sample line above the table naming the actual game count, and
+  calls out the platoon rows separately — a starter can face three
+  lefties in a game, and "vs LHB" over three at-bats is an anecdote.
+
+Also removed: `splits_vs_r` / `splits_vs_l`, the old season-only fetches.
+The Matchup table was their only consumer and it now fetches per window,
+so leaving them would have been two cached calls nothing read — rule 20,
+in the same batch that fixed another instance of it.
+
+**Six negative controls, all confirmed red:** drop G from STRIKES, offer
+a window `apply_window` doesn't implement, wire the control to nothing,
+remove the warning, colour-rank G, make `l1` slice to zero.
+
+`_games` was also added to the `empty` return of
+`get_pitcher_advanced_splits` — the populated path always had it, so a
+caller reading the sample got a KeyError on exactly the case where the
+sample matters most.
+
+### Verify
+1. `git pull`, run the suite. **78 files, FAILING: none.**
+2. **After the next slate-picks run**, read the log line — it now ends
+   `N weather from NWS forecast`. On the 1 PM run that number should be
+   close to the open-air game count. If it is 0, the NWS fallback is not
+   firing and tier 3 is back to park-only.
+3. `grep -c nws_forecast data/mlb/games.json` — non-zero on a 1 PM build.
+4. **The ranked card still has never been seen.** Three games, one line
+   naming the tier the sort used, now with the lead game's actual
+   signals beneath it.
+
+---
+
 ## PICK UP HERE — state as of 2026-08-10 (afternoon)
 
 **Everything below this block is still accurate. This is the delta.**
@@ -1253,7 +1413,7 @@ the site's own advance warning is a free check on this number.
 - Pages in **`app/views/`**, deliberately NOT `pages/` — Streamlit
   auto-registers `pages/` and would expose every page pre-auth.
 - Engines in `app/engines/`. Theme in `app/styles/kc_theme.py`.
-- Tests in `tests/` — **76 files, plain scripts, not pytest.**
+- Tests in `tests/` — **78 files, plain scripts, not pytest.**
 - Data comes off disk; the nightly publishes a release asset.
 - `requirements.txt` fully pinned, including transitives.
 
