@@ -79,20 +79,47 @@ WINDOW_LABELS = {
     "l15": "Last 15",
     "l10": "Last 10",
     "l5": "Last 5",
+    "l3": "Last 3",
+    "l1": "Last Game",
 }
+
+# THE SHORT WINDOWS ARE REAL BUT THIN, AND CALLERS HAVE TO SAY SO.
+#
+# l3 and l1 were added for the Game Card's pitcher splits, where the
+# question is "what has he looked like lately" and a five-start window
+# can still be a month old for a starter. They are honest slices of real
+# data — nothing here estimates or smooths.
+#
+# But one start is roughly 25 batters faced, and a rate over 25 at-bats
+# is noise wearing the costume of a measurement. A .400 BA against on one
+# night says almost nothing about tomorrow, and it renders in the same
+# table, in the same font, as a season figure computed over 700.
+#
+# So: this map exists for any caller that renders a window, and it is the
+# reason the pitcher splits table shows IP and a games count beside the
+# rates rather than the rates alone. If you add a control that offers
+# these, show the sample next to the number. The reader cannot see the
+# denominator unless you put it there.
+THIN_WINDOWS = {"l1", "l3", "l5"}
 
 
 def apply_window(df: pd.DataFrame, window: str, unit: str) -> pd.DataFrame:
     """
-    Slices df by a named window ("season"/"l60"/"l25"/"l15"/"l5") and
-    unit ("games"/"pa"/"bbe"). "season" returns df unchanged — the
-    full pull already covers the season since statcast_engine.py pulls
-    from the season start by default.
+    Slices df by a named window ("season"/"l60"/"l25"/"l15"/"l10"/"l5"/
+    "l3"/"l1") and unit ("games"/"pa"/"bbe"). "season" returns df
+    unchanged — the full pull already covers the season since
+    statcast_engine.py pulls from the season start by default.
+
+    An unrecognised window returns df UNCHANGED — i.e. the season. That
+    is deliberate and is the safe direction: a typo shows more data than
+    asked for, never a silently empty table that reads as "this pitcher
+    has no history".
     """
     if window == "season" or df.empty:
         return df
 
-    n = {"l60": 60, "l25": 25, "l15": 15, "l10": 10, "l5": 5}.get(window)
+    n = {"l60": 60, "l25": 25, "l15": 15, "l10": 10,
+         "l5": 5, "l3": 3, "l1": 1}.get(window)
     if n is None:
         return df
 
