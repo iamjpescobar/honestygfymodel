@@ -166,10 +166,16 @@ check("the caller fetches the homepage once, not per game",
 # third and fourth regex in that file to die to one redesign.
 #
 # They are a separate reader because membership of the starters map
-# means "this game has announced starters", and test_kbo_heat_risk
-# depends on that. Measured live at 13:13 KST: every card had a time and
-# a venue and NOT ONE had a starter, which is exactly the game a bettor
-# most needs to see.
+# means "this game has announced starters". Measured live at 13:13 KST:
+# every card had a time and a venue and NOT ONE had a starter, which is
+# exactly the game a bettor most needs to see.
+#
+# That sentence used to end "and test_kbo_heat_risk depends on that."
+# It no longer does — that file is DELETED along with the two homepage
+# conditions readers it was the only test of. Before deleting it, every
+# property it held was checked for a home elsewhere; all but one was
+# already covered here or in test_kbo_void_signals. The exception is
+# INHERITED BELOW rather than dropped.
 NO_SP = card("13792-Kiwoom-vs-Lotte-20260806",
              "Kiwoom Heroes Lotte Giants 30&deg; 6:30pm Busan-Sajik")
 only = kp.parse_homepage_schedule(NO_SP).get("13792", {})
@@ -177,6 +183,25 @@ check("a starterless card still yields venue", only.get("venue") == "Busan-Sajik
 check("a starterless card still yields time", only.get("time") == "6:30pm")
 check("a starterless card stays OUT of the starters map",
       kp.parse_homepage_starters(NO_SP) == {})
+
+# INHERITED FROM tests/test_kbo_heat_risk.py, which is deleted.
+#
+# That file asserted the two homepage readers were separate FUNCTIONS,
+# on the literal source string. Its partner, parse_homepage_conditions,
+# is gone — so the contract now rests on this one alone, and the check
+# has to move here or stop existing. Deleting a test that guards a real
+# property because the code it happened to name went away is how a
+# guarantee evaporates without anyone deciding to drop it.
+#
+# Asserted on the source rather than by calling it, for the reason at
+# the top of this file: this module's whole history is regexes that
+# matched nothing and returned {} without raising, so "the code still
+# says what we think it says" is itself part of the contract.
+check("the schedule reader is still its own function",
+      "def parse_homepage_schedule(" in _src)
+check("the orphaned conditions readers stay deleted, not revived",
+      "def parse_homepage_conditions(" not in _src
+      and "def fetch_homepage_conditions(" not in _src)
 
 # The heat warning sits between venue and starters; a greedy match would
 # ship a city called "Seoul-Jamsil Chance of Heat Cancellation".
