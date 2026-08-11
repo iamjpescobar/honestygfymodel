@@ -129,7 +129,7 @@ def main() -> int:
     print("-" * 72)
     print("S2iAjaxHtml CALL BLOCKS (verbatim — this is what maps setPreview's")
     print("nine arguments onto POST fields, and it is currently unknown):")
-    blocks = re.findall(r"S2iAjaxHtml\s*\(\s*\{.{0,400}?\}\s*\)", scripts, re.S)
+    blocks = re.findall(r"S2iAjax\w*\s*\(\s*\{.{0,400}?\}\s*\)", scripts, re.S)
     for b in blocks[:6]:
         print("   " + re.sub(r"\s+", " ", b)[:360])
     if not blocks:
@@ -156,10 +156,47 @@ def main() -> int:
         print(f"   attributes present: {', '.join(keys)}")
 
     if not games:
-        print("   NONE. Either the list is filled by an earlier fetch, or "
-              "the markup changed. Do NOT guess an attribute name — round "
-              "3 printed the script and the script named these outright. "
-              "Print the .game-list-n block and read it the same way.")
+        # ROUND 5: THE PAGE IS A STATIC SHELL. Measured, not inferred —
+        # main page: 200 57178b on FIVE runs spanning 11:21 to 19:26 KST,
+        # byte-identical every time. A live game centre whose size never
+        # moves by one byte is not rendering games; it is a frame that
+        # fetches everything after load. The <li> elements the script
+        # reads g_id from are built by a call this probe has not found,
+        # because it only ever extracted S2iAjaxHtml blocks and the game
+        # list is filled by something else.
+        #
+        # So stop narrowing and dump EVERY call and EVERY path in the
+        # script. One of them builds .game-list-n, and reading is what
+        # has broken every previous deadlock here.
+        print("   NONE — and the page has been 57178b on every run from "
+              "11:21 to 19:26 KST, byte-identical. This is a SHELL: the "
+              "game list is fetched after load, so no selector over this "
+              "HTML will ever find it.")
+        print("-" * 72)
+        print("EVERY AJAX-SHAPED CALL IN THE SCRIPT (not just S2iAjaxHtml):")
+        seen = set()
+        for m in re.finditer(
+                r"(\$\.(?:ajax|post|get|getJSON)|\.load|S2iAjax\w*)\s*\(.{0,260}",
+                scripts, re.S):
+            frag = re.sub(r"\s+", " ", m.group(0)).strip()
+            if frag[:120] in seen:
+                continue
+            seen.add(frag[:120])
+            print(f"   {frag[:250]}")
+            if len(seen) >= 18:
+                break
+        print("-" * 72)
+        print("EVERY QUOTED PATH IN THE SCRIPT:")
+        paths = sorted({p for p in re.findall(r"""["'](/[A-Za-z0-9_./-]{4,80})["']""",
+                                              scripts)})
+        for pth in paths[:40]:
+            print(f"   {pth}")
+        print("-" * 72)
+        print("FIND THE ONE THAT BUILDS .game-list-n. It is the call that "
+              "has to come first — StartPitcher cannot be reached without "
+              "a g_id, and the g_id only exists once that list is drawn. "
+              "Do NOT guess which path it is; the list above is the whole "
+              "set the page itself uses.")
         return 1
 
     # game_sc is the state code. The page's own switch:
