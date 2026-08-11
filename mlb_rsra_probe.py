@@ -125,6 +125,38 @@ def _walk_for_runs(node, depth=0):
     return None
 
 
+def _entries(payload):
+    """The per-CLUB records in a payload, whatever its shape.
+
+    ONE EXTRACTOR, USED BY BOTH THE DIAGNOSTIC AND THE RUNS COUNTER, and
+    that is the whole point of it existing.
+
+    When the standings shape was added, only _diagnose learned the new
+    nesting. main() kept its own private copy, keyed on the top-level teams /
+    stats lists, which are empty for standings. Run
+    85312622391 therefore printed:
+
+        standings regularSeason  200 | 30 entries | 30 w/stats | 0 w/runs
+
+    Thirty entries, thirty carrying runsScored, and zero counted. The
+    verdict then ranked shapes by w/runs, picked `teams/stats hitting`
+    with its ONE league-aggregate row, and reported PARTIAL — declaring
+    tier 2 unbuildable off a payload that had all thirty clubs in it.
+
+    Two places extracting entries meant one of them was always going to
+    be forgotten. Now there is one.
+    """
+    if not isinstance(payload, dict):
+        return []
+    if isinstance(payload.get("records"), list):
+        return [tr for rec in payload["records"]
+                if isinstance(rec, dict)
+                for tr in (rec.get("teamRecords") or [])
+                if isinstance(tr, dict)]
+    entries = payload.get("teams") or payload.get("stats") or []
+    return entries if isinstance(entries, list) else []
+
+
 def _diagnose(payload):
     """What actually came back — the part v1 never printed.
 
@@ -141,19 +173,14 @@ def _diagnose(payload):
     top = ", ".join(sorted(payload.keys())[:5]) or "(no keys)"
 
     if isinstance(payload.get("records"), list):
-        entries = [tr for rec in payload["records"]
-                   if isinstance(rec, dict)
-                   for tr in (rec.get("teamRecords") or [])
-                   if isinstance(tr, dict)]
+        entries = _entries(payload)
         with_stats = sum(1 for t in entries
                          if t.get("runsScored") is not None
                          or t.get("runsAllowed") is not None)
         return (f"top keys: {top} ({len(payload['records'])} division "
                 f"records)", len(entries), with_stats)
 
-    teams = payload.get("teams") or payload.get("stats") or []
-    if not isinstance(teams, list):
-        teams = []
+    teams = _entries(payload)
     with_stats = sum(
         1 for t in teams
         if isinstance(t, dict) and (t.get("stats") or t.get("splits")))
@@ -182,9 +209,7 @@ def main() -> int:
             continue
 
         shape, n_entries, n_with_stats = _diagnose(payload)
-        entries = payload.get("teams") or payload.get("stats") or []
-        if not isinstance(entries, list):
-            entries = []
+        entries = _entries(payload)
 
         with_runs = 0
         sample = None
