@@ -10,6 +10,160 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — MLB standings shape added to the probe. 2026-08-10
+
+**One file. Suite 80, FAILING: none.** Not a finding — an instrument.
+Run it and read the diagnostics.
+
+### WHY
+
+Every `teams/stats` shape returns ONE entry, and that entry is the
+LEAGUE AGGREGATE (591 runs in 118 G), not a club. That is not "statsapi
+lacks per-team runs" — it is that endpoint answering a league-level
+question. The probe correctly refused to call it a finding.
+
+Standings answers the right question: each `teamRecord` carries
+`runsScored` and `runsAllowed` for THAT club, and `leagueId=103,104`
+covers all 30 in one call. That is exactly what tier 2 of the best-games
+ranking needs and has never had.
+
+**STILL A HYPOTHESIS. Nobody has called this endpoint.**
+
+### TWO WAYS IT WOULD HAVE SILENTLY MISREPORTED, both fixed first
+
+Adding the url alone would not have worked, and both failures look like
+"the endpoint is broken" rather than "the probe is wrong" — the exact
+pattern that has now burned this repo three times.
+
+1. **`_diagnose` counted the wrong level.** Standings nests one deeper:
+   entries live under `records[].teamRecords[]`, not a top-level `teams`
+   or `stats` list. Counting `records` alone reports **6** (the
+   divisions) for a payload holding all 30 clubs — and 6-of-30 reads
+   exactly like the partial failure this probe already refused once.
+2. **`_walk_for_runs` looked only for `runs`.** Standings spells it
+   `runsScored` / `runsAllowed`. The walker would have traversed a
+   perfect payload, found nothing, and reported 0 with runs — the
+   endpoint working and the probe calling it empty.
+
+Verified offline against payloads matching each API's documented shape:
+`teams/stats` -> 1 entry / (591, 118); a 3-club standings stub -> 3
+entries across 2 division records; a full 6-division stub -> **30
+entries, 30 with runs, verdict flips to TIER 2 BUILDABLE**.
+
+### READ IT LIKE THIS
+
+- `entries 30 | 30 w/runs` -> tier 2 is buildable. Next is writing RS/RA
+  into the slate and letting `run_total` compute `proj_total`; the
+  ranking is already wired and tested for it.
+- `entries 30 | 0 w/runs` -> the query is wrong, not the API. Docs, not
+  a new source.
+- `entries 6` -> the nesting fix did not land.
+
+### The KBO probe on the same run
+Should now exit 0 and print `THE PAGE'S OWN AJAX CALL` with the url and
+the `setPreview(... awayPit, homePit)` signature. **That url is the next
+real step** — call it with a live gameId. If it prints `NONE FOUND`, the
+script changed shape: dump it and read it. Do NOT guess a url; v1
+guessed three `.asmx` names and got 401/401/500.
+
+---
+
+## PICK UP HERE — live hits props, engine only. 2026-08-10
+
+**Suite 80 files, FAILING: none.** New engine + test. **NOTHING RENDERS
+YET** — this is deliberately engine-first, headless and testable, before
+a view touches it.
+
+### WHAT IT ANSWERS
+
+"He's 1-for-2 and I want 2+ hits — what are my chances?"
+`conditional_rate(df, hits_so_far=1, pa_so_far=2, line=2)`
+
+An EMPIRICAL CONDITIONAL FREQUENCY: his real games that reached the same
+state, and how many finished at or above the line. Numerator and
+denominator both real, both returned.
+
+**NOT a model.** "He needs one more hit in two likely at-bats, his rate
+is .270, assume a binomial" produces a confident number from an
+assumption nobody can check. PAs are not independent draws — the pitcher
+changes, the order turns over, a blowout empties the bench. All of that
+is inside the real games; none of it is inside a binomial.
+
+### PINCH HITS — HANDLED BY DOING NOTHING, AND THAT IS THE POINT
+
+A game where he was lifted after 2 PAs with 1 hit FINISHED with 1 hit.
+It lands in the denominator, not the numerator, and correctly counts as
+a loss. No substitution detection needed.
+
+**The failure mode is the opposite: someone "cleaning" the short games
+out.** Measured at a 12% removal rate — keeping them **42.3%**, dropping
+them **48.8%**. Six and a half points of pure optimism, biased exactly
+the way that costs the bettor, and invisible on screen.
+
+**DO NOT add a minimum-PA filter to `_game_states`.** A game that ended
+early is a result, not a defect. `removal_rate()` reports removals
+separately, which is the honest place for it.
+
+### THE BULLPEN — BESIDE THE NUMBER, NEVER BLENDED IN
+
+The base rate ALREADY covers bullpens structurally: in every historical
+game where he was 1-for-2, his later ABs also came against relievers.
+Late pen exposure is the normal shape of a game and is baked in.
+
+What it cannot see is THIS pen. Adjusting for that needs a weight — how
+many points is a B-grade pen worth? — which would be invented and then
+hidden inside one number. Same argument as the best-games strict tiers.
+The caller shows pen quality alongside, with its own label and window,
+from the Bullpen Board data that already exists.
+
+### WINDOWS — ONE, STATED, NOT MIXED
+
+| quantity | window |
+|---|---|
+| conditional frequency | the batter pull's span (season; `DEFAULT_START_DATE`) |
+| pen quality | Bullpen Board's own — shown beside, never folded in |
+| batter recent form | **NOT USED, deliberately** |
+
+Conditioning on state already cuts ~150 games to ~60. Adding "and he's
+hot" takes it to ~15 — trading a real measurement for a noisier one to
+chase a signal unverifiable at that size. If form is wanted later, show
+BOTH numbers with BOTH denominators. Do not merge them.
+
+### SAMPLE FLOORS, and the arithmetic behind them
+
+`MIN_SHOW = 25` (no percentage below it), `MIN_TRUST = 50`. A .270 hitter
+over 150 games reaches 0-for-2 ~80 times and 1-for-2 ~59 — comfortable.
+But 2-for-2 happens ~11 times and 3-for-3 about 3. The count is ALWAYS
+returned even when the rate is not: "6 of 11" is useful, "55%" off 11
+games is not.
+
+Interval is **Wilson, not the normal approximation** — the normal one
+returns 33%-117% at 3-of-4, and a band claiming more than certainty is
+worse than no band because it looks like arithmetic. Control 5 proves it.
+
+### Six negative controls, all confirmed red
+filter short games (the big one) · treat the state as "at least" · read
+`line` as remaining · drop the floor · normal approximation · fold
+removal into the rate.
+
+### NEXT, and read this before building the view
+
+1. **It is unproven and must say so on screen** until graded. This is the
+   first number on the site a person acts on WITHIN SECONDS with money
+   already down — every other board is published pregame and graded
+   after. Log the state at query time `(batter, hits, PAs, line, ts)` into
+   the calibration record from day one and show its hit rate against the
+   league baseline like every other board.
+2. `DEFAULT_START_DATE` caps this at ONE SEASON, ~150 games. Widening to
+   two doubles every denominator but mixes a player who may have changed.
+   A real trade — make it deliberately, do not inherit it.
+3. WNBA points (the 11-at-halftime case) is **NOT buildable**:
+   `parse_boxscore` stores final lines only, no period splits anywhere.
+   ESPN exposes them; that is a new fetch, new storage, new nightly cost.
+   Probe first.
+
+---
+
 ## PICK UP HERE — 2026-08-10, KBO probe filter
 
 **Suite 79 files, FAILING: none.** One file changed, one added.
@@ -86,6 +240,44 @@ in advance" (NOT measured: zero `<div class="cancel">` anywhere on the
 page, so the case had no chance to appear). It was never committed. Find
 it in that session or re-write it — do NOT let the two of you write it
 twice.
+
+### RUN 85252013581 — the KBO fix landed and REVERSED a recorded finding
+
+```
+STRUCTURE: 57178b | '선발' x8 raw, x0 in RENDERED content | 19 script blocks
+ALL starter vocabulary is inside <script>
+```
+
+**The game centre does not serve starters server-side.** Retracted at
+its source below (search RETRACTED). The other two probes reproduced
+exactly: NPB `157 rows | 109 upcoming | 0 risk vocabulary`, MLB still
+`1 club with runs, not 30` (the league aggregate, 591 runs in 118 G).
+
+**And the run exposed a second bug, in the probe's own exit path.** It
+printed *"NO STARTER VOCABULARY AT ALL ... re-run mid-afternoon KST"*
+and `exit 1`. Both halves wrong: the vocabulary was there eight times,
+and timing cannot move JavaScript into the DOM. Worse, exiting
+suppressed the AJAX url — the one genuinely useful thing the run could
+produce.
+
+Fixed by splitting the two zeros, which are different questions:
+
+| condition | meaning | action |
+|---|---|---|
+| `n_raw == 0` | genuinely absent | timing IS a real explanation — re-run |
+| `n_raw > 0, rendered == 0` | referenced in script | NOT a failure. Print the endpoint, exit 0 |
+
+The referenced-not-rendered branch now extracts `S2iAjaxHtml({url: ...})`
+and the `setPreview(... awayPit, homePit)` signature **from the script
+text** — `rendered` is empty by definition there, so extracting from it
+would always find nothing and look like the endpoint had vanished. If no
+url matches it says so rather than guessing; v1 guessed three `.asmx`
+names and got 401/401/500.
+
+Verified offline against markup matching the logged shape: the url
+`/Schedule/GameCenter/StartPitcher.aspx` and the setPreview signature
+both extract correctly. Three more negative controls on top of the six
+already on the name filter.
 
 ### Still open
 - **Tier 2 (`proj_total`)** — MLB probe correctly refused to half-fire:
@@ -331,17 +523,27 @@ working source behind it.
 **FIRST RUN 08-10, run 85209788549 — two probes were WRONG and were
 rewritten. Read this before trusting any verdict from them.**
 
-- **KBO: a real finding, from the CONTROLS rather than the guesses.**
-  `Schedule/GameCenter/Main.aspx` is **server-rendered and already
-  contains 선발 투수** (200, 57KB). The rendered schedule pages carry
-  none, which is what this file already said — but nobody had looked at
-  the game centre. **The premise that probables are only client-side was
-  true of the schedule pages and false of this one.** The `.asmx`
-  guesses returned 401/401/500; the seven endpoints the page references
-  are recorded in the probe as a fallback, not the main line. v2 now
-  asks the narrower question: can per-game starter NAMES be paired to
-  both teams for today's slate? "The characters appear somewhere" is not
-  that — a page can carry the word as a header on an empty table.
+- **KBO: ~~a real finding~~ — WRONG, AND RETRACTED 2026-08-10. See the
+  block at the top of this file.** This said
+  `Schedule/GameCenter/Main.aspx` is "server-rendered and already
+  contains 선발 투수" and that the client-side premise was false for that
+  page. **It is not server-rendered.** Run 85252013581, with the probe
+  finally separating script from content, measured
+  `'선발' x8 raw, x0 in RENDERED content | 19 script blocks`. All eight
+  live inside a `setPreview()` function and a **commented-out alert
+  string** — the page TALKS ABOUT starters and fetches them over AJAX
+  after load. A commented-out alert is not even executed.
+
+  **Three runs recorded this as an unblock and it never was.** v1 read
+  raw html, v2 read raw html and added a stoplist filter that passed ten
+  Korean UI words as names. The original premise in this file — KBO
+  probables are client-side — was RIGHT all along, for the game centre
+  too. Do not re-derive the retraction; it cost three runs.
+
+  The `.asmx` guesses returned 401/401/500 and must not be retried:
+  guessing is what produced them. The real next step is the endpoint the
+  page itself calls, which the probe now prints verbatim from its script
+  rather than exiting before it gets there.
 - **NPB: the probe was wrong, not the site.** v1 split on
   `<div class="date">`, which does not exist on that page, found zero
   dated blocks, and reported "no forward-looking warnings" — a verdict
@@ -1501,7 +1703,7 @@ the site's own advance warning is a free check on this number.
 - Pages in **`app/views/`**, deliberately NOT `pages/` — Streamlit
   auto-registers `pages/` and would expose every page pre-auth.
 - Engines in `app/engines/`. Theme in `app/styles/kc_theme.py`.
-- Tests in `tests/` — **79 files, plain scripts, not pytest.**
+- Tests in `tests/` — **80 files, plain scripts, not pytest.**
 - Data comes off disk; the nightly publishes a release asset.
 - `requirements.txt` fully pinned, including transitives.
 
