@@ -115,6 +115,15 @@ import engines.mlb_run_rates as mrr  # noqa: E402
 
 
 class _Resp:
+    """A stub matching what fetch_team_run_rates actually calls.
+
+    It uses requests.GET and r.json(). `content` is provided as well so
+    the stub keeps working if the fetch ever switches to decoding bytes
+    the way engines/kbo_official does — a stub that does not match the
+    interface silently falls through to a REAL request, and the assertion
+    then passes on whatever error the network happens to give.
+    """
+
     status_code = 200
 
     def __init__(self, p):
@@ -122,6 +131,11 @@ class _Resp:
 
     def json(self):
         return self._p
+
+    @property
+    def content(self):
+        import json as _j
+        return _j.dumps(self._p).encode("utf-8")
 
 
 _real_get = mrr.requests.get
@@ -200,6 +214,107 @@ check("no second definition of runs-per-game anywhere in the engine",
       "def project_total" not in
       open(os.path.join(ROOT, "app", "engines", "mlb_run_rates.py"),
            encoding="utf-8").read())
+
+# ----------------------------------------------------------------------
+# 6. THE TWO ENDPOINTS DISAGREE ABOUT WHAT A TEAM IS CALLED.
+#
+#   schedule   "Detroit Tigers"     standings   "Tigers"
+#
+# Measured on 2026-08-11: `home matched: False | away matched: False`
+# for all fifteen games. Tier 2 wrote zero totals AND LOGGED NO ERROR,
+# because the fetch succeeded and every lookup missed. That is the worst
+# shape a bug can have — a feature silently absent from a working
+# pipeline.
+# ----------------------------------------------------------------------
+from engines.mlb_run_rates import canonical  # noqa: E402
+
+check("the schedule's full name resolves", canonical("Detroit Tigers") == "DET")
+check("the standings' short name resolves to the SAME club",
+      canonical("Tigers") == canonical("Detroit Tigers") == "DET")
+check("case and whitespace do not matter",
+      canonical("  cleveland guardians ") == "CLE")
+
+# AMBIGUITY RESOLVES TO NOTHING. "Sox" is the last word of both Red Sox
+# and White Sox. Picking one would put the wrong offense on a card and
+# nothing on screen could contradict it.
+check("an ambiguous suffix resolves to None, not a coin flip",
+      canonical("Sox") is None)
+check("but the unambiguous two-word forms both work",
+      canonical("Red Sox") == "BOS" and canonical("White Sox") == "CWS")
+check("an unknown name is None, never a raw-string fallback",
+      canonical("Sheffield Wednesday") is None and canonical("") is None)
+
+# Every short name the real endpoint returns must resolve. This is the
+# list from the live payload, not an invented one.
+_SHORTS = ["Angels", "Astros", "Athletics", "Blue Jays", "Braves", "Brewers",
+           "Cardinals", "Cubs", "Diamondbacks", "Dodgers", "Giants",
+           "Guardians", "Mariners", "Marlins", "Mets", "Nationals", "Orioles",
+           "Padres", "Phillies", "Pirates", "Rangers", "Rays", "Red Sox",
+           "Reds", "Rockies", "Royals", "Tigers", "Twins", "White Sox",
+           "Yankees"]
+_unresolved = [n for n in _SHORTS if not canonical(n)]
+check(f"all 30 standings short names resolve (unresolved: {_unresolved})",
+      not _unresolved)
+check("and they resolve to 30 DISTINCT clubs, not fewer",
+      len({canonical(n) for n in _SHORTS}) == 30)
+
+# Records are reachable by BOTH vocabularies, and both keys point at ONE
+# dict — otherwise the 30-club guard sees 60 and never fires.
+_short_payload = {"records": [{"teamRecords": [
+    {"team": {"name": "Tigers"}, "runsScored": 500, "runsAllowed": 480,
+     "gamesPlayed": 118}]}]}
+_r = parse_standings(_short_payload)
+check("a record is reachable by the standings name", "Tigers" in _r)
+check("and by the abbreviation the schedule reduces to", "DET" in _r)
+check("both keys are the SAME record, not two copies",
+      _r["Tigers"] is _r["DET"])
+
+# The 30-club guard must count CLUBS, not keys.
+_full = parse_standings(payload(THIRTY))
+check("dual keying does not fool the partial-league guard",
+      len({id(v) for v in _full.values()}) == 30)
+
+import engines.mlb_run_rates as _ko2  # noqa: E402
+# REAL team names, so dual keying actually happens. A fixture of
+# "Club 0".."Club 21" is keyed ONCE each (canonical returns None), so
+# len(rates) and the club count agree and the assertion cannot tell them
+# apart — it passed against a guard counting keys. The fixture has to
+# exercise the thing being asserted.
+_REAL22 = [(n, 470, 500, 118) for n in _SHORTS[:22]]
+_real3 = _ko2.requests.get
+try:
+    _ko2.requests.get = lambda *a, **k: _Resp(payload(_REAL22))
+    _got, _err = _ko2.fetch_team_run_rates(2026)
+    check(f"a 22-club league is refused even though it has 44 keys "
+          f"({_err})",
+          _got == {} and _err and "22" in _err)
+
+    _REAL30 = [(n, 470, 500, 118) for n in _SHORTS]
+    _ko2.requests.get = lambda *a, **k: _Resp(payload(_REAL30))
+    _got, _err = _ko2.fetch_team_run_rates(2026)
+    check("a full 30-club league with 60 keys is accepted",
+          len({id(v) for v in _got.values()}) == 30 and _err is None)
+finally:
+    _ko2.requests.get = _real3
+
+# THE REGRESSION, end to end: the exact matchup that failed in production.
+_rates = parse_standings({"records": [{"teamRecords": [
+    {"team": {"name": "Tigers"}, "runsScored": 520, "runsAllowed": 495,
+     "gamesPlayed": 118},
+    {"team": {"name": "Guardians"}, "runsScored": 470, "runsAllowed": 489,
+     "gamesPlayed": 117}]}]})
+_lg = league_run_average(_rates)
+_t, _d = project_total(_rates.get(canonical("Detroit Tigers")),
+                       _rates.get(canonical("Cleveland Guardians")),
+                       league_rs_pg=_lg)
+check(f"Cleveland Guardians @ Detroit Tigers now projects ({_t})",
+      _t is not None and 5.0 <= _t <= 14.0)
+
+# And the caller must actually use it — asserting on source, because the
+# engine can be perfect while the lookup still passes a raw name.
+_src = open(os.path.join(ROOT, "calibration_picks.py"), encoding="utf-8").read()
+check("the slate builder reduces both names before the lookup",
+      "canonical(home)" in _src and "canonical(g.get(\"away\"))" in _src)
 
 if failures:
     print()
