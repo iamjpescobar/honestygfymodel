@@ -51,6 +51,7 @@ against tonight's actual probables.
 """
 import importlib.util
 import os
+import re
 import sys
 
 ROOT = os.path.join(os.path.dirname(__file__), "..")
@@ -167,6 +168,40 @@ if _main:
     check("nothing slices raw html after the strip", not _reads_raw)
     check("the marker scan runs over rendered content",
           're.finditer("\uc120\ubc1c", rendered)' in src)
+
+# ----------------------------------------------------------------------
+# 5. TWO DIFFERENT ZEROS GET TWO DIFFERENT ANSWERS.
+#
+# Run 85252013581 found 선발 eight times in raw html and zero in
+# rendered content, and the probe told the reader "NO STARTER VOCABULARY
+# AT ALL ... re-run mid-afternoon KST", then exited 1. Both halves were
+# wrong: the vocabulary was there, timing cannot move JavaScript into
+# the DOM, and exiting suppressed the AJAX url — the one genuinely
+# useful thing the run produced.
+#
+#   raw == 0      -> genuinely absent. Timing IS a real explanation.
+#   raw > 0, rendered == 0 -> referenced in script. NOT a failure.
+# ----------------------------------------------------------------------
+check("the absent-everywhere branch keys on the RAW count, not rendered",
+      "if not n_raw:" in src)
+check("the referenced-not-rendered case exits 0, not 1",
+      re.search(r"if not n_seonbal:(?:(?!return 1)[\s\S])*?return 0", src)
+      is not None)
+check("that case prints the page's own AJAX url before returning",
+      "S2iAjaxHtml" in src and "THE PAGE'S OWN AJAX CALL" in src)
+check("it says REFERENCED, NOT RENDERED rather than 'no vocabulary'",
+      "REFERENCED, NOT RENDERED" in src)
+check("it records that this reverses v1 and v2",
+      "REVERSES v1 AND v2" in src)
+# The url must be pulled from the SCRIPT text. `rendered` is empty by
+# definition in this branch, so extracting from it would always find
+# nothing and look like the endpoint had vanished.
+check("the url is extracted from script text, not from rendered content",
+      "_script_text = \" \".join(scripts)" in src)
+# And it must never guess. v1 guessed three .asmx names and got
+# 401/401/500 — three wrong answers dressed as a finding.
+check("a missing url says so instead of guessing one",
+      "Do NOT guess a" in src or "do not guess" in src.lower())
 
 if failures:
     print()
