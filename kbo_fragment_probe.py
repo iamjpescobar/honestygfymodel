@@ -42,6 +42,7 @@ as "no endpoint found".
 
 If the call fails, the printed block is still the useful output.
 """
+import json
 import re
 import sys
 from datetime import datetime, timedelta
@@ -401,6 +402,43 @@ def main() -> int:
         print("  NO ID-LOOKING KEY on the row. Read the key list above and "
               "name it explicitly next round — do not guess a third time.")
         return 1
+
+    # ---- 2b. HOW MANY DATES DOES ONE CALL COVER? ------------------
+    #
+    # THE SCOPE QUESTION, and it decides how big the migration is.
+    # GetKboGameList takes ONE date. The current pipeline walks weeks off
+    # mykbostats, so replacing it means either N calls or one call to the
+    # other web method round 5 found:
+    #
+    #   $.ajax({ url: "/ws/Main.asmx/GetKboGameDate",
+    #            data: { leId: "1", srId: srId, date: selectDate } })
+    #
+    # If that returns a month of dates, the full migration is cheap. If
+    # it returns one date, it is ~14 calls for a two-week window — still
+    # fine against the league's own servers, but worth knowing before
+    # committing. Untested; this is the run that settles it.
+    print("-" * 72)
+    date_url = f"{BASE}/ws/Main.asmx/GetKboGameDate"
+    print(f"SCOPE PROBE: {date_url}")
+    try:
+        dr = requests.post(date_url, headers={**UA,
+                           "Content-Type": "application/json; charset=UTF-8"},
+                           json={"leId": "1", "srId": "0",
+                                 "date": today.strftime("%Y%m%d")}, timeout=25)
+        draw = (dr.content or b"").decode("utf-8-sig", errors="replace")
+        print(f"  -> {dr.status_code} | {len(draw)}b")
+        # Same trailing-error-page tolerance as the game list.
+        try:
+            dobj, _e = json.JSONDecoder().raw_decode(draw.lstrip())
+            print(f"  keys: {list(dobj)[:8] if isinstance(dobj, dict) else type(dobj).__name__}")
+            print(f"  ---- first 600 chars, UNPARSED ----")
+            print("  " + draw[:600])
+        except ValueError as _e:
+            print(f"  not JSON at offset {getattr(_e, 'pos', '?')}: {_e}")
+            print("  ---- first 400 chars ----")
+            print("  " + draw[:400])
+    except Exception as exc:
+        print(f"  FAILED {type(exc).__name__}: {exc}")
 
     # ---- 3. CALL IT, BOTH WAYS ---------------------------------------
     #
