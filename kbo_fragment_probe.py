@@ -136,84 +136,108 @@ def main() -> int:
         print("   NONE — the script changed shape since run 85313739682.")
         print("   Do NOT guess field names. Dump the script and read it.")
 
-    # ---- 2. THE GAME LIST, VERBATIM -------------------------------
+    # ---- 2. THE GAME LIST, FROM THE WEB METHOD THAT BUILDS IT -----
+    #
+    # ROUND 6. Round 5's path sweep found the call rounds 1-4 could not
+    # see, because it is a .asmx web method behind $.ajax rather than an
+    # S2iAjaxHtml block:
+    #
+    #   $.ajax({ type: "post", url: "/ws/Main.asmx/GetKboGameList",
+    #            dataType: "json",
+    #            data: { leId: "1", srId: srId, date: $("#txtGameDate").val() } })
+    #
+    # THE IRONY IS WORTH RECORDING. v1 of this probe GUESSED .asmx
+    # endpoint names, got 401/401/500, and that was written down as "no
+    # endpoint found" — which sent four rounds down the HTML path. The
+    # .asmx route was right the whole time. v1 guessed the wrong method
+    # names, and a wrong guess and a dead route return the same thing.
+    # GetKboGameList was sitting in the page's own script for all five
+    # runs.
+    #
+    # .asmx WANTS JSON, NOT FORM FIELDS. A ScriptService method needs
+    # Content-Type: application/json with a JSON body, and answers
+    # {"d": ...}. Posting form-encoded data is what produces a 500 that
+    # looks like a dead endpoint — almost certainly what v1 hit.
     print("-" * 72)
-    tags = GAME_LI.findall(html)
-    print(f"GAME LIST <li> TAGS carrying g_id: {len(tags)}")
-    games = []
-    for t in tags:
-        a = dict(ATTR.findall(t))
-        games.append(a)
-    # Print the FULL opening tag of the first few. Every attribute the
-    # page carries is visible here — including any this probe does not
-    # know it needs. leId and srId are still unaccounted for and may be
-    # among them; reading beats guessing, which is the whole lesson of
-    # rounds 2 and 3.
-    for t in tags[:4]:
-        print("   " + re.sub(r"\s+", " ", t)[:300])
-    if games:
-        keys = sorted({k for g in games for k in g})
-        print(f"   attributes present: {', '.join(keys)}")
+    list_url = f"{BASE}/ws/Main.asmx/GetKboGameList"
+    # leId "1" is a LITERAL in the page's own call, not an assumption.
+    # srId is a variable there; "0" is this probe's only remaining guess
+    # and is labelled as such below.
+    payload = {"leId": "1", "srId": "0", "date": today.strftime("%Y%m%d")}
+    print(f"CALLING {list_url}")
+    print(f"  json body: {payload}   (leId is the page's own literal; "
+          f"srId '0' is the one guess left)")
+
+    games, raw = [], ""
+    try:
+        lr = requests.post(list_url, headers={**UA,
+                           "Content-Type": "application/json; charset=UTF-8"},
+                           json=payload, timeout=25)
+        raw = lr.text or ""
+        print(f"  -> {lr.status_code} | {len(raw)}b")
+        if lr.status_code != 200 or not raw.strip():
+            print("  ---- BODY, first 800 chars ----")
+            print(raw[:800] or "  (empty)")
+            print("  A .asmx 500 is usually the CONTENT TYPE or the field "
+                  "names, not a dead route — that is what made v1 record "
+                  "this whole path as unreachable. Read the fault string.")
+        else:
+            print("  ---- RAW JSON, first 1200 chars, UNPARSED ----")
+            print(raw[:1200])
+            # ScriptService wraps everything in "d". Parsed defensively:
+            # the shape inside is unknown and is NOT guessed at.
+            try:
+                import json as _json
+                d = _json.loads(raw)
+                inner = d.get("d", d) if isinstance(d, dict) else d
+                if isinstance(inner, str):
+                    inner = _json.loads(inner)
+                rows = inner.get("game", inner) if isinstance(inner, dict) else inner
+                if isinstance(rows, list):
+                    games = [r for r in rows if isinstance(r, dict)]
+                    print(f"  parsed {len(games)} game row(s)")
+                    if games:
+                        print(f"  keys on the first row: "
+                              f"{', '.join(sorted(games[0])[:20])}")
+            except Exception as exc:
+                print(f"  could not parse as JSON ({type(exc).__name__}) — "
+                      f"read the raw body above rather than trusting this.")
+    except Exception as exc:
+        print(f"  FAILED {type(exc).__name__}: {exc}")
 
     if not games:
-        # ROUND 5: THE PAGE IS A STATIC SHELL. Measured, not inferred —
-        # main page: 200 57178b on FIVE runs spanning 11:21 to 19:26 KST,
-        # byte-identical every time. A live game centre whose size never
-        # moves by one byte is not rendering games; it is a frame that
-        # fetches everything after load. The <li> elements the script
-        # reads g_id from are built by a call this probe has not found,
-        # because it only ever extracted S2iAjaxHtml blocks and the game
-        # list is filled by something else.
-        #
-        # So stop narrowing and dump EVERY call and EVERY path in the
-        # script. One of them builds .game-list-n, and reading is what
-        # has broken every previous deadlock here.
-        print("   NONE — and the page has been 57178b on every run from "
-              "11:21 to 19:26 KST, byte-identical. This is a SHELL: the "
-              "game list is fetched after load, so no selector over this "
-              "HTML will ever find it.")
         print("-" * 72)
-        print("EVERY AJAX-SHAPED CALL IN THE SCRIPT (not just S2iAjaxHtml):")
-        seen = set()
-        for m in re.finditer(
-                r"(\$\.(?:ajax|post|get|getJSON)|\.load|S2iAjax\w*)\s*\(.{0,260}",
-                scripts, re.S):
-            frag = re.sub(r"\s+", " ", m.group(0)).strip()
-            if frag[:120] in seen:
-                continue
-            seen.add(frag[:120])
-            print(f"   {frag[:250]}")
-            if len(seen) >= 18:
-                break
-        print("-" * 72)
-        print("EVERY QUOTED PATH IN THE SCRIPT:")
-        paths = sorted({p for p in re.findall(r"""["'](/[A-Za-z0-9_./-]{4,80})["']""",
-                                              scripts)})
-        for pth in paths[:40]:
-            print(f"   {pth}")
-        print("-" * 72)
-        print("FIND THE ONE THAT BUILDS .game-list-n. It is the call that "
-              "has to come first — StartPitcher cannot be reached without "
-              "a g_id, and the g_id only exists once that list is drawn. "
-              "Do NOT guess which path it is; the list above is the whole "
-              "set the page itself uses.")
+        print("NO GAME ROWS. The raw body above is the answer, not this "
+              "line. If it is a SOAP fault, the field names or the content "
+              "type are wrong. If it is an empty list, there may be no "
+              "games on this date — check a date you know has some before "
+              "concluding anything.")
         return 1
 
-    # game_sc is the state code. The page's own switch:
-    #   1 -> setPreview  (scheduled; the ONLY state with starters to
-    #        preview, which is what this endpoint serves)
-    #   2, 5 -> setLive     3 -> setReview
-    # Preferring a "1" is not a guess — it is the page's own branch.
-    prev = [g for g in games if g.get("game_sc") == "1"]
-    pick = (prev or games)[0]
-    if not prev:
-        print("   NO game_sc==1 (preview) GAMES. Every game today is live "
-              "or final, so StartPitcher may legitimately return nothing. "
-              "That is a timing result, not a dead endpoint — re-run "
-              "earlier in the KST day before concluding.")
-    print(f"   using g_id={pick.get('g_id')} "
-          f"season={pick.get('season')} game_sc={pick.get('game_sc')} "
-          f"away={pick.get('away_id')} home={pick.get('home_id')}")
+    # Which key holds the id is UNKNOWN and not guessed: the script reads
+    # li.attr("g_id"), but that is the ATTRIBUTE the page writes, and the
+    # JSON key behind it may differ. Take whichever key looks like a game
+    # id, and say which one was used.
+    def _pick(row, *names):
+        for n in names:
+            for k in row:
+                if k.lower() == n:
+                    return k, row[k]
+        return None, None
+
+    pick = games[0]
+    for g in games:
+        _k, v = _pick(g, "gamesc", "game_sc", "gamestatus")
+        if str(v) == "1":
+            pick = g
+            break
+    id_key, game_id = _pick(pick, "gameid", "g_id", "gid")
+    print(f"  using {id_key}={game_id} from row: "
+          f"{ {k: pick[k] for k in list(pick)[:8]} }")
+    if not game_id:
+        print("  NO ID-LOOKING KEY on the row. Read the key list above and "
+              "name it explicitly next round — do not guess a third time.")
+        return 1
 
     # ---- 3. CALL IT, BOTH WAYS ---------------------------------------
     #
@@ -224,38 +248,38 @@ def main() -> int:
     # first guess — which is why it is labelled as one.
     url = f"{BASE}/Schedule/GameCenter/Preview/StartPitcher.aspx"
 
-    # EVERY VALUE HERE COMES FROM THE PAGE, NOT FROM ME.
-    #
-    # Field names: the `param` block round 2 printed verbatim.
-    # Values: the <li> attributes round 3's excerpts named —
-    #   gameId <- g_id, seasonId <- season,
-    #   awayTeam <- away_id, homeTeam <- home_id.
-    #
-    # leId and srId are the two the page has not shown a source for. If
-    # they appear in the attribute list above, THAT is where they come
-    # from and this should use them; the fallbacks below are the only
-    # remaining assumption in this probe and are labelled as such.
+    # EVERY VALUE FROM THE PAGE OR FROM ITS OWN GAME LIST.
+    #   field names  <- the `param` block round 2 printed verbatim
+    #   gameId       <- the id key round 6 just read off the JSON row
+    #   season/teams <- the same row, by whatever keys it carries
     #
     # awayPit/homePit go EMPTY on purpose: setPreview checks
-    # `if (awayPit == undefined)` before firing this call, which reads as
+    # `if (awayPit == undefined)` before firing this, which reads as
     # "this endpoint RESOLVES the starters" rather than "you pass them
     # in". If that is wrong the response will say so.
+    def _v(*names):
+        for n in names:
+            for k in pick:
+                if k.lower() == n:
+                    return str(pick[k])
+        return ""
+
     params = {
-        "leId": pick.get("le_id", "1"),      # ASSUMED if absent above
-        "srId": pick.get("sr_id", "0"),      # ASSUMED if absent above
-        "seasonId": pick.get("season", ""),
-        "gameId": pick.get("g_id", ""),
-        "awayTeam": pick.get("away_id", ""),
-        "homeTeam": pick.get("home_id", ""),
+        "leId": "1",                       # the page's own literal
+        "srId": "0",                       # the one remaining guess
+        "seasonId": _v("seasonid", "season") or str(today.year),
+        "gameId": str(game_id),
+        "awayTeam": _v("awayteamid", "away_id", "awayteam", "awaycode"),
+        "homeTeam": _v("hometeamid", "home_id", "hometeam", "homecode"),
         "awayPit": "", "homePit": "",
     }
     print("-" * 72)
     print(f"CALLING {url}")
     print(f"  params: {params}")
-    if "le_id" not in pick or "sr_id" not in pick:
-        print("  NOTE: leId/srId were not attributes on the <li> — the two "
-              "values above are the only assumption left in this probe. If "
-              "the call fails, they are the first suspects.")
+    if not params["awayTeam"] or not params["homeTeam"]:
+        print("  NOTE: team codes not found on the row under any tried key. "
+              "Read the key list above. Sending empty rather than inventing "
+              "a code — if that is what the endpoint needs, it will say so.")
 
     for verb in ("GET", "POST"):
         try:
