@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-08-11 08:02",
+  "generated_at_et": "2026-08-11 13:52",
   "slate_date_et": "2026-08-11",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -71,14 +71,14 @@
       "home_pitcher": "TBD",
       "venue": "Nationals Park",
       "game_time": "2026-08-11T22:45:00Z",
-      "weather_condition": "Chance Showers And Thunderstorms",
-      "weather_temp": 86,
-      "weather_wind": "NW 8 mph",
+      "weather_condition": "Slight Chance Showers And Thunderstorms",
+      "weather_temp": 87,
+      "weather_wind": "NW 7 mph",
       "park_factor": 102,
       "park_verified": true,
       "weather_source": "nws_forecast",
-      "wind_adj": -1.2,
-      "wind_note": "8 mph crosswind (-1.2)"
+      "wind_adj": -1.1,
+      "wind_note": "7 mph crosswind (-1.1)"
     },
     {
       "game_pk": 823512,
@@ -175,7 +175,7 @@
       "venue": "Target Field",
       "game_time": "2026-08-11T23:40:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": 86,
+      "weather_temp": 85,
       "weather_wind": "NNE 5 mph",
       "park_factor": 103,
       "park_verified": true,
@@ -194,7 +194,7 @@
       "ou_grade": "A",
       "ou_signals": [
         "Park factor 103 (hitter-friendly)",
-        "Temp 86F (carry weather)",
+        "Temp 85F (carry weather)",
         "Starters' avg WHIP 1.35 (high)",
         "Starters' avg HR/9 1.25 (high)"
       ]
@@ -207,14 +207,14 @@
       "home_pitcher": "Sean Burke",
       "venue": "Rate Field",
       "game_time": "2026-08-11T23:40:00Z",
-      "weather_condition": "Slight Chance Showers And Thunderstorms",
-      "weather_temp": 78,
-      "weather_wind": "ESE 5 mph",
+      "weather_condition": "Chance Showers And Thunderstorms",
+      "weather_temp": 77,
+      "weather_wind": "E 5 mph",
       "park_factor": 98,
       "park_verified": true,
       "weather_source": "nws_forecast",
-      "wind_adj": -2.0,
-      "wind_note": "5 mph blowing in (-2.0)",
+      "wind_adj": -1.8,
+      "wind_note": "5 mph blowing in (-1.8)",
       "edge_net": 4,
       "edge_lean": "Chicago White Sox",
       "edge_grade": "A",
@@ -241,13 +241,13 @@
       "venue": "Busch Stadium",
       "game_time": "2026-08-11T23:45:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": 97,
-      "weather_wind": "SW 8 mph",
+      "weather_temp": 95,
+      "weather_wind": "SW 7 mph",
       "park_factor": 97,
       "park_verified": true,
       "weather_source": "nws_forecast",
-      "wind_adj": 3.2,
-      "wind_note": "8 mph blowing out (+3.2)",
+      "wind_adj": 2.8,
+      "wind_note": "7 mph blowing out (+2.8)",
       "edge_net": 1,
       "edge_lean": "Philadelphia Phillies",
       "edge_grade": "C-",
@@ -258,7 +258,7 @@
       "ou_grade": "C",
       "ou_signals": [
         "Park factor 97 (pitcher-friendly)",
-        "Temp 97F (carry weather)",
+        "Temp 95F (carry weather)",
         "Starters' avg HR/9 0.765 (low)",
         "Starters' avg SLG against 0.359 (low)"
       ]
@@ -336,7 +336,7 @@
       "home_pitcher": "Mason Barnett",
       "venue": "Sutter Health Park",
       "game_time": "2026-08-12T01:40:00Z",
-      "weather_condition": "Mostly Clear",
+      "weather_condition": "Clear",
       "weather_temp": 90,
       "weather_wind": "SSW 9 mph",
       "park_factor": null,
@@ -399,7 +399,7 @@
       "away": "Houston Astros",
       "home": "San Francisco Giants",
       "away_pitcher": "Hunter Brown",
-      "home_pitcher": "TBD",
+      "home_pitcher": "Carson Whisenhunt",
       "venue": "Oracle Park",
       "game_time": "2026-08-12T01:45:00Z",
       "weather_condition": "Mostly Clear",
@@ -409,7 +409,16 @@
       "park_verified": true,
       "weather_source": "nws_forecast",
       "wind_adj": 2.8,
-      "wind_note": "10 mph blowing out (+2.8)"
+      "wind_note": "10 mph blowing out (+2.8)",
+      "edge_net": 4,
+      "edge_lean": "Houston Astros",
+      "edge_grade": "A",
+      "edge_signals": [
+        "WHIP: edge Houston Astros (1.4 vs 1.92)",
+        "K%: edge Houston Astros (25.8 vs 19)",
+        "HR/9: edge Houston Astros (1.05 vs 1.69)",
+        "SLG against: edge Houston Astros (0.326 vs 0.506)"
+      ]
     },
     {
       "game_pk": 823917,
@@ -420,7 +429,7 @@
       "venue": "UNIQLO Field at Dodger Stadium",
       "game_time": "2026-08-12T02:10:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": 76,
+      "weather_temp": 78,
       "weather_wind": "SW 10 mph",
       "park_factor": 101,
       "park_verified": true,
