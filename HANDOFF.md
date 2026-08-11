@@ -10,6 +10,82 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — NPB parity CLOSED, KBO round 2 ready. 2026-08-10
+
+**Suite 82, FAILING: none.** Three files.
+
+### NPB PARITY — CLOSED, and the answer is "there is nothing to show"
+
+KBO's board carries `void_risk` — the league's own "Chance of Heat
+Cancellation", published in advance on a game still ON. NPB's carried
+nothing there, and **a missing badge is unreadable**: on one board it
+meant "no risk", on the other "not measured", with nothing on screen
+telling them apart.
+
+Measured three times, most recently run 85313739682:
+
+    157 dated rows | 109 upcoming | 0 cancel | zero risk vocabulary
+
+across 中止 雨天 順延 延期 恐れ 見込み 予備日 微妙 流れ. npb.jp publishes
+no advance warning of any kind.
+
+**So the label says that**: `no rainout warning published`, on
+`app/views/NPB.py`, gated to **scheduled AND open-air** games only —
+under a roof the question is already answered by the roof badge, and two
+hedges on one card read as more doubt than either deserves.
+
+**WHAT IT DELIBERATELY DOES NOT SAY:** that NPB never calls a game off in
+advance. The probe found ZERO cancelled games anywhere on the page, so
+the forward-cancellation case had no opportunity to appear and remains
+UNMEASURED. Claiming it would be the same overreach as the badge this
+replaces. Re-run in the June rainy season to settle it.
+
+### KBO ROUND 2 — `kbo_fragment_probe.py` (NEW) + its own workflow job
+
+Round one established the game centre does NOT render starters
+(`x8 raw, x0 rendered`) and handed over the endpoint its own script
+calls. This one calls it.
+
+**IT PARSES NOTHING, ON PURPOSE.** `S2iAjaxHtml` injects markup so the
+response is an HTML fragment nobody has seen, and every wrong answer in
+this whole sequence came from a probe that invented the structure it
+parsed — v1 NPB split on a `<div class="date">` that does not exist, v1
+KBO guessed three `.asmx` names (401/401/500), v2 KBO matched
+`[가-힣]{2,4}` and returned ten Korean UI words as names. This prints the
+raw fragment and lets a human decide what the container is. A parser
+comes NEXT round, keyed on markup somebody has actually looked at.
+
+**THE POST FIELD NAMES ARE ALSO UNKNOWN AND ARE NOT GUESSED.**
+`setPreview` names nine values; the AJAX `data:` block is what maps them
+onto fields. The probe prints that block VERBATIM *before* attempting any
+call, because a 500 from wrong field names looks exactly like a 500 from
+a dead endpoint — and last time that ambiguity was read as "no endpoint
+found". The params it does send are labelled `FIRST GUESS`. It tries GET
+and POST both, since a 405 from the wrong verb is also indistinguishable
+from a dead route.
+
+Verified offline: the game-id regex matches `20260811LGOB0` and the
+call-block regex captures a realistic `S2iAjaxHtml({url:..., data:{...}})`
+including its field names. **The live call is untested** — that is the
+run.
+
+Added as a SEPARATE workflow job (`kbo-fragment`), not bolted onto
+`kbo-probables`: different questions, and one failing must not hide the
+other's output.
+
+### NEXT
+1. **Actions → Open-question probes.** Read `kbo-fragment`'s RAW
+   FRAGMENT section. If names are in there, round three writes the
+   parser and mykbostats can go (AUP clause 6). If the body is empty,
+   the CALL BLOCKS section holds the right field names.
+2. **Tomorrow's 1 PM slate-picks** is the first with tier 2 —
+   `grep -c proj_total data/mlb/games.json`, and the log ends
+   `N with a projected total`.
+3. `live_hits` is committed and unused. Viability check first: real
+   denominators in the 40-70 range, or the floors refuse most states.
+
+---
+
 ## PICK UP HERE — TIER 2 IS LIVE. 2026-08-10.
 
 **Suite 82, FAILING: none.** The last dark piece of item C is wired.
