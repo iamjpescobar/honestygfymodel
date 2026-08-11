@@ -347,6 +347,53 @@ def main() -> int:
         if str(v) == "1":
             pick = g
             break
+    # THE STARTERS ARE ALREADY IN THIS PAYLOAD.
+    #
+    # Round 9's byte window did not just explain the parse failure — it
+    # printed the full key list, and the answer to the whole eight-round
+    # question was sitting in it:
+    #
+    #   T_PIT_P_NM / T_PIT_P_ID   away starter, name and id
+    #   B_PIT_P_NM / B_PIT_P_ID   home starter, name and id
+    #   CANCEL_SC_NM              cancellation status, in words
+    #   GAME_SC_NM  AWAY_NM  HOME_NM  S_NM  G_TM  LINEUP_CK
+    #
+    # T = top of the inning = away. B = bottom = home. So ONE JSON call
+    # gives game ids, teams, start time, stadium, BOTH STARTERS with
+    # player ids, cancellation status and a lineup flag.
+    #
+    # StartPitcher.aspx — the endpoint chased since round 1 — is the deep
+    # ANALYSIS page, not the source of the names. It is still called
+    # below because seeing its shape costs one request and settles what
+    # it is for, but it is no longer the target.
+    #
+    # This prints the starter fields for EVERY row rather than one,
+    # because "the key exists" and "the key has a value tonight" are
+    # different claims and only the second one is worth building on.
+    print("-" * 72)
+    print("STARTERS, straight from the game list (T=away, B=home):")
+    for g in games:
+        def _g(*names):
+            for n in names:
+                for k in g:
+                    if k.lower() == n:
+                        return g[k]
+            return None
+        print(f"   {str(_g('g_id')):16} {str(_g('away_nm') or _g('away_id')):>10} "
+              f"@ {str(_g('home_nm') or _g('home_id')):<10} "
+              f"{str(_g('g_tm')):>6}  "
+              f"away SP: {str(_g('t_pit_p_nm')) or '-':<12} "
+              f"home SP: {str(_g('b_pit_p_nm')) or '-':<12} "
+              f"status={_g('game_sc_nm')} cancel={_g('cancel_sc_nm')}")
+    _named = sum(1 for g in games
+                 if str((_pick(g, "t_pit_p_nm")[1] or "")).strip()
+                 and str((_pick(g, "b_pit_p_nm")[1] or "")).strip())
+    print(f"   {_named} of {len(games)} game(s) have BOTH starters named.")
+    if _named < len(games):
+        print("   Partial. Half a matchup reads as a whole one, so a real "
+              "parser must fill BOTH sides or show neither — and this is "
+              "the field to gate on.")
+
     id_key, game_id = _pick(pick, "g_id", "gameid", "gid")
     print(f"  using {id_key}={game_id} from row: "
           f"{ {k: pick[k] for k in list(pick)[:8]} }")
