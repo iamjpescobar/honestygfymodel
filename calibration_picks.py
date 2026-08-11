@@ -337,6 +337,8 @@ def _write_mlb_slate(date_str: str) -> int:
     from engines.park_weather import is_roofed, get_park_forecast
     from engines.team_abbreviations import team_abbr
     from engines.wind_engine import wind_hr_adj
+    from engines.mlb_run_rates import fetch_team_run_rates
+    from engines.run_total import project_total, league_run_average
     from engines.player_of_the_day import _wind_hr_adj as _field_wind_adj
 
     games, err = get_todays_games_with_weather(date_str)
@@ -349,7 +351,16 @@ def _write_mlb_slate(date_str: str) -> int:
               flush=True)
         return 0
 
-    rows, graded, roofed, forecast_filled = [], 0, 0, 0
+    rows, graded, roofed, forecast_filled, totals = [], 0, 0, 0, 0
+
+    # ONE CALL FOR ALL 30 CLUBS, before the per-game loop — not once per
+    # game. Fetched here rather than inside the loop so a standings
+    # outage is one logged line instead of fifteen retries.
+    run_rates, _rr_err = fetch_team_run_rates(date_str[:4])
+    _league_rs_pg = league_run_average(run_rates) if run_rates else None
+    if _rr_err:
+        print(f"mlb slate: no team run rates ({_rr_err}) - proj_total "
+              f"omitted, tier 2 will not fire.", flush=True)
     for g in games:
         home = g.get("home") or "TBD"
         park = get_park_factor(home)
@@ -491,12 +502,36 @@ def _write_mlb_slate(date_str: str) -> int:
             row["ou_grade"] = ou.get("grade")
             row["ou_signals"] = ou.get("signals") or []
 
-        # proj_total IS DELIBERATELY NOT SET. engines/run_total needs each
-        # team's runs scored and runs allowed per game and nothing on disk
-        # carries those for MLB. best_games' tier 2 is wired and tested
-        # and simply never fires until this field exists — writing a total
-        # derived from something else would be a different quantity
-        # wearing the decided label. See that module's docstring.
+        # TIER 2, FINALLY. proj_total was deliberately absent for weeks:
+        # run_total needs each club's runs scored and allowed per game and
+        # nothing on disk carried those for MLB. Four probe rounds later,
+        # standings does (run 85313739682: 30 entries, 30 with runs).
+        #
+        # run_total.project_total is the SAME engine KBO and NPB use.
+        # league_rs_pg is a parameter it measures from the teams handed
+        # to it, not a frozen constant, so MLB's run environment goes in
+        # with no second copy of the maths.
+        #
+        # It returns (None, reason) when it cannot project — a club with
+        # no rates, or a total outside its own plausible range. That
+        # absence is written as an ABSENT FIELD, never a zero: best_games
+        # sorts unmeasured below measured on each tier, and a 0.0 would
+        # claim the lowest-scoring game on the slate.
+        if run_rates:
+            _t, _why = project_total(
+                run_rates.get(home), run_rates.get(g.get("away")),
+                league_rs_pg=_league_rs_pg,
+                # ERA is not passed. run_total shades a total by the
+                # starters' ERA against the league's, and neither figure
+                # is on disk for MLB — starter_adjustment returns 0.0 for
+                # a missing ERA, so the projection is the pure team-rate
+                # one. That is a real, smaller claim, and preferable to
+                # inventing an ERA to make a bigger one.
+                home_starter_era=None, away_starter_era=None,
+            )
+            if _t is not None:
+                row["proj_total"] = _t
+                totals += 1
 
         rows.append(row)
 
@@ -512,7 +547,8 @@ def _write_mlb_slate(date_str: str) -> int:
     }, indent=2))
     print(f"mlb slate: wrote {len(rows)} game(s) for {date_str} "
           f"({graded} with a modeled edge, {roofed} roofed, "
-          f"{forecast_filled} weather from NWS forecast) to "
+          f"{forecast_filled} weather from NWS forecast, "
+          f"{totals} with a projected total) to "
           f"{MLB_SLATE_PATH}.", flush=True)
     return len(rows)
 
