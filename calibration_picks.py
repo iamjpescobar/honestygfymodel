@@ -352,6 +352,7 @@ def _write_mlb_slate(date_str: str) -> int:
         return 0
 
     rows, graded, roofed, forecast_filled, totals = [], 0, 0, 0, 0
+    _proj_fail = None      # first projection failure, logged once
 
     # ONE CALL FOR ALL 30 CLUBS, before the per-game loop — not once per
     # game. Fetched here rather than inside the loop so a standings
@@ -532,6 +533,32 @@ def _write_mlb_slate(date_str: str) -> int:
             if _t is not None:
                 row["proj_total"] = _t
                 totals += 1
+            elif not _proj_fail:
+                # THE REASON WAS COMPUTED AND THROWN AWAY.
+                #
+                # project_total returns (None, {"reason": ...}) and this
+                # bound `_why` and never printed it — rule 20, in the one
+                # place where the reason IS the answer. The 2026-08-11
+                # 11:40 run wrote "0 with a projected total" with NO
+                # accompanying error, because the fetch succeeded and
+                # every projection failed silently. Fifteen games, fifteen
+                # discarded explanations.
+                #
+                # Printed ONCE per run, not per game: fifteen identical
+                # lines is noise, and the first one names the cause.
+                _proj_fail = _why.get("reason") if isinstance(_why, dict) else str(_why)
+                print(f"mlb slate: no projected total \u2014 {_proj_fail}", flush=True)
+                # And the likeliest cause, stated as data rather than a
+                # guess: run_rates is keyed by the name STANDINGS uses,
+                # while home/away come from the SCHEDULE. If those
+                # vocabularies differ, every lookup misses and the reason
+                # above will say "not enough real run data".
+                print(f"  schedule says home={home!r} away={g.get('away')!r}",
+                      flush=True)
+                print(f"  standings knows {len(run_rates)} clubs, e.g. "
+                      f"{sorted(run_rates)[:3]}", flush=True)
+                print(f"  home matched: {home in run_rates} | "
+                      f"away matched: {g.get('away') in run_rates}", flush=True)
 
         rows.append(row)
 
