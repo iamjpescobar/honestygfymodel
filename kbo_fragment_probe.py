@@ -76,31 +76,30 @@ UA = {
 # So there are now THREE patterns, from loosest to tightest, and the
 # probe reports which ones hit. A pattern that finds nothing is
 # information; a single pattern that finds nothing is just a dead end.
-GAME_ID_PATTERNS = [
-    # What round 2 assumed. Kept so its failure stays visible rather
-    # than being quietly replaced — if this one starts matching, the
-    # page changed, not our understanding.
-    ("round-2 guess (20YYMMDD + 4 letters + digit)",
-     re.compile(r"\b(20\d{6}[A-Z]{4}\d)\b")),
-    # Same date prefix, ANY trailing run of letters/digits. Catches
-    # 3-letter or 5-letter team codes, missing sequence digit, lowercase.
-    ("date-prefixed, any suffix",
-     re.compile(r"\b(20\d{6}[A-Za-z0-9]{2,8})\b")),
-    # Anything assigned to a variable or attribute NAMED gameId. This is
-    # the one that cannot be wrong about format, because it keys on the
-    # NAME the page itself uses rather than on what the value looks like.
-    ("assigned to something called gameId",
-     re.compile(r"""gameId["'\s]*[:=]\s*["']([^"']{4,20})["']""", re.I)),
-]
+# ROUND 4: THE IDS ARE HTML ATTRIBUTES, NOT SCRIPT VALUES.
+#
+# Round 3 printed the source instead of a count, and the source answered
+# it outright:
+#
+#   var seasonId = li.attr("season");  var gameSc  = li.attr("game_sc");
+#   var gameId   = li.attr("g_id");    var awayTeam = li.attr("away_id");
+#   var homeTeam = li.attr("home_id");
+#
+# The page carries `var gameId = "";` — EMPTY — and fills it from the
+# clicked `<li>` in `.game-list-n`, or from a `gameId` URL parameter.
+# So no regex over script values could ever have found one: there are
+# none in the script. They are markup attributes, and they are not
+# `data-` prefixed either, which is why the data-attr sweep missed them
+# too. Both round-2 and round-3 guesses were looking in the wrong place,
+# not for the wrong shape.
+#
+# This no longer guesses ANY attribute name. It captures the whole
+# opening <li> tag from the game list and prints it verbatim, so every
+# attribute the page carries is visible — including leId/srId, which are
+# still unaccounted for and may or may not live there.
+GAME_LI = re.compile(r"<li\b[^>]*\bg_id\s*=\s*[\"'][^\"']+[\"'][^>]*>", re.I)
+ATTR = re.compile(r"""([a-zA-Z_][\w:-]*)\s*=\s*["']([^"']*)["']""")
 
-# Where a value gets ASSIGNED, so the probe can show the surrounding
-# source instead of reporting a count and stopping. Round 2's failure
-# was not "no ids" — it was "no ids MATCHING MY GUESS", and those look
-# identical from a count alone.
-GAME_ID_CONTEXT = re.compile(r".{0,90}gameId.{0,110}", re.I | re.S)
-
-# data-* attributes carrying digits. If the ids live in markup rather
-# than script, this is where they are.
 DATA_ATTR = re.compile(r"""(data-[a-z-]*(?:game|id|gm)[a-z-]*)\s*=\s*["']([^"']{2,24})["']""", re.I)
 
 
@@ -137,57 +136,47 @@ def main() -> int:
         print("   NONE — the script changed shape since run 85313739682.")
         print("   Do NOT guess field names. Dump the script and read it.")
 
-    # ---- 2. GAME IDS — TRIED THREE WAYS, AND SHOWN EITHER WAY ------
+    # ---- 2. THE GAME LIST, VERBATIM -------------------------------
     print("-" * 72)
-    ids = []
-    for label, pat in GAME_ID_PATTERNS:
-        found = list(dict.fromkeys(pat.findall(scripts) + pat.findall(html)))
-        print(f"GAME IDS via {label}: {len(found)}")
-        if found:
-            print("   " + ", ".join(found[:8]))
-        ids.extend(found)
-    ids = list(dict.fromkeys(ids))
+    tags = GAME_LI.findall(html)
+    print(f"GAME LIST <li> TAGS carrying g_id: {len(tags)}")
+    games = []
+    for t in tags:
+        a = dict(ATTR.findall(t))
+        games.append(a)
+    # Print the FULL opening tag of the first few. Every attribute the
+    # page carries is visible here — including any this probe does not
+    # know it needs. leId and srId are still unaccounted for and may be
+    # among them; reading beats guessing, which is the whole lesson of
+    # rounds 2 and 3.
+    for t in tags[:4]:
+        print("   " + re.sub(r"\s+", " ", t)[:300])
+    if games:
+        keys = sorted({k for g in games for k in g})
+        print(f"   attributes present: {', '.join(keys)}")
 
-    # data-* attributes, in case the ids live in markup rather than script.
-    attrs = list(dict.fromkeys(DATA_ATTR.findall(html)))
-    if attrs:
-        print(f"data-* attributes that might carry one ({len(attrs)}):")
-        for k, v in attrs[:10]:
-            print(f"   {k}={v}")
-
-    if not ids:
-        # THE POINT OF ROUND 3. Round 2 printed "GAME IDS: 0" and
-        # stopped, which is indistinguishable from "this page has no
-        # ids" — and it does have them, under a shape nobody had looked
-        # at. Show the source instead of reporting a count.
-        print("-" * 72)
-        print("NO IDS MATCHED ANY PATTERN. Not a dead end — a shape nobody "
-              "has seen. Every mention of `gameId` in the page's own "
-              "script, verbatim, so the next round keys on what is "
-              "actually there:")
-        seen = set()
-        for m in GAME_ID_CONTEXT.finditer(scripts):
-            frag = re.sub(r"\s+", " ", m.group(0)).strip()
-            if frag in seen:
-                continue
-            seen.add(frag)
-            print(f"   ...{frag}...")
-            if len(seen) >= 12:
-                break
-        if not seen:
-            print("   `gameId` does not appear in the script at all. It is "
-                  "supplied by a fetch that happens BEFORE this one — find "
-                  "that call rather than this value.")
-        print("-" * 72)
-        print("READ THE EXCERPTS, DO NOT GUESS A FORMAT. That is twice now: "
-              "round 2 assumed 20260811LGOB0 and matched nothing, and the "
-              "count alone could not tell 'wrong guess' from 'no ids'.")
+    if not games:
+        print("   NONE. Either the list is filled by an earlier fetch, or "
+              "the markup changed. Do NOT guess an attribute name — round "
+              "3 printed the script and the script named these outright. "
+              "Print the .game-list-n block and read it the same way.")
         return 1
 
-    todays = [g for g in ids if g.startswith(today.strftime("%Y%m%d"))]
-    target = (todays or ids)[0]
-    stale = "" if todays else " (NOT today's — a stale id may 200 with an empty body)"
-    print(f"   using {target}{stale}")
+    # game_sc is the state code. The page's own switch:
+    #   1 -> setPreview  (scheduled; the ONLY state with starters to
+    #        preview, which is what this endpoint serves)
+    #   2, 5 -> setLive     3 -> setReview
+    # Preferring a "1" is not a guess — it is the page's own branch.
+    prev = [g for g in games if g.get("game_sc") == "1"]
+    pick = (prev or games)[0]
+    if not prev:
+        print("   NO game_sc==1 (preview) GAMES. Every game today is live "
+              "or final, so StartPitcher may legitimately return nothing. "
+              "That is a timing result, not a dead endpoint — re-run "
+              "earlier in the KST day before concluding.")
+    print(f"   using g_id={pick.get('g_id')} "
+          f"season={pick.get('season')} game_sc={pick.get('game_sc')} "
+          f"away={pick.get('away_id')} home={pick.get('home_id')}")
 
     # ---- 3. CALL IT, BOTH WAYS ---------------------------------------
     #
@@ -198,31 +187,38 @@ def main() -> int:
     # first guess — which is why it is labelled as one.
     url = f"{BASE}/Schedule/GameCenter/Preview/StartPitcher.aspx"
 
-    # THE FIELD NAMES ARE NO LONGER A GUESS. Round 2 printed the page's
-    # own call block verbatim:
+    # EVERY VALUE HERE COMES FROM THE PAGE, NOT FROM ME.
     #
-    #   S2iAjaxHtml({ url: ".../Preview/StartPitcher.aspx",
-    #     param: { leId, srId, seasonId, awayTeam, homeTeam,
-    #              awayPit, homePit, gameId }, async: false })
+    # Field names: the `param` block round 2 printed verbatim.
+    # Values: the <li> attributes round 3's excerpts named —
+    #   gameId <- g_id, seasonId <- season,
+    #   awayTeam <- away_id, homeTeam <- home_id.
     #
-    # EIGHT fields, not the four round 2 sent — awayTeam, homeTeam,
-    # awayPit and homePit were missing. Note the key is `param`, which
-    # is the S2i wrapper's own name for the payload; over the wire these
-    # become ordinary query/form fields.
+    # leId and srId are the two the page has not shown a source for. If
+    # they appear in the attribute list above, THAT is where they come
+    # from and this should use them; the fallbacks below are the only
+    # remaining assumption in this probe and are labelled as such.
     #
-    # awayPit/homePit are sent EMPTY on purpose. setPreview's own code
-    # checks `if (awayPit == undefined)` before firing this call, which
-    # says the endpoint is what RESOLVES the starters rather than
-    # something you pass them to. If that reading is wrong the response
-    # will say so, and an empty string is the honest way to ask.
+    # awayPit/homePit go EMPTY on purpose: setPreview checks
+    # `if (awayPit == undefined)` before firing this call, which reads as
+    # "this endpoint RESOLVES the starters" rather than "you pass them
+    # in". If that is wrong the response will say so.
     params = {
-        "leId": "1", "srId": "0", "seasonId": target[:4],
-        "gameId": target,
-        "awayTeam": "", "homeTeam": "", "awayPit": "", "homePit": "",
+        "leId": pick.get("le_id", "1"),      # ASSUMED if absent above
+        "srId": pick.get("sr_id", "0"),      # ASSUMED if absent above
+        "seasonId": pick.get("season", ""),
+        "gameId": pick.get("g_id", ""),
+        "awayTeam": pick.get("away_id", ""),
+        "homeTeam": pick.get("home_id", ""),
+        "awayPit": "", "homePit": "",
     }
     print("-" * 72)
     print(f"CALLING {url}")
-    print(f"  params (from the page's OWN param block, not guessed): {params}")
+    print(f"  params: {params}")
+    if "le_id" not in pick or "sr_id" not in pick:
+        print("  NOTE: leId/srId were not attributes on the <li> — the two "
+              "values above are the only assumption left in this probe. If "
+              "the call fails, they are the first suspects.")
 
     for verb in ("GET", "POST"):
         try:
@@ -233,10 +229,10 @@ def main() -> int:
             print(f"  {verb:4} -> {resp.status_code} | {len(body)}b | "
                   f"'선발' x{body.count('선발')}")
             if resp.status_code == 200 and body.strip():
-                print("  ---- RAW FRAGMENT, first 1200 chars, UNPARSED ----")
-                print(body[:1200])
-                print("  ---- TEXT ONLY, first 400 chars ----")
-                print("  " + _clean(body)[:400])
+                print("  ---- RAW FRAGMENT, first 1500 chars, UNPARSED ----")
+                print(body[:1500])
+                print("  ---- TEXT ONLY, first 500 chars ----")
+                print("  " + _clean(body)[:500])
         except Exception as exc:
             print(f"  {verb:4} -> FAILED {type(exc).__name__}: {exc}")
 
