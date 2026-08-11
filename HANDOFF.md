@@ -10,6 +10,77 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — KBO engine built. Scope probe pending. 2026-08-11
+
+**3 files. Suite 83, FAILING: none.** `app/engines/kbo_official.py` is
+NEW and NOT YET WIRED into anything.
+
+### CONFIRMED ON A REAL SLATE — run 85398873888
+
+    20260811HHOB0  한화 @ 두산   19:00  away 왕옌청   home 곽빈    정상경기
+    20260811LTSK0  롯데 @ SSG   19:00  away 비슬리   home 아빌라   정상경기
+    20260811SSHT0  삼성 @ KIA   19:00  away 페덱     home 올러    정상경기
+    20260811KTNC0  KT  @ NC     19:00  away 로건     home 라일리   정상경기
+    20260811LGWO0  LG  @ 키움    19:00  away 카라스코  home 안우진   정상경기
+    5 of 5 game(s) have BOTH starters named.
+
+One POST to `/ws/Main.asmx/GetKboGameList` gives game ids, teams, time,
+stadium, BOTH starters with player ids, status and cancellation.
+
+### THE ENGINE, AND THE TWO THINGS IT REFUSES TO DO
+
+**`app/engines/kbo_official.py`** — parse + fetch, nothing else. It does
+not project, grade or rank; it turns one response into records.
+
+**1. THE TRAILING ERROR PAGE IS IGNORED, PERMANENTLY.** The server
+returns a COMPLETE, SUCCESSFUL document — `{"game":[...], "code":"100",
+"msg":"성공"}` — and then staples an ASP.NET runtime error page to the
+same body. `json.loads` refuses the lot with "Extra data: char 8398".
+It is present on EVERY successful call, so treating it as a failure
+means never succeeding. `raw_decode` reads document one and stops.
+
+**2. BOTH STARTERS OR NEITHER.** `starters_for` excludes a game unless
+both sides are named. One name beside a blank reads as "the other team
+hasn't announced" — a claim about the league, when the truth is we read
+one side. `game_records` still returns every game, so a caller wanting
+the schedule is not punished by the gate.
+
+Cancellation compares against the ONE known-normal value (정상경기)
+rather than listing reasons: the field is free text and a whitelist
+would pass an unlisted reason through as fine.
+
+`tests/test_kbo_official.py` (NEW, #83) — 30 assertions. Five negative
+controls: json.loads instead of raw_decode, half-a-matchup, **T/B
+swapped** (which would flip every starter on the board and look
+normal), a reason whitelist, and a non-100 code treated as success.
+
+**The code-check control initially did NOT fire** — the check lived in
+`fetch_game_list`, which needs network, and nothing exercised it. Added
+a stubbed-`requests` block; it now fails correctly. Worth noting because
+a 200 with a failure code and a genuine off-day both arrive as "no
+rows", and reading that wrong renders a broken call as "no KBO games
+today" — a normal-looking page making a false statement about the
+league.
+
+### NOT WIRED YET, ON PURPOSE — the scope question
+
+`GetKboGameList` takes ONE date. The pipeline currently walks WEEKS off
+mykbostats. So the migration is either narrow (probables only, keep
+mykbostats, stay bound by AUP clause 6 — pointless) or full (replace the
+schedule walk too).
+
+The cost of full depends on `GetKboGameDate`, the other web method round
+5 found and nobody has called. **The probe now calls it.** A month of
+dates in one response makes full cheap; one date makes it ~14 calls for
+a fortnight — still fine against the league's own servers, but worth
+knowing before committing.
+
+**Run the probe, read the SCOPE PROBE block, then decide.** Building the
+pipeline change on an assumption about that endpoint is exactly the
+mistake the last nine rounds were made of.
+
+---
+
 ## PICK UP HERE — KBO SOLVED. The answer was in the payload all along. 2026-08-11
 
 **One file: `kbo_fragment_probe.py`.** Suite unchanged at 82.
@@ -2469,7 +2540,7 @@ the site's own advance warning is a free check on this number.
 - Pages in **`app/views/`**, deliberately NOT `pages/` — Streamlit
   auto-registers `pages/` and would expose every page pre-auth.
 - Engines in `app/engines/`. Theme in `app/styles/kc_theme.py`.
-- Tests in `tests/` — **82 files, plain scripts, not pytest.**
+- Tests in `tests/` — **83 files, plain scripts, not pytest.**
 - Data comes off disk; the nightly publishes a release asset.
 - `requirements.txt` fully pinned, including transitives.
 
