@@ -337,7 +337,7 @@ def _write_mlb_slate(date_str: str) -> int:
     from engines.park_weather import is_roofed, get_park_forecast
     from engines.team_abbreviations import team_abbr
     from engines.wind_engine import wind_hr_adj
-    from engines.mlb_run_rates import fetch_team_run_rates
+    from engines.mlb_run_rates import fetch_team_run_rates, canonical
     from engines.run_total import project_total, league_run_average
     from engines.player_of_the_day import _wind_hr_adj as _field_wind_adj
 
@@ -519,8 +519,15 @@ def _write_mlb_slate(date_str: str) -> int:
         # sorts unmeasured below measured on each tier, and a 0.0 would
         # claim the lowest-scoring game on the slate.
         if run_rates:
+            # LOOK UP BY THE CANONICAL FORM. The schedule says
+            # "Detroit Tigers"; standings says "Tigers". Measured on
+            # 2026-08-11: home matched False, away matched False, all
+            # fifteen games, tier 2 silently zero. canonical() reduces
+            # both vocabularies to the abbreviation the app already uses.
+            _hk = canonical(home) or home
+            _ak = canonical(g.get("away")) or g.get("away")
             _t, _why = project_total(
-                run_rates.get(home), run_rates.get(g.get("away")),
+                run_rates.get(_hk), run_rates.get(_ak),
                 league_rs_pg=_league_rs_pg,
                 # ERA is not passed. run_total shades a total by the
                 # starters' ERA against the league's, and neither figure
@@ -557,8 +564,8 @@ def _write_mlb_slate(date_str: str) -> int:
                       flush=True)
                 print(f"  standings knows {len(run_rates)} clubs, e.g. "
                       f"{sorted(run_rates)[:3]}", flush=True)
-                print(f"  home matched: {home in run_rates} | "
-                      f"away matched: {g.get('away') in run_rates}", flush=True)
+                print(f"  canonical: home={_hk!r} away={_ak!r} | "
+                      f"matched: {_hk in run_rates}/{_ak in run_rates}", flush=True)
 
         rows.append(row)
 
