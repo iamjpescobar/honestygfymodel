@@ -66,3 +66,26 @@ jobs:
       - run: pip install -c requirements.txt requests
       - name: Probe koreabaseball.com
         run: python kbo_probables_probe.py
+
+  kbo-fragment:
+    # ROUND TWO OF THE KBO QUESTION, and it only exists because round one
+    # finally asked the right one. kbo-probables established that the
+    # game centre does NOT render starters (x8 raw, x0 rendered) and
+    # handed over the endpoint its own script calls. This job calls that
+    # endpoint and DUMPS the fragment.
+    #
+    # Kept as a SEPARATE job rather than bolted onto kbo-probables: they
+    # answer different questions and one failing must not hide the
+    # other's output. Round one is also still worth re-running on its
+    # own — it is what would notice the page changing shape again.
+    name: KBO starter fragment (round 2)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: pip install -c requirements.txt requests
+      - name: Call the fragment endpoint
+        run: python kbo_fragment_probe.py
