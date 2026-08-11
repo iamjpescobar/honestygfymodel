@@ -200,8 +200,52 @@ def main() -> int:
             # the shape inside is unknown and is NOT guessed at.
             try:
                 import json as _json
-                d = _json.loads(raw)
-                inner = d.get("d", d) if isinstance(d, dict) else d
+                # THE BODY IS SEVERAL CONCATENATED JSON DOCUMENTS.
+                #
+                # Round 7's own diagnostic found this, and it disproved my
+                # guess in the process:
+                #
+                #   JSONDecodeError: Extra data: line 336 column 2
+                #                    (char 8397)      body = 11460 bytes
+                #   first 40 bytes: b'{\r\n  "game": [\r\n    {...'
+                #
+                # NO BOM — the body starts with a plain brace. Round 7
+                # "fixed" a BOM because round 6 printed only the exception
+                # NAME, and a BOM was a plausible cause I then confirmed
+                # in isolation. Plausible and confirmed-in-isolation is
+                # not the same as true. What actually found it was
+                # printing the full message and the first bytes; the
+                # utf-8-sig decode was harmless and beside the point.
+                #
+                # "Extra data" at char 8397 of 11460 means the first
+                # document ENDS there and another begins — the endpoint
+                # returns {"game":[...]} followed by at least one more
+                # object. json.loads parses exactly one document and
+                # refuses the rest, so it threw away a complete answer for
+                # the second round running.
+                #
+                # raw_decode consumes one document at a time and reports
+                # where it stopped. Every document is merged, so a payload
+                # of one behaves identically and this cannot regress if
+                # the endpoint ever returns a single object.
+                dec, idx, docs = _json.JSONDecoder(), 0, []
+                while idx < len(raw):
+                    while idx < len(raw) and raw[idx] in " \r\n\t":
+                        idx += 1
+                    if idx >= len(raw):
+                        break
+                    obj, idx = dec.raw_decode(raw, idx)
+                    docs.append(obj)
+                print(f"  {len(docs)} JSON document(s) in the body: "
+                      f"{[list(o)[:4] if isinstance(o, dict) else type(o).__name__ for o in docs]}")
+
+                merged = {}
+                for o in docs:
+                    if isinstance(o, dict):
+                        merged.update(o)
+                # "d" is still honoured in case a ScriptService wrapper
+                # appears on a different method; this one does not use it.
+                inner = merged.get("d", merged)
                 if isinstance(inner, str):
                     inner = _json.loads(inner)
                 rows = inner.get("game", inner) if isinstance(inner, dict) else inner
@@ -210,7 +254,9 @@ def main() -> int:
                     print(f"  parsed {len(games)} game row(s)")
                     if games:
                         print(f"  keys on the first row: "
-                              f"{', '.join(sorted(games[0])[:20])}")
+                              f"{', '.join(sorted(games[0])[:24])}")
+                        print(f"  other top-level keys: "
+                              f"{[k for k in merged if k != 'game']}")
             except Exception as exc:
                 # SHOW THE BYTES, not just the exception name. Round 6
                 # printed "could not parse as JSON (JSONDecodeError)" over
