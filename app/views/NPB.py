@@ -218,6 +218,42 @@ else:
                 badges += badge(_roof_note(_LEAGUE, g.get("stadium")), "good")
             elif _roof == "open":
                 badges += badge("open air", "neutral")
+                # THE PARITY GAP, ANSWERED — and the answer is "there
+                # isn't one to show".
+                #
+                # KBO's board carries void_risk: the league's own
+                # "Chance of Heat Cancellation" warning, published in
+                # advance on a game that is STILL ON. NPB's board has
+                # carried nothing in that space, and a missing badge is
+                # UNREADABLE — on one board it means "no risk", on the
+                # other it meant "not measured", and nothing on screen
+                # told them apart.
+                #
+                # MEASURED, three times, most recently run 85313739682:
+                #
+                #     157 dated rows | 109 upcoming | 0 cancel
+                #     zero risk vocabulary across all 109
+                #
+                # searching 中止 雨天 順延 延期 恐れ 見込み 予備日 微妙 流れ.
+                # npb.jp publishes no advance warning of any kind.
+                #
+                # SO THE LABEL SAYS THAT. It is a real answer and it
+                # closes the item — an empty space would still read as
+                # "no risk tonight", which is a claim this site cannot
+                # make and KBO's board CAN.
+                #
+                # WHAT IT DELIBERATELY DOES NOT SAY: that NPB never
+                # calls a game off in advance. The probe found ZERO
+                # cancelled games anywhere on that page, so the
+                # forward-cancellation case had no opportunity to
+                # appear and remains UNMEASURED. Claiming it would be
+                # the same overreach as the badge this replaces.
+                # Re-running in the June rainy season would settle it.
+                #
+                # Open-air only: under a roof the question is already
+                # answered by the badge above, and two hedges on one
+                # card read as more doubt than either deserves.
+                badges += badge("no rainout warning published", "neutral")
             # _roof is None -> say NOTHING. An unlisted venue is unknown,
             # not open air, and a wrong "open air" badge on a domed park
             # is worse than no badge: it invents a risk that is not there.
