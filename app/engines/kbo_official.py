@@ -190,3 +190,59 @@ def starters_for(rows):
         for g in game_records(rows)
         if g["away_starter"] and g["home_starter"]
     }
+
+
+# ----------------------------------------------------------------------
+# WALKING A WINDOW
+#
+# GetKboGameList takes ONE date. GetKboGameDate was probed to see whether
+# a range came in one call; it does not — it returns a CURSOR:
+#
+#     BEFORE_G_DT 20260809 | NOW_G_DT 20260811 | AFTER_G_DT 20260812
+#
+# previous / current / next game date. Useful, but not a range, so a
+# window means one call per date either way.
+#
+# THE CURSOR IS DELIBERATELY NOT USED FOR THE WALK. Following AFTER_G_DT
+# would be one extra request per step to skip off-days that
+# GetKboGameList already reports as empty in a single call — twice the
+# requests to learn something the cheaper call tells us anyway. Walking
+# calendar dates is simpler and halves the traffic against the league's
+# servers.
+#
+# An off-day returns code 100 with no rows and is NOT an error; see
+# fetch_game_list. That distinction is what makes this loop safe.
+# ----------------------------------------------------------------------
+
+def fetch_window(start_date, days, sleep=0.4, log=None):
+    """({date: rows}, [errors]) across `days` calendar dates from start.
+
+    Errors are COLLECTED, not raised, and the caller decides. A single
+    bad date must not cost the other thirteen — the nightly has to
+    publish whatever it could read, and a partial window is honest as
+    long as the gaps are known.
+
+    `sleep` is a courtesy pause between requests. This is a league site
+    being asked for two weeks of its own schedule; there is no hurry.
+    """
+    import time
+    from datetime import datetime, timedelta
+
+    try:
+        d0 = datetime.strptime(str(start_date), "%Y%m%d").date()
+    except (TypeError, ValueError):
+        return {}, [f"bad start date {start_date!r}"]
+
+    out, errs = {}, []
+    for i in range(max(0, int(days))):
+        ds = (d0 + timedelta(days=i)).strftime("%Y%m%d")
+        rows, err = fetch_game_list(ds)
+        if err:
+            errs.append(f"{ds}: {err}")
+        elif rows:
+            out[ds] = rows
+        if log:
+            log(f"  {ds}: {len(rows)} game(s)" + (f" [{err}]" if err else ""))
+        if sleep and i + 1 < days:
+            time.sleep(sleep)
+    return out, errs
