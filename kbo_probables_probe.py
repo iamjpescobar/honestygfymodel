@@ -182,12 +182,58 @@ def main() -> int:
               "REFERENCES starters, it does not render them. This is what "
               "v2 misread as a server-rendered table.")
 
-    if not n_seonbal:
-        print("NO STARTER VOCABULARY AT ALL — v1 saw it and this run does "
-              "not. Either the page varies by time of day (starters posted "
-              "later) or it changed. Re-run mid-afternoon KST before "
-              "concluding anything.")
+    # TWO DIFFERENT ZEROS, AND THEY NEED DIFFERENT ANSWERS.
+    #
+    # This branch used to fire on `not n_seonbal` alone and say "NO
+    # STARTER VOCABULARY AT ALL ... re-run mid-afternoon KST". After the
+    # raw/rendered split that message became FALSE on the commonest case:
+    # run 85252013581 found 선발 eight times in raw html and zero in
+    # rendered content, and got told the page might have changed and to
+    # try again later. Timing will never put JavaScript into the DOM.
+    # Worse, `return 1` meant the AJAX url below — the single most useful
+    # thing this probe can produce — never printed at all.
+    #
+    # n_raw == 0  : the vocabulary is genuinely absent. Timing is a real
+    #               explanation and re-running is the right advice.
+    # n_raw  > 0  : it is there, in script. NOT a failure, NOT a re-run.
+    #               Fall through and print the endpoint.
+    if not n_raw:
+        print("NO STARTER VOCABULARY ANYWHERE — not in rendered content and "
+              "not in script. v1 saw it and this run does not, so either the "
+              "page varies by time of day (starters posted later) or it "
+              "changed shape. Re-run mid-afternoon KST before concluding.")
         return 1
+
+    if not n_seonbal:
+        # Referenced but not rendered. Skip the CONTEXT/name extraction —
+        # both scan `rendered`, which by definition has nothing — and go
+        # straight to the endpoint the page itself calls.
+        print("-" * 72)
+        _script_text = " ".join(scripts)
+        print("THE PAGE'S OWN AJAX CALL (verbatim from its <script>):")
+        _urls = re.findall(
+            r"""S2iAjaxHtml\s*\(\s*\{[^}]*?url\s*:\s*["']([^"']+)["']""",
+            _script_text, re.S)
+        _urls += re.findall(r"""url\s*:\s*["'](/Schedule/GameCenter[^"']*)["']""",
+                            _script_text, re.S)
+        for u in dict.fromkeys(_urls):
+            print(f"  url: {u}")
+        for a in re.findall(r"function\s+setPreview\s*\(([^)]*)\)", _script_text):
+            print(f"  setPreview({_clean(a)})")
+        if not _urls:
+            print("  NONE FOUND — the script changed shape. Do NOT guess a "
+                  "url; dump the script and read it. v1 guessed .asmx names "
+                  "and got 401/401/500.")
+        print("-" * 72)
+        print("VERDICT — REFERENCED, NOT RENDERED. The game centre names "
+              "starters only inside <script>; the browser fetches them over "
+              "AJAX after load. THIS REVERSES v1 AND v2, which both read "
+              "that script text as a server-rendered table and recorded the "
+              "KBO migration as unblocked. It is not. The url above is the "
+              "actual next step: call it with a real gameId and read what "
+              "comes back. Not a dead end — it is the endpoint the site "
+              "itself uses.")
+        return 0
 
     # Every window around a 선발 marker, so we see the REAL container
     # rather than assuming one. Printing these is the point: if the
