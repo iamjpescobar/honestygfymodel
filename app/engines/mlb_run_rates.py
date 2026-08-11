@@ -63,6 +63,51 @@ STANDINGS_URL = (
 _NEEDED = ("runsScored", "runsAllowed", "gamesPlayed")
 
 
+# ONE NAME PER CLUB, DERIVED — NOT A SECOND HAND-WRITTEN MAP.
+#
+# The two MLB endpoints disagree about what a team is called:
+#
+#   schedule   "Detroit Tigers"   "Cleveland Guardians"
+#   standings  "Tigers"           "Guardians"
+#
+# Measured, not assumed — the 2026-08-11 run printed both and reported
+# `home matched: False | away matched: False` for all fifteen games.
+# Tier 2 wrote zero totals with no error, because the fetch succeeded
+# and every lookup missed.
+#
+# Both forms are reduced to the abbreviation, and the mapping is DERIVED
+# from engines/team_abbreviations — the map the app already uses and has
+# already verified. A second hand-written table of thirty clubs would be
+# a second thing to be wrong, and it would drift the day a team renames.
+#
+# AMBIGUOUS SUFFIXES ARE DROPPED. "Sox" is the last word of both Red Sox
+# and White Sox; a suffix that resolves to more than one club resolves to
+# NONE. Guessing which of two clubs is meant would put the wrong offense
+# on a card, and nothing on screen could contradict it.
+def _build_alias_index():
+    from engines.team_abbreviations import TEAM_ABBREVIATIONS
+    hits = {}
+    for full, abbr in TEAM_ABBREVIATIONS.items():
+        hits.setdefault(full.lower(), set()).add(abbr)
+        parts = full.split()
+        for n in range(1, min(3, len(parts)) + 1):
+            hits.setdefault(" ".join(parts[-n:]).lower(), set()).add(abbr)
+    return {k: next(iter(v)) for k, v in hits.items() if len(v) == 1}
+
+
+_ALIASES = _build_alias_index()
+
+
+def canonical(name):
+    """Any known form of a club's name -> its abbreviation, or None.
+
+    None means UNRECOGNISED, and the caller must treat it as unmeasured
+    rather than falling back to the raw string — a raw-string fallback is
+    what silently produced fifteen misses in the first place.
+    """
+    return _ALIASES.get(str(name or "").strip().lower())
+
+
 def _num(v):
     try:
         f = float(v)
@@ -99,11 +144,21 @@ def parse_standings(payload):
             # errors are invisible on a card.
             if rs is None or ra is None:
                 continue
-            out[name] = {
+            rec = {
                 "rs_pg": round(rs / g, 3),
                 "ra_pg": round(ra / g, 3),
                 "games": int(g),
+                "name": name,
+                "abbr": canonical(name),
             }
+            out[name] = rec
+            # ALSO keyed by abbreviation, so a caller holding the
+            # schedule's vocabulary finds the same record. Both keys
+            # point at ONE dict — league_run_average would otherwise
+            # count every club twice and halve nothing, but report a
+            # 60-club league, which is the kind of wrong that looks fine.
+            if rec["abbr"]:
+                out[rec["abbr"]] = rec
     return out
 
 
@@ -132,8 +187,13 @@ def fetch_team_run_rates(season, timeout=25):
     # tiers against games ranked on two. Nobody reading the card could
     # tell. The probe refused a partial for the same reason and it was
     # right to.
-    if 0 < len(rates) < 30:
-        return {}, (f"only {len(rates)} of 30 clubs carried runs — refusing a "
+    # COUNT DISTINCT CLUBS, not keys. Every club is keyed twice (name and
+    # abbreviation), so len(rates) is 60 on a healthy league and this
+    # guard would never fire — a partial league would sail straight
+    # through the check written to stop it.
+    n_clubs = len({id(v) for v in rates.values()})
+    if 0 < n_clubs < 30:
+        return {}, (f"only {n_clubs} of 30 clubs carried runs — refusing a "
                     f"partial league rather than ranking half the slate on "
                     f"three tiers and half on two")
     if not rates:
