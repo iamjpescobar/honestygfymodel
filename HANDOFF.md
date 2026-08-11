@@ -10,6 +10,536 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — KBO SOLVED. The answer was in the payload all along. 2026-08-11
+
+**One file: `kbo_fragment_probe.py`.** Suite unchanged at 82.
+
+### THE BYTE WINDOW EXPLAINED IT AND THEN ANSWERED THE WHOLE QUESTION
+
+The trailing bytes at char 8398:
+
+    ...  "code": "100",  "msg": "성공"  }
+    >>> FAILS HERE >>>
+    '<!DOCTYPE html>...<title>런타임 오류</title>...'
+
+**The JSON is complete and successful** — `code 100`, `msg 성공`
+("success") — and the server then appends an **ASP.NET runtime error
+page** to the same response. That is the "Extra data" and the "Expecting
+value". Rounds 7 and 8 theorised about BOMs and concatenated documents;
+it was a stack trace bolted onto a valid payload, and no amount of
+inference was going to produce that.
+
+Keeping partial documents paid off immediately: **`parsed 5 game
+row(s)`**, `using G_ID=20260811HHOB0`.
+
+### AND THE STARTERS WERE IN THAT PAYLOAD THE ENTIRE TIME
+
+The window printed the key list, and it contains:
+
+    T_PIT_P_NM / T_PIT_P_ID    away starter, name and player id
+    B_PIT_P_NM / B_PIT_P_ID    home starter, name and player id
+    CANCEL_SC_NM               cancellation status, in words
+    GAME_SC_NM  AWAY_NM  HOME_NM  S_NM  G_TM  LINEUP_CK
+
+T = top of the inning = away, B = bottom = home. **One JSON call to
+`/ws/Main.asmx/GetKboGameList` gives game ids, teams, start time,
+stadium, BOTH STARTERS with player ids, cancellation status and a lineup
+flag.**
+
+`StartPitcher.aspx` — chased since round 1 — is the deep ANALYSIS page,
+not the source of the names. It does work (**200, 7253b, 선발 x2, headed
+선발투수 전력분석**), so the endpoint hunt was not wasted; it is just not
+what probables need.
+
+### THE LESSON, AND IT IS THE SAME ONE NINE TIMES OVER
+
+Every round that printed raw material moved forward. Every round that
+reasoned from an error message shipped a fix for a cause that did not
+exist. The thing that finally cracked it was pointing the dump AT THE
+FAILURE instead of at the start of the body — a two-line change I could
+have made at round 6.
+
+### WHAT SHIPS IN THIS FILE
+The probe now prints, per game: id, teams, time, BOTH starters, status
+and cancellation — then counts how many rows have BOTH names. That count
+is the gate a real parser needs: **half a matchup reads as a whole one**,
+so a board must fill both sides or show neither.
+
+### NEXT — this is now a build, not a question
+1. Run it once more and read the starters table. Confirm names are
+   populated at a sane KST hour (this run was 19:xx, games already
+   underway).
+2. Write the parser into `kbo_precompute`: one POST to
+   `GetKboGameList`, tolerate the trailing error page via `raw_decode`,
+   read `T_PIT_P_NM`/`B_PIT_P_NM`, gate on both-or-neither.
+3. **`CANCEL_SC_NM` is a bonus** — an official cancellation field, which
+   is a better source than the homepage text `VOID_RISK_PAT` currently
+   scrapes. Worth comparing before switching.
+4. **Then drop mykbostats** (AUP clause 6 forbids using their content
+   for betting). That was the point of all nine rounds.
+
+---
+
+## PICK UP HERE — KBO round 9. I kept dumping the wrong 1200 bytes. 2026-08-11
+
+**One file: `kbo_fragment_probe.py`.** Suite unchanged at 82.
+
+### THE ERROR MOVED, WHICH MEANS ROUND 8 ALSO FIXED THE WRONG THING
+
+    round 7:  Extra data: line 336 column 2 (char 8397)   body 11460
+    round 8:  Expecting value: line 336 column 2 (char 8399)  body 11462
+
+Round 8 switched to `raw_decode` for concatenated documents. It DID
+consume document one — the offset advanced past it — and then found
+something at char 8399 that is not the start of any JSON value. So the
+body is not simply two JSON objects, and round 8's fix, like round 7's,
+addressed a cause inferred from an exception message rather than seen.
+
+### THE ACTUAL MISTAKE, AND IT HAS BEEN RUNNING FOR THREE ROUNDS
+
+| what the probe printed | covers |
+|---|---|
+| first 40 bytes on the wire | chars 0-40 |
+| RAW JSON, first 1200 chars | chars 0-1200 |
+| **the failure** | **char 8399 of 11462** |
+
+**Every diagnostic in this probe looks at the START of the body. The
+problem has never once been at the start.** I added "print the raw
+material" three times and every time pointed it at the beginning, then
+theorised about 8kb of bytes nobody had looked at.
+
+Round 9 prints a **window around the reported offset** — 250 chars
+before, 350 after, in repr, plus the last 200 chars of the body. Whatever
+sits at 8399 will be readable instead of guessable.
+
+It also keeps whatever documents DID parse rather than discarding them.
+**The first document has parsed successfully in both round 7 and round
+8** — the game rows were available both times and were thrown away over
+what follows them.
+
+### VERIFIED OFFLINE
+Trailing HTML, a genuine second document, trailing junk, and a clean
+body: the window reports the stop offset and shows the bytes for each,
+and partial documents still yield their game rows.
+
+### THE HONEST STATE
+`GetKboGameList` returns **200 with ~11.5kb of real game data on every
+run since round 6**, including `G_ID`, `SEASON_ID`, `AWAY_ID`, `HOME_ID`
+and `GAME_SC`. The endpoint is not the problem and has not been for
+three rounds. **The problem is entirely in how this probe reads it.**
+
+If round 9's window does not make the cause obvious, that is the point to
+stop probing and open the URL in a browser — five minutes with the raw
+response beats a tenth round of inference.
+
+---
+
+## PICK UP HERE — KBO round 8. My round-7 fix was for the wrong cause. 2026-08-11
+
+**One file: `kbo_fragment_probe.py`.** Suite unchanged at 82.
+
+### THE DIAGNOSTIC WORKED, AND DISPROVED MY OWN FIX
+
+Round 7 added "print the first 40 bytes and the full exception" because
+round 6's `could not parse as JSON (JSONDecodeError)` said nothing about
+the cause. It immediately earned its place:
+
+    JSONDecodeError: Extra data: line 336 column 2 (char 8397)
+    first 40 bytes on the wire: b'{\r\n  "game": [\r\n    {\r\n      "LE_ID": 1,'
+    declared encoding: 'UTF-8'  content-type: 'text/plain; charset=UTF-8'
+
+**NO BOM.** The body starts with a plain brace. Round 7 "fixed" a BOM
+that was never there — I formed that hypothesis from an exception NAME,
+confirmed it in isolation against a synthetic BOM, and shipped it. **A
+plausible cause, reproduced in a test I wrote myself, is not the same as
+the actual cause.** The `utf-8-sig` decode was harmless and beside the
+point; the diagnostic line is what found the truth.
+
+### THE REAL SHAPE: SEVERAL CONCATENATED JSON DOCUMENTS
+
+`Extra data` at char 8397 of 11460 means the first document ENDS there
+and another begins. The endpoint returns `{"game":[...]}` followed by at
+least one more object. `json.loads` parses exactly one document and
+refuses the rest — so it discarded a complete answer for the **second
+round running**, both times reporting it as an endpoint failure.
+
+`raw_decode` consumes one document at a time and reports where it
+stopped. All documents are merged, so a single-document payload behaves
+identically and this cannot regress if the endpoint ever changes.
+
+Verified offline against five shapes: round 7's real two-document CRLF
+body, three documents, a single document, a BOM as well, and a
+ScriptService `d` wrapper. **All five parse; the game row comes out of
+every one.**
+
+### THE PATTERN, THREE TIMES OVER NOW
+
+- rounds 2-4: searched HTML for an id that lives behind a web method
+- round 6: got a perfect 200 and reported NO GAME ROWS
+- round 7: fixed a BOM that did not exist
+
+Every one is the same failure: **acting on a hypothesis about what is
+there instead of printing what is there.** Every recovery came from a
+line that dumped raw material. The probe is now mostly made of those
+lines, which is why it keeps making progress.
+
+### THIS IS STILL THE LAST HOP
+`GetKboGameList` -> real `G_ID` -> `StartPitcher.aspx`. The first call is
+confirmed working with real data in hand; only the second's response is
+unseen.
+
+- **A fragment with Korean names** -> round 9 is the parser, and
+  mykbostats can go (AUP clause 6).
+- **500 on StartPitcher** -> `srId` is the only value still guessed.
+- **Parse still fails** -> the printed document list and key names are
+  the answer. Do not theorise from the exception name; that is what
+  produced rounds 7 and 8.
+
+---
+
+## PICK UP HERE — KBO round 7. The endpoint WORKS. My parser threw it away. 2026-08-11
+
+**One file: `kbo_fragment_probe.py`.** Suite unchanged at 82.
+
+### ROUND 6 SUCCEEDED AND THE PROBE REPORTED FAILURE
+
+    CALLING .../ws/Main.asmx/GetKboGameList
+      json body: {'leId': '1', 'srId': '0', 'date': '20260811'}
+      -> 200 | 11461b
+      ---- RAW JSON ----
+      { "game": [ { "LE_ID": 1, "SR_ID": 0, "SEASON_ID": 2026,
+                    "G_DT": "20260811", "G_ID": "20260811HHOB0",
+                    "G_TM": "19:00", "S_NM": "잠실", "AWAY_ID": "HH", ...
+      could not parse as JSON (JSONDecodeError)
+    NO GAME ROWS.
+
+**200. Eleven kilobytes of perfect JSON. Every field needed.** And the
+probe said NO GAME ROWS — because `json.loads` raised *"Unexpected UTF-8
+BOM"*. Three bytes. A working answer, discarded, and reported as a
+failure of the endpoint.
+
+That is the same shape as every other bug in this sequence, now on my
+own side of the wire: **the output could not distinguish "the source
+failed" from "I mishandled what the source gave me."** `could not parse
+as JSON (JSONDecodeError)` names the exception and says nothing about
+the cause, when the first forty bytes would have named it instantly.
+
+Two fixes, both about that:
+- `lr.content.decode("utf-8-sig")` — strips a BOM, no-op without one.
+  Explicit UTF-8 matters twice over here: the payload carries Korean
+  stadium names (잠실) and `requests` guesses ISO-8859-1 when the server
+  omits a charset, which would mangle every one while still parsing.
+- On any decode failure it now prints **the first 40 bytes as a repr**,
+  the declared encoding and the Content-Type. An exception name is not a
+  diagnosis.
+
+### AND ROUND 2'S GUESS WAS RIGHT ALL ALONG
+
+`G_ID: "20260811HHOB0"` — exactly the `20YYMMDD + 4 letters + digit`
+shape round 2 assumed and got zero matches for. **The format was never
+wrong. The place was.** It lives behind this web method and was never in
+the page, so no amount of searching the HTML at any format could have
+found it. Rounds 2, 3 and 4 were unwinnable, not badly aimed.
+
+### KEYS, NOW KNOWN AND NO LONGER GUESSED
+
+    LE_ID  SR_ID  SEASON_ID  G_DT  G_DT_TXT  G_ID  HEADER_NO
+    G_TM   S_NM   AWAY_ID    HOME_ID   GAME_SC
+
+Matched case-insensitively with the old guesses kept behind them: the
+dump showed the FIRST row's keys, and a name seen once is not a name
+confirmed on every row.
+
+Verified offline end to end against the real payload shape, BOM
+included: 2 rows parsed, the `GAME_SC == "1"` game selected over the
+finished one, `G_ID`/`SEASON_ID`/`AWAY_ID`/`HOME_ID` all read, Korean
+intact.
+
+### THIS IS THE LAST HOP
+The chain is now: `GetKboGameList` -> real `G_ID` -> `StartPitcher.aspx`.
+Both calls confirmed reachable; only the second's response is unseen.
+
+- **A fragment with Korean names** -> round 8 is the parser, and
+  mykbostats can go (AUP clause 6).
+- **A 500 on StartPitcher** -> `srId` is the only value still guessed.
+- **Empty fragment** -> check `GAME_SC` values in the dump; every game
+  may already be live or final at that hour.
+
+---
+
+## PICK UP HERE — KBO round 6. THE CALL IS FOUND. 2026-08-11
+
+**One file: `kbo_fragment_probe.py`.** Suite unchanged at 82.
+
+### ROUND 5 FOUND IT, in the path sweep
+
+    $.ajax({ type: "post", url: "/ws/Main.asmx/GetKboGameList",
+             dataType: "json",
+             data: { leId: "1", srId: srId, date: $("#txtGameDate").val() } })
+
+**`/ws/Main.asmx/GetKboGameList`** builds `.game-list-n`, and it returns
+**JSON, not markup**. Invisible to rounds 1-4 because it is a `.asmx`
+web method behind `$.ajax` rather than an `S2iAjaxHtml` block — only the
+"every quoted path" sweep could see it.
+
+### THE IRONY, RECORDED SO IT IS NOT REPEATED
+
+**v1 of this probe guessed `.asmx` endpoint names, got 401/401/500, and
+that was written down as "no endpoint found"** — which sent four rounds
+down the HTML path looking for something that was never there.
+
+**The `.asmx` route was right the whole time.** v1 guessed the wrong
+method names, and a wrong guess and a dead route return the same thing.
+`GetKboGameList` and `GetKboGameDate` were sitting in the page's own
+script for all five runs, waiting to be read rather than guessed.
+
+That is the same lesson as rounds 2, 3 and 4, one level up: **a probe
+that guesses can only ever confirm or deny its own guess.** It cannot
+tell you what is actually there.
+
+### ALSO: .asmx WANTS JSON, NOT FORM FIELDS
+
+A ScriptService method needs `Content-Type: application/json` and a JSON
+body, and answers `{"d": ...}`. Posting form-encoded data yields a 500
+that looks exactly like a dead endpoint — almost certainly what v1 hit,
+on top of the wrong names.
+
+### ROUND 6
+
+1. POST JSON to `GetKboGameList` with `{leId:"1", srId:"0", date:YYYYMMDD}`.
+   **`leId: "1"` is the page's own literal, not an assumption.** `srId`
+   `"0"` is the ONE guess left and is labelled in the output.
+2. Unwrap `{"d": ...}` defensively — d-as-list, d-as-object, d-as-JSON-
+   string and bare-list all handled; **verified offline against all four.**
+   The shape inside is NOT guessed at: it prints the raw JSON and the
+   key names off the first row.
+3. Pick a game with status `1` (the page's own preview branch), read the
+   id by case-insensitive key match (`G_ID`/`gameId`/`gid`), and chain
+   straight into `StartPitcher.aspx` with real values.
+
+Team codes are read from whatever key the row carries; if none matches,
+it sends EMPTY and says so rather than inventing a code.
+
+### READ THE LOG LIKE THIS
+- **A fragment with Korean names** -> round 7 is the parser. mykbostats
+  can go (AUP clause 6).
+- **SOAP fault on GetKboGameList** -> field names or content type. Read
+  the fault string; it is descriptive.
+- **Empty game list** -> check a date you KNOW has games before
+  concluding.
+- **`NO ID-LOOKING KEY`** -> the key list is printed. Name it explicitly
+  next round; do not guess a third time.
+
+---
+
+## PICK UP HERE — KBO round 5. The page is a SHELL. 2026-08-11
+
+**One file: `kbo_fragment_probe.py`.** Suite unchanged at 82.
+
+### THE MEASUREMENT THAT SETTLES IT
+
+    main page: 200 57178b
+
+**Five runs, 11:21 / 11:35 / 19:07 / 19:20 / 19:26 KST — byte-identical
+every time.** A live game centre whose size never moves by a single byte
+across eight hours of a playing day is not rendering games. It is a
+static frame that fetches everything after load.
+
+That explains all four previous rounds at once:
+
+| round | looked for | why it found nothing |
+|---|---|---|
+| 1 | 선발 in rendered content | it is in script only |
+| 2 | ids matching `20260811LGOB0` | no ids in script — script's `gameId` starts `""` |
+| 3 | ids under any pattern | same: they are markup attributes |
+| 4 | `<li g_id=...>` in the HTML | **the `<li>`s do not exist until a fetch draws them** |
+
+Round 4 was the right idea aimed at the right place — the place is just
+empty on arrival. `$(".game-list-n > li[g_id=...]")` reads a list that
+JavaScript builds.
+
+### ROUND 5 STOPS NARROWING AND DUMPS EVERYTHING
+
+Rounds 1-4 each guessed one layer deeper and each guess was wrong in the
+same way: assuming the thing was somewhere and searching for its shape.
+Round 5 asks the page to name its own calls.
+
+- **`S2iAjax*`**, not just `S2iAjaxHtml` — a `Json` variant would have
+  been invisible to every previous round.
+- **Every ajax-shaped call**: `$.ajax`, `$.post`, `$.get`, `$.getJSON`,
+  `.load`, `S2iAjax*`.
+- **Every quoted path in the script.** This is the real safety net —
+  it catches `.asmx` web methods and anything called through a wrapper
+  the regexes do not know.
+
+**What to look for: the call that builds `.game-list-n`.** It has to
+come first. StartPitcher cannot be reached without a `g_id`, and the
+`g_id` does not exist until that list is drawn.
+
+Verified offline: the sweep finds `/Schedule/GameCenter/GameList.aspx`,
+a `.load()` target, and `/ws/Schedule.asmx/GetGames` in one pass.
+
+### THE HONEST STATE OF THIS THREAD
+
+Five rounds, and the endpoint is confirmed but still uncalled. What has
+been genuinely won:
+
+- the game centre does NOT serve starters (reverses a finding that sat
+  in this file for three sessions),
+- the exact `param` contract, verbatim,
+- the id source (`li.attr("g_id")`),
+- and now that the page is a shell.
+
+Every one of those came from a round that PRINTED THE SOURCE instead of
+reporting a count. Every dead end came from a round that searched for a
+shape it had assumed. That is the pattern worth keeping.
+
+**If round 5 also comes back empty, stop probing and open the page in a
+browser with devtools.** Five rounds is enough to say the static text is
+not going to give it up; watching the network tab for thirty seconds
+would. That is not defeat, it is the cheaper tool.
+
+---
+
+## PICK UP HERE — KBO round 4. The ids were never in the script. 2026-08-11
+
+**One file: `kbo_fragment_probe.py`.** Suite unchanged at 82.
+
+### ROUND 3 ANSWERED IT, by printing the source instead of a count
+
+Run 85390946879. All three id patterns found zero — and then the
+excerpts said why:
+
+    var seasonId = li.attr("season");   var gameSc   = li.attr("game_sc");
+    var gameId   = li.attr("g_id");     var awayTeam = li.attr("away_id");
+    var homeTeam = li.attr("home_id");
+
+and, at the top of the page:
+
+    var gameId = "";
+
+**The ids are HTML ATTRIBUTES on `<li>` elements in `.game-list-n`.**
+The script's `gameId` starts EMPTY and is filled from the clicked list
+item (or a `gameId` URL parameter). So no regex over script values could
+ever have found one — there are none. They are not `data-` prefixed
+either, which is why that sweep missed them too.
+
+**Rounds 2 and 3 were both looking in the wrong PLACE, not for the wrong
+shape.** Three patterns over the wrong corpus is still zero. What broke
+the deadlock was round 3 printing the page's own source when it found
+nothing, rather than reporting a count — the count is what made the
+first two failures unreadable.
+
+### ROUND 4 READS THE MARKUP
+
+No attribute name is guessed. It captures the whole opening `<li>` tag
+and prints it verbatim, so every attribute is visible — including
+`le_id`/`sr_id`, which the page has still not shown a source for.
+
+It picks a game with **`game_sc == "1"`**, which is not a guess either:
+that is the page's own branch — `1` -> setPreview, `2`/`5` -> setLive,
+`3` -> setReview. Only a preview game has starters to preview. If none
+exists it says so and calls that a TIMING result, not a dead endpoint.
+
+Every value now comes from the page: `gameId` <- `g_id`, `seasonId` <-
+`season`, `awayTeam` <- `away_id`, `homeTeam` <- `home_id`, with the
+field names from the `param` block round 2 printed. **The only
+assumption left is `leId`/`srId`**, defaulted to "1"/"0" and explicitly
+labelled in the output as the first suspects if the call fails.
+
+Verified offline against markup matching round 3's description: two
+`<li>`s, one final and one scheduled — it skips the final and picks the
+scheduled one, and lists every attribute it saw.
+
+### READ THE LOG LIKE THIS
+- **A fragment with Korean names** -> round 5 writes the parser, keyed
+  on markup somebody has seen. mykbostats can go (AUP clause 6).
+- **`GAME LIST <li> TAGS: 0`** -> the list is filled by an earlier
+  fetch. Print the `.game-list-n` block and read it, the same way round
+  3 read the script. Do NOT guess an attribute name.
+- **`NO game_sc==1`** -> every game today is live or final. Timing, not
+  a dead endpoint. Re-run earlier in the KST day.
+- **A 500 with real values** -> `leId`/`srId` are wrong; they are the
+  last unknown.
+
+### ALSO IN THIS RUN
+Tier 2 reproduces (`30 entries | 30 w/stats | 30 w/runs`). NPB
+reproduces (157 rows, 109 upcoming, zero risk vocabulary). Nightly ran
+GREEN after the `calibration_picks.py` fix — archive published, 2548
+entries, all four required files present.
+
+---
+
+## PICK UP HERE — KBO round 3. 2026-08-11
+
+**One file: `kbo_fragment_probe.py`.** Suite unchanged at 82.
+
+### ROUND 2 GOT THE CONTRACT, then stopped on a bad guess
+
+The valuable half worked. Run 85388251099 printed the page's own call
+block verbatim:
+
+    S2iAjaxHtml({ url: "/Schedule/GameCenter/Preview/StartPitcher.aspx",
+      param: { leId, srId, seasonId, awayTeam, homeTeam,
+               awayPit, homePit, gameId }, async: false })
+
+**EIGHT fields**, and round 2 was sending four — `awayTeam`, `homeTeam`,
+`awayPit`, `homePit` were all missing. Printing the block BEFORE calling
+is the only reason we know that instead of chasing a 500.
+
+Then: `GAME IDS: 0 on the page`. The probe stopped rather than firing
+blind, which was right — but the id format was **my second wrong guess
+in this file**. `20260811LGOB0` matched nothing in 57KB, and a count of
+zero cannot distinguish "no ids here" from "ids in a shape I did not
+anticipate".
+
+### ROUND 3 STOPS GUESSING
+
+- **Three id patterns, not one**, and it reports which hit. The round-2
+  guess is KEPT so its failure stays visible rather than being quietly
+  replaced. The third keys on the NAME the page uses (`gameId: "..."`)
+  rather than what the value looks like — that one cannot be wrong about
+  format.
+- **`data-*` attributes** dumped too, in case the ids live in markup.
+- **When nothing matches, it PRINTS THE SOURCE** — every `gameId`
+  mention in the script, verbatim, up to twelve. Round 2 printed a count
+  and stopped; a count is what made "wrong guess" and "no ids" look
+  identical.
+- **All eight field names**, from the page's own `param` block.
+  `awayPit`/`homePit` are sent EMPTY on purpose: setPreview checks
+  `if (awayPit == undefined)` before firing, which reads as "this
+  endpoint RESOLVES the starters" rather than "you pass them in". If
+  that reading is wrong the response will say so.
+
+Verified offline against five plausible id shapes — the round-2 format,
+3-letter codes, no sequence digit, lowercase, and a wholly different
+`KBO-2026-0811-07`. **All five are caught by at least one pattern.**
+Round 2 would have found only the first.
+
+### READ THE LOG LIKE THIS
+- **A fragment with Korean names** -> round 4 writes the parser, keyed
+  on markup somebody has now seen. mykbostats can go (AUP clause 6).
+- **200, empty body** -> the params are right but something else is
+  needed; the CALL BLOCKS section is still the reference.
+- **`NO IDS MATCHED ANY PATTERN`** -> read the `gameId` excerpts it
+  prints. Do NOT guess a third format.
+- **`gameId does not appear at all`** -> it is supplied by a fetch that
+  happens BEFORE this one. Find that call, not this value.
+
+### ALSO CONFIRMED IN RUN 85388251099
+Tier 2 reproduces: `standings 200 | 30 entries | 30 w/stats | 30 w/runs`.
+NPB reproduces: 157 rows, 109 upcoming, zero risk vocabulary.
+
+### WORKFLOWS — only THREE are scheduled
+`nightly-data` (6 AM ET), `slate-picks` (1/5/7 PM ET), `intl-late-refresh`
+(5:20 AM ET). The other **nine are manual-only probes** costing nothing
+when idle, six of which have already answered their question. Worth
+KEEPING: each records how a source was verified, and deleting them loses
+the reasoning behind a parser's shape. If the Actions sidebar gets
+noisy, move them to an archive folder rather than deleting.
+
+---
+
 ## PICK UP HERE — NPB parity CLOSED, KBO round 2 ready. 2026-08-10
 
 **Suite 82, FAILING: none.** Three files.
