@@ -10,6 +10,129 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — tier 2's cause found and fixed. 2026-08-11
+
+**3 files. Suite 83, FAILING: none.**
+
+### THE DIAGNOSTIC NAMED IT, AS DATA
+
+    mlb slate: no projected total — not enough real run data for both teams yet
+      schedule says home='Detroit Tigers' away='Cleveland Guardians'
+      standings knows 30 clubs, e.g. ['Angels', 'Astros', 'Athletics']
+      home matched: False | away matched: False
+
+**The two MLB endpoints disagree about what a team is called.** Schedule
+says "Detroit Tigers"; standings says "Tigers". Every lookup missed, all
+fifteen games, and tier 2 wrote zero totals **with no error** — the
+fetch succeeded, so nothing was wrong to report.
+
+My hypothesis was right in shape and **wrong in detail**: I assumed
+standings used the LONGER form. Printing both is what settled it.
+
+### THE FIX — DERIVED, NOT HAND-WRITTEN
+
+`canonical()` reduces either vocabulary to the abbreviation, and the
+alias index is **built from `engines/team_abbreviations`** — the map the
+app already uses and has verified. A second hand-written table of thirty
+clubs would be a second thing to be wrong, and would drift on a rename.
+Verified: **all 30 standings short names resolve, to 30 distinct clubs.**
+
+**Ambiguous suffixes resolve to NOTHING.** "Sox" ends both Red Sox and
+White Sox; a suffix matching more than one club maps to None. Guessing
+would put the wrong offense on a card with nothing on screen to
+contradict it.
+
+`parse_standings` keys every record by BOTH name and abbreviation,
+pointing at ONE dict. End to end, the exact failing matchup — Cleveland
+Guardians @ Detroit Tigers — now projects **8.4**.
+
+### TWO TEST BUGS FOUND WHILE FIXING IT, both the same shape
+
+**1. A STUB THAT DID NOT MATCH THE INTERFACE.** `_Resp` exposed
+`.json()` and I "fixed" it toward `.content` — but
+`fetch_team_run_rates` uses `requests.GET` and `r.json()`. I had been
+editing the test to match a DIFFERENT engine's shape. The original stub
+patched `requests.get` correctly; my edit broke it, the call fell
+through to a real request, and "22 of 30 is refused" passed on a
+sandbox 403 instead of the guard.
+
+**2. A FIXTURE THAT COULD NOT EXERCISE ITS OWN ASSERTION.** The
+partial-league guard now counts distinct clubs rather than keys, because
+dual keying makes `len(rates)` 60. The control for that did NOT fire —
+the fixture used "Club 0".."Club 21", which `canonical()` does not
+recognise, so they were keyed once and key-count equalled club-count.
+Real names now, and the control fires.
+
+Both are the same lesson as the KBO rounds: **a test that cannot fail is
+not evidence.** Four controls now confirmed red — raw-name lookup,
+ambiguous coin-flip, guard counting keys, unknown-name fallback.
+
+### VERIFY
+Re-run Slate Picks. Expect `15 with a projected total`. If it is still
+0, the reason now prints with both canonical forms and whether they
+matched — read that, do not infer.
+
+Also confirmed live in the 11:40 run: **13 of 15 with a modeled edge**
+at 7:40 AM ET, and **12 weather from NWS forecast**. Both earlier fixes
+are working.
+
+---
+
+## PICK UP HERE — tier 2 wrote 0, and the reason was thrown away. 2026-08-11
+
+**One file: `calibration_picks.py`.** Suite 83, FAILING: none.
+
+### THE RUN — 2026-08-11 11:40 UTC, manual
+
+    mlb slate: wrote 15 game(s) for 2026-08-11
+      (13 with a modeled edge, 3 roofed, 12 weather from NWS forecast,
+       0 with a projected total)
+
+Everything else worked. **13 of 15 with a modeled edge at 7:40 AM ET** —
+probables were already posted, better than expected. **12 weather from
+NWS forecast** — that fix is live and doing its job.
+
+**0 with a projected total, and NO error line above it.** So
+`fetch_team_run_rates` SUCCEEDED — a failure would have logged
+`no team run rates (...)`. The fetch worked and every projection failed.
+
+### AND THE REASON WAS COMPUTED AND DISCARDED
+
+`project_total` returns `(None, {"reason": ...})`. The code did:
+
+    _t, _why = project_total(...)
+    if _t is not None: ...
+
+`_why` bound and never printed. **Rule 20, in the one place where the
+reason IS the answer** — fifteen games, fifteen discarded explanations,
+and a log line that says what happened but not why.
+
+Now printed ONCE per run (fifteen identical lines would be noise), along
+with the schedule's team names, the standings' team names, and whether
+each matched.
+
+### THE HYPOTHESIS, AND IT IS ONLY THAT
+
+`run_rates` is keyed by the name **standings** uses. `home`/`away` come
+from the **schedule**. If those vocabularies differ, every lookup misses.
+
+Reproduced offline: matched names give a total of 8.7; a mismatch gives
+exactly `(None, "not enough real run data for both teams yet")` — the
+observed symptom.
+
+**Do not fix this on that basis.** The next run prints the actual names
+from both sources and says whether they matched. That is a fact; the
+above is a guess that happens to fit. Nine rounds of KBO were spent on
+guesses that fit.
+
+### NEXT
+Re-run Slate Picks manually. Read the three new lines under
+`no projected total`. If the names differ, the fix is a mapping at the
+lookup — and `engines/team_abbreviations` already exists for exactly
+this kind of translation.
+
+---
+
 ## PICK UP HERE — scope answered, window walk built. 2026-08-11
 
 **3 files. Suite 83, FAILING: none.** `kbo_official.py` still NOT wired
