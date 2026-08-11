@@ -234,7 +234,41 @@ def main() -> int:
                         idx += 1
                     if idx >= len(raw):
                         break
-                    obj, idx = dec.raw_decode(raw, idx)
+                    try:
+                        obj, idx = dec.raw_decode(raw, idx)
+                    except ValueError as _e:
+                        # SHOW THE BYTES AT THE FAILURE, NOT AT THE START.
+                        #
+                        # This is the diagnostic that should have existed
+                        # three rounds ago. Every dump in this probe looks
+                        # at the BEGINNING of the body — first 40 bytes,
+                        # first 1200 chars — and the failure has never once
+                        # been at the beginning:
+                        #
+                        #   round 7: Extra data      char 8397 of 11460
+                        #   round 8: Expecting value char 8399 of 11462
+                        #
+                        # Both are ~8kb in, outside every window I printed,
+                        # so both rounds theorised about a cause nobody had
+                        # looked at. Round 8 "fixed" concatenated documents
+                        # on the strength of an error message; the message
+                        # moved and the fix did not hold.
+                        #
+                        # A window around the offset ends that: whatever is
+                        # at 8399 will be visible, in repr, and can be read
+                        # instead of guessed.
+                        _pos = getattr(_e, "pos", idx)
+                        _lo, _hi = max(0, _pos - 250), min(len(raw), _pos + 350)
+                        print(f"  raw_decode stopped at char {_pos} of "
+                              f"{len(raw)} after {len(docs)} document(s): {_e}")
+                        print(f"  ---- BYTES {_lo}..{_hi}, AROUND THE "
+                              f"FAILURE (repr) ----")
+                        print("  " + repr(raw[_lo:_pos]))
+                        print("  >>> FAILS HERE >>>")
+                        print("  " + repr(raw[_pos:_hi]))
+                        print(f"  ---- LAST 200 CHARS OF THE BODY ----")
+                        print("  " + repr(raw[-200:]))
+                        break
                     docs.append(obj)
                 print(f"  {len(docs)} JSON document(s) in the body: "
                       f"{[list(o)[:4] if isinstance(o, dict) else type(o).__name__ for o in docs]}")
@@ -273,11 +307,14 @@ def main() -> int:
 
     if not games:
         print("-" * 72)
-        print("NO GAME ROWS. The raw body above is the answer, not this "
-              "line. If it is a SOAP fault, the field names or the content "
-              "type are wrong. If it is an empty list, there may be no "
-              "games on this date — check a date you know has some before "
-              "concluding anything.")
+        print("NO GAME ROWS — but note the endpoint has returned 200 with "
+              "~11.5kb of real game data on every run since round 6, and "
+              "the FIRST document has always parsed. If this fires now, "
+              "read the byte window above: it shows what is actually at "
+              "the failure offset, which no previous round could see. "
+              "Do NOT theorise from the exception message — rounds 7 and "
+              "8 both did, and both fixed something that was not the "
+              "cause.")
         return 1
 
     # Which key holds the id is UNKNOWN and not guessed: the script reads
