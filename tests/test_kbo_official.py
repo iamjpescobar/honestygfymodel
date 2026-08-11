@@ -232,6 +232,73 @@ check("B_PIT maps to HOME in exactly one place",
 check("the module makes no attempt to project or grade anything",
       "def project" not in src and "def grade" not in src)
 
+# ----------------------------------------------------------------------
+# 6. WALKING A WINDOW — an off-day and a broken date are NOT the same.
+#
+# GetKboGameList takes one date. GetKboGameDate was probed to see if a
+# range came in one call; it returns a CURSOR instead —
+# BEFORE_G_DT / NOW_G_DT / AFTER_G_DT — so a window is one call per date
+# regardless. The cursor is deliberately unused: following AFTER_G_DT
+# costs an extra request per step to skip off-days that GetKboGameList
+# already reports as empty.
+#
+# The property that makes the loop safe: an off-day (code 100, no rows)
+# is silence, a 503 is a gap. Conflating them means a nightly either
+# publishes a fortnight with holes it does not know about, or refuses to
+# publish over a Monday with no baseball.
+# ----------------------------------------------------------------------
+_calls = []
+
+
+def _walk_stub(url, **kw):
+    d = kw["json"]["date"]
+    _calls.append(d)
+    if d == "20260812":
+        return _Resp("", status=503)          # a real failure
+    if d == "20260810":
+        return _Resp(body([]))               # an off-day
+    return _Resp(body(REAL))
+
+
+_real_post2 = _ko.requests.post
+try:
+    _ko.requests.post = _walk_stub
+    got, errs = _ko.fetch_window("20260810", 4, sleep=0)
+    check(f"every date in the window is asked for ({len(_calls)})",
+          _calls == ["20260810", "20260811", "20260812", "20260813"])
+    check("an off-day contributes no rows and NO error",
+          "20260810" not in got and not any("20260810" in e for e in errs))
+    check("a broken date is recorded as an error, not silence",
+          any("20260812" in e and "503" in e for e in errs))
+    check("neither one stops the walk — the good dates still come back",
+          sorted(got) == ["20260811", "20260813"])
+
+    _ko.requests.post = lambda *a, **k: _Resp(body(REAL))
+    check("a zero-day window asks for nothing",
+          _ko.fetch_window("20260810", 0, sleep=0) == ({}, []))
+    check("a malformed start date is an error, not a crash",
+          _ko.fetch_window("not-a-date", 3, sleep=0)[1] != [])
+finally:
+    _ko.requests.post = _real_post2
+
+# The cursor endpoint is NOT used for the walk. Asserted on the RUNNABLE
+# code with comments stripped — the first version of this checked the
+# whole source and failed on the paragraph EXPLAINING why the cursor is
+# unused, which is the same "matched the comment, not the command"
+# mistake as rule 26. The reasoning should stay in the file; only the
+# code has to be clean.
+#
+# Worth asserting at all because "we chose the cheaper path" silently
+# reverses the moment someone reads GetKboGameDate's name and assumes it
+# must be involved. Following AFTER_G_DT would double the requests to
+# learn something the cheaper call already reports.
+_code = "\n".join(l for l in src.splitlines()
+                  if not l.lstrip().startswith("#"))
+check("the walk does not chase the GetKboGameDate cursor in code",
+      "AFTER_G_DT" not in _code and "GetKboGameDate" not in _code)
+check("but the reasoning for that choice is still written down",
+      "AFTER_G_DT" in src)
+
 if failures:
     print()
     for f in failures:
