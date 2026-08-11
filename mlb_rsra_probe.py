@@ -72,6 +72,24 @@ CANDIDATES = [
     ("teams hydrate hitting only",
      f"https://statsapi.mlb.com/api/v1/teams"
      f"?sportId=1&season={SEASON}&hydrate=stats(type=season,group=hitting)"),
+    # THE LEAD FROM RUN 85217159493, and the reason for this round.
+    #
+    # Every teams/stats shape above returns ONE entry — the LEAGUE
+    # AGGREGATE (591 runs in 118 G), not a club. That is not "the API
+    # lacks per-team runs"; it is this endpoint answering a
+    # league-level question.
+    #
+    # Standings answers a different one. Each teamRecord carries
+    # runsScored and runsAllowed for THAT club, and leagueId=103,104
+    # covers all 30 in a single call — which is what tier 2 of the
+    # best-games ranking needs and has never had.
+    #
+    # HYPOTHESIS, NOT A FINDING. Nobody has called this. It is here to
+    # be measured, and the per-shape diagnostics below are what decides
+    # it — not the verdict line.
+    ("standings regularSeason (the untested lead)",
+     f"https://statsapi.mlb.com/api/v1/standings"
+     f"?leagueId=103,104&season={SEASON}&standingsTypes=regularSeason"),
 ]
 
 
@@ -84,6 +102,15 @@ def _walk_for_runs(node, depth=0):
     if depth > 8:
         return None
     if isinstance(node, dict):
+        # STANDINGS SPELLS IT DIFFERENTLY. teams/stats returns `runs`;
+        # a standings teamRecord returns `runsScored` / `runsAllowed`
+        # with the game count under `gamesPlayed`. Looking only for
+        # `runs` would have walked the whole standings payload, found
+        # nothing, and reported 0 with runs — the endpoint working
+        # perfectly and the probe calling it empty. That is precisely
+        # the failure this file exists to stop repeating.
+        if node.get("runsScored") is not None:
+            return node.get("runsScored"), node.get("gamesPlayed")
         if node.get("runs") is not None:
             return node.get("runs"), node.get("gamesPlayed")
         for v in node.values():
@@ -99,10 +126,31 @@ def _walk_for_runs(node, depth=0):
 
 
 def _diagnose(payload):
-    """What actually came back — the part v1 never printed."""
+    """What actually came back — the part v1 never printed.
+
+    STANDINGS NESTS ONE LAYER DEEPER and had to be handled explicitly:
+    its entries live under records[].teamRecords[], not under a top-level
+    `teams` or `stats` list. Counting only the outer `records` would have
+    reported 6 entries (the divisions) for a payload holding all 30
+    clubs, and 6-of-30 reads exactly like the partial failure this probe
+    already refused once. Getting the count wrong is how a working
+    endpoint gets recorded as broken.
+    """
     if not isinstance(payload, dict):
         return "payload is not an object", 0, 0
     top = ", ".join(sorted(payload.keys())[:5]) or "(no keys)"
+
+    if isinstance(payload.get("records"), list):
+        entries = [tr for rec in payload["records"]
+                   if isinstance(rec, dict)
+                   for tr in (rec.get("teamRecords") or [])
+                   if isinstance(tr, dict)]
+        with_stats = sum(1 for t in entries
+                         if t.get("runsScored") is not None
+                         or t.get("runsAllowed") is not None)
+        return (f"top keys: {top} ({len(payload['records'])} division "
+                f"records)", len(entries), with_stats)
+
     teams = payload.get("teams") or payload.get("stats") or []
     if not isinstance(teams, list):
         teams = []
