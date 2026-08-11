@@ -173,7 +173,19 @@ def main() -> int:
         lr = requests.post(list_url, headers={**UA,
                            "Content-Type": "application/json; charset=UTF-8"},
                            json=payload, timeout=25)
-        raw = lr.text or ""
+        # DECODE EXPLICITLY, AND STRIP A BOM.
+        #
+        # Round 6 got 200 with 11461 bytes of perfectly good JSON and
+        # then reported "NO GAME ROWS" — because json.loads raised
+        # "Unexpected UTF-8 BOM". The endpoint was fine; the probe threw
+        # away a working answer over three bytes.
+        #
+        # utf-8-sig strips the BOM if present and is a no-op if not.
+        # Explicit UTF-8 also matters here for a second reason: the
+        # payload carries Korean stadium and team names (잠실), and
+        # requests guesses ISO-8859-1 when the server omits a charset,
+        # which would mangle every one of them while still parsing.
+        raw = (lr.content or b"").decode("utf-8-sig", errors="replace")
         print(f"  -> {lr.status_code} | {len(raw)}b")
         if lr.status_code != 200 or not raw.strip():
             print("  ---- BODY, first 800 chars ----")
@@ -200,8 +212,16 @@ def main() -> int:
                         print(f"  keys on the first row: "
                               f"{', '.join(sorted(games[0])[:20])}")
             except Exception as exc:
-                print(f"  could not parse as JSON ({type(exc).__name__}) — "
-                      f"read the raw body above rather than trusting this.")
+                # SHOW THE BYTES, not just the exception name. Round 6
+                # printed "could not parse as JSON (JSONDecodeError)" over
+                # a body that was valid — the failure was a BOM, and the
+                # exception name alone could not say that. The first bytes
+                # as a repr would have named it immediately.
+                print(f"  could not parse as JSON ({type(exc).__name__}: "
+                      f"{exc})")
+                print(f"  first 40 bytes on the wire: {lr.content[:40]!r}")
+                print(f"  declared encoding: {lr.encoding!r}  "
+                      f"content-type: {lr.headers.get('Content-Type')!r}")
     except Exception as exc:
         print(f"  FAILED {type(exc).__name__}: {exc}")
 
@@ -218,6 +238,19 @@ def main() -> int:
     # li.attr("g_id"), but that is the ATTRIBUTE the page writes, and the
     # JSON key behind it may differ. Take whichever key looks like a game
     # id, and say which one was used.
+    # THE KEYS ARE KNOWN NOW, from round 6's own dump:
+    #
+    #   LE_ID  SR_ID  SEASON_ID  G_DT  G_DT_TXT  G_ID  HEADER_NO
+    #   G_TM   S_NM   AWAY_ID    ...   GAME_SC
+    #
+    # G_ID = "20260811HHOB0" — which means round 2's guessed FORMAT was
+    # right all along (20YYMMDD + 4 letters + digit). It was just never
+    # in the page; it lives behind this web method. Four rounds of
+    # searching the HTML could not have found it at any format.
+    #
+    # Still matched case-insensitively with fallbacks: the dump showed
+    # the first row's keys, not every row's, and a name read once is not
+    # a name confirmed.
     def _pick(row, *names):
         for n in names:
             for k in row:
@@ -227,11 +260,11 @@ def main() -> int:
 
     pick = games[0]
     for g in games:
-        _k, v = _pick(g, "gamesc", "game_sc", "gamestatus")
+        _k, v = _pick(g, "game_sc", "gamesc", "gamestatus")
         if str(v) == "1":
             pick = g
             break
-    id_key, game_id = _pick(pick, "gameid", "g_id", "gid")
+    id_key, game_id = _pick(pick, "g_id", "gameid", "gid")
     print(f"  using {id_key}={game_id} from row: "
           f"{ {k: pick[k] for k in list(pick)[:8]} }")
     if not game_id:
@@ -267,10 +300,13 @@ def main() -> int:
     params = {
         "leId": "1",                       # the page's own literal
         "srId": "0",                       # the one remaining guess
-        "seasonId": _v("seasonid", "season") or str(today.year),
+        # SEASON_ID / AWAY_ID / HOME_ID, named by round 6's dump. Tried
+        # first, with the old guesses kept behind them — a key seen on
+        # one row is not a key confirmed on all of them.
+        "seasonId": _v("season_id", "seasonid", "season") or str(today.year),
         "gameId": str(game_id),
-        "awayTeam": _v("awayteamid", "away_id", "awayteam", "awaycode"),
-        "homeTeam": _v("hometeamid", "home_id", "hometeam", "homecode"),
+        "awayTeam": _v("away_id", "awayteamid", "awayteam", "awaycode"),
+        "homeTeam": _v("home_id", "hometeamid", "hometeam", "homecode"),
         "awayPit": "", "homePit": "",
     }
     print("-" * 72)
