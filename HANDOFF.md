@@ -10,6 +10,166 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — TIER 2 IS LIVE. 2026-08-10.
+
+**Suite 82, FAILING: none.** The last dark piece of item C is wired.
+
+### THE ANSWER, run 85313739682
+
+```
+standings regularSeason  200 | 30 entries | 30 w/stats | 30 w/runs
+                             e.g. Rays: 519 runs in 117 G
+TIER 2 BUILDABLE
+```
+
+**The `e.g.` line is what makes it a finding rather than a count.**
+`teams/stats` printed `?: 591 runs in 119 G` — no team name, because
+there wasn't one. That row is the LEAGUE AGGREGATE, and it looks like a
+club until you notice the blank. It survived two rounds recorded as
+"PARTIAL: 1 of 30". Standings gives a named club.
+
+### WHAT SHIPPED
+
+**`app/engines/mlb_run_rates.py` (NEW).** Turns one standings response
+into `{"rs_pg", "ra_pg", "games"}` per club. Thin on purpose — three of
+the four probe rounds went wrong in the PARSE, not the fetch, so
+`parse_standings()` is pure and tested offline against a payload
+matching the real shape.
+
+**`calibration_picks._write_mlb_slate`** fetches once for all 30 clubs
+BEFORE the per-game loop (inside it would be thirty requests a slate),
+measures `league_rs_pg` from those same clubs, and writes `proj_total`.
+
+**`run_total.project_total` is unchanged and is the SAME engine KBO and
+NPB use.** `league_rs_pg` is a parameter it measures from whatever teams
+it is handed, not a frozen constant, so MLB's run environment goes in
+with no second copy of the maths. Verified end to end on a 30-club
+payload: league 4.256 rs/pg, and totals of 10.1 (Rockies@Dodgers), 9.3
+(WhiteSox@Yankees), 7.5 (Guardians@Mariners) — a sensible spread around
+an MLB average.
+
+**ERA IS NOT PASSED.** `run_total` shades a total by the starters' ERA
+against the league's, and neither figure is on disk for MLB.
+`starter_adjustment` returns 0.0 for a missing ERA, so this is the pure
+team-rate projection — a real, smaller claim, and better than inventing
+an ERA to make a bigger one. Adding starter ERA later would sharpen it.
+
+### TWO WAYS A WRONG NUMBER REACHES THE FRONT PAGE, both refused
+
+1. **A ZERO WHERE A MEASUREMENT IS MISSING.** A club with `runsScored`
+   absent is unmeasured, not one that has scored no runs. A 0.00 rs_pg
+   drags the league average down AND makes that club the worst offense
+   in baseball — both invisible on a card. Such clubs are dropped.
+2. **A PARTIAL LEAGUE.** 30 or nothing. With 22, eight games get no
+   projected total, tier 2 fires on some and not others, and the ranking
+   silently mixes two sorts — some games on three tiers, some on two,
+   nothing on screen saying so. `fetch_team_run_rates` refuses and says
+   why. The probe refused a partial for the same reason and was right to.
+
+A standings outage returns a reason rather than raising: this runs
+beside six pick builders and must cost tier 2, not the day's picks.
+
+`tests/test_mlb_run_rates.py` (NEW, #82) — 20 assertions, 5 negative
+controls (zero-for-missing, accept-a-partial, count-divisions,
+outage-raises, fetch-inside-the-loop), all confirmed red.
+
+### VERIFY, and this one is visible on the page
+1. Next slate-picks run, the log line now ends `N with a projected
+   total`. Expect it to equal the game count.
+2. `grep -c proj_total data/mlb/games.json` — non-zero.
+3. **Home's hero card.** With tier 1 tied (two games at edge_net 3 on
+   08-10), tier 2 now breaks that tie, and `why_first` may say "Highest
+   projected run total on the slate" where it used to fall to the
+   alphabetical tiebreak.
+
+### STILL OPEN
+- **KBO fragment probe.** `/Schedule/GameCenter/Preview/StartPitcher.aspx`
+  confirmed at 11:35 KST. `S2iAjaxHtml` injects markup, so these return
+  **HTML FRAGMENTS, NOT JSON** — the next probe fetches with a live
+  gameId and dumps ~2KB RAW, unparsed. Guessing structure is what made
+  v1 and v2 wrong. This is the last thing before dropping mykbostats.
+- **NPB label still not in the repo.** `grep -c "NO ADVANCE"
+  app/views/NPB.py` returns 0. The verdict is earned and reproduces
+  cleanly (157 rows, 109 upcoming, zero risk vocabulary).
+
+---
+
+## PICK UP HERE — 2026-08-10. KBO UNBLOCKED. MLB probe was under-reporting.
+
+**Suite 81, FAILING: none.**
+
+### KBO — THE ENDPOINT, AT LAST. Run 85311921317.
+
+```
+'선발' x8 raw, x0 in RENDERED content | 19 script blocks
+THE PAGE'S OWN AJAX CALL (verbatim from its <script>):
+  url: /Schedule/GameCenter/Preview/StartPitcher.aspx
+  url: /Schedule/GameCenter/Preview/LineUp.aspx        (+6 more)
+  setPreview(section, leId, srId, seasonId, gameId, awayTeam, homeTeam, awayPit, homePit)
+```
+
+**`/Schedule/GameCenter/Preview/StartPitcher.aspx`** — named
+unambiguously, pulled verbatim from the page's own script, at **11:21
+KST** so the "starters not posted yet" caveat does not apply.
+
+**These return HTML FRAGMENTS, not JSON.** `S2iAjaxHtml` injects markup.
+Whatever comes back is a page to parse, not a payload to read — which
+shapes the next probe: fetch it with a real `gameId` and **dump the raw
+fragment unparsed**. Do not guess its structure; guessing the structure
+is what made v1 and v2 both wrong.
+
+This is the last thing between here and dropping mykbostats (AUP clause
+6 forbids using their content for betting).
+
+### MLB — THE PROBE WAS WRONG, NOT THE API. Run 85312622391.
+
+```
+standings regularSeason  200 | 30 entries | 30 w/stats | 0 w/runs
+```
+
+Thirty entries. Thirty carrying `runsScored`. **Zero counted.** The
+verdict then ranked shapes by `w/runs`, picked `teams/stats hitting` with
+its ONE league-aggregate row, and reported *"tier 2 stays dark"* —
+declaring tier 2 unbuildable off a payload holding all thirty clubs.
+
+**Cause: two places extracted entries and only one learned the new
+shape.** `_diagnose` was taught the standings nesting
+(`records[].teamRecords[]`); `main()` kept its own copy keyed on the
+top-level lists, which are empty for standings. Diagnostic saw thirty,
+counter saw none, in the same row of the same line.
+
+Third time this repo has been bitten by a computed thing and a rendered
+thing disagreeing because they were derived separately — and the worst
+version yet, because it produced a **confident negative about an endpoint
+that works.** "Tier 2 is not buildable" is exactly the kind of finding
+that gets written down and closes an avenue for months.
+
+`_entries()` is now the single extractor and both callers go through it.
+Verified offline: 30 entries / 30 w/stats / **30 w/runs**, verdict flips
+to TIER 2 BUILDABLE.
+
+**A third copy was still hiding in `_diagnose`'s fallback branch and the
+new test found it, not me.** That is the assertion earning its place on
+its first run.
+
+`tests/test_mlb_rsra_probe.py` (NEW, #81) pins that exactly one place
+extracts entries, that the diagnostic and counter agree, and that
+`teams/stats` and hydrate still parse. Four negative controls, all red.
+
+### NEXT
+1. **Re-run the MLB probe.** Expect `30 entries | 30 w/stats | 30
+   w/runs` and TIER 2 BUILDABLE. If so, write RS/RA into the slate and
+   let `run_total` compute `proj_total` — the ranking is already wired
+   and tested for it.
+2. **Write the KBO fragment probe** — fetch StartPitcher.aspx with a live
+   gameId, dump ~2KB raw.
+3. **NPB reproduces cleanly** (157 rows, 109 upcoming, zero risk
+   vocabulary; score-tag gap 153 vs 47-with-digits confirms the
+   played-check fix holds). The label is still NOT in the repo —
+   `grep -c "NO ADVANCE" app/views/NPB.py` returns 0.
+
+---
+
 ## PICK UP HERE — MLB standings shape added to the probe. 2026-08-10
 
 **One file. Suite 80, FAILING: none.** Not a finding — an instrument.
@@ -1703,7 +1863,7 @@ the site's own advance warning is a free check on this number.
 - Pages in **`app/views/`**, deliberately NOT `pages/` — Streamlit
   auto-registers `pages/` and would expose every page pre-auth.
 - Engines in `app/engines/`. Theme in `app/styles/kc_theme.py`.
-- Tests in `tests/` — **80 files, plain scripts, not pytest.**
+- Tests in `tests/` — **82 files, plain scripts, not pytest.**
 - Data comes off disk; the nightly publishes a release asset.
 - `requirements.txt` fully pinned, including transitives.
 
