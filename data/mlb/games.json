@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-08-11 07:25",
+  "generated_at_et": "2026-08-11 07:40",
   "slate_date_et": "2026-08-11",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -19,18 +19,20 @@
       "weather_source": "nws_forecast",
       "wind_adj": -0.8,
       "wind_note": "5 mph crosswind (-0.8)",
-      "edge_net": 1,
+      "edge_net": 3,
       "edge_lean": "Detroit Tigers",
-      "edge_grade": "C-",
+      "edge_grade": "B",
       "edge_signals": [
-        "K%: edge Detroit Tigers (18.3 vs 28)"
+        "K%: edge Detroit Tigers (19.2 vs 26.8)",
+        "HR/9: edge Detroit Tigers (1.76 vs 1.2)",
+        "SLG against: edge Detroit Tigers (0.436 vs 0.4)"
       ],
       "ou_lean": "Over",
       "ou_grade": "B",
       "ou_signals": [
         "Temp 80F (carry weather)",
-        "Starters' avg WHIP 1.38 (high)",
-        "Starters' avg HR/9 1.44 (high)"
+        "Starters' avg WHIP 1.35 (high)",
+        "Starters' avg HR/9 1.48 (high)"
       ]
     },
     {
@@ -53,12 +55,12 @@
       "edge_lean": "Pittsburgh Pirates",
       "edge_grade": "C-",
       "edge_signals": [
-        "K%: edge Pittsburgh Pirates (30.4 vs 26.6)"
+        "K%: edge Pittsburgh Pirates (30.4 vs 27.2)"
       ],
       "ou_lean": "Under",
       "ou_grade": "C-",
       "ou_signals": [
-        "Starters' avg SLG against 0.36 (low)"
+        "Starters' avg SLG against 0.359 (low)"
       ]
     },
     {
@@ -98,15 +100,14 @@
       "edge_lean": "Seattle Mariners",
       "edge_grade": "B",
       "edge_signals": [
-        "WHIP: edge Seattle Mariners (1.15 vs 1.34)",
-        "HR/9: edge Seattle Mariners (0.94 vs 1.51)",
-        "SLG against: edge Seattle Mariners (0.376 vs 0.425)"
+        "WHIP: edge Seattle Mariners (1.15 vs 1.33)",
+        "HR/9: edge Seattle Mariners (0.9 vs 1.45)",
+        "SLG against: edge Seattle Mariners (0.366 vs 0.416)"
       ],
       "ou_lean": "Over",
-      "ou_grade": "C",
+      "ou_grade": "C-",
       "ou_signals": [
-        "Temp 84F (carry weather)",
-        "Starters' avg HR/9 1.23 (high)"
+        "Temp 84F (carry weather)"
       ]
     },
     {
@@ -129,10 +130,17 @@
       "edge_lean": "Toronto Blue Jays",
       "edge_grade": "A",
       "edge_signals": [
-        "WHIP: edge Toronto Blue Jays (1.69 vs 1.13)",
-        "K%: edge Toronto Blue Jays (23.3 vs 35.8)",
-        "HR/9: edge Toronto Blue Jays (1.47 vs 0.52)",
-        "SLG against: edge Toronto Blue Jays (0.481 vs 0.262)"
+        "WHIP: edge Toronto Blue Jays (1.81 vs 1.09)",
+        "K%: edge Toronto Blue Jays (22.9 vs 36.1)",
+        "HR/9: edge Toronto Blue Jays (1.19 vs 0.49)",
+        "SLG against: edge Toronto Blue Jays (0.464 vs 0.254)"
+      ],
+      "ou_lean": "Under",
+      "ou_grade": "C-",
+      "ou_signals": [
+        "Starters' avg WHIP 1.45 (high)",
+        "Starters' avg HR/9 0.84 (low)",
+        "Starters' avg SLG against 0.359 (low)"
       ]
     },
     {
@@ -155,7 +163,7 @@
       "edge_lean": "New York Mets",
       "edge_grade": "C-",
       "edge_signals": [
-        "K%: edge New York Mets (28.3 vs 18.2)"
+        "K%: edge New York Mets (28.4 vs 18.5)"
       ]
     },
     {
@@ -178,9 +186,9 @@
       "edge_lean": "Baltimore Orioles",
       "edge_grade": "B",
       "edge_signals": [
-        "K%: edge Baltimore Orioles (19.3 vs 16.3)",
-        "HR/9: edge Baltimore Orioles (0.98 vs 1.55)",
-        "SLG against: edge Baltimore Orioles (0.382 vs 0.446)"
+        "K%: edge Baltimore Orioles (19.3 vs 15.4)",
+        "HR/9: edge Baltimore Orioles (1.03 vs 1.46)",
+        "SLG against: edge Baltimore Orioles (0.387 vs 0.438)"
       ],
       "ou_lean": "Over",
       "ou_grade": "A",
@@ -188,7 +196,7 @@
         "Park factor 103 (hitter-friendly)",
         "Temp 86F (carry weather)",
         "Starters' avg WHIP 1.35 (high)",
-        "Starters' avg HR/9 1.27 (high)"
+        "Starters' avg HR/9 1.25 (high)"
       ]
     },
     {
@@ -211,17 +219,17 @@
       "edge_lean": "Chicago White Sox",
       "edge_grade": "A",
       "edge_signals": [
-        "WHIP: edge Chicago White Sox (1.67 vs 1.21)",
-        "K%: edge Chicago White Sox (18.9 vs 27.3)",
-        "HR/9: edge Chicago White Sox (1.55 vs 0.97)",
-        "SLG against: edge Chicago White Sox (0.458 vs 0.37)"
+        "WHIP: edge Chicago White Sox (1.67 vs 1.22)",
+        "K%: edge Chicago White Sox (18.9 vs 27.1)",
+        "HR/9: edge Chicago White Sox (1.55 vs 1.01)",
+        "SLG against: edge Chicago White Sox (0.458 vs 0.375)"
       ],
       "ou_lean": "Over",
       "ou_grade": "C-",
       "ou_signals": [
         "Park factor 98 (pitcher-friendly)",
         "Starters' avg WHIP 1.44 (high)",
-        "Starters' avg HR/9 1.26 (high)"
+        "Starters' avg HR/9 1.28 (high)"
       ]
     },
     {
@@ -244,7 +252,7 @@
       "edge_lean": "Philadelphia Phillies",
       "edge_grade": "C-",
       "edge_signals": [
-        "K%: edge Philadelphia Phillies (27.8 vs 17.3)"
+        "K%: edge Philadelphia Phillies (27.7 vs 17.4)"
       ],
       "ou_lean": "Under",
       "ou_grade": "C",
@@ -275,15 +283,15 @@
       "edge_lean": "Texas Rangers",
       "edge_grade": "B",
       "edge_signals": [
-        "K%: edge Texas Rangers (25 vs 18.5)",
-        "HR/9: edge Texas Rangers (0 vs 2)",
-        "SLG against: edge Texas Rangers (0.333 vs 0.482)"
+        "K%: edge Texas Rangers (25 vs 17.5)",
+        "HR/9: edge Texas Rangers (0 vs 2.03)",
+        "SLG against: edge Texas Rangers (0.333 vs 0.479)"
       ],
       "ou_lean": "Over",
       "ou_grade": "C",
       "ou_signals": [
         "Temp 81F (carry weather)",
-        "Starters' avg WHIP 1.6 (high)"
+        "Starters' avg WHIP 1.64 (high)"
       ]
     },
     {
@@ -302,19 +310,22 @@
       "weather_source": null,
       "wind_adj": 0,
       "wind_note": null,
-      "edge_net": 1,
-      "edge_lean": "Colorado Rockies",
-      "edge_grade": "C-",
+      "edge_net": 2,
+      "edge_lean": "Arizona Diamondbacks",
+      "edge_grade": "C",
       "edge_signals": [
-        "WHIP: edge Colorado Rockies (1.36 vs 1.97)"
+        "WHIP: edge Colorado Rockies (1.36 vs 1.62)",
+        "K%: edge Arizona Diamondbacks (13.6 vs 17.2)",
+        "HR/9: edge Arizona Diamondbacks (1.86 vs 1.38)",
+        "SLG against: edge Arizona Diamondbacks (0.52 vs 0.426)"
       ],
       "ou_lean": "Over",
       "ou_grade": "A",
       "ou_signals": [
         "Park factor 103 (hitter-friendly)",
-        "Starters' avg WHIP 1.67 (high)",
-        "Starters' avg HR/9 1.87 (high)",
-        "Starters' avg SLG against 0.52 (high)"
+        "Starters' avg WHIP 1.49 (high)",
+        "Starters' avg HR/9 1.62 (high)",
+        "Starters' avg SLG against 0.473 (high)"
       ]
     },
     {
@@ -333,19 +344,22 @@
       "weather_source": "nws_forecast",
       "wind_adj": 0,
       "wind_note": null,
-      "edge_net": 1,
-      "edge_lean": "Athletics",
-      "edge_grade": "C-",
+      "edge_net": 2,
+      "edge_lean": "Tampa Bay Rays",
+      "edge_grade": "C",
       "edge_signals": [
-        "K%: edge Athletics (12.9 vs 23)"
+        "WHIP: edge Tampa Bay Rays (1.29 vs 1.47)",
+        "K%: edge Athletics (13.1 vs 24.5)",
+        "HR/9: edge Tampa Bay Rays (1.3 vs 2.2)",
+        "SLG against: edge Tampa Bay Rays (0.441 vs 0.477)"
       ],
       "ou_lean": "Over",
       "ou_grade": "A",
       "ou_signals": [
         "Temp 90F (carry weather)",
-        "Starters' avg WHIP 1.33 (high)",
-        "Starters' avg HR/9 1.46 (high)",
-        "Starters' avg SLG against 0.434 (high)"
+        "Starters' avg WHIP 1.38 (high)",
+        "Starters' avg HR/9 1.75 (high)",
+        "Starters' avg SLG against 0.459 (high)"
       ]
     },
     {
@@ -356,7 +370,7 @@
       "home_pitcher": "Walker Buehler",
       "venue": "Petco Park",
       "game_time": "2026-08-12T01:40:00Z",
-      "weather_condition": "Partly Cloudy",
+      "weather_condition": "Mostly Clear",
       "weather_temp": 76,
       "weather_wind": "W 5 mph",
       "park_factor": 97,
@@ -368,17 +382,16 @@
       "edge_lean": "Milwaukee Brewers",
       "edge_grade": "B",
       "edge_signals": [
-        "WHIP: edge Milwaukee Brewers (1.19 vs 1.59)",
-        "K%: edge Milwaukee Brewers (29.1 vs 20.5)",
-        "SLG against: edge Milwaukee Brewers (0.386 vs 0.459)"
+        "WHIP: edge Milwaukee Brewers (1.15 vs 1.6)",
+        "K%: edge Milwaukee Brewers (30.5 vs 20.4)",
+        "SLG against: edge Milwaukee Brewers (0.373 vs 0.46)"
       ],
       "ou_lean": "Over",
-      "ou_grade": "C",
+      "ou_grade": "C-",
       "ou_signals": [
         "Park factor 97 (pitcher-friendly)",
-        "Starters' avg WHIP 1.39 (high)",
-        "Starters' avg HR/9 1.41 (high)",
-        "Starters' avg SLG against 0.422 (high)"
+        "Starters' avg WHIP 1.38 (high)",
+        "Starters' avg HR/9 1.35 (high)"
       ]
     },
     {
@@ -419,9 +432,9 @@
       "edge_grade": "C",
       "edge_signals": [
         "WHIP: edge Kansas City Royals (1.26 vs 2.4)",
-        "K%: edge Los Angeles Dodgers (19.9 vs 27.8)",
-        "HR/9: edge Los Angeles Dodgers (1.15 vs 0)",
-        "SLG against: edge Los Angeles Dodgers (0.412 vs 0.375)"
+        "K%: edge Los Angeles Dodgers (19.4 vs 27.8)",
+        "HR/9: edge Los Angeles Dodgers (1.17 vs 0)",
+        "SLG against: edge Los Angeles Dodgers (0.411 vs 0.375)"
       ]
     }
   ]
