@@ -10,6 +10,72 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — scope answered, window walk built. 2026-08-11
+
+**3 files. Suite 83, FAILING: none.** `kbo_official.py` still NOT wired
+into `kbo_precompute`.
+
+### THE SCOPE ANSWER — run 85401634630
+
+`GetKboGameDate` returns a **CURSOR, not a range**:
+
+    BEFORE_G_DT 20260809 | NOW_G_DT 20260811 | AFTER_G_DT 20260812
+
+previous / current / next game date. So a window is one call per date
+either way. **The cursor is deliberately NOT used for the walk** —
+following `AFTER_G_DT` costs an extra request per step to skip off-days
+that `GetKboGameList` already reports as empty in a single call. Twice
+the traffic to learn something the cheaper call tells us anyway.
+
+It also carries the SAME trailing ASP.NET error page, which confirms
+that quirk is site-wide rather than specific to one method. The engine's
+tolerance is right for every endpoint here.
+
+**Full migration is therefore cheap: ~14 POSTs for a fortnight**, one
+per calendar date, against the league's own servers with a courtesy
+pause. That is fewer requests than the current weekly walk of a fan site.
+
+### `fetch_window(start, days)` — the one property that matters
+
+**An off-day and a broken date are NOT the same thing.** Off-day = code
+100, no rows, no error. A 503 = a recorded gap. Conflating them means a
+nightly either publishes a fortnight with holes it does not know about,
+or refuses to publish over a Monday with no baseball.
+
+Errors are COLLECTED, never raised: one bad date must not cost the other
+thirteen. Verified with a stubbed walk containing both an off-day and a
+503 — the good dates still come back, and the gap is named.
+
+### A TEST BUG WORTH RECORDING
+The cursor-not-used assertion first checked the whole source and failed
+on the **paragraph explaining why the cursor is unused** — rule 26
+again, in a file written the same day I cited it. Now strips comment
+lines and asserts the reasoning is still present. Control confirms it
+fires when the cursor is genuinely used.
+
+### THE MIGRATION MAP — what still needs deciding
+
+`kbo_precompute` takes four things from mykbostats. The official source
+covers three outright:
+
+| what | mykbostats | GetKboGameList |
+|---|---|---|
+| schedule, venue, time | `parse_week` weekly walk | `G_DT` `G_TM` `S_NM` |
+| probables | homepage scrape | `T_PIT_P_NM` / `B_PIT_P_NM` **+ player ids** |
+| cancellation | `VOID_RISK_PAT` text | `CANCEL_SC_NM` official |
+| **scoreline H2H** | `parse_week` scorelines | **UNVERIFIED** |
+
+The first three are strict upgrades — official names, official status,
+and player ids the scrape never had. **H2H is the open one.** The row
+carries `B_SCORE_CN` and `GAME_RESULT_CK`, so past dates probably return
+scores, but nobody has called this for a past date. **That is the last
+thing to check before the swap** — one probe against a date last week.
+
+Do not migrate until it is checked: dropping mykbostats while H2H
+silently empties would take a rendered section off the KBO board.
+
+---
+
 ## PICK UP HERE — KBO engine built. Scope probe pending. 2026-08-11
 
 **3 files. Suite 83, FAILING: none.** `app/engines/kbo_official.py` is
