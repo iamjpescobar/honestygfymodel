@@ -10,6 +10,104 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — an unreachable colour scale, and four fields the research log was dropping. 2026-08-12 (evening)
+
+**4 files. Suite 87, FAILING: none.** Five controls confirmed red.
+
+### THE BOARD WAS CALLING ITS BEST CLEARS% HITTER BAD AT IT
+
+`stat_scales.SCALES["Clears%"]` was `(10.0, 20.0, 30.0, 40.0)`.
+
+**Clears Anywhere is a rate in TENTHS of a percent.** The nightly
+measures the league mean at 0.32%; across 373 hitters at 150+ PA the
+median is 0.00, the 75th is 0.63, the 90th is 0.93. **Nobody in baseball
+reaches the first cut point**, so every cell in that column rendered in
+the bottom tier — a bat at 1.01, above the 90th percentile of the whole
+league, in the same red as one at 0.13.
+
+`_magnitude_column`'s own docstring says a colour reads as a verdict.
+This one delivered the same verdict to everybody, which is worse than no
+colour: the column looked graded and was not.
+
+Now `(0.15, 0.40, 0.65, 0.95)` — median, ~65th, 75th, 90th, from the
+measured distribution. The first cut sits just above zero on purpose:
+over half of qualified hitters have never once put a ball on a
+trajectory that leaves every park, so "has done it at all" genuinely is
+what separates the bottom tier here.
+
+**TWO NEIGHBOURS ARE SUSPECT AND WERE DELIBERATELY NOT TOUCHED.**
+`FB95%` and `HRWindow%` are both `(15, 25, 35, 45)` — round numbers
+spanning the same range, written in the same style, neither checked
+against a real distribution. The HR-window league mean is 25.1%, so that
+scale's median lands on its second cut and the top tier may be close to
+unreachable; FB95% is unmeasured entirely. **Replacing one guess with
+another is what produced the bug above**, so there is a one-line
+measurement command in the comment beside them. Run it before changing
+either.
+
+The guard added to `test_number_formats.py` is "the top tier must be
+reachable and the bottom cut must be beatable", checked against the
+2026-08-12 league maxima for four stats — not a pin on the exact
+numbers. Re-tuning a scale stays free; re-typing a tens-of-percent scale
+onto a tenths-of-a-percent stat does not.
+
+### THE RESEARCH LOG WAS DROPPING FOUR FIELDS
+
+`data/hr_research/2026-08.ndjson` logged 103 rows on 2026-08-12 without
+them. All four are things that came into existence AFTER the logger was
+written, and `PROFILE_KEYS` / `EDGE_KEYS` were never revisited.
+
+| field | what its absence costs |
+|---|---|
+| `game_pk` | **the worst one.** Every row read as its own game, so the log could never measure same-game correlation or evaluate the 2-per-game cap — the exact question the cap was built to answer |
+| `edge_raw` | only the clamped integer was stored, so every bat that pinned at 100 is the same number and the board's real order is unrecoverable. The clamp erasing separation is what `edge_raw` was ADDED to fix; storing only `edge` put the bug back inside the measurement |
+| `AvgEV` | the floor set names it, so the qualification tier was not reconstructable from a stored row — which is most of why the nine metrics are captured |
+| `floors_met` | derivable in principle, but only against the thresholds IN FORCE THAT NIGHT, and those are measured nightly and move. Storing the count records what the board said, not what today's thresholds would say about a bat from three weeks ago |
+
+**The 103 rows already on disk keep their gaps.** They are still valid
+for score-vs-outcome; they cannot answer the cap or tier questions.
+Nothing to backfill — the thresholds and the board state that produced
+them are gone.
+
+### ALSO IN FROM THE OTHER ACCOUNT (not my work, recorded here so the
+### next session does not rediscover it)
+
+`Styler.format()` REPLACES the display function for every column rather
+than merging with the earlier `.format(precision=2, na_rep="—")` in
+`_base_styler`. Any view adding its own format call silently stripped
+precision and na_rep from every column it did not name — unlisted
+numeric columns fell to pandas' default of SIX decimals, and missing
+values printed the literal `nan` instead of the em dash.
+
+**The `PA` column added in the previous batch shipped rendering as
+`543.000000` on the live board.** Same root cause already recorded in
+`Strikeout_Board.py` as `10.370000` — one defect, patched twice at the
+symptom, never at the source. Fixed at the source now
+(`styler.format.precision` set to 2 as a floor), plus explicit formats
+across six views and `test_number_formats.py`.
+
+### VERIFY
+
+1. Suite: **87 files, FAILING: none.**
+2. Open HR Edge. **Clears% should now show a range of colours** — the
+   0.13s at the bottom, the 0.9+ at the top. If it is still uniformly
+   red, Render has not redeployed.
+3. After tonight's 5 PM and 7 PM pick runs, a fresh row should carry all
+   four fields:
+   `python -c "import json;r=[json.loads(l) for l in open('data/hr_research/2026-08.ndjson')][-1];print({k:r.get(k) for k in ('game_pk','edge_raw','AvgEV','floors_met')})"`
+   Any `None` there means the board stopped supplying that key, not that
+   the logger stopped asking.
+4. `data/hr_research/2026-08.ndjson` should be well past 103 rows for
+   2026-08-12 once lineups are posted. If it stalls near 100, something
+   is gating the board harder than lineup availability.
+
+### NEXT
+Nothing structural. Three or four weeks of graded bat-nights, then refit
+the axis weights and re-set the floors against outcomes instead of
+choosing them. Before touching FB95% or HRWindow%, measure them.
+
+---
+
 ## PICK UP HERE — floors as a tier, and the board's ordering fixed. 2026-08-12
 
 **8 files (1 new engine, 1 new test). Suite 86, FAILING: none.**
