@@ -45,7 +45,7 @@ If the call fails, the printed block is still the useful output.
 import json
 import re
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import requests
