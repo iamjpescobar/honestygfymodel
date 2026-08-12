@@ -124,7 +124,14 @@ with card("daily13"):
                 # Hits in the positive colour, misses receding — the run
                 # of identical grey dots read as debris.
                 "Last 10": form_dots(),
-            })
+                # na_rep IS NOT OPTIONAL. This second .format() call
+                # resets na_rep for EVERY column to None, and pandas then
+                # prints a missing value as the literal string "nan" —
+                # the exact thing _base_styler's em dash exists to
+                # prevent. Harmless today only because every numeric cell
+                # in this frame is a pre-formatted string; it stops being
+                # harmless the moment one of them becomes a real number.
+            }, na_rep="\u2014")
         ,
             key="daily_13_80")
         # Calibration: record tonight's board, grade past days, and
