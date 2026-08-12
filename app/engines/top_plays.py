@@ -20,6 +20,8 @@ app's own choice, not an official stat.
 """
 from functools import lru_cache as _lru_cache
 
+from engines import hr_floors
+
 from engines.savant_leaderboard import get_percentile, get_hr_metric, get_hr_metrics
 
 
@@ -50,15 +52,31 @@ def _league_hrfb() -> float:
     The file changes once a night; a process-lifetime cache is the
     correct scope, and Render restarts the process on every deploy.
     """
+    return (_load_baselines().get("hrPerFlyBall")
+            or _LEAGUE_HRFB_FALLBACK)
+
+
+@_lru_cache(maxsize=1)
+def _load_baselines() -> dict:
+    """The nightly baselines file, or {} — parsed once per process.
+
+    Two callers now (the HR/FB anchor and the qualification floors) and
+    both sit inside per-batter loops, so this exists so the file is
+    opened once rather than once per hitter per caller. {} on any
+    failure: a missing archive means every consumer falls back to its
+    own literal, which is the behaviour that kept the site up when the
+    data reader was pointed at the wrong directory.
+    """
     try:
         import json as _j
         from pathlib import Path as _P
         _p = (_P(__file__).resolve().parent.parent
               / "data" / "statcast" / "baselines.json")
-        v = (_j.loads(_p.read_text()) or {}).get("hrPerFlyBall")
-        return float(v) if v else _LEAGUE_HRFB_FALLBACK
+        return _j.loads(_p.read_text()) or {}
     except Exception:
-        return _LEAGUE_HRFB_FALLBACK
+        return {}
+
+
 _HRFB_WEIGHT = 0.15
 
 # ------------------------------------------------------------
@@ -360,8 +378,14 @@ def rank_batters(batter_profiles: list, savant_df) -> list:
     # Loaded ONCE for the whole slate. get_hr_metrics is cached and the
     # lookups are O(1), so the four new axes cost nothing per batter.
     hr_df = get_hr_metrics()
+    # Tonight's qualification thresholds, resolved once. See
+    # engines/hr_floors for why these are measured percentiles rather
+    # than the numbers as typed.
+    _thresholds = hr_floors.resolve(_load_baselines())
     for b in batter_profiles:
         pid = b.get("id")
+        _met, _total, _missed = hr_floors.evaluate(b.get("profile") or {},
+                                                   _thresholds)
         out.append({
             **b,
             # HR/FB comes from the batter's own windowed profile (the
@@ -399,5 +423,20 @@ def rank_batters(batter_profiles: list, savant_df) -> list:
             # having "no sample column to contradict it" was written.
             "hr_pa": get_hr_metric(hr_df, pid, "pa"),
             "hr_bbe": get_hr_metric(hr_df, pid, "bbe"),
+            # QUALIFICATION FLOORS AS A TIER, NOT A FILTER.
+            #
+            # hr_floors_probe measured the proposed nine-floor AND gate
+            # against 373 hitters at 150+ PA: 21 clear all nine. About a
+            # third of qualifying hitters are in any night's confirmed
+            # lineups, so a hard gate leaves roughly seven bats and
+            # cannot fill a top-15 board. Thirty-three more miss by
+            # exactly one, and deleting the hitter at 10.9% barrel with
+            # everything else elite is a cliff nobody wants.
+            #
+            # So nothing is filtered. The count rides along and the
+            # board shows it, which is the same choice the sample column
+            # above makes: put the qualification in front of the reader
+            # rather than acting on it for them.
+            "floors_met": _met, "floors_total": _total, "floors_missed": _missed,
         })
     return out
