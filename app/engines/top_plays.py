@@ -18,6 +18,8 @@ implying that kind of calibration — every number that FEEDS these
 scores is real and live, but the way they're combined is still this
 app's own choice, not an official stat.
 """
+from functools import lru_cache as _lru_cache
+
 from engines.savant_leaderboard import get_percentile, get_hr_metric, get_hr_metrics
 
 
@@ -38,8 +40,16 @@ from engines.savant_leaderboard import get_percentile, get_hr_metric, get_hr_met
 _LEAGUE_HRFB_FALLBACK = 11.5
 
 
+@_lru_cache(maxsize=1)
 def _league_hrfb() -> float:
-    """League HR/FB percent from the nightly build, else the fallback."""
+    """League HR/FB percent from the nightly build, else the fallback.
+
+    Cached: this is called from inside the per-batter loop, and it was
+    opening and re-parsing baselines.json once per hitter — several
+    hundred disk reads to answer the same question on every board paint.
+    The file changes once a night; a process-lifetime cache is the
+    correct scope, and Render restarts the process on every deploy.
+    """
     try:
         import json as _j
         from pathlib import Path as _P
@@ -51,14 +61,52 @@ def _league_hrfb() -> float:
         return _LEAGUE_HRFB_FALLBACK
 _HRFB_WEIGHT = 0.15
 
-# Axis weights for hr_score. These are a considered starting point, NOT
-# fitted against outcomes — nothing here has been backtested yet. The
-# structure (one power axis instead of three, plus genuinely independent
-# launch and intent axes) is what matters; once calibration is producing
-# real graded history these should be replaced by fitted weights.
-_W_POWER = 0.45
-_W_LAUNCH = 0.30
-_W_INTENT = 0.15
+# ------------------------------------------------------------
+# AXIS WEIGHTS for hr_score. Calibration constants: a considered
+# starting point, NOT fitted against outcomes. Argue with them HERE —
+# never special-case a weight at a call site, which is how an app ends
+# up with five definitions of the same score.
+#
+# THE RULE THAT SHAPES THEM: no measured column may appear in more than
+# one axis.
+#
+# The previous version broke that rule and said the opposite. INTENT was
+# fed hr_intent_pct, and HRIntent is the mean of bat speed, HR window %
+# and pull air % — the last two being exactly the two columns the LAUNCH
+# axis already carried. Stated weights were power .45 / launch .30 /
+# intent .15. What the arithmetic actually produced:
+#
+#     Brl/PA   37.5% | EV90 12.5% | HR window 22.2%
+#     pull air 22.2% | bat speed 5.6%
+#
+# So launch plane carried 44% of the score against power's 50%, and bat
+# speed — the one input in that axis measuring the SWING rather than the
+# result of a swing — carried a twentieth. It was the same failure the
+# docstring below describes in the version before it, where Barrel%,
+# Hard-Hit% and EV were averaged as three axes while measuring one
+# thing. Sitting in the fix for it.
+#
+# Four axes now, each column used exactly once. Correlation between
+# axes remains — every batted-ball stat correlates with every other —
+# but nothing is literally entered twice, and the weights say what the
+# arithmetic does.
+_W_POWER = 0.40         # Brl/PA, EV90            — how hard
+_W_CONVERGE = 0.30      # FB95%, Clears Anywhere% — hard AND in the air
+_W_LAUNCH = 0.22        # HR window %, pull air % — trajectory
+_W_PROCESS = 0.08       # bat speed               — the swing itself
+
+# Within-axis splits.
+_S_BRL_PA, _S_EV90 = 0.70, 0.30
+_S_FB95, _S_CLEARS = 0.60, 0.40
+_S_WINDOW, _S_PULLAIR = 0.50, 0.50
+
+# COVERAGE FLOOR. Renormalising over live axes stops a missing axis from
+# reading as a zero — but with no floor it also meant a bat measured on
+# ONE axis received a full 0-100 score indistinguishable from a bat
+# measured on four, with nothing on the board to tell them apart. A
+# score has to rest on most of its own definition.
+_MIN_LIVE_WEIGHT = 0.60
+
 # xHR gap enters as a bounded correction, not a weight — see hr_score.
 _XHR_MAX_ADJ = 8.0
 
@@ -77,37 +125,64 @@ def hr_score(player_id, savant_df, hrfb_pct=None, hr_df=None):
     all. It got loud about obvious sluggers, which is exactly where the
     market is already efficient, and blind to everything else.
 
-    Four axes now, each carrying information the others don't:
+    Four axes, and NO COLUMN APPEARS IN TWO OF THEM. See the weight
+    block above for the version that broke that rule and the arithmetic
+    showing what it really weighted.
 
-      POWER (45%)    Brl/PA primary, EV90 as a ceiling modifier.
-                     Brl/PA rather than Brl% because it folds in contact
-                     rate and plate discipline — a bat that barrels 15%
-                     of its contact while striking out a third of the
-                     time produces far fewer home runs than the per-BBE
-                     rate implies. EV90 rather than Max EV because Max
-                     is a sample of one that never regresses.
-                     The whole correlated block is now ONE input.
+      POWER (40%)     Brl/PA (70%), EV90 (30%). How hard.
+                      Brl/PA rather than Brl% because it folds in
+                      contact rate and plate discipline — a bat that
+                      barrels 15% of its contact while striking out a
+                      third of the time produces far fewer home runs
+                      than the per-BBE rate implies. EV90 rather than
+                      Max EV because Max is a sample of one that never
+                      regresses.
 
-      LAUNCH (30%)   HR Window % (launch angle 20-40) and pulled-fly-ball
-                     rate. Deliberately velocity-free: this asks whether
-                     his swing plane puts the ball where home runs live,
-                     independent of how hard he hits it. Home runs are
-                     overwhelmingly PULLED in the air, and neither of
-                     these is measured anywhere in the power block.
+      CONVERGENCE     FB95 % (60%), Clears Anywhere % (40%). Hard
+      (30%)           contact ACTUALLY PUT IN THE AIR, and contact on a
+                      trajectory the league's own outcomes say leaves
+                      any park. This is not power and it is not launch:
+                      a bat can sit in the top decile of both and still
+                      rarely combine them in one swing, and the
+                      combination is the home run. FB95 was already
+                      computed, ranked and displayed by the nightly and
+                      was read by nothing that scored anything — the
+                      one column here whose own comment says it is the
+                      intersection that predicts home runs.
 
-      INTENT (15%)   Bat speed, window, and pull-air as process inputs.
-                     Every other axis here is downstream of results, so
-                     they all sag together when a good power hitter goes
-                     cold. This one asks whether the swing is still a
-                     home-run swing.
+      LAUNCH (22%)    HR Window % (launch angle 20-40) and pulled-fly-
+                      ball rate, evenly. Deliberately velocity-free:
+                      does his swing plane put the ball where home runs
+                      live, independent of how hard he hits it. Home
+                      runs are overwhelmingly PULLED in the air.
 
-      CONVERSION     xHR minus actual HR, as a bounded +/-8 ADJUSTMENT
-      (adjustment)   rather than a weight. A hitter well under his xHR
-                     has been putting home-run trajectories in play and
-                     not being paid for them, and that gap tends to
-                     close. It's a correction to the skill estimate, not
-                     a skill of its own, so it shouldn't carry weight in
-                     the base.
+      PROCESS (8%)    Bat speed, alone. Every other axis is downstream
+                      of results, so they all sag together when a good
+                      power hitter goes cold; this one asks whether the
+                      swing is still a home-run swing. It is ALONE here
+                      because it is the only input in the table that is
+                      not a measurement of a batted ball — the previous
+                      version put window and pull-air in beside it and
+                      called the axis independent.
+
+      CONVERSION      xHR minus actual HR, PER SCOREABLE BATTED BALL,
+      (adjustment)    as a bounded +/-8 adjustment rather than a weight.
+                      A hitter well under his xHR has been putting
+                      home-run trajectories in play and not being paid
+                      for them, and that gap tends to close. It's a
+                      correction to the skill estimate, not a skill of
+                      its own, so it shouldn't carry weight in the base.
+                      It reads xhr_gap_RATE_pct: the old xhr_gap_pct
+                      ranked a raw count of home runs, which put playing
+                      time inside a correction that has nothing to do
+                      with playing time.
+
+    COVERAGE FLOOR. Renormalising over live axes protects a bat with one
+    axis missing. It does NOT protect the reader from a bat with only
+    one axis PRESENT, which used to receive a full 0-100 score off a
+    single measurement. A score now has to rest on at least
+    _MIN_LIVE_WEIGHT of its own definition, and must include POWER;
+    below that it falls back to the Savant path or returns None.
 
     DEGRADES GRACEFULLY. hr_df comes from a nightly table that won't
     exist until the next pipeline run, and a batter under the sample
@@ -132,32 +207,51 @@ def hr_score(player_id, savant_df, hrfb_pct=None, hr_df=None):
     # ---- new axes ----------------------------------------------------
     brl_pa = get_hr_metric(hr_df, player_id, "brl_per_pa_pct")
     ev90 = get_hr_metric(hr_df, player_id, "ev90_pct")
+    fb95 = get_hr_metric(hr_df, player_id, "fb95_pct_pct")
+    clears = get_hr_metric(hr_df, player_id, "clears_anywhere_pct_pct")
     window = get_hr_metric(hr_df, player_id, "hr_window_pct_pct")
     pull_air = get_hr_metric(hr_df, player_id, "pull_air_pct_pct")
-    intent = get_hr_metric(hr_df, player_id, "hr_intent_pct")
-    xhr_gap = get_hr_metric(hr_df, player_id, "xhr_gap_pct")
+    bat_speed = get_hr_metric(hr_df, player_id, "bat_speed_pct")
+    xhr_gap = get_hr_metric(hr_df, player_id, "xhr_gap_rate_pct")
 
-    # POWER — one axis. Brl/PA leads; EV90 modifies the ceiling. Falls
-    # back to the Savant power average when the nightly table is absent.
-    power = None
-    if brl_pa is not None and ev90 is not None:
-        power = brl_pa * 0.75 + ev90 * 0.25
-    elif brl_pa is not None:
-        power = brl_pa
-    elif savant_base is not None:
-        power = savant_base
+    def _blend(*pairs):
+        """Weighted mean over whichever components are measurable."""
+        live = [(v, w) for v, w in pairs if v is not None]
+        if not live:
+            return None
+        return sum(v * w for v, w in live) / sum(w for _, w in live)
 
-    launch_parts = [x for x in (window, pull_air) if x is not None]
-    launch = sum(launch_parts) / len(launch_parts) if launch_parts else None
+    power = _blend((brl_pa, _S_BRL_PA), (ev90, _S_EV90))
+    converge = _blend((fb95, _S_FB95), (clears, _S_CLEARS))
+    launch = _blend((window, _S_WINDOW), (pull_air, _S_PULLAIR))
+    process = bat_speed
 
-    axes = [(power, _W_POWER), (launch, _W_LAUNCH), (intent, _W_INTENT)]
+    axes = [(power, _W_POWER), (converge, _W_CONVERGE),
+            (launch, _W_LAUNCH), (process, _W_PROCESS)]
     live = [(v, w) for v, w in axes if v is not None]
-    if not live:
-        return None
-    # Renormalise over measurable axes so a missing one doesn't read as
-    # a zero for that axis.
-    total_w = sum(w for _, w in live)
-    base = sum(v * w for v, w in live) / total_w
+    live_w = sum(w for _, w in live)
+
+    # THE NIGHTLY TABLE IS THE PREFERRED PATH, NOT THE ONLY ONE.
+    #
+    # When hr_metrics.parquet is absent — a fresh deploy before the first
+    # nightly, or an archive that predates it — none of the axes above
+    # resolve and the Savant percentile average is a complete, valid
+    # score on its own. That path must survive: this reader has already
+    # silently pointed at the wrong directory once, and the symptom was
+    # every board quietly falling back rather than going blank, which is
+    # the behaviour that kept the site up while the bug was found.
+    #
+    # The coverage floor therefore governs the NEW path only. A bat the
+    # table knows but barely measures falls back to Savant if Savant has
+    # him, and scores nothing if neither source does.
+    if live_w < _MIN_LIVE_WEIGHT or power is None:
+        if savant_base is None:
+            return None
+        base = savant_base
+    else:
+        # Renormalise over measurable axes so a missing one doesn't read
+        # as a zero for that axis.
+        base = sum(v * w for v, w in live) / live_w
 
     # CONVERSION — bounded correction, never a weight.
     if xhr_gap is not None:
@@ -294,5 +388,16 @@ def rank_batters(batter_profiles: list, savant_df) -> list:
             "hr_threat": get_hr_metric(hr_df, pid, "hr_threat"),
             "clears_anywhere": get_hr_metric(hr_df, pid, "clears_anywhere_pct"),
             "fb95": get_hr_metric(hr_df, pid, "fb95_pct"),
+            # THE DENOMINATOR, carried so a board can show it.
+            #
+            # The inclusion floor is 50 PA and the scale core is 150, so
+            # a part-timer and a everyday bat sit in the same ranked list
+            # in identical type with nothing between them. The regression
+            # in build_hr_metrics protects the NUMBER; it does nothing
+            # for the reader. Same argument that put the G column on the
+            # pitcher splits table, where the comment about a table
+            # having "no sample column to contradict it" was written.
+            "hr_pa": get_hr_metric(hr_df, pid, "pa"),
+            "hr_bbe": get_hr_metric(hr_df, pid, "bbe"),
         })
     return out
