@@ -10,6 +10,198 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — HR scoring math and floors rebuilt. 2026-08-12
+
+**5 files. Suite 84, FAILING: none** (the five streamlit-only ones in a
+bare container, as always). **NOT YET RUN AGAINST A REAL NIGHTLY** —
+every number below is verified against synthetic frames only. Rule 22:
+read the next `nightly-data` log before trusting the table.
+
+### THE DOUBLE COUNT, AND IT WAS THE SAME BUG TWICE
+
+`hr_score` fed an "INTENT" axis from `hr_intent_pct`. HRIntent is the
+mean of bat speed, HR window % and pull air % — and the last two WERE
+the LAUNCH axis. So two columns entered the score through two doors, on
+two different scales, while the docstring said the axes were
+independent. Stated weights were power .45 / launch .30 / intent .15.
+What the arithmetic actually produced:
+
+    Brl/PA 37.5% | EV90 12.5% | HR window 22.2% | pull air 22.2%
+    bat speed 5.6%
+
+Launch plane carried 44% against power's 50%, and bat speed — the one
+input measuring the SWING rather than the result of a swing — carried a
+twentieth. That is the identical failure the docstring describes in the
+version BEFORE it, where Barrel%, Hard-Hit% and EV were averaged as
+three axes while measuring one thing. The fix for that bug contained it.
+
+**Four axes now, and no column appears in two of them:**
+
+| axis | weight | inputs |
+|---|---|---|
+| POWER | .40 | Brl/PA (.70), EV90 (.30) |
+| CONVERGENCE | .30 | FB95 % (.60), Clears Anywhere % (.40) |
+| LAUNCH | .22 | HR window % (.50), pull air % (.50) |
+| PROCESS | .08 | bat speed, alone |
+
+**FB95 was already computed, ranked, displayed — and scored nothing.**
+Its own comment calls it the intersection that predicts home runs. It is
+in the score now, as its own axis with Clears Anywhere: hard contact
+ACTUALLY PUT IN THE AIR is not power and is not launch, and a bat can
+sit top-decile in both and rarely combine them in one swing.
+
+Correlation between axes remains — every batted-ball stat correlates
+with every other. Nothing is literally entered twice, and the weights
+say what the arithmetic does. **They are still calibration constants,
+not fitted.** Refit them once calibration has graded history.
+
+### COVERAGE FLOOR — one axis is not a score
+
+Renormalising over live axes stops a MISSING axis reading as a zero. It
+did nothing about a bat with only one axis PRESENT, which received a
+full 0-100 indistinguishable from a bat measured on four. A score now
+needs `_MIN_LIVE_WEIGHT` (0.60) of its own definition and must include
+POWER.
+
+**The Savant-only path is deliberately exempt.** When
+`hr_metrics.parquet` is absent — fresh deploy, or an archive predating
+it — the Savant percentile average is a complete score on its own, and
+that fallback is the only reason the site did not go blank for the weeks
+the metrics reader pointed at the wrong directory. The floor governs the
+NEW path only: under-covered falls back to Savant, and returns None only
+when neither source has the bat.
+
+### THE GAP WAS A COUNT
+
+`xhr_gap` was `xhr - hr` in whole home runs, percentile-ranked as if it
+were a rate, then worth +/-8 on the score. **A count carries playing
+time inside it.** A 550-PA bat can run six either way; a 60-PA bat
+structurally cannot. Both tails of that percentile were regulars, and
+part of what the correction rewarded was being in the lineup every
+night. It was also the one figure in `build_hr_metrics` that skipped the
+shrinkage every other rate gets.
+
+Now `xhr_gap_rate`: per SCOREABLE batted ball, regressed with
+`K_XHR_GAP = 150`. Per batted ball and not per PA on purpose — contact
+rate is already inside Brl/PA in the power axis, and putting it in the
+conversion correction too would be the same double-count one layer down.
+`xhr_gap_rate_raw` ships alongside for display, and the raw count stays.
+
+`hr_score` reads `xhr_gap_rate_pct`. **If that name ever reverts to
+`xhr_gap_pct` the adjustment silently stops firing** — the new nightly
+does not publish that column — and every score shifts with no error.
+`test_hr_score` case 6 pins it.
+
+### UNTRACKED CONTACT WAS BEING SCORED AS ZERO
+
+The worst of the batch, because it looked like nothing. A batted ball
+with no exit velocity or launch angle binned to NaN, missed the grid
+merge, and took `fillna(0.0)` — **unmeasured contact scored as contact
+that had no chance of leaving, while it stayed in the denominator.** Two
+hitters who swung identically got different numbers because one played
+in front of cameras that missed more balls. Missing-is-not-zero is
+applied correctly three other places in that same function; the xHR path
+was the one leak.
+
+Three separate cases now, and they are NOT the same:
+
+| what | treatment |
+|---|---|
+| no EV/LA at all | excluded from numerator and denominator |
+| tracked, OUTSIDE the grid region (EV<80, LA outside 8-50) | a real 0.0 — the region was drawn where home runs happen |
+| tracked, IN region, bucket dropped for thin sample | excluded, not zeroed — those buckets sit at the extremes where probability is HIGHEST, so zeroing them understated exactly the contact xHR exists to find |
+
+`bbe_scored` is the denominator every xHR-derived rate divides by, and
+`hr_tracked` is what the gap subtracts — an untracked home run used to
+land in the subtrahend with nothing on the other side of it, pushing a
+hitter's gap negative for doing the thing the metric rewards.
+`HRM_MIN_TRACKED_BBE = 25`; below it xHR, the gap and Clears read N/A.
+
+**The nightly now prints the scoreable share.** If that number is not in
+the high nineties, read it before trusting anything above.
+
+### THE PERCENTILE SCALE COMES FROM REGULARS
+
+Inclusion is 50 PA / 30 BBE, deliberately low so a bench bat in
+tonight's lineup still scores. But ranking everyone against everyone let
+several hundred thin bats — all shrunk to the league mean BY
+CONSTRUCTION — pile into the middle of every distribution and stretch
+the tails. A regular's percentile depended on how many part-timers
+happened to clear the floor that week.
+
+`HRM_CORE_PA = 150` defines the scale; everyone else is PLACED on it by
+searchsorted. Thin bats still rank, and still rank fairly. Under 30 core
+bats it falls back to whole-pool ranking and says so in the log —
+early April is a real state, not an error.
+
+### ALSO
+
+- `_regress` returns NaN on a zero league denominator instead of
+  dividing by nothing and printing a numpy warning into the nightly log.
+- Clears Anywhere divided by total BBE; it can only ever be counted on a
+  ball that reached the grid, so it divides by `bbe_scored` now.
+- HRThreat's comment said "60% outcome / 40% process". The genuinely
+  process-only share is bat speed at 40/3 ~= 13%: HRIntent's other two
+  inputs are outcomes. **Weights unchanged, label fixed** — the 60/40
+  outcome lean is the decision; a right number under a wrong label is
+  the one error nobody downstream can catch.
+- `_league_hrfb()` was opening and re-parsing `baselines.json` once per
+  hitter, inside the per-batter loop. `lru_cache`.
+- `rank_batters` now carries `hr_pa` / `hr_bbe` so a board can show the
+  denominator. Nothing renders them yet — that is the HR Edge batch.
+- **`hr_intent_pct` and `hr_threat_pct` are now published and read by
+  nothing.** `hr_threat_pct` already was. Left in rather than deleted: a
+  key-literal grep cannot see a dynamic access, and this repo has had a
+  sweep wrongly report rendered fields as unrendered for exactly that
+  reason. Check the views for an f-string access before removing.
+
+### TWO CONTROLS THAT DID NOT FIRE, both fixture bugs, both recorded
+
+**1. A BOUND ASSERTED AGAINST ITS OWN CONSTANT.** `test_hr_score` case 5
+read `2 * tp._XHR_MAX_ADJ + 1`. Widening the constant from 8 to 30
+widened the bound with it, and the case stayed green through a control
+that turned a bounded correction into the largest term in the score. A
+test that derives its expectation from the thing under test measures
+nothing. Literal now, plus a separate assertion pinning the constant.
+
+**2. A FIXTURE WHOSE VALUES COULD NOT MOVE.** The scale case measured
+`brl_per_pa_pct`, and every bat in that fixture barrels everything — so
+all forty regulars tied on that column, and searchsorted gives ties the
+same position whatever the scale is built from. It went green against a
+control that ranked everyone together. Measured on `ev90_pct` now, where
+the regulars actually spread and the part-timers sit in the MIDDLE of
+that spread, which is where they do the most damage. Same round: the
+untracked-contact fixture had no untracked HOME RUN, so `hr` and
+`hr_tracked` were equal and the tracked-HR subtraction was untestable.
+
+Same lesson as the KBO rounds and rules 25/26: **a test that cannot fail
+is not evidence.** Twelve controls confirmed red across the two files.
+
+### VERIFY, in order
+
+1. `git pull`, run the suite. **84 files, FAILING: none.**
+2. **Read the next `nightly-data` log.** The HR metrics line now ends
+   with the core size and the scoreable share:
+   `N in the 150+ PA scale core · X of Y batted balls scoreable (Z%)`.
+   A low Z, or a core under 30, changes how everything above reads.
+3. `python -c "import pandas as p;d=p.read_parquet('app/data/statcast/hr_metrics.parquet');print(d[['bbe','bbe_scored','xhr_gap','xhr_gap_rate']].describe())"`
+   — `xhr_gap_rate` should be small and centred near zero, and
+   `bbe_scored` should sit just under `bbe`.
+4. **Open HR Edge and Player of the Day.** Scores will MOVE — the axes
+   and the scale both changed. That is expected. What is not expected is
+   blank scores: if a column is empty, the nightly has not republished
+   yet and `hr_score` is on the Savant fallback.
+
+### NEXT
+The HR Edge board batch, unstarted: sort on the unclamped float with a
+stated tiebreak (integer `edge` + a stable sort currently resolves ties
+by slate iteration order, and teammates share `ctx_adj` exactly so they
+tie more often than strangers), pass `batting_order` on confirmed
+lineups, correct the fidelity docstring, show the sample column, then
+the 2-per-game cap.
+
+---
+
 ## PICK UP HERE — tier 2's cause found and fixed. 2026-08-11
 
 **3 files. Suite 83, FAILING: none.**
