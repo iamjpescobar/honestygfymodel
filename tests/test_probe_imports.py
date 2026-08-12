@@ -45,3 +45,28 @@ from engines.hr_floors import FLOOR_SPECS, resolve  # noqa: E402
 assert callable(_compute_batted_ball_metrics)
 assert len(FLOOR_SPECS) == 9 and len(resolve(None)) == 9
 print("PASS: hr_floors_probe's imports resolve, 9 floors defined")
+
+
+# --- THE PAYLOAD SHAPE -----------------------------------------------
+#
+# players.json is keyed BY PLAYER ID, not a list. wnba_props_probe
+# iterated it directly, got the id STRINGS, and died on the first
+# p.get("gp") with AttributeError: 'str' object has no attribute 'get'.
+#
+# league_percentiles() in the same engine does the unwrap three lines
+# from where it reads the same file. The probe was written without
+# copying it. So this asserts the engine still owns that unwrap — if it
+# ever stops, the probe's copy is the only one left and it will rot.
+import inspect  # noqa: E402
+from engines import wnba_props  # noqa: E402
+
+_src = inspect.getsource(wnba_props.league_percentiles)
+assert "isinstance(players, dict)" in _src, (
+    "the engine stopped unwrapping the dict-keyed players.json — check "
+    "whether the file shape changed, and fix wnba_props_probe to match")
+
+_probe = open("wnba_props_probe.py", encoding="utf-8").read()
+assert "list(players.values())" in _probe, (
+    "wnba_props_probe iterates players.json directly again — it will "
+    "crash on the id strings the moment it is run")
+print("PASS: both readers unwrap the dict-keyed player payload")
