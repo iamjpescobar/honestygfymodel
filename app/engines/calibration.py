@@ -942,22 +942,6 @@ def american_to_decimal(odds):
     return 1.0 + (100.0 / abs(o) if o < 0 else o / 100.0)
 
 
-def implied_pct(odds):
-    """What the BOOK thinks the chance is, from its price, as a percent.
-
-    Includes the vig, so these sum to more than 100% across a market.
-    That's fine for the purpose here: the book's price is the bar a pick
-    has to clear, vig included, because the vig is a cost you actually
-    pay.
-    """
-    try:
-        o = float(odds)
-    except (TypeError, ValueError):
-        return None
-    if o == 0:
-        return None
-    return round((abs(o) / (abs(o) + 100) if o < 0 else 100 / (o + 100)) * 100, 1)
-
 
 def breakeven_pct(odds):
     """The hit rate a price REQUIRES just to break even, as a percent.
