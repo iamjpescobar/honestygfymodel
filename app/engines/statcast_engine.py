@@ -490,6 +490,7 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
         "HRWindow %": None, "FB95 %": None, "EV90": None, "MaxEV": None,
         "ClearsAnywhere %": None,
         "Brl/PA": None, "PA": 0, "HRIntent": None, "HRThreat": None,
+        "AvgEV": None,
         "BA": None, "AB": 0,
         "SLG": None, "ISO": None,
         "HR/FB": None, "FB_count": 0,
@@ -605,6 +606,16 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
     # the displayed Max EV silently became that Series. Both names are
     # now explicit. Don't reintroduce a bare `max_ev` in this function.
     max_ev_actual = round(float(_ev_clean.max()), 1) if len(_ev_clean) else None
+    # AVERAGE exit velocity — the typical ball, not the ceiling.
+    #
+    # Added because a proposed "91 EV minimum" floor was applied to EV90
+    # and cleared 373 of 373 qualified hitters. EV90 is the 90th
+    # PERCENTILE of a hitter's batted balls (median 104.2 across the
+    # league); average EV sits near 89. Both are real and they answer
+    # different questions — "how hard is his best contact" versus "how
+    # hard is his contact" — and a floor written for one silently does
+    # nothing when applied to the other.
+    avg_ev = round(float(_ev_clean.mean()), 1) if len(_ev_clean) else None
 
     bb_type = bbe_df.get("bb_type", pd.Series(dtype=str))
     # HR/FB — of his fly balls, how many left the yard. Uses Statcast's
@@ -793,6 +804,7 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
         "HRWindow %": round(hr_window / bbe_count * 100, 2),
         "FB95 %": round(fb95 / bbe_count * 100, 2),
         "EV90": ev90,
+        "AvgEV": avg_ev,
         "MaxEV": max_ev_actual,
         "Brl/PA": brl_per_pa,
         "PA": pa_count,
