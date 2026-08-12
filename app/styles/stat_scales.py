@@ -78,7 +78,15 @@ SCALES = {
     "Brl/PA":    (2.0, 4.0, 6.0, 9.0),
     "HH %":      (32.0, 37.0, 42.0, 48.0),
     "EV90":      (100.0, 103.0, 106.0, 109.0),
-    "FB95%":     (15.0, 25.0, 35.0, 45.0),
+    # MEASURED 2026-08-12, 373 hitters at 150+ PA:
+    #   median 11.49 · 65th 13.45 · 75th 15.07 · 90th 18.66 · MAX 30.89
+    #
+    # These were (15, 25, 35, 45) and the top TWO tiers were unreachable:
+    # nobody in the league hit 35, and the 90th percentile (18.66) did
+    # not clear the SECOND cut. Three quarters of hitters sat in the
+    # bottom tier. Same defect as Clears%, found the same way — by
+    # measuring instead of assuming a per-batted-ball rate spans 15-45.
+    "FB95%":     (11.5, 13.4, 15.1, 18.7),
     # CLEARS ANYWHERE IS A RATE IN TENTHS OF A PERCENT, not tens.
     #
     # These cut points were (10, 20, 30, 40) — reasonable-looking numbers
@@ -127,25 +135,7 @@ SCALES = {
     "SLAM":      (35.0, 50.0, 65.0, 80.0),
     "HR Score":  (15.0, 30.0, 45.0, 60.0),
     "Hit Score": (30.0, 45.0, 55.0, 65.0),
-    # SUSPECT, NOT YET MEASURED. This one and FB95% above were written
-    # in the same style as the Clears% mistake — round numbers spanning
-    # 15-45 for a per-batted-ball rate — and neither has been checked
-    # against a real distribution. The nightly puts the HR-window league
-    # mean at 25.1%, so this scale's median lands on its second cut and
-    # the top tier may be close to unreachable; FB95% is unmeasured
-    # entirely. NOT changed here: replacing one guess with another is
-    # what produced the bug above. Measure first:
-    #
-    #   python -c "import glob,pandas as pd,sys,types; \
-    #   sys.path.insert(0,'app'); \
-    #   st=types.ModuleType('streamlit'); st.cache_data=lambda **k:(lambda f:f); \
-    #   sys.modules['streamlit']=st; \
-    #   sys.modules['pybaseball']=types.ModuleType('pybaseball'); \
-    #   from engines.statcast_engine import _compute_batted_ball_metrics as m; \
-    #   r=[m(pd.read_parquet(f)) for f in glob.glob('app/data/statcast/batters/*.parquet')]; \
-    #   d=pd.DataFrame([x for x in r if x and (x.get('PA') or 0)>=150]); \
-    #   print(d[['FB95 %','HRWindow %']].describe(percentiles=[.5,.65,.75,.9]))"
-    "HRWindow%": (15.0, 25.0, 35.0, 45.0),
+    "HRWindow%": (25.1, 26.6, 27.7, 30.1),
     "HRIntent":  (35.0, 50.0, 65.0, 80.0),
     "HRThreat":  (35.0, 50.0, 65.0, 80.0),
 }
