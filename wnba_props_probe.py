@@ -75,8 +75,21 @@ def main() -> int:
     import json
     payload = json.loads(players_path.read_text())
     players = payload.get("players") if isinstance(payload, dict) else payload
+    # players.json is keyed BY PLAYER ID, not a list. Iterating it
+    # yields the id strings, and the first `p.get("gp")` below dies with
+    # AttributeError: 'str' object has no attribute 'get'.
+    #
+    # league_percentiles() in engines/wnba_props.py does exactly this
+    # unwrap, three lines from where it reads the same file, and this
+    # probe was written without copying it. The lesson is not "remember
+    # the unwrap" — it is that the shape of a payload belongs in ONE
+    # place, and a probe reading a file the engine already reads should
+    # look at how the engine reads it.
+    if isinstance(players, dict):
+        players = list(players.values())
+    players = [p for p in players if isinstance(p, dict)]
     if not players:
-        print("Player file present but empty.")
+        print("Player file present but held no player records.")
         return 1
     print(f"Reading {len(players):,} players from {players_path.name}\n")
 
