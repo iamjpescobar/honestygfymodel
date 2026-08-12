@@ -144,7 +144,9 @@ with card("wprops"):
                     # doesn't resolve.
                     "Team": wnba_logo_cell(_team_ids, _team_urls),
                     "Opp": wnba_logo_cell(_team_ids, _team_urls),
-                })
+                # na_rep restated: this call clears it for every column,
+                # and pandas prints an unset na_rep as the literal "nan".
+                }, na_rep="\u2014")
         ,
             key="wnba_props_101")
 
