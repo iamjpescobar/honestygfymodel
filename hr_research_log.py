@@ -67,6 +67,12 @@ BATTER_DIR = ROOT / "app" / "data" / "statcast" / "batters"
 # here is a second name for one number, which is how two parts of this
 # repo end up disagreeing about what a stat is.
 PROFILE_KEYS = ("Brl %", "Brl/PA", "HH %", "FB %", "EV90", "MaxEV",
+                # AvgEV, not just EV90. The floor set names AvgEV, and
+                # without it the qualification tier cannot be
+                # reconstructed from a stored row — which is the whole
+                # reason these nine are captured. It was omitted because
+                # the column did not exist when this list was written.
+                "AvgEV",
                 "ClearsAnywhere %", "Blast %", "PullAir %", "PullBrl %",
                 "ISO", "SLG", "BA", "HRIntent", "HRThreat", "HR/FB",
                 "SweetSpot %", "LD %", "GB %", "BBE", "PA")
@@ -75,9 +81,25 @@ PROFILE_KEYS = ("Brl %", "Brl/PA", "HH %", "FB %", "EV90", "MaxEV",
 # Without these you cannot tell whether a miss came from rating the
 # hitter wrong or from rating the park, the pen and the arsenal wrong,
 # and those want opposite fixes.
-EDGE_KEYS = ("edge", "hr_score", "bvp_adj", "zone_adj", "pen_adj",
+EDGE_KEYS = ("edge",
+             # THE UNCLAMPED VALUE. `edge` is an integer clamped to
+             # 0-100, so every bat that pinned at the ceiling is stored
+             # as the same number and the log cannot reconstruct the
+             # order the board actually showed. The clamp erasing
+             # separation at the top is precisely what edge_raw was
+             # added to fix; recording only the clamped one puts the bug
+             # back inside the measurement.
+             "edge_raw",
+             "hr_score", "bvp_adj", "zone_adj", "pen_adj",
              "ctx_adj", "pitch_adj", "slot_adj", "hr_threat",
-             "clears_anywhere", "fb95", "hr_pa", "hr_bbe")
+             "clears_anywhere", "fb95", "hr_pa", "hr_bbe",
+             # HOW MANY QUALIFICATION FLOORS. Derivable from the nine
+             # metrics in principle, but only against the thresholds in
+             # force ON THAT NIGHT — and those are measured nightly and
+             # move. Storing the count records what the board actually
+             # said rather than what today's thresholds would say about
+             # a bat from three weeks ago.
+             "floors_met", "floors_total")
 
 
 def _month_path(month: str) -> Path:
@@ -150,6 +172,14 @@ def log(date_str: str) -> int:
             "team": r.get("team"), "opponent": r.get("opponent"),
             "pitcher": r.get("pitcher"), "park": r.get("park"),
             "bats": r.get("bats"),
+            # THE GAME KEY, and its absence made a whole class of
+            # question unanswerable. Without it the log cannot tell
+            # which bats shared a park, a starter, a wind and a
+            # bullpen — so it could never measure same-game correlation
+            # or evaluate the 2-per-game cap, which is the reason the
+            # cap exists. 103 rows were logged on 2026-08-12 with this
+            # missing.
+            "game_pk": r.get("game_pk"),
             # Filled by grade(). None means UNGRADED, not zero — the
             # distinction this repo has had to relearn three times.
             "hr": None, "graded": None,
