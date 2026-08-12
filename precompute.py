@@ -394,6 +394,29 @@ def build_xhr_table(season_df: pd.DataFrame) -> bool:
 HRM_MIN_PA = 50          # below this a rate is noise, not a signal
 HRM_MIN_BBE = 30
 
+# TRACKED batted balls — the ones Statcast measured an exit velocity AND
+# a launch angle for. Every xHR-derived figure is computed over these and
+# only these. An untracked ball used to bin to NaN, miss the grid merge,
+# and take a filled-in hr_prob of 0.0 — scoring contact nobody measured
+# as contact that had no chance of leaving, while it still sat in the
+# denominator. Missing is not zero; this file already applies that rule
+# to `ca` and to pull_air, and the xHR path was the one place it leaked.
+HRM_MIN_TRACKED_BBE = 25
+
+# The population that DEFINES the percentile scale.
+#
+# Inclusion (HRM_MIN_PA above) is deliberately low so a bench bat in
+# tonight's lineup still gets a score. But ranking everyone against
+# everyone let several hundred thin bats — all pulled to the league mean
+# by the regression below, by construction — pile up in the middle of
+# every distribution. A dense middle stretches the tails, so a regular
+# was reading a percentile earned partly by being compared against
+# part-timers who had been shrunk to average on purpose.
+#
+# Scale comes from regulars. Thin bats are PLACED on that scale rather
+# than allowed to reshape it, so they still rank and still rank fairly.
+HRM_CORE_PA = 150
+
 
 def build_baselines(season_df: pd.DataFrame) -> bool:
     """Measure what a RANDOM starting hitter does, league-wide.
@@ -498,6 +521,10 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
     # integer cast further down.
     is_bbe = _mask(df["type"] == "X")
     is_pa = _mask(df["events"].notna())
+    # TRACKED CONTACT — see HRM_MIN_TRACKED_BBE. A batted ball with no
+    # exit velocity or no launch angle cannot be binned into the xHR
+    # grid, and it must not be counted as a ball that had no chance.
+    is_tracked = _mask(is_bbe & ev.notna() & la.notna())
 
     # Barrel: Statcast's own launch_speed_angle == 6. NaN on every
     # non-batted-ball row, which is the majority of the file.
@@ -531,11 +558,21 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
                       & _mask(ev >= 95.0)).astype("int32"),
         "pullair": is_pull_air.astype("int32"),
         "hr": _mask(df["events"].astype(str) == "home_run").astype("int32"),
+        "bbe_tracked": is_tracked.astype("int32"),
+        # Home runs on TRACKED contact only. The xHR gap subtracts actual
+        # home runs from expected ones, and expected is summed over
+        # tracked balls — so an untracked home run used to land in the
+        # subtrahend with nothing on the other side of it, pushing the
+        # gap negative for a hitter who did nothing wrong.
+        "hr_tracked": _mask(is_tracked
+                            & _mask(df["events"].astype(str) == "home_run")
+                            ).astype("int32"),
         "ev": ev.where(is_bbe),
         "bat_speed": pd.to_numeric(df.get("bat_speed"), errors="coerce"),
     })
     g = work.groupby("batter", observed=True)
-    out = g[["pa", "bbe", "barrel", "window", "fb95", "pullair", "hr"]].sum()
+    out = g[["pa", "bbe", "barrel", "window", "fb95", "pullair", "hr",
+             "bbe_tracked", "hr_tracked"]].sum()
     out["ev90"] = g["ev"].quantile(0.90)
     out["max_ev"] = g["ev"].max()
     out["bat_speed"] = g["bat_speed"].mean()
@@ -551,18 +588,49 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
     ca_measured = False
     if xhr_path.exists():
         tbl = pd.read_parquet(xhr_path)
+        # TRACKED rows only — an unmeasured ball has no bin, and the
+        # `how="left"` merge below turns a missing bin into a missing
+        # probability, which the old code then filled with 0.0.
         key = pd.DataFrame({
             "batter": df["batter"],
             "ev_bin": (ev // 2.0 * 2.0),
             "la_bin": (la // 2.0 * 2.0),
-        })[is_bbe.values]
+        })[is_tracked.values]
+        # IN-REGION vs OUT-OF-REGION, and they are not the same miss.
+        #
+        # build_xhr_table only grids EV 80-122 and LA 8-50, because that
+        # is where home runs occur. A tracked ball outside that box — a
+        # 71 mph chopper, a 60-degree pop-up — is a REAL zero: the region
+        # was chosen precisely because contact outside it does not leave.
+        #
+        # A ball INSIDE the box whose bucket was dropped for thin sample
+        # (XHR_MIN_BUCKET_N) is a different thing: unmeasurable, and
+        # those buckets sit at the extremes where probability is HIGHEST.
+        # Filling them with zero understated exactly the contact xHR
+        # exists to find. They come out of the numerator AND the
+        # denominator instead.
+        _in_region = (key["ev_bin"].between(XHR_MIN_EV, XHR_MAX_EV)
+                      & key["la_bin"].between(XHR_MIN_LA, XHR_MAX_LA))
         merged = key.merge(tbl, on=["ev_bin", "la_bin"], how="left")
+        _unmeasurable = merged["hr_prob"].isna() & _in_region.to_numpy()
         merged["hr_prob"] = merged["hr_prob"].fillna(0.0)
+        _drop = merged[_unmeasurable].groupby("batter", observed=True).size()
+        merged = merged[~_unmeasurable.to_numpy()]
+
         out["xhr"] = merged.groupby("batter", observed=True)["hr_prob"].sum()
         out["xhr"] = out["xhr"].fillna(0.0)
+        # Denominator for every xHR-derived rate: tracked contact we
+        # could actually score, not every batted ball he put in play.
+        out["bbe_scored"] = (out["bbe_tracked"]
+                             - _drop.reindex(out.index).fillna(0)).astype("int32")
+        if int(_unmeasurable.sum()):
+            print(f"  xHR: {int(_unmeasurable.sum()):,} tracked batted ball(s) "
+                  f"in-region with no bucket — excluded, not zeroed")
         # THE regression signal: trajectories that deserved to leave and
-        # didn't. Positive = owed home runs.
-        out["xhr_gap"] = out["xhr"] - out["hr"]
+        # didn't. Positive = owed home runs. Kept as a raw count for
+        # DISPLAY only; what gets ranked is the rate below, because a
+        # count carries playing time inside it.
+        out["xhr_gap"] = out["xhr"] - out["hr_tracked"]
 
         # Clears Anywhere: batted balls on a trajectory verified to leave
         # every park. An OLDER parquet has no such column — that means
@@ -585,6 +653,14 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
         out["xhr"] = np.nan
         out["xhr_gap"] = np.nan
         out["ca"] = np.nan
+        out["bbe_scored"] = 0
+
+    # THE TRACKED FLOOR. A hitter with a handful of scoreable batted
+    # balls has no xHR profile, and every rate built on that denominator
+    # must read N/A rather than a number nobody should act on. Applied
+    # after the merge so the reason is one place, not three.
+    _thin = out["bbe_scored"] < HRM_MIN_TRACKED_BBE
+    out.loc[_thin, ["xhr", "xhr_gap", "ca"]] = np.nan
 
     # ------------------------------------------------------------
     # SAMPLE-SIZE REGRESSION
@@ -618,6 +694,10 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
     K_WINDOW = 110      # batted balls
     K_PULL_AIR = 110    # batted balls
     K_FB95 = 110        # batted balls
+    K_XHR_GAP = 150     # SCOREABLE batted balls. The gap is a difference
+                        # of two counts, so it is noisier per opportunity
+                        # than any of the rates below and wants at least
+                        # as much shrinkage.
     K_CA = 200          # batted balls. Higher than the rest on purpose:
                         # clears-anywhere contact is RARE (a couple of
                         # grid buckets league-wide), so a hitter with two
@@ -625,16 +705,46 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
                         # an untouchable rate off two swings.
 
     def _regress(made, opp, k):
-        """Rate per 100, pulled toward the league mean by sample size."""
-        league = made.sum() / opp.sum()          # real league rate, measured
+        """Rate per 100, pulled toward the league mean by sample size.
+
+        A zero league denominator means the metric is unmeasurable for
+        everyone (no grid on disk, so no scoreable contact). Return NaN
+        rather than dividing by nothing — a numpy warning in the nightly
+        log is how a real problem gets read as noise.
+        """
+        denom = float(opp.sum())
+        if not denom:
+            return pd.Series(np.nan, index=opp.index, dtype="float64")
+        league = made.sum() / denom             # real league rate, measured
         return (made + k * league) / (opp + k) * 100
 
     out["brl_per_pa"] = _regress(out["barrel"], out["pa"], K_BRL_PA)
     out["hr_window_pct"] = _regress(out["window"], out["bbe"], K_WINDOW)
     out["pull_air_pct"] = _regress(out["pullair"], out["bbe"], K_PULL_AIR)
     out["fb95_pct"] = _regress(out["fb95"], out["bbe"], K_FB95)
-    out["clears_anywhere_pct"] = (_regress(out["ca"], out["bbe"], K_CA)
+    # Denominator is SCOREABLE contact, not every batted ball. `ca` can
+    # only ever be counted on a ball that reached the grid, so dividing
+    # it by total BBE charged a hitter for contact the metric never had
+    # the chance to look at.
+    out["clears_anywhere_pct"] = (_regress(out["ca"], out["bbe_scored"], K_CA)
                                   if ca_measured else np.nan)
+
+    # THE CONVERSION SIGNAL, AS A RATE.
+    #
+    # This was ranked as `xhr - hr`, a count of whole home runs. A count
+    # carries playing time inside it: a 550-PA bat can run six either
+    # way and a 60-PA bat structurally cannot, so both tails of that
+    # percentile were full-timers and part of what the correction
+    # rewarded was simply being in the lineup every night. It was also
+    # the one figure in this function that skipped the shrinkage every
+    # other rate gets.
+    #
+    # Per SCOREABLE batted ball, not per PA. Contact rate is already
+    # inside Brl/PA over in the power axis; putting it in the conversion
+    # correction as well would count the same thing twice, which is the
+    # exact failure this batch is fixing in hr_score.
+    out["xhr_gap_rate"] = _regress(out["xhr"] - out["hr_tracked"],
+                                   out["bbe_scored"], K_XHR_GAP)
 
     # Raw, unregressed rates kept alongside for DISPLAY. The regressed
     # values are what get ranked; the raw ones are what a hitter actually
@@ -643,8 +753,17 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
     out["hr_window_pct_raw"] = out["window"] / out["bbe"] * 100
     out["pull_air_pct_raw"] = out["pullair"] / out["bbe"] * 100
     out["fb95_pct_raw"] = out["fb95"] / out["bbe"] * 100
-    out["clears_anywhere_pct_raw"] = (out["ca"] / out["bbe"] * 100
+    out["clears_anywhere_pct_raw"] = (out["ca"] / out["bbe_scored"] * 100
                                       if ca_measured else np.nan)
+    # The gap per 100 scoreable batted balls, before shrinkage. This is
+    # the figure that is genuinely playing-time neutral — two hitters
+    # converting identically post the same number whether one batted 40
+    # times or 400. The regressed column above is what gets RANKED, and
+    # it deliberately pulls the thinner sample further toward the league;
+    # that is shrinkage doing its job, not playing time leaking back in.
+    # Keeping both means the difference is visible instead of argued.
+    out["xhr_gap_rate_raw"] = ((out["xhr"] - out["hr_tracked"])
+                               / out["bbe_scored"].replace(0, np.nan) * 100)
 
     # HR Intent — same three process inputs and the same league anchors
     # as statcast_engine, averaged over whatever is measurable.
@@ -705,9 +824,18 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
     stacked = pd.concat(intent, axis=1)
     out["hr_intent"] = stacked.mean(axis=1, skipna=True)
 
-    # HR THREAT — 60% outcome, 40% process. Same weights and the same
-    # anchors the app uses, so a board built here and a player page
+    # HR THREAT — 60% direct outcome, 40% HRIntent. Same weights and the
+    # same anchors the app uses, so a board built here and a player page
     # rendered live can never disagree.
+    #
+    # THIS USED TO SAY "40% process" AND THAT WAS NOT WHAT IT DID.
+    # HRIntent is the mean of bat speed, HR window % and pull air %, and
+    # the last two are outcomes — measurements of batted balls, not of
+    # the swing. So the genuinely process-only share of HRThreat is bat
+    # speed at 40/3 ≈ 13%, not 40%. The weights are unchanged (the
+    # 60/40 outcome lean is the decision); only the label is, because a
+    # right number under a wrong label is the one kind of error nobody
+    # downstream can catch.
     _threat = [(0.35, (out["brl_per_pa"] / _anchor("brl_per_pa", 6.0)
                        * 50.0).clip(upper=100))]
     if ca_measured:
@@ -737,18 +865,70 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
              if anchors.get("clears_anywhere_pct") else "N/A"))
 
 
-    # Rank to 0-100 league percentiles, matching the Savant scale.
-    for col in ("brl_per_pa", "hr_window_pct", "pull_air_pct",
-                "fb95_pct", "clears_anywhere_pct",
-                "ev90", "hr_intent", "hr_threat", "xhr_gap"):
-        out[col + "_pct"] = out[col].rank(pct=True) * 100.0
+    # ------------------------------------------------------------
+    # RANK TO 0-100 LEAGUE PERCENTILES, matching the Savant scale.
+    #
+    # Against the CORE population (HRM_CORE_PA), not against everyone in
+    # the table. See that constant for why. Everyone still receives a
+    # percentile — thin bats are placed on the regulars' scale by
+    # searchsorted rather than ranked among themselves.
+    _core = out[out["pa"] >= HRM_CORE_PA]
+
+    def _pct_on_core(s):
+        """0-100 placement of every value on the CORE distribution."""
+        ref = np.sort(_core[s.name].dropna().to_numpy())
+        if len(ref) < 30:
+            # Not enough regulars to describe a league yet — early April,
+            # or a partial pull. Rank within whoever is here and say so,
+            # rather than inventing a distribution off a dozen bats.
+            return s.rank(pct=True) * 100.0
+        vals = s.to_numpy(dtype="float64")
+        # side="left" so the core minimum lands at 0 rather than at
+        # 1/len — the scale has to start where the league starts.
+        pos = np.searchsorted(ref, vals, side="left") / len(ref) * 100.0
+        # searchsorted sorts NaN to the top and would hand an unmeasured
+        # hitter a 100th percentile. Unmeasured stays unmeasured.
+        return pd.Series(np.where(np.isnan(vals), np.nan, pos), index=s.index)
+
+    _ranked = ("brl_per_pa", "hr_window_pct", "pull_air_pct",
+               "fb95_pct", "clears_anywhere_pct", "ev90",
+               # bat_speed is ranked directly now. hr_score used to take
+               # its process input as hr_intent_pct, but HRIntent is two
+               # thirds hr_window and pull_air — the same two columns the
+               # launch axis already carried — so the score was entering
+               # them twice while the docstring claimed the axes were
+               # independent. Bat speed is the part of intent that is
+               # genuinely not measured anywhere else.
+               "bat_speed",
+               # hr_intent_pct and hr_threat_pct are PUBLISHED AND READ
+               # BY NOTHING as of this change. hr_threat_pct already was
+               # — rank_batters reads the raw hr_threat — and hr_intent_pct
+               # became so when hr_score stopped taking its process input
+               # from HRIntent. Left in rather than deleted: a
+               # key-literal grep cannot see a dynamic access, and this
+               # repo has already had a sweep wrongly report rendered
+               # fields as unrendered for exactly that reason. Check the
+               # views for an f-string access before removing them.
+               "hr_intent", "hr_threat", "xhr_gap_rate")
+    for col in _ranked:
+        out[col + "_pct"] = _pct_on_core(out[col])
+    if len(_core) < 30:
+        print(f"  HR metrics: only {len(_core)} batter(s) at "
+              f"{HRM_CORE_PA}+ PA — percentiles ranked within the whole "
+              f"pool until the core fills out")
 
     out = out.reset_index()
     out["batter"] = out["batter"].astype("int64")
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     out.to_parquet(DATA_DIR / "hr_metrics.parquet", index=False)
+    _bbe_all = int(out["bbe"].sum())
+    _bbe_scored = int(out["bbe_scored"].sum())
+    _share = (_bbe_scored / _bbe_all * 100) if _bbe_all else 0.0
     print(f"  HR metrics: {len(out):,} qualified batters "
-          f"(>= {HRM_MIN_PA} PA, {HRM_MIN_BBE} BBE)")
+          f"(>= {HRM_MIN_PA} PA, {HRM_MIN_BBE} BBE) · "
+          f"{len(_core):,} in the {HRM_CORE_PA}+ PA scale core · "
+          f"{_bbe_scored:,} of {_bbe_all:,} batted balls scoreable "
+          f"({_share:.1f}%)")
     return True
 
 
