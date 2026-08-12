@@ -132,6 +132,33 @@ jobs:
       - name: Fetch and package real Statcast data
         run: python precompute.py
 
+      # AFTER precompute, NOT beside the calibration grader above.
+      #
+      # This grades off app/data/statcast/batters/{id}.parquet, and those
+      # files only contain last night's games once precompute has run.
+      # Placed next to "Grade calibration picks" it would read yesterday's
+      # files every time, find almost no bat appearing on the date it was
+      # grading, correctly refuse to close the night — and stay one day
+      # behind forever while reporting nothing wrong.
+      - name: Grade the HR research log
+        run: python hr_research_log.py grade || echo "hr_research grade failed - continuing"
+
+      - name: Commit the graded HR research log
+        run: |
+          # Same porcelain-not-diff reason as every other commit step in
+          # this repo: data/hr_research/ starts untracked, and git diff
+          # reports an untracked file as no change.
+          if [ -z "$(git status --porcelain -- data/hr_research)" ]; then
+            echo "No HR research changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/hr_research
+          git commit -m "chore: grade HR research log [skip ci]"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
       # DO NOT PUBLISH A PARTIAL ARCHIVE.
       #
       # The three slate fetches above end in `|| echo "... continuing
