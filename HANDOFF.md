@@ -10,6 +10,58 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — probe crash fixed, Daily 13 docstring. 2026-08-12 (last)
+
+**3 files. Suite 88, FAILING: none.** Control confirmed red.
+
+### THE PROBE CRASHED ON ITS FIRST REAL RUN
+
+```
+if (p.get("gp") or 0) < MIN_GP:
+AttributeError: 'str' object has no attribute 'get'
+```
+
+**`players.json` is keyed BY PLAYER ID, not a list.** Iterating it yields
+the id strings. `league_percentiles()` in `engines/wnba_props.py` does
+exactly this unwrap — `if isinstance(players, dict): players =
+list(players.values())` — three lines from where it reads the same file,
+and the probe was written without copying it.
+
+The lesson is not "remember the unwrap." It is that **the shape of a
+payload belongs in one place**, and a probe reading a file the engine
+already reads should look at how the engine reads it. Rule 21 in a form
+it had not taken here before: not duplicated LOGIC, duplicated
+ASSUMPTIONS about a file.
+
+Fixed, then verified against a synthetic 308-player fixture built with
+the dict-keyed shape that crashed it — the previous fixture used a list,
+which is why the probe passed its pre-ship run and failed in the field.
+**A fixture that does not reproduce production's shape is not a test of
+production.**
+
+`test_probe_imports.py` now asserts BOTH readers unwrap it: if the
+engine ever stops, the probe's copy is the only one left and it rots
+silently.
+
+### Daily 13 docstring
+
+Said the floor was 60% of games with a hit; `MIN_HIT_RATE` is 50.0. The
+page body renders the real constant, so nothing on screen contradicted
+the wrong text — the worst version, because the next reader goes looking
+for a floor that does not exist.
+
+**Now it names the constants and states no number.** A threshold copied
+into prose has no way to stay true. (The first pass at this fix restated
+"currently 50%" one line after saying the number was not repeated —
+caught by the check, not by reading it back.)
+
+### STILL OUTSTANDING
+`wnba_props_probe.py` has still not produced real output. Run it after
+this lands; the WNBA section of READING_THE_BOARDS is the last place in
+the guide that tells the reader to measure something themselves.
+
+---
+
 ## PICK UP HERE — the other two colour scales were broken too. 2026-08-12 (night)
 
 **4 files. Suite 88, FAILING: none.** Control confirmed red.
