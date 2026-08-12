@@ -132,13 +132,26 @@ def main() -> int:
 
             season_v = p.get(cfg["season"])
             recent_v = p.get(cfg["l10"])
-            form = None
+            form, form_raw = None, None
             if season_v and recent_v:
-                form = _scale((recent_v - season_v) / season_v * 100.0,
-                              -25.0, 25.0)
+                # THE RAW DEVIATION, kept beside the scaled score.
+                #
+                # `form` is that deviation squeezed into 0-100 by a
+                # +/-25% band, and the first real run showed it pinning
+                # at the ceiling: for 3PM the 75th percentile was 94.9
+                # and the 90th was exactly 100. A component that
+                # saturates for a quarter of the league has stopped
+                # measuring. The band is the suspect, and it cannot be
+                # re-set from the scaled number — once a value clamps,
+                # how far past the edge it went is gone. So the raw
+                # figure is reported too, and a new band comes from ITS
+                # distribution rather than from another round number.
+                form_raw = (recent_v - season_v) / season_v * 100.0
+                form = _scale(form_raw, -25.0, 25.0)
 
             rows.append({"line": line, "clear15": r15, "floor15": f15,
-                         "consistency": consistency, "form": form})
+                         "consistency": consistency, "form": form,
+                         "form_raw": form_raw})
 
         if not rows:
             print(f"{label}: no player cleared the floors "
@@ -150,19 +163,21 @@ def main() -> int:
         print(f"{label.upper()} — {len(d)} qualified players "
               f"({skipped} below the floors)")
         print("=" * 72)
-        print(f"{'component':<16}{'median':>9}{'75th':>9}{'90th':>9}"
-              f"{'max':>9}")
+        print(f"{'component':<16}{'10th':>9}{'median':>9}{'75th':>9}"
+              f"{'90th':>9}{'max':>9}")
         for col, name in (("consistency", "CONSISTENCY"),
                           ("clear15", "  clear rate L15"),
                           ("floor15", "  floor rate L15"),
                           ("form", "FORM"),
+                          ("form_raw", "  raw dev %"),
                           ("line", "typical line")):
             s = pd.to_numeric(d[col], errors="coerce").dropna()
             if s.empty:
-                print(f"{name:<16}{'—':>9}{'—':>9}{'—':>9}{'—':>9}")
+                print(f"{name:<16}{'—':>9}{'—':>9}{'—':>9}{'—':>9}{'—':>9}")
                 continue
-            print(f"{name:<16}{s.median():>9.1f}{s.quantile(.75):>9.1f}"
-                  f"{s.quantile(.90):>9.1f}{s.max():>9.1f}")
+            print(f"{name:<16}{s.quantile(.10):>9.1f}{s.median():>9.1f}"
+                  f"{s.quantile(.75):>9.1f}{s.quantile(.90):>9.1f}"
+                  f"{s.max():>9.1f}")
         print()
 
     _measured = W_CONSISTENCY + W_FORM
