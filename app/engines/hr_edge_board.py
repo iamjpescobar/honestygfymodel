@@ -28,8 +28,18 @@ slate question.
 FIDELITY
 --------
 Nothing is reimplemented. Every number comes from the same engine calls
-GameCard makes, in the same order, so a bat's edge here equals its edge
-on the card. If the scoring changes, both follow.
+GameCard makes, in the same order. If the scoring changes, both follow.
+
+ONE DELIBERATE DIFFERENCE FROM THE CARD, stated because this docstring
+used to claim there were none while two had accumulated underneath it:
+`batter_vs_pitch` is omitted here. Fetching per-pitch profiles for every
+hitter on the slate is hundreds of extra dataframe slices per render,
+and the arsenal mix term alone is still real information. So the
+pitch-matchup term can differ from the card's by a few points.
+
+(The other difference, a missing `batting_order`, was NOT deliberate —
+it was an omission, and it is fixed below. The slot term is worth up to
+five points and this is the board that gets logged for calibration.)
 
 COST
 ----
@@ -190,6 +200,9 @@ def get_hr_edge_board(_date_str=None, confirmed_only=True):
 
             profiles = [{
                 "name": b["name"], "bats": b.get("bats") or "?", "id": b.get("id"),
+                # Carried so edge_components can price the slot. Only
+                # meaningful on a CONFIRMED card — see the guard below.
+                "batting_order": b.get("battingOrder"),
                 "profile": get_batter_profile_windowed(b.get("id"), window="season", unit="bbe"),
             } for b in batters]
             ranked = rank_batters(profiles, savant_df) if profiles else []
@@ -210,8 +223,24 @@ def get_hr_edge_board(_date_str=None, confirmed_only=True):
                     home_team=park,
                     bats=_effective_hand(r.get("bats"), p_throws),
                     temp=temp, wind=wind, arsenal=arsenal,
+                    # THE FIDELITY GAP THIS CLOSES. The Game Card passes
+                    # batting_order and this board did not, so the slot
+                    # term (+/-5) was on the card and absent here — and
+                    # it is this board that gets logged for calibration.
+                    # The docstring above promised the two agreed while
+                    # the code made them differ by up to five points.
+                    #
+                    # Only on a confirmed lineup. An unposted card has no
+                    # batting order, and yesterday's order is a guess
+                    # about tonight that would price a slot the hitter
+                    # may not be in.
+                    batting_order=(r.get("batting_order") if confirmed else None),
                 ))
                 r["team"] = batting_team
+                # Carried so cap_per_game has a real key. Without it the
+                # cap fails open on every row and does nothing — silently,
+                # since "no key" is deliberately treated as uncappable.
+                r["game_pk"] = game.get("game_pk")
                 r["opponent"] = pitcher_team
                 r["pitcher"] = opp_name
                 r["park"] = park
@@ -222,14 +251,91 @@ def get_hr_edge_board(_date_str=None, confirmed_only=True):
                 if r.get("edge") is not None:
                     rows.append(r)
 
-    rows.sort(key=lambda r: r.get("edge") or 0, reverse=True)
+    # SORTED ON THE UNCLAMPED FLOAT, with the tiebreak SAID OUT LOUD.
+    #
+    # This was `key=r["edge"]` — an integer, on a stable sort. Ties
+    # resolved by the order this loop happened to build rows in (game
+    # order, away before home, lineup order), so the top of the board was
+    # partly the schedule. Teammates share ctx_adj exactly and therefore
+    # tie more often than strangers, which put whole lineups adjacent.
+    #
+    # HR Score then HR Threat as the declared tiebreak: when the matchup
+    # layer cannot separate two bats, the better hitter goes first. That
+    # is a choice, and it belongs in the code as one rather than being
+    # inherited from iteration order.
+    rows.sort(key=lambda r: (r.get("edge_raw") if r.get("edge_raw") is not None
+                             else (r.get("edge") or 0),
+                             r.get("hr_score") or 0,
+                             r.get("hr_threat") or 0), reverse=True)
     meta = {"date": date_str, "games": len(games), "rated": len(rows),
             "skipped": skipped, "savant_error": savant_error,
             "confirmed_only": confirmed_only}
     return rows, meta
 
 
-def top_hr_edge(n=5, confirmed_only=True):
-    """The slate's top n by HR Edge — the real board, all games."""
+# Most bats from any ONE GAME allowed in the capped view.
+#
+# Per GAME, not per team. The context that lifts a whole lineup — park
+# factor, temperature, wind, the opposing arsenal — applies to BOTH
+# sides of the same game, so a team cap of two still lets a hitter-park
+# matinee put four bats in a top fifteen. The game is the unit the
+# correlation actually travels on.
+GAME_CAP = 2
+
+
+def cap_per_game(rows, cap=GAME_CAP):
+    """(kept, overflow) — at most `cap` bats from any one game.
+
+    ORDER IS PRESERVED. This is a filter over an already-ranked list,
+    never a re-rank: the bats that survive stay in exactly the order
+    they were in, so the capped view is a subset of the board rather
+    than a second, differently-sorted board.
+
+    THE OVERFLOW IS RETURNED, NOT DISCARDED. A bat pushed out has to
+    stay reachable underneath the board with the rule named, because
+    silently dropping a hitter from a list people bet off is worse than
+    the stacking this exists to fix.
+
+    A row with no game key is never capped away. That means an unknown
+    key fails OPEN — it can only ever show MORE bats, never hide one on
+    the strength of a field that wasn't there.
+    """
+    kept, overflow, seen = [], [], {}
+    for r in rows:
+        key = r.get("game_pk") or r.get("game_key")
+        if key is None:
+            kept.append(r)
+            continue
+        if seen.get(key, 0) < cap:
+            seen[key] = seen.get(key, 0) + 1
+            kept.append(r)
+        else:
+            overflow.append(r)
+    return kept, overflow
+
+
+def top_hr_edge(n=5, confirmed_only=True, cap_games=True):
+    """The slate's top n by HR Edge — the real board, all games.
+
+    cap_games=True by default, and that INCLUDES the calibration record.
+    The board's job is to answer "who are the best home-run plays
+    tonight", and a record graded on a list the page no longer shows
+    would be measuring a claim the site stopped making — the same fault
+    this module was built to fix, one layer up.
+
+    It is a selection-rule change, not a metric change: what is graded
+    (did the bat homer) and the baseline it is graded against (share of
+    league starters with a home run) are both unchanged, exactly as when
+    HRThreat and Clears% entered the scoring. Dated in HANDOFF.md.
+
+    ON A THIN SLATE THE LIST CAN COME BACK SHORT. Two confirmed games at
+    5 PM means four bats, not five. The cap is absolute on purpose: a
+    rule that stops applying when it is inconvenient cannot be read off
+    the page, and a short honest list beats a fifth pick that only
+    exists because the rule was relaxed to reach a round number.
+    """
     rows, meta = get_hr_edge_board(confirmed_only=confirmed_only)
+    if cap_games:
+        rows, overflow = cap_per_game(rows)
+        meta = {**meta, "game_cap": GAME_CAP, "capped_out": len(overflow)}
     return rows[:n], meta
