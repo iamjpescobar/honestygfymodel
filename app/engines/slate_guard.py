@@ -35,7 +35,6 @@ from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-EASTERN = ZoneInfo("America/New_York")
 # TWO PLACES A SLATE CAN LIVE, and they arrive by different routes.
 #
 # _PUBLISHED is app/data/, where fetch_data.py extracts the nightly
@@ -80,7 +79,10 @@ _LEAGUES = {
     # Eastern, like WNBA: an MLB schedule day IS an Eastern day. A game
     # at 10 PM ET on the 8th is the 8th's slate even though it is already
     # the 9th in UTC, which is the exact bug weather_engine documents in
-    # its own EASTERN comment.
+    # its own EASTERN comment. (That constant lives in weather_engine;
+    # this module holds no timezone of its own — every zone comes from
+    # the table below, so a league's timezone is stated in exactly one
+    # place instead of two that can disagree.)
     "mlb":  ("slate_date_et",  "generated_at_et",  "America/New_York"),
 }
 
@@ -162,9 +164,6 @@ def today_for(league: str) -> str:
     _dk, _gk, tz = _cfg(league)
     return datetime.now(ZoneInfo(tz)).strftime("%Y-%m-%d")
 
-
-def today_et() -> str:
-    return datetime.now(EASTERN).strftime("%Y-%m-%d")
 
 
 def _read(league: str):
