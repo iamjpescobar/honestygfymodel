@@ -140,10 +140,23 @@ for col in ("brl_per_pa_raw", "hr_window_pct_raw", "pull_air_pct_raw"):
 print("PASS: unregressed rates preserved alongside the regressed ones")
 
 for col in ("brl_per_pa_pct", "hr_window_pct_pct", "pull_air_pct_pct",
-            "ev90_pct", "hr_intent_pct", "xhr_gap_pct"):
+            "ev90_pct", "bat_speed_pct", "hr_intent_pct", "xhr_gap_rate_pct"):
     assert col in out.columns, f"missing percentile column {col}"
-    assert out[col].between(0, 100).all(), f"{col} out of 0-100"
-print("PASS: all six league-percentile columns present and in range")
+    assert out[col].dropna().between(0, 100).all(), f"{col} out of 0-100"
+print("PASS: all seven league-percentile columns present and in range")
+
+# bat_speed is ranked in its own right now. hr_score's process axis reads
+# it directly instead of reading HRIntent, which is two thirds the same
+# columns the launch axis already carries.
+assert "bat_speed_pct" in out.columns, "process axis has no ranked column to read"
+
+# The COUNT-based gap column must NOT be published as a percentile any
+# more — hr_score would read a ranking of whole home runs, i.e. of
+# playing time. The raw count stays for display.
+assert "xhr_gap" in out.columns, "raw gap should stay available for display"
+assert "xhr_gap_pct" not in out.columns, (
+    "xhr_gap_pct is back — that column ranks a count, not a rate")
+print("PASS: the gap is ranked as a rate; the raw count stays for display only")
 
 assert out.at[SLUG, "hr_intent_pct"] > out.at[FLAT, "hr_intent_pct"]
 print("PASS: HR Intent separates the launcher from the flat swing")
@@ -151,6 +164,19 @@ print("PASS: HR Intent separates the launcher from the flat swing")
 # xHR gap: SLUG hit 10 HRs off 40 identical high-probability trajectories.
 assert not pd.isna(out.at[SLUG, "xhr_gap"]), "xHR gap not computed"
 print(f"PASS: xHR gap computed (SLUG {out.at[SLUG,'xhr_gap']:+.1f})")
+
+# UNTRACKED CONTACT IS EXCLUDED, NOT ZEROED.
+#
+# The fixture gives SLUG five batted balls with no launch_speed and no
+# launch_angle. Those cannot be binned into the xHR grid; the merge used
+# to fill their probability with 0.0 and leave them in the denominator,
+# so a hitter was charged for contact nobody measured. bbe_scored is the
+# denominator every xHR-derived rate now divides by.
+assert out.at[SLUG, "bbe_tracked"] < out.at[SLUG, "bbe"], (
+    "fixture no longer contains untracked contact — this case proves nothing")
+assert out.at[SLUG, "bbe_scored"] <= out.at[SLUG, "bbe_tracked"]
+print(f"PASS: {out.at[SLUG,'bbe']} batted balls, "
+      f"{out.at[SLUG,'bbe_scored']} scoreable — the rest excluded, not zeroed")
 
 # Sample floor must exclude thin samples rather than publish noise.
 precompute.HRM_MIN_PA, precompute.HRM_MIN_BBE = 500, 500
