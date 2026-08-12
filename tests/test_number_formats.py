@@ -211,6 +211,13 @@ _LEAGUE_MAX = {
     "Brl %": 20.0,
     "Brl/PA": 13.0,
     "ISO": 0.35,
+    # Both of these were (15, 25, 35, 45) and both were caught by
+    # measuring rather than by anyone noticing on screen. FB95% had its
+    # top TWO tiers unreachable; HRWindow%'s league maximum fell short
+    # of its fourth cut. Three scales now, same defect, same style of
+    # round number — assume any scale not in this dict is unverified.
+    "FB95%": 30.89,
+    "HRWindow%": 41.94,
 }
 for _stat, _max in _LEAGUE_MAX.items():
     _cuts = SCALES.get(_stat)
