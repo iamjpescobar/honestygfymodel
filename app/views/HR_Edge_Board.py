@@ -15,7 +15,7 @@ import streamlit as st
 
 from styles.kc_theme import card, footer, COLOR
 from styles.table_style import style_stat_table, render_html_table, team_logo_cell, score_bar, sort_control, tier_legend
-from engines.hr_edge_board import get_hr_edge_board
+from engines.hr_edge_board import get_hr_edge_board, cap_per_game, GAME_CAP
 from engines.live_sync import sync_latest_button
 
 # Theme injection lives in app.py, which renders once per script run
@@ -48,6 +48,18 @@ with st.spinner("Ranking every bat on the slate\u2026 (first load does the real 
                 "work; cached after)"):
     rows, meta = get_hr_edge_board(confirmed_only=not _show_all)
 
+# CAPPED HERE TOO, and that is the whole point of capping at all.
+#
+# top_hr_edge() caps the top 5 that calibration logs. This page called
+# get_hr_edge_board directly and did not, so for one commit the graded
+# record and the board on screen were two different lists — the exact
+# divergence the cap decision was made to prevent, reintroduced one
+# layer up from where it was fixed.
+#
+# The overflow is rendered below rather than dropped: silently removing
+# a hitter from a list people bet off is worse than the stacking.
+_capped, _overflow = cap_per_game(rows)
+
 if meta.get("error"):
     st.warning(meta["error"])
 if meta.get("savant_error"):
@@ -70,8 +82,16 @@ else:
             f'TOP HOME RUN PLAYS \u2014 {meta["date"]}</div>',
             unsafe_allow_html=True)
 
+        st.caption(
+            f"At most {GAME_CAP} bats per GAME. Park, temperature, wind and "
+            f"the opposing arsenal lift a whole lineup at once, so without "
+            f"this one matinee can take over the board. Per game, not per "
+            f"team: both sides share that context. "
+            + (f"{len(_overflow)} bat(s) held back \u2014 listed below."
+               if _overflow else "Nothing held back tonight."))
+
         table = []
-        for i, r in enumerate(rows[:40], start=1):
+        for i, r in enumerate(_capped[:40], start=1):
             # ctx_notes explains WHY the park/temperature moved this bat.
             # Showing the reason rather than a bare number is the point:
             # a +7 with no explanation is indistinguishable from a bug.
@@ -98,6 +118,22 @@ else:
                 # is meant to be near-empty, and a bat with a real number
                 # in it is the point.
                 "Clears%": r.get("clears_anywhere"),
+                # HOW MANY QUALIFICATION FLOORS THIS BAT CLEARS.
+                #
+                # A tier, never a filter. Only 21 hitters in the league
+                # clear all nine, which is roughly seven in any night's
+                # lineups — a top-15 board cannot be built from that, and
+                # 33 more miss by exactly one. Deleting the hitter at
+                # 10.9% barrel with everything else elite is a cliff.
+                # See engines/hr_floors.
+                "Floors": (f'{r.get("floors_met")}/{r.get("floors_total")}'
+                           if r.get("floors_met") is not None else None),
+                # THE DENOMINATOR. Inclusion is 50 PA and the scale core
+                # is 150, so a part-timer and an everyday bat sat in this
+                # table in identical type with nothing between them. The
+                # regression protects the number; it does nothing for the
+                # reader. Same argument that put G on the pitcher splits.
+                "PA": r.get("hr_pa"),
                 "Matchup": r.get("mx"),
                 "Context": r.get("ctx_adj"),
                 "Why": ctx,
@@ -154,6 +190,29 @@ else:
             f"skill number is park-neutral so a hitter doesn't get better by "
             f"travelling; tonight's building belongs here."
         )
+
+    # THE BATS THE CAP HELD BACK, with the rule named.
+    #
+    # Not an afterthought. A capped-out bat is often a genuinely strong
+    # play — it lost its place to two teammates in the same building, not
+    # to a better hitter — and a board that made it disappear without
+    # saying so would be hiding a pick rather than ranking one.
+    if _overflow:
+        with st.expander(f"Held back by the {GAME_CAP}-per-game cap "
+                         f"({len(_overflow)})"):
+            st.caption(
+                "These rank inside the board above on HR Edge. They sit here "
+                "because their game already had its two bats \u2014 not "
+                "because anything about them scored worse."
+            )
+            _ov = pd.DataFrame([{
+                "Player": r.get("name"), "Team": r.get("team"),
+                "vs": r.get("pitcher"), "Park": r.get("park"),
+                "HR Edge": r.get("edge"), "HR Score": r.get("hr_score"),
+                "Floors": (f'{r.get("floors_met")}/{r.get("floors_total")}'
+                           if r.get("floors_met") is not None else None),
+            } for r in _overflow[:20]])
+            st.dataframe(_ov, hide_index=True, use_container_width=True)
 
     if meta.get("skipped"):
         with st.expander(f"Games not included ({len(meta['skipped'])})"):
