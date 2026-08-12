@@ -180,3 +180,45 @@ if failures:
         print(f"  - {f}")
     sys.exit(1)
 print(f"All number-format checks passed ({len(_views)} views scanned).")
+
+
+# --- A COLOUR SCALE THAT CANNOT BE REACHED ---------------------------
+#
+# Same family of defect as the formatting above: the number is right and
+# what the reader SEES is wrong.
+#
+# "Clears%" had cut points (10, 20, 30, 40). It is a rate in tenths of a
+# percent — the nightly measures the league mean at 0.32%, and across
+# 373 hitters at 150+ PA the median is 0.00, the 75th 0.63, the 90th
+# 0.93. Nobody in baseball reached the FIRST cut, so every cell rendered
+# in the bottom tier, including a bat at 1.01 that sat above the 90th
+# percentile of the league. _magnitude_column's own docstring says a
+# colour reads as a verdict; the board was calling the best
+# trajectory-clearing hitter on the slate bad at it.
+#
+# Guarded as "the top tier must be reachable" rather than by pinning the
+# exact numbers, so re-tuning the scale stays free and re-typing a
+# tens-of-percent scale onto a tenths-of-a-percent stat does not.
+import sys as _sys
+_sys.path.insert(0, "app")
+from styles.stat_scales import SCALES  # noqa: E402
+
+_LEAGUE_MAX = {
+    # stat: the highest value seen across 373 hitters at 150+ PA,
+    # measured 2026-08-12. A top cut point above this means the elite
+    # tier is unreachable and the column grades everyone the same.
+    "Clears%": 1.1,
+    "Brl %": 20.0,
+    "Brl/PA": 13.0,
+    "ISO": 0.35,
+}
+for _stat, _max in _LEAGUE_MAX.items():
+    _cuts = SCALES.get(_stat)
+    assert _cuts, f"{_stat} lost its scale"
+    assert min(_cuts) < _max, (
+        f"{_stat} cut points {_cuts} start above the league maximum "
+        f"({_max}) — every cell would render in the bottom tier")
+    assert max(_cuts) <= _max, (
+        f"{_stat} top cut {max(_cuts)} exceeds the league maximum "
+        f"({_max}) — the elite tier can never be earned")
+print(f"PASS: {len(_LEAGUE_MAX)} colour scales sit inside their real range")
