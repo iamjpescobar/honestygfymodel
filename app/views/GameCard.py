@@ -11,7 +11,7 @@ from styles.kc_theme import (
 )
 from styles.table_style import (style_stat_table, plain_dark_table,
                                 render_html_table, score_bar, bats_chip,
-                                tier_legend, style_vs_league)
+                                tier_legend, style_vs_league, stat_formats)
 
 from engines.weather_engine import get_todays_games_with_weather
 from engines.park_factors import get_park_factor
@@ -603,6 +603,7 @@ def _render_bullpen_browser(_arsenal_bars, game):
                                         "Pitches": vs.get("_pitches_seen", 0),
                                     })
                                 bp_names = ", ".join(pitch_name(p) for p in bp_top3)
+                                _bp_df = pd.DataFrame(bp_rows)
                                 st.markdown(
                                     f'<div style="font-size:var(--lc-text-caption); font-weight:700; color:{COLOR["text_muted"]}; '
                                     f'margin-top:var(--lc-space-md);">{opp_label} vs this arsenal ({bp_names})</div>',
@@ -623,11 +624,19 @@ def _render_bullpen_browser(_arsenal_bars, game):
                                         # Player as a column also gets it the
                                         # identity colouring _player_name_column
                                         # applies for free.
-                                        pd.DataFrame(bp_rows),
+                                        _bp_df,
                                         favor_high=["BA", "Brl %", "HH %"],
                                         favor_low=["Whiff %", "SwStr %"],
                                         gradient=True,
-                                    ), key="gc_666")
+                                    # No format call here meant BA rendered
+                                    # at two decimals (.25, not .250) while
+                                    # the same stat one card away showed
+                                    # three. stat_formats matches "Brl %"
+                                    # to "Brl%" — spaces don't count — so
+                                    # this table's spellings resolve to the
+                                    # same entries as everywhere else.
+                                    ).format(stat_formats(_bp_df), na_rep="N/A"),
+                                    key="gc_666")
                                 st.caption(
                                     f"Season numbers vs those pitch types only \u2014 blue rows are the "
                                     f"batters who punish this stuff, red rows are the ones it beats. "
@@ -1453,18 +1462,31 @@ with content_col:
                     f'The platoon rows are thinner still.</div>',
                     unsafe_allow_html=True)
             g1, g2 = st.columns(2)
+            # NEITHER OF THESE TABLES HAD A FORMAT CALL.
+            #
+            # So both inherited style_stat_table's blanket precision of 2,
+            # and the two things wrong with that are opposite: BA, SLG and
+            # ISO are .000-scale rates that printed as .25 next to a
+            # lineup card showing .250, while G and HR are COUNTS that
+            # printed as 12.00 and 3.00. G in particular exists to tell
+            # the reader how thin the window is — a sample size with two
+            # decimals on it reads like a rate.
+            _stats_df = full_df[stats_cols]
+            _strikes_df = full_df[strikes_cols]
             with g1:
                 with card("stats_table"):
                     st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">STATS</div>', unsafe_allow_html=True)
                     render_html_table(
-                        style_stat_table(full_df[stats_cols], favor_high=["BA", "SLG", "ISO", "HR", "HR/9"], favor_low=["WHIP"], gradient=True),
+                        style_stat_table(_stats_df, favor_high=["BA", "SLG", "ISO", "HR", "HR/9"], favor_low=["WHIP"], gradient=True)
+                        .format(stat_formats(_stats_df), na_rep="N/A"),
                         key="splits_stats",
                     )
             with g2:
                 with card("strikes_table"):
                     st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">STRIKES</div>', unsafe_allow_html=True)
                     render_html_table(
-                        style_stat_table(full_df[strikes_cols], favor_low=["BB%", "Whiff%", "K%", "Putaway%", "SwStr%", "K/9", "Meatball%"], favor_high=["1stPS%"], gradient=True),
+                        style_stat_table(_strikes_df, favor_low=["BB%", "Whiff%", "K%", "Putaway%", "SwStr%", "K/9", "Meatball%"], favor_high=["1stPS%"], gradient=True)
+                        .format(stat_formats(_strikes_df), na_rep="N/A"),
                         key="splits_strikes",
                     )
             st.caption("Computed by this app directly from raw Statcast pitch data \u2014 see get_pitcher_advanced_splits() for exact definitions.")
