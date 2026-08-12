@@ -618,10 +618,32 @@ def edge_components(batter_id, pitcher_id, base_score, pen_adj, pen_note,
                                                    league_pa_per_game())
 
     total = b_adj + z_adj + pen_adj + ctx_adj + pm_adj + slot_adj
-    edge = None
+    edge = edge_raw = None
     if base_score is not None:
-        edge = int(max(0, min(100, round(base_score + total))))
-    return {"edge": edge, "mx": round(total, 1),
+        # THE UNROUNDED, UNCLAMPED VALUE, carried for SORTING ONLY.
+        #
+        # `edge` is an integer clamped to 0-100. On a full slate that is
+        # ~270 bats sharing 101 possible values, so ties are everywhere —
+        # and a stable sort resolves them by whatever order the caller
+        # happened to build its rows in, which on the slate board is
+        # game order, then away before home, then lineup order. A
+        # ranking that falls back to the schedule is the alphabetical
+        # problem wearing a different costume.
+        #
+        # Teammates tie far more often than strangers do, because they
+        # share ctx_adj EXACTLY — same park, same temperature, same wind,
+        # same opposing arsenal. So tied teammates land adjacent, which
+        # is part of why one lineup can appear to take over the top of
+        # the board.
+        #
+        # The clamp compounds it: the adjustments span +/-67 (bvp 15,
+        # zone 15, pen 10, park 10, temp 4, pitch 8, slot 5), so a strong
+        # bat in a strong spot pins at 100 and real separation at the
+        # very top is erased. Sorting on this value keeps the separation
+        # while the displayed number stays the honest bounded one.
+        edge_raw = round(base_score + total, 4)
+        edge = int(max(0, min(100, round(edge_raw))))
+    return {"edge": edge, "edge_raw": edge_raw, "mx": round(total, 1),
             "bvp_adj": b_adj, "bvp_line": b_line,
             "zone_adj": z_adj, "zone_note": z_note,
             "pen_adj": pen_adj, "pen_note": pen_note,
