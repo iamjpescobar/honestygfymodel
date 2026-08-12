@@ -79,7 +79,26 @@ SCALES = {
     "HH %":      (32.0, 37.0, 42.0, 48.0),
     "EV90":      (100.0, 103.0, 106.0, 109.0),
     "FB95%":     (15.0, 25.0, 35.0, 45.0),
-    "Clears%":   (10.0, 20.0, 30.0, 40.0),
+    # CLEARS ANYWHERE IS A RATE IN TENTHS OF A PERCENT, not tens.
+    #
+    # These cut points were (10, 20, 30, 40) — reasonable-looking numbers
+    # for a percentage, and wrong by a factor of about twenty. The
+    # nightly measures the league mean at 0.32%; across 373 hitters at
+    # 150+ PA the median is 0.00, the 75th is 0.63 and the 90th is 0.93.
+    # NOBODY IN BASEBALL reaches the first cut, so every cell in the
+    # column rendered in the bottom tier — including a bat at 1.01,
+    # above the 90th percentile of the league.
+    #
+    # A colour reads as a verdict (see _magnitude_column). The board was
+    # telling the reader that the best trajectory-clearing hitter on the
+    # slate was bad at it, in the same red as one at 0.13.
+    #
+    # Set from the measured distribution: median, ~65th, 75th, 90th. The
+    # median is 0.00 because over half of qualified hitters have never
+    # once put a ball on a trajectory that leaves every park — so the
+    # first cut sits just above zero, and "has done it at all" is
+    # genuinely what separates the bottom tier here.
+    "Clears%":   (0.15, 0.40, 0.65, 0.95),
     "HR/FB":     (6.0, 9.0, 12.0, 16.0),
 
     # ---- plate discipline ----------------------------------------
@@ -108,6 +127,24 @@ SCALES = {
     "SLAM":      (35.0, 50.0, 65.0, 80.0),
     "HR Score":  (15.0, 30.0, 45.0, 60.0),
     "Hit Score": (30.0, 45.0, 55.0, 65.0),
+    # SUSPECT, NOT YET MEASURED. This one and FB95% above were written
+    # in the same style as the Clears% mistake — round numbers spanning
+    # 15-45 for a per-batted-ball rate — and neither has been checked
+    # against a real distribution. The nightly puts the HR-window league
+    # mean at 25.1%, so this scale's median lands on its second cut and
+    # the top tier may be close to unreachable; FB95% is unmeasured
+    # entirely. NOT changed here: replacing one guess with another is
+    # what produced the bug above. Measure first:
+    #
+    #   python -c "import glob,pandas as pd,sys,types; \
+    #   sys.path.insert(0,'app'); \
+    #   st=types.ModuleType('streamlit'); st.cache_data=lambda **k:(lambda f:f); \
+    #   sys.modules['streamlit']=st; \
+    #   sys.modules['pybaseball']=types.ModuleType('pybaseball'); \
+    #   from engines.statcast_engine import _compute_batted_ball_metrics as m; \
+    #   r=[m(pd.read_parquet(f)) for f in glob.glob('app/data/statcast/batters/*.parquet')]; \
+    #   d=pd.DataFrame([x for x in r if x and (x.get('PA') or 0)>=150]); \
+    #   print(d[['FB95 %','HRWindow %']].describe(percentiles=[.5,.65,.75,.9]))"
     "HRWindow%": (15.0, 25.0, 35.0, 45.0),
     "HRIntent":  (35.0, 50.0, 65.0, 80.0),
     "HRThreat":  (35.0, 50.0, 65.0, 80.0),
