@@ -22,6 +22,9 @@ import time
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent / "app"))
+from engines.hr_floors import FLOOR_SPECS, BASELINE_KEY  # noqa: E402
+
 import numpy as np
 import pandas as pd
 import requests
@@ -417,6 +420,21 @@ HRM_MIN_TRACKED_BBE = 25
 # than allowed to reshape it, so they still rank and still rank fairly.
 HRM_CORE_PA = 150
 
+# Which hr_metrics column carries each floor's profile key.
+#
+# DELIBERATELY PARTIAL. HH %, FB %, Blast %, ISO and AvgEV are computed
+# in statcast_engine's per-player profile and have no column in this
+# table, so their floors keep the fallback in engines/hr_floors.py until
+# they do. Listing only what is genuinely measurable here is the point:
+# a mapping that guessed at a column name would publish a floor built
+# from the wrong stat, which is exactly the failure the EV90-vs-AvgEV
+# mix-up already caused once.
+_FLOOR_COLUMNS = {
+    "Brl %": "brl_pct_raw",
+    "Brl/PA": "brl_per_pa_raw",
+    "PullAir %": "pull_air_pct_raw",
+}
+
 
 def build_baselines(season_df: pd.DataFrame) -> bool:
     """Measure what a RANDOM starting hitter does, league-wide.
@@ -750,6 +768,12 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
     # values are what get ranked; the raw ones are what a hitter actually
     # did, and hiding them would be its own kind of dishonesty.
     out["brl_per_pa_raw"] = out["barrel"] / out["pa"] * 100
+    # Barrels per BATTED BALL, alongside the per-PA rate above. Not a
+    # duplicate: Brl% answers "when he connects, how good is it" and
+    # Brl/PA folds in the strikeouts. They are the two floors that do
+    # almost all of the cutting in the qualification gate, and the gate
+    # cannot measure its own threshold from a column that isn't here.
+    out["brl_pct_raw"] = out["barrel"] / out["bbe"] * 100
     out["hr_window_pct_raw"] = out["window"] / out["bbe"] * 100
     out["pull_air_pct_raw"] = out["pullair"] / out["bbe"] * 100
     out["fb95_pct_raw"] = out["fb95"] / out["bbe"] * 100
@@ -855,6 +879,41 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
     _bl["hr_anchors"] = {k: (round(v, 3) if isinstance(v, float) else v)
                          for k, v in anchors.items()}
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    # ------------------------------------------------------------
+    # THE QUALIFICATION FLOORS, MEASURED.
+    #
+    # engines/hr_floors.py stores each floor as the PERCENTILE it was
+    # meant to express rather than a typed number, and this is where
+    # that percentile becomes tonight's threshold. See that module for
+    # why: a literal is a photograph of one season, and a "firm 40%
+    # hard-hit" floor set in 2026 is the median in 2026 and below it by
+    # 2028, with nothing about the number announcing that the league
+    # moved.
+    #
+    # Measured over the SCALE CORE, not the whole qualified pool. Same
+    # reason the percentiles above are: several hundred thin bats all
+    # shrunk to the league mean would drag every quantile toward the
+    # middle, and a floor is supposed to describe regulars.
+    _floor_src = out[out["pa"] >= HRM_CORE_PA]
+    if len(_floor_src) < 30:
+        _floor_src = out
+    _floors = {}
+    for _key, _pkey, _pct, _fallback in FLOOR_SPECS:
+        if _pct is None:
+            continue          # not a percentile floor — see FLOOR_SPECS
+        _col = _FLOOR_COLUMNS.get(_pkey)
+        _series = (pd.to_numeric(_floor_src.get(_col), errors="coerce").dropna()
+                   if _col else None)
+        if _series is None or len(_series) < 30:
+            continue          # unmeasurable tonight; the fallback stands
+        _floors[_key] = float(_series.quantile(_pct))
+    if _floors:
+        _bl[BASELINE_KEY] = {k: round(v, 3) for k, v in _floors.items()}
+        print("  HR floors (measured): "
+              + " · ".join(f"{k} {v:.2f}" for k, v in sorted(_floors.items())))
+    else:
+        print("  HR floors: not enough measured hitters — fallbacks stand.")
+
     _bl_path.write_text(json.dumps(_bl, indent=2))
     print(f"  HR anchors (league means): bat speed "
           f"{anchors['bat_speed']:.1f} mph · HR window "
