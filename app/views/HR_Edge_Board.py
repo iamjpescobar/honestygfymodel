@@ -162,14 +162,23 @@ else:
             favor_high=["Matchup", "Context", "Threat", "Clears%"],
             gradient=True,
         ).format({
-            # Explicit formats for every numeric column — style_stat_table
-            # applies a global precision=2, and anything unlisted falls
-            # through to it and renders out of step with its neighbours.
+            # Explicit formats for every numeric column. Anything unlisted
+            # does NOT keep style_stat_table's precision=2 — this second
+            # .format() call replaces the formatter for EVERY column, not
+            # just the ones named here, so an omitted column falls all the
+            # way through to pandas' own default of SIX decimals. That is
+            # what printed PA as "543.000000" on a live board. See the
+            # note at the top of styles/table_style.py.
             # Filled bars rather than bare numbers, same as the Game Card
             # lineup — these are the two columns the board is ranked on.
             "HR Edge": score_bar("gold"), "HR Score": score_bar("stat_high"),
             "Matchup": "{:+.1f}", "Context": "{:+.1f}",
             "Threat": "{:.0f}", "Clears%": "{:.2f}",
+            # A COUNT, so no decimal point at all. get_hr_metric returns
+            # float(val) for everything it reads out of the parquet, so
+            # this arrives as 543.0 and has to be told it is a count —
+            # the frame cannot tell the reader that on its own.
+            "PA": "{:.0f}",
             # Logo beside the abbreviation; text stays so the column
             # still reads if an image fails to load.
             "Team": team_logo_cell(),
