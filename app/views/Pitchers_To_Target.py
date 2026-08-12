@@ -101,7 +101,12 @@ with card("targets"):
             # ValueError: Unknown format code 'f' for object of type
             # 'str'. Nothing needed restating — unlike the Strikeout
             # Board, whose frame holds real floats.
-            ).format({"Team": team_logo_cell(), "Opp": team_logo_cell()}),
+            # na_rep passed for the same reason it is passed everywhere
+            # else: this call resets it to None for every column, and a
+            # missing value would then print as the literal "nan"
+            # instead of the em dash the rest of the app uses.
+            ).format({"Team": team_logo_cell(), "Opp": team_logo_cell()},
+                     na_rep="\u2014"),
             key="pitchers_to_target",
         )
         st.caption(
