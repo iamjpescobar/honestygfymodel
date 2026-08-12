@@ -23,20 +23,27 @@ pd.read_parquet = lambda path, **kw: pd.read_pickle(str(path))
 sys.path.insert(0, ".")
 
 # --- stub the board so `log` needs no network and no lineups ---------
+# Both NYY bats share game 10 — the same park, starter, wind and pen.
+# That is the correlation the 2-per-game cap exists for, and the log
+# cannot see it at all unless game_pk is stored.
 BOARD = [
-    {"id": 1, "name": "A", "team": "NYY", "opponent": "BOS", "edge": 88,
-     "hr_score": 80, "bats": "R"},
-    {"id": 2, "name": "B", "team": "NYY", "opponent": "BOS", "edge": 71,
-     "hr_score": 66, "bats": "L"},
+    {"id": 1, "name": "A", "team": "NYY", "opponent": "BOS", "edge": 100,
+     "edge_raw": 115.2, "hr_score": 80, "bats": "R", "game_pk": 10,
+     "floors_met": 9, "floors_total": 9},
+    {"id": 2, "name": "B", "team": "NYY", "opponent": "BOS", "edge": 100,
+     "edge_raw": 100.4, "hr_score": 66, "bats": "L", "game_pk": 10,
+     "floors_met": 4, "floors_total": 9},
     {"id": 3, "name": "C", "team": "BOS", "opponent": "NYY", "edge": 55,
-     "hr_score": 50, "bats": "R"},
+     "edge_raw": 55.3, "hr_score": 50, "bats": "R", "game_pk": 11,
+     "floors_met": 6, "floors_total": 9},
 ]
 _board_mod = types.ModuleType("engines.hr_edge_board")
 _board_mod.get_hr_edge_board = lambda confirmed_only=True: (
     list(BOARD), {"games": 1, "rated": len(BOARD)})
 _sc_mod = types.ModuleType("engines.statcast_engine")
 _sc_mod.get_batter_profile_windowed = lambda pid, **kw: {
-    "Brl %": 12.0, "Brl/PA": 8.5, "ISO": 0.240, "PA": 400}
+    "Brl %": 12.0, "Brl/PA": 8.5, "ISO": 0.240, "PA": 400,
+    "AvgEV": 91.4, "Blast %": 22.0, "ClearsAnywhere %": 0.7}
 _pkg = types.ModuleType("engines"); _pkg.__path__ = []
 sys.modules.setdefault("engines", _pkg)
 sys.modules["engines.hr_edge_board"] = _board_mod
@@ -128,3 +135,36 @@ path = hrl._month_path(DATE)
 path.write_text(path.read_text() + "{not json\n", encoding="utf-8")
 assert len(hrl._read_month(DATE)) == 6, "one bad line took the whole file down"
 print("PASS: an unreadable line is reported and skipped, month survives")
+
+# --- 8. THE FIELDS ADDED AFTER THIS LOGGER WAS WRITTEN ---------------
+#
+# Four of them were missing for a full night of real logging, and each
+# one silently removes a question the log was built to answer. The
+# regression control is that a stored row can still answer it.
+row = [r for r in hrl._read_month(DATE) if r["date"] == DATE][0]
+
+# game_pk — without it, every row reads as its own game and the cap can
+# never be evaluated against outcomes.
+by_game = {}
+for r in hrl._read_month(DATE):
+    if r["date"] == DATE:
+        by_game.setdefault(r.get("game_pk"), []).append(r)
+assert None not in by_game, "a logged bat has no game key"
+assert len(by_game) == 2 and len(by_game[10]) == 2, (
+    f"same-game bats are not groupable: {by_game.keys()}")
+
+# edge_raw — both NYY bats display 100 and the log has to keep them apart.
+_pinned = sorted(by_game[10], key=lambda r: r["edge_raw"], reverse=True)
+assert _pinned[0]["id"] == 1, "two bats clamped to 100 are indistinguishable"
+assert row["edge"] != row["edge_raw"], (
+    "edge_raw stored as the clamped value — the clamp is back inside the "
+    "measurement")
+
+# AvgEV — the floor set names it, so the tier is not reconstructable
+# without it.
+assert row.get("AvgEV") == 91.4, "AvgEV is not captured"
+
+# floors_met — recorded against the thresholds IN FORCE THAT NIGHT,
+# which move as the league does.
+assert row.get("floors_met") == 9 and row.get("floors_total") == 9
+print("PASS: game_pk, edge_raw, AvgEV and floors_met all reach the file")
