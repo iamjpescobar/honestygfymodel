@@ -377,6 +377,8 @@ decile of the actual league, not a guess.
 | PullAir % | 11.89 | 15.21 | 18.36 |
 | ISO | .150 | .190 | .230 |
 | Clears % | **0.00** | 0.63 | 0.93 |
+| FB95 % | 11.49 | 15.07 | 18.66 |
+| HR window % | 25.10 | 27.74 | 30.14 |
 
 **The bar I would use on the board itself:**
 
