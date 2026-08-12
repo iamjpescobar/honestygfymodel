@@ -10,6 +10,273 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — floors as a tier, and the board's ordering fixed. 2026-08-12
+
+**8 files (1 new engine, 1 new test). Suite 86, FAILING: none.**
+Nine controls confirmed red.
+
+### THE PROBE RESULT THAT DECIDED THIS
+
+`hr_floors_probe.py` against 373 hitters at 150+ PA:
+
+- **21 clear all nine floors. 33 more miss by exactly one.**
+  About a third of qualifying hitters are in any night's confirmed
+  lineups, so a hard AND gate leaves roughly SEVEN bats. **A top-15
+  board cannot be built from that.** Tier, not filter.
+- **Brl% did 89% of all the cutting** (373 -> 87). The remaining eight
+  floors removed 66 between them. Nine conditions behaving like one,
+  because they are all power proxies of each other.
+- The only two still earning their place at the end were ISO (-8) and
+  ClearsAnywhere (-7). ClearsAnywhere is the one floor in the set that
+  is not a power proxy, and its median is 0.00 — over half of qualified
+  hitters have never once put a ball on a trajectory that leaves every
+  park.
+
+**THREE OF THE NINE WERE NOT DOING WHAT THEY WERE MEANT TO.**
+
+| floor | what happened |
+|---|---|
+| EV 91 | cleared **373 of 373** and removed nothing |
+| HH% 40 | the league median to two decimals (39.95); removed **one** more bat after the barrel floors |
+| PullAir% 10 | below the median too (11.89) |
+
+The EV one is the instructive failure. It was meant as a floor on
+AVERAGE exit velocity, where 91 sits above a league average near 89. The
+only EV column was `EV90` — the 90th PERCENTILE of a hitter's batted
+balls, median **104.2**. Right number, wrong stat, and it looked strict
+the whole time. `AvgEV` now exists in the profile so 91 means what it
+was meant to mean.
+
+### `app/engines/hr_floors.py` — ONE definition, as percentiles
+
+Imported by the board, the probe and the research log. Three copies of
+nine numbers is nine chances to disagree, and this repo has already paid
+for that with anchors typed separately into precompute and
+statcast_engine.
+
+**Stored as the PERCENTILE each floor was reaching for, resolved nightly
+against the scale core** — the same pattern `hr_anchors` already uses. A
+literal is a photograph of one season: set at the 75th in 2026 and left
+alone it is the median by 2028, and nothing about a hardcoded 40
+announces that the league moved. Brl/PA 8.0 was already the 90th and ISO
+.200 the ~78th, so those barely move; HH%, FB%, PullAir% and the EV
+floor snap up to the 75th, which is where "firm" was meant to be.
+
+The literals in `FLOOR_SPECS` are a FALLBACK for an archive published
+before this shipped — they are the values MEASURED on 2026-08-12, not
+the values as originally typed.
+
+`ClearsAnywhere` is deliberately NOT a percentile: its median is 0.00,
+so a percentile floor would resolve to zero and pass everybody. "Has
+done it at all" is the real threshold.
+
+**Unmeasured fails its floor and is named in `missed`.** A bat with no
+bat-tracking data has not cleared the Blast floor — and the DENOMINATOR
+does not move, because a 9/9 that quietly became 8/8 would be one number
+meaning two different things.
+
+`_FLOOR_COLUMNS` in precompute is **deliberately partial**: HH%, FB%,
+Blast%, ISO and AvgEV live in the per-player profile and have no column
+in hr_metrics, so those keep the fallback until they do. A mapping that
+guessed at a column name would publish a floor built from the wrong
+stat — which is precisely what the EV90 mix-up already cost once.
+
+### THE BOARD'S ORDERING WAS PARTLY THE SCHEDULE
+
+`rows.sort(key=r["edge"])` — an INTEGER clamped to 0-100, ~270 bats
+sharing 101 possible values, on a stable sort. **Ties resolved by the
+order the build loop produced rows in: game order, away before home,
+lineup order.** Rule 25 in a new place.
+
+And **teammates tie far more often than strangers**, because they share
+`ctx_adj` EXACTLY — same park, temperature, wind, opposing arsenal. Tied
+teammates land adjacent. That is a real contributor to one lineup
+appearing to take over the top of the board, and it is a separate cause
+from the one the cap addresses.
+
+The clamp compounds it: adjustments span **+/-67** (bvp 15, zone 15, pen
+10, park 10, temp 4, pitch 8, slot 5), so a strong bat in a strong spot
+pins at 100 beside one several points behind it — separation erased
+exactly where the reader looks.
+
+Now sorted on `edge_raw` (unrounded, unclamped, carried from
+`edge_components` for SORTING ONLY — the displayed number stays the
+bounded integer), with the tiebreak **said out loud**: HR Score, then HR
+Threat. When the matchup layer cannot separate two bats, the better
+hitter goes first. That is a choice and it belongs in the code as one.
+
+### THE FIDELITY PROMISE, MADE TRUE
+
+The docstring said a bat's edge here equals its edge on the Game Card.
+Two differences had accumulated under it:
+
+- **`batting_order` was never passed.** The slot term is worth up to
+  five points, it was on the card and absent here, and THIS is the board
+  that gets logged. Fixed — and only on a CONFIRMED lineup, because
+  yesterday's order is a guess about tonight that would price a slot the
+  hitter may not be in.
+- **`batter_vs_pitch` is omitted**, deliberately, for cost. Now stated
+  in the docstring instead of contradicted by it.
+
+### `cap_per_game` — 2 per game
+
+**Per GAME, not per team.** Park, temperature, wind and the opposing
+arsenal apply to BOTH sides, so a team cap of two still lets one
+hitter-park matinee put four bats in a top fifteen. The game is the unit
+the correlation travels on.
+
+- Order preserved. It filters an already-ranked list; it never re-ranks.
+- **The overflow is returned, not discarded** — a capped-out bat has to
+  stay reachable under the board with the rule named. Silently dropping
+  a hitter from a list people bet off is worse than the stacking.
+- A row with no game key is never capped away: unknown fails OPEN, so it
+  can only ever show MORE bats. That is only safe if the key is really
+  there, so a test asserts the board carries `game_pk` — from the
+  outside, a cap doing nothing looks identical to a cap that works.
+- **Applied to the logged top 5 as well.** The record's job is to
+  measure what the site told you to play. It is a selection-rule change,
+  not a metric change: what is graded (did the bat homer) and the
+  baseline (share of league starters with a home run) are unchanged,
+  exactly as when HRThreat and Clears% entered the scoring.
+- **On a thin slate the list comes back SHORT.** Two confirmed games at
+  5 PM means four picks, not five. The cap is absolute on purpose: a
+  rule that stops applying when it is inconvenient cannot be read off
+  the page.
+
+### VERIFY
+
+1. Suite: **86 files, FAILING: none.**
+2. Next nightly log should carry a new line:
+   `HR floors (measured): brl_pa 9.xx · brl_pct 10.xx · pull_air 15.xx`.
+   Only three keys — the rest have no column in hr_metrics yet and keep
+   their fallback, which is expected, not a failure.
+3. Re-run `python hr_floors_probe.py`. It now reads the shared floors,
+   so the numbers will differ from the 2026-08-12 run above — that IS
+   the change. Expect FEWER qualifiers, since HH%/FB%/PullAir%/EV all
+   rose to the 75th.
+4. Open HR Edge. Top 15 should show at most two bats per GAME, an
+   `N/9` floors column, and the capped-out bats below with the rule
+   stated.
+
+### NEXT
+Nothing structural. The research log is the queue now — three or four
+weeks of graded bat-nights, then refit the axis weights and re-set the
+floors against outcomes instead of choosing them. `floors_met` is
+derivable retroactively from what the log already captures.
+
+---
+
+## PICK UP HERE — the measuring instrument, not more structure. 2026-08-12
+
+**3 files (2 new scripts + 1 new test). Suite 85, FAILING: none.**
+Runs alongside the scoring batch below; neither depends on the other.
+
+### WHY THIS AND NOT NINE NEW FLOORS
+
+Nine hard qualification floors were proposed for the HR board (Brl% 11,
+Brl/PA 8, HH% 40, FB% 26, EV 91, Blast% 18, PullAir% 10, ISO .200, plus
+the clears-any-park contour). Every one of those nine already EXISTS and
+is computed per batter — five of them feed HR Score as ranking inputs
+and four are display-only. **None of them gates anything**, which is the
+real hole: a bat at 3% Brl/PA is not excluded, he takes a low percentile
+and can still ride park, weather and pen into the top 15.
+
+The floors are a good idea. They were not buildable yet, for one reason:
+
+**calibration.json records the top 5. The board rates ~270 bats a night
+and discards 265.** After sixteen days that is ~80 graded HR picks, all
+from the extreme top of the distribution, and it cannot answer the
+question everything rests on — *does an 88 HR Edge homer more often than
+a 71?* You cannot validate a ranking by only ever recording its first
+five rows. Every weight in top_plays and every proposed floor is an
+opinion until the middle of the distribution is on disk beside the top.
+
+Three or four weeks of this gives ~8-10k graded bat-nights, and then
+each of those arguments becomes a query.
+
+### `hr_research_log.py`
+
+    python hr_research_log.py log      # evening, beside calibration_picks
+    python hr_research_log.py grade    # next morning, after the nightly
+
+Writes `data/hr_research/YYYY-MM.ndjson`, one line per bat-night: the
+edge components kept SEPARATE from hr_score (a miss from mis-rating the
+hitter and a miss from mis-rating the park want opposite fixes), plus
+all nine floor metrics, plus the result.
+
+**It is NOT a second pick record.** It never touches calibration.json,
+feeds no page, and must never be used to report a hit rate — it contains
+every bat on the slate, most of which the site never recommended.
+
+Grades off `app/data/statcast/batters/{id}.parquet`, the files the
+nightly already writes. No network, no Stats API. Grading 270 bats a
+night through `_mlb_line` would be 270 HTTP requests; this is a
+dataframe lookup against the same source the metrics come from.
+
+**THE GUARD THAT MATTERS.** "No rows for this batter on this date" is
+ambiguous: he did not play, or the pull has not reached that date. Read
+the second as the first and a whole night closes as DNP with a permanent
+0 against each bat, and the file looks complete. A real slate always has
+most of its bats appearing, so **under 50% appearing means the pull is
+behind and the whole night is left ungraded.** This is the same mistake
+that once closed 45 WNBA picks as DNP against games already played.
+
+### `hr_floors_probe.py` — one-shot, run it before deciding anything
+
+Reads every batter parquet, computes metrics by calling the engine's own
+`_compute_batted_ball_metrics` (a probe that reimplements Brl% measures
+a stat the site does not have), and prints four things:
+
+1. **Where each proposed floor sits in the real league** — median, 75th,
+   90th, and whether the floor is below the median. Two of the nine look
+   like they may be: HH% 40 is near league average and PullAir% 10 is
+   well under the measured anchor of 18. A floor below the median is a
+   label, not a filter.
+2. Each floor alone.
+3. **The AND cascade**, so you can see which floor does the cutting.
+   These nine are heavily correlated — a bat at 8% Brl/PA clears 91 EV,
+   40% HH and .200 ISO by construction — so nine conditions may act like
+   two, and the risk is thinking you built a wide net.
+4. How many clear all nine, and **how many miss by exactly one**. That
+   near-miss count decides hard gate vs a "floors met: 8/9" tier.
+
+Rough guide in the output: about a third of qualifying hitters are in
+any night's confirmed lineups, so under ~45 qualifiers means a hard gate
+cannot fill a top-15 board.
+
+### TWO TEST BUGS FOUND, both the same species as the last round
+
+**1. A FUNCTION NAMED NARROWER THAN ITS SCOPE.** `_read(date_str)` read
+like a day's rows and returned the whole month, so "tonight is ungraded"
+picked up last night's graded rows and failed against working code.
+Renamed `_read_month`. The write in `grade()` also keyed its destination
+off `rows[0]["date"]` rather than the file it came from — same month by
+construction, which is exactly the kind of assumption that puts a
+month's rows in another month's file the first time it breaks.
+
+**2. A CASE PASSING ON THE WRONG GUARD.** "Tonight is never graded"
+passed because the coverage guard fired, not because of the date check —
+the fixture had no batter rows for today. So the control that deleted
+the date check stayed green. The fixture now covers today, which is the
+realistic case anyway: **a 1 PM game lands in the pull hours before the
+7 PM games finish**, and without the date check the grader would close
+tonight's board at 4 PM.
+
+Six controls confirmed red.
+
+### NEXT — in this order, and the order is the point
+
+1. Run `hr_floors_probe.py`. Nobody knows what the nine floors leave.
+2. Wire the two logger calls into CI and let it run 3-4 weeks.
+3. THEN decide floors, and refit the axis weights against real graded
+   bat-nights instead of choosing them.
+
+The HR Edge board batch (unclamped sort key, stated tiebreak,
+`batting_order` on confirmed lineups, sample column, 2-per-game cap) is
+still unstarted and is independent of all of the above.
+
+---
+
 ## PICK UP HERE — HR scoring math and floors rebuilt. 2026-08-12
 
 **5 files. Suite 84, FAILING: none** (the five streamlit-only ones in a
