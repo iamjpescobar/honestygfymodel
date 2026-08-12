@@ -14,7 +14,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import footer, card, COLOR
-from styles.table_style import style_stat_table, render_html_table
+from styles.table_style import style_stat_table, render_html_table, stat_formats
 from engines.weather_engine import get_todays_games_with_weather
 from engines.team_logos import logo_for
 from engines.live_sync import sync_latest_button
@@ -131,13 +131,23 @@ with card("pen_totals"):
     )
     _trow = {lbl: _tot.get(key) for key, lbl, _hi in PEN_STATS if key in _tot}
     if _trow:
+        # THE PRECISION IS NOT COSMETIC HERE.
+        #
+        # This table had no .format() at all, so every column inherited
+        # style_stat_table's blanket precision of 2 — and pen_totals
+        # rounds to 3 before it ever gets here. SLG and ISO allowed
+        # printed as 0.25 beside a lineup card showing .250, IP printed
+        # 12.30, and K% printed 24.50 where every other percentage in the
+        # app carries one decimal. stat_formats gives each stat the
+        # precision it is published at, from one shared definition.
+        _tot_df = pd.DataFrame([{"Line": "Pen total", **_trow}])
         render_html_table(
             style_stat_table(
-                pd.DataFrame([{"Line": "Pen total", **_trow}]),
+                _tot_df,
                 favor_high=[l for k, l, hi in PEN_STATS if hi is True and k in _tot],
                 favor_low=[l for k, l, hi in PEN_STATS if hi is False and k in _tot],
                 gradient=True,
-            ),
+            ).format(stat_formats(_tot_df), na_rep="N/A"),
             key="pen_totals_tbl",
         )
 
@@ -172,13 +182,17 @@ with card("pen_relievers"):
             f"against this hand, so their rows read N/A. That absence is the "
             f"honest answer — not a zero."
         )
+    # Same precision fix as the totals row above — and it matters more
+    # here, because this is the table someone reads mid-game to decide
+    # whether to take the batter.
+    _rel_df = pd.DataFrame(rows)
     render_html_table(
         style_stat_table(
-            pd.DataFrame(rows),
+            _rel_df,
             favor_high=[l for _k, l, hi in PEN_STATS if hi is True],
             favor_low=[l for _k, l, hi in PEN_STATS if hi is False],
             gradient=True,
-        ),
+        ).format(stat_formats(_rel_df), na_rep="N/A"),
         key=f"pen_rel_{_side_key}",
     )
 
@@ -198,11 +212,21 @@ with card("pen_read"):
             )
             continue
         split = w["vs_lhb"] if hand == "L" else w["vs_rhb"]
+
+        # Interpolated bare, these lost their trailing zeros: the engine
+        # rounds to 3, and round(0.5, 3) prints "0.5", so the same figure
+        # the table above showed as .500 read as 0.5 in the sentence
+        # beneath it. Formatted to the same precision the table uses, out
+        # of the same shared map, so the two can't drift apart again.
+        def _fig(key, fmt):
+            v = split.get(key)
+            return format(v, fmt) if isinstance(v, (int, float)) else "\u2014"
+
         st.caption(
             f"**{word.capitalize()} bats** have done the most damage to "
             f"**{w['name']}** ({w.get('throws') or '?'}HP): "
-            f"{split.get('SLG')} SLG, {split.get('ISO')} ISO, "
-            f"{split.get('HR/9')} HR/9 over {split.get('IP')} IP."
+            f"{_fig('SLG', '.3f')} SLG, {_fig('ISO', '.3f')} ISO, "
+            f"{_fig('HR/9', '.2f')} HR/9 over {_fig('IP', '.1f')} IP."
         )
     st.caption(
         "Ranked on slugging allowed, not batting average — a high average "
