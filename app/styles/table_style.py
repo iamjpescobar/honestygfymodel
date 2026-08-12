@@ -34,6 +34,123 @@ def _st_cache_1h():
 from .kc_theme import COLOR, pitch_color_by_name
 from .stat_scales import has_scale, tier_fraction
 
+# WHY THIS OPTION IS SET, AND WHAT IT ACTUALLY FIXES
+#
+# pandas' Styler.format() does NOT merge with a previous format() call —
+# it REPLACES the display function for every column in the subset, and
+# with no subset that means every column in the frame. _base_styler runs
+# .format(precision=2, na_rep="—") first; the moment a caller adds its own
+# .format({...}) for two logo columns, every OTHER column loses that
+# precision and falls back to `styler.format.precision`, whose pandas
+# default is SIX. That is how "543.000000" reached the HR Edge board's PA
+# column, and it is the same cause behind the "10.370000" note in
+# Strikeout_Board.py — one symptom, fixed twice, never at the source.
+#
+# Setting the option to 2 makes the FALLBACK match the house style, so a
+# column nobody remembered to list degrades to 543.00 instead of
+# 543.000000. It is a floor, not a substitute for an explicit format:
+# stat_formats() below is what gets each stat to its right precision.
+#
+# na_rep gets no equivalent safety net. pandas reads
+# `styler.format.na_rep` only when the Styler is CONSTRUCTED, so a later
+# format() call with na_rep unset still resets it to None and prints the
+# literal "nan" (verified, this pandas). The only fix there is passing
+# na_rep at every call site — tests/test_number_formats.py enforces it.
+#
+# Wrapped because a pandas upgrade could rename the option, and an
+# ImportError-at-startup takes the whole site down while a wrong decimal
+# only looks bad. The test asserts the option actually took effect, so a
+# rename fails loudly in CI rather than silently here.
+try:
+    pd.set_option("styler.format.precision", 2)
+except Exception:
+    pass
+
+# ONE definition of how each stat is printed, keyed by column header.
+#
+# The precisions are not arbitrary: they are the ones already typed by
+# hand into the Game Card lineup, the Strikeout Board and the HR
+# vulnerability card. Collecting them here is the same argument as
+# engines/hr_floors — the same numbers written out in five places is five
+# chances to disagree, and the splits tables had already drifted (BA and
+# SLG rendering .25 where the lineup showed .250).
+#
+# Matched case- and space-insensitively so "Brl%", "Brl %" and "BRL%" —
+# all three of which exist in this app — resolve to one entry.
+STAT_FORMATS = {
+    # Rate stats published on the .000 scale. Three decimals or they stop
+    # looking like batting lines.
+    "BA": "{:.3f}", "AVG": "{:.3f}", "OBP": "{:.3f}", "SLG": "{:.3f}",
+    "OPS": "{:.3f}", "ISO": "{:.3f}", "WOBA": "{:.3f}", "XWOBA": "{:.3f}",
+    "XBA": "{:.3f}", "XSLG": "{:.3f}",
+    # Per-nine and per-inning rates.
+    "WHIP": "{:.2f}", "HR/9": "{:.2f}", "K/9": "{:.2f}", "BB/9": "{:.2f}",
+    # Contact that leaves ANY park. Two decimals, not one: the league
+    # average is a fraction of a percent, so {:.1f} would print 0.0 for
+    # most of the league and throw away the only resolution it has.
+    "CLEARS%": "{:.2f}", "CLEARSANYWHERE%": "{:.2f}",
+    # Percentages. One decimal everywhere, matching Brl%/HH% on the
+    # lineup card.
+    "BRL%": "{:.1f}", "BRL/PA": "{:.1f}", "HH%": "{:.1f}", "LD%": "{:.1f}",
+    "FB%": "{:.1f}", "GB%": "{:.1f}", "PU%": "{:.1f}", "K%": "{:.1f}",
+    "BB%": "{:.1f}", "WHIFF%": "{:.1f}", "SWSTR%": "{:.1f}",
+    "PUTAWAY%": "{:.1f}", "MEATBALL%": "{:.1f}", "1STPS%": "{:.1f}",
+    "SWEETSPOT%": "{:.1f}", "PULLAIR%": "{:.1f}", "PULLBRL%": "{:.1f}",
+    "BLAST%": "{:.1f}", "HRWINDOW%": "{:.1f}", "FB95%": "{:.1f}",
+    "HR/FB": "{:.1f}", "SOFTNESS": "{:+.1f}",
+    # Exit velocities read as mph — one decimal is how Statcast
+    # publishes them.
+    "EV90": "{:.1f}", "MAXEV": "{:.1f}", "AVGEV": "{:.1f}",
+    # Innings and projections.
+    "IP": "{:.1f}", "IP/GS": "{:.1f}", "PROJK": "{:.1f}", "L5AVG": "{:.1f}",
+    "SLAM": "{:.1f}",
+    # Counting stats. A count with a decimal point on it looks like a
+    # rate, and PA especially — it is the DENOMINATOR the reader is
+    # checking the row's weight against.
+    "PA": "{:.0f}", "AB": "{:.0f}", "HR": "{:.0f}", "H": "{:.0f}",
+    "G": "{:.0f}", "GP": "{:.0f}", "BBE": "{:.0f}", "ORD": "{:.0f}",
+    "PITCHES": "{:.0f}", "PITCHESSEEN": "{:.0f}", "ARMS": "{:.0f}",
+    "HRINTENT": "{:.0f}", "HRTHREAT": "{:.0f}", "THREAT": "{:.0f}",
+}
+
+
+def _norm_stat(name) -> str:
+    """Column header -> STAT_FORMATS key. Case and spaces don't count."""
+    return str(name).replace(" ", "").upper()
+
+
+def stat_formats(df: pd.DataFrame, extra: dict = None) -> dict:
+    """Format strings for the columns of `df` that STAT_FORMATS knows.
+
+    Pass the result straight to Styler.format(). Anything the map doesn't
+    cover falls through to the precision floor set above.
+
+    ONLY NUMERIC COLUMNS ARE INCLUDED, and that is load-bearing rather
+    than tidy: many views build their frames with the numbers ALREADY
+    formatted into strings (f'{r["iso"]:.3f}'), and handing "{:.3f}" a str
+    raises `ValueError: Unknown format code 'f' for object of type 'str'`
+    — see the note in Pitchers_To_Target.py, which hit exactly that. A
+    dtype check means this helper is safe to call on any frame.
+
+    `extra` is merged last, so a caller's own formatter for a column
+    (a logo cell, a score bar) always wins over the map.
+    """
+    out = {}
+    for col in df.columns:
+        try:
+            numeric = pd.api.types.is_numeric_dtype(df[col])
+        except Exception:
+            numeric = False
+        if not numeric:
+            continue
+        fmt = STAT_FORMATS.get(_norm_stat(col))
+        if fmt:
+            out[col] = fmt
+    if extra:
+        out.update(extra)
+    return out
+
+
 BG = COLOR["bg"]
 CYAN = COLOR["stat_high"]
 CYAN_RGB = tuple(int(CYAN.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4))
