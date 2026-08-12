@@ -54,19 +54,25 @@ BATTER_DIR = ROOT / "app" / "data" / "statcast" / "batters"
 # call-ups sitting on twelve plate appearances.
 MIN_PA = 150
 
-# (label, profile key, floor, direction). Direction is always ">=" here;
-# it is spelled out so a future one-sided floor cannot be misread.
-FLOORS = [
-    ("Brl %",            "Brl %",            11.0),
-    ("Brl/PA",           "Brl/PA",            8.0),
-    ("HH %",             "HH %",             40.0),
-    ("FB %",             "FB %",             26.0),
-    ("EV90",             "EV90",             91.0),
-    ("Blast %",          "Blast %",          18.0),
-    ("PullAir %",        "PullAir %",        10.0),
-    ("ISO",              "ISO",               0.200),
-    ("ClearsAnywhere %", "ClearsAnywhere %",  0.001),
-]
+# THE FLOORS COME FROM engines/hr_floors, not from a list typed here.
+#
+# They were literals in this file when it first ran, and that run is why
+# they no longer are: three of the nine were not doing what they were
+# meant to (EV 91 against EV90 cleared 373 of 373; HH% 40 was the median
+# to two decimals; PullAir% 10 was below it). A probe carrying its own
+# copy of the thresholds would keep reporting on a set the board does
+# not use — which is the failure the probe exists to catch, committed by
+# the probe itself.
+def _floors():
+    from engines.hr_floors import FLOOR_SPECS, resolve
+    import json
+    try:
+        _bl = json.loads((ROOT / "app" / "data" / "statcast"
+                          / "baselines.json").read_text())
+    except Exception:
+        _bl = None
+    th = resolve(_bl)
+    return [(pkey, pkey, th[key]) for key, pkey, _pct, _fb in FLOOR_SPECS]
 
 
 def main() -> int:
@@ -78,6 +84,7 @@ def main() -> int:
 
     from engines.statcast_engine import _compute_batted_ball_metrics
 
+    FLOORS = _floors()
     files = sorted(BATTER_DIR.glob("*.parquet"))
     print(f"Reading {len(files):,} batter files from {BATTER_DIR}...\n")
 
