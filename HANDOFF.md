@@ -10,6 +10,80 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — the WNBA had no measured bar. 2026-08-12 (late)
+
+**3 files (2 new). Suite 88, FAILING: none.** Two controls red.
+
+### `wnba_props_probe.py` — one-shot
+
+`hr_floors_probe` gave MLB batters a league context, so "Brl/PA 8.79"
+reads as top decile instead of as a bare number. The WNBA board had no
+equivalent, so a 71 consistency score could only be read against
+tonight's other names and meant nothing on its own.
+
+This prints median / 75th / 90th for CONSISTENCY (and its clear-rate and
+floor-rate halves) and FORM, per stat, across every player clearing the
+board's own floors.
+
+**IT MEASURES 60% OF THE SCORE AND SAYS SO.** Consistency (35%) and form
+(25%) are properties of the PLAYER, readable from the season log.
+Matchup (25%) and pace (15%) are properties of TONIGHT and need a slate.
+A probe that quietly reported a partial score as the whole thing is
+exactly the kind of number this repo keeps having to unwind.
+
+**Availability is deliberately NOT applied.** The board excludes players
+who have not appeared recently and should. But this measures what the
+LEAGUE looks like, not who is playable tonight, and dropping every
+injured player would bias the distribution toward whoever is healthy
+this week.
+
+No formula is reimplemented — `_line_for`, `_clear_rate`, `_floor_rate`
+and `_scale` are imported from the engine. Same reason `hr_floors_probe`
+stopped carrying its own copy of the thresholds: a probe that computes
+its own clear-rate measures a stat the board does not have.
+
+Verified against a synthetic 120-player league before shipping (rule
+22), not first-executed in production.
+
+### `tests/test_probe_imports.py` — new
+
+The probes import PRIVATE engine helpers by name. That is the right
+design and its cost is that **a rename breaks a probe silently**:
+nothing imports these files, no page renders them, and the break only
+surfaces weeks later when someone runs one by hand.
+
+This asserts the names still resolve, and that the props weights still
+sum to 1.0 with the player-intrinsic share at 60% — because the probe
+prints that fraction to the reader and would misstate it if the weights
+moved. It does not run the probes; they need an archive not in the repo.
+
+**A stale `app/engines/__pycache__` held a control edit alive through a
+`cp` restore during this work** and produced a phantom failure in the
+suite. `find app -name __pycache__ -exec rm -rf {} +` before believing a
+surprising red.
+
+### `READING_THE_BOARDS.md` — new this session
+
+Full reading guide for every board: what each one answers, what the
+columns mean, the measured MLB thresholds, and a workflow. Section 0 is
+the one that matters — the league baselines (a hit is a 62% event, a
+homer 12%), and what beating them actually looks like.
+
+**Section 7 opens with the structural gap: there are no odds anywhere in
+this app.** Every board rates the quality of a spot; none knows the
+price being offered. "Good enough to bet" is unanswerable from this site
+alone, and every threshold in that section is written as "strong
+reading", never as "profitable".
+
+Candidate for the Glossary expander later.
+
+### NEXT
+Unchanged: three or four weeks of graded bat-nights, then refit the axis
+weights and re-set the floors against outcomes. Before touching FB95%
+or HRWindow% in stat_scales, measure them.
+
+---
+
 ## PICK UP HERE — an unreachable colour scale, and four fields the research log was dropping. 2026-08-12 (evening)
 
 **4 files. Suite 87, FAILING: none.** Five controls confirmed red.
