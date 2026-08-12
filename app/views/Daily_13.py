@@ -1,7 +1,13 @@
 """
 The Daily 13 — personal consistency board: the 13 most consistent
-hitters on today's slate for at least one hit, minimum 60% of games
-with a hit across their full season log, minimum 25 games.
+hitters on today's slate for at least one hit. The floor is
+MIN_HIT_RATE and MIN_GAMES in engines/daily_13.py.
+
+NO THRESHOLD IS WRITTEN HERE ON PURPOSE. This docstring used to state
+one, it drifted out of step with the engine, and the page body renders
+the real constant — so nothing on screen contradicted the wrong text and
+the next reader went looking for a floor that did not exist. A number
+copied into prose has no way to stay true.
 
 Runs inside app.py's loader. Formula + bars documented in
 engines/daily_13.py.
