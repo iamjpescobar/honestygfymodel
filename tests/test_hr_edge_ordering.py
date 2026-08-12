@@ -154,3 +154,22 @@ _keys = [pkey for _k, pkey, _p, _f in hr_floors.FLOOR_SPECS]
 assert "AvgEV" in _keys and "EV90" not in _keys, _keys
 assert GAME_CAP == 2, f"the game cap moved to {GAME_CAP} — say so in a commit"
 print("PASS: the EV floor reads average EV, not the 90th percentile")
+
+# --- 12. THE PAGE CAPS TOO, not just the logged top 5 ----------------
+#
+# top_hr_edge() caps the record. This view called get_hr_edge_board
+# directly and did not, so for one commit the graded record and the
+# board on screen were two different lists — the exact divergence the
+# cap decision was made to prevent, reintroduced one layer above where
+# it was fixed. Asserted against the source because the view needs a
+# Streamlit runtime to execute.
+view = open("app/views/HR_Edge_Board.py", encoding="utf-8").read()
+assert "cap_per_game(rows)" in view, (
+    "the HR Edge page is not capped — it would show a different list "
+    "from the one calibration grades")
+assert "_overflow" in view and "Held back by the" in view, (
+    "capped-out bats are not rendered anywhere — a hidden pick is worse "
+    "than the stacking the cap exists to fix")
+assert '"Floors"' in view and '"PA": r.get("hr_pa")' in view, (
+    "the floors tier and the sample column are computed but not shown")
+print("PASS: the page caps, shows the overflow, and renders floors + PA")
