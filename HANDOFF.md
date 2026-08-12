@@ -10,6 +10,57 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — the other two colour scales were broken too. 2026-08-12 (night)
+
+**4 files. Suite 88, FAILING: none.** Control confirmed red.
+
+### MEASURED, AND BOTH WERE WRONG
+
+`FB95%` and `HRWindow%` were flagged as suspect in the previous entry
+and deliberately left alone until measured. Measured now, 373 hitters at
+150+ PA:
+
+| stat | median | 65th | 75th | 90th | **MAX** | old scale |
+|---|---|---|---|---|---|---|
+| FB95 % | 11.49 | 13.45 | 15.07 | 18.66 | **30.89** | (15, 25, 35, 45) |
+| HRWindow % | 25.10 | 26.62 | 27.74 | 30.14 | **41.94** | (15, 25, 35, 45) |
+
+**FB95% was the worse of the two.** The top two tiers were unreachable —
+nobody in the league hit 35 — and the 90th percentile did not clear the
+SECOND cut. Three quarters of hitters sat in the bottom tier.
+
+**HRWindow% was broken only at the top**, which is why it survived
+longer: the league maximum fell short of the fourth cut, so the elite
+tier could never be earned, and the 90th percentile did not reach the
+third. The bottom half of that scale worked fine. **A scale can be half
+right and still tell the reader nothing where it matters.**
+
+Both are now median / 65th / 75th / 90th, the same shape as the Clears%
+fix. HRWindow%'s cut points are deliberately close together (std 4.19) —
+small differences flip tiers because that is what the league actually
+looks like. A wider, prettier scale would just be the old bug again.
+
+**THREE SCALES, ONE DEFECT, and the pattern is worth naming.** All three
+were round numbers spanning 15-45 (or 10-40) for a per-batted-ball rate.
+None was caught by looking at the site — a uniformly-coloured column
+looks graded. All three were caught by measuring. **Assume any scale not
+in `_LEAGUE_MAX` in test_number_formats.py is unverified.**
+
+The guard now covers six stats and asserts both directions: the bottom
+cut must be beatable and the top cut must be reachable.
+
+### STILL OUTSTANDING
+`wnba_props_probe.py` has not been run — the WNBA section of
+READING_THE_BOARDS still tells the reader to measure it themselves.
+That is the last "measure this" left in the guide.
+
+Also unresolved: `app/views/Daily_13.py`'s module docstring says the
+floor is 60% of games with a hit. `daily_13.MIN_HIT_RATE` is 50.0. The
+page body renders the real constant, so only the docstring lies — but it
+will send someone hunting for a floor that does not exist.
+
+---
+
 ## PICK UP HERE — the WNBA had no measured bar. 2026-08-12 (late)
 
 **3 files (2 new). Suite 88, FAILING: none.** Two controls red.
