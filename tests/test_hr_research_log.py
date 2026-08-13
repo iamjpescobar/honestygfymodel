@@ -41,9 +41,20 @@ _board_mod = types.ModuleType("engines.hr_edge_board")
 _board_mod.get_hr_edge_board = lambda confirmed_only=True: (
     list(BOARD), {"games": 1, "rated": len(BOARD)})
 _sc_mod = types.ModuleType("engines.statcast_engine")
-_sc_mod.get_batter_profile_windowed = lambda pid, **kw: {
-    "Brl %": 12.0, "Brl/PA": 8.5, "ISO": 0.240, "PA": 400,
-    "AvgEV": 91.4, "Blast %": 22.0, "ClearsAnywhere %": 0.7}
+def _profile(pid, window="season", **kw):
+    """Season and short windows must differ, or case 11 proves nothing."""
+    base = {"Brl %": 12.0, "Brl/PA": 8.5, "ISO": 0.240, "PA": 400,
+            "AvgEV": 91.4, "Blast %": 22.0, "ClearsAnywhere %": 0.7,
+            "PullAir %": 15.0, "HH %": 45.0, "FB %": 30.0, "EV90": 106.0,
+            "HRWindow %": 27.0}
+    if window == "l15":
+        return {**base, "Brl/PA": 11.2, "PullAir %": 19.4}   # hot
+    if window == "l5":
+        return {**base, "Brl/PA": 3.1, "PullAir %": 8.0}     # cold
+    return base
+
+
+_sc_mod.get_batter_profile_windowed = _profile
 _pkg = types.ModuleType("engines"); _pkg.__path__ = []
 sys.modules.setdefault("engines", _pkg)
 sys.modules["engines.hr_edge_board"] = _board_mod
@@ -53,8 +64,17 @@ import hr_research_log as hrl  # noqa: E402
 
 tmp = Path(tempfile.mkdtemp())
 hrl.OUT_DIR = tmp / "research"
-hrl.BATTER_DIR = tmp / "batters"
-hrl.BATTER_DIR.mkdir(parents=True)
+# TWO ROOTS, and the reason is the bug that cost a day of grading.
+#
+# precompute writes into build_data/; app/data/ only exists after
+# fetch_data.py unpacks the release asset, which never happens on the CI
+# runner. The grader read app/data/ alone, found nothing on the nightly,
+# and the coverage guard correctly refused to close 270 rows — for a
+# reason nobody could see. The fixture uses a fake first root so the
+# FALLBACK is what these cases exercise.
+_ABSENT = tmp / "build_data_that_does_not_exist"
+hrl.BATTER_DIRS = (_ABSENT, tmp / "batters")
+(tmp / "batters").mkdir(parents=True)
 
 DATE = "2026-08-11"
 TODAY = "2026-08-12"
@@ -69,6 +89,26 @@ assert all(r["hr"] is None and r["graded"] is None for r in rows), (
 assert rows[0]["Brl/PA"] == 8.5, "the floor metrics did not come through"
 print("PASS: every rated bat logged, all three, ungraded")
 
+# --- 1b. SHORT WINDOWS ARE LOGGED BESIDE THE SEASON FIGURES ----------
+#
+# Season alone cannot answer whether season is the right basis. If only
+# the season value is on disk, then in three weeks the log can say
+# whether an 88 beats a 71 and STILL not say whether L15 pull-air beats
+# season pull-air — and there is no way to backfill, because the windows
+# move every night.
+#
+# The fixture deliberately makes l15 hot and l5 cold, so a row that
+# merely copied the season value would fail here.
+row = [r for r in hrl._read_month(DATE) if r["date"] == DATE][0]
+assert row.get("Brl/PA") == 8.5, "the season value was overwritten"
+assert row.get("l15_Brl/PA") == 11.2, f"l15 not logged: {row.get('l15_Brl/PA')}"
+assert row.get("l5_Brl/PA") == 3.1, f"l5 not logged: {row.get('l5_Brl/PA')}"
+assert row.get("l15_PullAir %") == 19.4 and row.get("l5_PullAir %") == 8.0
+assert len({row["Brl/PA"], row["l15_Brl/PA"], row["l5_Brl/PA"]}) == 3, (
+    "the three windows returned the same number — the window argument is "
+    "not reaching the profile call")
+print("PASS: season, L15 and L5 are all logged and are all different")
+
 # --- 2. idempotent per (date, batter) --------------------------------
 assert hrl.log(DATE) == 0, "a second run duplicated the night"
 assert len([r for r in hrl._read_month(DATE) if r["date"] == DATE]) == 3
@@ -80,7 +120,7 @@ def batter_file(pid, dates, hr_dates=()):
     pd.DataFrame({
         "game_date": list(dates),
         "events": ["home_run" if d in hr_dates else "field_out" for d in dates],
-    }).to_parquet(hrl.BATTER_DIR / f"{pid}.parquet")
+    }).to_parquet(hrl.BATTER_DIRS[1] / f"{pid}.parquet")
 
 
 # --- 3. THE COVERAGE GUARD -------------------------------------------
@@ -168,3 +208,51 @@ assert row.get("AvgEV") == 91.4, "AvgEV is not captured"
 # which move as the league does.
 assert row.get("floors_met") == 9 and row.get("floors_total") == 9
 print("PASS: game_pk, edge_raw, AvgEV and floors_met all reach the file")
+
+
+# --- 9. A MISSING ROOT IS NOT A MISSING GAME -------------------------
+#
+# The regression control for the day of grading that was lost. With no
+# readable root at all, every bat looks like "did not play" — and closing
+# a night on that would write 270 permanent zeros against games that were
+# played. The guard must hold, and the reason must be reported.
+hrl.BATTER_DIRS = (_ABSENT, tmp / "also_missing")
+LATER = "2026-08-13"
+BOARD[:] = [{"id": 1, "name": "A", "team": "NYY", "opponent": "BOS",
+             "edge": 90, "edge_raw": 90.1, "hr_score": 80, "bats": "R",
+             "game_pk": 10, "floors_met": 9, "floors_total": 9}]
+hrl.log(LATER)
+hrl.grade("2026-08-14")
+_after = [r for r in hrl._read_month(LATER) if r["date"] == LATER]
+assert _after and all(r["graded"] is None for r in _after), (
+    "a night was closed with no batter files readable at all")
+print("PASS: no readable data root -> the night stays ungraded, not zeroed")
+
+
+# --- 10. THE ROOTS MUST MATCH WHERE PRECOMPUTE WRITES ----------------
+#
+# THE CASE THAT WOULD HAVE CAUGHT THE REAL BUG, and none of the above
+# can: every case here monkeypatches BATTER_DIRS, so a wrong hardcoded
+# path is invisible to them. The defect was never in the logic — it was
+# that the logger read app/data/ while precompute writes build_data/,
+# and app/data/ does not exist on the CI runner at all.
+#
+# A fixture cannot test a constant it replaces. Only comparing the two
+# modules' own constants can.
+import importlib, re as _re  # noqa: E402
+
+# Read precompute's OUT_ROOT from SOURCE rather than importing it —
+# precompute pulls in engines.hr_floors, which needs app/ on sys.path and
+# a streamlit shim. This case is about two literals agreeing; dragging a
+# whole import graph in to compare them is how a test starts failing for
+# reasons that have nothing to do with what it checks.
+_src = open("precompute.py", encoding="utf-8").read()
+_root = _re.search(r'^OUT_ROOT = Path\("([^"]+)"\)', _src, _re.M).group(1)
+_datadir = _re.search(r'^DATA_DIR = OUT_ROOT / "([^"]+)" / "([^"]+)"', _src, _re.M)
+_real = list(importlib.reload(hrl).BATTER_DIRS)
+_want = (Path(_root) / _datadir.group(1) / _datadir.group(2) / "batters").resolve()
+assert any(p.resolve() == _want for p in _real), (
+    f"none of the grader's roots {[str(p) for p in _real]} is where "
+    f"precompute writes batter files ({_want}) — grading will find no "
+    f"data on the nightly runner and silently refuse every night")
+print(f"PASS: a grader root matches precompute's output ({_want.name})")
