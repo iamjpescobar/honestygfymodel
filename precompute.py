@@ -525,6 +525,77 @@ def build_baselines(season_df: pd.DataFrame) -> bool:
     return True
 
 
+# The per-game stat lines the Research page reads.
+#
+# ONE ROW PER PLAYER PER GAME, not per player per threshold. That is the
+# whole design decision here.
+#
+# The obvious build is to pre-bake rates — "cleared 1+ hit in 8 of his
+# last 10" — but a rate needs a THRESHOLD, and baking one in means the
+# page can only ever ask the question this file decided to ask. Storing
+# the game lines instead lets the reader move the threshold live: 1+
+# hit, 2+ hits, 2+ total bases, all off the same table, none of it
+# recomputed nightly when someone changes their mind.
+#
+# It is also small. ~1,400 players x ~110 games x 8 integers is a few
+# megabytes, against a batter-file directory already in the hundreds.
+RATE_STATS = ("hits", "tb", "hr", "singles", "doubles", "triples", "k")
+
+
+def build_player_game_logs(season_df: pd.DataFrame) -> bool:
+    """Per-player per-game batting lines -> player_game_logs.parquet.
+
+    NOT RBIs, and not runs. See the module notes: RBIs need bat_score and
+    post_bat_score, which ENGINE_COLS does not carry yet; runs are not
+    recoverable from a pitch feed at all except on a home run, because
+    nothing in these rows says whether the batter later scored.
+
+    Both are omitted rather than approximated. A "runs" column built by
+    guessing would be the most convincing wrong number on the page.
+    """
+    need = {"batter", "game_date", "events"}
+    if not need.issubset(season_df.columns):
+        print(f"  player game logs: missing {sorted(need - set(season_df.columns))}")
+        return False
+
+    ev = season_df["events"].astype(str)
+    # events is non-null only on the pitch that ENDS a plate appearance,
+    # so counting these rows counts PAs, not pitches.
+    is_pa = _mask(season_df["events"].notna())
+
+    work = pd.DataFrame({
+        "batter": season_df["batter"],
+        "game_date": season_df["game_date"].astype(str).str[:10],
+        "pa": is_pa.astype("int32"),
+        "singles": _mask(ev == "single").astype("int32"),
+        "doubles": _mask(ev == "double").astype("int32"),
+        "triples": _mask(ev == "triple").astype("int32"),
+        "hr": _mask(ev == "home_run").astype("int32"),
+        # Both strikeout events. strikeout_double_play is still a
+        # strikeout for the batter and a prop that pays on it counts it;
+        # dropping it would quietly understate every K rate.
+        "k": _mask(ev.isin(["strikeout", "strikeout_double_play"])).astype("int32"),
+    })
+    work["hits"] = (work["singles"] + work["doubles"]
+                    + work["triples"] + work["hr"])
+    work["tb"] = (work["singles"] + 2 * work["doubles"]
+                  + 3 * work["triples"] + 4 * work["hr"])
+
+    out = (work.groupby(["batter", "game_date"], observed=True)
+               .sum().reset_index())
+    out = out[out["pa"] > 0]
+    # A game with no plate appearance is not a zero — it is an absence,
+    # and a rate that counts it as a miss punishes a hitter for resting.
+    out = out.sort_values(["batter", "game_date"])
+
+    out.to_parquet(DATA_DIR / "player_game_logs.parquet", index=False)
+    _games = out.groupby("batter", observed=True).size()
+    print(f"  player game logs: {len(out):,} lines across "
+          f"{out['batter'].nunique():,} batters "
+          f"(median {int(_games.median())} games each)")
+    return True
+
+
 def build_hr_metrics(season_df: pd.DataFrame) -> bool:
     need = {"batter", "launch_speed", "launch_angle", "events", "type"}
     if not need.issubset(season_df.columns):
@@ -1490,6 +1561,7 @@ def main():
 
     print("Building league-wide HR metrics...")
     hrm_ok = build_hr_metrics(season_df)
+    build_player_game_logs(season_df)
 
     print("Building pitcher allowed-contact percentiles...")
     build_pitcher_allowed_percentiles(season_df)
