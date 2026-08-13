@@ -132,6 +132,23 @@ _KEEP_COLS = [
     "estimated_slg_using_speedangle", "estimated_woba_using_speedangle",
     # count / location
     "balls", "strikes", "plate_x", "plate_z",
+    # THREE COLUMNS ADDED 2026-08-13, none read yet, all needed BEFORE
+    # the next pull because they only populate going forward. Kept in
+    # sync with ENGINE_COLS in precompute.py — tests/test_columns.py
+    # fails if they drift, which is how p_throws once went missing and
+    # left the platoon split dead league-wide with no error.
+    #
+    # swing_length — the other half of Statcast bat tracking, beside
+    #   bat_speed. Both barely move year to year for almost any hitter,
+    #   which is exactly why a CHANGE means something real: an offseason
+    #   rebuild, an injury, aging. A rare "swing changed" flag, not a
+    #   nightly column.
+    #
+    # bat_score / post_bat_score — the batting team's score before and
+    #   after a plate appearance. The delta on the PA-ending pitch IS the
+    #   RBI count. Runs remain unrecoverable from a pitch feed: nothing
+    #   in these rows says whether the batter later crossed the plate.
+    "swing_length", "bat_score", "post_bat_score",
     # opponent ids (BvP support — "pitcher" in a batter's data and vice versa)
     "batter", "pitcher",
 ]
