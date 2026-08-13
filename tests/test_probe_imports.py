@@ -70,3 +70,33 @@ assert "list(players.values())" in _probe, (
     "wnba_props_probe iterates players.json directly again — it will "
     "crash on the id strings the moment it is run")
 print("PASS: both readers unwrap the dict-keyed player payload")
+
+
+# --- mlb_form_probe's imports ----------------------------------------
+#
+# Same exposure as the other probes: it reaches into the engine by name,
+# nothing imports it, and a rename breaks it silently until someone runs
+# it by hand weeks later.
+from engines.statcast_engine import get_batter_profile_windowed  # noqa: E402,F401
+
+_fp = open("mlb_form_probe.py", encoding="utf-8").read()
+assert "window=\"l15\"" in _fp and "window=\"season\"" in _fp, (
+    "the form probe stopped comparing two windows — it would report a "
+    "deviation of zero for everyone")
+for _k in ("Brl/PA", "PullAir %", "AvgEV"):
+    assert _k in _fp, f"the form probe lost {_k}"
+print("PASS: mlb_form_probe's imports and windows resolve")
+
+
+# --- mlb_platoon_probe's imports -------------------------------------
+from engines.statcast_engine import get_batter_iso_vs_hand  # noqa: E402,F401
+
+_pp = open("mlb_platoon_probe.py", encoding="utf-8").read()
+assert 'get_batter_iso_vs_hand(pid, "L")' in _pp and \
+       'get_batter_iso_vs_hand(pid, "R")' in _pp, (
+    "the platoon probe stopped reading both hands — a one-sided split is "
+    "not a split")
+assert "if iso_l is None or iso_r is None" in _pp, (
+    "the probe no longer requires BOTH sides to clear the 40-AB floor; a "
+    "hitter measured against one hand would be reported as having a gap")
+print("PASS: mlb_platoon_probe reads both hands and requires both")
