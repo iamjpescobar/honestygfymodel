@@ -43,6 +43,7 @@ import streamlit as st
 
 from engines.weather_engine import get_todays_games_with_weather
 from engines.roster import (get_live_team_roster, get_confirmed_lineup,
+                           get_last_starting_lineup,
                             prefetch_slate)
 from engines.statcast_engine import (
     _read_local_parquet, _HIT_EVENTS, get_pitcher_advanced_splits,
@@ -248,8 +249,28 @@ def _daily13_json(date_str: str) -> str:
             pool = [p for p in lineup if not p.get("is_pitcher")]
             confirmed_teams += 1
         else:
-            pool = [p for p in (get_live_team_roster(team) or [])
-                    if not p.get("is_pitcher")]
+            # THE TEAM'S LAST STARTING LINEUP, NOT ITS 26-MAN ROSTER.
+            #
+            # The roster fallback put every bench bat and backup catcher
+            # in the pool, and the recency cutoff below is a weak filter:
+            # a backup who started twice last week clears it. So the
+            # board spent slots on players who were never going to be in
+            # the lineup — 16 of 221 picks (7.2%) closed as DNP, James
+            # McCann twice in three days, while HR Edge and Player of the
+            # Day have ZERO DNPs across 96 picks. The difference was
+            # exactly this: they fall back to the last STARTING LINEUP,
+            # which is nine men who start.
+            #
+            # Roster stays as the last resort, because an early-season or
+            # newly-promoted team can have no posted lineup to fall back
+            # on at all, and no board is worse than a board with a
+            # weaker fallback.
+            last, _d, last_ok = get_last_starting_lineup(team)
+            if last_ok and last:
+                pool = [p for p in last if not p.get("is_pitcher")]
+            else:
+                pool = [p for p in (get_live_team_roster(team) or [])
+                        if not p.get("is_pitcher")]
 
         info = opp_info.get(team)
         opp_pid, opp_name, opp_team = info if info else (None, None, None)
