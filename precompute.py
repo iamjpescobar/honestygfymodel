@@ -55,6 +55,22 @@ ENGINE_COLS = [
     "bat_speed", "release_speed",
     "estimated_slg_using_speedangle", "estimated_woba_using_speedangle",
     "balls", "strikes", "plate_x", "plate_z",
+    # THREE COLUMNS ADDED 2026-08-13, none used yet, all needed BEFORE
+    # the next pull because they only populate going forward.
+    #
+    # swing_length — the other half of Statcast's bat tracking, beside
+    #   bat_speed. Bat speed and swing length barely move year to year
+    #   for almost every hitter, which is exactly why a CHANGE in them
+    #   means something real: an offseason rebuild, an injury, aging.
+    #   Intended as a rare "swing changed" flag, not a nightly column.
+    #
+    # bat_score / post_bat_score — the batting team's score before and
+    #   after a plate appearance. The delta on the PA-ending pitch IS the
+    #   RBI count, which is the only one of the requested prop columns
+    #   that was missing for a fixable reason. (Runs are not recoverable
+    #   from a pitch feed at all: nothing in these rows says whether the
+    #   batter later crossed the plate.)
+    "swing_length", "bat_score", "post_bat_score",
 ]
 ID_COLS = ["batter", "pitcher"]
 CATEGORY_COLS = ["type", "events", "description", "bb_type", "stand"]
