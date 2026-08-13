@@ -96,6 +96,13 @@ def has_id(value) -> bool:
     # disagreeing is what poisoned the record before.
 
 
+# A LOOKUP THAT ANSWERED "he wasn't there", as distinct from one that
+# never answered. Both used to be None, so a timed-out request and a
+# real bench night were indistinguishable and both closed as "dnp" after
+# three days. 16 of 221 Daily 13 picks (7.2%) have closed that way, and
+# at least one of them — James McCann — was playing and homering.
+DID_NOT_PLAY = object()
+
 MAX_GRADE_DAYS = 21     # don't chase results older than this
 RETENTION_DAYS = 120    # keep roughly a season of history
 
@@ -145,6 +152,21 @@ def _graded_count(entry):
 
 
 def _mlb_line(pid, date_str):
+    """That batter's line for one date.
+
+    Returns a dict, or None when the API did not answer, or the sentinel
+    DID_NOT_PLAY when it answered and the date genuinely is not in his
+    log. Those two are not the same thing and the caller must not treat
+    them alike — see the finalize branch in grade().
+
+    EVERY stats ENTRY IS READ, NOT stats[0].
+    A player who changes teams mid-season can come back as more than one
+    entry, and this used to take the first and drop the rest — so every
+    game after a trade was invisible and the pick eventually finalized
+    as a DNP for a player who had been in the lineup all along. James
+    McCann appeared ungraded on two separate Daily 13 days while playing
+    (and homering) for Arizona.
+    """
     season = int(date_str[:4])
     try:
         resp = requests.get(MLB_URL.format(pid=pid),
@@ -153,9 +175,10 @@ def _mlb_line(pid, date_str):
                             timeout=15)
         resp.raise_for_status()
         stats = resp.json().get("stats") or []
-        splits = (stats[0].get("splits") if stats else []) or []
     except Exception:
+        # The request failed. NOT evidence about whether he played.
         return None
+    splits = [sp for entry in stats for sp in (entry.get("splits") or [])]
     for sp in splits:
         if sp.get("date") == date_str:
             stat = sp.get("stat", {}) or {}
@@ -167,7 +190,10 @@ def _mlb_line(pid, date_str):
                         "xbh": doubles + triples + hrs}
             except Exception:
                 return None
-    return None
+    # The API answered and this date is not in his log. That IS a
+    # did-not-play, and saying so lets grade() close it immediately
+    # instead of waiting three days for a timeout to look identical.
+    return DID_NOT_PLAY
 
 
 def _mlb_pitching_line(pid, date_str):
@@ -510,6 +536,12 @@ def grade(record):
                 else:
                     line = _mlb_line(pid, date_str)
                 time.sleep(0.12)   # be polite to the public APIs
+                if line is DID_NOT_PLAY:
+                    # The API answered and he is not in the log. A real
+                    # bench night — close it now rather than holding the
+                    # day open for three days waiting on nothing.
+                    pick["result"] = "dnp"
+                    continue
                 if line is None:
                     # NO BOX-SCORE LINE YET — leave this pick UNGRADED.
                     #
@@ -535,8 +567,20 @@ def grade(record):
                     # since posted, so a still-missing line is a real
                     # DNP and we close it rather than leaving the day
                     # open forever. See the constant for the full why.
+                    # STILL "dnp" AFTER THE WINDOW, BUT SAY SO.
+                    #
+                    # Reaching here means the lookup never answered — a
+                    # timeout, a rate limit, a 500 — for three straight
+                    # days. That is a data-collection failure, not a
+                    # bench night, and it should be visible rather than
+                    # buried in the same bucket as a real DNP.
                     if date_str < finalize_before:
                         pick["result"] = "dnp"
+                        pick["dnp_reason"] = "no box-score line after "
+                        pick["dnp_reason"] += f"{FINALIZE_AFTER_DAYS} days"
+                        print(f"  {board} {date_str} {pick.get('name')}: "
+                              f"closed dnp with NO API answer — check "
+                              f"whether he actually played", flush=True)
                     continue
                 stat_key = pick.get("stat") or cfg["stat"]
                 target = pick.get("line")
