@@ -10,6 +10,86 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — every HTML table on the site shared one CSS selector. 2026-08-12 (late)
+
+**3 files (1 new test). Suite 90, FAILING: none.** Three controls red.
+
+### IT WAS NEVER THE COLOURS
+
+Reported as "the WNBA FG%/3P% columns grade backwards": 56.7 FG% rendered
+poor, 30.0 rendered elite, in a table captioned "higher is better".
+
+**They were not inverted.** An inversion is still ordered, and this was
+not — 0.0 rendered good on one team while 33.1 rendered elite on another.
+No value-based theory fits, and three were killed by measurement before
+the real one turned up:
+
+1. Fractions vs percentages — dead. `fg_pct` runs 0.0-100.0 consistently.
+2. Values arriving as strings — real (every stat column is `object`
+   dtype by design, so numbers sit flush under left-aligned headers) but
+   NOT the cause: `to_numeric` parses them, and the debug panel showed
+   `FG%: min=30.0 max=56.7 nulls=0/14`.
+3. The grader itself — dead, and decisively. Fed the exact 14-row Sky
+   frame, the Styler returns ELITE for 56.7 and POOR for 30.0. Correct
+   at both ends.
+
+### THE ACTUAL CAUSE
+
+pandas builds Styler selectors from `table_uuid`:
+
+    #T_{uuid}_row0_col10 { background-image: ... }
+
+`render_html_table` used `f"lc{key}"`, and **key defaults to `""`**. Of
+24 call sites only 9 pass a key at all. Every keyless table emitted CSS
+under `#T_lc_row*_col*` — identical selectors, equal specificity, so in
+one DOM **the last table rendered wins for all of them.**
+
+The WNBA team table is the worst case: it renders inside two nested
+loops (once per prop tab, once per side) under a single hardcoded
+`key="wnba_636"`, so a three-game slate painted dozens of grids all
+claiming the same selectors. Every team's table wore the colours
+computed for whichever rendered last. **GameCard has nine keyless tables
+on one page** with the same collision.
+
+That explains what nothing else could: FG% and 3P% matching each OTHER
+within a row (both taking col10/col11 from a different table where those
+landed in one tier), and MIN looking right most of the time (after the
+same sort, minutes correlate by row position across teams, so the wrong
+colours land plausibly).
+
+**Every colour in every one of these tables has been wrong** — just
+invisible in columns where teams happen to look alike.
+
+### THE FIX
+
+`uid = f"lc{key}_{next(_TABLE_SEQ)}"` — a module-level `itertools.count`.
+
+**`key` is now a readable LABEL, not the uniqueness mechanism.** A
+counter guarantees distinct selectors even when two callers pass the same
+key or none. Uniqueness must not depend on every future caller
+remembering to invent a name; this bug is the proof nobody sustains that.
+The key survives in the uuid so devtools shows
+`lcwnba_Points_away_7` rather than `lc_7`, and the WNBA call site now
+passes `f"wnba_{label}_{side}"`.
+
+No other call site needs touching — the counter covers them all.
+
+### THE DIAGNOSTIC THAT FOUND IT
+
+A temporary expander rendered ON THE PAGE (not to logs) printing
+`df.columns`, dtype, nulls, min/max and samples. Removed in this commit.
+Worth repeating as a technique: reading Render logs from a tablet is
+worse than looking at the table already open, and it took one tap to
+produce the `FG%: min=30.0 max=56.7` line that killed hypothesis 2.
+
+### NEXT
+Unchanged. Research page part 2 (the view, plus deciding where saved
+filter presets live), then WNBA. The per-game log table builds on the
+next nightly. Tomorrow's checkpoint is still
+`hr_research: graded N bat(s) for 2026-08-12`.
+
+---
+
 ## PICK UP HERE — dead code cleared, and what is deliberately NOT fixed. 2026-08-12 (close)
 
 **5 files. Suite 88, FAILING: none.**
