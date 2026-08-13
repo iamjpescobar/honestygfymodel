@@ -69,6 +69,42 @@ from engines.roster import get_live_team_roster, get_active_player_ids
 EASTERN = ZoneInfo("America/New_York")
 
 BVP_CAP, ZONE_CAP, PEN_CAP = 15, 15, 10
+
+# PLATOON — the batter's ISO against the STARTER's hand.
+#
+# pen_context has priced the bullpen's hand mix since it was written.
+# The starting pitcher, whom a hitter faces two or three times, had no
+# platoon term at all, so a hitter with a .300 ISO against right-handers
+# was scored on his blended .205 when he faced a righty.
+#
+# MEASURED 2026-08-12, 340 batters clearing 40 AB against BOTH hands:
+#
+#   |ISO vs RHP - ISO vs LHP|   median 0.058 · 75th 0.094
+#                               90th 0.138 · max 0.300
+#   188 of 340 (55%) gap >= 0.050 · 78 (23%) >= 0.100
+#
+# League median ISO is about .150, so the MEDIAN hitter's gap is roughly
+# 39% of a typical ISO and the 90th nearly doubles it. This is one of
+# the largest single effects in the data, and the board selects from the
+# tail, which is exactly where splits live.
+#
+# The signed median is +0.012 — essentially zero, because righties and
+# lefties cancel. That is the sanity check that says this measures a
+# platoon split and not a systematic bias.
+#
+# BAND: a hitter's ISO against one hand sits half the gap from his
+# neutral, so the 90th-percentile gap of 0.138 is a ~46% swing off a
+# .150 neutral. 0.45 maps that to the full cap: about one hitter in ten
+# reaches an extreme, which is what an extreme should mean. It also
+# lands beside pen_context's 0.40 rather than contradicting it.
+PLATOON_CAP = 8
+PLATOON_BAND = 0.45
+
+# Both sides must clear get_batter_iso_vs_hand's own 40-AB floor, which
+# is why only 340 of 1,390 batters qualify. That is not a gap to paper
+# over: a hitter measured against one hand has ONE NUMBER, not a split,
+# and inventing the other side is how a thin sample becomes a confident
+# adjustment. The term stays silent for him.
 _ZONE_MIN_PITCHER = 200   # pitcher's in-zone pitches to profile him
 _ZONE_MIN_P = 15          # batter pitches in a zone to count it
 _ZONE_MIN_BBE = 5         # batter batted balls in a zone to count it
@@ -552,6 +588,30 @@ def pen_context(pitcher_team: str, starter_pid, batter_id=None):
 # ------------------------------------------------------------------
 # Composition
 # ------------------------------------------------------------------
+def platoon_context(batter_id, p_throws):
+    """(adj, note) for the batter's split against the STARTER's hand.
+
+    Returns (0, None) whenever the split is not measurable on both
+    sides — see PLATOON_CAP above for why a one-sided sample is not a
+    split.
+    """
+    if not batter_id or p_throws not in ("L", "R"):
+        return 0, None
+    iso_l = get_batter_iso_vs_hand(batter_id, "L")
+    iso_r = get_batter_iso_vs_hand(batter_id, "R")
+    if iso_l is None or iso_r is None:
+        return 0, None
+    neutral = (iso_l + iso_r) / 2.0
+    if neutral <= 0:
+        return 0, None
+    facing = iso_l if p_throws == "L" else iso_r
+    swing = (facing - neutral) / (PLATOON_BAND * neutral)
+    adj = max(-1.0, min(1.0, swing)) * PLATOON_CAP
+    note = (f"ISO {facing:.3f} vs {p_throws}HP against {neutral:.3f} "
+            f"neutral (L {iso_l:.3f} / R {iso_r:.3f})")
+    return int(round(adj)), note
+
+
 def edge_components(batter_id, pitcher_id, base_score, pen_adj, pen_note,
                     *, home_team=None, bats=None, temp=None, roof_closed=False,
                     wind=None, arsenal=None, batter_vs_pitch=None,
@@ -617,7 +677,14 @@ def edge_components(batter_id, pitcher_id, base_score, pen_adj, pen_note,
         slot_adj, slot_note = slot_opportunity_adj(batting_order,
                                                    league_pa_per_game())
 
-    total = b_adj + z_adj + pen_adj + ctx_adj + pm_adj + slot_adj
+    # THE STARTER'S HAND. pen_context already prices the bullpen's mix;
+    # this is the arm the hitter faces two or three times. get_pitcher_hand
+    # is the same lookup the arsenal and zone terms use, so a pitcher
+    # whose hand is unknown gets no platoon adjustment rather than a
+    # guessed one.
+    plat_adj, plat_note = platoon_context(batter_id, get_pitcher_hand(pitcher_id))
+
+    total = b_adj + z_adj + pen_adj + ctx_adj + pm_adj + slot_adj + plat_adj
     edge = edge_raw = None
     if base_score is not None:
         # THE UNROUNDED, UNCLAMPED VALUE, carried for SORTING ONLY.
@@ -636,8 +703,9 @@ def edge_components(batter_id, pitcher_id, base_score, pen_adj, pen_note,
         # is part of why one lineup can appear to take over the top of
         # the board.
         #
-        # The clamp compounds it: the adjustments span +/-67 (bvp 15,
-        # zone 15, pen 10, park 10, temp 4, pitch 8, slot 5), so a strong
+        # The clamp compounds it: the adjustments span +/-75 (bvp 15,
+        # zone 15, pen 10, park 10, temp 4, pitch 8, slot 5, platoon 8),
+        # so a strong
         # bat in a strong spot pins at 100 and real separation at the
         # very top is erased. Sorting on this value keeps the separation
         # while the displayed number stays the honest bounded one.
@@ -649,4 +717,5 @@ def edge_components(batter_id, pitcher_id, base_score, pen_adj, pen_note,
             "pen_adj": pen_adj, "pen_note": pen_note,
             "ctx_adj": ctx_adj, "ctx_notes": ctx_notes,
             "pitch_adj": pm_adj, "pitch_note": pm_note,
-            "slot_adj": slot_adj, "slot_note": slot_note}
+            "slot_adj": slot_adj, "slot_note": slot_note,
+            "platoon_adj": plat_adj, "platoon_note": plat_note}
