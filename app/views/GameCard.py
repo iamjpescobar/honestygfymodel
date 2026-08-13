@@ -35,26 +35,7 @@ from engines.weather_icons import (
     weather_icon, wind_arrow, temp_icon, park_icon,
 )
 from engines.park_weather import get_park_forecast
-try:
-    from engines.slam_engine import slam_from_profile
-except ImportError:
-    # TOURNIQUET 2026-08-13 — TEMPORARY, DELETE ONCE SLAM IS RESTORED.
-    #
-    # slam_engine.py was overwritten in the 2026-08-13 commit with a
-    # copy of statcast_engine.py (the two files are now identical apart
-    # from three added Statcast columns). slam_from_profile was not
-    # renamed — it is GONE, along with the rest of the SLAM scoring. It
-    # has to come back out of git history; it cannot be reconstructed
-    # from anything left in the repo.
-    #
-    # Returning {} means slam_score is None, which the code below
-    # already renders as an em dash rather than 0.0 — the SLAM column
-    # and the Matchup tier go blank. Every other panel on the card is
-    # untouched. A blank cell is the honest reading here; a 0.0 or a
-    # "Weak" tier would be a fabricated number, which this repo does
-    # not ship.
-    def slam_from_profile(profile):
-        return {}
+from engines.slam_engine import slam_from_profile
 from engines.top_plays import rank_batters, confidence_tier, matchup_tier
 from engines.team_abbreviations import team_abbr
 from engines.matchup_grades import grade_matchup
@@ -1804,11 +1785,11 @@ with content_col:
                     # window.
                     slam = _sb["final"]
                     # Matchup tier is DERIVED from SLAM, so a missing
-                    # SLAM has to blank the tier too. Feeding 0.0 in
-                    # printed "Weak" for a bat that was never measured —
-                    # tolerable when it hit one hitter with no expected
-                    # stats, indefensible while the engine is down and
-                    # it would label the entire board Weak.
+                    # SLAM has to blank the tier too. Feeding 0.0 into
+                    # matchup_tier returned "Weak" — a fabricated read
+                    # on a bat that was never measured, sitting in the
+                    # same column as tiers that were. The em dash two
+                    # lines up already made that call for SLAM itself.
                     tier = matchup_tier(slam) if slam is not None else None
                     r["slam_base"], r["slam_adj"] = _sb["base"], _sb["adj"]
                     conf_label, sample = confidence_tier(profile.get("BBE", 0))
