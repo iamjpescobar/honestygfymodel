@@ -82,6 +82,16 @@ else:
             f'TOP HOME RUN PLAYS \u2014 {meta["date"]}</div>',
             unsafe_allow_html=True)
 
+        _cg, _tg = meta.get("confirmed_games", 0), meta.get("total_games", 0)
+        if _tg:
+            st.caption(
+                f"**{_cg} of {_tg} lineups confirmed.** Games without a "
+                f"posted card are rated from that team's last starting "
+                f"lineup, with anyone since placed on the IL removed, and "
+                f"are marked *projected* below. Those rows can still "
+                f"change \u2014 a projected bat may not be in tonight's "
+                f"lineup at all."
+            )
         st.caption(
             f"At most {GAME_CAP} bats per GAME. Park, temperature, wind and "
             f"the opposing arsenal lift a whole lineup at once, so without "
@@ -126,6 +136,15 @@ else:
                 # 33 more miss by exactly one. Deleting the hitter at
                 # 10.9% barrel with everything else elite is a cliff.
                 # See engines/hr_floors.
+                #
+                # WHICH LINEUP THIS ROW RESTS ON. A bat from a posted
+                # card and a bat from the team's last lineup are not the
+                # same claim, and the board used to hide the difference
+                # by dropping the second entirely. A column rather than a
+                # footnote because it changes how much weight a row
+                # deserves: a projected bat may not be in tonight's
+                # lineup at all.
+                "Lineup": "CONFIRMED" if r.get("confirmed") else "projected",
                 "Floors": (f'{r.get("floors_met")}/{r.get("floors_total")}'
                            if r.get("floors_met") is not None else None),
                 # THE DENOMINATOR. Inclusion is 50 PA and the scale core
