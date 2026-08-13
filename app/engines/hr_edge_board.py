@@ -121,10 +121,11 @@ def _lineup_for(game_pk, side, team_name):
 
 
 @st.cache_data(ttl=1800, max_entries=4, show_spinner=False)
-def get_hr_edge_board(_date_str=None, confirmed_only=True):
+def get_hr_edge_board(_date_str=None, confirmed_only=False):
     """(rows, meta) — every batter on the slate, ranked by HR Edge.
 
-    confirmed_only=True restricts to games with a posted lineup, which
+    confirmed_only=False by DEFAULT — see the note at the guard below.
+    Passing True restricts to games with a posted lineup, which
     is what calibration should log: a pick made off a projected lineup
     isn't the pick the site would have shown, and grading it would
     measure something the model never actually claimed.
@@ -183,6 +184,23 @@ def get_hr_edge_board(_date_str=None, confirmed_only=True):
             if not batters:
                 skipped.append(f"{batting_team} (no lineup)")
                 continue
+            # PROJECTED LINEUPS STAY ON THE BOARD, BADGED.
+            #
+            # confirmed_only used to default True, so before a lineup
+            # posted the game simply was not there. At 1 PM on a 15-game
+            # slate that meant a two-game board — and because the list
+            # was rebuilt from scratch at 5 and 7 PM as lineups arrived,
+            # it reordered wholesale under anyone reading it.
+            #
+            # _lineup_for already falls back to the team's last posted
+            # lineup and already drops anyone since placed on the IL, and
+            # it reports confirmed=False upward precisely so the weaker
+            # claim stays visible. Dropping those games threw away good
+            # information to avoid labelling it.
+            #
+            # Now every game is rated from the morning and the row says
+            # which lineup it rests on. The board REFINES through the day
+            # instead of appearing.
             if confirmed_only and not confirmed:
                 skipped.append(f"{batting_team} (lineup not confirmed)")
                 continue
@@ -269,7 +287,13 @@ def get_hr_edge_board(_date_str=None, confirmed_only=True):
                              r.get("hr_threat") or 0), reverse=True)
     meta = {"date": date_str, "games": len(games), "rated": len(rows),
             "skipped": skipped, "savant_error": savant_error,
-            "confirmed_only": confirmed_only}
+            "confirmed_only": confirmed_only,
+            # How much of the board rests on a real posted card. The page
+            # shows this so "6 of 15 lineups confirmed" is readable at a
+            # glance rather than inferred from a column.
+            "confirmed_games": len({r.get("game_pk") for r in rows
+                                    if r.get("confirmed")}),
+            "total_games": len({r.get("game_pk") for r in rows})}
     return rows, meta
 
 
@@ -314,7 +338,7 @@ def cap_per_game(rows, cap=GAME_CAP):
     return kept, overflow
 
 
-def top_hr_edge(n=5, confirmed_only=True, cap_games=True):
+def top_hr_edge(n=5, confirmed_only=False, cap_games=True):
     """The slate's top n by HR Edge — the real board, all games.
 
     cap_games=True by default, and that INCLUDES the calibration record.
