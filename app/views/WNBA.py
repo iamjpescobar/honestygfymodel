@@ -994,36 +994,6 @@ def _render_slate():
                             # floating/misaligned column bug. So: hand the
                             # widget the Styler and NOTHING else that touches
                             # column layout.
-                            # TEMPORARY DIAGNOSTIC — delete once the FG%/3P%
-                            # colouring is understood.
-                            #
-                            # Those two columns grade backwards on screen:
-                            # 56.7 FG% renders poor and 30.0 renders elite, in
-                            # a table whose caption says higher is better. The
-                            # grader itself is NOT the cause — given the same
-                            # values, _magnitude_column produces identical
-                            # styles for MIN and FG%, and MIN is correct here.
-                            #
-                            # So the question is what actually reaches these
-                            # two columns. Rendered on the page rather than
-                            # printed to logs on purpose: reading Render logs
-                            # from a tablet is worse than looking at the table
-                            # that is already open.
-                            with st.expander("debug: FG%/3P% columns", expanded=False):
-                                st.write("columns:", list(df.columns))
-                                for _c in ("FG%", "3P%", "MIN"):
-                                    if _c not in df.columns:
-                                        st.write(f"{_c}: NOT IN FRAME")
-                                        continue
-                                    _s = df[_c]
-                                    st.write(
-                                        f"{_c}: dtype={_s.dtype} · "
-                                        f"nulls={int(_s.isna().sum())}/{len(_s)} · "
-                                        f"min={pd.to_numeric(_s, errors='coerce').min()} · "
-                                        f"max={pd.to_numeric(_s, errors='coerce').max()} · "
-                                        f"sample={list(_s.head(4))}"
-                                    )
-
                             styled = style_stat_table(
                                 df, favor_high=["MIN", "Season", "L5", "L10",
                                                 "vs OPP", "FG%", "3P%"],
@@ -1039,8 +1009,14 @@ def _render_slate():
                             # table was missed. Player name already
                             # identifies the row, so the number adds
                             # nothing but the scrolling artifact.
+                            # Key names the table; uniqueness comes from
+                            # render_html_table's own counter. Named
+                            # anyway so the selectors are readable in
+                            # devtools — "lcwnba_Points_away_7" says
+                            # which grid you are looking at, "lc_7" does
+                            # not.
                             render_html_table(styled,
-                                key="wnba_636")
+                                key=f"wnba_{label}_{side}")
                             # Every other gradient table on the site says
                             # what its colours mean; this one didn't, and
                             # it is the densest table we render. Five
