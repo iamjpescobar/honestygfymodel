@@ -6,9 +6,11 @@
                  from 'engines.slam_engine'
 
 app/engines/slam_engine.py was overwritten with a copy of
-statcast_engine.py, which deleted slam_from_profile outright.
-GameCard.py still imported it, so the Game Card page raised at import
-time and the break was found by a user rather than by the suite.
+statcast_engine.py in dd9f481, which deleted slam_from_profile
+outright. GameCard.py still imported it, so the Game Card page raised at
+import time and the break was found by a user rather than by the suite.
+The engine was restored from 95614a4; this is the control that would
+have caught it before deploy.
 
 Two neighbours cover the adjacent cases and neither covers this one.
 test_view_imports.py checks that every name a view CALLS is bound
@@ -25,10 +27,13 @@ streamlit and no data archive, and costs nothing.
 
 TOURNIQUETS
 An import wrapped in `try: ... except ImportError:` with a fallback is
-deliberate and temporary. Those are listed below rather than ignored,
-and the test fails BOTH ways: an unlisted one appears (someone papered
-over a break quietly), or a listed one starts resolving again (the real
-fix landed and the stub is now dead code returning fake emptiness).
+deliberate and temporary, and must be listed in KNOWN_TOURNIQUETS below
+rather than ignored. The list is empty and should stay that way. The
+test fails BOTH ways: an unlisted fallback appears (someone papered over
+a break quietly, and a stub returning empty data looks exactly like
+measured data that happens to be missing), or a listed one starts
+resolving again (the real fix landed and the stub is now dead code in
+front of it).
 """
 import ast
 import sys
@@ -42,8 +47,10 @@ ENGINES = ROOT / "app" / "engines"
 # Delete an entry the moment the underlying name is restored; the test
 # will tell you to.
 KNOWN_TOURNIQUETS = {
-    ("GameCard.py", "engines.slam_engine", "slam_from_profile"):
-        "slam_engine.py was clobbered 2026-08-13; restore from git history",
+    # ("GameCard.py", "engines.slam_engine", "slam_from_profile"):
+    #     "slam_engine.py was clobbered 2026-08-13" — restored from
+    #     95614a4 the same night, so no tourniquet ever shipped. Left
+    #     here as the worked example of what an entry looks like.
 }
 
 
