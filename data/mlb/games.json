@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-08-13 13:53",
+  "generated_at_et": "2026-08-13 17:38",
   "slate_date_et": "2026-08-13",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -56,7 +56,7 @@
       "edge_signals": [
         "HR/9: edge Chicago White Sox (1.31 vs 0.74)"
       ],
-      "proj_total": 9.1
+      "proj_total": 9.2
     },
     {
       "game_pk": 823829,
@@ -87,7 +87,7 @@
         "Starters' avg WHIP 1.33 (high)",
         "Starters' avg HR/9 1.23 (high)"
       ],
-      "proj_total": 9.4
+      "proj_total": 9.5
     },
     {
       "game_pk": 823508,
@@ -121,7 +121,7 @@
         "Starters' avg HR/9 0.745 (low)",
         "Starters' avg SLG against 0.324 (low)"
       ],
-      "proj_total": 7.4
+      "proj_total": 7.3
     },
     {
       "game_pk": 822776,
@@ -131,9 +131,9 @@
       "home_pitcher": "Max Scherzer",
       "venue": "Rogers Centre",
       "game_time": "2026-08-13T19:07:00Z",
-      "weather_condition": "Sunny",
-      "weather_temp": "78",
-      "weather_wind": "7 mph, Out To CF",
+      "weather_condition": "Partly Cloudy",
+      "weather_temp": "83",
+      "weather_wind": "13 mph, L To R",
       "park_factor": 101,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -149,13 +149,14 @@
         "SLG against: edge Boston Red Sox (0.374 vs 0.491)"
       ],
       "ou_lean": "Over",
-      "ou_grade": "B",
+      "ou_grade": "A",
       "ou_signals": [
+        "Temp 83F (carry weather)",
         "Starters' avg WHIP 1.32 (high)",
         "Starters' avg HR/9 1.78 (high)",
         "Starters' avg SLG against 0.432 (high)"
       ],
-      "proj_total": 7.7
+      "proj_total": 7.6
     },
     {
       "game_pk": 822696,
@@ -165,19 +166,19 @@
       "home_pitcher": "Cade Cavalli",
       "venue": "Nationals Park",
       "game_time": "2026-08-13T20:05:00Z",
-      "weather_condition": "Partly Sunny",
-      "weather_temp": 91,
-      "weather_wind": "NW 7 mph",
+      "weather_condition": "Partly Cloudy",
+      "weather_temp": "89",
+      "weather_wind": "8 mph, In From LF",
       "park_factor": 102,
       "park_verified": true,
-      "weather_source": "nws_forecast",
-      "wind_adj": -1.1,
-      "wind_note": "7 mph crosswind (-1.1)",
+      "weather_source": "mlb_posted",
+      "wind_adj": -2,
+      "wind_note": "wind in 8 mph (-2)",
       "ou_lean": "Over",
       "ou_grade": "B",
       "ou_signals": [
         "Park factor 102 (hitter-friendly)",
-        "Temp 91F (carry weather)",
+        "Temp 89F (carry weather)",
         "Starters' avg WHIP 1.36 (high)"
       ],
       "proj_total": 11.3
@@ -190,14 +191,14 @@
       "home_pitcher": "Taj Bradley",
       "venue": "Field of Dreams",
       "game_time": "2026-08-13T23:30:00Z",
-      "weather_condition": null,
-      "weather_temp": null,
-      "weather_wind": null,
+      "weather_condition": "Partly Cloudy",
+      "weather_temp": "73",
+      "weather_wind": "10 mph, Out To CF",
       "park_factor": 103,
       "park_verified": true,
-      "weather_source": null,
-      "wind_adj": 0,
-      "wind_note": null,
+      "weather_source": "mlb_posted",
+      "wind_adj": 3,
+      "wind_note": "wind out 10 mph (+3)",
       "edge_net": 4,
       "edge_lean": "Minnesota Twins",
       "edge_grade": "A",
@@ -226,7 +227,7 @@
       "venue": "Angel Stadium",
       "game_time": "2026-08-14T02:07:00Z",
       "weather_condition": "Mostly Cloudy",
-      "weather_temp": 74,
+      "weather_temp": 75,
       "weather_wind": "SW 5 mph",
       "park_factor": 100,
       "park_verified": true,
