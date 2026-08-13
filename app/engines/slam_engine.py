@@ -1,128 +1,1634 @@
-"""
-SLAM — real, live power-quality signal for a batter, built entirely on
-MLB's own published expected stats (xSLG, xwOBA), not this app's own
-invented weighting of raw inputs.
+import pandas as pd
+import numpy as np
+import streamlit as st
+from datetime import datetime
+from zoneinfo import ZoneInfo
+# pybaseball is imported LAZILY, inside the three functions that use it.
+#
+# `import pybaseball` runs pybaseball/__init__.py, which imports
+# pybaseball.plotting, which imports matplotlib. Measured on this
+# requirements set: +0.5s to cold start and +60MB RSS, for a plotting
+# stack this app never calls.
+#
+# That is a quarter of the headroom on Render's 512MB free tier, and it
+# was being paid on every boot by every process — including the many
+# where pybaseball is never called at all. In production the nightly
+# parquets serve every read; these three functions are the fallback for
+# when a player's file is missing, which is the exception, not the path.
+#
+# _pull_and_trim, get_player_id and the percentile loader in
+# engines/savant_leaderboard.py all import at call time instead. Nothing
+# about their behaviour changes — the first fallback call pays the
+# import once, and the module is cached from then on.
 
-Why xSLG/xwOBA instead of hand-blending Brl%/HH%/PullAir%/LD%: those
-raw inputs are all real, but there's no published, defensible formula
-for combining them into one number — any set of weights we pick
-ourselves is a modeling choice, not a measured fact. xSLG and xwOBA
-ARE that already-solved problem: MLB computes them, they're
-peer-reviewed-adjacent (used across the industry), and adopting them
-directly means SLAM's core number is never something we invented.
 
-Computed across three separate real recency windows — last 25 PA,
-last 25 BBE, last 25 games — shown SEPARATELY, not averaged together.
-Averaging them would hide exactly the signal a real bettor wants: a
-batter who's mashing in his last 25 BBE but whose last-25-game number
-is still dragged down by a cold stretch earlier in that window.
-"""
-from engines.statcast_engine import get_batter_profile_windowed
+def _statcast_batter():
+    from pybaseball import statcast_batter
+    return statcast_batter
 
-SLAM_WINDOWS = [
-    ("l25_pa", "Last 25 PA", "l25", "pa"),
-    ("l25_bbe", "Last 25 BBE", "l25", "bbe"),
-    ("l25_games", "Last 25 Games", "l25", "games"),
+
+def _statcast_pitcher():
+    from pybaseball import statcast_pitcher
+    return statcast_pitcher
+
+DEFAULT_START_DATE = "2026-03-01"
+
+
+_EASTERN = ZoneInfo("America/New_York")
+
+
+def _today_str():
+    """Today in EASTERN time, not the server's.
+
+    Render runs in UTC, so date.today() rolls over at 8pm ET — every
+    evening, this returned TOMORROW. It's used as the end_date of a live
+    Statcast pull, where a day in the future is merely wasteful rather
+    than wrong, but the rest of the app (calibration, trends, bvp,
+    slate dates) already anchors to America/New_York and this was the
+    straggler. One clock across the app is worth more than the bug it
+    happens to avoid today."""
+    return datetime.now(_EASTERN).strftime("%Y-%m-%d")
+
+
+# ============================================================
+# SHARED CACHED FETCH — the single source of raw Statcast data
+#
+# Previously, every profile function (batter profile, windowed
+# profile, vs-pitch-types, pitcher profile, advanced splits x3)
+# did its OWN full-season network pull of the SAME player's data.
+# One page load could download the same data 3-6 times, at 1-3
+# seconds each. Now each player's data is pulled from the network
+# exactly once, trimmed to only the columns the formulas use, and
+# downcast to smaller dtypes — then every function derives from
+# that one cached copy.
+#
+# All stat formulas below are byte-for-byte unchanged.
+# ============================================================
+
+# Only the columns the derivations below actually read.
+# Raw Statcast returns ~90+ columns; this is the working set.
+# HR/FB sample floor — the stat is famously unstable, so it doesn't
+# report (or score) below this many fly balls in the window.
+_HRFB_MIN_FB = 25
+
+# ------------------------------------------------------------
+# HOME-RUN LAUNCH WINDOW
+#
+# NOT the 8-32 "sweet spot" band. Sweet spot is MLB's definition for
+# overall PRODUCTION (wOBA) and it starts at 8 degrees, which is a line
+# drive — those essentially never leave the yard. Using it in a home-run
+# model rewards contact hitters who don't hit homers.
+#
+# 20-40 is the home-run band: ~94% of MLB home runs land in it. The
+# absolute physical floor is nearer 16 (the lowest Statcast has ever
+# tracked is a 13.5-degree Stanton shot), but homers down there need
+# 110+ mph to happen at all — so a 16-degree floor mostly admits line
+# drives that only leave when exit velocity is elite, and exit velocity
+# is ALREADY measured by Brl%/HH%/EV90. Widening the floor would just
+# re-count power through an angle stat.
+#
+# Held at 20, this metric measures ONE thing cleanly: does his swing
+# plane put the ball in the home-run window, independent of how hard he
+# hits it. That is real information next to barrel rate, which requires
+# both at once.
+_HR_LA_MIN = 20
+_HR_LA_MAX = 40
+
+# 90th-percentile exit velocity replaces Max EV as the scored power
+# ceiling. Max EV is a sample of ONE — the single hardest ball he hit
+# all season, one lucky swing away from being wrong, and it never
+# regresses. EV90 is built from the top ~10% of his batted balls, so
+# it measures the same raw-power ceiling off dozens of observations and
+# stabilizes in a fraction of the sample. Max EV is still computed and
+# returned for DISPLAY (it is a genuinely interesting number), it just
+# does not feed any score.
+_EV_PERCENTILE = 90
+
+_KEEP_COLS = [
+    # identity / ordering (recency windows need these)
+    "game_date", "game_pk", "at_bat_number", "pitch_number",
+    # outcomes
+    "type", "events", "description", "zone",
+    # pitch + batter handedness
+    # p_throws is the PITCHER's throwing hand, recorded on every row.
+    # It was missing from this list, which meant _trim_and_downcast
+    # dropped it on both the parquet path and the live path — so
+    # get_batter_iso_vs_hand() below hit its `"p_throws" not in
+    # df.columns` guard on EVERY call and returned None for every
+    # batter, league-wide, silently. The Game Card's platoon column was
+    # dead the whole time. It's also the prerequisite for any real
+    # platoon-split work in the scoring rework.
+    "pitch_type", "stand", "p_throws",
+    # home_team identifies the PARK a batted ball was hit in. Required to
+    # measure HR park factors from the data itself instead of hardcoding
+    # a table of numbers nobody can verify.
+    "home_team",
+    # batted ball
+    "bb_type", "launch_speed", "launch_angle", "launch_speed_angle",
+    "hc_x", "hc_y",
+    # bat tracking (Blast %)
+    "bat_speed", "release_speed",
+    # expected stats
+    "estimated_slg_using_speedangle", "estimated_woba_using_speedangle",
+    # count / location
+    "balls", "strikes", "plate_x", "plate_z",
+    # THREE COLUMNS ADDED 2026-08-13, none read yet, all needed BEFORE
+    # the next pull because they only populate going forward. Kept in
+    # sync with ENGINE_COLS in precompute.py — tests/test_columns.py
+    # fails if they drift, which is how p_throws once went missing and
+    # left the platoon split dead league-wide with no error.
+    #
+    # swing_length — the other half of Statcast bat tracking, beside
+    #   bat_speed. Both barely move year to year for almost any hitter,
+    #   which is exactly why a CHANGE means something real: an offseason
+    #   rebuild, an injury, aging. A rare "swing changed" flag, not a
+    #   nightly column.
+    #
+    # bat_score / post_bat_score — the batting team's score before and
+    #   after a plate appearance. The delta on the PA-ending pitch IS the
+    #   RBI count. Runs remain unrecoverable from a pitch feed: nothing
+    #   in these rows says whether the batter later crossed the plate.
+    "swing_length", "bat_score", "post_bat_score",
+    # opponent ids (BvP support — "pitcher" in a batter's data and vice versa)
+    "batter", "pitcher",
 ]
 
-
-# HR/FB scoring anchors — shared with engines/top_plays.py so both
-# scores treat the stat identically.
-# HR/FB scoring anchor — MEASURED, not asserted.
-#
-# This was a hardcoded 11.5. Close to reality, but typed in rather than
-# measured, so it silently went stale as the league moved and nothing in
-# the app could tell. precompute.build_baselines now measures HR per FLY
-# BALL across the whole league each night and ships it in baselines.json.
-#
-# The literal survives only as a fallback for a build that predates the
-# measurement, so the score never breaks — it just uses the old anchor
-# until the next nightly, and says so in the docstring rather than
-# pretending the number is measured.
-_LEAGUE_HRFB_FALLBACK = 11.5
+# Repeated-string columns that are safe to store as category
+# (every comparison below uses ==, .isin(), or .dropna(), all of
+# which behave identically on categoricals).
+_CATEGORY_COLS = ["type", "events", "description", "bb_type", "stand"]
 
 
-def _league_hrfb() -> float:
-    """League HR/FB percent from the nightly build, else the fallback."""
+def _trim_and_downcast(df: pd.DataFrame) -> pd.DataFrame:
+    """Keeps only needed columns and shrinks dtypes. Values are
+    untouched — float32 has far more precision than any rounded
+    percentage here needs."""
+    if df is None or df.empty:
+        return pd.DataFrame()
+
+    keep = [c for c in _KEEP_COLS if c in df.columns]
+    df = df[keep].copy()
+
+    for c in df.select_dtypes(include="float64").columns:
+        df[c] = df[c].astype("float32")
+
+    for c in _CATEGORY_COLS:
+        if c in df.columns:
+            df[c] = df[c].astype("category")
+
+    return df
+
+
+def _pull_and_trim(func, player_id, start_date, end_date):
+    """The actual network pull + trim. Returns (df, error_message).
+    error_message is None on success — including when a player
+    legitimately has zero rows (e.g. hasn't played yet this season) —
+    so callers can tell "no data available" apart from "the pull
+    actually failed."""
+    if player_id is None:
+        return pd.DataFrame(), "No player ID could be resolved for this name — check spelling or that pybaseball's lookup table has them."
+
     try:
-        import json as _j
-        from pathlib import Path as _P
-        _p = (_P(__file__).resolve().parent.parent
-              / "data" / "statcast" / "baselines.json")
-        v = (_j.loads(_p.read_text()) or {}).get("hrPerFlyBall")
-        return float(v) if v else _LEAGUE_HRFB_FALLBACK
+        df = func(start_date, end_date, player_id)
+        if df is None:
+            return pd.DataFrame(), "Statcast returned no response for this player/date range."
+        return _trim_and_downcast(df), None
+    except Exception as e:
+        return pd.DataFrame(), f"Statcast pull failed: {e}"
+
+
+# ------------------------------------------------------------
+# PRECOMPUTED DATA (parquet-first, live fallback)
+#
+# The nightly pipeline (precompute.py + GitHub Actions) fetches the
+# same real Baseball Savant data ahead of time and ships it with the
+# deploy as data/statcast/{batters|pitchers}/{mlbam_id}.parquet.
+# If a player's file exists, we read it from disk (milliseconds, no
+# memory spike). If it doesn't — new call-up, pipeline not run yet —
+# we fall back to the exact live pull the app has always done.
+# ------------------------------------------------------------
+
+from pathlib import Path
+import json as _json
+
+_DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "statcast"
+
+
+def _read_local_parquet(kind: str, player_id):
+    """Returns the player's precomputed dataframe, or None if unavailable."""
+    try:
+        pid = int(player_id)
+    except (TypeError, ValueError):
+        return None
+    path = _DATA_DIR / kind / f"{pid}.parquet"
+    if not path.exists():
+        return None
+    try:
+        # Trim + downcast on read as well: the nightly pipeline already
+        # writes lean files, but this guarantees nothing full-width ever
+        # enters the cache — e.g. a parquet from an older pipeline run,
+        # or a future pipeline edit that drifts out of sync with
+        # _KEEP_COLS. Costs nothing when the file is already trimmed.
+        return _trim_and_downcast(pd.read_parquet(path))
     except Exception:
-        return _LEAGUE_HRFB_FALLBACK
-_HRFB_WEIGHT = 0.15
+        return None
 
 
-def slam_from_profile(profile: dict) -> dict:
+# ------------------------------------------------------------
+# xHR — expected home runs from batted-ball trajectory
+# ------------------------------------------------------------
+# Reads the empirical HR-probability grid the nightly pipeline builds
+# from the league's own batted balls (see build_xhr_table in
+# precompute.py). Each of a player's batted balls is looked up by its
+# exit-velocity/launch-angle bucket and contributes that bucket's real
+# home-run rate; the sum is his xHR.
+#
+# The number that matters is xHR MINUS actual HR. A hitter under his
+# xHR has been hitting home-run trajectories that aren't leaving —
+# unfriendly parks, dead air, warning-track outs — and that gap tends
+# to close. On a pitcher's own rows the identical calculation gives
+# xHR ALLOWED, which is the same regression signal from the other side.
+#
+# Park-neutral by construction: the grid pools all 30 parks, so tonight's
+# venue belongs in the matchup layer and is not baked in here.
+#
+# Returns (None, None) when the table isn't present — an app running on
+# live pulls before the first pipeline run shows "not available" rather
+# than a fabricated zero.
+_EV_BIN, _LA_BIN = 2.0, 2.0
+
+
+@st.cache_data(ttl=21600, max_entries=1, show_spinner=False)
+def _xhr_table():
+    """{(ev_bin, la_bin): hr_prob} or None when unavailable."""
+    path = _DATA_DIR / "xhr_table.parquet"
+    if not path.exists():
+        return None
+    try:
+        t = pd.read_parquet(path)
+        return {(float(r.ev_bin), float(r.la_bin)): float(r.hr_prob)
+                for r in t.itertuples(index=False)}
+    except Exception:
+        return None
+
+
+@st.cache_data(ttl=21600, max_entries=1, show_spinner=False)
+def _clears_anywhere_buckets():
+    """Set of (ev_bin, la_bin) that leave ALL 30 parks, or None.
+
+    Derived nightly from the league's own batted balls — see
+    build_xhr_table. None (not an empty set) when the column is absent,
+    because an older parquet from before this shipped means "we cannot
+    tell", and the metric must read N/A rather than 0.0. That distinction
+    is the same one the `empty` dict in _compute_batted_ball_metrics
+    exists to protect.
     """
-    Pure computation: real SLAM score from an ALREADY-FETCHED windowed
-    batter profile (see get_batter_profile_windowed). Split out from
-    compute_slam_window() so a caller who already has the profile
-    (e.g. the Lineup table, which needs the same profile for its raw
-    stat columns) doesn't have to pull the same live data twice.
+    path = _DATA_DIR / "xhr_table.parquet"
+    if not path.exists():
+        return None
+    try:
+        t = pd.read_parquet(path)
+        if "clears_anywhere" not in t.columns:
+            return None
+        q = t[t["clears_anywhere"].astype(bool)]
+        return {(float(r.ev_bin), float(r.la_bin)) for r in q.itertuples(index=False)}
+    except Exception:
+        return None
+
+
+# ------------------------------------------------------------
+# LEAGUE ANCHORS
+#
+# The numbers that define "league average = 50" for HRIntent and
+# HRThreat. Measured nightly by build_hr_metrics over the same qualified
+# population the percentiles are built on, and read here so the app and
+# the build cannot drift apart — they used to be typed into both files
+# separately.
+#
+# The literals below are a FALLBACK for an archive published before the
+# anchors shipped, not a default. They are the values that were
+# hardcoded, kept only so an old archive still renders something rather
+# than dividing by nothing.
+_ANCHOR_FALLBACK = {
+    "bat_speed": 71.0,
+    "hr_window_pct": 30.0,
+    "pull_air_pct": 18.0,
+    "brl_per_pa": 6.0,
+    # 0.5, not the 4.0 originally typed here. Contact that clears every
+    # park is far rarer than that guess assumed — the first nightly to
+    # measure the contour found only a couple of qualifying buckets in
+    # the whole league. A 4.0 anchor scored every hitter alike near zero
+    # and turned a real signal into noise.
+    "clears_anywhere_pct": 0.5,
+}
+
+
+@st.cache_data(ttl=21600, max_entries=1, show_spinner=False)
+def _hr_anchors():
+    """Measured league anchors, falling back per-key to the old literals."""
+    out = dict(_ANCHOR_FALLBACK)
+    try:
+        raw = _json.loads((_DATA_DIR / "baselines.json").read_text())
+        for k, v in (raw.get("hr_anchors") or {}).items():
+            if isinstance(v, (int, float)) and v and v > 0:
+                out[k] = float(v)
+    except Exception:
+        pass
+    return out
+
+
+def clears_anywhere_pct(df: pd.DataFrame):
+    """Share of batted balls on a trajectory that clears any park, or None.
+
+    THE LAUNCH FLOOR, MEASURED. No single launch angle clears all 30
+    fences — the angle needed falls as exit velocity rises — so this is
+    a curve read off the league's own outcomes rather than a constant.
+    See build_xhr_table for how the contour is derived and verified
+    against the number of parks that actually saw those balls leave.
+
+    Distinct from HRWindow %, which is angle-only and deliberately blind
+    to how hard the ball was hit; that independence is what makes it
+    useful next to Brl%. This one requires BOTH axes at once and answers
+    a different question: not "is his swing plane right" but "how often
+    does he produce contact that is out everywhere".
+
+    Works unchanged on a pitcher's rows, where it is the rate he allows.
     """
-    xslg = profile.get("xSLG")
-    xwoba = profile.get("xwOBA")
+    buckets = _clears_anywhere_buckets()
+    # An EMPTY contour is not a zero rate. If no trajectory in the whole
+    # league qualified this season — a short pull, a dead ball, an early
+    # April archive — then "0.0% of his contact clears anywhere" reads as
+    # a measurement of him when it is really a statement about the
+    # league. Every hitter would show the same 0.0, and it would drag the
+    # composite below by exactly the same amount for all of them: noise
+    # with the shape of a stat. Same reasoning as the `empty` dict in
+    # _compute_batted_ball_metrics.
+    if not buckets or df is None or df.empty:
+        return None
+    if not {"launch_speed", "launch_angle", "type"}.issubset(df.columns):
+        return None
+    bbe = df[df["type"] == "X"]
+    if bbe.empty:
+        return None
+    ev = pd.to_numeric(bbe["launch_speed"], errors="coerce")
+    la = pd.to_numeric(bbe["launch_angle"], errors="coerce")
+    ok = ev.notna() & la.notna()
+    n = int(ok.sum())
+    if n == 0:
+        return None
+    keys = zip((ev[ok] // _EV_BIN * _EV_BIN), (la[ok] // _LA_BIN * _LA_BIN))
+    hits = sum(1 for e, l in keys if (float(e), float(l)) in buckets)
+    return round(hits / n * 100, 2)
 
-    # Fallback: if the expected-stat columns weren't available for this
-    # window (e.g. a data pull missing estimated_slg/woba, which zeroed
-    # SLAM for every batter on the Season window), fall back to the
-    # REAL slugging line so SLAM still computes from actual outcomes
-    # rather than collapsing to nothing. xSLG is preferred when present
-    # because it's noise-adjusted, but real SLG is a valid stand-in and
-    # far better than a blank board. ISO isn't used as a direct anchor
-    # (different scale) but SLG carries the same power signal.
-    slg_fallback = profile.get("SLG")
-    if xslg is None and slg_fallback:
-        try:
-            xslg = float(slg_fallback)
-        except (TypeError, ValueError):
-            pass
 
-    parts = [p for p in [xslg, xwoba] if p is not None]
-    # xSLG is on a ~0-4+ scale, xwOBA on a ~0-1 scale — normalize both
-    # to a 0-100ish display scale using real, published scale anchors
-    # (league-average xSLG ~.400, league-average xwOBA ~.310) rather
-    # than an arbitrary multiplier.
-    slam_score = None
-    if parts:
-        norm_slg = (xslg / 0.400 * 50) if xslg is not None else None
-        norm_woba = (xwoba / 0.310 * 50) if xwoba is not None else None
-        norm_parts = [p for p in [norm_slg, norm_woba] if p is not None]
-        slam_score = round(sum(norm_parts) / len(norm_parts), 1) if norm_parts else None
+def compute_xhr(df: pd.DataFrame):
+    """(xHR, actual HR) for these rows, or (None, None) if unavailable.
 
-        # HR/FB layer (15%) — xSLG/xwOBA price expected damage; HR/FB
-        # asks whether his fly balls actually leave. Same league anchor
-        # (~11.5% -> 50) and same light weight as HR Score, and it only
-        # applies when the profile cleared the 25-fly-ball floor, so a
-        # thin sample never moves SLAM.
-        hrfb = profile.get("HR/FB")
-        if slam_score is not None and hrfb is not None:
-            hrfb_scaled = max(0.0, min(100.0, hrfb / _league_hrfb() * 50.0))
-            slam_score = round(slam_score * (1 - _HRFB_WEIGHT)
-                               + hrfb_scaled * _HRFB_WEIGHT, 1)
+    Works unchanged on a batter's rows (his xHR) and a pitcher's rows
+    (his xHR allowed) — same trajectories, same grid, opposite side of
+    the ball.
+    """
+    table = _xhr_table()
+    if not table or df is None or df.empty:
+        return None, None
+    if not {"launch_speed", "launch_angle", "type"}.issubset(df.columns):
+        return None, None
+    bbe = df[df["type"] == "X"]
+    if bbe.empty:
+        return None, None
+    ev = pd.to_numeric(bbe["launch_speed"], errors="coerce")
+    la = pd.to_numeric(bbe["launch_angle"], errors="coerce")
+    ok = ev.notna() & la.notna()
+    if not ok.any():
+        return None, None
+    # Same flooring the table was built with, so a ball lands in the
+    # bucket it was counted in. Trajectories outside the tracked region
+    # contribute 0 — correctly, since none of them are home runs.
+    keys = zip((ev[ok] // _EV_BIN * _EV_BIN), (la[ok] // _LA_BIN * _LA_BIN))
+    xhr = sum(table.get((float(e), float(l)), 0.0) for e, l in keys)
+    actual = int((bbe["events"] == "home_run").sum()) if "events" in bbe.columns else None
+    return round(xhr, 1), actual
+
+
+# Sized for a FULL SLATE, not a single game card. The Daily 13
+# reads every hitter on the slate (~400 players), so a 10-entry
+# cache had a 100% miss rate: every call re-read a parquet from
+# disk. These frames are column-trimmed on ingest, so holding a
+# few hundred is affordable and turns the board from hundreds of
+# disk reads into one pass.
+@st.cache_data(ttl=7200, max_entries=450, show_spinner=False)
+def _get_batter_df(batter_id, start_date=DEFAULT_START_DATE, end_date=None):
+    local = _read_local_parquet("batters", batter_id)
+    if local is not None:
+        return local, None
+    if end_date is None:
+        end_date = _today_str()
+    return _pull_and_trim(_statcast_batter(), batter_id, start_date, end_date)
+
+
+# Every probable plus both bullpens across a 15-game slate is
+# roughly 150 arms; 4 guaranteed thrashing.
+@st.cache_data(ttl=7200, max_entries=180, show_spinner=False)
+def _get_pitcher_df(pitcher_id, start_date=DEFAULT_START_DATE, end_date=None):
+    local = _read_local_parquet("pitchers", pitcher_id)
+    if local is not None:
+        return local, None
+    if end_date is None:
+        end_date = _today_str()
+    return _pull_and_trim(_statcast_pitcher(), pitcher_id, start_date, end_date)
+
+
+def get_player_id(full_name: str):
+    """
+    Resolves a player's full name (e.g. "Gerrit Cole") to an MLBAM id
+    using pybaseball's player lookup. Works for batters and pitchers alike.
+    Returns None if no match is found so callers can fail safely instead
+    of crashing.
+    """
+    if not full_name or not isinstance(full_name, str):
+        return None
+
+    parts = full_name.strip().split(" ")
+    if len(parts) < 2:
+        return None
+
+    first_name = parts[0]
+    last_name = " ".join(parts[1:])
+
+    try:
+        from pybaseball import playerid_lookup
+        matches = playerid_lookup(last_name, first_name)
+        if matches is None or matches.empty:
+            return None
+        matches = matches.sort_values("mlb_played_last", ascending=False)
+        return int(matches.iloc[0]["key_mlbam"])
+    except Exception:
+        return None
+
+
+# Kept as an alias — existing code calls get_pitcher_id(), and the lookup
+# itself isn't pitcher-specific.
+get_pitcher_id = get_player_id
+
+
+# ============================================================
+# REAL STATCAST COLUMN DERIVATIONS
+# (raw pybaseball/Statcast output has NO "barrel"/"hard_hit"/"ld"/"gb"
+#  boolean columns — these must be derived from launch_speed,
+#  launch_angle, bb_type, hc_x/hc_y, zone, description, events)
+# ============================================================
+
+def _spray_angle(hc_x, hc_y):
+    """Standard horizontal spray-angle formula (degrees) from Statcast hit coordinates."""
+    return np.degrees(np.arctan2((hc_x - 125.42), (198.27 - hc_y)))
+
+
+def _compute_batted_ball_metrics(df: pd.DataFrame):
+    """Derives Barrel %, Hard Hit %, LD/GB/FB %, Sweet Spot %, PullAir %,
+    Pull Barrel %, and Blast % from batted-ball rows / real bat-tracking data."""
+    # EVERY RATE HERE IS None, NOT 0.0.
+    #
+    # This dict is what a player with no measurable batted balls gets —
+    # a fresh call-up with no parquet and an empty live pull, a window
+    # filter that lands on zero games, a switch-hitter side he hasn't
+    # batted from yet. A 0.0 in these fields is not "we measured him and
+    # he barrels nothing", it is "we measured nothing", and the lineup
+    # table has no PA column to tell those apart. Rendered as 0.0 next to
+    # real numbers it reads as the WORST hitter on the board, which is a
+    # fabricated stat — the one thing this app promises it never shows.
+    #
+    # None flows through to na_rep="N/A" / the em-dash formatters in
+    # table_style, which is the convention the rest of this file already
+    # follows (see SwStr%, EV90, HRIntent, HR/FB).
+    empty = {
+        "Brl %": None, "HH %": None, "LD %": None, "GB %": None, "FB %": None,
+        "SweetSpot %": None, "PullAir %": None, "PullBrl %": None,
+        "Blast %": None, "BBE": 0,
+        "HRWindow %": None, "FB95 %": None, "EV90": None, "MaxEV": None,
+        "ClearsAnywhere %": None,
+        "Brl/PA": None, "PA": 0, "HRIntent": None, "HRThreat": None,
+        "AvgEV": None,
+        "BA": None, "AB": 0,
+        "SLG": None, "ISO": None,
+        "HR/FB": None, "FB_count": 0,
+        # No batted balls at all, so nothing about barrels was measured.
+        "_barrel_measured": False,
+    }
+    if df.empty or "type" not in df.columns:
+        return empty
+
+    # Real batting average from PA outcomes — hits / at-bats using the
+    # standard AB definition (walks/HBP/sac excluded), same event sets
+    # the pitcher Splits table uses. On a batter's rows this is his BA;
+    # on a pitcher's rows the identical figure is his BA ALLOWED.
+    # None, not 0.0, with no at-bats: a .000 average is a real and very
+    # bad batting line, and printing one for a hitter who has not had an
+    # at-bat yet is inventing a number. Same reasoning as the `empty`
+    # dict above; every downstream consumer already guards for None
+    # (see slam_engine's slg_fallback, xbh_engine's isinstance check,
+    # daily_13's `ba is None: continue`).
+    ba, ab = None, 0
+    slg, iso = None, None
+    if "events" in df.columns:
+        _ev = df["events"].dropna()
+        _hits = _ev.isin(_HIT_EVENTS).sum()
+        ab = int(_ev.isin(_AB_EVENTS).sum())
+        ba = round(_hits / ab, 3) if ab > 0 else None
+        # SLG and ISO from the same PA outcomes: total bases weighted
+        # 1/2/3/4, then ISO = SLG - BA (extra bases per AB — the pure
+        # power number, and the one that matters for a prop where every
+        # extra-base hit stacks multiple legs).
+        if ab > 0:
+            _tb = (int((_ev == "single").sum())
+                   + 2 * int((_ev == "double").sum())
+                   + 3 * int((_ev == "triple").sum())
+                   + 4 * int((_ev == "home_run").sum()))
+            slg = round(_tb / ab, 3)
+            iso = round(slg - ba, 3)
+
+    bbe_df = df[df["type"] == "X"].copy()
+    bbe_count = len(bbe_df)
+    if bbe_count == 0:
+        return {**empty, "BA": ba, "AB": ab, "SLG": slg, "ISO": iso}
+
+    ls = pd.to_numeric(bbe_df.get("launch_speed"), errors="coerce")
+    la = pd.to_numeric(bbe_df.get("launch_angle"), errors="coerce")
+
+    hh = (ls >= 95).sum()
+
+    # BARRELS ARE MEASURED, NEVER DERIVED.
+    #
+    # Statcast's own launch_speed_angle == 6 is the only thing that counts
+    # as a barrel here. When that column is absent we report None, not an
+    # estimate — a barrel is MLB's classification of a batted ball, and a
+    # number we computed ourselves is not that number no matter how
+    # closely the formula matches.
+    #
+    # History, so nobody reintroduces it: this used to fall back to a flat
+    # 26-30 degree band at every exit velocity. That was doubly wrong — a
+    # real barrel band WIDENS as EV rises (98 -> 26-30, up to 8-50 at
+    # 116), so the flat version also systematically undercounted, and
+    # Brl%/Brl/PA feed HR Score, so the error reached the board. Fixing
+    # the band would have made the estimate accurate but still an
+    # estimate.
+    #
+    # precompute.py already does exactly this (see its `== 6` masks): the
+    # nightly parquets keep launch_speed_angle in ENGINE_COLS/_KEEP_COLS,
+    # so on the normal path the real bucket is always there and this
+    # never returns None. Downstream is built for it either way —
+    # top_plays renormalises over measurable axes, so a missing barrel
+    # rate lowers no score.
+    if "launch_speed_angle" in bbe_df.columns:
+        is_barrel = pd.to_numeric(bbe_df["launch_speed_angle"], errors="coerce") == 6
+        barrels = int(is_barrel.sum())
+        _barrel_measured = True
+    else:
+        is_barrel = pd.Series(False, index=bbe_df.index)
+        barrels = None
+        _barrel_measured = False
+
+    # Sweet Spot % — MLB's own definition: launch angle 8-32 degrees.
+    # KEPT AS-IS on purpose: it's a real published stat and the lineup
+    # table displays it. It is NOT the home-run band — see _HR_LA_MIN.
+    sweet_spot = la.between(8, 32).sum()
+
+    # HR Window % — share of batted balls launched into the home-run
+    # band (see _HR_LA_MIN/_HR_LA_MAX). Angle only, no velocity term:
+    # that independence from the power axis is the entire point.
+    hr_window = la.between(_HR_LA_MIN, _HR_LA_MAX).sum()
+
+    # FB95 % — hard-hit fly balls as a share of batted balls.
+    #
+    # HH % (95+ mph) and FB % were both already here, on their own, and
+    # the INTERSECTION never was — which is the one that actually
+    # predicts home runs. A 95 mph ground ball is a single and a 78 mph
+    # fly ball is an out; neither is a home-run trajectory, yet each
+    # lands in one of those two rates and inflates it. Requiring both at
+    # once costs nothing extra to compute and is a cleaner power signal
+    # than either parent.
+    #
+    # Denominator is BBE, not fly balls: per-FB would flatter a hitter
+    # who almost never lifts the ball, and how OFTEN he gets it airborne
+    # is half the question.
+    # (computed below, once bb_type's fly-ball mask exists)
+
+    # EV90 (scored) and Max EV (display only). Both from the same
+    # measured exit velocities; see _EV_PERCENTILE for why the score
+    # uses the percentile and not the max.
+    _ev_clean = ls.dropna()
+    ev90 = round(float(np.percentile(_ev_clean, _EV_PERCENTILE)), 1) if len(_ev_clean) else None
+    # NAME COLLISION HAZARD: the Blast% block further down used to bind
+    # a local also called `max_ev` (the squared-up formula's theoretical
+    # ceiling, a Series, not a scalar) and it runs AFTER this line — so
+    # the displayed Max EV silently became that Series. Both names are
+    # now explicit. Don't reintroduce a bare `max_ev` in this function.
+    max_ev_actual = round(float(_ev_clean.max()), 1) if len(_ev_clean) else None
+    # AVERAGE exit velocity — the typical ball, not the ceiling.
+    #
+    # Added because a proposed "91 EV minimum" floor was applied to EV90
+    # and cleared 373 of 373 qualified hitters. EV90 is the 90th
+    # PERCENTILE of a hitter's batted balls (median 104.2 across the
+    # league); average EV sits near 89. Both are real and they answer
+    # different questions — "how hard is his best contact" versus "how
+    # hard is his contact" — and a floor written for one silently does
+    # nothing when applied to the other.
+    avg_ev = round(float(_ev_clean.mean()), 1) if len(_ev_clean) else None
+
+    bb_type = bbe_df.get("bb_type", pd.Series(dtype=str))
+    # HR/FB — of his fly balls, how many left the yard. Uses Statcast's
+    # own bb_type classification rather than a homemade launch-angle
+    # cutoff. Fly balls only (not popups, not line drives): that's the
+    # standard definition and the one that means anything for power.
+    # None below the sample floor — HR/FB is the noisiest power stat
+    # and a rate off 8 fly balls is not a profile.
+    _fb_mask = bb_type == "fly_ball"
+    _fb_n = int(_fb_mask.sum())
+    _hr_fb = None
+    if _fb_n >= _HRFB_MIN_FB and "events" in bbe_df.columns:
+        _hr_on_fb = int((bbe_df.loc[_fb_mask, "events"] == "home_run").sum())
+        _hr_fb = round(_hr_on_fb / _fb_n * 100, 1)
+    # FB95 count — see the block above HR Window %. Uses Statcast's own
+    # bb_type fly-ball classification, the same one FB % and HR/FB use,
+    # rather than a homemade launch-angle cut, so the three stay
+    # consistent with each other and with Savant.
+    fb95 = int(((ls >= 95).fillna(False) & _fb_mask).sum())
+
+    ld = (bb_type == "line_drive").sum()
+    gb = (bb_type == "ground_ball").sum()
+    fb = (bb_type == "fly_ball").sum()
+
+    # None, not 0, when the spray coordinates aren't there to measure
+    # with — same rule as pull_barrel directly below. Without hc_x/hc_y
+    # we cannot tell a pulled fly ball from an opposite-field one, and
+    # "0% pulled air" is a strong (and wrong) statement about a hitter's
+    # swing, not an absence of data.
+    pull_air = None
+    # None, not 0, when barrels couldn't be measured — a pulled barrel is
+    # a barrel first, so if we can't identify barrels we can't count these
+    # either, and 0.0 would read as a real "never pulls a barrel".
+    pull_barrel = 0 if _barrel_measured else None
+    if {"hc_x", "hc_y", "stand"}.issubset(bbe_df.columns):
+        angle = _spray_angle(pd.to_numeric(bbe_df["hc_x"], errors="coerce"),
+                              pd.to_numeric(bbe_df["hc_y"], errors="coerce"))
+        is_fb = bb_type == "fly_ball"
+        pulled_rhh = (bbe_df["stand"] == "R") & (angle < 0)
+        pulled_lhh = (bbe_df["stand"] == "L") & (angle > 0)
+        is_pulled = pulled_rhh | pulled_lhh
+        pull_air = (is_fb & is_pulled).sum()
+        if _barrel_measured:
+            pull_barrel = int((is_barrel & is_pulled).sum())
+
+    # Blast % — real MLB formula: squared-up% = EV / ((bat_speed*1.23) + (pitch_speed*0.2116));
+    # a swing is a "blast" when (squared_up% * 100) + bat_speed >= 164.
+    # Scoped to balls in play AND fouls (both are real contact with a
+    # real measurable exit velocity) — NOT balls-in-play only. A ball
+    # that gets fouled off weakly is still a real swing that should
+    # count toward the denominator; excluding it meant only shots that
+    # "worked out" into fair territory were ever measured, which
+    # quietly inflates the rate. A true swing-and-miss has no exit
+    # velocity to measure at all (bat never touched the ball), so it
+    # can't enter this specific formula — that's a real physical limit
+    # of the stat, not an oversight.
+    # None, not 0.0, when bat tracking isn't present. Bat speed only
+    # exists from 2024 onward and is missing on plenty of rows, so a
+    # 0.0 here means "this swing wasn't tracked" far more often than it
+    # means "he never squares one up" — and Blast% is a headline column
+    # on the lineup table, where 0.0 reads as a damning real number.
+    blast_pct = None
+    if "description" in df.columns and {"bat_speed", "release_speed"}.issubset(df.columns):
+        contact_df = df[(df["type"] == "X") | (df["description"] == "foul")]
+        c_ls = pd.to_numeric(contact_df.get("launch_speed"), errors="coerce")
+        c_bs = pd.to_numeric(contact_df.get("bat_speed"), errors="coerce")
+        c_pitch_speed = pd.to_numeric(contact_df.get("release_speed"), errors="coerce")
+        tracked = c_bs.notna() & c_pitch_speed.notna() & c_ls.notna()
+        if tracked.sum() > 0:
+            # The theoretical maximum EV this swing could have produced —
+            # the denominator of squared-up%. Renamed from `max_ev`,
+            # which collided with the real measured Max EV above.
+            squared_up_ceiling = (c_bs[tracked] * 1.23) + (c_pitch_speed[tracked] * 0.2116)
+            squared_up_pct = (c_ls[tracked] / squared_up_ceiling) * 100
+            is_blast = (squared_up_pct + c_bs[tracked]) >= 164
+            blast_pct = round(is_blast.sum() / tracked.sum() * 100, 2)
+
+    # ------------------------------------------------------------
+    # HR INTENT — is this hitter TRYING to hit the ball out?
+    #
+    # Deliberately built from process, not results. Every other power
+    # metric here (Brl%, HH%, HR/FB, xSLG) is downstream of whether the
+    # ball actually got crushed, so they all sag together when a good
+    # power hitter goes cold. Intent asks a different question: is the
+    # swing itself still a home-run swing? Three inputs, none of which
+    # is an outcome:
+    #
+    #   bat speed   - how fast he's swinging (2024+ Statcast bat
+    #                 tracking; league average sits near 71 mph, elite
+    #                 near 75). A hitter shortening up to make contact
+    #                 shows up here before it shows up in his results.
+    #   HR window % - swing plane. Is he getting the ball into the
+    #                 20-40 band at all?
+    #   PullAir %   - home runs are overwhelmingly PULLED in the air.
+    #                 A hitter going the other way in the air is not
+    #                 hunting a homer, however hard he hits it.
+    #
+    # Each is scaled to 0-100 against a real league anchor and averaged
+    # over whichever components are actually measurable. Returns None
+    # rather than a fabricated number when none of them are — an
+    # untracked bat is not a zero-intent bat.
+    #
+    # Bat speed is unavailable before 2024 and on some rows, so the
+    # component simply drops out when absent instead of zeroing the
+    # composite.
+    # Measured nightly — see _hr_anchors. These were three typed
+    # constants duplicated in precompute.py; the build and the app can no
+    # longer disagree about what league average is.
+    _A = _hr_anchors()
+    _INTENT_BATSPEED_ANCHOR = _A["bat_speed"]
+    _INTENT_HRWINDOW_ANCHOR = _A["hr_window_pct"]
+    _INTENT_PULLAIR_ANCHOR = _A["pull_air_pct"]
+    _intent_parts = []
+    if "bat_speed" in df.columns:
+        _bs = pd.to_numeric(df["bat_speed"], errors="coerce").dropna()
+        if len(_bs) >= 25:
+            _intent_parts.append(min(100.0, float(_bs.mean()) / _INTENT_BATSPEED_ANCHOR * 50.0))
+    _hrw_pct = hr_window / bbe_count * 100
+    _intent_parts.append(min(100.0, _hrw_pct / _INTENT_HRWINDOW_ANCHOR * 50.0))
+    if pull_air:
+        _pa_pct = pull_air / bbe_count * 100
+        _intent_parts.append(min(100.0, _pa_pct / _INTENT_PULLAIR_ANCHOR * 50.0))
+    hr_intent = round(sum(_intent_parts) / len(_intent_parts), 1) if _intent_parts else None
+
+
+    # Barrels per PLATE APPEARANCE, not per batted ball.
+    #
+    # Brl% (per BBE) answers "when he connects, how good is it" and
+    # flatters a hitter who barrels 15% of his contact while striking
+    # out 35% of the time — that bat produces far fewer home runs than
+    # the rate implies. Brl/PA folds contact rate and plate discipline
+    # in automatically, which is why it's the better home-run input.
+    #
+    # PA denominator = every row carrying a terminal event, which is
+    # exactly one per plate appearance in Statcast's pitch-level data.
+    pa_count = int(df["events"].notna().sum()) if "events" in df.columns else 0
+    brl_per_pa = (round(barrels / pa_count * 100, 2)
+                  if barrels is not None and pa_count > 0 else None)
+
+    # Trajectory-level "gets out anywhere" rate for this same set of
+    # rows. Computed here rather than in the caller so the composite
+    # below and the displayed column can never disagree.
+    clears_anywhere = clears_anywhere_pct(df)
+
+    # ------------------------------------------------------------
+    # HR THREAT — intent weighted toward whether it is WORKING.
+    #
+    # HRIntent above stays exactly as it was, and stays visible. Its
+    # value is that it is pure process: a good power hitter in a cold
+    # week still shows a home-run swing here, which every outcome metric
+    # on this page hides. Averaging that away would have destroyed the
+    # one signal that does not move with results.
+    #
+    # This sits beside it, 60% outcome / 40% that process score:
+    #
+    #   Brl/PA           barrels per plate appearance, not per contact —
+    #                    folds in strikeouts, which per-BBE rates hide
+    #   ClearsAnywhere % contact on a trajectory that leaves any park
+    #   HRIntent         the process score above
+    #
+    # Each outcome component is scaled against a measured league anchor,
+    # the same way the intent components are. Components that cannot be
+    # measured drop out and the weights renormalise over what remains,
+    # rather than a missing axis silently scoring as zero — the same
+    # rule top_plays already follows.
+    #
+    # Returns None when NOTHING is measurable. A hitter with no tracked
+    # contact has no threat score, which is not the same as a threat
+    # score of zero, and the lineup table has no column to tell those
+    # apart. See the `empty` dict at the top of this function.
+    _THREAT_BRLPA_ANCHOR = _A["brl_per_pa"]
+    _THREAT_CA_ANCHOR = _A["clears_anywhere_pct"]
+    _threat_parts = []            # (weight, 0-100 score)
+    if brl_per_pa is not None:
+        _threat_parts.append((0.35, min(100.0, brl_per_pa / _THREAT_BRLPA_ANCHOR * 50.0)))
+    if clears_anywhere is not None:
+        _threat_parts.append((0.25, min(100.0, clears_anywhere / _THREAT_CA_ANCHOR * 50.0)))
+    if hr_intent is not None:
+        _threat_parts.append((0.40, hr_intent))
+    _wsum = sum(w for w, _ in _threat_parts)
+    hr_threat = (round(sum(w * v for w, v in _threat_parts) / _wsum, 1)
+                 if _wsum > 0 else None)
 
     return {
-        "slam_score": slam_score,
-        "xSLG": xslg,
-        "xwOBA": xwoba,
-        "HR/FB": profile.get("HR/FB"),
-        "FB_count": profile.get("FB_count", 0),
-        "sample_bbe": profile.get("BBE", 0),
-        "window_rows": profile.get("_window_rows", 0),
-        "error": profile.get("_error"),
+        "Brl %": round(barrels / bbe_count * 100, 2) if barrels is not None else None,
+        "HRWindow %": round(hr_window / bbe_count * 100, 2),
+        "FB95 %": round(fb95 / bbe_count * 100, 2),
+        "EV90": ev90,
+        "AvgEV": avg_ev,
+        "MaxEV": max_ev_actual,
+        "Brl/PA": brl_per_pa,
+        "PA": pa_count,
+        "HRIntent": hr_intent,
+        "HRThreat": hr_threat,
+        "ClearsAnywhere %": clears_anywhere,
+        "HH %": round(hh / bbe_count * 100, 2),
+        "LD %": round(ld / bbe_count * 100, 2),
+        "GB %": round(gb / bbe_count * 100, 2),
+        "FB %": round(fb / bbe_count * 100, 2),
+        "SweetSpot %": round(sweet_spot / bbe_count * 100, 2),
+        "PullAir %": (round(pull_air / bbe_count * 100, 2)
+                      if pull_air is not None else None),
+        "PullBrl %": (round(pull_barrel / bbe_count * 100, 2)
+                      if pull_barrel is not None else None),
+        "Blast %": blast_pct,
+        "BA": ba, "AB": ab,
+        "SLG": slg, "ISO": iso,
+        "HR/FB": _hr_fb, "FB_count": _fb_n,
+        "BBE": bbe_count,
+        # Provenance, not a stat: True when Brl%/Brl/PA/PullBrl% came from
+        # Statcast's own launch_speed_angle bucket. False means the column
+        # was absent and those three are None — nothing was estimated.
+        "_barrel_measured": _barrel_measured,
     }
 
 
-def compute_slam_window(batter_id, window: str, unit: str) -> dict:
+# ONE definition of a whiff and ONE definition of a swing, shared by
+# every rate below. These used to disagree with each other: SwStr%
+# counted only "swinging_strike" while Whiff% counted "swinging_strike"
+# AND "swinging_strike_blocked", and zone-contact left blocked whiffs
+# out of its swing denominator entirely — which understated SwStr% and
+# inflated zone contact% for exactly the pitchers who generate the most
+# swings in the dirt. A blocked swinging strike is a swing and a miss;
+# there is no version of these stats where it isn't.
+_WHIFF_DESC = ("swinging_strike", "swinging_strike_blocked")
+_CONTACT_DESC = ("hit_into_play", "foul", "foul_tip")
+_SWING_DESC = _CONTACT_DESC + _WHIFF_DESC
+
+
+def _compute_swstr_pct(df: pd.DataFrame):
+    """SwStr % = swings and misses / ALL PITCHES SEEN. Different
+    denominator than Whiff % (below) — don't conflate the two, they
+    answer different questions.
+
+    Returns None, not 0.0, when there are no pitches to measure. A real
+    0.00 here reads as "never misses a swing", which is elite — showing
+    that for a player we have no data on is the exact kind of invented
+    number this app isn't allowed to display. Every table that renders
+    it formats with na_rep, so None shows as N/A.
     """
-    Real SLAM number for one specific window: fetches the windowed
-    profile live, then calls slam_from_profile(). Use this when you
-    don't already have the profile; use slam_from_profile() directly
-    if you do, to avoid pulling the same live data twice.
+    if df.empty or "description" not in df.columns:
+        return None
+    return round(df["description"].isin(_WHIFF_DESC).mean() * 100, 2)
+
+
+def _compute_whiff_pct(df: pd.DataFrame):
+    """Whiff % = swings and misses / SWINGS ONLY. Returns None when the
+    player took no swings — see _compute_swstr_pct on why not 0.0."""
+    if df.empty or "description" not in df.columns:
+        return None
+    total_swings = df["description"].isin(_SWING_DESC).sum()
+    if total_swings == 0:
+        return None
+    whiffs = df["description"].isin(_WHIFF_DESC).sum()
+    return round(whiffs / total_swings * 100, 2)
+
+
+def _compute_zone_contact_pct(df: pd.DataFrame):
+    """Contact on swings at pitches in the strike zone (zones 1-9).
+    Returns None when there were no in-zone swings."""
+    if df.empty or "zone" not in df.columns or "description" not in df.columns:
+        return None
+    in_zone = pd.to_numeric(df["zone"], errors="coerce").between(1, 9)
+    swings_in_zone = df["description"].isin(_SWING_DESC) & in_zone
+    contact_in_zone = df["description"].isin(_CONTACT_DESC) & in_zone
+    total_swings = swings_in_zone.sum()
+    if total_swings == 0:
+        return None
+    return round(contact_in_zone.sum() / total_swings * 100, 2)
+
+
+# ============================================================
+# BATTER STATCAST PROFILE
+# ============================================================
+
+def get_batter_statcast(batter_id):
+    df, error = _get_batter_df(batter_id)
+    metrics = _compute_batted_ball_metrics(df)
+    metrics["Whiff %"] = _compute_whiff_pct(df)
+    metrics["SwStr %"] = _compute_swstr_pct(df)
+    metrics["_error"] = error
+    metrics["_raw_df"] = df  # kept for real recency-window slicing downstream (now trimmed/downcast)
+    return metrics
+
+
+# _real_woba_slg() was REMOVED along with the actual-for-expected
+# fallback in _add_expected_stats. It computed real wOBA/SLG from plate
+# appearance outcomes purely to backfill the xwOBA/xSLG columns — a
+# different statistic under an "x" label. Real SLG and ISO are already
+# returned by _compute_batted_ball_metrics under their own correct
+# names, so nothing it produced is missing from the tables.
+
+
+def _add_expected_stats(metrics: dict, frame) -> dict:
+    """Attach xSLG and xwOBA (Statcast's speed+angle expected stats) to a
+    metrics dict, averaged over the batted-ball rows of `frame`. Both are
+    None when the frame has no BBE or no measured expected values.
+    Shared by get_batter_profile_windowed and get_batter_vs_pitch_types
+    so the lineup table and the vs-pitch tables report the same numbers.
+
+    THESE COLUMNS CARRY MLB'S EXPECTED STATS OR NOTHING.
+
+    There used to be a fallback here: when the expected-stat columns were
+    absent, it filled xwOBA/xSLG with REAL wOBA/SLG computed from
+    outcomes, so the columns "still carry a meaningful number". Those
+    numbers were real, but they are a DIFFERENT STATISTIC — expected
+    stats strip out defence, park and luck; actuals contain all three.
+    Presenting an actual under an "x" header tells the user they're
+    looking at something they aren't, which is the one thing this app
+    promises never to do.
+
+    Nothing is lost by removing it:
+      - real SLG and ISO are already returned by
+        _compute_batted_ball_metrics and already displayed, correctly
+        labelled, in the same tables;
+      - SLAM does NOT depend on this fallback. slam_engine has its own
+        documented xSLG -> real SLG substitution, disclosed inside SLAM's
+        own definition where it belongs (SLAM is a composite score, not a
+        Savant stat), so the board still computes when the columns are
+        missing.
+
+    If these come back None across the board, the cause is upstream:
+    bulk statcast() dropping estimated_woba/slg_using_speedangle.
+    precompute.py already warns loudly about exactly that — fix it there
+    rather than papering over it here.
     """
-    profile = get_batter_profile_windowed(batter_id, window=window, unit=unit)
-    return slam_from_profile(profile)
+    metrics["xSLG"] = None
+    metrics["xwOBA"] = None
+    cols = {"estimated_slg_using_speedangle", "estimated_woba_using_speedangle"}
+    if frame is not None and not frame.empty and cols.issubset(frame.columns):
+        bbe_only = frame[frame["type"] == "X"] if "type" in frame.columns else frame
+        if not bbe_only.empty:
+            xslg = pd.to_numeric(bbe_only["estimated_slg_using_speedangle"], errors="coerce").mean()
+            xwoba = pd.to_numeric(bbe_only["estimated_woba_using_speedangle"], errors="coerce").mean()
+            # pd.notna guards against both NaN and pandas' NA marker, which
+            # round() can't handle — happens when a window has BBE rows but no
+            # measured expected-stat values.
+            metrics["xSLG"] = round(float(xslg), 3) if pd.notna(xslg) else None
+            metrics["xwOBA"] = round(float(xwoba), 3) if pd.notna(xwoba) else None
+    return metrics
+
+
+@st.cache_data(ttl=1800, max_entries=384, show_spinner=False)
+def get_batter_vs_pitch_types(batter_id, pitch_types: tuple, window: str = "season", unit: str = "bbe"):
+    """
+    Real batter performance specifically against a given set of pitch
+    types (meant to be a pitcher's top 3 most-used pitches) — same real
+    windowing and the exact same proven stat formulas as
+    get_batter_profile_windowed, just filtered down to pitches of
+    those specific types first.
+
+    Kept as its OWN separate stat rather than folded into SLAM: SLAM
+    already asks a lot of a small recent-window sample, and narrowing
+    it further by pitch type on top would leave a real, honest "not
+    enough data" far more often than it would a usable number.
+
+    CACHED for the same reason get_pitcher_statcast is: the underlying
+    dataframe pull was already cached, but this re-derived every metric
+    on top of it on EVERY Streamlit rerun — every click and toggle on
+    the Game Card — once per batter in the lineup, and
+    pitch_matchup.py calls it in a loop, once per pitch type per batter.
+    All four arguments are hashable scalars/tuples, so the key is cheap
+    and correct — never cache a function whose only argument is a
+    DataFrame, and never "fix" that by underscore-prefixing the arg: with
+    no hashable arguments left, every caller collides on one cache entry
+    and every batter gets the first batter's numbers.
+    """
+    from engines.recency_windows import apply_window
+    df, error = _get_batter_df(batter_id)
+    windowed_df = apply_window(df, window, unit)
+
+    if windowed_df.empty or "pitch_type" not in windowed_df.columns or not pitch_types:
+        matchup_df = windowed_df.iloc[0:0]
+    else:
+        matchup_df = windowed_df[windowed_df["pitch_type"].isin(pitch_types)]
+
+    metrics = _compute_batted_ball_metrics(matchup_df)
+    metrics["Whiff %"] = _compute_whiff_pct(matchup_df)
+    metrics["SwStr %"] = _compute_swstr_pct(matchup_df)
+    _add_expected_stats(metrics, matchup_df)
+    metrics["_error"] = error
+    metrics["_pitches_seen"] = len(matchup_df)
+    metrics["_window_rows"] = len(windowed_df)
+    return metrics
+
+
+@st.cache_data(ttl=1800, max_entries=256, show_spinner=False)
+def get_first_pitch_swing(batter_id, window: str = "season", stand: str = None) -> dict:
+    """First-pitch swing rate, and what he actually does with it.
+
+    A 0-0 count is identified by balls == 0 and strikes == 0 — the
+    literal first pitch of a plate appearance. That's more reliable
+    than pitch_number, which counts pitches within a PA and drifts
+    once fouls start piling up.
+
+    Returns swing_pct (share of first pitches offered at), pa (the
+    sample), contact (of those swings, share put in play or fouled),
+    xslg (real expected slugging on first-pitch balls in play), and
+    hard_hit (share of first-pitch batted balls at 95+ mph).
+
+    Sample floor: below MIN_FP first pitches nothing is reported — a
+    first-pitch swing rate off 20 plate appearances is noise, not a
+    tendency, and this app doesn't publish noise as a number.
+
+    stand: "R"/"L" splits a switch hitter; None is combined.
+    """
+    MIN_FP = 50
+    from engines.recency_windows import apply_window
+    try:
+        df, _err = _get_batter_df(batter_id)
+    except Exception:
+        return {"swing_pct": None, "pa": 0, "reason": "no pitch data"}
+    if df is None or df.empty:
+        return {"swing_pct": None, "pa": 0, "reason": "no pitch data"}
+    if stand in ("R", "L") and "stand" in df.columns:
+        df = df[df["stand"] == stand]
+    if window != "season":
+        df = apply_window(df, window, "games")
+    if df.empty or not {"balls", "strikes", "description"}.issubset(df.columns):
+        return {"swing_pct": None, "pa": 0,
+                "reason": "no first-pitch data in this window"}
+
+    balls = pd.to_numeric(df["balls"], errors="coerce")
+    strikes = pd.to_numeric(df["strikes"], errors="coerce")
+    fp = df[(balls == 0) & (strikes == 0)]
+    n = int(len(fp))
+    if n < MIN_FP:
+        return {"swing_pct": None, "pa": n,
+                "reason": f"{n} first pitches - below the {MIN_FP} floor"}
+
+    swing_desc = ["hit_into_play", "foul", "foul_tip",
+                  "swinging_strike", "swinging_strike_blocked"]
+    swings = fp[fp["description"].isin(swing_desc)]
+    n_swings = int(len(swings))
+    contact = swings[swings["description"].isin(["hit_into_play", "foul", "foul_tip"])]
+
+    out = {
+        "swing_pct": round(n_swings / n * 100, 1),
+        "pa": n,
+        "swings": n_swings,
+        "contact": round(len(contact) / n_swings * 100, 1) if n_swings else None,
+        "reason": None,
+    }
+
+    bip = fp[fp["type"] == "X"] if "type" in fp.columns else fp.iloc[0:0]
+    if not bip.empty:
+        if "estimated_slg_using_speedangle" in bip.columns:
+            v = pd.to_numeric(bip["estimated_slg_using_speedangle"],
+                              errors="coerce").dropna()
+            out["xslg"] = round(float(v.mean()), 3) if not v.empty else None
+        if "launch_speed" in bip.columns:
+            ev = pd.to_numeric(bip["launch_speed"], errors="coerce").dropna()
+            out["hard_hit"] = (round(float((ev >= 95).mean() * 100), 1)
+                               if not ev.empty else None)
+        out["bip"] = int(len(bip))
+    return out
+
+
+@st.cache_data(ttl=1800, max_entries=384, show_spinner=False)
+def get_batter_profile_windowed(batter_id, window: str = "season", unit: str = "bbe",
+                                stand: str = None):
+    """
+    Real recency-windowed batter profile — same metrics as
+    get_batter_statcast, but sliced to a specific window ("season" /
+    "l60" / "l25" / "l15" / "l5") and unit ("games" / "pa" / "bbe")
+    using engines/recency_windows.py. This is what SLAM, the Lineup
+    table's window filter, and the pitch-matchup stat all call.
+
+    CACHED (this matters a lot): the Game Card calls this once per
+    batter for the lineup table AND again per ranked batter, so a
+    single render was recomputing ~18 full profiles — slicing the
+    DataFrame and recomputing every metric each time — on EVERY rerun,
+    which in Streamlit means every click, filter change, and toggle.
+    That was roughly 200ms of pure recomputation per interaction with
+    the data already in memory. The result is deterministic for a
+    given (batter, window, unit), so caching it is free correctness.
+    max_entries covers a full slate's batters across several windows.
+    """
+    from engines.recency_windows import apply_window
+    df, error = _get_batter_df(batter_id)
+
+    # Switch-hitter support: "stand" records which side he ACTUALLY
+    # batted from in each plate appearance, so stand="R"/"L" returns
+    # that side's real profile. A switch hitter's two sides are often
+    # completely different hitters, and blending them into one number
+    # hides exactly the split that decides a matchup. The filter runs
+    # BEFORE the window, so "last 15" means 15 games batting from
+    # that side, not 15 games overall.
+    if stand in ("R", "L") and df is not None and not df.empty and "stand" in df.columns:
+        df = df[df["stand"] == stand]
+
+    windowed_df = apply_window(df, window, unit)
+    metrics = _compute_batted_ball_metrics(windowed_df)
+    metrics["Whiff %"] = _compute_whiff_pct(windowed_df)
+    metrics["SwStr %"] = _compute_swstr_pct(windowed_df)
+    _add_expected_stats(metrics, windowed_df)
+    metrics["_error"] = error
+    metrics["_window_rows"] = len(windowed_df)
+    return metrics
+
+
+# ============================================================
+# PITCHER STATCAST PROFILE
+# ============================================================
+
+def _compute_pitch_type_breakdown(df: pd.DataFrame) -> dict:
+    """
+    Real per-pitch-type breakdown: usage%, Whiff% (of swings against
+    THAT pitch specifically), and Hard Hit% allowed (of batted balls
+    against that pitch). This is what actually makes an arsenal list
+    useful — "usage 23%" alone doesn't tell you if that pitch is any
+    good, whiff/hard-hit rates do.
+    """
+    if df.empty or "pitch_type" not in df.columns:
+        return {}
+
+    total = len(df)
+    breakdown = {}
+    for pt, group in df.groupby("pitch_type", observed=True):
+        if pd.isna(pt):
+            continue
+        usage = round(len(group) / total * 100, 2)
+        whiff = _compute_whiff_pct(group)
+        bbe = group[group["type"] == "X"] if "type" in group.columns else pd.DataFrame()
+        if not bbe.empty and "launch_speed" in bbe.columns:
+            ls = pd.to_numeric(bbe["launch_speed"], errors="coerce")
+            hh_allowed = round((ls >= 95).mean() * 100, 2) if ls.notna().any() else None
+        else:
+            hh_allowed = None
+        breakdown[pt] = {"usage": usage, "whiff": whiff, "hh_allowed": hh_allowed, "n": len(group)}
+    return breakdown
+
+
+@st.cache_data(ttl=3600, max_entries=200, show_spinner=False)
+def get_pitcher_statcast(pitcher_id):
+    """Full pitcher metric bundle (batted-ball, whiff/swstr/zone-contact,
+    HR/BBE, arsenal + per-pitch breakdown). CACHED: called on the Game
+    Card and several pitcher views, and it re-derives every metric from
+    the (already-cached) dataframe. Without this cache that recompute
+    ran on every Streamlit rerun — every click, filter, and toggle on
+    the page. The return is a plain pickle-safe dict keyed on pitcher_id
+    and deterministic, so caching is free correctness; max_entries
+    covers a full slate's starters and bullpens."""
+    df, error = _get_pitcher_df(pitcher_id)
+
+    metrics = _compute_batted_ball_metrics(df)
+    metrics["Whiff %"] = _compute_whiff_pct(df)
+    metrics["SwStr %"] = _compute_swstr_pct(df)
+    metrics["ZoneContact %"] = _compute_zone_contact_pct(df)
+
+    bbe = metrics["BBE"]
+    if not df.empty and "events" in df.columns:
+        hr_count = (df["events"] == "home_run").sum()
+        # None, not 0.0, with no batted balls to divide by: a 0.000
+        # HR/BBE is the best possible value in this column.
+        metrics["HR/BBE"] = round(hr_count / bbe, 3) if bbe > 0 else None
+    else:
+        metrics["HR/BBE"] = None
+
+    # ------------------------------------------------------------
+    # HR VULNERABILITY ALLOWED
+    #
+    # _compute_batted_ball_metrics above already ran on this PITCHER's
+    # rows, which means Brl %, HH %, FB %, HRWindow % and EV90 in
+    # `metrics` are ALREADY "allowed" figures — they describe the contact
+    # hitters made against him. They were computed and, for a while,
+    # never surfaced anywhere, so the pitcher side of the HR model was
+    # invisible despite the numbers existing. They ARE rendered now —
+    # GameCard's hr_vuln_table — and this comment stayed stale long
+    # enough to send someone looking for work that was already done.
+    #
+    # Aliased here under explicit "Allowed" names so no view has to know
+    # that a batter-shaped metric means something different on this side
+    # of the ball. Same values, honest labels.
+    for src, dst in (("Brl %", "Brl % Allowed"),
+                     ("HH %", "HH % Allowed"),
+                     ("FB %", "FB % Allowed"),
+                     ("FB95 %", "FB95 % Allowed"),
+                     ("HRWindow %", "HRWindow % Allowed"),
+                     ("ClearsAnywhere %", "ClearsAnywhere % Allowed"),
+                     ("EV90", "EV90 Allowed")):
+        if src in metrics:
+            metrics[dst] = metrics[src]
+
+    # xHR ALLOWED — the same empirical trajectory grid used for hitters,
+    # run on the contact he gave up. xHR-allowed minus HR-allowed is the
+    # regression signal from the pitcher's side: a pitcher well UNDER his
+    # xHR allowed has been surrendering home-run trajectories that
+    # happened to stay in the park, and that luck tends to run out.
+    xhr_allowed, hr_allowed = compute_xhr(df)
+    metrics["xHR Allowed"] = xhr_allowed
+    metrics["HR Allowed"] = hr_allowed
+    metrics["xHR Gap Allowed"] = (
+        round(xhr_allowed - hr_allowed, 1)
+        if xhr_allowed is not None and hr_allowed is not None else None
+    )
+
+    # THROWING HAND. Present on every row of his own data and never
+    # surfaced, so pitcher_data.get("p_throws") returned None everywhere —
+    # which meant the Game Card's switch-hitter resolution silently sat
+    # out for every switch hitter (no effective side, so no park split),
+    # and handedness appeared nowhere on the site at all.
+    #
+    # Taken as the most common value rather than the first row: a stray
+    # mislabelled pitch shouldn't flip a pitcher's hand.
+    if not df.empty and "p_throws" in df.columns:
+        _hands = df["p_throws"].dropna()
+        metrics["p_throws"] = str(_hands.mode().iloc[0]) if not _hands.empty else None
+    else:
+        metrics["p_throws"] = None
+
+    if not df.empty and "pitch_type" in df.columns:
+        arsenal = df["pitch_type"].dropna().value_counts(normalize=True) * 100
+        metrics["Pitch Arsenal"] = {k: round(v, 2) for k, v in arsenal.items() if v > 0}
+        metrics["Pitch Arsenal Detail"] = _compute_pitch_type_breakdown(df)
+    else:
+        metrics["Pitch Arsenal"] = {}
+        metrics["Pitch Arsenal Detail"] = {}
+
+    metrics["_error"] = error
+    return metrics
+
+
+# ============================================================
+# ADVANCED PITCHER SPLITS
+# (for the Game Card Splits table — BA/SLG/ISO/WHIP/K%/BB%/etc.)
+#
+# Every derived stat below uses a specific, documented definition so
+# nothing here claims more precision than it has. These are standard
+# sabermetric formulas computed from raw Statcast pitch-level rows —
+# NOT pulled from a third-party stats provider, so treat them as this
+# app's own calculation rather than an official league stat.
+# ============================================================
+
+_HIT_EVENTS = {"single", "double", "triple", "home_run"}
+_OUT_EVENTS = {
+    "field_out", "strikeout", "strikeout_double_play", "double_play",
+    "grounded_into_double_play", "force_out", "fielders_choice_out",
+    "sac_fly", "sac_bunt", "triple_play", "field_error",
+}
+# Note: field_error does NOT record an out in real scoring (reached on
+# error), but we count it toward outs here as a pragmatic IP estimate
+# since we don't have an official box-score outs feed — flagged so it's
+# not mistaken for a certified stat.
+_WALK_EVENTS = {"walk", "hit_by_pitch"}
+_STRIKEOUT_EVENTS = {"strikeout", "strikeout_double_play"}
+# Standard at-bat definition: hits + outs + errors; walks/HBP/sac excluded.
+_AB_EVENTS = _HIT_EVENTS | {"field_out", "strikeout", "strikeout_double_play",
+                            "double_play", "grounded_into_double_play",
+                            "force_out", "fielders_choice_out", "field_error"}
+
+
+@st.cache_data(ttl=3600, max_entries=512, show_spinner=False)
+def get_pitcher_hand(pitcher_id):
+    """Throwing hand for one pitcher: "L", "R", or None.
+
+    Split out of get_pitcher_statcast so any board can label a pitcher
+    without paying for the full metric computation. Handedness drives the
+    entire platoon side of the model — which side a switch hitter bats
+    from, the batter-vs-hand splits, the park factor that then applies —
+    yet it appeared in exactly one place on the site, next to the selected
+    pitcher's name on the Game Card. Every other board named a pitcher
+    with no indication of which way he throws.
+
+    Reads the same cached dataframe get_pitcher_statcast uses, so calling
+    it for both probables on every game costs one dict lookup after the
+    first fetch. Most common value rather than the first row: a stray
+    mislabelled pitch shouldn't flip a pitcher's hand.
+    """
+    if not pitcher_id:
+        return None
+
+
+    try:
+        # Fallback for a pitcher the nightly hasn't seen — a call-up, or
+        # a build that hasn't run yet. _get_pitcher_df returns a
+        # (df, error) TUPLE, not a DataFrame.
+        df, _err = _get_pitcher_df(pitcher_id)
+    except Exception:
+        return None
+    if df is None or df.empty or "p_throws" not in df.columns:
+        return None
+    hands = df["p_throws"].dropna()
+    return str(hands.mode().iloc[0]) if not hands.empty else None
+
+
+@st.cache_data(ttl=21600, max_entries=1, show_spinner=False)
+def _roles_lookup() -> dict:
+    """{pitcher_id: "SP"|"RP"} from the nightly build, or {}.
+
+    Empty when the archive predates this feature, which sends every
+    lookup down the live path — correct, just slower.
+    """
+    try:
+        # _DATA_DIR is already .../data/statcast — no second "statcast".
+        path = _DATA_DIR / "pitcher_roles.json"
+        # _json, not json: this module imports `json as _json`. Using the
+        # wrong name raised NameError, which the except below swallowed —
+        # the lookup returned {} on every call and every pitcher quietly
+        # took the slow path. Exactly the failure this was meant to fix,
+        # hidden by its own fallback.
+        return _json.loads(path.read_text()) or {}
+    except Exception:
+        return {}
+
+
+@st.cache_data(ttl=3600, max_entries=512, show_spinner=False)
+def get_pitcher_role(pitcher_id):
+    """Classify a pitcher as "SP" or "RP" from his own pitch data.
+
+    Statcast has no role flag and this app doesn't keep `inning`, but it
+    does keep game_pk and at_bat_number — and at_bat_number is the
+    sequential plate appearance within a game. A starter's first PA of an
+    outing is number 1 or 2; a reliever entering in the 7th picks up
+    somewhere north of 20. So the MEDIAN of (first at_bat_number he faced
+    in each game) separates the two cleanly, without a new data source.
+
+    Median rather than mean: one spot start or one opener appearance
+    shouldn't reclassify a pitcher, and the median ignores those.
+
+    Returns "SP", "RP", or None when there isn't enough to judge. None is
+    deliberate — callers treat it as "don't know" and exclude, rather
+    than guessing a role and polluting a pooled average.
+    """
+    if not pitcher_id:
+        return None
+
+    # Precomputed table first. The nightly build derives every pitcher's
+    # role in one groupby over the whole league (see
+    # precompute.build_pitcher_roles), so this is a dict lookup.
+    #
+    # It matters because the slate-wide bullpen baseline asks for the role
+    # of every pitcher on every roster in the slate. Doing that live meant
+    # loading a few hundred full-season dataframes before the first MLB
+    # page could render.
+    _pre = _roles_lookup().get(str(pitcher_id))
+    if _pre:
+        return _pre
+    try:
+        df, _err = _get_pitcher_df(pitcher_id)
+    except Exception:
+        return None
+    if df is None or df.empty:
+        return None
+    if not {"game_pk", "at_bat_number"}.issubset(df.columns):
+        return None
+
+    firsts = (df.groupby("game_pk")["at_bat_number"].min()).dropna()
+    if len(firsts) < 3:          # too few outings to be confident
+        return None
+    med = float(firsts.median())
+    # A starter faces the top of the order immediately. Anything past the
+    # first time through the order (9 batters) is someone who came in
+    # after the game was under way.
+    return "SP" if med <= 9 else "RP"
+
+
+def hand_tag(pitcher_id):
+    """"LHP" / "RHP" / "" — ready to append to a displayed name."""
+    h = get_pitcher_hand(pitcher_id)
+    return f"{h}HP" if h in ("L", "R") else ""
+
+
+@st.cache_data(ttl=3600, max_entries=64, show_spinner=False)
+def get_batter_iso_vs_hand(batter_id, throws: str) -> float:
+    """Batter's real ISO against pitchers of one handedness ("R"/"L"),
+    this season, from his own Statcast rows. ISO = SLG - BA computed
+    from the standard at-bat definition (_AB_EVENTS), so it matches
+    every other ISO on the site. Returns None when the split has fewer
+    than 40 at-bats — below that the rate is noise, not a profile."""
+    try:
+        df, _err = _get_batter_df(batter_id)
+    except Exception:
+        return None
+    if df is None or df.empty or "p_throws" not in df.columns or "events" not in df.columns:
+        return None
+    sub = df[df["p_throws"] == throws]
+    if sub.empty:
+        return None
+    ev = sub["events"].dropna()
+    ab = int(ev.isin(_AB_EVENTS).sum())
+    if ab < 40:
+        return None
+    singles = int((ev == "single").sum())
+    doubles = int((ev == "double").sum())
+    triples = int((ev == "triple").sum())
+    hrs = int((ev == "home_run").sum())
+    hits = singles + doubles + triples + hrs
+    tb = singles + 2 * doubles + 3 * triples + 4 * hrs
+    return round(tb / ab - hits / ab, 3)
+
+
+def get_pitcher_k_game_log_json(pitcher_id) -> str:
+    """Game-by-game strikeout log for a pitcher, schedule order —
+    powers the Strikeout Board trend viewer. Returns a JSON string
+    (always pickle-serializable): [{"date": "YYYY-MM-DD", "k": N}, ...]
+    Empty list when there's no data — the caller says so honestly."""
+    try:
+        df, _err = _get_pitcher_df(pitcher_id)
+    except Exception:
+        return _json.dumps([])
+    if df is None or df.empty or "events" not in df.columns or "game_pk" not in df.columns:
+        return _json.dumps([])
+    entries = []
+    for _gpk, gdf in df.groupby("game_pk"):
+        gdate = str(gdf["game_date"].iloc[0])[:10] if "game_date" in gdf.columns else ""
+        k = int(gdf["events"].dropna().isin(_STRIKEOUT_EVENTS).sum())
+        entries.append({"date": gdate, "k": k})
+    entries.sort(key=lambda r: r["date"])
+    return _json.dumps(entries)
+
+
+@st.cache_data(ttl=1800, max_entries=384, show_spinner=False)
+def get_pitcher_advanced_splits(pitcher_id, side: str = None, window: str = "season") -> dict:
+    """
+    Computes BA/SLG/ISO/WHIP/HR/HR9/BB%/K%/Whiff%/SwStr%/K9/Putaway%/
+    1stPitchStrike%/Meatball% against a pitcher from raw Statcast rows.
+
+    side: None for overall, "R" for vs RHB, "L" for vs LHB (filters on
+    the batter's stand).
+    window: "season" (default — unchanged behavior) or "l25"/"l15"/
+    "l10"/"l5" — the pitcher's last N GAMES (i.e. starts/appearances),
+    sliced by engines/recency_windows before anything is computed, so
+    every stat (including IP and _games) honestly reflects the window.
+
+    CACHED, same reasoning as get_pitcher_statcast and
+    get_batter_vs_pitch_types: the underlying dataframe pull was already
+    cached, but every metric below was re-derived on top of it on EVERY
+    Streamlit rerun — every click, filter and toggle. The Game Card calls
+    it three times per pitcher (overall, vs RHB, vs LHB), and both
+    k_projection and pitchers_to_target call it inside a loop over every
+    pitcher on the slate, so a full board re-ran the whole computation
+    dozens of times for data that had not changed.
+
+    All three arguments are hashable scalars and the return is a plain
+    dict, so the key is cheap and the value pickles cleanly.
+
+    Definitions used:
+      BA        = hits / at-bats (at-bats = PAs with a batted-ball or
+                  strikeout result; walks/HBP/sac excluded per standard rule)
+      SLG       = total bases / at-bats
+      ISO       = SLG - BA
+      WHIP      = (walks + hits) / estimated innings pitched
+      IP        = estimated from out-producing events / 3 (approximation —
+                  this app has no official box-score innings feed)
+      BB%, K%   = walks / PA, strikeouts / PA
+      Whiff%    = swinging strikes / total swings
+      SwStr%    = swinging strikes / total pitches
+      Putaway%  = strikeouts / pitches thrown with a 2-strike count
+      1stPS%    = first pitch of the PA was a strike, as % of PAs
+      Meatball% = pitches landing in the heart of the zone (Statcast
+                  attack-zone approximation: |plate_x| < 0.83 ft and
+                  1.5-3.5 ft plate_z), as % of all pitches
+    """
+    # RATES ARE None, COUNTS STAY 0.
+    #
+    # Same rule as _compute_batted_ball_metrics above, and it matters
+    # more here than anywhere else in the app: this dict is what the
+    # Game Card's STATS / STRIKES tables render when a pitcher (or one
+    # side of his platoon split) has no Statcast rows — a September
+    # call-up, a reliever who hasn't faced a lefty yet, a starter whose
+    # parquet isn't in tonight's build. Rendered as zeros, that row said
+    # BA .000, SLG .000, WHIP 0.00, HR/9 0.00 — a line describing the
+    # most dominant pitcher who ever lived, and the table has no sample
+    # column to contradict it.
+    #
+    # IP stays 0.0: it is the sentinel every caller gates on
+    # (bullpen_board's MIN_SPLIT_IP, edge's `ip <= 0`, daily_13), zero
+    # innings measured is a true statement, and the guards read
+    # `(x or 0)` so they are unaffected either way.
+    empty = {
+        "IP": 0.0,
+        "BA": None, "SLG": None, "ISO": None, "WHIP": None,
+        "HR": None, "HR/9": None,
+        "BB%": None, "K%": None, "Whiff%": None, "SwStr%": None, "K/9": None,
+        "Putaway%": None, "1stPS%": None, "Meatball%": None, "_error": None,
+        # _games BELONGS IN THE EMPTY DICT TOO.
+        #
+        # The populated return has carried it since windows were added,
+        # but this one did not — so a caller reading splits["_games"] to
+        # show the reader how thin a window is got a KeyError on exactly
+        # the case where the sample matters most: nothing measured at
+        # all. Zero games is the true answer and the honest one to
+        # render; a missing key forces the caller to guess or crash.
+        "_games": 0,
+    }
+
+    df, error = _get_pitcher_df(pitcher_id)
+    if df is not None and not df.empty and window != "season":
+        # Slice to the pitcher's last N GAMES before anything is
+        # computed — IP, _games, and every rate below then honestly
+        # reflect the window, not the season.
+        from engines.recency_windows import apply_window
+        df = apply_window(df, window, "games")
+    if df.empty:
+        empty["_error"] = error
+        return empty
+
+    if side and "stand" in df.columns:
+        df = df[df["stand"] == side].copy()
+    if df.empty:
+        empty["_error"] = "No pitches found for this split."
+        return empty
+
+    total_pitches = len(df)
+    swings_desc = {"hit_into_play", "foul", "foul_tip", "swinging_strike",
+                    "swinging_strike_blocked"}
+    swinging_strike_desc = {"swinging_strike", "swinging_strike_blocked"}
+
+    swings = df["description"].isin(swings_desc).sum() if "description" in df.columns else 0
+    whiffs = df["description"].isin(swinging_strike_desc).sum() if "description" in df.columns else 0
+    whiff_pct = round(whiffs / swings * 100, 1) if swings > 0 else None
+    swstr_pct = round(whiffs / total_pitches * 100, 1) if total_pitches > 0 else None
+
+    # Per-plate-appearance aggregation (last pitch of each PA carries the event)
+    pa_events = pd.Series(dtype=object)
+    if "events" in df.columns:
+        pa_events = df["events"].dropna()
+
+    pa_count = len(pa_events) if len(pa_events) > 0 else df.get("at_bat_number", pd.Series(dtype=int)).nunique()
+    walks = pa_events.isin(_WALK_EVENTS).sum()
+    strikeouts = pa_events.isin(_STRIKEOUT_EVENTS).sum()
+    hits = pa_events.isin(_HIT_EVENTS).sum()
+    home_runs = (pa_events == "home_run").sum()
+    outs = pa_events.isin(_OUT_EVENTS).sum()
+
+    at_bats = pa_events.isin(_AB_EVENTS).sum()
+
+    total_bases = (
+        (pa_events == "single").sum() * 1
+        + (pa_events == "double").sum() * 2
+        + (pa_events == "triple").sum() * 3
+        + (pa_events == "home_run").sum() * 4
+    )
+
+    # SAME RULE AS THE EMPTY STATE ABOVE, applied to the computed path.
+    #
+    # These branches fire for a pitcher who HAS rows but no denominator:
+    # no recorded outs (a reliever who's allowed a hit and a walk and
+    # nothing else yet), no official at-bats, no plate appearances. The
+    # `else 0.0` made all of those read as elite.
+    #
+    # This one is not merely cosmetic. engines/matchup_grades compares
+    # the two starters on WHIP, HR/9, K% and SLG-against — and a 0.00
+    # WHIP with a 0.00 HR/9 BEATS EVERY REAL PITCHER ALIVE on three of
+    # the four checks. A starter with a thin or missing sample would
+    # sweep the moneyline signals and hand his team a lean built on
+    # nothing. val() in that engine already returns None for a
+    # non-numeric value and skips the check, which is exactly the
+    # behaviour we want — it just never got the chance, because 0.0 is
+    # perfectly numeric.
+    ba = round(hits / at_bats, 3) if at_bats > 0 else None
+    slg = round(total_bases / at_bats, 3) if at_bats > 0 else None
+    iso = round(slg - ba, 3) if (ba is not None and slg is not None) else None
+
+    innings_pitched = outs / 3 if outs > 0 else 0.0
+    whip = round((walks + hits) / innings_pitched, 2) if innings_pitched > 0 else None
+    hr9 = round(home_runs * 9 / innings_pitched, 2) if innings_pitched > 0 else None
+    k9 = round(strikeouts * 9 / innings_pitched, 2) if innings_pitched > 0 else None
+
+    bb_pct = round(walks / pa_count * 100, 1) if pa_count > 0 else None
+    k_pct = round(strikeouts / pa_count * 100, 1) if pa_count > 0 else None
+
+    # None, not 0.0: no two-strike pitches (or no count columns) means
+    # unmeasured, and a 0% putaway rate is a real, terrible number.
+    putaway_pct = None
+    if {"balls", "strikes", "description"}.issubset(df.columns):
+        two_strike_pitches = df[pd.to_numeric(df["strikes"], errors="coerce") == 2]
+        if len(two_strike_pitches) > 0:
+            putaway_pct = round(strikeouts / len(two_strike_pitches) * 100, 1)
+
+    first_pitch_strike_pct = None
+    if "pitch_number" in df.columns and "description" in df.columns:
+        first_pitches = df[pd.to_numeric(df["pitch_number"], errors="coerce") == 1]
+        if len(first_pitches) > 0:
+            strike_desc = {"called_strike", "swinging_strike", "swinging_strike_blocked",
+                            "foul", "foul_tip", "hit_into_play"}
+            fp_strikes = first_pitches["description"].isin(strike_desc).sum()
+            first_pitch_strike_pct = round(fp_strikes / len(first_pitches) * 100, 1)
+
+    meatball_pct = None
+    if {"plate_x", "plate_z"}.issubset(df.columns):
+        px = pd.to_numeric(df["plate_x"], errors="coerce")
+        pz = pd.to_numeric(df["plate_z"], errors="coerce")
+        in_heart = (px.abs() < 0.83) & (pz.between(1.5, 3.5))
+        meatball_pct = round(in_heart.sum() / total_pitches * 100, 1) if total_pitches > 0 else None
+
+    return {
+        # Estimated IP (out events / 3) — the same figure WHIP/HR9/K9
+        # above are already built on; now exposed instead of discarded.
+        "IP": round(innings_pitched, 1),
+        # Distinct games in the sample — the K projection board divides
+        # season IP by this to get innings per start.
+        "_games": int(df["game_pk"].nunique()) if "game_pk" in df.columns else 0,
+        "BA": ba, "SLG": slg, "ISO": iso, "WHIP": whip, "HR": int(home_runs), "HR/9": hr9,
+        "BB%": bb_pct, "K%": k_pct, "Whiff%": whiff_pct, "SwStr%": swstr_pct, "K/9": k9,
+        "Putaway%": putaway_pct, "1stPS%": first_pitch_strike_pct, "Meatball%": meatball_pct,
+        "_error": error,
+    }
