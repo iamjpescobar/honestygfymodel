@@ -17,6 +17,7 @@ systems layered on top:
 import json as _tbl_json
 from pathlib import Path
 
+import itertools
 import pandas as pd
 
 
@@ -677,6 +678,9 @@ div[data-testid="column"]:has(.lc-tbl-wrap) {{
 """
 
 
+_TABLE_SEQ = itertools.count()
+
+
 def render_html_table(styler, key: str = ""):
     """Render a pandas Styler as real HTML with a sticky first column.
 
@@ -684,6 +688,29 @@ def render_html_table(styler, key: str = ""):
     sorting. Pass a Styler whose row label is already a real COLUMN, not
     an index — _base_styler calls .hide(axis="index"), so anything left
     in the index is dropped before it ever reaches here.
+
+    THE UUID IS ALWAYS UNIQUE, AND THAT IS NOT A DETAIL.
+
+    pandas builds its selectors from table_uuid: #T_{uuid}_row0_col10.
+    This used to be f"lc{key}", with key defaulting to "" — so every
+    caller that passed no key emitted CSS under the identical selector,
+    and two such tables on one page have equal specificity. The LAST one
+    rendered wins for all of them.
+
+    That is not theoretical. The WNBA team table renders inside two
+    nested loops (once per prop tab, once per side) with a hardcoded
+    key="wnba_636", so a three-game slate painted dozens of tables all
+    claiming the same selectors — and every team's grid wore the colours
+    computed for whichever table happened to render last. It read as
+    "the colours are inverted", because the numbers and their colours
+    came from different tables. GameCard had nine keyless tables on one
+    page with the same collision.
+
+    So key is now a readable LABEL, not the uniqueness mechanism. A
+    counter guarantees the uuid differs even when two callers pass the
+    same key, or none. Uniqueness must not depend on every future caller
+    remembering to invent a name — that is exactly the discipline this
+    bug proves nobody sustains.
     """
     import streamlit as st
 
@@ -702,7 +729,8 @@ def render_html_table(styler, key: str = ""):
     # just applies the same rules again.
     st.markdown(_HTML_TABLE_CSS, unsafe_allow_html=True)
 
-    html = styler.to_html(table_uuid=f"lc{key}") if hasattr(styler, "to_html") else str(styler)
+    uid = f"lc{key}_{next(_TABLE_SEQ)}"
+    html = styler.to_html(table_uuid=uid) if hasattr(styler, "to_html") else str(styler)
     st.markdown(f'<div class="lc-tbl-wrap">{html}</div>', unsafe_allow_html=True)
 
 
