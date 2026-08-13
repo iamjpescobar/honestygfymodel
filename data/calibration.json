@@ -1873,14 +1873,6 @@
     "2026-08-13": {
       "picks": [
         {
-          "id": "668904",
-          "name": "Royce Lewis",
-          "team": "MIN",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
           "id": "678882",
           "name": "Ceddanne Rafaela",
           "team": "BOS",
@@ -1889,25 +1881,9 @@
           "result": null
         },
         {
-          "id": "808959",
-          "name": "Munetaka Murakami",
-          "team": "CWS",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "608324",
-          "name": "Alex Bregman",
-          "team": "CHC",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "701398",
-          "name": "Sal Stewart",
-          "team": "CIN",
+          "id": "668904",
+          "name": "Royce Lewis",
+          "team": "MIN",
           "stat": null,
           "line": null,
           "result": null
@@ -1921,17 +1897,25 @@
           "result": null
         },
         {
-          "id": "655316",
-          "name": "Andruw Monasterio",
-          "team": "BOS",
+          "id": "701398",
+          "name": "Sal Stewart",
+          "team": "CIN",
           "stat": null,
           "line": null,
           "result": null
         },
         {
-          "id": "673548",
-          "name": "Seiya Suzuki",
+          "id": "608324",
+          "name": "Alex Bregman",
           "team": "CHC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "655316",
+          "name": "Andruw Monasterio",
+          "team": "BOS",
           "stat": null,
           "line": null,
           "result": null
@@ -1953,24 +1937,40 @@
           "result": null
         },
         {
-          "id": "807712",
-          "name": "Luke Keaschall",
-          "team": "MIN",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "702222",
-          "name": "Justin Crawford",
-          "team": "PHI",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
           "id": "805367",
           "name": "Chase Meidroth",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "673548",
+          "name": "Seiya Suzuki",
+          "team": "CHC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686765",
+          "name": "Nick Sogard",
+          "team": "BOS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "669364",
+          "name": "Xavier Edwards",
+          "team": "MIA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686668",
+          "name": "Brenton Doyle",
           "team": "CWS",
           "stat": null,
           "line": null,
@@ -2962,6 +2962,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-13": {
+      "picks": [
+        {
+          "id": "682987",
+          "name": "Spencer Jones",
+          "team": "New York Yankees",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "677800",
+          "name": "Wilyer Abreu",
+          "team": "Boston Red Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "678246",
+          "name": "Miguel Vargas",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "575929",
+          "name": "Willson Contreras",
+          "team": "Boston Red Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "700250",
+          "name": "Ben Rice",
+          "team": "New York Yankees",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
