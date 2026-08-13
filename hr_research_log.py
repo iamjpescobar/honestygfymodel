@@ -60,12 +60,50 @@ sys.path.insert(0, str(ROOT / "app"))
 
 EASTERN = ZoneInfo("America/New_York")
 OUT_DIR = ROOT / "data" / "hr_research"
-BATTER_DIR = ROOT / "app" / "data" / "statcast" / "batters"
+# WHERE THE BATTER PARQUETS ACTUALLY ARE, and there are two answers.
+#
+# precompute writes into build_data/ — a staging tree that gets packaged
+# and published as the release asset. app/data/ only exists once
+# fetch_data.py unpacks that asset, which happens on Render and in a
+# Codespace and NEVER on the CI runner.
+#
+# This read app/data/ only, so on the nightly runner it found zero files,
+# every lookup returned "cannot tell", and the coverage guard correctly
+# refused to close the night. 270 rows sat ungraded for a day and the
+# reason went into a log nobody read.
+#
+# Both roots, build_data first because that is where the freshest data
+# lives at the moment grading runs.
+BATTER_DIRS = (ROOT / "build_data" / "data" / "statcast" / "batters",
+               ROOT / "app" / "data" / "statcast" / "batters")
 
 # THE NINE FLOOR CANDIDATES, read straight off the profile the board
 # already computed. Keys are the profile's own, not renamed — a rename
 # here is a second name for one number, which is how two parts of this
 # repo end up disagreeing about what a stat is.
+# SHORT WINDOWS, LOGGED ALONGSIDE THE SEASON ONES.
+#
+# Everything in PROFILE_KEYS below is a SEASON figure, regressed toward
+# the league mean. That is the conservative choice and it is defensible
+# — season is stable, regression protects thin samples — but it is a
+# CHOICE, and the log cannot currently tell whether it is the right one.
+#
+# Competing products rate almost entirely on short windows: exit
+# velocity over the last 5 games, hard-hit and pull-air over 14, form
+# over 7. For "does he homer TONIGHT", recent batted-ball shape may
+# genuinely carry more signal than stable skill. Nobody here knows.
+#
+# The question is only answerable if both are on disk from the same
+# night against the same outcome. Recording season alone means that in
+# three weeks we can answer "does an 88 beat a 71" and still not answer
+# "does L15 pull-air beat season pull-air" — and every night logged
+# without these is a night that cannot answer it later.
+#
+# l15 and l5 because recency_windows already supports exactly those.
+WINDOWED_KEYS = ("Brl %", "Brl/PA", "HH %", "FB %", "EV90", "AvgEV",
+                 "PullAir %", "Blast %", "ISO", "HRWindow %")
+WINDOWS = ("l15", "l5")
+
 PROFILE_KEYS = ("Brl %", "Brl/PA", "HH %", "FB %", "EV90", "MaxEV",
                 # AvgEV, not just EV90. The floor set names AvgEV, and
                 # without it the qualification tier cannot be
@@ -188,6 +226,15 @@ def log(date_str: str) -> int:
             rec[k] = r.get(k)
         for k in PROFILE_KEYS:
             rec[k] = prof.get(k)
+
+        # The same metrics over short windows, prefixed by window so a
+        # column name always says which one it is. Cached per
+        # (batter, window, unit), so the second and third calls for a
+        # batter the board already profiled are dict lookups.
+        for win in WINDOWS:
+            wp = get_batter_profile_windowed(pid, window=win, unit="bbe") or {}
+            for k in WINDOWED_KEYS:
+                rec[f"{win}_{k}"] = wp.get(k)
         fresh.append(rec)
 
     if not fresh:
@@ -208,8 +255,9 @@ def _homered(pid, date_str):
     and it must not be recorded as a zero.
     """
     import pandas as pd
-    path = BATTER_DIR / f"{int(pid)}.parquet"
-    if not path.exists():
+    path = next((d / f"{int(pid)}.parquet" for d in BATTER_DIRS
+                 if (d / f"{int(pid)}.parquet").exists()), None)
+    if path is None:
         return None, None
     try:
         df = pd.read_parquet(path, columns=["game_date", "events"])
@@ -260,10 +308,21 @@ def grade(today: str) -> int:
             # games that had already been played.
             appeared = sum(1 for _hr, played in results.values() if played)
             if appeared < len(pending) * 0.5:
+                # SAY WHICH REASON. "No rows for this batter" and "no file
+                # for this batter" are indistinguishable inside _homered,
+                # and they mean completely different things: the first is
+                # a pull that has not caught up, the second is a path that
+                # is wrong. Reporting them as one cost a full day of
+                # grading — the guard held, and nobody could tell why.
+                _nofile = sum(1 for _hr, played in results.values()
+                              if played is None)
+                _roots = [str(d) for d in BATTER_DIRS if d.exists()]
                 print(f"hr_research: {date_str} — only {appeared} of "
-                      f"{len(pending)} bats appear in the batter files. The "
-                      f"nightly pull has not reached that date; leaving the "
-                      f"whole night ungraded.")
+                      f"{len(pending)} bats appear in the batter files; "
+                      f"{_nofile} had NO FILE AT ALL. Leaving the night "
+                      f"ungraded.")
+                _why = _roots or ["NONE — the path is wrong, not the pull"]
+                print(f"  batter dirs present: {_why}")
                 continue
 
             for r in pending:
