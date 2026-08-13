@@ -16,7 +16,7 @@ THREE THINGS THAT WERE WRONG IN THE SAME PLACE.
    the board over.
 
 2. The clamp erased separation exactly where the reader looks: the
-   adjustments span +/-67, so a strong bat in a strong spot pins at 100
+   adjustments span +/-75, so a strong bat in a strong spot pins at 100
    beside one several points behind it.
 
 3. The board never passed batting_order, so the slot term was on the
