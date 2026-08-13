@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-08-13 17:38",
+  "generated_at_et": "2026-08-13 19:37",
   "slate_date_et": "2026-08-13",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -181,7 +181,7 @@
         "Temp 89F (carry weather)",
         "Starters' avg WHIP 1.36 (high)"
       ],
-      "proj_total": 11.3
+      "proj_total": 11.2
     },
     {
       "game_pk": 823669,
@@ -192,13 +192,13 @@
       "venue": "Field of Dreams",
       "game_time": "2026-08-13T23:30:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": "73",
-      "weather_wind": "10 mph, Out To CF",
+      "weather_temp": "72",
+      "weather_wind": "9 mph, In From CF",
       "park_factor": 103,
       "park_verified": true,
       "weather_source": "mlb_posted",
-      "wind_adj": 3,
-      "wind_note": "wind out 10 mph (+3)",
+      "wind_adj": -2,
+      "wind_note": "wind in 9 mph (-2)",
       "edge_net": 4,
       "edge_lean": "Minnesota Twins",
       "edge_grade": "A",
@@ -226,19 +226,14 @@
       "home_pitcher": "Walbert Ure\u00f1a",
       "venue": "Angel Stadium",
       "game_time": "2026-08-14T02:07:00Z",
-      "weather_condition": "Mostly Cloudy",
-      "weather_temp": 75,
-      "weather_wind": "SW 5 mph",
+      "weather_condition": "Cloudy",
+      "weather_temp": "84",
+      "weather_wind": "9 mph, Varies",
       "park_factor": 100,
       "park_verified": true,
-      "weather_source": "nws_forecast",
-      "wind_adj": 2.0,
-      "wind_note": "5 mph blowing out (+2.0)",
-      "ou_lean": "Under",
-      "ou_grade": "C-",
-      "ou_signals": [
-        "Starters' avg SLG against 0.34 (low)"
-      ],
+      "weather_source": "mlb_posted",
+      "wind_adj": 0,
+      "wind_note": null,
       "proj_total": 8.4
     },
     {
@@ -250,13 +245,13 @@
       "venue": "UNIQLO Field at Dodger Stadium",
       "game_time": "2026-08-14T02:10:00Z",
       "weather_condition": "Cloudy",
-      "weather_temp": 70,
-      "weather_wind": "SW 10 mph",
+      "weather_temp": "84",
+      "weather_wind": "9 mph, Varies",
       "park_factor": 101,
       "park_verified": true,
-      "weather_source": "nws_forecast",
-      "wind_adj": 3.7,
-      "wind_note": "10 mph blowing out (+3.7)",
+      "weather_source": "mlb_posted",
+      "wind_adj": 0,
+      "wind_note": null,
       "edge_net": 2,
       "edge_lean": "Milwaukee Brewers",
       "edge_grade": "C",
@@ -265,8 +260,9 @@
         "SLG against: edge Milwaukee Brewers (0.404 vs 0.471)"
       ],
       "ou_lean": "Over",
-      "ou_grade": "B",
+      "ou_grade": "A",
       "ou_signals": [
+        "Temp 84F (carry weather)",
         "Starters' avg WHIP 1.4 (high)",
         "Starters' avg HR/9 1.4 (high)",
         "Starters' avg SLG against 0.438 (high)"
