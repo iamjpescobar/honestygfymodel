@@ -10,6 +10,127 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — slam_engine.py was overwritten with statcast_engine.py, and the Game Card died at import. 2026-08-13 (3)
+
+**3 files (1 new test). Suite 94, FAILING: test_league_anchors — and it
+must stay red until slam_engine is restored from git history. See
+"WHAT IS STILL BROKEN" below.**
+
+### THE SYMPTOM
+
+    ImportError: cannot import name 'slam_from_profile'
+                 from 'engines.slam_engine'
+    app/views/GameCard.py, line 38
+
+Whole page down in production, found by a user.
+
+### THE CAUSE — not a rename, a clobber
+
+`diff app/engines/slam_engine.py app/engines/statcast_engine.py` returns
+ONE hunk: seventeen lines, the three-column addition dated 2026-08-13.
+The two files are otherwise byte-identical.
+
+The three new columns (`swing_length`, `bat_score`, `post_bat_score`)
+belonged in `statcast_engine._KEEP_COLS`. What actually happened is that
+statcast_engine's full contents, plus those columns, were written to
+`slam_engine.py`. slam_engine's own contents were destroyed.
+
+`slam_from_profile` was not renamed and it did not move — grep the tree,
+nothing defines it. Neither does `_league_hrfb`, which slam_engine also
+owned. Nothing in the repo describes SLAM's formula either: `grep -i
+slam` across HANDOFF.md, README.md and READING_THE_BOARDS.md returns
+zero lines. **The scoring cannot be reconstructed from anything left in
+the working tree.** It has to come out of git.
+
+Two tests were already red and both are downstream of this one commit:
+
+| test | what it was telling us |
+|---|---|
+| `test_league_anchors` | `engines.slam_engine no longer reads the measured anchor` — `_league_hrfb` gone with the rest of the file |
+| `test_columns` | `build writes columns the engine discards: bat_score, post_bat_score, swing_length` — the addition landed in the wrong file, so the nightly writes three columns statcast_engine throws away |
+
+### WHAT SHIPPED
+
+**1. `app/views/GameCard.py` — tourniquet, marked for deletion.**
+The import is wrapped in `try/except ImportError` with a stub returning
+`{}`. That makes `slam_score` None, which the row builder already
+renders as an em dash. Every other panel on the card is untouched.
+
+Also: `tier = matchup_tier(slam) if slam is not None else None`. It
+previously fed `0.0` into `matchup_tier` when SLAM was missing, which
+returns **"Weak"** — a fabricated read on a bat that was never measured.
+Survivable when it hit one hitter with no expected stats; indefensible
+while the engine is down, when it would have labelled the entire board
+Weak. Matchup is derived from SLAM, so a missing SLAM blanks both.
+
+**2. `app/engines/statcast_engine.py` — the three columns, in the file
+they were meant for.** Verbatim from the clobbered copy, comment
+included. `test_columns` goes green and tonight's pull actually keeps
+them, which matters: they only populate going forward.
+
+**3. `tests/test_view_engine_imports.py` — NEW. The control.**
+Reads both sides as source via `ast` and checks that every name in every
+`from engines.X import ...` across `app/views/` exists — 183 imports
+today. No streamlit, no data archive, runs bare.
+
+Two neighbours already existed and neither covers this case.
+`test_view_imports.py` checks that every name a view CALLS is bound
+somewhere in that view; it passes on this break, because the import line
+was present and correctly spelled — the name it asked for is what
+stopped existing. `test_probe_imports.py` guards the probes' reach into
+engine internals, the cheaper direction: a broken probe is noticed by
+whoever runs it, a broken view is a dead page in production.
+
+Tourniquets are listed in `KNOWN_TOURNIQUETS`, not ignored, and the test
+fails BOTH ways: an unlisted `except ImportError` fallback appears
+(someone quietly papered over a break), or a listed one starts resolving
+again (the real fix landed and a stub returning empty data is still
+sitting in front of it).
+
+Negative control confirmed red against the unpatched GameCard:
+
+    BROKEN: GameCard.py imports slam_from_profile from
+            engines.slam_engine — that name does not exist
+
+### WHAT IS STILL BROKEN — do this next, from Codespaces
+
+    git log --oneline -- app/engines/slam_engine.py
+    git show <sha-before-today>:app/engines/slam_engine.py > /tmp/slam_old.py
+    grep -n "^def \|^_LEAGUE\|^def _league_hrfb" /tmp/slam_old.py
+
+Confirm `slam_from_profile` and `_league_hrfb` are in that copy, then
+restore it over `app/engines/slam_engine.py`. Then, in order:
+
+1. `python tests/test_league_anchors.py` — must go green. It asserts
+   slam_engine and top_plays resolve the SAME measured HR/FB anchor; if
+   they ever disagree a bat scores differently on SLAM than on Top
+   Plays.
+2. **Delete the `try/except` in GameCard.py and the `KNOWN_TOURNIQUETS`
+   entry in test_view_engine_imports.py.** The test will fail with
+   `FIXED: engines.slam_engine.slam_from_profile resolves again` until
+   you do — that is the reminder working, not a regression.
+3. Re-run the suite. 94 green.
+
+Do NOT rewrite SLAM from the description in `matchup_tier`'s docstring
+or `app.py`'s legend. "Real xSLG/xwOBA normalized so ~50 = league
+average" names the inputs and the centre point and nothing else — no
+weights, no windows, no floors. A reconstruction would be a number
+chosen by eye wearing the name of one that was measured, and the
+Matchup tiers, the sort, and the BvP adjustment on the Game Card would
+all inherit it silently. The em dash is honest; a guess is not.
+
+### THE RULE THIS ADDS
+
+**A file that is written wholesale is a deletion of everything in it.**
+The three-column edit was correct, small, and reviewed. It went into the
+wrong file and cost the SLAM engine, because writing a whole file
+replaces it — an edit that only ADDS lines cannot do this. Prefer
+targeted edits; when a full-file write is unavoidable, diff it against
+what is on disk before shipping. `diff` would have shown 1,600
+unexplained lines in a seventeen-line change.
+
+---
+
 ## PICK UP HERE — Daily 13 was picking bench bats, and the grader was mislabelling starters. 2026-08-13 (2)
 
 **4 files (1 new test). Suite 92, FAILING: none.** Four controls red.
