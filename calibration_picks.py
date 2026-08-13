@@ -667,6 +667,54 @@ def main() -> int:
         # app/engines/calibration.py's log_picks() already wrote both
         # fields correctly. This is the CI path, and since every record
         # now carries source="ci", this was the only path that ran.
+        # A SINGLE-MARKET BOARD HAS stat=None, AND None IS A MARKET.
+        #
+        # This froze hr_edge, daily13 and potd at the FIRST run that
+        # produced anything. Their picks carry stat=None, so after the
+        # 1 PM run logged_markets == {None}, and at 5 and 7 PM every row
+        # also had stat=None — so `fresh` was empty and the day was left
+        # alone. The per-market rule was written for the WNBA boards,
+        # which have five real markets; it silently froze the MLB ones.
+        #
+        # On 2026-08-12 that meant hr_edge graded FOUR picks on a
+        # fifteen-game slate: two confirmed lineups at 1 PM against a
+        # 2-per-game cap. By evening the real board had Raleigh and
+        # Ohtani above every one of them. The record was measuring
+        # lunchtime.
+        #
+        # So: a board whose markets are all None REPLACES its picks each
+        # run rather than appending. Later runs see more confirmed
+        # lineups, so the last write of the day is the best one — and it
+        # is the one that gets graded, which is the whole point of the
+        # record.
+        # REPLACE ONLY WITH AT LEAST AS MUCH BOARD.
+        #
+        # Plain replacement lets a DEGRADED later run destroy a good
+        # record: if the 7 PM build hiccups and sees two games where the
+        # 5 PM one saw fifteen, the day would be overwritten with the
+        # worse list. tests/test_calibration_picks.py caught exactly that
+        # — its second run returns a thinner board and asserts the fuller
+        # one survives, which is the retry safety these three daily runs
+        # exist for in the first place.
+        #
+        # `>=` and not `>`: an evening board of the same size is still
+        # built on more confirmed lineups, so it should win a tie.
+        _single_market = {r.get("stat") for r in rows} == {None}
+        if (_single_market and existing.get("picks")
+                and len(rows) >= len(existing["picks"])):
+            entry = record[board][date_str]
+            entry["picks"] = [
+                {"id": r["id"], "name": r.get("name"), "team": r.get("team"),
+                 "stat": r.get("stat"), "line": r.get("line"),
+                 "result": None} for r in rows]
+            # Replacing the list reopens the day; grade() must revisit it.
+            entry["graded"] = False
+            wrote += len(rows)
+            print(f"{board}: REPLACED {len(existing['picks'])} pick(s) with "
+                  f"{len(rows)} for {date_str} — a later run sees more "
+                  f"confirmed lineups [built in {_elapsed:.1f}s].", flush=True)
+            continue
+
         fresh = [r for r in rows if r.get("stat") not in logged_markets]
         if not fresh:
             print(f"{board}: every market already logged for {date_str} "
