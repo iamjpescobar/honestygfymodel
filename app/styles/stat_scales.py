@@ -84,6 +84,13 @@ SCALES = {
     # is his BEST contact" — and a scale written for one grades nothing
     # when applied to the other. A "91 EV" floor aimed at this column
     # was applied to EV90 (median 104.2) and cleared 373 of 373.
+    # FORM is a league PERCENTILE of the L15-vs-season move, so the cut
+    # points ARE percentiles — 25 / 50 / 75 / 90. Nothing to measure:
+    # a percentile's own distribution is uniform by construction, which
+    # is the one case where round numbers are the honest choice rather
+    # than a guess. Every other scale on this page had to be measured
+    # precisely because it was NOT a percentile.
+    "Form":      (25.0, 50.0, 75.0, 90.0),
     "AvgEV":     (87.0, 88.6, 90.1, 91.8),
     # FORM DELTAS — signed, and the cut points STRADDLE ZERO, because
     # zero is the meaningful anchor: a hitter doing exactly what he
