@@ -16,7 +16,8 @@ import streamlit as st
 from styles.kc_theme import card, footer, COLOR
 from styles.table_style import (style_stat_table, render_html_table, team_logo_cell,
                                 score_bar, sort_control, tier_legend, stat_formats)
-from engines.hr_edge_board import get_hr_edge_board, cap_per_game, GAME_CAP
+from engines.hr_edge_board import (get_hr_edge_board, cap_per_game,
+                                   GAME_CAP, CAP_UNIT)
 # Column headers come from the component, not from this file. Typing
 # them here would let the board and engines/form disagree about what
 # Form is called, which is the drift STAT_FORMATS and hr_floors both
@@ -99,10 +100,23 @@ else:
                 f"lineup at all."
             )
         st.caption(
-            f"At most {GAME_CAP} bats per GAME. Park, temperature, wind and "
+            f"At most {GAME_CAP} bats per {'TEAM' if CAP_UNIT == 'team' else 'GAME'}. "
+            f"Park, temperature, wind and "
             f"the opposing arsenal lift a whole lineup at once, so without "
-            f"this one matinee can take over the board. Per game, not per "
-            f"team: both sides share that context. "
+            f"this one matinee can take over the board. "
+            # THE CAPTION USED TO SAY "per game, not per team" WHILE THE
+            # CODE COUNTED PER TEAM. CAP_UNIT moved to "team" for more
+            # room at the top and this sentence did not follow, so the
+            # board was showing up to six bats from one game under a
+            # label that explicitly denied it could.
+            #
+            # Both halves are now generated from CAP_UNIT, so the label
+            # cannot drift from the rule again. A right number under a
+            # wrong label is the one error nobody downstream can catch.
+            + (f"Per TEAM, so both sides of one game each get {GAME_CAP} "
+               f"\u2014 up to {GAME_CAP * 2} bats from a single matchup. "
+               if CAP_UNIT == "team" else
+               f"Per game, not per team: both sides share that context. ")
             + (f"{len(_overflow)} bat(s) held back \u2014 listed below."
                if _overflow else "Nothing held back tonight."))
 
@@ -199,7 +213,7 @@ else:
             # length readable. Same reason they were removed from the
             # Game Card lineup.
             favor_high=["Matchup", "Context", "Threat", "Clears%",
-                        "AvgEV", "Form"],
+                        "AvgEV"],
             gradient=True,
         ).format(stat_formats(df, extra={
             # THE MAP FIRST, this dict on top of it.
@@ -263,7 +277,7 @@ else:
     # to a better hitter — and a board that made it disappear without
     # saying so would be hiding a pick rather than ranking one.
     if _overflow:
-        with st.expander(f"Held back by the {GAME_CAP}-per-game cap "
+        with st.expander(f"Held back by the {GAME_CAP}-per-{CAP_UNIT} cap "
                          f"({len(_overflow)})"):
             st.caption(
                 "These rank inside the board above on HR Edge. They sit here "
