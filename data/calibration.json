@@ -1979,6 +1979,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-08-14": {
+      "picks": [
+        {
+          "id": "695506",
+          "name": "Jac Caglianone",
+          "team": "KC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682674",
+          "name": "Victor Bericoto",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701398",
+          "name": "Sal Stewart",
+          "team": "CIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666018",
+          "name": "Jonathan Aranda",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "608324",
+          "name": "Alex Bregman",
+          "team": "CHC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "685133",
+          "name": "Wade Meckler",
+          "team": "LAA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "805811",
+          "name": "Bryce Eldridge",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701807",
+          "name": "Carson Benge",
+          "team": "NYM",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "679529",
+          "name": "Spencer Torkelson",
+          "team": "DET",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672695",
+          "name": "Geraldo Perdomo",
+          "team": "ARI",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "808982",
+          "name": "Jung Hoo Lee",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "642715",
+          "name": "Willy Adames",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691016",
+          "name": "Tyler Soderstrom",
+          "team": "ATH",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -2232,6 +2342,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-14": {
+      "picks": [
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -7330,6 +7454,412 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-08-14": {
+      "picks": [
+        {
+          "id": "5220150",
+          "name": "D. Malonga",
+          "team": "Seattle Storm",
+          "stat": "pts",
+          "line": 17.0,
+          "result": null
+        },
+        {
+          "id": "3904577",
+          "name": "A. Ogunbowale",
+          "team": "Dallas Wings",
+          "stat": "pts",
+          "line": 16.0,
+          "result": null
+        },
+        {
+          "id": "3142191",
+          "name": "K. Mitchell",
+          "team": "Indiana Fever",
+          "stat": "pts",
+          "line": 28.0,
+          "result": null
+        },
+        {
+          "id": "5105406",
+          "name": "F. Buhner",
+          "team": "Portland Fire",
+          "stat": "pts",
+          "line": 8.0,
+          "result": null
+        },
+        {
+          "id": "3913881",
+          "name": "A. Smith",
+          "team": "Dallas Wings",
+          "stat": "pts",
+          "line": 7.5,
+          "result": null
+        },
+        {
+          "id": "3906972",
+          "name": "B. Carleton",
+          "team": "Portland Fire",
+          "stat": "pts",
+          "line": 16.0,
+          "result": null
+        },
+        {
+          "id": "4432831",
+          "name": "A. Boston",
+          "team": "Indiana Fever",
+          "stat": "pts",
+          "line": 16.0,
+          "result": null
+        },
+        {
+          "id": "4433403",
+          "name": "C. Clark",
+          "team": "Indiana Fever",
+          "stat": "pts",
+          "line": 22.0,
+          "result": null
+        },
+        {
+          "id": "3056730",
+          "name": "K. Samuelson",
+          "team": "Portland Fire",
+          "stat": "pts",
+          "line": 5.0,
+          "result": null
+        },
+        {
+          "id": "3142255",
+          "name": "M. Billings",
+          "team": "Indiana Fever",
+          "stat": "pts",
+          "line": 9.0,
+          "result": null
+        },
+        {
+          "id": "5220150",
+          "name": "D. Malonga",
+          "team": "Seattle Storm",
+          "stat": "reb",
+          "line": 10.0,
+          "result": null
+        },
+        {
+          "id": "3906972",
+          "name": "B. Carleton",
+          "team": "Portland Fire",
+          "stat": "reb",
+          "line": 5.5,
+          "result": null
+        },
+        {
+          "id": "5105406",
+          "name": "F. Buhner",
+          "team": "Portland Fire",
+          "stat": "reb",
+          "line": 3.0,
+          "result": null
+        },
+        {
+          "id": "4432831",
+          "name": "A. Boston",
+          "team": "Indiana Fever",
+          "stat": "reb",
+          "line": 7.5,
+          "result": null
+        },
+        {
+          "id": "5209202",
+          "name": "N. Puoch",
+          "team": "Portland Fire",
+          "stat": "reb",
+          "line": 2.0,
+          "result": null
+        },
+        {
+          "id": "5345325",
+          "name": "A. Fam",
+          "team": "Seattle Storm",
+          "stat": "reb",
+          "line": 6.5,
+          "result": null
+        },
+        {
+          "id": "4433546",
+          "name": "M. Timpson",
+          "team": "Indiana Fever",
+          "stat": "reb",
+          "line": 5.5,
+          "result": null
+        },
+        {
+          "id": "2529047",
+          "name": "O. Sims",
+          "team": "Dallas Wings",
+          "stat": "reb",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "3913881",
+          "name": "A. Smith",
+          "team": "Dallas Wings",
+          "stat": "reb",
+          "line": 4.5,
+          "result": null
+        },
+        {
+          "id": "3142191",
+          "name": "K. Mitchell",
+          "team": "Indiana Fever",
+          "stat": "reb",
+          "line": 2.0,
+          "result": null
+        },
+        {
+          "id": "5220150",
+          "name": "D. Malonga",
+          "team": "Seattle Storm",
+          "stat": "ast",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "4398729",
+          "name": "E. Engstler",
+          "team": "Portland Fire",
+          "stat": "ast",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "5017726",
+          "name": "J. Melbourne",
+          "team": "Seattle Storm",
+          "stat": "ast",
+          "line": 4.0,
+          "result": null
+        },
+        {
+          "id": "3906753",
+          "name": "N. Hiedeman",
+          "team": "Seattle Storm",
+          "stat": "ast",
+          "line": 5.0,
+          "result": null
+        },
+        {
+          "id": "3906972",
+          "name": "B. Carleton",
+          "team": "Portland Fire",
+          "stat": "ast",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "5345325",
+          "name": "A. Fam",
+          "team": "Seattle Storm",
+          "stat": "ast",
+          "line": 2.0,
+          "result": null
+        },
+        {
+          "id": "4433403",
+          "name": "C. Clark",
+          "team": "Indiana Fever",
+          "stat": "ast",
+          "line": 8.0,
+          "result": null
+        },
+        {
+          "id": "5105406",
+          "name": "F. Buhner",
+          "team": "Portland Fire",
+          "stat": "ast",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "3904577",
+          "name": "A. Ogunbowale",
+          "team": "Dallas Wings",
+          "stat": "ast",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "5208982",
+          "name": "C. Leite",
+          "team": "Portland Fire",
+          "stat": "ast",
+          "line": 7.0,
+          "result": null
+        },
+        {
+          "id": "3904577",
+          "name": "A. Ogunbowale",
+          "team": "Dallas Wings",
+          "stat": "pra",
+          "line": 22.5,
+          "result": null
+        },
+        {
+          "id": "3142191",
+          "name": "K. Mitchell",
+          "team": "Indiana Fever",
+          "stat": "pra",
+          "line": 33.0,
+          "result": null
+        },
+        {
+          "id": "5220150",
+          "name": "D. Malonga",
+          "team": "Seattle Storm",
+          "stat": "pra",
+          "line": 28.5,
+          "result": null
+        },
+        {
+          "id": "4433546",
+          "name": "M. Timpson",
+          "team": "Indiana Fever",
+          "stat": "pra",
+          "line": 11.5,
+          "result": null
+        },
+        {
+          "id": "3906972",
+          "name": "B. Carleton",
+          "team": "Portland Fire",
+          "stat": "pra",
+          "line": 24.0,
+          "result": null
+        },
+        {
+          "id": "4433403",
+          "name": "C. Clark",
+          "team": "Indiana Fever",
+          "stat": "pra",
+          "line": 33.5,
+          "result": null
+        },
+        {
+          "id": "3142255",
+          "name": "M. Billings",
+          "team": "Indiana Fever",
+          "stat": "pra",
+          "line": 16.0,
+          "result": null
+        },
+        {
+          "id": "5105406",
+          "name": "F. Buhner",
+          "team": "Portland Fire",
+          "stat": "pra",
+          "line": 12.0,
+          "result": null
+        },
+        {
+          "id": "3913881",
+          "name": "A. Smith",
+          "team": "Dallas Wings",
+          "stat": "pra",
+          "line": 12.0,
+          "result": null
+        },
+        {
+          "id": "3934218",
+          "name": "Gustafson",
+          "team": "Portland Fire",
+          "stat": "pra",
+          "line": 20.0,
+          "result": null
+        },
+        {
+          "id": "3142191",
+          "name": "K. Mitchell",
+          "team": "Indiana Fever",
+          "stat": "tpm",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "5105406",
+          "name": "F. Buhner",
+          "team": "Portland Fire",
+          "stat": "tpm",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "4433403",
+          "name": "C. Clark",
+          "team": "Indiana Fever",
+          "stat": "tpm",
+          "line": 3.0,
+          "result": null
+        },
+        {
+          "id": "3913881",
+          "name": "A. Smith",
+          "team": "Dallas Wings",
+          "stat": "tpm",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "5220150",
+          "name": "D. Malonga",
+          "team": "Seattle Storm",
+          "stat": "tpm",
+          "line": 0.5,
+          "result": null
+        },
+        {
+          "id": "3056730",
+          "name": "K. Samuelson",
+          "team": "Portland Fire",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "3906972",
+          "name": "B. Carleton",
+          "team": "Portland Fire",
+          "stat": "tpm",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "5017726",
+          "name": "J. Melbourne",
+          "team": "Seattle Storm",
+          "stat": "tpm",
+          "line": 0.5,
+          "result": null
+        },
+        {
+          "id": "4433730",
+          "name": "P. Bueckers",
+          "team": "Dallas Wings",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "3934218",
+          "name": "Gustafson",
+          "team": "Portland Fire",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "wnba_defense": {
@@ -8731,6 +9261,132 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-08-14": {
+      "picks": [
+        {
+          "id": "5220150",
+          "name": "D. Malonga",
+          "team": "Seattle Storm",
+          "stat": "pts",
+          "line": 20.2,
+          "result": null
+        },
+        {
+          "id": "4432831",
+          "name": "A. Boston",
+          "team": "Indiana Fever",
+          "stat": "pts",
+          "line": 14.5,
+          "result": null
+        },
+        {
+          "id": "5345325",
+          "name": "A. Fam",
+          "team": "Seattle Storm",
+          "stat": "pts",
+          "line": 8.7,
+          "result": null
+        },
+        {
+          "id": "3906972",
+          "name": "B. Carleton",
+          "team": "Portland Fire",
+          "stat": "pts",
+          "line": 17.1,
+          "result": null
+        },
+        {
+          "id": "3913881",
+          "name": "A. Smith",
+          "team": "Dallas Wings",
+          "stat": "pts",
+          "line": 8.2,
+          "result": null
+        },
+        {
+          "id": "4432831",
+          "name": "A. Boston",
+          "team": "Indiana Fever",
+          "stat": "reb",
+          "line": 7.0,
+          "result": null
+        },
+        {
+          "id": "3906972",
+          "name": "B. Carleton",
+          "team": "Portland Fire",
+          "stat": "reb",
+          "line": 5.9,
+          "result": null
+        },
+        {
+          "id": "4398729",
+          "name": "E. Engstler",
+          "team": "Portland Fire",
+          "stat": "reb",
+          "line": 4.8,
+          "result": null
+        },
+        {
+          "id": "5220150",
+          "name": "D. Malonga",
+          "team": "Seattle Storm",
+          "stat": "reb",
+          "line": 10.5,
+          "result": null
+        },
+        {
+          "id": "5105406",
+          "name": "F. Buhner",
+          "team": "Portland Fire",
+          "stat": "reb",
+          "line": 2.9,
+          "result": null
+        },
+        {
+          "id": "3906753",
+          "name": "N. Hiedeman",
+          "team": "Seattle Storm",
+          "stat": "ast",
+          "line": 5.8,
+          "result": null
+        },
+        {
+          "id": "5017726",
+          "name": "J. Melbourne",
+          "team": "Seattle Storm",
+          "stat": "ast",
+          "line": 4.4,
+          "result": null
+        },
+        {
+          "id": "5345325",
+          "name": "A. Fam",
+          "team": "Seattle Storm",
+          "stat": "ast",
+          "line": 2.1,
+          "result": null
+        },
+        {
+          "id": "5220150",
+          "name": "D. Malonga",
+          "team": "Seattle Storm",
+          "stat": "ast",
+          "line": 1.8,
+          "result": null
+        },
+        {
+          "id": "2529183",
+          "name": "S. Dolson",
+          "team": "Seattle Storm",
+          "stat": "ast",
+          "line": 1.0,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "k_board": {
@@ -9284,6 +9940,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-14": {
+      "picks": [
+        {
+          "id": 668909,
+          "name": "Gavin Williams (RHP)",
+          "team": "CLE",
+          "stat": "strikeOuts",
+          "line": 7.4,
+          "result": null
+        },
+        {
+          "id": 695505,
+          "name": "Chase Burns (RHP)",
+          "team": "CIN",
+          "stat": "strikeOuts",
+          "line": 6.2,
+          "result": null
+        },
+        {
+          "id": 645261,
+          "name": "Sandy Alcantara (RHP)",
+          "team": "MIA",
+          "stat": "strikeOuts",
+          "line": 5.9,
+          "result": null
+        },
+        {
+          "id": 808967,
+          "name": "Yoshinobu Yamamoto (RHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 5.9,
+          "result": null
+        },
+        {
+          "id": 663567,
+          "name": "Peter Lambert (RHP)",
+          "team": "HOU",
+          "stat": "strikeOuts",
+          "line": 5.5,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
