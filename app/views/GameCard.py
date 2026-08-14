@@ -11,7 +11,8 @@ from styles.kc_theme import (
 )
 from styles.table_style import (style_stat_table, plain_dark_table,
                                 render_html_table, score_bar, bats_chip,
-                                tier_legend, style_vs_league, stat_formats)
+                                tier_legend, style_vs_league, stat_formats,
+                                grade_text_column)
 
 from engines.weather_engine import get_todays_games_with_weather
 from engines.park_factors import get_park_factor
@@ -2125,6 +2126,14 @@ with content_col:
                         "HR Score": score_bar("stat_high"),
                         "Hit Score": score_bar("warn"),
                     }, na_rep="N/A")
+                    # FORM IS TEXT ("86% \u2191"), so the numeric styler
+                    # skipped it and it rendered in plain type beside
+                    # twenty graded columns — which reads as "this one
+                    # does not matter". grade_text_column grades on the
+                    # leading number against the Form scale in
+                    # stat_scales; the arrow is decoration.
+                    styled = grade_text_column(styled, "Form",
+                                               scale_key="Form", gradient=True)
                     # LAST TABLE OFF st.dataframe.
                     #
                     # This one held out longest because its HR Edge / HR
