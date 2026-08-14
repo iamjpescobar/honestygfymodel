@@ -45,6 +45,17 @@ def _form_deltas_for(b):
     return form_engine.form_deltas(b.get("profile"), _recent_for(b))
 
 
+def _form_pct_for(b, hr_df, pid):
+    """(percentile, direction) — measured nightly, read here.
+
+    Not computed at render time: it is a RANK against the league, and a
+    rank needs the whole league. build_hr_metrics has it; a view does
+    not.
+    """
+    return (get_hr_metric(hr_df, pid, "form_pct"),
+            get_hr_metric(hr_df, pid, "form_dir"))
+
+
 def _form_note_for(b):
     return form_engine.form_note(b.get("profile"), _recent_for(b))
 
@@ -461,6 +472,11 @@ def rank_batters(batter_profiles: list, savant_df) -> list:
             # single blended Form number.
             **_form_deltas_for(b),
             "form_note": _form_note_for(b),
+            # FORM as a league percentile plus a direction. See
+            # engines/form: 64 means hotter than 64% of qualified
+            # hitters tonight, which is a count rather than a score.
+            "form_pct": get_hr_metric(hr_df, pid, "form_pct"),
+            "form_dir": get_hr_metric(hr_df, pid, "form_dir"),
             "hr_pa": get_hr_metric(hr_df, pid, "pa"),
             "hr_bbe": get_hr_metric(hr_df, pid, "bbe"),
             # QUALIFICATION FLOORS AS A TIER, NOT A FILTER.
