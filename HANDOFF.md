@@ -10,6 +10,108 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — weak spots redrawn, thresholds measured. 2026-08-14
+
+**5 files (2 new). Suite 96, FAILING: none.** Six controls red.
+
+### THE THRESHOLDS WERE FLAGGING 40% OF EVERYTHING
+
+`mlb_weakspot_probe.py`, 5,032 buckets across 451 pitchers — every
+bucket the panel actually draws:
+
+    10th   25th   median   75th   90th
+   0.394  0.453   0.523   0.598  0.675
+
+At `XSLG_HOT = 0.550` the panel flagged **40.2%** of buckets as "hitters
+do real damage here". A phrase that marks the dangerous QUARTER cannot
+apply to two buckets in five: a panel where nearly half the bars are red
+says nothing about WHERE a pitcher gets hurt, which is its only job.
+
+xSLG measured ON CONTACT excludes strikeouts, so it sits far above the
+per-PA figure people quote. 0.550 sat near the MIDDLE of this
+distribution, not near its top.
+
+Now the measured 75th and 25th: `XSLG_HOT = 0.598`, `XSLG_COLD = 0.453`.
+
+**Fifth scale on this site set by eye.** Clears%, FB95%, HRWindow% and an
+EV floor were the others — all measured, all wrong, three unreachable at
+one end. Re-run the probe every few weeks.
+
+### THE BARS ARE GONE — `app/engines/weakspot_view.py`
+
+Nineteen horizontal bars, no shape. Three of the groups were the wrong
+form for their data:
+
+- **A pitch type carries TWO numbers** — usage and damage. A bar draws
+  one, so usage was demoted to a subtitle where it stopped being
+  comparable across pitches.
+- **Up/middle/down is a strike zone** that was being drawn sideways.
+- **Times through the order is a three-point trend** drawn as three
+  unconnected bars, which hides the only thing it says.
+
+Replaced by:
+
+| panel | why |
+|---|---|
+| `arsenal_svg` | usage on x, damage on y, bubble area = batted balls. Position answers the question — top right is "thrown often, gets hit", the only quadrant worth acting on |
+| `zone_svg` | up / middle / down stacked as an actual zone, shaded by damage |
+| `tto_svg` | three passes as a connected line; the SHAPE is the finding |
+
+Pitches under the sample floor are **named** underneath rather than
+dropped — "he throws a sweeper 9% of the time and we cannot rate it" is
+worth knowing, and omitting it makes the arsenal look smaller than it is.
+
+These are SVG STRINGS, not Streamlit widgets: one markdown call instead
+of ~19 nested column layouts, and the whole thing is unit-testable
+without a Streamlit runtime. The old version could not be.
+
+### THE SLOT PANEL BECAME THE GEM
+
+The flat 1-9 slot list is gone from the weak-spots card entirely. Nine
+slots in batting order is a roster printout, and the panel's own caveat
+admits a slot line partly reflects WHICH hitters batted there rather
+than the pitcher — close to unactionable alone.
+
+`slot_rows()` **sorts by leak** and joins to tonight's lineup. That
+ordering is the change: sorted by damage, the top rows ARE the answer
+instead of something to scan for. And the join answers the caveat — the
+claim is no longer "he is bad at slot 4", it is "the soft spots in this
+order line up with these bats tonight", which is true whatever causes
+the softness. Unmeasured slots drop out rather than rendering empty.
+
+The "vs this lineup" section in GameCard (~line 2020) already did the
+join; it now has the sorted, hitter-joined rows to draw.
+
+### AN EXISTING TEST HAD TO CHANGE, AND WHY THAT WAS RIGHT
+
+`test_gamecard_ui` asserted "every group uses the same row unit"
+(`_ws_group(` >= 5). Correct for a bar stack: one shape, repeated, no
+hand-rolled variants. Wrong now that three groups are deliberately
+spatial.
+
+The rule it was really protecting — **don't hand-roll a new visual
+language inline in the view** — still holds and is what it asserts now:
+the panels come from one engine module, the view contains no `<svg>` of
+its own, and whatever stays a bar still goes through the one bar
+renderer. Changed rather than deleted.
+
+### ALSO
+
+- WNBA combo tabs (Pts+Reb / Pts+Ast / Reb+Ast) lost their colour
+  because `f"wnba_{label}_{side}"` put a **`+`** into the CSS selector,
+  which is not a legal identifier — the browser discarded the whole rule
+  block. Sanitised in `render_html_table`; two cases pin it.
+- `AvgEV` and `Form` are on the HR Edge board with measured scales.
+  Form reads AvgEV and HH% only, per-input bands 7.3% and 48%.
+- Cap is `GAME_CAP = 3`, `CAP_UNIT = "team"` — looser than 2-per-game by
+  design; both constants in one place to revert.
+
+### NEXT
+Nothing structural. The research log needs weeks. `mlb_form_probe` and
+`mlb_platoon_probe` are in the repo; re-run every few weeks.
+
+---
+
 ## PICK UP HERE — slam_engine.py was overwritten with statcast_engine.py. Restored from git. 2026-08-13 (3)
 
 **3 files (1 new test). Suite 94, FAILING: none.** Control confirmed red
