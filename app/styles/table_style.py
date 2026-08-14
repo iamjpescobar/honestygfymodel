@@ -484,6 +484,36 @@ def plain_dark_table(df: pd.DataFrame):
     return _base_styler(df)
 
 
+def grade_text_column(styler, col, scale_key=None, gradient=True):
+    """Colour a column whose cells are TEXT, by the number inside them.
+
+    _magnitude_column coerces with pd.to_numeric and gives up on a
+    column of strings — correct, because a column of words has no
+    magnitude. But some cells are a number WEARING text: "86% \u2191"
+    is a percentile with a direction glued on, and leaving it grey put
+    the one self-relative column on the lineup table in plain type
+    beside twenty graded ones, which reads as "this one doesn't matter".
+
+    Grades on the LEADING number and ignores everything after it. The
+    suffix is decoration; the number is the value.
+
+    scale_key names an entry in stat_scales so the cut points live with
+    every other scale on the site rather than being invented here. None
+    falls back to the column's own spread.
+    """
+    import re as _r
+
+    def _paint(column):
+        nums = column.astype(str).str.extract(r"^\s*(-?\d+(?:\.\d+)?)")[0]
+        nums = pd.to_numeric(nums, errors="coerce")
+        nums.name = scale_key or column.name
+        return _magnitude_column(nums, invert=False, use_gradient=gradient)
+
+    if col in styler.data.columns:
+        styler = styler.apply(_paint, subset=[col])
+    return styler
+
+
 def style_stat_table(df: pd.DataFrame, favor_high=None, favor_low=None, gradient: bool = False):
     """
     favor_high: column names where a HIGHER value is better
