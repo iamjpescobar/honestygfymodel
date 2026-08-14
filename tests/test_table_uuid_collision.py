@@ -48,6 +48,11 @@ def uuids(styler, key=""):
     return set(re.findall(r"#T_(\w+?)_row\d+_col\d+", "".join(captured)))
 
 
+def _re_ok(uid):
+    """CSS identifiers: letters, digits, hyphen, underscore only."""
+    return re.fullmatch(r"[A-Za-z0-9_-]+", uid) is not None
+
+
 def frame(vals):
     return pd.DataFrame({"Player": [f"p{i}" for i in range(len(vals))],
                          "MIN": vals})
@@ -100,3 +105,34 @@ ELITE, POOR = "59,184,255", "214,48,74"
 assert fill(0, 1) == ELITE, f"max value did not grade elite: {fill(0, 1)}"
 assert fill(2, 1) == POOR, f"min value did not grade poor: {fill(2, 1)}"
 print("PASS: the grader puts the maximum at elite and the minimum at poor")
+
+
+# --- 5. A KEY WITH CSS-UNSAFE CHARACTERS MUST NOT KILL THE STYLING ---
+#
+# THE BUG THIS SHIPPED WITH. pandas puts table_uuid straight into the
+# selector: #T_{uuid}_row0_col4. A key of "wnba_Pts+Reb_away" yields
+# #T_lcwnba_Pts+Reb_away_7_row0_col4, and "+" is not valid in a CSS
+# identifier — the browser discards the WHOLE RULE and the table renders
+# with no colour at all. Silent, total, and it looks like a data problem.
+#
+# The WNBA tab labels are Points, Rebounds, Assists, Threes, PRA,
+# Pts+Reb, Pts+Ast, Reb+Ast, Stocks, Volume. The three that lost colour
+# were exactly the three containing a "+".
+for bad in ("wnba_Pts+Reb_away", "a b", "x/y", "p%q", "n(1)", "d.e"):
+    got = uuids(a, key=bad)
+    assert got, f"no selectors emitted for key {bad!r}"
+    for u in got:
+        assert _re_ok(u), (
+            f"key {bad!r} produced uuid {u!r} — a CSS identifier may only "
+            f"contain letters, digits, hyphen and underscore, and an "
+            f"invalid one silently voids every rule for that table")
+print("PASS: unsafe key characters are sanitised, selectors stay valid")
+
+# --- 6. Sanitising must not reintroduce collisions -------------------
+#
+# "Pts+Reb" and "Pts Reb" both sanitise to "Pts_Reb". The counter is
+# what keeps them apart — this is the case that proves sanitising did
+# not undo case 1.
+u1, u2 = uuids(a, key="Pts+Reb"), uuids(b, key="Pts Reb")
+assert not (u1 & u2), f"two keys that sanitise alike collided: {u1 & u2}"
+print("PASS: keys that sanitise to the same string still get distinct uuids")
