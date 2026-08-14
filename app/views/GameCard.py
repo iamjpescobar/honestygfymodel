@@ -487,25 +487,36 @@ def _render_weak_spots(_ws):
         f'than a number. Formula and floors in engines/pitcher_weakspots.py.</div>',
         unsafe_allow_html=True)
 
-    _ws_group(
-        "By pitch type",
-        [(p["name"], f'{p["usage"]:.0f}% usage',
-          _ws_bar(p.get("xslg"), p.get("reason", f'{p["bbe"]} batted balls')))
-         for p in _ws.get("pitches", []) if p["usage"] >= 3])
+    # THREE SPATIAL PANELS INSTEAD OF FIFTEEN BARS.
+    #
+    # See engines/weakspot_view for why. Briefly: a pitch type carries
+    # TWO numbers (usage and damage) and a bar can only draw one, so
+    # usage was demoted to a subtitle where it stopped being comparable.
+    # Up/middle/down is a strike zone that was being drawn sideways.
+    # Times-through-the-order is a trend across three points drawn as
+    # three unconnected bars, which hides the only thing it says.
+    from engines.weakspot_view import arsenal_svg, zone_svg, tto_svg
 
-    _ws_group(
-        "By zone band",
-        [(b["band"], "", _ws_bar(b.get("xslg"), f'{b["bbe"]} bbe'))
-         for b in _ws.get("bands", [])])
+    _svg = arsenal_svg(_ws.get("pitches", []))
+    if _svg:
+        st.markdown(f'<div class="pf-card-subtitle">By pitch type \u2014 '
+                    f'further right is thrown more often, higher is more '
+                    f'damage. Top right is the attack spot.</div>{_svg}',
+                    unsafe_allow_html=True)
+
+    _svg = zone_svg(_ws.get("bands", []))
+    if _svg:
+        st.markdown(f'<div class="pf-card-subtitle">By zone band</div>{_svg}',
+                    unsafe_allow_html=True)
 
     _tto = _ws.get("tto", [])
-    _ws_group(
-        "Times through the order",
-        [(f'{t["pass"]}{"st" if t["pass"] == 1 else "nd" if t["pass"] == 2 else "rd"} time',
-          "", _ws_bar(t.get("xslg"), f'{t["bbe"]} bbe'))
-         for t in _tto],
-        note=("Most starters decline the third time through a lineup \u2014 a steep "
-              "jump here is a real bullpen and late-innings angle.") if _tto else None)
+    _svg = tto_svg(_tto)
+    if _svg:
+        st.markdown(
+            f'<div class="pf-card-subtitle">Times through the order \u2014 '
+            f'most starters decline the third time through; a jump here is a '
+            f'real bullpen and late-innings angle.</div>{_svg}',
+            unsafe_allow_html=True)
 
     # Halves stay prose-free but join the same grid, so the one group
     # that used to be a sentence now compares directly against the rest.
@@ -520,7 +531,19 @@ def _render_weak_spots(_ws):
     # Per batting-order slot (1-9) — the granular version, each slot
     # flagged only above its sample floor. Aligned to tonight's actual
     # hitters in the "vs this lineup" section below the lineup table.
-    _slots = _ws.get("slots", [])
+    # THE FLAT 1-9 SLOT LIST IS GONE FROM HERE.
+    #
+    # Nine slots in batting order is a roster printout: the reader has to
+    # scan all nine and hold them in their head, and the panel's own
+    # caveat says a slot line partly reflects WHICH hitters batted there
+    # rather than the pitcher. On its own it is close to unactionable.
+    #
+    # It becomes the best read on the page in the "vs this lineup"
+    # section further down, where the same numbers are SORTED BY LEAK and
+    # joined to tonight's actual hitters. There the caveat stops
+    # mattering: the claim is not "he is bad at slot 4", it is "the soft
+    # spots in this order line up with these bats tonight".
+    _slots = _ws.get("slots", []) if False else []
     if any(s.get("xslg") is not None for s in _slots):
         _ws_group(
             "By batting-order slot",
