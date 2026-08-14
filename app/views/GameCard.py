@@ -983,7 +983,8 @@ def _score_num(v):
         paired with the N/A text elsewhere so it's never the only signal."""
     return 0 if v is None else v
 
-def _stat_row(name, bats_label, profile, *, matchup=None, slam=None,
+def _stat_row(name, bats_label, profile, *, form_pct=None, form_dir=None,
+              matchup=None, slam=None,
               hr_edge=None, hr_score=None, hit_score=None, form_deltas=None,
               edge_cell=None, edge_label="", edge_tier="neutral",
               confidence="", batting_order=None):
@@ -1011,6 +1012,20 @@ def _stat_row(name, bats_label, profile, *, matchup=None, slam=None,
         "Ord": (batting_order // 100) if batting_order else None,
         "Matchup": matchup if matchup is not None else "\u2014",
         "SLAM": round(slam, 1) if slam is not None else None,
+        # FORM, deliberately BESIDE SLAM.
+        #
+        # Every other number on this row is league-relative — where this
+        # hitter sits among other hitters. Form is the only self-relative
+        # signal, and putting it next to the widest column on the table
+        # keeps it out of the run of Savant percentiles where a reader
+        # would take it for one more of them.
+        #
+        # It renders as "64% ↑": a league PERCENTILE, not an index. 64
+        # means hotter than 64% of qualified hitters right now, measured
+        # nightly by ranking every hitter's combined L15-vs-season move.
+        # The arrow carries direction, which a percentile cannot — 50 is
+        # the middle of the league whether the league is hot or cold.
+        "Form": form_engine.form_cell(form_pct, form_dir),
         # NO ", 0" DEFAULTS ANYWHERE IN THIS ROW.
         #
         # A missing BA is not a .000 BA, a missing HH% is
@@ -1936,6 +1951,11 @@ with content_col:
                         _primary_label = r["bats"]
                     table_rows.append(_stat_row(
                         r["name"], _primary_label, profile,
+                        # Ranked nightly against the whole league, so it
+                        # is read here rather than recomputed — a view
+                        # cannot rank a hitter against a league it does
+                        # not have.
+                        form_pct=r.get("form_pct"), form_dir=r.get("form_dir"),
                         matchup=tier, slam=slam,
                         hr_edge=r.get("edge"), hr_score=r["hr_score"], hit_score=r["hit_score"],
                         # Already computed by rank_batters for every rated
