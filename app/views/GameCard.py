@@ -37,6 +37,11 @@ from engines.weather_icons import (
 from engines.park_weather import get_park_forecast
 from engines.slam_engine import slam_from_profile
 from engines.top_plays import rank_batters, confidence_tier, matchup_tier
+# THE FORM COMPONENT. One definition of what Form is and how it looks,
+# imported rather than re-implemented — the columns, the window it is
+# measured over, and the card renderer all come from here, so a change
+# to the measurement reaches every board that shows it.
+from engines import form as form_engine
 from engines.team_abbreviations import team_abbr
 from engines.matchup_grades import grade_matchup
 from engines.matchup_grades_intl import render_matchup_grades_card
@@ -979,13 +984,22 @@ def _score_num(v):
     return 0 if v is None else v
 
 def _stat_row(name, bats_label, profile, *, matchup=None, slam=None,
-              hr_edge=None, hr_score=None, hit_score=None,
+              hr_edge=None, hr_score=None, hit_score=None, form_deltas=None,
               edge_cell=None, edge_label="", edge_tier="neutral",
               confidence="", batting_order=None):
     """One table row. Score/matchup fields are optional so a
                     switch hitter's non-matchup side can show stats only (its
                     HR/Hit scores would be for the wrong platoon side, so we
-                    blank them rather than print a misleading number)."""
+                    blank them rather than print a misleading number).
+
+                    `form_deltas` is in that same optional group and for
+                    the same reason, but the reason is the opposite one:
+                    they are NOT per-side numbers. engines/form measures a
+                    hitter against his own baseline with no `stand` filter,
+                    so what comes back belongs to the player, not to the L
+                    or R row. Printing it on all three rows of a switch
+                    hitter would read as three platoon-split form figures
+                    that happen to be identical."""
     return {
         "Player": name,
         "Bats": bats_label,
@@ -1021,6 +1035,18 @@ def _stat_row(name, bats_label, profile, *, matchup=None, slam=None,
         # balls in play to cash it in.
         "Brl/PA": profile.get("Brl/PA"),
         "HH%": profile.get("HH %"),
+        # THE THREE EXIT VELOCITIES, IN THAT ORDER:
+        # typical, ceiling, single best.
+        #
+        # AvgEV was the missing one, and it was already on
+        # the HR Edge board — the same measurement, off the
+        # same profile bundle. A table showing EV90 and
+        # MaxEV without it answers "how hard is his BEST
+        # contact" twice and "how hard is his contact"
+        # never. It reads from `profile`, so like every
+        # other stat column here it follows the Window
+        # control.
+        "AvgEV": profile.get("AvgEV"),
         # 90th-percentile exit velocity — the scored
         # power ceiling. Max EV sits beside it for
         # interest only; it's a sample of one.
@@ -1072,6 +1098,24 @@ def _stat_row(name, bats_label, profile, *, matchup=None, slam=None,
         # the best possible value. na_rep on the
         # formatter below renders None as N/A.
         "SwStr%": profile.get("SwStr %"),
+        # FORM, AS THE MEASUREMENTS THEMSELVES.
+        #
+        # This was one column holding a 0-100 index with 50 at the
+        # hitter's own baseline. Every input to it was real and the
+        # output was not — nobody ever recorded a 63.4 — and it sat in a
+        # row of LEAGUE percentiles (HR Score, HRThreat, Savant) looking
+        # exactly like one, which is the opposite of what it measured.
+        #
+        # What ships instead is the subtraction: his recent AvgEV minus
+        # his season AvgEV in mph, his recent HH% minus his season HH% in
+        # points. Real stats, checkable against Savant, and self-relative
+        # in a way the reader can see rather than be told.
+        #
+        # Spread from the dict rather than named here so the columns are
+        # whatever engines/form measures. A third input added there
+        # appears on this table with no edit to this file — and, more to
+        # the point, cannot be added there and silently missed here.
+        **(form_deltas or {}),
         "HR Edge": hr_edge,
         "HR Score": hr_score,
         "Hit Score": hit_score,
@@ -1634,8 +1678,8 @@ with content_col:
                         # lineup card. Every analytic sort is still one
                         # click away.
                         "Sort by", ["Batting Order", "SLAM", "HR Edge", "HR Score",
-                                    "Hit Score", "xwOBA", "xSLG", "ISO", "Brl%",
-                                    "Brl/PA", "HH%", "EV90", "HRWindow%", "HRIntent",
+                                    "Hit Score", "ΔEV", "ΔHH%", "xwOBA", "xSLG", "ISO", "Brl%",
+                                    "Brl/PA", "HH%", "AvgEV", "EV90", "HRWindow%", "HRIntent",
                                     "HRThreat", "FB95%", "Clears%"],
                         key="lineup_sort_by"
                     )
@@ -1763,6 +1807,23 @@ with content_col:
                     "HR Edge": lambda r: _score_num(r.get("edge")),
                     "HR Score": lambda r: _score_num(r["hr_score"]),
                     "Hit Score": lambda r: _score_num(r["hit_score"]),
+                    # Off the RANKED ROW, not windowed_profile_cache — the
+                    # only sort keys on this table that must not read the
+                    # window. rank_batters computed these as
+                    # FORM_WINDOW-minus-season (engines/form); a windowed
+                    # lookup would silently sort by a different quantity
+                    # than the column shows.
+                    #
+                    # `or 0` for the same reason as every key below: a
+                    # delta is absent for a bat with no measurable recent
+                    # window, and None breaks sorted(). Note that 0 is a
+                    # REAL value in these columns — a hitter exactly at his
+                    # own baseline — so unmeasured bats sort in among bats
+                    # that genuinely did not move. That is the least-wrong
+                    # option here: the alternative sinks them to the bottom
+                    # of a signed column, which reads as ice cold.
+                    "ΔEV": lambda r: r.get("ΔEV") or 0,
+                    "ΔHH%": lambda r: r.get("ΔHH%") or 0,
                     "xwOBA": lambda r: windowed_profile_cache[r["name"]].get("xwOBA") or 0,
                     "xSLG": lambda r: windowed_profile_cache[r["name"]].get("xSLG") or 0,
                     "ISO": lambda r: windowed_profile_cache[r["name"]].get("ISO") or 0,
@@ -1784,6 +1845,10 @@ with content_col:
                     # the wrong guard for a sort key regardless — it can't
                     # protect against a present-but-None value.
                     "HH%": lambda r: windowed_profile_cache[r["name"]].get("HH %") or 0,
+                    # Windowed, like EV90 beside it — the two have to be
+                    # read against each other and cannot be on different
+                    # windows.
+                    "AvgEV": lambda r: windowed_profile_cache[r["name"]].get("AvgEV") or 0,
                     "EV90": lambda r: windowed_profile_cache[r["name"]].get("EV90") or 0,
                     "HRWindow%": lambda r: windowed_profile_cache[r["name"]].get("HRWindow %") or 0,
                     "HRIntent": lambda r: windowed_profile_cache[r["name"]].get("HRIntent") or 0,
@@ -1873,6 +1938,13 @@ with content_col:
                         r["name"], _primary_label, profile,
                         matchup=tier, slam=slam,
                         hr_edge=r.get("edge"), hr_score=r["hr_score"], hit_score=r["hit_score"],
+                        # Already computed by rank_batters for every rated
+                        # bat, live, off this app's own Statcast parquet —
+                        # these do NOT wait on the HR Edge board being
+                        # published, so they are populated on a game card
+                        # hours before any board exists.
+                        form_deltas={c: r.get(c) for c in form_engine.FORM_COLUMNS
+                                     if r.get(c) is not None},
                         edge_cell=edge_tag(tag_label, tag_tier),
                         edge_label=tag_label, edge_tier=tag_tier,
                         confidence=f"{conf_label} \u2014 n={sample}",
@@ -1937,8 +2009,16 @@ with content_col:
                         "Contact": _ident + ["Hit Score", "SLAM", "BA", "xwOBA", "xSLG",
                                              "ISO", "HH%", "LD%", "FB%", "GB%",
                                              "SweetSpot%"],
+                        # Form and AvgEV land HERE rather than in Power,
+                        # which is already at the documented 14 cap with
+                        # every slot argued for above. Quick had room, and
+                        # it is the group that gets used on a phone — the
+                        # two questions "is he hot right now" and "how hard
+                        # does he hit it" are exactly what an at-a-glance
+                        # read wants. Both are in "All" regardless, which
+                        # is the default.
                         "Quick": _ident + ["HR Edge", "HR Score", "Hit Score", "SLAM",
-                                           "xwOBA", "Brl/PA", "HH%"],
+                                           "ΔEV", "ΔHH%", "xwOBA", "Brl/PA", "HH%", "AvgEV"],
                     }
                     _grp = st.segmented_control(
                         "Columns", list(_groups),
@@ -1962,7 +2042,12 @@ with content_col:
                     # render_html_table pins the first column in CSS.)
                     styled = style_stat_table(
                         _table_df,
-                        favor_high=["SLAM", "BA", "xwOBA", "xSLG", "ISO", "HR/FB", "Brl%", "Brl/PA", "HH%", "EV90", "MaxEV", "LD%", "FB%", "SweetSpot%", "HRWindow%", "PullAir%", "PullBrl%", "Blast%", "HRIntent", "HRThreat", "FB95%", "Clears%"],
+                        # AvgEV and Form both have ABSOLUTE cut points in
+                        # styles/stat_scales.py already (the HR Edge board
+                        # colours them from the same entries), so a given
+                        # number takes the same colour on both boards and
+                        # does not change tier when a filter moves.
+                        favor_high=["SLAM", "BA", "xwOBA", "xSLG", "ISO", "HR/FB", "Brl%", "Brl/PA", "HH%", "AvgEV", "EV90", "MaxEV", "LD%", "FB%", "SweetSpot%", "HRWindow%", "PullAir%", "PullBrl%", "Blast%", "HRIntent", "HRThreat", "FB95%", "Clears%", "ΔEV", "ΔHH%"],
                         # HR Edge / HR Score / Hit Score are deliberately
                         # NOT in favor_high: score_bar already encodes each
                         # one as a filled bar, and a gradient cell behind
@@ -1989,7 +2074,15 @@ with content_col:
                         "Brl/PA": "{:.1f}", "HRWindow%": "{:.1f}",
                         # Exit velocities read as mph — one decimal is how
                         # Statcast publishes them.
-                        "EV90": "{:.1f}", "MaxEV": "{:.1f}",
+                        "AvgEV": "{:.1f}", "EV90": "{:.1f}", "MaxEV": "{:.1f}",
+                        # SIGNED, always. These are the only columns on
+                        # this table where the sign IS the reading — a
+                        # bare "1.8" in a delta column is unreadable
+                        # without knowing which way it went, and 0.0 is a
+                        # real measured value here rather than a missing
+                        # one. Same {:+.1f} the Matchup and Context
+                        # adjustments use on the HR Edge board.
+                        "ΔEV": "{:+.1f}", "ΔHH%": "{:+.1f}",
                         # 0-100 composite, formatted like HR/Hit Score.
                         "HRIntent": "{:.0f}", "HRThreat": "{:.0f}",
                         "FB95%": "{:.1f}",
@@ -2037,6 +2130,33 @@ with content_col:
                     tier_legend(favor_note="Higher is better for the BATTER \u2014 "
                                            "colour is his grade in that column.")
                     render_html_table(styled, key="gc_lineup")
+                    # SAY THE EXCEPTION OUT LOUD.
+                    #
+                    # Every other column on this table moves when the
+                    # Window control moves. The two Form deltas do not,
+                    # and a reader who set Window to Last 5 Games and
+                    # watched two columns sit still would reasonably
+                    # conclude they were stale or broken. They are
+                    # neither: a delta is a comparison BETWEEN two
+                    # windows and cannot be pinned to one. Rule 20 in
+                    # reverse — a signal the reader can't interpret is
+                    # not a signal, so the definition ships with it.
+                    st.caption(
+                        f"{form_engine.FORM_COLUMNS[0]} and {form_engine.FORM_COLUMNS[1]} "
+                        "are FORM, and they are plain subtraction: each hitter's last "
+                        f"{form_engine.FORM_WINDOW.lstrip('l')} batted balls minus his "
+                        "OWN season, in mph and in percentage points. Nothing is scaled "
+                        "or ranked \u2014 +1.8 means his exit velocity is 1.8 mph above "
+                        "where he has been all year, and you can check it against "
+                        "Savant. That makes them the opposite of HR Score and HRThreat "
+                        "beside them, which say where he sits among OTHER hitters. "
+                        "They are also the only columns here that do NOT follow the "
+                        "Window control, because a comparison between two windows "
+                        "cannot be pinned to one: set Window to the same span and "
+                        "every hitter would read 0.0. They are computed live, so they "
+                        "fill in whether or not the HR Edge board has published. AvgEV "
+                        "and every other stat column do follow the Window."
+                    )
                     if not league_data_available:
                         st.caption("HR Score / Hit Score / K Score show N/A above because Baseball Savant's live percentile rankings aren't reachable right now (see warning above) \u2014 not because these players lack power or contact skill.")
 
@@ -2319,6 +2439,32 @@ with content_col:
                                 line=float(_bt_line or _bt_dflt),
                                 opp_label=team_abbr(_bt_opp_team),
                             )
+                            # ---- FORM, as its own component ----
+                            #
+                            # The lineup table above carries the two
+                            # deltas as columns; this is the same
+                            # measurement with its working shown — recent
+                            # and season side by side, so the subtraction
+                            # is checkable rather than asserted. One
+                            # renderer (engines/form.render_form) draws it
+                            # wherever it appears, which is the whole
+                            # reason it is a component: the definition
+                            # cannot drift between the board and the card.
+                            #
+                            # Season profile is refetched rather than
+                            # taken off `ranked`, so this reads the same
+                            # baseline the engine used even if the row
+                            # was built on an earlier paint.
+                            _fm_season = get_batter_profile_windowed(
+                                _bt_ids[_bt_pick], window="season", unit="bbe")
+                            _fm_recent = get_batter_profile_windowed(
+                                _bt_ids[_bt_pick],
+                                window=form_engine.FORM_WINDOW,
+                                unit=form_engine.FORM_UNIT)
+                            form_engine.render_form(
+                                _fm_season, _fm_recent,
+                                title=f"Form \u2014 {_bt_pick}")
+
                             # Deep dive: career BvP vs tonight's selected
                             # pitcher, then zone map + spray chart on the
                             # SAME window the trend chart is showing.

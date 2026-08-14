@@ -156,11 +156,44 @@ bad_keys = [k for k in set(re.findall(r'COLOR\["(\w+)"\]', hb)) if k not in _COL
 assert not bad_keys, f"HR Edge Board uses nonexistent theme keys (KeyError on load): {bad_keys}"
 print("PASS: HR Edge Board theme keys all resolve")
 
-hb_fmt = re.search(r'\)\.format\(\{(.*?)\}, na_rep=', hb, re.S).group(1)
+# WHICH COLUMNS ARE FORMATTED, not how the call is spelled.
+#
+# This searched for the literal `).format({`. The board now builds its
+# formatter as `stat_formats(df, extra={...})` — the map supplies the
+# published precision for every stat it knows and the dict overrides it
+# for bars, logos and signed adjustments — and the old regex simply did
+# not match, so the test died on a None rather than reporting anything.
+# Rule 11: assert the property. The property is that each numeric column
+# resolves to SOME explicit formatter, whichever half of the call
+# provides it.
+_open = hb.index("(", hb.index(").format(", hb.index("style_stat_table(")) + 1)
+_depth, _close = 0, _open
+for _k in range(_open, len(hb)):
+    if hb[_k] in "([{":
+        _depth += 1
+    elif hb[_k] in ")]}":
+        _depth -= 1
+        if _depth == 0:
+            _close = _k
+            break
+hb_fmt = hb[_open + 1:_close].rsplit(", na_rep=", 1)[0]
 hb_formatted = set(re.findall(r'"([^"]+)":', hb_fmt))
+# Anything the canonical map covers counts as formatted too — that is
+# the whole point of routing through it.
+from styles.table_style import STAT_FORMATS as _SF, _norm_stat as _NS
 hb_cols = set(re.findall(r'"([^"]+)": r\.get', hb))
-NUMERIC = {"HR Edge", "HR Score", "Matchup", "Context"}
-missing_hb = [c for c in NUMERIC if c not in hb_formatted]
+# AvgEV and the Form deltas joined this list. AvgEV and the old Form
+# column both shipped to the board with no entry anywhere and printed
+# 89.30 and 63.40 for weeks, because the precision FLOOR caught the
+# six-decimal case and hid the wrong-decimal one behind it.
+#
+# The delta columns are read off the component rather than typed, so
+# renaming a column there cannot leave this test asserting the old name
+# and passing.
+from engines.form import FORM_COLUMNS as _FC
+NUMERIC = {"HR Edge", "HR Score", "Matchup", "Context", "AvgEV", *_FC}
+missing_hb = [c for c in NUMERIC
+              if c not in hb_formatted and _NS(c) not in _SF]
 assert not missing_hb, f"unformatted numeric columns: {missing_hb}"
 print(f"PASS: all {len(NUMERIC)} numeric HR Edge Board columns are formatted")
 

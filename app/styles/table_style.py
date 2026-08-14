@@ -113,6 +113,11 @@ STAT_FORMATS = {
     "G": "{:.0f}", "GP": "{:.0f}", "BBE": "{:.0f}", "ORD": "{:.0f}",
     "PITCHES": "{:.0f}", "PITCHESSEEN": "{:.0f}", "ARMS": "{:.0f}",
     "HRINTENT": "{:.0f}", "HRTHREAT": "{:.0f}", "THREAT": "{:.0f}",
+    # FORM DELTAS — SIGNED, always. These are recent-minus-season in the
+    # stat's own units, so the sign is half the reading: a bare "1.8"
+    # does not say which way he moved, and 0.0 is a real measured value
+    # here (exactly at his own baseline) rather than a missing one.
+    "ΔEV": "{:+.1f}", "ΔHH%": "{:+.1f}",
 }
 
 

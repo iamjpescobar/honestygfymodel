@@ -14,8 +14,14 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import card, footer, COLOR
-from styles.table_style import style_stat_table, render_html_table, team_logo_cell, score_bar, sort_control, tier_legend
+from styles.table_style import (style_stat_table, render_html_table, team_logo_cell,
+                                score_bar, sort_control, tier_legend, stat_formats)
 from engines.hr_edge_board import get_hr_edge_board, cap_per_game, GAME_CAP
+# Column headers come from the component, not from this file. Typing
+# them here would let the board and engines/form disagree about what
+# Form is called, which is the drift STAT_FORMATS and hr_floors both
+# exist to stop.
+from engines.form import FORM_COLUMNS
 from engines.live_sync import sync_latest_button
 
 # Theme injection lives in app.py, which renders once per script run
@@ -148,12 +154,16 @@ else:
                 # his BEST contact; this is his typical contact, and the
                 # board only ever showed the first.
                 "AvgEV": r.get("avg_ev"),
-                # FORM — 50 is exactly his own baseline, so a 70 means
-                # genuinely hot and a 30 genuinely cold, both against
-                # HIMSELF rather than against the league. Built on AvgEV
-                # and HH% only; see engines/hr_form for the measurement
-                # that ruled the others out.
-                "Form": r.get("form"),
+                # FORM, AS THE MEASUREMENTS THEMSELVES — his recent
+                # AvgEV minus his season AvgEV in mph, his recent HH%
+                # minus his season HH% in points. This was a single
+                # 0-100 column with 50 at his own baseline: a real
+                # deviation, but rendered as a number no hitter ever
+                # recorded, in a row of LEAGUE percentiles it looked
+                # identical to. The subtraction is checkable against
+                # Savant; the index was not. See engines/form, including
+                # why these two are NOT averaged into one column.
+                **{c: r.get(c) for c in FORM_COLUMNS if r.get(c) is not None},
                 "Lineup": "CONFIRMED" if r.get("confirmed") else "projected",
                 "Floors": (f'{r.get("floors_met")}/{r.get("floors_total")}'
                            if r.get("floors_met") is not None else None),
@@ -191,14 +201,30 @@ else:
             favor_high=["Matchup", "Context", "Threat", "Clears%",
                         "AvgEV", "Form"],
             gradient=True,
-        ).format({
-            # Explicit formats for every numeric column. Anything unlisted
-            # does NOT keep style_stat_table's precision=2 — this second
-            # .format() call replaces the formatter for EVERY column, not
-            # just the ones named here, so an omitted column falls all the
-            # way through to pandas' own default of SIX decimals. That is
-            # what printed PA as "543.000000" on a live board. See the
-            # note at the top of styles/table_style.py.
+        ).format(stat_formats(df, extra={
+            # THE MAP FIRST, this dict on top of it.
+            #
+            # This second .format() call replaces the formatter for EVERY
+            # column, not just the ones named here, so an omitted column
+            # falls through to the precision floor — or, before that floor
+            # existed, all the way to pandas' default of SIX decimals,
+            # which is what printed PA as "543.000000" on a live board.
+            #
+            # Listing every column BY HAND was the original fix and it
+            # only half worked: AvgEV and Form were added to this table
+            # later and nobody came back to this dict, so they printed
+            # 89.30 and 63.40 for weeks — the floor caught the six-decimal
+            # case and hid the wrong-precision one behind it. STAT_FORMATS
+            # already knew AvgEV was a one-decimal exit velocity; the
+            # board just wasn't asking. stat_formats() answers for every
+            # numeric column the map knows, and this dict overrides it for
+            # the ones it can't know about — bars, logos, signed
+            # adjustments. A column added tomorrow is formatted by
+            # default instead of by memory.
+            #
+            # Safe on this frame: stat_formats only touches columns whose
+            # dtype is numeric, so Floors ("8/9") and Lineup are skipped
+            # rather than handed "{:.1f}".
             # Filled bars rather than bare numbers, same as the Game Card
             # lineup — these are the two columns the board is ranked on.
             "HR Edge": score_bar("gold"), "HR Score": score_bar("stat_high"),
@@ -212,7 +238,7 @@ else:
             # Logo beside the abbreviation; text stays so the column
             # still reads if an image fails to load.
             "Team": team_logo_cell(),
-        }, na_rep="N/A")
+        }), na_rep="N/A")
         # Colour key sits WITH the table. Five filled tiers look
         # authoritative whether or not anyone knows what they mean,
         # and which direction is "good" flips between boards.

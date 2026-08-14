@@ -21,30 +21,32 @@ app's own choice, not an official stat.
 from functools import lru_cache as _lru_cache
 
 from engines import hr_floors
-from engines import hr_form
+from engines import form as form_engine
 
 
-def _form_for(b):
-    """Form for one rated bat, or None when the window can't be read."""
+def _recent_for(b):
+    """The hitter's recent window, or None when it can't be read.
+
+    One fetch, shared by both Form outputs below. It used to be pulled
+    twice — once for the score and once for the note — which was two
+    identical windowed Statcast reads per hitter on every board paint.
+    """
     try:
         from engines.statcast_engine import get_batter_profile_windowed
-        recent = get_batter_profile_windowed(b.get("id"),
-                                             window=hr_form.FORM_WINDOW,
-                                             unit="bbe")
+        return get_batter_profile_windowed(b.get("id"),
+                                           window=form_engine.FORM_WINDOW,
+                                           unit=form_engine.FORM_UNIT)
     except Exception:
         return None
-    return hr_form.form_score(b.get("profile"), recent)
+
+
+def _form_deltas_for(b):
+    """{column header: real delta} — see engines/form."""
+    return form_engine.form_deltas(b.get("profile"), _recent_for(b))
 
 
 def _form_note_for(b):
-    try:
-        from engines.statcast_engine import get_batter_profile_windowed
-        recent = get_batter_profile_windowed(b.get("id"),
-                                             window=hr_form.FORM_WINDOW,
-                                             unit="bbe")
-    except Exception:
-        return None
-    return hr_form.form_note(b.get("profile"), recent)
+    return form_engine.form_note(b.get("profile"), _recent_for(b))
 
 from engines.savant_leaderboard import get_percentile, get_hr_metric, get_hr_metrics
 
@@ -449,11 +451,15 @@ def rank_batters(batter_profiles: list, savant_df) -> list:
             # questions: how hard is his contact, versus how hard is his
             # BEST contact. The board showed only the second.
             "avg_ev": (b.get("profile") or {}).get("AvgEV"),
-            # FORM — recent vs his OWN baseline. See engines/hr_form for
-            # why it reads AvgEV and HH% and not barrels: a quarter of
-            # hitters have zero barrels over fifteen games, and -100% is
-            # a wall rather than a measurement.
-            "form": _form_for(b),
+            # FORM — his recent numbers against HIS OWN, in his own
+            # units. Not an index: this used to be a 0-100 score with 50
+            # at his baseline, which was a real deviation wearing the
+            # costume of the league percentiles sitting beside it. What
+            # spreads onto the row now is the subtraction itself —
+            # "+1.8 mph", "+6.9 pts" — a stat a subscriber can check
+            # against Savant. See engines/form for why there is no
+            # single blended Form number.
+            **_form_deltas_for(b),
             "form_note": _form_note_for(b),
             "hr_pa": get_hr_metric(hr_df, pid, "pa"),
             "hr_bbe": get_hr_metric(hr_df, pid, "bbe"),

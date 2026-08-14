@@ -85,10 +85,24 @@ SCALES = {
     # when applied to the other. A "91 EV" floor aimed at this column
     # was applied to EV90 (median 104.2) and cleared 373 of 373.
     "AvgEV":     (87.0, 88.6, 90.1, 91.8),
-    # FORM is 0-100 with 50 = exactly the player's own baseline, so the
-    # cut points sit AROUND 50 rather than spanning the range. A hitter
-    # at his own average should read neutral, not poor.
-    "Form":      (40.0, 50.0, 60.0, 70.0),
+    # FORM DELTAS — signed, and the cut points STRADDLE ZERO, because
+    # zero is the meaningful anchor: a hitter doing exactly what he
+    # always does is neither hot nor cold. A scale spanning a range,
+    # like every other entry in this file, would grade "unchanged" as
+    # bad.
+    #
+    # DERIVED, NOT MEASURED — say so plainly. hr_floors_probe measured
+    # these as PERCENTAGES of each hitter's own baseline across 373
+    # hitters at 150+ PA (AvgEV: 25th -3.4, median -0.6, 75th +2.1,
+    # 90th +4.4; HH%: 25th -26.1, median -4.4, 75th +14.0, 90th +35.9).
+    # Converting to units needs a baseline, and these use the league
+    # averages — about 89 mph and about 40% — so they are right for a
+    # typical hitter and progressively wrong for the tails.
+    #
+    # form_scale_probe.py measures them directly. Run it and replace
+    # these with the real figures; do not quietly tune them by eye.
+    "ΔEV":     (-3.0, -0.5, 1.9, 3.9),
+    "ΔHH%":    (-10.4, -1.8, 5.6, 14.4),
     "EV90":      (100.0, 103.0, 106.0, 109.0),
     # MEASURED 2026-08-12, 373 hitters at 150+ PA:
     #   median 11.49 · 65th 13.45 · 75th 15.07 · 90th 18.66 · MAX 30.89
