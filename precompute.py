@@ -612,6 +612,43 @@ def build_player_game_logs(season_df: pd.DataFrame) -> bool:
     return True
 
 
+def _recent_window_metrics(season_df, games=15):  # games=None -> all
+    """Per-batter AvgEV and HH% over his last `games` GAMES PLAYED.
+
+    Games, not calendar days: a hitter who sat three of the last ten is
+    measured over fifteen games he actually appeared in, which is what
+    "recent form" means to anyone reading it.
+
+    Returns a frame indexed like build_hr_metrics' `out`, or None when
+    the columns are missing.
+    """
+    need = {"batter", "game_date", "launch_speed", "type"}
+    if not need.issubset(season_df.columns):
+        return None
+    ev = pd.to_numeric(season_df["launch_speed"], errors="coerce")
+    df = pd.DataFrame({
+        "batter": season_df["batter"],
+        "game_date": season_df["game_date"].astype(str).str[:10],
+        "ev": ev,
+        "bbe": _mask(season_df["type"] == "X").astype("int32"),
+        "hard": _mask((season_df["type"] == "X") & (ev >= 95.0)).astype("int32"),
+    })
+    df = df[df["bbe"] == 1]
+    if df.empty:
+        return None
+    # Rank each batter's games most-recent-first, keep the newest N.
+    _dates = (df[["batter", "game_date"]].drop_duplicates()
+                .sort_values(["batter", "game_date"], ascending=[True, False]))
+    if games is not None:
+        _dates["n"] = _dates.groupby("batter", observed=True).cumcount()
+        keep = _dates[_dates["n"] < games][["batter", "game_date"]]
+        df = df.merge(keep, on=["batter", "game_date"], how="inner")
+    g = df.groupby("batter", observed=True)
+    out = pd.DataFrame({"avg_ev": g["ev"].mean(),
+                        "hh_pct": g["hard"].sum() / g["bbe"].sum() * 100.0})
+    return out
+
+
 def build_hr_metrics(season_df: pd.DataFrame) -> bool:
     need = {"batter", "launch_speed", "launch_angle", "events", "type"}
     if not need.issubset(season_df.columns):
@@ -1035,6 +1072,61 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
         # searchsorted sorts NaN to the top and would hand an unmeasured
         # hitter a 100th percentile. Unmeasured stays unmeasured.
         return pd.Series(np.where(np.isnan(vals), np.nan, pos), index=s.index)
+
+    # ------------------------------------------------------------
+    # FORM AS A LEAGUE PERCENTILE, not an index.
+    #
+    # engines/form deliberately publishes raw deltas — AvgEV +1.7 mph,
+    # HH% +6.9 pts — because those are real measurements a subscriber
+    # can check against Savant, and a 0-100 index is not: 63.4 is not
+    # something a hitter did.
+    #
+    # A single combined column was still wanted, and it can be honest as
+    # long as the number means something real. So this is NOT an index.
+    # It is a RANK: the share of the league a hitter is currently hotter
+    # than, on the same two inputs. 64 means "hotter than 64% of
+    # qualified hitters right now" — a fact about the league on a given
+    # night, not a score invented to fill a column.
+    #
+    # WHY THE TWO DELTAS ARE DIVIDED BY THEIR OWN MEASURED SPREAD BEFORE
+    # BEING ADDED. Across 373 hitters at 150+ PA, the 90th percentile of
+    # absolute L15-vs-season deviation is 7.3% for AvgEV and 48.0% for
+    # HH%. Adding raw percentages would let hard-hit rate swamp exit
+    # velocity six to one purely because it is the noisier measurement.
+    # Dividing each by its own spread first puts them in the same units
+    # — "how unusual is this move FOR THIS STAT" — and then the sum is
+    # ranked, so the weighting never has to be argued about again.
+    #
+    # NOT built on barrels, pull-air or blast: a quarter of hitters
+    # record ZERO barrels over fifteen games, which reads as -100% and
+    # is a wall rather than a measurement.
+    # BOTH WINDOWS THROUGH THE SAME FUNCTION, and that is the point.
+    #
+    # The season side could be read off columns already in `out`, but
+    # then "L15 avg EV" and "season avg EV" would come from two
+    # different code paths and any difference between them would show up
+    # as form. The probe's own sanity check is that the median deviation
+    # sits at zero; it only can if both sides are computed identically.
+    # games=None means every game he played.
+    _l15 = _recent_window_metrics(season_df, games=15)
+    _all = _recent_window_metrics(season_df, games=None)
+    if _l15 is not None and _all is not None:
+        _z = None
+        for _key, _spread in (("avg_ev", 7.3), ("hh_pct", 48.0)):
+            _base = _all[_key].reindex(out.index)
+            _rec = _l15[_key].reindex(out.index)
+            _base = _base.where(_base > 0)
+            _dev = (_rec - _base) / _base * 100.0 / _spread
+            _z = _dev if _z is None else _z.add(_dev, fill_value=0)
+        if _z is not None:
+            # rank(pct=True) IS the percentile — the share of measured
+            # hitters at or below this one. Unmeasured stays NaN rather
+            # than landing at a neutral 50, because "we could not tell"
+            # and "exactly average" are opposite claims.
+            out["form_pct"] = (_z.rank(pct=True) * 100.0).round(0)
+            out["form_dir"] = _z.round(3)
+            print(f"  Form: {int(out['form_pct'].notna().sum()):,} batters "
+                  f"ranked on L15-vs-season")
 
     _ranked = ("brl_per_pa", "hr_window_pct", "pull_air_pct",
                "fb95_pct", "clears_anywhere_pct", "ev90",
