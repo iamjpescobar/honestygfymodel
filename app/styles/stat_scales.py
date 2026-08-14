@@ -77,6 +77,18 @@ SCALES = {
     "Brl %":     (3.0, 6.0, 9.0, 13.0),
     "Brl/PA":    (2.0, 4.0, 6.0, 9.0),
     "HH %":      (32.0, 37.0, 42.0, 48.0),
+    # MEASURED 2026-08-12, 373 hitters at 150+ PA:
+    #   median 88.60 · 75th 90.10 · 90th 91.80
+    # AVERAGE exit velocity, not the 90th percentile. The two are
+    # different questions — "how hard is his contact" against "how hard
+    # is his BEST contact" — and a scale written for one grades nothing
+    # when applied to the other. A "91 EV" floor aimed at this column
+    # was applied to EV90 (median 104.2) and cleared 373 of 373.
+    "AvgEV":     (87.0, 88.6, 90.1, 91.8),
+    # FORM is 0-100 with 50 = exactly the player's own baseline, so the
+    # cut points sit AROUND 50 rather than spanning the range. A hitter
+    # at his own average should read neutral, not poor.
+    "Form":      (40.0, 50.0, 60.0, 70.0),
     "EV90":      (100.0, 103.0, 106.0, 109.0),
     # MEASURED 2026-08-12, 373 hitters at 150+ PA:
     #   median 11.49 · 65th 13.45 · 75th 15.07 · 90th 18.66 · MAX 30.89
