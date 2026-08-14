@@ -110,10 +110,31 @@ for _n in _ast.walk(_tree):
             break
 assert _row_dict, "could not find the lineup row dict (the one keyed on Player)"
 declared = _row_dict
-NON_NUMERIC = {"Player", "Bats", "Matchup", "Edge", "EdgeLabel", "EdgeTier", "Confidence"}
+# Columns that arrive as TEXT and must not be in the formatter.
+#
+# "Form" is here on purpose. It is not a number in the row — engines/form
+# renders it as "64% ↑" before it reaches the dict, because a percentile
+# and a direction arrow cannot both survive a float format string. Adding
+# it to the formatter would make pandas try to apply "{:.1f}" to a string
+# and the cell would render as the format spec itself.
+#
+# The rule this list protects is unchanged: any column that is still a
+# NUMBER when it lands here needs an explicit format, which is what
+# caught PA rendering as 543.000000.
+NON_NUMERIC = {"Player", "Bats", "Matchup", "Edge", "EdgeLabel", "EdgeTier",
+               "Confidence", "Form"}
 missing = [c for c in declared if c not in NON_NUMERIC and c not in formatted]
 assert not missing, f"numeric lineup columns with no format string: {missing}"
 print(f"PASS: all {len(formatted)} numeric lineup columns have explicit formats")
+
+# Form must be PRE-RENDERED, not left as a float for the formatter.
+assert '"Form": form_engine.form_cell(' in gc, (
+    "Form is no longer rendered through engines/form — a raw percentile "
+    "in this dict would lose its direction arrow entirely")
+assert '"Form":' not in gc.split("styled.format({")[1].split("}, na_rep")[0], (
+    "Form is in the formatter; a format string applied to '64% \u2191' "
+    "renders the spec instead of the value")
+print("PASS: Form arrives pre-rendered and stays out of the formatter")
 
 for col in ("Brl/PA", "EV90", "MaxEV", "HRWindow%", "HRIntent"):
     assert col in formatted, f'"{col}" would render at the global precision'
