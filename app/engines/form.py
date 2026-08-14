@@ -258,3 +258,54 @@ def _delta_color(delta, COLOR):
     if delta < 0:
         return COLOR["error"]
     return COLOR["text_muted"]
+
+# ---------------------------------------------------------------------
+# THE SINGLE COLUMN — a league PERCENTILE, not an index.
+#
+# The deltas above stay: they are what a subscriber can check against
+# Savant. But two columns means combining them in your head on every
+# row, so there is one column too.
+#
+# It is honest for one reason only: **it is not a score, it is a rank.**
+# 64 means "hotter than 64% of qualified hitters right now" — a fact
+# about tonight's league, measured nightly in build_hr_metrics by
+# ranking every hitter's combined L15-vs-season move. Nobody invented
+# the 64; it is a position among real people.
+#
+# That is the difference from the 0-100 index this file replaced. An
+# index of 63.4 was a deviation clamped to a band and mapped onto a
+# hundred-point scale — a number no hitter ever recorded. A percentile
+# is a count.
+#
+# The arrow carries the DIRECTION, because a percentile alone cannot:
+# 50 is the middle of the league whether the league is hot or cold, and
+# a hitter can sit at 50 while genuinely up on both inputs.
+FORM_FLAT = 0.15   # combined move smaller than this reads as flat
+
+
+def form_arrow(direction):
+    """Up, down or flat, from the raw combined move."""
+    if direction is None:
+        return ""
+    if direction >= FORM_FLAT:
+        return "\u2191"
+    if direction <= -FORM_FLAT:
+        return "\u2193"
+    return "\u2192"
+
+
+def form_cell(pct, direction=None):
+    """'64% \u2191' for a table cell, or an em dash when unmeasured.
+
+    Unmeasured renders as a dash, NEVER as 50. A hitter with no L15
+    window and a hitter sitting exactly at the league median are
+    opposite claims, and on a coloured table they would look identical.
+    """
+    if pct is None:
+        return "\u2014"
+    try:
+        pct = float(pct)
+    except (TypeError, ValueError):
+        return "\u2014"
+    arrow = form_arrow(direction)
+    return f"{pct:.0f}%{(' ' + arrow) if arrow else ''}"
