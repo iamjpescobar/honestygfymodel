@@ -21,6 +21,30 @@ app's own choice, not an official stat.
 from functools import lru_cache as _lru_cache
 
 from engines import hr_floors
+from engines import hr_form
+
+
+def _form_for(b):
+    """Form for one rated bat, or None when the window can't be read."""
+    try:
+        from engines.statcast_engine import get_batter_profile_windowed
+        recent = get_batter_profile_windowed(b.get("id"),
+                                             window=hr_form.FORM_WINDOW,
+                                             unit="bbe")
+    except Exception:
+        return None
+    return hr_form.form_score(b.get("profile"), recent)
+
+
+def _form_note_for(b):
+    try:
+        from engines.statcast_engine import get_batter_profile_windowed
+        recent = get_batter_profile_windowed(b.get("id"),
+                                             window=hr_form.FORM_WINDOW,
+                                             unit="bbe")
+    except Exception:
+        return None
+    return hr_form.form_note(b.get("profile"), recent)
 
 from engines.savant_leaderboard import get_percentile, get_hr_metric, get_hr_metrics
 
@@ -421,6 +445,16 @@ def rank_batters(batter_profiles: list, savant_df) -> list:
             # for the reader. Same argument that put the G column on the
             # pitcher splits table, where the comment about a table
             # having "no sample column to contradict it" was written.
+            # AVERAGE exit velocity, beside EV90. Two different
+            # questions: how hard is his contact, versus how hard is his
+            # BEST contact. The board showed only the second.
+            "avg_ev": (b.get("profile") or {}).get("AvgEV"),
+            # FORM — recent vs his OWN baseline. See engines/hr_form for
+            # why it reads AvgEV and HH% and not barrels: a quarter of
+            # hitters have zero barrels over fifteen games, and -100% is
+            # a wall rather than a measurement.
+            "form": _form_for(b),
+            "form_note": _form_note_for(b),
             "hr_pa": get_hr_metric(hr_df, pid, "pa"),
             "hr_bbe": get_hr_metric(hr_df, pid, "bbe"),
             # QUALIFICATION FLOORS AS A TIER, NOT A FILTER.
