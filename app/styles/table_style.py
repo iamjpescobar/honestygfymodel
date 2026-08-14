@@ -18,6 +18,7 @@ import json as _tbl_json
 from pathlib import Path
 
 import itertools
+import re as _re
 import pandas as pd
 
 
@@ -729,7 +730,27 @@ def render_html_table(styler, key: str = ""):
     # just applies the same rules again.
     st.markdown(_HTML_TABLE_CSS, unsafe_allow_html=True)
 
-    uid = f"lc{key}_{next(_TABLE_SEQ)}"
+    # THE KEY IS SANITISED, and that is not cosmetic.
+    #
+    # pandas puts table_uuid straight into CSS selectors:
+    #     #T_{uuid}_row0_col4 { background-image: ... }
+    #
+    # A key of "wnba_Pts+Reb_away" produces #T_lcwnba_Pts+Reb_away_7_...
+    # and "+" is not a valid character in a CSS identifier, so the
+    # browser DISCARDS THE ENTIRE RULE and the table renders with no
+    # colour at all. Not a warning, not a partial failure — silence.
+    #
+    # This shipped: the WNBA tab labels are Points, Rebounds, Assists,
+    # Threes, PRA, Pts+Reb, Pts+Ast, Reb+Ast, Stocks, Volume, and the
+    # three that lost their colour were exactly the three containing a
+    # "+". Every other tab was fine, which is what made it look like a
+    # data problem in the combo stats rather than a naming one.
+    #
+    # Callers pass human labels because that is what makes selectors
+    # readable in devtools. Making them CSS-safe is this function's job,
+    # not every caller's.
+    safe = _re.sub(r"[^A-Za-z0-9_-]", "_", str(key))
+    uid = f"lc{safe}_{next(_TABLE_SEQ)}"
     html = styler.to_html(table_uuid=uid) if hasattr(styler, "to_html") else str(styler)
     st.markdown(f'<div class="lc-tbl-wrap">{html}</div>', unsafe_allow_html=True)
 
