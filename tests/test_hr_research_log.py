@@ -256,3 +256,32 @@ assert any(p.resolve() == _want for p in _real), (
     f"precompute writes batter files ({_want}) — grading will find no "
     f"data on the nightly runner and silently refuse every night")
 print(f"PASS: a grader root matches precompute's output ({_want.name})")
+
+
+# --- 12. EVERY ADJUSTMENT edge_components RETURNS MUST BE LOGGED -----
+#
+# THE GUARD FOR A MISTAKE MADE FOUR TIMES. game_pk, edge_raw, AvgEV and
+# platoon_adj were each added to the model after EDGE_KEYS was written.
+# Each reached the board rows (the board does r.update(edge_components(
+# ...))) and none reached the log, so for as long as it went unnoticed
+# the log could not measure the thing that had just been built. There is
+# no backfill: the board state that produced those nights is gone.
+#
+# Asserted against edge.py's SOURCE rather than by importing it —
+# edge.py pulls in most of the engine layer, and a test that drags an
+# import graph in to compare two lists starts failing for reasons
+# unrelated to what it checks.
+import re as _re2  # noqa: E402
+
+_edge_src = open("app/engines/edge.py", encoding="utf-8").read()
+_ret = _edge_src[_edge_src.rindex("return {\"edge\":"):]
+_ret = _ret[:_ret.index("}") + 1]
+_returned = set(_re2.findall(r'"(\w+_adj)"', _ret))
+_logged = set(hrl.EDGE_KEYS)
+_missing = _returned - _logged
+assert not _missing, (
+    f"edge_components returns {sorted(_missing)} and hr_research_log does "
+    f"not record it — the log cannot measure a term the model just "
+    f"gained. Add it to EDGE_KEYS.")
+print(f"PASS: all {len(_returned)} edge adjustments reach the log "
+      f"({', '.join(sorted(_returned))})")
