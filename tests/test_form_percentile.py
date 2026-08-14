@@ -123,3 +123,50 @@ assert "per GAME. Park" not in hb, "the caption hardcodes GAME again"
 assert 'CAP_UNIT == "team"' in hb, "the caption no longer derives from CAP_UNIT"
 assert "{GAME_CAP}-per-{CAP_UNIT} cap" in hb, "the expander still hardcodes it"
 print("PASS: both cap labels derive from CAP_UNIT, not from a typed word")
+
+
+# --- 9. THE COLUMN IS GRADED, EVEN THOUGH IT IS TEXT -----------------
+#
+# _magnitude_column coerces with pd.to_numeric and gives up on strings —
+# correct, a column of words has no magnitude. But "86% \u2191" is a
+# number WEARING text, and leaving it grey put the one self-relative
+# column on the lineup table in plain type beside twenty graded ones,
+# which reads as "this one does not matter".
+import re as _re3  # noqa: E402
+import pandas as _pd  # noqa: E402
+from styles.table_style import style_stat_table, grade_text_column  # noqa: E402
+
+_df = _pd.DataFrame({"Player": list("abcd"),
+                     "Form": ["96% \u2191", "56% \u2192", "4% \u2193", "\u2014"]})
+_sty = grade_text_column(style_stat_table(_df, favor_high=[], gradient=True),
+                         "Form", scale_key="Form")
+_css = _sty.to_html(table_uuid="t").split("</style>")[0]
+
+
+def _fill(row):
+    for blk in _css.split("}"):
+        if f"#T_t_row{row}_col1" in blk.split("{")[0]:
+            m = _re3.search(r"rgba\((\d+,\d+,\d+)", blk)
+            if m:
+                return m.group(1)
+    return None
+
+
+assert _fill(0) and _fill(1) and _fill(2), "the Form column rendered ungraded"
+assert len({_fill(0), _fill(1), _fill(2)}) == 3, (
+    f"96/56/4 all graded the same: {_fill(0)}, {_fill(1)}, {_fill(2)}")
+assert _fill(3) is None, (
+    "an unmeasured dash was given a colour — it would read as a real "
+    "grade for a hitter with no window at all")
+print("PASS: Form grades on the leading number; the dash stays unfilled")
+
+# --- 10. THE CUT POINTS ARE PERCENTILES, WHICH NEEDS NO MEASURING ----
+#
+# Every other scale on this site had to be measured because it was not a
+# percentile — Clears%, FB95%, HRWindow% and an EV floor were all round
+# numbers over a real distribution and all four were wrong. A
+# percentile's own distribution is uniform BY CONSTRUCTION, so 25/50/75/90
+# is the one case where round numbers are the honest choice.
+from styles.stat_scales import SCALES  # noqa: E402
+assert SCALES["Form"] == (25.0, 50.0, 75.0, 90.0), SCALES["Form"]
+print("PASS: Form's cut points are percentiles of a uniform distribution")
