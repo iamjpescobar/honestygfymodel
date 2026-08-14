@@ -49,29 +49,42 @@ board = [
     {"name": "d", "team": "LAD", "game_pk": 1},
     {"name": "e", "team": "NYY", "game_pk": 2},
 ]
-kept, overflow = cap_per_game(board, cap=2)
+kept, overflow = cap_per_game(board, cap=2, unit="game")
 assert [r["name"] for r in kept] == ["a", "b", "e"], [r["name"] for r in kept]
 assert [r["name"] for r in overflow] == ["c", "d"]
 assert len({r["team"] for r in board[:4]}) == 2, (
     "fixture no longer has two teams in one game — per-game vs per-team "
     "is the whole point of this case")
-print("PASS: cap is per GAME — COL and LAD bats both count against game 1")
+print("PASS: unit='game' counts COL and LAD bats against the same game")
+
+# --- 1b. unit="team" IS LOOSER, AND THAT IS THE TRADE ----------------
+#
+# The board now ships CAP_UNIT="team" at 3, for more room at the top.
+# Both sides of a matchup get their own allowance, so a hitter's park
+# permits up to twice as many bats from one building as the per-game
+# rule did. Pinned here so the looseness is visible in a test rather
+# than discovered on a night when one lineup takes the board over.
+_kept, _over = cap_per_game(board, cap=2, unit="team")
+assert [r["name"] for r in _kept] == ["a", "b", "c", "d", "e"], (
+    "unit='team' should let both sides of game 1 through")
+assert not _over
+print("PASS: unit='team' lets both sides of one game through — looser, on purpose")
 
 # --- 2. ORDER IS PRESERVED, never re-ranked --------------------------
 ranked = [{"name": f"{i:02d}", "game_pk": i // 3} for i in range(9)]
-kept, _ = cap_per_game(ranked, cap=2)
+kept, _ = cap_per_game(ranked, cap=2, unit="game")
 assert [r["name"] for r in kept] == sorted(r["name"] for r in kept), (
     "the cap re-ordered the board instead of filtering it")
 print("PASS: survivors keep board order — it filters, it never re-ranks")
 
 # --- 3. NOTHING IS DISCARDED -----------------------------------------
-kept, overflow = cap_per_game(board, cap=1)
+kept, overflow = cap_per_game(board, cap=1, unit="game")
 assert len(kept) + len(overflow) == len(board), "a bat vanished"
 print("PASS: every capped-out bat comes back in the overflow")
 
 # --- 4. AN UNKNOWN GAME KEY FAILS OPEN -------------------------------
 nokey = [{"name": "x"}, {"name": "y"}, {"name": "z"}]
-kept, overflow = cap_per_game(nokey, cap=1)
+kept, overflow = cap_per_game(nokey, cap=1, unit="game")
 assert len(kept) == 3 and not overflow
 print("PASS: a row with no game key is never capped away")
 
@@ -152,7 +165,7 @@ print("PASS: measured floors win, partials merge, a zero floor is refused")
 # once again exclude nobody while looking strict.
 _keys = [pkey for _k, pkey, _p, _f in hr_floors.FLOOR_SPECS]
 assert "AvgEV" in _keys and "EV90" not in _keys, _keys
-assert GAME_CAP == 2, f"the game cap moved to {GAME_CAP} — say so in a commit"
+assert GAME_CAP == 3, f"the cap moved to {GAME_CAP} — say so in a commit"
 print("PASS: the EV floor reads average EV, not the 90th percentile")
 
 # --- 12. THE PAGE CAPS TOO, not just the logged top 5 ----------------
