@@ -129,7 +129,28 @@ check("the shrinking-slate clamp survived the rewrite",
 # ---- 5. weak spots render in ONE language ---------------------------
 check("weak spots go through a single renderer",
       "_render_weak_spots" in gc)
-check("every group uses the same row unit", gc.count("_ws_group(") >= 5)
+# THE INVARIANT CHANGED, DELIBERATELY, AND THIS IS WHY.
+#
+# It used to be "every group uses the same row unit" (>= 5 _ws_group
+# calls), which was right when the panel was a bar stack: one shape,
+# repeated, no hand-rolled variants.
+#
+# Three groups are now SPATIAL because their data is. A pitch type
+# carries two numbers (usage and damage) and a bar draws one, so usage
+# was demoted to a subtitle where it stopped being comparable.
+# Up/middle/down is a strike zone that was drawn sideways. Times through
+# the order is a three-point trend drawn as three unconnected bars.
+#
+# The rule the old check was really protecting — DON'T HAND-ROLL A NEW
+# VISUAL LANGUAGE INLINE IN THE VIEW — still holds, and is what these
+# assert: the spatial panels come from one engine module, and whatever
+# stays a bar still goes through the one bar renderer.
+check("the spatial panels come from weakspot_view, not inline SVG",
+      "from engines.weakspot_view import" in gc)
+check("the view hand-rolls no SVG of its own",
+      "<svg" not in gc)
+check("remaining bar groups still use the one row unit",
+      gc.count("_ws_group(") >= 2)
 check("the legend is drawn, not just described",
       "below its sample floor" in gc and "_WS_FLOOR" in gc)
 # A missing value must still occupy space — a vanishing row is how
