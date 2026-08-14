@@ -137,7 +137,18 @@ EDGE_KEYS = ("edge",
              # move. Storing the count records what the board actually
              # said rather than what today's thresholds would say about
              # a bat from three weeks ago.
-             "floors_met", "floors_total")
+             "floors_met", "floors_total",
+             # THE PLATOON TERM. Added to edge_components after this list
+             # was written, so it reached the board rows and never the
+             # log — 0 of 440 rows carried it. That is the FOURTH field
+             # to arrive this way (game_pk, edge_raw, AvgEV, and now
+             # this one), and each time the cost is the same: the log
+             # cannot measure the thing that was just built.
+             #
+             # test_hr_research_log now asserts this list covers every
+             # *_adj key edge_components returns, so the fifth one fails
+             # a test instead of quietly logging nothing for a week.
+             "platoon_adj")
 
 
 def _month_path(month: str) -> Path:
