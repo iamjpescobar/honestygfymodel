@@ -1991,22 +1991,6 @@
           "result": null
         },
         {
-          "id": "682674",
-          "name": "Victor Bericoto",
-          "team": "SF",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "701398",
-          "name": "Sal Stewart",
-          "team": "CIN",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
           "id": "666018",
           "name": "Jonathan Aranda",
           "team": "TB",
@@ -2018,6 +2002,22 @@
           "id": "608324",
           "name": "Alex Bregman",
           "team": "CHC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682674",
+          "name": "Victor Bericoto",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701398",
+          "name": "Sal Stewart",
+          "team": "CIN",
           "stat": null,
           "line": null,
           "result": null
@@ -2055,14 +2055,6 @@
           "result": null
         },
         {
-          "id": "672695",
-          "name": "Geraldo Perdomo",
-          "team": "ARI",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
           "id": "808982",
           "name": "Jung Hoo Lee",
           "team": "SF",
@@ -2079,9 +2071,17 @@
           "result": null
         },
         {
-          "id": "691016",
-          "name": "Tyler Soderstrom",
-          "team": "ATH",
+          "id": "691718",
+          "name": "Pete Crow-Armstrong",
+          "team": "CHC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "676356",
+          "name": "Jonny DeLuca",
+          "team": "TB",
           "stat": null,
           "line": null,
           "result": null
@@ -3132,6 +3132,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-14": {
+      "picks": [
+        {
+          "id": "676475",
+          "name": "Alec Burleson",
+          "team": "St. Louis Cardinals",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691718",
+          "name": "Pete Crow-Armstrong",
+          "team": "Chicago Cubs",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683737",
+          "name": "Michael Busch",
+          "team": "Chicago Cubs",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "621438",
+          "name": "Tyrone Taylor",
+          "team": "Chicago Cubs",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "802139",
+          "name": "JJ Wetherholt",
+          "team": "St. Louis Cardinals",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
