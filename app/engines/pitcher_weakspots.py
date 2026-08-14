@@ -65,8 +65,32 @@ HALF_MIN_BBE = 50
 SLOT_MIN_BBE = 18
 
 # league-ish reference points for coloring (xSLG on contact)
-XSLG_HOT = 0.550     # hitters are doing real damage here
-XSLG_COLD = 0.380    # he's winning here
+# MEASURED 2026-08-13 — 5,032 buckets across 451 pitchers, every bucket
+# the panel actually draws (mlb_weakspot_probe.py):
+#
+#     10th   25th   median   75th   90th
+#    0.394  0.453   0.523   0.598  0.675
+#
+# The old pair was 0.550 / 0.380, chosen by eye. At 0.550 the panel
+# flagged **40.2%** of buckets as "hitters do real damage" — a phrase
+# that should mark the dangerous QUARTER, not two buckets in five. A
+# panel where nearly half the bars are red says nothing about WHERE a
+# pitcher gets hurt, which is its entire job.
+#
+# xSLG measured ON CONTACT excludes strikeouts, so it sits far above the
+# per-plate-appearance xSLG people quote. 0.550 was near the middle of
+# this distribution, not near its top.
+#
+# Set to the 75th and 25th: the top quarter is genuinely dangerous, the
+# bottom quarter is genuinely where he wins, and the middle half reads
+# as middling because it IS middling.
+#
+# Fifth scale on this site set by eye. The other four — Clears%, FB95%,
+# HRWindow% and an EV floor — were all measured and all wrong, three of
+# them unreachable at one end. Re-measure with the probe every few
+# weeks; the distribution drifts.
+XSLG_HOT = 0.598     # 75th percentile — hitters do real damage here
+XSLG_COLD = 0.453    # 25th percentile — he wins here
 
 _ZONE_BANDS = {"Up": (1, 2, 3), "Middle": (4, 5, 6), "Down": (7, 8, 9)}
 
