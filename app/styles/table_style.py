@@ -710,6 +710,27 @@ div[data-testid="column"]:has(.lc-tbl-wrap) {{
   .lc-tbl-wrap th, .lc-tbl-wrap td {{ padding:var(--lc-space-xs) var(--lc-space-sm); }}
   .lc-tbl-wrap thead th {{ font-size:var(--lc-text-micro); }}
 }}
+/* DENSE — for tables with a lot of COLUMNS, at any screen width.
+   The breakpoint above only fires below 900px, so a 25-column lineup
+   table on a wide tablet got the same roomy padding as a 5-column
+   reference table and ran off the edge with columns to spare. Density
+   should follow the TABLE's width, not the viewport's: CSS cannot count
+   columns, so render_html_table adds this class. */
+.lc-tbl-wrap.lc-tbl-dense th, .lc-tbl-wrap.lc-tbl-dense td {{
+  padding:var(--lc-space-xs) var(--lc-space-sm);
+}}
+.lc-tbl-wrap.lc-tbl-dense table {{ font-size:var(--lc-text-caption); }}
+.lc-tbl-wrap.lc-tbl-dense thead th {{ font-size:var(--lc-text-micro); }}
+/* A visible edge on the scroll container. Without it a table that
+   continues past the viewport looks CROPPED rather than scrollable —
+   the content just stops, and nothing says there is more. */
+.lc-tbl-wrap {{
+  background-image: linear-gradient(to left, {BG}00, {BG}ee 92%);
+  background-position: right center;
+  background-repeat: no-repeat;
+  background-size: 28px 100%;
+  background-attachment: local;
+}}
 </style>
 """
 
@@ -784,10 +805,20 @@ def render_html_table(styler, key: str = ""):
     # Callers pass human labels because that is what makes selectors
     # readable in devtools. Making them CSS-safe is this function's job,
     # not every caller's.
+    # A WIDE TABLE GETS TIGHTER CELLS, at any screen size. Twelve is the
+    # point where roomy padding starts costing more columns than it buys
+    # in legibility — a lineup table carries twenty-five and a reference
+    # table five, and they should not be spaced the same.
+    # `or []` on an Index raises — pandas refuses to guess the truth
+    # value of one. Ask for the length directly.
+    _data = getattr(styler, "data", None)
+    _ncols = len(_data.columns) if _data is not None and hasattr(_data, "columns") else 0
+    _dense = " lc-tbl-dense" if _ncols > 12 else ""
     safe = _re.sub(r"[^A-Za-z0-9_-]", "_", str(key))
     uid = f"lc{safe}_{next(_TABLE_SEQ)}"
     html = styler.to_html(table_uuid=uid) if hasattr(styler, "to_html") else str(styler)
-    st.markdown(f'<div class="lc-tbl-wrap">{html}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="lc-tbl-wrap{_dense}">{html}</div>',
+                unsafe_allow_html=True)
 
 
 def score_bar(color_key: str = "gold"):
