@@ -136,3 +136,41 @@ print("PASS: unsafe key characters are sanitised, selectors stay valid")
 u1, u2 = uuids(a, key="Pts+Reb"), uuids(b, key="Pts Reb")
 assert not (u1 & u2), f"two keys that sanitise alike collided: {u1 & u2}"
 print("PASS: keys that sanitise to the same string still get distinct uuids")
+
+
+# --- 7. A WIDE TABLE GETS TIGHTER CELLS, AT ANY SCREEN WIDTH ---------
+#
+# The stylesheet's only density rule was @media (max-width: 900px), so a
+# twenty-five-column lineup table on a wide tablet got the same roomy
+# padding as a five-column reference table and ran off the right edge
+# with columns to spare. It read as CROPPED rather than scrollable.
+#
+# Density has to follow the TABLE's width, not the viewport's, and CSS
+# cannot count columns — so render_html_table adds the class.
+_seen = []
+_real_md = st.markdown
+st.markdown = lambda h, **kw: _seen.append(h)
+try:
+    for _n in (20, 5):
+        _df = pd.DataFrame({f"c{_i}": [1.0] for _i in range(_n)})
+        render_html_table(style_stat_table(_df, favor_high=[]), key=f"k{_n}")
+finally:
+    st.markdown = _real_md
+
+_wraps = [h for h in _seen if 'class="lc-tbl-wrap' in h]
+assert len(_wraps) == 2, len(_wraps)
+assert "lc-tbl-dense" in _wraps[0], (
+    "a 20-column table did not get the dense class — it will overflow "
+    "with columns to spare")
+assert "lc-tbl-dense" not in _wraps[1], (
+    "a 5-column table was made dense; tight padding on a narrow table "
+    "buys nothing and costs legibility")
+print("PASS: 20 columns render dense, 5 columns stay roomy")
+
+# --- 8. The dense rule exists in the stylesheet ----------------------
+_css = open("app/styles/table_style.py", encoding="utf-8").read()
+assert ".lc-tbl-wrap.lc-tbl-dense th" in _css, "the dense class has no CSS"
+assert "background-attachment: local" in _css, (
+    "the scroll-edge shading is gone — a table that continues past the "
+    "viewport looks cropped rather than scrollable")
+print("PASS: dense padding and the scroll-edge hint are both in the CSS")
