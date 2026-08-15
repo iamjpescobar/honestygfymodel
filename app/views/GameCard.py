@@ -2033,7 +2033,10 @@ with content_col:
                     # Player/Bats/Ord lead every group: they're what tells
                     # you whose row you're reading, and losing that while
                     # scrolling sideways was the other half of the problem.
-                    _ident = ["Player", "Bats", "Ord"]
+                    # Ord before Bats: the slot is what you scan for when
+                    # you already know the lineup, and the hand is what you
+                    # check second.
+                    _ident = ["Player", "Ord", "Bats"]
 
                     # COLUMN ORDER, BY WHAT THE MODEL ACTUALLY WEIGHTS.
                     #
@@ -2062,30 +2065,136 @@ with content_col:
                     # log, THIS LIST MOVES WITH THEM — that is the point of
                     # deriving it from them rather than typing an order
                     # someone liked.
+                    # COLUMN ORDER.
+                    #
+                    # The head of this list is the OWNER'S reading order,
+                    # given explicitly: identity, the model's verdicts, the
+                    # slash line, then contact quality. It is how a
+                    # baseball person scans a row, and it is deliberately
+                    # NOT the model's internal order — Brl/PA is 28% of HR
+                    # Score and sits behind four outcome stats here. That
+                    # is a real trade, made on purpose: this table is read
+                    # by a person every night, and matching how he reads
+                    # beats matching how the score computes.
+                    #
+                    # Everything after PullBrl% is arranged here, and the
+                    # tiers below say why.
                     _COL_ORDER = (
-                        # 1. The model's verdicts.
+                        # --- given, in this order -----------------------
+                        # ORDERED BY WHAT EACH COLUMN CHECKS, not by what
+                        # category it belongs to.
+                        #
+                        # Two columns side by side are read as a PAIR
+                        # whether or not that was intended, so adjacency
+                        # is the actual tool here. Every neighbour below
+                        # is the thing that qualifies the column before
+                        # it.
+                        #
+                        # --- who, and does the model like him -----------
+                        # HR Edge beside HR Score because THE GAP IS THE
+                        # READ. Close together, the hitter is the pick.
+                        # Edge far above Score, the SPOT is the pick —
+                        # and a spot-driven bat is the one that
+                        # evaporates on a lineup change or a wind flip.
                         ["HR Edge", "HR Score", "Hit Score", "SLAM",
-                         "HRThreat", "Form"]
-                        # 2. Scored inputs, by effective weight.
-                        + ["Brl/PA", "FB95%", "EV90", "Clears%",
-                           "HRWindow%", "PullAir%"]
-                        # 3. Outcomes — what actually happened. HR sits
-                        #    beside NearHR because the PAIR is the read.
-                        + ["HR", "NearHR", "ISO", "HR/FB", "xSLG", "xwOBA",
-                           "BA", "SLG", "OPS"]
-                        # 4. Contact quality the score does not weight
-                        #    directly but that explains the inputs above.
-                        + ["Brl%", "HH%", "AvgEV", "Blast%", "MaxEV",
-                           "SweetSpot%", "LD%", "FB%", "GB%", "PullBrl%",
-                           "HRIntent"]
-                        # 5. Volume and distance — descriptive. Real, and
-                        #    not what the score is built on.
-                        + ["L5 PA/G", "AvgDist", "300+", "350+", "PA", "AB"]
-                        # 6. The raw form deltas last: they are the
-                        #    CHECKABLE version of the Form column at the
-                        #    front, kept for anyone verifying against
-                        #    Savant rather than reading at a glance.
-                        + ["\u0394EV", "\u0394HH%"]
+
+                         # --- is he that hitter RIGHT NOW ---------------
+                         # Form beside its own magnitude. The percentile
+                         # says he is hotter than 96 percent of the
+                         # league; the delta says by how much, in mph.
+                         # 96% with +1.7 is a real
+                         # move and 96% with +0.2 is a technicality, and
+                         # nobody can tell those apart with twenty columns
+                         # in between. Only dEV rides along: it is the
+                         # better-behaved input (measured band +/-7.3%
+                         # against dHH%'s +/-48%), so it is the one that
+                         # means something at a glance.
+                         "Form", "\u0394EV",
+
+                         # --- how much evidence is any of this ----------
+                         # PA is the denominator under every rate to its
+                         # right, and it was buried with the volume stats.
+                         # A .300 ISO on 65 PA and on 543 PA are not the
+                         # same claim. It sits here as the veto, before
+                         # the numbers it qualifies rather than after.
+                         "PA",
+
+                         # --- the power claim: actual, then expected ----
+                         # ISO first because it is SLG minus BA — power
+                         # with the singles stripped out — and BA last
+                         # because a hitter can bat .320 entirely on
+                         # singles, which makes it the weakest column on a
+                         # home-run board. ISO next to xSLG is deliberate:
+                         # the gap between what he HAS slugged and what he
+                         # was EXPECTED to is the luck still owed to him.
+                         "ISO", "xSLG", "xwOBA", "BA",
+
+                         # --- the two least redundant power inputs ------
+                         # Brl/PA is 28% of HR Score by itself, and Brl%
+                         # further right is the same event over a
+                         # different denominator. Clears% is the one
+                         # number nothing else here duplicates: league
+                         # median is 0.00, so over half of qualified
+                         # hitters have NEVER put a ball on a trajectory
+                         # that leaves every park. A column earns its
+                         # place by disagreeing, and this is the one most
+                         # able to.
+                         "Brl/PA", "Clears%",
+
+                         # --- cashed against owed -----------------------
+                         # Read right here, while you are deciding whether
+                         # the power above is real. 3 homers against 12
+                         # near misses is a hitter the ball is not falling
+                         # for; 12 against 3 has already been paid.
+                         "HR", "NearHR",
+
+                         # --- contact quality, as given -----------------
+                         "Brl%", "HH%", "FB%", "GB%", "LD%", "AvgEV",
+                         "PullBrl%"]
+
+                        # --- 1. THE REST OF WHAT HR SCORE IS MADE OF ----
+                        # Heaviest first, from engines/top_plays:
+                        #   FB95% 18% · EV90 12% · HRWindow% 11%
+                        #   PullAir% 11%
+                        # (Brl/PA 28% and Clears% 12% are up in the head,
+                        #  ahead of the contact run — see the note there.)
+                        # They lead the tail because when a reader keeps
+                        # scrolling past the slash line, this is the next
+                        # thing worth their attention — and if the weights
+                        # are ever refitted against the research log, this
+                        # run reorders with them.
+                        + ["FB95%", "EV90", "HRWindow%", "PullAir%"]
+
+                        # --- 2. THE COMPOSITE SECOND OPINIONS -----------
+                        # Built from different inputs than HR Score, so
+                        # they earn their place by DISAGREEING with it.
+                        # Directly after the inputs, because that is where
+                        # a disagreement is legible.
+                        + ["HRThreat", "HRIntent", "Blast%", "SweetSpot%",
+                           "MaxEV"]
+
+                        # --- 3. OUTCOMES, AND THE PAIR ------------------
+                        # HR next to NearHR always: 3 homers against 12
+                        # near misses is a different hitter from 12 against
+                        # 3, and separating them destroys the only
+                        # comparison NearHR exists for.
+                        + ["HR/FB", "SLG", "OPS"]
+
+                        # --- 4. VOLUME AND DISTANCE --------------------
+                        # Descriptive, and last of the real stats. L5 PA/G
+                        # is the exception worth knowing about: everything
+                        # above is a RATE and this is the volume those
+                        # rates get applied to, so it is the first thing to
+                        # check when two bats look identical.
+                        + ["L5 PA/G", "AvgDist", "300+", "350+", "AB"]
+
+                        # --- 5. THE CHECKABLE FORM DELTAS --------------
+                        # Dead last on purpose. They are plain subtraction
+                        # against Savant — the verifiable version of the
+                        # Form column at the front — so they belong where
+                        # someone auditing a number goes looking, not in
+                        # the glance path.
+                        + ["\u0394HH%"]
                     )
 
                     def _ordered(cols):
