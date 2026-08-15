@@ -1988,7 +1988,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "695506",
@@ -1996,7 +1996,7 @@
           "team": "KC",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "666018",
@@ -2004,7 +2004,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "701398",
@@ -2012,7 +2012,7 @@
           "team": "CIN",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "685133",
@@ -2020,7 +2020,7 @@
           "team": "LAA",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "608324",
@@ -2028,7 +2028,7 @@
           "team": "CHC",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "624413",
@@ -2036,7 +2036,7 @@
           "team": "BAL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "682674",
@@ -2044,7 +2044,7 @@
           "team": "SF",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "663757",
@@ -2052,7 +2052,7 @@
           "team": "NYY",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "691016",
@@ -2060,7 +2060,7 @@
           "team": "ATH",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "701807",
@@ -2068,7 +2068,7 @@
           "team": "NYM",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "660271",
@@ -2076,7 +2076,7 @@
           "team": "LAD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "680757",
@@ -2084,10 +2084,10 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -2352,10 +2352,10 @@
           "team": "Kansas City Royals",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -3142,7 +3142,7 @@
           "team": "Baltimore Orioles",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "670541",
@@ -3150,7 +3150,7 @@
           "team": "Houston Astros",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "663586",
@@ -3158,7 +3158,7 @@
           "team": "Atlanta Braves",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "676475",
@@ -3166,7 +3166,7 @@
           "team": "St. Louis Cardinals",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "677800",
@@ -3174,10 +3174,10 @@
           "team": "Boston Red Sox",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -7509,7 +7509,7 @@
           "team": "Seattle Storm",
           "stat": "pts",
           "line": 17.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3904577",
@@ -7517,7 +7517,7 @@
           "team": "Dallas Wings",
           "stat": "pts",
           "line": 16.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3142191",
@@ -7525,7 +7525,7 @@
           "team": "Indiana Fever",
           "stat": "pts",
           "line": 28.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5105406",
@@ -7533,7 +7533,7 @@
           "team": "Portland Fire",
           "stat": "pts",
           "line": 8.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3913881",
@@ -7541,7 +7541,7 @@
           "team": "Dallas Wings",
           "stat": "pts",
           "line": 7.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3906972",
@@ -7549,7 +7549,7 @@
           "team": "Portland Fire",
           "stat": "pts",
           "line": 16.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4432831",
@@ -7557,7 +7557,7 @@
           "team": "Indiana Fever",
           "stat": "pts",
           "line": 16.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433403",
@@ -7565,7 +7565,7 @@
           "team": "Indiana Fever",
           "stat": "pts",
           "line": 22.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3056730",
@@ -7573,7 +7573,7 @@
           "team": "Portland Fire",
           "stat": "pts",
           "line": 5.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3142255",
@@ -7581,7 +7581,7 @@
           "team": "Indiana Fever",
           "stat": "pts",
           "line": 9.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5220150",
@@ -7589,7 +7589,7 @@
           "team": "Seattle Storm",
           "stat": "reb",
           "line": 10.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3906972",
@@ -7597,7 +7597,7 @@
           "team": "Portland Fire",
           "stat": "reb",
           "line": 5.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "5105406",
@@ -7605,7 +7605,7 @@
           "team": "Portland Fire",
           "stat": "reb",
           "line": 3.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4432831",
@@ -7613,7 +7613,7 @@
           "team": "Indiana Fever",
           "stat": "reb",
           "line": 7.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "5209202",
@@ -7621,7 +7621,7 @@
           "team": "Portland Fire",
           "stat": "reb",
           "line": 2.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "5345325",
@@ -7629,7 +7629,7 @@
           "team": "Seattle Storm",
           "stat": "reb",
           "line": 6.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433546",
@@ -7637,7 +7637,7 @@
           "team": "Indiana Fever",
           "stat": "reb",
           "line": 5.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2529047",
@@ -7645,7 +7645,7 @@
           "team": "Dallas Wings",
           "stat": "reb",
           "line": 1.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3913881",
@@ -7653,7 +7653,7 @@
           "team": "Dallas Wings",
           "stat": "reb",
           "line": 4.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3142191",
@@ -7661,7 +7661,7 @@
           "team": "Indiana Fever",
           "stat": "reb",
           "line": 2.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "5220150",
@@ -7669,7 +7669,7 @@
           "team": "Seattle Storm",
           "stat": "ast",
           "line": 1.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398729",
@@ -7677,7 +7677,7 @@
           "team": "Portland Fire",
           "stat": "ast",
           "line": 2.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5017726",
@@ -7685,7 +7685,7 @@
           "team": "Seattle Storm",
           "stat": "ast",
           "line": 4.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3906753",
@@ -7693,7 +7693,7 @@
           "team": "Seattle Storm",
           "stat": "ast",
           "line": 5.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3906972",
@@ -7701,7 +7701,7 @@
           "team": "Portland Fire",
           "stat": "ast",
           "line": 2.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5345325",
@@ -7709,7 +7709,7 @@
           "team": "Seattle Storm",
           "stat": "ast",
           "line": 2.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433403",
@@ -7717,7 +7717,7 @@
           "team": "Indiana Fever",
           "stat": "ast",
           "line": 8.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "5105406",
@@ -7725,7 +7725,7 @@
           "team": "Portland Fire",
           "stat": "ast",
           "line": 1.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3904577",
@@ -7733,7 +7733,7 @@
           "team": "Dallas Wings",
           "stat": "ast",
           "line": 3.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5208982",
@@ -7741,7 +7741,7 @@
           "team": "Portland Fire",
           "stat": "ast",
           "line": 7.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3904577",
@@ -7749,7 +7749,7 @@
           "team": "Dallas Wings",
           "stat": "pra",
           "line": 22.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3142191",
@@ -7757,7 +7757,7 @@
           "team": "Indiana Fever",
           "stat": "pra",
           "line": 33.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5220150",
@@ -7765,7 +7765,7 @@
           "team": "Seattle Storm",
           "stat": "pra",
           "line": 28.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433546",
@@ -7773,7 +7773,7 @@
           "team": "Indiana Fever",
           "stat": "pra",
           "line": 11.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3906972",
@@ -7781,7 +7781,7 @@
           "team": "Portland Fire",
           "stat": "pra",
           "line": 24.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433403",
@@ -7789,7 +7789,7 @@
           "team": "Indiana Fever",
           "stat": "pra",
           "line": 33.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3142255",
@@ -7797,7 +7797,7 @@
           "team": "Indiana Fever",
           "stat": "pra",
           "line": 16.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5105406",
@@ -7805,7 +7805,7 @@
           "team": "Portland Fire",
           "stat": "pra",
           "line": 12.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3913881",
@@ -7813,7 +7813,7 @@
           "team": "Dallas Wings",
           "stat": "pra",
           "line": 12.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3934218",
@@ -7821,7 +7821,7 @@
           "team": "Portland Fire",
           "stat": "pra",
           "line": 20.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3142191",
@@ -7829,7 +7829,7 @@
           "team": "Indiana Fever",
           "stat": "tpm",
           "line": 3.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5105406",
@@ -7837,7 +7837,7 @@
           "team": "Portland Fire",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433403",
@@ -7845,7 +7845,7 @@
           "team": "Indiana Fever",
           "stat": "tpm",
           "line": 3.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3913881",
@@ -7853,7 +7853,7 @@
           "team": "Dallas Wings",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5220150",
@@ -7861,7 +7861,7 @@
           "team": "Seattle Storm",
           "stat": "tpm",
           "line": 0.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3056730",
@@ -7869,7 +7869,7 @@
           "team": "Portland Fire",
           "stat": "tpm",
           "line": 1.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3906972",
@@ -7877,7 +7877,7 @@
           "team": "Portland Fire",
           "stat": "tpm",
           "line": 3.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "5017726",
@@ -7885,7 +7885,7 @@
           "team": "Seattle Storm",
           "stat": "tpm",
           "line": 0.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433730",
@@ -7893,7 +7893,7 @@
           "team": "Dallas Wings",
           "stat": "tpm",
           "line": 1.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3934218",
@@ -7901,10 +7901,10 @@
           "team": "Portland Fire",
           "stat": "tpm",
           "line": 1.5,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -9002,7 +9002,8 @@
           "team": "Phoenix Mercury",
           "stat": "reb",
           "line": 2.5,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": "4282173",
@@ -9053,7 +9054,7 @@
           "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     },
     "2026-08-12": {
@@ -9316,7 +9317,7 @@
           "team": "Seattle Storm",
           "stat": "pts",
           "line": 20.2,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4432831",
@@ -9324,7 +9325,7 @@
           "team": "Indiana Fever",
           "stat": "pts",
           "line": 14.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "5345325",
@@ -9332,7 +9333,7 @@
           "team": "Seattle Storm",
           "stat": "pts",
           "line": 8.7,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3906972",
@@ -9340,7 +9341,7 @@
           "team": "Portland Fire",
           "stat": "pts",
           "line": 17.1,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3913881",
@@ -9348,7 +9349,7 @@
           "team": "Dallas Wings",
           "stat": "pts",
           "line": 8.2,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4432831",
@@ -9356,7 +9357,7 @@
           "team": "Indiana Fever",
           "stat": "reb",
           "line": 7.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3906972",
@@ -9364,7 +9365,7 @@
           "team": "Portland Fire",
           "stat": "reb",
           "line": 5.9,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398729",
@@ -9372,7 +9373,7 @@
           "team": "Portland Fire",
           "stat": "reb",
           "line": 4.8,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "5220150",
@@ -9380,7 +9381,7 @@
           "team": "Seattle Storm",
           "stat": "reb",
           "line": 10.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "5105406",
@@ -9388,7 +9389,7 @@
           "team": "Portland Fire",
           "stat": "reb",
           "line": 2.9,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3906753",
@@ -9396,7 +9397,7 @@
           "team": "Seattle Storm",
           "stat": "ast",
           "line": 5.8,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5017726",
@@ -9404,7 +9405,7 @@
           "team": "Seattle Storm",
           "stat": "ast",
           "line": 4.4,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5345325",
@@ -9412,7 +9413,7 @@
           "team": "Seattle Storm",
           "stat": "ast",
           "line": 2.1,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5220150",
@@ -9420,7 +9421,7 @@
           "team": "Seattle Storm",
           "stat": "ast",
           "line": 1.8,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2529183",
@@ -9428,10 +9429,10 @@
           "team": "Seattle Storm",
           "stat": "ast",
           "line": 1.0,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -9996,7 +9997,7 @@
           "team": "CLE",
           "stat": "strikeOuts",
           "line": 7.4,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 695505,
@@ -10004,7 +10005,7 @@
           "team": "CIN",
           "stat": "strikeOuts",
           "line": 6.2,
-          "result": null
+          "result": "hit"
         },
         {
           "id": 645261,
@@ -10012,7 +10013,7 @@
           "team": "MIA",
           "stat": "strikeOuts",
           "line": 5.9,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 808967,
@@ -10020,7 +10021,7 @@
           "team": "LAD",
           "stat": "strikeOuts",
           "line": 5.9,
-          "result": null
+          "result": "hit"
         },
         {
           "id": 663567,
@@ -10028,10 +10029,10 @@
           "team": "HOU",
           "stat": "strikeOuts",
           "line": 5.5,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   }
