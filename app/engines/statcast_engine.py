@@ -149,6 +149,15 @@ _KEEP_COLS = [
     #   RBI count. Runs remain unrecoverable from a pitch feed: nothing
     #   in these rows says whether the batter later crossed the plate.
     "swing_length", "bat_score", "post_bat_score",
+    # ADDED 2026-08-14, needed BEFORE the next pull because it only
+    # populates going forward.
+    #
+    # hit_distance_sc — projected landing distance of a batted ball.
+    # Behind AvgDist and the 300+/350+ counts: how FAR a hitter's contact
+    # travels, which is a different question from how hard he hits it.
+    # Two bats can share an exit velocity and separate by fifty feet on
+    # launch angle alone, and EV alone cannot see that.
+    "hit_distance_sc",
     # opponent ids (BvP support — "pitcher" in a batter's data and vice versa)
     "batter", "pitcher",
 ]
