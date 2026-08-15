@@ -100,3 +100,26 @@ assert "if iso_l is None or iso_r is None" in _pp, (
     "the probe no longer requires BOTH sides to clear the 40-AB floor; a "
     "hitter measured against one hand would be reported as having a gap")
 print("PASS: mlb_platoon_probe reads both hands and requires both")
+
+
+# --- benchmark_probe reads the log, and adds no nightly step ---------
+#
+# The Results page grades HR Edge against 11.9% — every league starter.
+# The board does not pick random starters, it picks sluggers, so ANY
+# power-sorted list clears that bar with no model in it. This probe runs
+# the honest comparison instead: the model's top five against naive top
+# fives from the SAME pool on the SAME nights.
+_bp = open("benchmark_probe.py", encoding="utf-8").read()
+assert "hr_research" in _bp, "the probe no longer reads the research log"
+assert 'r.get("graded") == "played"' in _bp, (
+    "the probe stopped filtering to graded bats — ungraded rows would "
+    "count as misses and every list would look worse than it is")
+assert 'r.get(key) is not None' in _bp, (
+    "bats missing a stat are no longer skipped; defaulting them to 0 "
+    "ranks an unmeasured hitter last instead of leaving him out")
+for _k in ("ISO", "HR/FB", "Brl/PA"):
+    assert f'("{_k}"' in _bp, f"naive benchmark {_k} was dropped"
+assert "not an answer yet" in _bp, (
+    "the small-sample warning is gone — ten picks an arm reads as a "
+    "result without it")
+print("PASS: benchmark_probe reads the log, filters graded, warns on n")
