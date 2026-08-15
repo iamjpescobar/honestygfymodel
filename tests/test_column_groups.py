@@ -38,7 +38,11 @@ for name, cols in groups.items():
             f'group "{name}" drops {ident} — losing track of whose row you are '
             f'reading while scrolling sideways is the exact problem these '
             f'groups exist to fix')
-    assert cols[:3] == ["Player", "Bats", "Ord"], (
+    # Ord before Bats: the slot is what you scan for when you already
+    # know the lineup, and the hand is the second check. Changed with the
+    # column reorder — the RULE (identity leads every group) is
+    # unchanged, only which two of the three come second and third.
+    assert cols[:3] == ["Player", "Ord", "Bats"], (
         f'group "{name}" must LEAD with the identity columns; they are only '
         f'useful if they are the first thing on screen')
 print("PASS: every group leads with Player/Bats/Ord")
