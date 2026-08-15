@@ -477,6 +477,13 @@ def rank_batters(batter_profiles: list, savant_df) -> list:
             # hitters tonight, which is a count rather than a score.
             "form_pct": get_hr_metric(hr_df, pid, "form_pct"),
             "form_dir": get_hr_metric(hr_df, pid, "form_dir"),
+            # Volume and distance, from the nightly.
+            "hr_count": get_hr_metric(hr_df, pid, "hr"),
+            "near_hr": get_hr_metric(hr_df, pid, "near_hr"),
+            "l5_pa_per_game": get_hr_metric(hr_df, pid, "l5_pa_per_game"),
+            "avg_dist": get_hr_metric(hr_df, pid, "avg_dist"),
+            "dist_300": get_hr_metric(hr_df, pid, "dist_300"),
+            "dist_350": get_hr_metric(hr_df, pid, "dist_350"),
             "hr_pa": get_hr_metric(hr_df, pid, "pa"),
             "hr_bbe": get_hr_metric(hr_df, pid, "bbe"),
             # QUALIFICATION FLOORS AS A TIER, NOT A FILTER.
