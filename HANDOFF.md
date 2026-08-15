@@ -10,6 +10,64 @@ as fixed. Verify before you build. START WITH "PICK UP HERE".**
 
 ---
 
+## PICK UP HERE — column order derived from the model's weights. 2026-08-14 (3)
+
+**2 files (1 new test). Suite 100, FAILING: none.** Four controls red.
+
+### THE ORDER WAS AN ACCIDENT
+
+Lineup columns rendered in whatever order `_stat_row` happened to
+insert. The six volume and distance columns went in right after Form and
+pushed **Brl/PA — 28% of HR Score on its own — out past ten others**, so
+a reader scanning left to right met batted-ball distance before the
+thing the score is mostly made of.
+
+### THE ANSWER IS NOT TASTE
+
+`engines/top_plays` multiplies out to a real ranking:
+
+    Brl/PA     28%   POWER    .40 x .70
+    FB95%      18%   CONVERGE .30 x .60
+    EV90       12%   POWER    .40 x .30
+    Clears%    12%   CONVERGE .30 x .40
+    HRWindow%  11%   LAUNCH   .22 x .50
+    PullAir%   11%   LAUNCH   .22 x .50
+
+`_COL_ORDER` in GameCard puts the model's verdicts first, then the
+scored inputs HEAVIEST FIRST, then outcomes, then contact quality, then
+volume/distance, then the raw form deltas. Left to right is the score's
+own reasoning in its own order.
+
+**AND IT MOVES WITH THE WEIGHTS.** When the research log has enough
+graded outcomes to refit them, this order follows — which is the entire
+reason it is derived rather than typed. `tests/test_column_order` reads
+`_W_POWER` etc. out of top_plays and asserts the on-screen order matches
+what they multiply out to, so a refit that forgets the table fails a
+test instead of shipping a stale layout.
+
+Two smaller rules pinned there:
+
+- **HR and NearHR stay adjacent.** The PAIR is the read — 3 homers
+  against 12 near misses is a different hitter from 12 against 3, and
+  splitting them destroys the comparison NearHR exists for.
+- **A column absent from `_COL_ORDER` still renders**, at the end.
+  Dropping one silently is how a stat vanishes and nobody notices for a
+  month.
+
+### CONTROL LESSON, AGAIN
+
+C1 (reverse the scored inputs) reported GREEN on its first run because
+the shell heredoc turned `\n` into a literal backslash-n and the edit
+never applied — "no match" scrolled past above a green line. **A control
+that did not modify anything is not a passing control.** Re-fired with a
+real newline: red.
+
+### NEXT
+Nothing. The research log needs weeks. Re-run mlb_form_probe /
+mlb_platoon_probe / mlb_weakspot_probe every few weeks.
+
+---
+
 ## PICK UP HERE — six new columns, weak-spot gem wired. 2026-08-14 (2)
 
 **7 files (1 new test). Suite 99, FAILING: none.** Four controls red.
