@@ -2034,6 +2034,72 @@ with content_col:
                     # you whose row you're reading, and losing that while
                     # scrolling sideways was the other half of the problem.
                     _ident = ["Player", "Bats", "Ord"]
+
+                    # COLUMN ORDER, BY WHAT THE MODEL ACTUALLY WEIGHTS.
+                    #
+                    # Order was accidental: whatever _stat_row happened to
+                    # insert first. Six volume and distance columns went in
+                    # after Form and pushed Brl/PA — the single
+                    # heaviest input in HR Score — out past ten others.
+                    #
+                    # There is a non-arbitrary answer, and it is not taste.
+                    # engines/top_plays multiplies out to:
+                    #
+                    #   Brl/PA     28%   (POWER .40 x .70)
+                    #   FB95%      18%   (CONVERGE .30 x .60)
+                    #   EV90       12%   (POWER .40 x .30)
+                    #   Clears%    12%   (CONVERGE .30 x .40)
+                    #   HRWindow%  11%   (LAUNCH .22 x .50)
+                    #   PullAir%   11%   (LAUNCH .22 x .50)
+                    #
+                    # So the scored inputs lead, heaviest first, and every
+                    # other column follows in tiers. A reader scanning left
+                    # to right is then reading the score's own reasoning in
+                    # its own order rather than an accident of dict
+                    # insertion.
+                    #
+                    # If the weights are ever refitted against the research
+                    # log, THIS LIST MOVES WITH THEM — that is the point of
+                    # deriving it from them rather than typing an order
+                    # someone liked.
+                    _COL_ORDER = (
+                        # 1. The model's verdicts.
+                        ["HR Edge", "HR Score", "Hit Score", "SLAM",
+                         "HRThreat", "Form"]
+                        # 2. Scored inputs, by effective weight.
+                        + ["Brl/PA", "FB95%", "EV90", "Clears%",
+                           "HRWindow%", "PullAir%"]
+                        # 3. Outcomes — what actually happened. HR sits
+                        #    beside NearHR because the PAIR is the read.
+                        + ["HR", "NearHR", "ISO", "HR/FB", "xSLG", "xwOBA",
+                           "BA", "SLG", "OPS"]
+                        # 4. Contact quality the score does not weight
+                        #    directly but that explains the inputs above.
+                        + ["Brl%", "HH%", "AvgEV", "Blast%", "MaxEV",
+                           "SweetSpot%", "LD%", "FB%", "GB%", "PullBrl%",
+                           "HRIntent"]
+                        # 5. Volume and distance — descriptive. Real, and
+                        #    not what the score is built on.
+                        + ["L5 PA/G", "AvgDist", "300+", "350+", "PA", "AB"]
+                        # 6. The raw form deltas last: they are the
+                        #    CHECKABLE version of the Form column at the
+                        #    front, kept for anyone verifying against
+                        #    Savant rather than reading at a glance.
+                        + ["\u0394EV", "\u0394HH%"]
+                    )
+
+                    def _ordered(cols):
+                        """_COL_ORDER first, then anything it forgot.
+
+                        A column missing from the list must still RENDER —
+                        dropping one silently is how a stat disappears from
+                        the site and nobody notices for a month.
+                        """
+                        known = [c for c in _COL_ORDER if c in cols]
+                        rest = [c for c in cols if c not in _COL_ORDER
+                                and c not in _ident]
+                        return _ident + known + rest
+
                     _groups = {
                         "All": None,
                         # CAPPED AT 14 (see tests/test_column_groups) and it
@@ -2068,6 +2134,9 @@ with content_col:
                         "Quick": _ident + ["HR Edge", "HR Score", "Hit Score", "SLAM",
                                            "ΔEV", "ΔHH%", "xwOBA", "Brl/PA", "HH%", "AvgEV"],
                     }
+                    display_df = display_df[
+                        [c for c in _ordered(list(display_df.columns))
+                         if c in display_df.columns]]
                     _grp = st.segmented_control(
                         "Columns", list(_groups),
                         default="All", key="lineup_col_group",
