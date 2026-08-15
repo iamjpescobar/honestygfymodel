@@ -71,6 +71,15 @@ ENGINE_COLS = [
     #   from a pitch feed at all: nothing in these rows says whether the
     #   batter later crossed the plate.)
     "swing_length", "bat_score", "post_bat_score",
+    # ADDED 2026-08-14, needed BEFORE the next pull because it only
+    # populates going forward.
+    #
+    # hit_distance_sc — projected landing distance of a batted ball.
+    # Behind AvgDist and the 300+/350+ counts: how FAR a hitter's contact
+    # travels, which is a different question from how hard he hits it.
+    # Two bats can share an exit velocity and separate by fifty feet on
+    # launch angle alone, and EV alone cannot see that.
+    "hit_distance_sc",
 ]
 ID_COLS = ["batter", "pitcher"]
 CATEGORY_COLS = ["type", "events", "description", "bb_type", "stand"]
@@ -558,7 +567,24 @@ def build_baselines(season_df: pd.DataFrame) -> bool:
 RATE_STATS = ("hits", "tb", "hr", "singles", "doubles", "triples", "k")
 
 
-def build_player_game_logs(season_df: pd.DataFrame) -> bool:
+def _player_game_logs(season_df):
+    """The per-game lines as a FRAME, without writing anything.
+
+    build_hr_metrics needs them for L5 PA/G and runs before the file is
+    written; reading the parquet back would make one function depend on
+    another's side effect and on their order in main().
+    """
+    try:
+        got = build_player_game_logs(season_df, _frame_only=True)
+    except Exception:
+        return None
+    # build_player_game_logs returns False when its columns are missing,
+    # and a bool has no .empty — so normalise here rather than making
+    # every caller remember that one function has two return types.
+    return got if isinstance(got, pd.DataFrame) else None
+
+
+def build_player_game_logs(season_df: pd.DataFrame, _frame_only=False):
     """Per-player per-game batting lines -> player_game_logs.parquet.
 
     NOT RBIs, and not runs. See the module notes: RBIs need bat_score and
@@ -600,6 +626,8 @@ def build_player_game_logs(season_df: pd.DataFrame) -> bool:
     out = (work.groupby(["batter", "game_date"], observed=True)
                .sum().reset_index())
     out = out[out["pa"] > 0]
+    if _frame_only:
+        return out
     # A game with no plate appearance is not a zero — it is an absence,
     # and a rate that counts it as a miss punishes a hitter for resting.
     out = out.sort_values(["batter", "game_date"])
@@ -711,13 +739,41 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
                             ).astype("int32"),
         "ev": ev.where(is_bbe),
         "bat_speed": pd.to_numeric(df.get("bat_speed"), errors="coerce"),
+        # ---- DISTANCE ----------------------------------------------
+        # How FAR his contact travels, which is a different question
+        # from how hard he hits it: two bats can share an exit velocity
+        # and separate by fifty feet on launch angle alone.
+        "dist": (pd.to_numeric(df.get("hit_distance_sc"), errors="coerce")
+                 .where(is_bbe) if "hit_distance_sc" in df.columns
+                 else pd.Series(float("nan"), index=df.index)),
+        # ---- NEAR MISSES -------------------------------------------
+        # A ball hit hard enough AND at an angle to leave a park, that
+        # did not. This is "who was trying" — the profile the xHR gap
+        # already flags as owed, made countable per hitter.
+        #
+        # 100 mph and the HR launch window, because that is the same
+        # definition in_window already uses for the LAUNCH axis. Reusing
+        # it rather than picking a second threshold means a near miss
+        # and a home-run trajectory are the same shape by construction,
+        # not by coincidence.
+        "near_hr": _mask(is_bbe & in_window & _mask(ev >= 100.0)
+                         & _mask(df["events"].astype(str) != "home_run")
+                         ).astype("int32"),
     })
     g = work.groupby("batter", observed=True)
     out = g[["pa", "bbe", "barrel", "window", "fb95", "pullair", "hr",
-             "bbe_tracked", "hr_tracked"]].sum()
+             "bbe_tracked", "hr_tracked", "near_hr"]].sum()
     out["ev90"] = g["ev"].quantile(0.90)
     out["max_ev"] = g["ev"].max()
     out["bat_speed"] = g["bat_speed"].mean()
+    # Distance, on batted balls that HAVE one. hit_distance_sc was added
+    # to the column set on 2026-08-14 and only populates going forward,
+    # so on older data these are all NaN — which renders as a dash
+    # rather than a zero, because "not measured" and "hit it nowhere"
+    # are opposite claims.
+    out["avg_dist"] = g["dist"].mean().round(1)
+    out["dist_300"] = g["dist"].apply(lambda d: int((d >= 300).sum()))
+    out["dist_350"] = g["dist"].apply(lambda d: int((d >= 350).sum()))
     out = out[(out["pa"] >= HRM_MIN_PA) & (out["bbe"] >= HRM_MIN_BBE)]
     if out.empty:
         print("  HR metrics skipped — no batter cleared the sample floor.")
@@ -1127,6 +1183,23 @@ def build_hr_metrics(season_df: pd.DataFrame) -> bool:
             out["form_dir"] = _z.round(3)
             print(f"  Form: {int(out['form_pct'].notna().sum()):,} batters "
                   f"ranked on L15-vs-season")
+
+    # PLATE APPEARANCES PER GAME OVER HIS LAST FIVE.
+    #
+    # The single most-ignored input on a home-run board: a bat gets one
+    # swing per PA, and a hitter batting ninth on a low-scoring team
+    # simply gets fewer chances than one batting second. Everything else
+    # here is a RATE — this is the volume those rates get applied to.
+    #
+    # Last five GAMES PLAYED, not calendar days, so a rest day does not
+    # dilute it. Built from the same per-game lines the Research page
+    # reads, which is why they exist.
+    _logs = _player_game_logs(season_df)
+    if _logs is not None and not _logs.empty:
+        _l5 = (_logs.sort_values(["batter", "game_date"])
+                    .groupby("batter", observed=True).tail(5)
+                    .groupby("batter", observed=True)["pa"].mean())
+        out["l5_pa_per_game"] = _l5.reindex(out.index).round(2)
 
     _ranked = ("brl_per_pa", "hr_window_pct", "pull_air_pct",
                "fb95_pct", "clears_anywhere_pct", "ev90",
