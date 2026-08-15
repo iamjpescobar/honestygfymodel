@@ -31,6 +31,7 @@ from engines.bvp import render_bvp_card, render_zone_map, render_spray_chart
 from engines.edge import edge_components, pen_context, bvp_component
 from engines.pick_badges import compute_badges, render_badge_row
 from engines.pitcher_weakspots import get_weak_spots, XSLG_HOT, XSLG_COLD
+from engines.weakspot_view import slot_rows
 from engines.team_logos import logo_for
 from engines.weather_icons import (
     weather_icon, wind_arrow, temp_icon, park_icon,
@@ -985,6 +986,8 @@ def _score_num(v):
     return 0 if v is None else v
 
 def _stat_row(name, bats_label, profile, *, form_pct=None, form_dir=None,
+              hr_count=None, near_hr=None, l5_pa=None,
+              avg_dist=None, dist_300=None, dist_350=None,
               matchup=None, slam=None,
               hr_edge=None, hr_score=None, hit_score=None, form_deltas=None,
               edge_cell=None, edge_label="", edge_tier="neutral",
@@ -1027,6 +1030,26 @@ def _stat_row(name, bats_label, profile, *, form_pct=None, form_dir=None,
         # The arrow carries direction, which a percentile cannot — 50 is
         # the middle of the league whether the league is hot or cold.
         "Form": form_engine.form_cell(form_pct, form_dir),
+        # HR and NEAR HR side by side, deliberately.
+        #
+        # NEAR HR counts balls hit hard enough AND at an angle to leave a
+        # park, that did not — the same launch window the LAUNCH axis
+        # uses, so a near miss and a home-run trajectory are the same
+        # shape by construction rather than by coincidence. Read as a
+        # pair: 2 HR against 9 near misses is a hitter the ball is not
+        # falling for; 7 against 2 is one who has cashed everything.
+        "HR": hr_count,
+        "NearHR": near_hr,
+        # PA per game over his last five GAMES PLAYED. Every other column
+        # here is a RATE; this is the volume those rates get applied to,
+        # and a bat batting ninth simply gets fewer swings.
+        "L5 PA/G": l5_pa,
+        # How FAR his contact travels — a different question from how
+        # hard he hits it. Two bats can share an exit velocity and
+        # separate by fifty feet on launch angle alone.
+        "AvgDist": avg_dist,
+        "300+": dist_300,
+        "350+": dist_350,
         # NO ", 0" DEFAULTS ANYWHERE IN THIS ROW.
         #
         # A missing BA is not a .000 BA, a missing HH% is
@@ -1957,6 +1980,10 @@ with content_col:
                         # cannot rank a hitter against a league it does
                         # not have.
                         form_pct=r.get("form_pct"), form_dir=r.get("form_dir"),
+                        hr_count=r.get("hr_count"), near_hr=r.get("near_hr"),
+                        l5_pa=r.get("l5_pa_per_game"),
+                        avg_dist=r.get("avg_dist"),
+                        dist_300=r.get("dist_300"), dist_350=r.get("dist_350"),
                         matchup=tier, slam=slam,
                         hr_edge=r.get("edge"), hr_score=r["hr_score"], hit_score=r["hit_score"],
                         # Already computed by rank_batters for every rated
@@ -2068,7 +2095,9 @@ with content_col:
                         # colours them from the same entries), so a given
                         # number takes the same colour on both boards and
                         # does not change tier when a filter moves.
-                        favor_high=["SLAM", "BA", "xwOBA", "xSLG", "ISO", "HR/FB", "Brl%", "Brl/PA", "HH%", "AvgEV", "EV90", "MaxEV", "LD%", "FB%", "SweetSpot%", "HRWindow%", "PullAir%", "PullBrl%", "Blast%", "HRIntent", "HRThreat", "FB95%", "Clears%", "ΔEV", "ΔHH%"],
+                        favor_high=["SLAM", "BA", "xwOBA", "xSLG", "ISO", "HR/FB", "Brl%", "Brl/PA", "HH%", "AvgEV", "EV90", "MaxEV", "LD%", "FB%", "SweetSpot%", "HRWindow%", "PullAir%", "PullBrl%", "Blast%", "HRIntent", "HRThreat", "FB95%", "Clears%", "ΔEV", "ΔHH%",
+                                    "HR", "NearHR", "L5 PA/G", "AvgDist",
+                                    "300+", "350+"],
                         # HR Edge / HR Score / Hit Score are deliberately
                         # NOT in favor_high: score_bar already encodes each
                         # one as a filled bar, and a gradient cell behind
@@ -2096,6 +2125,12 @@ with content_col:
                         # Exit velocities read as mph — one decimal is how
                         # Statcast publishes them.
                         "AvgEV": "{:.1f}", "EV90": "{:.1f}", "MaxEV": "{:.1f}",
+                        # Counts render whole; a hitter cannot have 7.0
+                        # home runs. AvgDist too — a foot of precision on
+                        # a projected landing point is false precision.
+                        "HR": "{:.0f}", "NearHR": "{:.0f}",
+                        "300+": "{:.0f}", "350+": "{:.0f}",
+                        "AvgDist": "{:.0f}", "L5 PA/G": "{:.1f}",
                         # SIGNED, always. These are the only columns on
                         # this table where the sign IS the reading — a
                         # bare "1.8" in a delta column is unreadable
@@ -2202,30 +2237,48 @@ with content_col:
                         # batters is in real batting order; index+1 = slot.
                         _order = [b for b in batters][:9]
                         if _slot_map and _order:
+                            # SORTED BY LEAK, NOT BY BATTING ORDER.
+                            #
+                            # This is the change that makes the panel worth
+                            # reading. Nine slots listed 1 through 9 is a
+                            # roster printout — the reader scans all nine and
+                            # holds them in their head. Sorted by damage the
+                            # TOP ROWS ARE THE ANSWER.
+                            #
+                            # slot_rows also drops slots below the sample
+                            # floor entirely rather than rendering an empty
+                            # track, so a short list means "these are the
+                            # ones we can actually measure" instead of
+                            # "something is missing".
                             _align_rows = []
-                            for _i, _b in enumerate(_order, start=1):
-                                _s = _slot_map.get(_i, {})
-                                _xslg = _s.get("xslg")
-                                # weak = pitcher gets hit here AND it's a
-                                # real sample (xslg present means it cleared
-                                # the floor in the engine).
-                                _is_weak = _xslg is not None and _xslg >= XSLG_HOT
+                            for _slot, _xslg, _bbe, _b in slot_rows(
+                                    _wsl.get("slots", []), lineup=_order):
+                                if _b is None:
+                                    continue
                                 _align_rows.append({
-                                    "slot": _i,
+                                    "slot": _slot,
                                     "name": _b.get("name", "\u2014"),
                                     "bats": _b.get("bats", ""),
                                     "xslg": _xslg,
-                                    "bbe": _s.get("bbe", 0),
-                                    "weak": _is_weak,
+                                    "bbe": _bbe or 0,
+                                    # Weak = he gets hit here AND the bucket
+                                    # cleared its sample floor. Both, because
+                                    # a thin bucket can show any number.
+                                    "weak": _xslg is not None and _xslg >= XSLG_HOT,
                                 })
                             if any(r["xslg"] is not None for r in _align_rows):
                                 st.markdown(
                                     f'<div class="pf-card-title" style="color:{COLOR["gold"]}; '
                                     f'margin-top:var(--lc-space-lg);">Weak spot vs this lineup</div>'
                                     f'<div class="pf-card-subtitle">{selected_pitcher_name}\u2019s xSLG '
-                                    f'allowed by batting slot, mapped to tonight\u2019s hitters. '
+                                    f'allowed by batting slot, mapped to tonight\u2019s hitters, '
+                                    f'ORDERED BY WHERE HE LEAKS \u2014 the top rows are the read. '
                                     f'Green = a real, well-sampled slot where he gets hit and a '
-                                    f'live bat is sitting. Slots below the sample floor show \u2014.'
+                                    f'live bat is sitting. A slot line partly reflects WHICH '
+                                    f'hitters have batted there across his starts, not the pitcher '
+                                    f'alone \u2014 which is exactly why it is shown against '
+                                    f'tonight\u2019s order rather than on its own. Slots below the '
+                                    f'sample floor are omitted.'
                                     f'</div>',
                                     unsafe_allow_html=True,
                                 )
