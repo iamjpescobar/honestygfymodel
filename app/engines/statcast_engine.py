@@ -1100,7 +1100,11 @@ def get_first_pitch_swing(batter_id, window: str = "season", stand: str = None) 
     return out
 
 
-@st.cache_data(ttl=1800, max_entries=384, show_spinner=False)
+@st.cache_data(ttl=1800, max_entries=1024, show_spinner=False)
+# One slate is ~300 batters, and the lineup table reads TWO windows for
+# each (season for the stats, l15 for form) — ~600 entries before any
+# second look. At 384 the cache evicted mid-slate and re-read parquets
+# for batters already seen this session.
 def get_batter_profile_windowed(batter_id, window: str = "season", unit: str = "bbe",
                                 stand: str = None):
     """
@@ -1405,7 +1409,19 @@ def hand_tag(pitcher_id):
     return f"{h}HP" if h in ("L", "R") else ""
 
 
-@st.cache_data(ttl=3600, max_entries=64, show_spinner=False)
+@st.cache_data(ttl=3600, max_entries=1024, show_spinner=False)
+# 1024, NOT 64.
+#
+# 64 was right when pen_context was the only caller: one blended read
+# per batter for the bullpen's hand mix. The platoon term against the
+# STARTER now calls this TWICE per batter — once per hand — so a full
+# slate is ~300 batters x 2 = ~600 lookups against a 64-entry cache.
+# It thrashed almost completely, and EVERY MISS READS THAT BATTER'S
+# WHOLE PARQUET FROM DISK.
+#
+# The cost of a hit is a small dict; the cost of a miss is a file read.
+# Size the cache to one slate's working set, not to a number that was
+# fine before the caller count doubled.
 def get_batter_iso_vs_hand(batter_id, throws: str) -> float:
     """Batter's real ISO against pitchers of one handedness ("R"/"L"),
     this season, from his own Statcast rows. ISO = SLG - BA computed
