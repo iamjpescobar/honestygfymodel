@@ -2219,30 +2219,6 @@
           "result": null
         },
         {
-          "id": "680777",
-          "name": "Ryan Jeffers",
-          "team": "MIN",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "807712",
-          "name": "Luke Keaschall",
-          "team": "MIN",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "802415",
-          "name": "Chandler Simpson",
-          "team": "TB",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
           "id": "666018",
           "name": "Jonathan Aranda",
           "team": "TB",
@@ -2259,9 +2235,9 @@
           "result": null
         },
         {
-          "id": "596019",
-          "name": "Francisco Lindor",
-          "team": "NYM",
+          "id": "802415",
+          "name": "Chandler Simpson",
+          "team": "TB",
           "stat": null,
           "line": null,
           "result": null
@@ -2275,17 +2251,17 @@
           "result": null
         },
         {
-          "id": "701807",
-          "name": "Carson Benge",
+          "id": "596019",
+          "name": "Francisco Lindor",
           "team": "NYM",
           "stat": null,
           "line": null,
           "result": null
         },
         {
-          "id": "676724",
-          "name": "Jared Young",
-          "team": "NYM",
+          "id": "807712",
+          "name": "Luke Keaschall",
+          "team": "MIN",
           "stat": null,
           "line": null,
           "result": null
@@ -2302,6 +2278,30 @@
           "id": "680757",
           "name": "Steven Kwan",
           "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "800050",
+          "name": "Chase DeLauter",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "681082",
+          "name": "Bryson Stott",
+          "team": "PHI",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701807",
+          "name": "Carson Benge",
+          "team": "NYM",
           "stat": null,
           "line": null,
           "result": null
@@ -2595,9 +2595,9 @@
     "2026-08-16": {
       "picks": [
         {
-          "id": "677951",
-          "name": "Bobby Witt Jr.",
-          "team": "Kansas City Royals",
+          "id": "547180",
+          "name": "Bryce Harper",
+          "team": "Philadelphia Phillies",
           "stat": null,
           "line": null,
           "result": null
@@ -3472,6 +3472,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-16": {
+      "picks": [
+        {
+          "id": "676475",
+          "name": "Alec Burleson",
+          "team": "St. Louis Cardinals",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "677800",
+          "name": "Wilyer Abreu",
+          "team": "Boston Red Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683146",
+          "name": "Brett Baty",
+          "team": "New York Mets",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "596019",
+          "name": "Francisco Lindor",
+          "team": "New York Mets",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
