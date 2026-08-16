@@ -107,19 +107,46 @@ def arsenal_svg(pitches, min_usage=3.0):
     ]
 
     for p in sorted(rated, key=lambda q: -(q.get("bbe") or 0)):
-        cx, cy = _x(p["usage"]), _y(p["xslg"])
+        # PLOTTED ON RECENT USAGE, RATED ON SEASON DAMAGE.
+        #
+        # The x-axis is what he is throwing NOW — a pitch he has dropped
+        # since June belongs at the left edge no matter how much he threw
+        # it in March. The y-axis stays season, because a damage rate
+        # needs 35 batted balls and thirty days will not clear that.
+        _u = p.get("usage_recent")
+        _u = p["usage"] if _u is None else _u
+        cx, cy = _x(_u), _y(p["xslg"])
         r = 7 + ((p.get("bbe") or 1) / max_b) ** 0.5 * 9
+        # TOP THREE READ AS THE FOCUS, THE REST STAY VISIBLE. A hollow
+        # ring rather than a hidden bubble: a fourth pitch thrown 9% of
+        # the time still leaves the yard, and a pitch a pitcher has just
+        # ADDED shows up here before it shows up anywhere else on the
+        # site.
+        _pri = p.get("primary", True)
         out.append(f'<circle cx="{cx:.0f}" cy="{cy:.0f}" r="{r:.0f}" '
-                   f'fill="{tone(p["xslg"])}" opacity="0.72"/>')
+                   f'fill="{tone(p["xslg"])}" '
+                   f'opacity="{0.78 if _pri else 0.20}" '
+                   f'stroke="{tone(p["xslg"])}" stroke-width="1.5" '
+                   f'stroke-opacity="{0 if _pri else 0.9}"/>')
+        # The drift note only appears when a pitch has actually moved.
+        # No threshold is invented here — the number itself is shown and
+        # the reader judges it, which is what the site does everywhere a
+        # cut point has not been measured.
+        _d = p.get("usage_drift")
+        _drift = (f'  {_d:+.0f} pts' if _d is not None and abs(_d) >= 1 else '')
         out.append(f'<text x="{cx:.0f}" y="{cy - r - 7:.0f}" text-anchor="middle" '
-                   f'font-size="12" fill="currentColor" font-family="inherit">'
-                   f'{p["name"]} {p["xslg"]:.3f}</text>')
+                   f'font-size="12" fill="currentColor" font-family="inherit" '
+                   f'opacity="{1.0 if _pri else 0.65}">'
+                   f'{p["name"]} {p["xslg"]:.3f}{_drift}</text>')
 
     for i, u in enumerate((0, max_u / 2, max_u)):
         out.append(f'<text x="{_x(u):.0f}" y="268" text-anchor="middle" font-size="12" '
                    f'fill="{_DIM}" font-family="inherit">{u:.0f}%</text>')
     out.append(f'<text x="92" y="288" font-size="12" fill="{_DIM}" '
-               f'font-family="inherit">usage \u00b7 bubble size = batted balls</text>')
+               f'font-family="inherit">usage over the last 30 days '
+               f'\u00b7 bubble size = batted balls \u00b7 solid = top 3, '
+               f'hollow = the rest \u00b7 \u00b1pts = usage change vs '
+               f'his season</text>')
     if unrated:
         names = ", ".join(f'{p["name"].lower()} {p["usage"]:.0f}%' for p in unrated)
         out.append(f'<text x="92" y="{306 if False else 300}" font-size="12" '
