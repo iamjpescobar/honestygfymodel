@@ -46,15 +46,55 @@ MAX_RANK = 25
 
 
 @st.cache_data(ttl=300, max_entries=8, show_spinner=False)
-def board_ranks():
-    """{batter_id: {board: rank}} for tonight. Never raises.
+def board_ranks(allow_build=False):
+    """{batter_id: {board: rank}} for tonight. Never raises, never blocks.
 
-    A board that fails to build is simply absent from the index rather
-    than taking the whole lookup down — a broken Daily 13 should not
-    remove the HR Edge tokens from a page that has nothing to do with
-    it.
+    **allow_build=False BY DEFAULT, AND THAT IS THE WHOLE POINT.**
+
+    The first version of this called get_hr_edge_board() and
+    get_daily_13() directly, on the claim that both were "already built
+    and cached for the slate". That is only true if the reader visited
+    those pages first. Landing on a Game Card cold, this rebuilt the
+    entire HR Edge board — ~270 rated bats — and scanned the league for
+    Daily 13, before a single row of the lineup table could draw. Both
+    boards cache with show_spinner=False, so the page just sat blank.
+
+    A convenience column must never be able to block the page it
+    decorates. So by default this reads only what the nightly already
+    wrote to disk, which costs a file read. A caller that genuinely
+    wants the live boards — the boards' own pages, where the build is
+    the point — passes allow_build=True.
+
+    A board that cannot be read is simply absent from the index rather
+    than taking the whole lookup down.
     """
     index = {}
+
+    # ---- the cheap path: today's published picks, off disk ----------
+    #
+    # calibration_picks writes the top five per board every slate. That
+    # is fewer ranks than a live build gives, but it is the SAME list
+    # the site published, it costs one file read, and it cannot hang.
+    try:
+        import json
+        from pathlib import Path
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        _today = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
+        _rec = json.loads((Path(__file__).resolve().parents[2]
+                           / "data" / "calibration.json").read_text("utf-8"))
+        for _board, _key in (("hr_edge", "hr_edge"), ("daily13", "daily13"),
+                             ("potd", "potd")):
+            _day = (_rec.get(_key) or {}).get(_today) or {}
+            for i, pick in enumerate(_day.get("picks", []), start=1):
+                if pick.get("id") is None:
+                    continue
+                index.setdefault(str(pick["id"]), {})[_board] = i
+    except Exception:
+        pass
+
+    if not allow_build:
+        return index
 
     def _add(board, rows, id_key="id"):
         for i, r in enumerate(rows, start=1):
