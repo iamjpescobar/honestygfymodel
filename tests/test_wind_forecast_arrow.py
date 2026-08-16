@@ -91,3 +91,32 @@ assert "wind_arrow(_wind_raw, home_team=" in _wb, (
     "the arrow no longer receives the park, so a forecast cannot point "
     "at the field")
 print("PASS: the board feeds the forecast to both the grade and the arrow")
+
+
+# --- 7. EVERY CALLER MUST PASS THE PARK ------------------------------
+#
+# THE MISS THIS CATCHES. The Weather Board was fixed and the Game Card
+# was not — same forecast, same slate, resolved on one page and a
+# neutral swirl on the other. That is the SECOND time in two days a fix
+# reached one consumer and silently missed another (the arsenal window
+# was fixed in one of three panels the same way).
+#
+# wind_arrow cannot resolve a compass bearing without knowing which way
+# the park faces, so a call without home_team is not a style problem —
+# it is a call that CANNOT work in the morning, which is exactly when
+# the wind read matters most.
+import re as _re  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+_missing = []
+for _f in sorted(Path("app").rglob("*.py")):
+    _src = _f.read_text(encoding="utf-8")
+    if _f.name == "weather_icons.py":
+        continue                      # the definition itself
+    for _m in _re.finditer(r"wind_arrow\(([^)]*)\)", _src):
+        if "home_team" not in _m.group(1):
+            _missing.append(f"{_f}: wind_arrow({_m.group(1)})")
+assert not _missing, (
+    "these callers do not pass the park, so a compass forecast cannot "
+    "resolve to a field direction there:\n  " + "\n  ".join(_missing))
+print("PASS: every wind_arrow caller passes the park")
