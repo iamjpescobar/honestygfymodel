@@ -250,9 +250,18 @@ with st.spinner("Pulling game-time forecasts for every park\u2026 (30-min cache 
             temp_txt = f'{fc["temp"]}\u00b0F*'
         else:
             temp_txt = "\u2014"
-        # The arrow can only claim a field direction from MLB's official
-        # field-relative string; a compass forecast ("SW 12 mph") gets a
-        # neutral swirl, which wind_arrow() handles.
+        # A COMPASS FORECAST NOW POINTS AT THE FIELD TOO.
+        #
+        # This used to say the arrow could only claim a field direction
+        # from MLB's official string. That was true when it was written;
+        # wind_engine now carries the home-plate-to-centre-field bearing
+        # for 29 parks, and _hr_weather below has been resolving the same
+        # forecast to GRADE it — so the page was pointing one way and
+        # scoring another on the same row.
+        #
+        # This is what makes the arrows usable in the morning: MLB does
+        # not publish gameData.weather until close to first pitch, and
+        # weather is the read that matters most before a slate.
         _wind_raw = g.get("weather_wind") or (fc.get("wind") if fc else None)
         if g.get("weather_wind"):
             wind_txt = f'{g["weather_wind"]} <span style="opacity:0.6; font-size:var(--lc-text-micro);">(official)</span>'
@@ -267,8 +276,27 @@ with st.spinner("Pulling game-time forecasts for every park\u2026 (30-min cache 
         # Park abbreviation so a compass wind can be resolved against
         # this stadium's real orientation — same key wind_engine and the
         # HR park factors use, so all three agree.
+        # _wind_raw, NOT g["weather_wind"].
+        #
+        # THIS IS WHY THE ARROWS ONLY APPEARED LATE IN THE DAY. MLB does
+        # not populate gameData.weather until close to first pitch, so
+        # before then g["weather_wind"] is empty and this call handed
+        # _hr_weather a None — neutral arrow, no grade, "wind pending".
+        #
+        # _wind_raw was already computed four lines up WITH the NWS
+        # forecast as a fallback, and then never used. Temperature two
+        # lines below always fell back correctly; wind did not, so a
+        # morning card showed a real temperature beside a blank arrow.
+        #
+        # _hr_weather resolves a compass forecast through wind_engine
+        # against the park's real home-plate-to-centre-field bearing, so
+        # "SW 12 mph" at Wrigley reads as blowing out. Passing the
+        # forecast through costs nothing and is what the rest of the
+        # site already does — HR Edge has been applying that same wind
+        # all along, which meant this page called it pending while the
+        # board had already scored it.
         _hr_label, _hr_col, _hr_why = _hr_weather(
-            _raw_temp, g.get("weather_wind"), roofed,
+            _raw_temp, _wind_raw, roofed,
             home_team=team_abbr(g.get("home") or ""))
         _why_txt = " \u00b7 ".join(_hr_why)
 
@@ -291,7 +319,7 @@ with st.spinner("Pulling game-time forecasts for every park\u2026 (30-min cache 
             f'<span>{temp_txt}</span></div>'
             f'<div style="flex:1.3; font-size:var(--lc-text-caption); color:{COLOR["text"]}; '
             f'display:flex; align-items:center; gap:6px;">'
-            f'<span style="flex-shrink:0;">{_small(wind_arrow(_wind_raw))}</span>'
+            f'<span style="flex-shrink:0;">{_small(wind_arrow(_wind_raw, home_team=team_abbr(g.get("home") or "")))}</span>'
             f'<span>{wind_txt}</span></div>'
             f'<div style="flex:1.15; text-align:center;">'
             f'<span style="padding:var(--lc-space-hair) var(--lc-space-md); border-radius:var(--lc-radius-sm); font-size:var(--lc-text-tiny); font-weight:800; '
