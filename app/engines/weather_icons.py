@@ -104,7 +104,7 @@ def weather_icon(condition: str) -> str:
         f'fill="{grey}" opacity="0.32" stroke="{grey}" stroke-width="1.3"/></svg>'
     )
 
-def wind_arrow(wind_str: str) -> str:
+def wind_arrow(wind_str: str, home_team=None) -> str:
     """An arrow that actually points where the ball will be pushed.
 
     MLB's field-relative wind string ("12 mph, Out To CF") is the
@@ -131,10 +131,34 @@ def wind_arrow(wind_str: str) -> str:
     w = (wind_str or "").lower()
     is_forecast = "*" in (wind_str or "")
 
+    # A FORECAST CAN NOW POINT AT THE FIELD, GIVEN THE PARK.
+    #
+    # MLB does not publish gameData.weather until close to first pitch,
+    # so every morning card had only a compass forecast and drew a rose
+    # pointing at real-world north-east — technically true and useless
+    # for deciding whether a ball carries. wind_engine carries the
+    # home-plate-to-centre-field bearing for 29 parks, and _hr_weather
+    # has been using it to SCORE the same wind, so the arrow was
+    # pointing one way while the grade beside it said another.
+    #
+    # Resolved forecasts still render dashed: the direction is now
+    # right, and the fact that it is a forecast has not changed.
+    _resolved = None
+    if home_team and not any(k in w for k in ("out to", "in from", "l to r",
+                                              "r to l")):
+        try:
+            from engines.wind_engine import field_angle
+            _resolved = field_angle(home_team, wind_str)
+        except Exception:
+            _resolved = None
+
     m = re.search(r"(\d+)\s*mph", w)
     mph = int(m.group(1)) if m else 0
 
-    angle = None
+    # A resolved forecast supplies the angle when MLB has posted nothing.
+    # Field-relative strings below still win — those are measured at the
+    # park, not modelled from a bearing.
+    angle = _resolved
     if "out to cf" in w or "out to center" in w:
         angle = 0
     elif "out to lf" in w or "out to left" in w:
