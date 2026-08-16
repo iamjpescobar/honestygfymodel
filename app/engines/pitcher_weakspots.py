@@ -52,6 +52,19 @@ from engines.statcast_engine import _get_pitcher_df
 from engines.recency_windows import apply_window
 
 # ---- sample floors ----
+# The arsenal a hitter faces TONIGHT, not the one from March.
+#
+# 30 days is a window choice rather than a threshold: long enough that a
+# starter throws ~450 pitches in it (a usage share is a proportion and
+# settles fast), short enough to catch a pitch added or dropped
+# mid-season. It is NOT used for any damage rate — those keep the season.
+USAGE_DAYS = 30
+
+# How many pitches get the focus. Three is roughly 80% of what a hitter
+# sees, and it is what he actually game-plans for. The rest are marked
+# secondary, never dropped.
+PRIMARY_PITCHES = 3
+
 PITCH_MIN_PITCHES = 150
 PITCH_MIN_BBE = 35
 ZONE_MIN_PITCHES = 40
@@ -102,6 +115,32 @@ _PITCH_NAMES = {
 }
 
 
+
+def _recent_usage(df, days):
+    """{pitch_type: usage% over the last `days` days} — or {} if unknown.
+
+    Returns an empty dict rather than falling back to season usage: a
+    caller that cannot tell "no recent data" from "same as season" will
+    report a stale arsenal as a current one, which is the exact failure
+    this function exists to prevent.
+    """
+    if "game_date" not in df.columns or "pitch_type" not in df.columns:
+        return {}
+    try:
+        d = pd.to_datetime(df["game_date"], errors="coerce")
+        cutoff = d.max() - pd.Timedelta(days=days)
+        sub = df[d >= cutoff]
+    except Exception:
+        return {}
+    if sub.empty or len(sub) < 50:
+        # Under ~50 pitches a usage share is noise — one appearance can
+        # put a pitch at 40%. Better to show the season order than a
+        # confident wrong one.
+        return {}
+    counts = sub["pitch_type"].astype(str).value_counts()
+    return {k: round(v / len(sub) * 100, 1) for k, v in counts.items()}
+
+
 def _xslg_of(sub):
     """(xSLG on contact, batted-ball count) for a slice.
 
@@ -146,6 +185,32 @@ def weak_spots_json(pitcher_id, window: str = "season") -> str:
     out = {"error": None, "window": window, "total_pitches": int(len(df))}
 
     # ---- 1) pitch type ----
+    #
+    # USAGE AND DAMAGE COME FROM DIFFERENT WINDOWS, ON PURPOSE.
+    #
+    # They have different sample requirements and reading both off one
+    # window forces a bad trade:
+    #
+    #   season only -> damage is well-sampled, USAGE IS STALE. A pitcher
+    #                  who scrapped his curve in June still shows 16%
+    #                  curveballs in August, and the arsenal a hitter
+    #                  will actually see tonight is not what is on
+    #                  screen.
+    #   recent only -> usage is current, DAMAGE COLLAPSES. The floor is
+    #                  150 pitches and 35 batted balls per pitch type,
+    #                  and thirty days does not clear it for anything
+    #                  but a primary fastball.
+    #
+    # So: RANK BY RECENT USAGE, RATE ON SEASON DAMAGE. Usage is a
+    # proportion — a month gives a starter ~450 pitches, which pins a
+    # usage share tightly. Damage is a rate over batted balls and needs
+    # the year.
+    #
+    # Both numbers are published per pitch (`usage` season, `usage_recent`)
+    # rather than one being silently replaced, because the GAP between
+    # them is itself the signal: a pitch at 7% on the season and 18% over
+    # the last month is a pitcher who changed something.
+    recent = _recent_usage(df, USAGE_DAYS)
     pitches = []
     if "pitch_type" in df.columns:
         for pt, sub in df.groupby("pitch_type"):
@@ -154,8 +219,14 @@ def weak_spots_json(pitcher_id, window: str = "season") -> str:
             n_pitches = int(len(sub))
             xslg, bbe = _xslg_of(sub)
             usage = round(n_pitches / len(df) * 100, 1)
+            u_recent = recent.get(str(pt))
             entry = {"code": str(pt), "name": _PITCH_NAMES.get(str(pt), str(pt)),
-                     "pitches": n_pitches, "bbe": bbe, "usage": usage}
+                     "pitches": n_pitches, "bbe": bbe, "usage": usage,
+                     "usage_recent": u_recent,
+                     # Signed, so the direction is readable: positive means
+                     # he is going to it MORE than his season says.
+                     "usage_drift": (round(u_recent - usage, 1)
+                                     if u_recent is not None else None)}
             if n_pitches >= PITCH_MIN_PITCHES and bbe >= PITCH_MIN_BBE and xslg is not None:
                 entry["xslg"] = xslg
             else:
@@ -163,8 +234,25 @@ def weak_spots_json(pitcher_id, window: str = "season") -> str:
                 entry["reason"] = (f"{n_pitches} pitches / {bbe} batted balls "
                                    f"\u2014 below the {PITCH_MIN_PITCHES}/{PITCH_MIN_BBE} floor")
             pitches.append(entry)
-        pitches.sort(key=lambda p: -p["usage"])
+        # SORTED BY WHAT HE IS THROWING NOW, not by the season. Recent
+        # usage falls back to season when a pitcher has not pitched
+        # inside the window (injury, call-up) — better a stale order
+        # than no order.
+        pitches.sort(key=lambda p: -(p.get("usage_recent")
+                                     if p.get("usage_recent") is not None
+                                     else p["usage"]))
+        # TOP THREE ARE THE FOCUS, AND THE REST STAY ON THE PAGE.
+        #
+        # Three because that is what a hitter actually prepares for —
+        # roughly 80% of what he will see. Marking rather than
+        # truncating: a fourth pitch thrown 9% of the time is still a
+        # ball that leaves the yard, and a pitcher who has just ADDED a
+        # pitch shows up at the bottom of this list before he shows up
+        # anywhere else.
+        for i, p in enumerate(pitches):
+            p["primary"] = i < PRIMARY_PITCHES
     out["pitches"] = pitches
+    out["usage_window_days"] = USAGE_DAYS
 
     # ---- 2) zone bands ----
     bands = []
