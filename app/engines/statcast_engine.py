@@ -104,6 +104,11 @@ _HR_LA_MAX = 40
 # does not feed any score.
 _EV_PERCENTILE = 90
 
+# The window every arsenal display uses. Matches USAGE_DAYS in
+# pitcher_weakspots deliberately — two different windows on one card
+# would show two different mixes for the same pitcher.
+ARSENAL_USAGE_DAYS = 30
+
 _KEEP_COLS = [
     # identity / ordering (recency windows need these)
     "game_date", "game_pk", "at_bat_number", "pitch_number",
@@ -1258,11 +1263,44 @@ def get_pitcher_statcast(pitcher_id):
         metrics["p_throws"] = None
 
     if not df.empty and "pitch_type" in df.columns:
-        arsenal = df["pitch_type"].dropna().value_counts(normalize=True) * 100
+        # ARSENAL USAGE IS RECENT, NOT SEASON — one definition, read by
+        # every panel that shows a pitch mix.
+        #
+        # Three places on the Game Card show a pitcher's arsenal: the
+        # weak-spot quadrant, "Both Starters — Arsenal Comparison", and
+        # the usage pills. All three read THIS dict. Fixing the freshness
+        # in one panel and not the others is how a card ends up saying
+        # 13% sweeper in one place and 17% in another on the same screen.
+        #
+        # Season usage is stale by August: a pitcher who scrapped a pitch
+        # in June still shows it. Usage is a PROPORTION and settles in a
+        # few hundred pitches, so a 30-day window is plenty — unlike the
+        # damage rates in pitcher_weakspots, which need the season to
+        # clear a 35-batted-ball floor. That is why only usage moves.
+        _recent = df
+        if "game_date" in df.columns:
+            try:
+                _d = pd.to_datetime(df["game_date"], errors="coerce")
+                _cut = _d.max() - pd.Timedelta(days=ARSENAL_USAGE_DAYS)
+                _sub = df[_d >= _cut]
+                # Under ~50 pitches one appearance can put a pitch at
+                # 40%. Fall back to the season rather than publish a
+                # confident wrong mix.
+                if len(_sub) >= 50:
+                    _recent = _sub
+            except Exception:
+                pass
+        arsenal = _recent["pitch_type"].dropna().value_counts(normalize=True) * 100
         metrics["Pitch Arsenal"] = {k: round(v, 2) for k, v in arsenal.items() if v > 0}
+        # Season usage kept alongside, so a caller that wants the drift
+        # can have it without recomputing — and so nothing silently loses
+        # access to the full-year number.
+        _season = df["pitch_type"].dropna().value_counts(normalize=True) * 100
+        metrics["Pitch Arsenal Season"] = {k: round(v, 2) for k, v in _season.items() if v > 0}
         metrics["Pitch Arsenal Detail"] = _compute_pitch_type_breakdown(df)
     else:
         metrics["Pitch Arsenal"] = {}
+        metrics["Pitch Arsenal Season"] = {}
         metrics["Pitch Arsenal Detail"] = {}
 
     metrics["_error"] = error
