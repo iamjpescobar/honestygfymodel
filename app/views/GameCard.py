@@ -262,7 +262,8 @@ def _render_game_headline(game):
     )
 
 
-def _render_conditions_strip(_cond_display, _wind_display, park_display, temp_display):
+def _render_conditions_strip(_cond_display, _wind_display, park_display,
+                             temp_display, home_team=None):
     """Weather and park factor as one divided band.
 
     Was four blocks floating in a card with space-around, so the cells
@@ -281,8 +282,18 @@ def _render_conditions_strip(_cond_display, _wind_display, park_display, temp_di
                       f'{weather_icon(_cond_display)}</div>', _cond_display),
         ("Temp", f'<div style="height:28px;">{temp_icon(temp_display)}</div>',
          f"{temp_display}\u00b0F"),
+        # home_team is what lets a compass FORECAST point at the field.
+        #
+        # MLB does not publish gameData.weather until close to first
+        # pitch, so a morning card has only "SW 10 mph*" — a real-world
+        # bearing that means nothing without knowing which way the park
+        # faces. wind_engine carries the home-plate-to-centre-field
+        # bearing for 29 parks, and the Weather Board was already
+        # passing it; this call was not, so the same wind resolved on
+        # one page and drew a neutral swirl on the other.
         ("Wind", f'<div class="lc-wind-icon" style="height:28px;">'
-                 f'{wind_arrow(_wind_display)}</div>', _wind_display),
+                 f'{wind_arrow(_wind_display, home_team=home_team)}</div>',
+         _wind_display),
         ("Park Factor", f'<div style="height:28px;">{park_icon(park_display)}</div>',
          park_display),
     )
@@ -1281,7 +1292,9 @@ with content_col:
 
 
 
-    _render_conditions_strip(_cond_display, _wind_display, park_display, temp_display)
+    _render_conditions_strip(_cond_display, _wind_display, park_display,
+                             temp_display,
+                             home_team=team_abbr(game.get("home") or ""))
 
     if _fc:
         st.caption(
