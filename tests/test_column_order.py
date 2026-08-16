@@ -82,6 +82,11 @@ print(f"PASS: scored inputs run heaviest first — {' > '.join(_by_weight)}")
 # The trade is real and worth failing on if it drifts silently: pinned
 # here so the head cannot be quietly rearranged back.
 _HEAD = ["HR Edge", "HR Score", "Hit Score", "SLAM",
+         # Cross-board standing sits with the verdicts because it IS a
+         # verdict — one made on another page. "HR13 · H4" means 13th on
+         # HR Edge and 4th on Daily 13, so a bat the whole site likes is
+         # visible without opening three tabs.
+         "Boards",
          # Form beside its own MAGNITUDE. The percentile says he is
          # hotter than 96 percent of the league; the delta says by how
          # much. 96% with +1.7 mph is a real move and 96% with +0.2 is a
