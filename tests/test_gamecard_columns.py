@@ -122,7 +122,12 @@ declared = _row_dict
 # NUMBER when it lands here needs an explicit format, which is what
 # caught PA rendering as 543.000000.
 NON_NUMERIC = {"Player", "Bats", "Matchup", "Edge", "EdgeLabel", "EdgeTier",
-               "Confidence", "Form"}
+               "Confidence", "Form",
+               # "Boards" is pre-rendered text like "HR13 \u00b7 H4" —
+               # a rank and a board label glued together. A float format
+               # applied to it would print the spec instead of the value,
+               # same as Form.
+               "Boards"}
 missing = [c for c in declared if c not in NON_NUMERIC and c not in formatted]
 assert not missing, f"numeric lineup columns with no format string: {missing}"
 print(f"PASS: all {len(formatted)} numeric lineup columns have explicit formats")
