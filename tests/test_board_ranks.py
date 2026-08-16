@@ -103,3 +103,69 @@ assert "_board_idx = board_ranks()" in gc, (
     "the index is not built once per slate — a per-row lookup would "
     "rebuild every board for every hitter")
 print("PASS: built once per slate and rendered on the lineup table")
+
+
+# --- 9. THE COLUMN MUST NEVER BLOCK THE PAGE IT DECORATES ------------
+#
+# THE BUG THIS PINS, and it took the Game Card down.
+#
+# The first version called get_hr_edge_board() and get_daily_13()
+# directly, on the claim that both were "already built and cached for
+# the slate". That is only true if the reader visited those pages
+# first. Landing on a Game Card cold, it rebuilt the ENTIRE HR Edge
+# board — ~270 rated bats — and scanned the league for Daily 13, before
+# a single row of the lineup table could draw. Both boards cache with
+# show_spinner=False, so the page just sat blank with no error and no
+# spinner.
+#
+# A CONVENIENCE COLUMN CANNOT BE ALLOWED TO BUILD ANYTHING. By default
+# this reads today's published picks off disk — the same list the site
+# published, one file read, cannot hang.
+import inspect  # noqa: E402
+
+_sig = inspect.signature(br.board_ranks)
+assert "allow_build" in _sig.parameters, (
+    "board_ranks lost its allow_build switch — it will rebuild boards "
+    "inside a page render again")
+assert _sig.parameters["allow_build"].default is False, (
+    "allow_build defaults to True; the Game Card would rebuild the whole "
+    "slate before drawing a row")
+print("PASS: board_ranks defaults to the non-building path")
+
+_src = open("app/engines/board_ranks.py", encoding="utf-8").read()
+# Match the CALL, not the name — the docstring above explains the bug
+# and names both functions, so a bare name search finds line 54 and
+# reports a failure that is not there.
+_i_guard = _src.index("if not allow_build:")
+# The docstring above explains the bug and names both functions WITH
+# parentheses, so even that is not distinctive. Match the assignment —
+# only the real call site looks like this.
+for _call in ("rows, _meta = get_hr_edge_board()",
+              "rows, _meta = get_daily_13()",
+              "potd = get_mlb_player_of_the_day()"):
+    _i = _src.index(_call)
+    assert _i > _i_guard, (
+        f"{_call} runs BEFORE the allow_build guard — the default path "
+        f"still builds a board")
+print("PASS: every board build sits behind the guard")
+
+# --- 10. THE CHEAP PATH READS WHAT WAS PUBLISHED ---------------------
+#
+# Not a separate ranking. The tokens have to agree with the boards, and
+# the only list guaranteed to match is the one the site actually wrote.
+assert "calibration.json" in _src, (
+    "the cheap path no longer reads the published picks — a token could "
+    "disagree with the board it names")
+assert 'ZoneInfo("America/New_York")' in _src, (
+    "today is resolved without a timezone; after 8pm ET the lookup would "
+    "read tomorrow's empty entry and every token would vanish")
+print("PASS: the cheap path reads today's published picks, ET")
+
+# --- 11. IT STILL RETURNS AN INDEX WHEN THE FILE IS MISSING ---------
+#
+# No calibration.json (fresh clone, first run) must yield an empty index,
+# not an exception — a missing convenience column is fine, a crashed
+# page is not.
+_empty = br.board_ranks()
+assert isinstance(_empty, dict), "a missing record file broke the lookup"
+print("PASS: a missing record file yields an empty index, not an error")
