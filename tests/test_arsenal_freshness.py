@@ -157,3 +157,81 @@ assert "+0 pts" not in _flat_svg and "-0 pts" not in _flat_svg, (
     "a 0.4-point move was annotated; noise-level drift should stay silent")
 assert "Sweeper 0.620" in _flat_svg, "the pitch label itself went missing"
 print("PASS: real drift is labelled, noise-level drift is not")
+
+
+# --- 7. LABELS MUST NOT SIT ON TOP OF EACH OTHER ---------------------
+#
+# THE BUG THIS PINS. On a real card (Trevor Rogers) four pitches landed
+# in a narrow damage band and their labels overlapped — "Sinker 0.441"
+# and "Sweeper 0.417" rendered on the same line, both unreadable. The
+# data was right and the panel was useless.
+_rogers = [
+    {"code": "FF", "name": "4-Seam", "usage": 44.4, "usage_recent": 46.0,
+     "usage_drift": 2.0, "xslg": 0.566, "bbe": 120, "primary": True},
+    {"code": "CH", "name": "Changeup", "usage": 21.8, "usage_recent": 21.0,
+     "usage_drift": -1.0, "xslg": 0.486, "bbe": 65, "primary": True},
+    {"code": "ST", "name": "Sweeper", "usage": 13.2, "usage_recent": 17.0,
+     "usage_drift": 4.0, "xslg": 0.417, "bbe": 43, "primary": True},
+    {"code": "SI", "name": "Sinker", "usage": 10.4, "usage_recent": 8.0,
+     "usage_drift": -2.0, "xslg": 0.441, "bbe": 40, "primary": False},
+]
+_svg = wv.arsenal_svg(_rogers, min_usage=0)
+_pos = [(int(m.group(1)), int(m.group(2))) for m in re.finditer(
+    r'<text x="(\d+)" y="(\d+)" text-anchor="[a-z]+" font-size="12" '
+    r'fill="currentColor"', _svg)]
+assert len(_pos) == 4, f"expected 4 pitch labels, got {len(_pos)}"
+_hits = [(a, b) for i, a in enumerate(_pos) for b in _pos[i + 1:]
+         if abs(a[1] - b[1]) <= 13 and abs(a[0] - b[0]) <= 150]
+assert not _hits, f"labels overlap: {_hits}"
+print(f"PASS: 4 clustered pitches, no overlapping labels {_pos}")
+
+# --- 8. THE CAPTION FITS INSIDE THE VIEWBOX --------------------------
+#
+# The single-line caption ran off the right edge and collided with the
+# below-floor note under it. Two lines, and the viewBox grew to hold
+# them.
+assert 'viewBox="0 0 680 330"' in _svg, "the viewBox no longer fits the caption"
+_caps = re.findall(r'<text x="92" y="(\d+)"[^>]*>([^<]{20,})</text>', _svg)
+assert len(_caps) >= 2, "the caption is back to one line and will overflow"
+for _y, _txt in _caps:
+    assert len(_txt) < 60, (
+        f"caption line is {len(_txt)} chars — long enough to run past the "
+        f"right edge again: {_txt!r}")
+print(f"PASS: caption wraps to {len(_caps)} lines, all inside the viewBox")
+
+# --- 9. A LABEL AT THE PLOT EDGE ANCHORS INWARD ----------------------
+#
+# A pitch thrown 50% sits at the far right; a centred label there runs
+# off the box even though it does not collide with anything.
+_edge = [{"code": "FF", "name": "4-Seam", "usage": 50.0, "usage_recent": 50.0,
+          "usage_drift": 0.0, "xslg": 0.60, "bbe": 100, "primary": True}]
+# Assert on the PITCH LABEL, not on the string anywhere in the SVG —
+# the quadrant caption is also end-anchored, so a naive search passed
+# even with the label centred. A control that cannot fail is not a test.
+_edge_svg = wv.arsenal_svg(_edge, min_usage=0)
+_lbl = re.search(r'<text x="\d+" y="\d+" text-anchor="(\w+)" font-size="12" '
+                 r'fill="currentColor"[^>]*>4-Seam', _edge_svg)
+assert _lbl, "the pitch label went missing"
+assert _lbl.group(1) == "end", (
+    f"a far-right label is anchored {_lbl.group(1)!r} and will overflow")
+print("PASS: edge labels anchor inward")
+
+# --- 10. ONE ARSENAL SOURCE, NOT THREE -------------------------------
+#
+# The Game Card shows a pitch mix in THREE places: this quadrant, "Both
+# Starters — Arsenal Comparison", and the usage pills. The first was
+# windowed to 30 days and the other two were left on the season, so the
+# same card could say 13% sweeper in one panel and 17% in another.
+_se = open("app/engines/statcast_engine.py", encoding="utf-8").read()
+assert "ARSENAL_USAGE_DAYS" in _se, (
+    "Pitch Arsenal is back on season usage — the two panels that read it "
+    "will disagree with the quadrant on the same screen")
+assert _se.index("ARSENAL_USAGE_DAYS = 30") and pw.USAGE_DAYS == 30, (
+    "the two windows drifted apart; one card would show two mixes")
+assert '"Pitch Arsenal Season"' in _se, (
+    "the season mix was dropped rather than kept alongside — the drift "
+    "number needs both")
+assert "len(_sub) >= 50" in _se, (
+    "a thin recent window no longer falls back to season; one appearance "
+    "could set the whole mix")
+print("PASS: one arsenal source, windowed, season kept alongside")
