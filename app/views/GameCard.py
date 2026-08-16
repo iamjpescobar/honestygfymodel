@@ -32,6 +32,7 @@ from engines.edge import edge_components, pen_context, bvp_component
 from engines.pick_badges import compute_badges, render_badge_row
 from engines.pitcher_weakspots import get_weak_spots, XSLG_HOT, XSLG_COLD
 from engines.weakspot_view import slot_rows
+from engines.board_ranks import board_ranks, token_text
 from engines.team_logos import logo_for
 from engines.weather_icons import (
     weather_icon, wind_arrow, temp_icon, park_icon,
@@ -985,7 +986,7 @@ def _score_num(v):
         paired with the N/A text elsewhere so it's never the only signal."""
     return 0 if v is None else v
 
-def _stat_row(name, bats_label, profile, *, form_pct=None, form_dir=None,
+def _stat_row(name, bats_label, profile, *, boards="", form_pct=None, form_dir=None,
               hr_count=None, near_hr=None, l5_pa=None,
               avg_dist=None, dist_300=None, dist_350=None,
               matchup=None, slam=None,
@@ -1029,6 +1030,16 @@ def _stat_row(name, bats_label, profile, *, form_pct=None, form_dir=None,
         # nightly by ranking every hitter's combined L15-vs-season move.
         # The arrow carries direction, which a percentile cannot — 50 is
         # the middle of the league whether the league is hot or cold.
+        # WHERE HE SITS ON THE OTHER BOARDS, without opening them.
+        #
+        # "HR13 \u00b7 H4" means 13th on HR Edge and 4th on Daily 13.
+        # Mostly blank by design — only a handful of bats on a slate are
+        # on any board — and blank rather than a dash, because a column
+        # of dashes reads as missing data instead of as a clean no.
+        #
+        # Sits with the verdicts: it IS a verdict, just one made on
+        # another page.
+        "Boards": boards,
         "Form": form_engine.form_cell(form_pct, form_dir),
         # HR and NEAR HR side by side, deliberately.
         #
@@ -1900,6 +1911,7 @@ with content_col:
                 if not filtered:
                     st.info(f"No batters match that Bats filter for {opposing_team}.")
 
+                _board_idx = board_ranks()
                 table_rows = []
                 for r in filtered:
                     profile = windowed_profile_cache[r["name"]]
@@ -1979,6 +1991,9 @@ with content_col:
                         # is read here rather than recomputed — a view
                         # cannot rank a hitter against a league it does
                         # not have.
+                        # Built once for the slate and passed in — the
+                        # index is one cached lookup, not one per row.
+                        boards=token_text(r.get("id"), _board_idx),
                         form_pct=r.get("form_pct"), form_dir=r.get("form_dir"),
                         hr_count=r.get("hr_count"), near_hr=r.get("near_hr"),
                         l5_pa=r.get("l5_pa_per_game"),
@@ -2096,7 +2111,7 @@ with content_col:
                         # Edge far above Score, the SPOT is the pick —
                         # and a spot-driven bat is the one that
                         # evaporates on a lineup change or a wind flip.
-                        ["HR Edge", "HR Score", "Hit Score", "SLAM",
+                        ["HR Edge", "HR Score", "Hit Score", "SLAM", "Boards",
 
                          # --- is he that hitter RIGHT NOW ---------------
                          # Form beside its own magnitude. The percentile
