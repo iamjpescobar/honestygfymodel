@@ -130,6 +130,40 @@ def _parse_wind(wind_str):
     return None, None
 
 
+def field_angle(home_team_abbr, wind_str):
+    """Degrees from the batter's view, or None if unresolvable.
+
+    0 = straight out to centre, 180 = straight in, ±90 = crosswind —
+    the same convention weather_icons.wind_arrow already uses for MLB's
+    field-relative strings.
+
+    WHY THIS EXISTS. MLB does not publish gameData.weather until close
+    to first pitch, so a morning card has only an NWS compass forecast
+    ("SW 12 mph"). wind_hr_adj already resolves that against the park's
+    home-plate-to-centre-field bearing to SCORE it — this returns the
+    direction it resolved to, so the arrow can point the same way the
+    grade is reasoning. Without it the page grades a wind as blowing out
+    while drawing a rose pointing at real-world southwest, which is two
+    different answers to the same question on one row.
+    """
+    bearing = PARK_CF_BEARING.get(str(home_team_abbr or "").upper())
+    if bearing is None:
+        return None
+    speed, from_deg = _parse_wind(wind_str)
+    if speed is None:
+        return None
+    # Wind travels OPPOSITE the direction it is reported as coming from.
+    toward = (from_deg + 180.0) % 360.0
+    # Signed difference from the out-to-centre bearing, wrapped to
+    # (-180, 180] so a wind just west of centre reads as a small left
+    # angle rather than 359 degrees.
+    delta = (toward - bearing + 180.0) % 360.0 - 180.0
+    # -180 and +180 are the same direction — straight in. The modulo
+    # above can produce either, and a -180 rotation renders identically
+    # but reads as an error to anyone debugging it.
+    return round(abs(delta), 0) if abs(delta) == 180.0 else round(delta, 0)
+
+
 def wind_hr_adj(home_team_abbr, wind_str, roof_closed=False):
     """(adj, note) — wind resolved against this park's orientation.
 
