@@ -86,14 +86,15 @@ def arsenal_svg(pitches, min_usage=3.0):
         return 92 + (u / max_u) * 300
 
     out = [
-        '<svg width="100%" viewBox="0 0 680 300" role="img">',
+        '<svg width="100%" viewBox="0 0 680 330" role="img">',
         '<title>Pitch usage against damage allowed</title>',
         '<desc>Each bubble is a pitch type: further right is thrown more '
         'often, higher is more damage allowed on contact.</desc>',
         f'<rect x="242" y="60" width="152" height="{_y(XSLG_HOT) - 60:.0f}" '
         f'fill="{_DANGER}" opacity="0.07"/>',
         f'<text x="388" y="76" text-anchor="end" font-size="12" '
-        f'fill="{_DANGER}" font-family="inherit">thrown often, gets hit</text>',
+        f'fill="{_DANGER}" font-family="inherit" opacity="0.75">'
+        f'thrown often, gets hit</text>',
         f'<line x1="92" y1="250" x2="410" y2="250" stroke="{_DIM}" stroke-width="0.5"/>',
         f'<line x1="92" y1="55" x2="92" y2="250" stroke="{_DIM}" stroke-width="0.5"/>',
         f'<line x1="92" y1="{_y(XSLG_HOT):.0f}" x2="410" y2="{_y(XSLG_HOT):.0f}" '
@@ -105,6 +106,25 @@ def arsenal_svg(pitches, min_usage=3.0):
         f'<text x="416" y="{_y(XSLG_COLD) + 4:.0f}" font-size="12" '
         f'fill="{_GOOD}" font-family="inherit">{XSLG_COLD:.3f}</text>',
     ]
+
+    # LABEL COLLISION IS THE MAIN THING THIS LOOP HAS TO SOLVE.
+    #
+    # Bubbles cluster: a pitcher with four pitches in a narrow damage
+    # band puts four labels on top of each other and none of them are
+    # readable. Placing a label ABOVE its bubble by default and flipping
+    # it BELOW when the slot above is taken keeps every one legible
+    # without moving the data.
+    _taken = []
+
+    def _label_y(cx, cy, r):
+        """A y for this label that does not sit on another one."""
+        for cand in (cy - r - 8, cy + r + 15, cy - r - 26, cy + r + 33):
+            if all(abs(cand - ty) > 13 or abs(cx - tx) > 150
+                   for tx, ty in _taken):
+                _taken.append((cx, cand))
+                return cand
+        _taken.append((cx, cy - r - 8))
+        return cy - r - 8
 
     for p in sorted(rated, key=lambda q: -(q.get("bbe") or 0)):
         # PLOTTED ON RECENT USAGE, RATED ON SEASON DAMAGE.
@@ -134,7 +154,12 @@ def arsenal_svg(pitches, min_usage=3.0):
         # cut point has not been measured.
         _d = p.get("usage_drift")
         _drift = (f'  {_d:+.0f} pts' if _d is not None and abs(_d) >= 1 else '')
-        out.append(f'<text x="{cx:.0f}" y="{cy - r - 7:.0f}" text-anchor="middle" '
+        _ly = _label_y(cx, cy, r)
+        # Anchored away from the plot edges so a label on the far right
+        # does not run off the viewBox.
+        _anchor = "end" if cx > 340 else "start" if cx < 140 else "middle"
+        _lx = cx + (18 if _anchor == "start" else -18 if _anchor == "end" else 0)
+        out.append(f'<text x="{_lx:.0f}" y="{_ly:.0f}" text-anchor="{_anchor}" '
                    f'font-size="12" fill="currentColor" font-family="inherit" '
                    f'opacity="{1.0 if _pri else 0.65}">'
                    f'{p["name"]} {p["xslg"]:.3f}{_drift}</text>')
@@ -142,14 +167,17 @@ def arsenal_svg(pitches, min_usage=3.0):
     for i, u in enumerate((0, max_u / 2, max_u)):
         out.append(f'<text x="{_x(u):.0f}" y="268" text-anchor="middle" font-size="12" '
                    f'fill="{_DIM}" font-family="inherit">{u:.0f}%</text>')
-    out.append(f'<text x="92" y="288" font-size="12" fill="{_DIM}" '
-               f'font-family="inherit">usage over the last 30 days '
-               f'\u00b7 bubble size = batted balls \u00b7 solid = top 3, '
-               f'hollow = the rest \u00b7 \u00b1pts = usage change vs '
-               f'his season</text>')
+    # TWO LINES. One ran off the right edge of the viewBox and collided
+    # with the below-floor note underneath it.
+    out.append(f'<text x="92" y="286" font-size="12" fill="{_DIM}" '
+               f'font-family="inherit">usage \u2014 last 30 days '
+               f'\u00b7 bubble = batted balls</text>')
+    out.append(f'<text x="92" y="302" font-size="12" fill="{_DIM}" '
+               f'font-family="inherit">solid = top 3 \u00b7 '
+               f'\u00b1pts = usage change vs his season</text>')
     if unrated:
         names = ", ".join(f'{p["name"].lower()} {p["usage"]:.0f}%' for p in unrated)
-        out.append(f'<text x="92" y="{306 if False else 300}" font-size="12" '
+        out.append(f'<text x="92" y="318" font-size="12" '
                    f'fill="{_DIM}" font-family="inherit">'
                    f'{names} \u2014 below the sample floor</text>')
     out.append("</svg>")
