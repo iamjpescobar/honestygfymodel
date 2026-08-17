@@ -1534,7 +1534,23 @@ with content_col:
         # rest. That question needs a window shorter than a month, and
         # the data supports it. What it does not support is reading a
         # rate off it without seeing the denominator.
-        _sw_opts = {"Season": "season", "L10": "l10", "L5": "l5",
+        # L25 / L20 / L15 ADDED 2026-08-17. For a starter these are
+        # roughly 140 / 110 / 85 IP.
+        #
+        # WHAT THEY ARE FOR, AND WHAT THEY ARE NOT. Everything on the
+        # pitcher side that stabilises does so at about 70 balls in play
+        # — five or six starts — so L15, L20 and L25 are all well past
+        # it and the longer two buy no extra stability, only more April.
+        # Use them for the batted-ball profile: fly-ball rate, hard
+        # contact allowed, what the arsenal actually does.
+        #
+        # DO NOT read HR-allowed off them. A pitcher's home-run rate
+        # needs ~1,320 batters faced and HR/FB ~400 fly balls — north of
+        # 200 innings, more than a full season. No window offered here,
+        # or offerable in-season, makes that number reliable, and a
+        # longer window looks like it should without delivering it.
+        _sw_opts = {"Season": "season", "L25": "l25", "L20": "l20",
+                    "L15": "l15", "L10": "l10", "L5": "l5",
                     "L3": "l3", "Last game": "l1"}
         _sw_choice = st.segmented_control(
             "Splits window", list(_sw_opts.keys()), default="Season",
@@ -1779,12 +1795,22 @@ with content_col:
                         "Window",
                         [
                             "Season",
-                            "Last 25 Games", "Last 15 Games", "Last 10 Games",
-                            "Last 5 Games",
+                            "Last 75 Games", "Last 50 Games", "Last 25 Games",
+                            "Last 15 Games", "Last 10 Games", "Last 5 Games",
+                            "Last 300 PA", "Last 250 PA", "Last 200 PA",
                             "Last 60 PA", "Last 25 PA", "Last 15 PA",
                             "Last 60 BBE", "Last 25 BBE", "Last 15 BBE", "Last 5 BBE",
                         ],
                         key="lineup_window",
+                        help=(
+                            "PA windows are the honest ones for power: HR rate "
+                            "needs ~170 PA and ISO ~160 AB, and 25 games is only "
+                            "~110 PA. Games windows vary with playing time — a "
+                            "platoon bat's 50 games is not a regular's 50 games. "
+                            "A window longer than a hitter has played returns his "
+                            "whole season under the longer label, and the parquet "
+                            "only holds this season."
+                        ),
                     )
                 # Each label maps to a (window, unit) pair. "unit" decides
                 # what "last N" counts: games played, plate appearances, or
@@ -1796,10 +1822,20 @@ with content_col:
                     # every OTHER window control in the app (Bullpen Board,
                     # Player of the Day, WNBA form, the grade window right
                     # above). This one list was the only place missing it.
+                    # LONG WINDOWS, added 2026-08-17. ~215 PA at 50 games
+                    # and ~320 at 75 for an everyday bat, which clears the
+                    # HR-rate and ISO stabilisation points that a 25-game
+                    # window sits under. Ask in PA when the target is a PA
+                    # count — games-to-PA moves with playing time.
+                    "Last 75 Games": ("l75", "games"),
+                    "Last 50 Games": ("l50", "games"),
                     "Last 25 Games": ("l25", "games"),
                     "Last 15 Games": ("l15", "games"),
                     "Last 10 Games": ("l10", "games"),
                     "Last 5 Games": ("l5", "games"),
+                    "Last 300 PA": ("l300", "pa"),
+                    "Last 250 PA": ("l250", "pa"),
+                    "Last 200 PA": ("l200", "pa"),
                     "Last 60 PA": ("l60", "pa"),
                     "Last 25 PA": ("l25", "pa"),
                     "Last 15 PA": ("l15", "pa"),
