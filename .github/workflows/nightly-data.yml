@@ -129,6 +129,32 @@ jobs:
       - name: Fetch WNBA slate (real ESPN data)
         run: python wnba_precompute.py || echo "WNBA fetch failed - continuing without it"
 
+      # Who actually starts, from MLB's own posted lineups. Feeds the
+      # projected-lineup caption on the Game Card, which is what a
+      # morning read has instead of a real lineup.
+      #
+      # Tolerant like the league fetches above: a failed run leaves
+      # yesterday's file in place and the caption keeps working off it,
+      # which is far better than failing the nightly over a decoration.
+      - name: Build lineup lock rates (real MLB boxscores)
+        run: python lineup_lock_precompute.py || echo "Lineup lock build failed - continuing without it"
+
+      - name: Commit lineup lock rates
+        run: |
+          # --porcelain, not git diff: an untracked first-time file
+          # reports clean under git diff and never gets committed. That
+          # exact mistake is documented on the calibration step above.
+          if [ -z "$(git status --porcelain -- data/mlb/lineup_lock.json)" ]; then
+            echo "No lineup lock changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/mlb/lineup_lock.json
+          git commit -m "chore: rebuild lineup lock rates [skip ci]"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
       - name: Fetch and package real Statcast data
         run: python precompute.py
 

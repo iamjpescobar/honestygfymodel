@@ -1,0 +1,29 @@
+name: Lineup lock probe
+
+# Manual only. Measures whether a bat's recent start rate actually
+# PREDICTS his next start, which is the question that decides whether
+# the Lock column ships as measured or stays labelled provisional.
+#
+# Not a nightly step on purpose: this is a measurement, not a feed. It
+# walks 45 days of boxscores for all 30 clubs, so it costs several
+# hundred API calls and takes a while. Re-run it every few weeks —
+# distributions drift, which is why standing rule 1 says re-measure.
+#
+# Touches nothing: no commit, no release, no deploy hook. Read the run
+# log, then set WINDOW_GAMES in lineup_lock_precompute.py from it and
+# flip window_is_measured to True.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: pip install -c requirements.txt requests
+      - name: Measure whether start rate predicts the next start
+        run: python lineup_lock_probe.py
