@@ -26,6 +26,52 @@ it does, move the oldest entries to the archive — do not trim the rules.
 
 ---
 
+## HOW WE WORK
+
+Not preferences — these shape what a useful answer looks like here.
+
+**The owner is on an iPad, in Codespaces.** Deliver COMPLETE FILES to
+upload through GitHub's web editor, never terminal edit instructions,
+never patches. One tap beats three commands. Say which folder each file
+goes in — `GameCard.py` and `hr_edge_board.py` differ from
+`HR_Edge_Board.py` and `hr_edge_board.py` only by case and folder, and
+that has already cost a cycle.
+
+**Every change ships with a test AND a negative control that is
+confirmed red.** Break the thing on purpose, watch the test fail, put it
+back. A control that stays green proves nothing, and several have —
+because the fixture could not tell the two behaviours apart, or because
+the edit never applied at all.
+
+**The suite is 105 files and stays green.** Five fail in a bare
+container for want of streamlit and pass in Codespaces:
+test_data_paths, test_home, test_pen_roster_drift,
+test_wnba_grading_honesty, test_wnba_injury_gate. Run it with:
+
+    find . -name __pycache__ -type d -prune -exec rm -rf {} + 2>/dev/null
+    for f in tests/*.py; do python "$f" >/dev/null 2>&1 || echo "FAIL $f"; done
+
+Silence is a pass.
+
+**`git stash` before every `git pull`,** and `git checkout --
+data/mlb/games.json` after. CI rewrites that file constantly; never
+commit it.
+
+**Every batch ships a HANDOFF.md entry in the same commit.**
+
+## WHAT THE SITE IS FOR RIGHT NOW
+
+Not published. The owner uses it himself and records slate-breakdown
+videos from it (YouTube: Slate Signals), which changes what "good"
+means in two concrete ways:
+
+- **Speed is a feature.** A page that degrades as you open more games is
+  fine while browsing and painful on camera. That is why the cache
+  sizing entry below exists.
+- **Mornings matter.** Recording happens before first pitch, so anything
+  that only works once MLB posts official data is broken for the actual
+  use. That is why the wind forecast entry below exists.
+
 ## STANDING RULES
 
 These are not history. They cost real time to learn and every one of
@@ -90,6 +136,240 @@ DOWNSTREAM CAN CATCH.** The board capped per TEAM while its caption said
 **10. DO NOT TUNE AFTER A BAD NIGHT.** At a 12% base rate a bad week and
 a broken model are indistinguishable, and every change resets the
 measurement clock.
+
+---
+
+## PICK UP HERE — arsenal freshness, cross-board tokens, morning wind. 2026-08-16
+
+**Suite 105, FAILING: none.** Everything below shipped with negative
+controls confirmed red.
+
+### 1. THE ARSENAL WAS STALE, AND IN THREE PLACES AT ONCE
+
+`get_weak_spots` read usage and damage off the SAME window, which forces
+a bad trade either way:
+
+  season only -> damage well-sampled, USAGE STALE. A pitcher who
+                 scrapped his curve in June still showed 16% curveballs.
+  recent only -> usage current, DAMAGE COLLAPSES. The floor is 150
+                 pitches / 35 batted balls per pitch type and thirty
+                 days does not clear it for anything but a fastball.
+
+**Fixed by giving them different windows: rank by 30-day usage, rate on
+season damage.** Usage is a proportion and settles in ~450 pitches;
+damage is a rate over batted balls and needs the year. Both are
+published per pitch (`usage`, `usage_recent`, `usage_drift`) because THE
+GAP IS THE SIGNAL — 7% on the season and 18% over the last month is a
+pitcher who changed something, shown as `+11 pts` on the chart.
+
+**Top 3 are marked, never truncated.** A fourth pitch thrown 9% still
+leaves the yard, and a pitch a pitcher has just ADDED appears at the
+bottom of that list before it appears anywhere else on the site.
+
+**THE PART I GOT WRONG FIRST.** I fixed the weak-spot quadrant and
+called it done. There are THREE arsenal displays on the Game Card — the
+quadrant, "Both Starters — Arsenal Comparison", and the usage pills —
+and the other two still read season usage, so one card could say 13%
+sweeper in one panel and 17% in another. Now `Pitch Arsenal` in
+statcast_engine is the single 30-day source all three read, with
+`Pitch Arsenal Season` kept alongside for the drift number.
+`ARSENAL_USAGE_DAYS` and `USAGE_DAYS` are both 30 and a test fails if
+they drift apart.
+
+Guarded by `tests/test_arsenal_freshness`.
+
+Layout fixes in the same batch: labels no longer collide (they flip
+below the bubble when the slot above is taken), the caption wraps to two
+lines instead of running off the viewBox, and edge labels anchor inward.
+
+### 2. CROSS-BOARD TOKENS — and the outage they caused
+
+New `Boards` column on the lineup table: `HR13 · H4` means 13th on HR
+Edge, 4th on Daily 13. Blank when a bat is on no board, which is most of
+them — blank rather than a dash, because a column of dashes reads as
+missing data instead of a clean no.
+
+**THIS TOOK THE GAME CARD DOWN ON ITS FIRST DEPLOY.** The first version
+called `get_hr_edge_board()` and `get_daily_13()` directly, on my claim
+that both were "already built and cached for the slate". That is only
+true if the reader visited those pages first. Landing on a Game Card
+cold, it rebuilt the entire HR Edge board — ~270 rated bats — and
+scanned the league for Daily 13 before a single row could draw. Both
+boards cache with `show_spinner=False`, so the page just sat blank: no
+error, no spinner, nothing.
+
+**`board_ranks(allow_build=False)` is now the default** and reads today's
+published picks out of `calibration.json` — one file read, ~27ms, and
+the SAME list the site published so a token can never disagree with the
+board it names. Live building is behind `allow_build=True`.
+
+Cost of the cheap path: ranks 1-5 per board rather than up to 25. If
+deeper ranks are wanted, the honest fix is having the nightly write a
+fuller index — NOT rebuilding during a render.
+
+Guarded by `tests/test_board_ranks` — it asserts the default cannot
+build, that every build sits behind the guard, and that "today" resolves
+in Eastern (without that, after 8pm ET it reads tomorrow's empty entry
+and every token silently vanishes).
+
+**Generalise this:** a convenience column must never be able to build
+anything. Anything decorating a page has to read, not compute.
+
+### 3. WIND ARROWS NOW WORK IN THE MORNING
+
+MLB does not publish `gameData.weather` until close to first pitch, so a
+card opened at 8am had only an NWS compass forecast. Two failures:
+
+- **The grade ignored it.** `_hr_weather` was handed `g["weather_wind"]`
+  — MLB only — while `_wind_raw` (computed four lines above WITH the
+  forecast fallback) went unused. Temperature fell back correctly, wind
+  did not, so a morning card showed a real temperature beside "wind
+  pending official".
+- **The arrow pointed at real-world north.** A compass forecast drew a
+  rose at its true bearing: correct, and useless for knowing whether a
+  ball carries.
+
+Both were already solvable. `wind_engine` carries the home-plate-to-
+centre-field bearing for 29 parks and **was already resolving these same
+forecasts to score them elsewhere on the site** — the Weather Board
+called a wind "pending" while HR Edge had scored it. New
+`wind_engine.field_angle()` returns the resolved field direction so the
+arrow points the way the grade is reasoning.
+
+    SW 12 mph -> Wrigley    0 deg   straight out
+    SW 12 mph -> Comerica -112 deg  crosswind
+    NE 12 mph -> Wrigley  +180 deg  straight in
+
+Guarded by `tests/test_wind_forecast_arrow`.
+
+**AND THE SAME MISS HAPPENED AGAIN, ONE FILE OVER.** The Weather Board
+was fixed and the Game Card was not — its conditions strip has its own
+`wind_arrow` call and was not passing the park, so the identical
+forecast resolved on one page and drew a neutral swirl on the other.
+That is the SECOND time in two days a fix reached one consumer and
+silently missed another (the arsenal window was fixed in one of three
+panels the same way).
+
+So the guard is not "check the two places I know about":
+`tests/test_wind_forecast_arrow` now walks every `.py` under `app/` and
+fails on any `wind_arrow()` call without `home_team`. A call without it
+cannot work in the morning, which is when the wind read matters most.
+
+**When a fix has multiple call sites, grep for all of them before
+declaring it done, and write the test against the glob rather than the
+known callers.**
+
+Resolved forecasts still render DASHED — the direction is right now, the
+fact that it is a forecast has not changed. An official field-relative
+string still wins when it arrives: measured beats modelled, and a test
+pins that order.
+
+### 4. CACHE SIZING — a caller count doubled and nobody resized
+
+`get_batter_iso_vs_hand` sat at `max_entries=64`, correct when
+pen_context was its only caller. The platoon term (2026-08-13) calls it
+TWICE per batter, once per hand, so a full slate is ~600 lookups against
+64 slots. Near-total thrash, and **every miss reads that batter's whole
+parquet from disk.** Raised to 1024, same for
+`get_batter_profile_windowed` (season + l15 per batter is ~600 entries
+against a 384 cap).
+
+A cache smaller than the working set does not fail — it evicts silently
+and the page gets slower the longer you use it. `tests/test_cache_sizing`
+now checks each per-batter cache against one slate.
+
+**RULE: when a function gains a caller, re-size its cache.**
+
+### 5. MEASURED, THEN NOT BUILT
+
+Asked for a tiered cap — 2nd/3rd bat on a team must be within X of the
+team leader. Measured it first:
+
+    gap <=  5 behind leader:  9.4%   |  gap >  5:  7.8%
+    gap <= 20:                7.5%   |  gap > 20: 12.5%
+
+**No signal, and the direction flips with the threshold.** Building it
+would have meant picking a number that looked principled and was not.
+Not built. (8 homers across 96 teammate bats — nowhere near enough
+either way.)
+
+### 6. BENCHMARK — the Results page baseline is too easy
+
+`benchmark_probe.py` (new, reads the research log, no nightly step).
+
+HR Edge is 19/89 = 21.3% against the published 11.9% baseline, p=0.003.
+**But 11.9% is every league starter including slap hitters**, and the
+board picks sluggers — any power-sorted list clears that bar with no
+model in it. The probe runs the honest comparison: model top five vs
+naive top fives (ISO, HR/FB, SLG, Brl/PA, HH%) from the same pool on the
+same nights.
+
+Currently 2/10 vs 2/10. That is ten picks and means nothing. **Re-run in
+2-3 weeks** — at five a night a month is ~150 an arm.
+
+### FILES TOUCHED, 2026-08-15 to 08-16
+
+    app/engines/statcast_engine.py   arsenal source + cache sizing
+    app/engines/pitcher_weakspots.py usage window split
+    app/engines/weakspot_view.py     labels, caption, recent-usage plot
+    app/engines/board_ranks.py       NEW - cross-board tokens
+    app/engines/wind_engine.py       NEW field_angle()
+    app/engines/weather_icons.py     forecast arrows
+    app/views/GameCard.py            Boards column
+    app/views/Weather_Board.py       forecast wind to grade AND arrow
+    benchmark_probe.py               NEW - model vs naive lists
+    tests/test_cache_sizing.py             NEW
+    tests/test_arsenal_freshness.py        NEW
+    tests/test_board_ranks.py              NEW
+    tests/test_wind_forecast_arrow.py      NEW
+
+Suite went 102 -> 105.
+
+**NOT in the repo:** `SITE_CAPABILITIES.md` was written this session as a
+briefing doc for a separate assistant working on the YouTube side. It
+describes what the site offers and its honest limits, with no strategy in
+it. Commit it if that hand-off is worth keeping; it goes stale the moment
+the model changes materially.
+
+### WHERE THE RECORD STANDS
+
+    HR Edge   19/89  = 21.3%  vs 11.9% published baseline  (p=0.003)
+    Daily 13  133/200 = 66.5% vs 62% baseline
+
+Both are ahead. Neither is settled — and see section 6 above for why the
+HR Edge baseline is the easy opponent.
+
+### NEXT — AND THE ANSWER IS MOSTLY "NOT YET"
+
+**Nothing is queued, and that is deliberate.** The research log records
+~270 rated bats a night with season AND l15/l5 windows plus the graded
+outcome. It needs another 2-3 weeks before anything is tuned. Until
+then:
+
+- `benchmark_probe.py` is the thing to run — model vs naive lists.
+- Do NOT refit weights, move floors, or change the cap. At a 12% base
+  rate a bad week and a broken model look identical, and every change
+  resets the clock. This is standing rule 10 and it is the one most
+  likely to get ignored.
+
+**Open items, none urgent:**
+
+- **Bullpen weak spots.** `get_weak_spots(pitcher_id)` already works on
+  relievers — nothing in it is starter-specific, and the sample floors
+  drop the TTO/slot sections on their own because a reliever never
+  clears 60 BBE facing the order once. Needs a view that aggregates the
+  pen as ONE arm, weighted by innings and split by hand.
+- **Custom floor sets.** `hr_floors` already computes 9 floors and
+  `evaluate()` takes any subset, so a "highlight bats meeting MY floors"
+  feature is small. The trap: a self-chosen floor set is unfalsifiable —
+  you pick floors that light up bats you already like. The honest
+  version logs each saved set alongside the boards so it gets a hit rate
+  against the baseline and can be WRONG.
+- **Research page part 2.** Part 1 shipped (`build_player_game_logs`
+  writes one row per player per game so a threshold moves live instead
+  of being baked in). Part 2 is the view. Open decision: where saved
+  filter presets live — `streamlit_authenticator` gives a username to
+  key on, so it is a storage question, not a feasibility one.
 
 ---
 
