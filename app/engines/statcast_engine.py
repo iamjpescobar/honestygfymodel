@@ -173,12 +173,53 @@ _KEEP_COLS = [
 _CATEGORY_COLS = ["type", "events", "description", "bb_type", "stand"]
 
 
+def _conforms(df: pd.DataFrame) -> bool:
+    """True when df is ALREADY byte-for-byte what _trim_and_downcast
+    would return, so the work below can be skipped.
+
+    MEASURED, NOT ASSUMED. The comment in _read_local_parquet claimed
+    the trim "costs nothing when the file is already trimmed". It does
+    not: `df[keep].copy()` copies the whole frame whether or not
+    anything needs trimming.
+
+        pd.read_parquet on a nightly file   3.9 ms
+        _trim_and_downcast on that frame    1.3 ms   <- pure waste
+        this check                          0.1 ms
+
+    A cold board pass reads ~300 batters, so that is ~0.4s per build
+    spent re-doing what precompute.py already did.
+
+    All three conditions have to hold, and the column check covers two
+    of them at once: an extra column not in _KEEP_COLS, or the right
+    columns in the wrong order, both make the lists differ."""
+    if list(df.columns) != [c for c in _KEEP_COLS if c in df.columns]:
+        return False
+    if any(str(dt) == "float64" for dt in df.dtypes):
+        return False
+    return all(str(df[c].dtype) == "category"
+               for c in _CATEGORY_COLS if c in df.columns)
+
+
 def _trim_and_downcast(df: pd.DataFrame) -> pd.DataFrame:
     """Keeps only needed columns and shrinks dtypes. Values are
     untouched — float32 has far more precision than any rounded
-    percentage here needs."""
+    percentage here needs.
+
+    RETURNING THE INPUT ON THE FAST PATH IS SAFE HERE, and it is worth
+    saying why, because "returns a copy" is the kind of contract that
+    quietly matters. Both call sites hand this function a frame they
+    just constructed themselves — a fresh pd.read_parquet, or a fresh
+    Statcast pull — so nothing else holds a reference to it. And the
+    two consumers are cached with st.cache_data, which serialises what
+    it stores, so every caller gets its own object regardless.
+
+    If a third call site ever passes a frame it did not construct, it
+    must copy first."""
     if df is None or df.empty:
         return pd.DataFrame()
+
+    if _conforms(df):
+        return df
 
     keep = [c for c in _KEEP_COLS if c in df.columns]
     df = df[keep].copy()
@@ -242,7 +283,9 @@ def _read_local_parquet(kind: str, player_id):
         # writes lean files, but this guarantees nothing full-width ever
         # enters the cache — e.g. a parquet from an older pipeline run,
         # or a future pipeline edit that drifts out of sync with
-        # _KEEP_COLS. Costs nothing when the file is already trimmed.
+        # _KEEP_COLS. On an already-conformant file _trim_and_downcast
+        # now short-circuits (see _conforms) instead of copying the
+        # frame for nothing.
         return _trim_and_downcast(pd.read_parquet(path))
     except Exception:
         return None
@@ -1033,7 +1076,11 @@ def get_batter_vs_pitch_types(batter_id, pitch_types: tuple, window: str = "seas
     return metrics
 
 
-@st.cache_data(ttl=1800, max_entries=256, show_spinner=False)
+# 256 sat just under one slate's 300 batters, and the key carries a
+# window and a side as well, so the working set is a multiple of that
+# rather than equal to it. Caught by the glob in
+# tests/test_cache_sizing, not by anyone reading this line.
+@st.cache_data(ttl=1800, max_entries=512, show_spinner=False)
 def get_first_pitch_swing(batter_id, window: str = "season", stand: str = None) -> dict:
     """First-pitch swing rate, and what he actually does with it.
 
