@@ -1,73 +1,177 @@
 """Caches sized to one slate's working set, not to a stale number.
 
-THE FAILURE MODE. A Streamlit cache that is smaller than the working set
-does not fail — it EVICTS, silently, and every eviction turns a dict
-lookup into a parquet read. Nothing errors, nothing warns; the page just
-gets slower the longer you use it, which is exactly the shape of problem
-that survives testing and shows up on a recording.
+THE FAILURE MODE. A Streamlit cache that is smaller than the working
+set does not fail — it EVICTS, silently, and every eviction turns a
+dict lookup into a parquet read or a network round-trip. Nothing
+errors, nothing warns; the page just gets slower the longer you use
+it, which is exactly the shape of problem that survives testing and
+shows up on a recording.
 
-WHAT HAPPENED. `get_batter_iso_vs_hand` sat at max_entries=64, which was
-right when pen_context was its only caller: one blended read per batter
-for the bullpen's hand mix. The platoon term against the STARTER (added
-2026-08-13) calls it TWICE per batter, once per hand. A full slate is
-~300 batters, so ~600 lookups against 64 slots — near-total thrash, and
-every miss reads that batter's whole parquet.
+WHAT HAPPENED THE FIRST TIME. `get_batter_iso_vs_hand` sat at
+max_entries=64, which was right when pen_context was its only caller:
+one blended read per batter for the bullpen's hand mix. The platoon
+term against the STARTER (added 2026-08-13) calls it TWICE per batter,
+once per hand. A full slate is ~300 batters, so ~600 lookups against
+64 slots — near-total thrash, and every miss reads that batter's whole
+parquet.
 
-THE RULE: when a function gains a caller, its cache has to be re-sized.
-Nobody remembers, so this test does it.
+WHAT HAPPENED THE SECOND TIME, AND WHY THIS FILE WAS REWRITTEN.
+`weak_spots_json` sat at 16 for exactly the same reason and this test
+did not see it, because it only checked the four batter caches named
+inside it. It tested the callers I knew about instead of the rule.
+Measured on a 30-starter slate: revisiting eight already-seen starters
+cost 291 ms of recomputation against 1.6 ms warm.
+
+So the rule is enforced against the GLOB now. Every `@st.cache_data`
+in app/engines whose first parameter is a player id has to hold at
+least the players one slate can put through it. A new engine, or a new
+cache in an old engine, is covered the day it is written.
+
+THE RULE: when a function gains a caller, re-size its cache. Nobody
+remembers, so this test does it.
 """
-import re
+import ast
+import pathlib
 
 SLATE_BATTERS = 300     # a full MLB slate, both lineups
-s = open("app/engines/statcast_engine.py", encoding="utf-8").read()
+SLATE_ARMS = 150        # every probable plus both bullpens
 
+# First-parameter names that mean "this cache is keyed per player".
+_BATTER_KEYS = {"batter_id"}
+_PITCHER_KEYS = {"pitcher_id"}
+_GENERIC_KEYS = {"pid", "player_id"}
 
-def max_entries(fn):
-    m = re.search(rf"max_entries=(\d+)[^)]*\)\n(?:#[^\n]*\n)*def {fn}\b", s)
-    assert m, f"{fn} is not cached, or the decorator moved"
-    return int(m.group(1))
-
-
-# --- 1. THE ONE THE PLATOON TERM BROKE -------------------------------
+# --- THE ONE EXEMPTION, AND THE CONDITION THAT KILLS IT --------------
 #
-# Two calls per batter — one per hand — so the working set is twice the
-# slate, not once.
-iso = max_entries("get_batter_iso_vs_hand")
-assert iso >= SLATE_BATTERS * 2, (
-    f"get_batter_iso_vs_hand holds {iso} but the platoon term needs "
-    f"{SLATE_BATTERS * 2} for one slate (two hands per batter). Below "
-    f"that it thrashes and every miss is a parquet read.")
-print(f"PASS: iso_vs_hand holds {iso} — covers {SLATE_BATTERS} batters x 2 hands")
-
-# --- 2. TWO WINDOWS PER BATTER ---------------------------------------
+# _k_vs_team_json is asked only about tonight's PROBABLES — the
+# Strikeout Board loops the slate's starters and nothing else reaches
+# it. That is ~30 arms, so 64 is real headroom rather than a leftover
+# number.
 #
-# The lineup table reads season for the stats and l15 for Form, so one
-# pass over a slate is ~600 entries before anyone looks at a card twice.
-prof = max_entries("get_batter_profile_windowed")
-assert prof >= SLATE_BATTERS * 2, (
-    f"get_batter_profile_windowed holds {prof}, under the {SLATE_BATTERS * 2} "
-    f"one slate needs (season + l15 per batter)")
-print(f"PASS: profile_windowed holds {prof} — covers season + l15 for a slate")
+# An exemption granted on "one caller, and it only asks about
+# starters" rots the moment a second caller appears. So the exemption
+# carries that condition as an assertion below: if this function is
+# ever called from outside its own module, the exemption lapses and
+# the full floor applies.
+STARTERS_ONLY = {"k_projection.py:_k_vs_team_json": 60}
 
-# --- 3. THE UNDERLYING FRAME CACHE IS NOT THE SMALLEST ---------------
-#
-# _get_batter_df is what a miss above falls through to. If it is smaller
-# than its callers, raising them just moves the thrash one level down.
-df = max_entries("_get_batter_df")
-assert df >= SLATE_BATTERS, (
-    f"_get_batter_df holds {df}, under one slate's {SLATE_BATTERS} batters — "
-    f"the layer everything else falls through to is the bottleneck")
-print(f"PASS: _get_batter_df holds {df}, at least one slate")
+ENGINES = pathlib.Path("app/engines")
 
-# --- 4. NO PER-BATTER CACHE IS LEFT AT A TOKEN SIZE ------------------
+
+def cached_functions():
+    """Every st.cache_data-decorated function under app/engines.
+
+    Parsed from the AST rather than matched with a regex: a decorator
+    can be wrapped, reordered or reformatted, and a regex that misses
+    one reports a clean pass on an unchecked cache."""
+    out = []
+    for path in sorted(ENGINES.glob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.FunctionDef):
+                continue
+            for dec in node.decorator_list:
+                if "cache_data" not in ast.unparse(dec):
+                    continue
+                entries = None
+                if isinstance(dec, ast.Call):
+                    for kw in dec.keywords:
+                        if kw.arg == "max_entries":
+                            entries = ast.literal_eval(kw.value)
+                args = [a.arg for a in node.args.args]
+                out.append((path.name, node.name, entries, args))
+    return out
+
+
+CACHES = cached_functions()
+assert len(CACHES) >= 50, (
+    f"only found {len(CACHES)} cached functions — the AST walk is not "
+    f"seeing the decorators, so every check below is vacuous")
+print(f"PASS: found {len(CACHES)} cached functions under app/engines")
+
+
+# --- 1. EVERY PER-PLAYER CACHE HOLDS A SLATE -------------------------
 #
-# The regression guard. 64 looked deliberate and had simply been left
-# behind when the caller count doubled; a bare number gives no hint that
-# it is now wrong.
-for fn in ("get_batter_iso_vs_hand", "get_batter_profile_windowed",
-           "get_batter_vs_pitch_types", "_get_batter_df"):
-    n = max_entries(fn)
-    assert n >= 128, (
-        f"{fn} caches only {n} entries — too small for any real slate, "
-        f"and a cache that small costs a file read on nearly every call")
-print("PASS: no per-batter cache left at a token size")
+# Classified by the FIRST parameter's name, which is what the cache is
+# keyed on. A cache keyed per player and sized for one card is the
+# defect this file exists for.
+undersized = []
+for fname, func, entries, args in CACHES:
+    if not args:
+        continue
+    key = args[0]
+    if key in _BATTER_KEYS:
+        floor = SLATE_BATTERS
+    elif key in _PITCHER_KEYS or key in _GENERIC_KEYS:
+        floor = SLATE_ARMS
+    else:
+        continue
+    exempt = STARTERS_ONLY.get(f"{fname}:{func}")
+    if exempt is not None:
+        floor = exempt
+    if entries is None:
+        undersized.append(f"{fname}:{func} is per-player and UNBOUNDED")
+    elif entries < floor:
+        undersized.append(
+            f"{fname}:{func} holds {entries}, under the {floor} one slate "
+            f"needs (keyed on `{key}`)")
+
+assert not undersized, (
+    "per-player caches too small for one slate — each miss is a parquet "
+    "read or a network call:\n  " + "\n  ".join(undersized))
+print(f"PASS: every per-player cache holds a slate "
+      f"({SLATE_BATTERS} bats / {SLATE_ARMS} arms)")
+
+
+# --- 2. THE EXEMPTION'S CONDITION STILL HOLDS ------------------------
+#
+# The moment an exempt cache is called from another module, the reason
+# it was exempt ("starters only, one caller") is no longer true.
+for entry in STARTERS_ONLY:
+    fname, func = entry.split(":")
+    own = (ENGINES / fname).resolve()
+    callers = []
+    for path in sorted(pathlib.Path("app").rglob("*.py")):
+        if path.resolve() == own:
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                    and node.func.id == func):
+                callers.append(f"{path}:{node.lineno}")
+    assert not callers, (
+        f"{entry} is exempted from the slate floor because only its own "
+        f"module calls it, and only about tonight's probables. It now has "
+        f"outside callers ({', '.join(callers)}), so the exemption is void "
+        f"— size it for {SLATE_ARMS} arms or re-justify it here.")
+print("PASS: exempted caches still have no outside callers")
+
+
+# --- 3. THE UNDERLYING FRAME CACHES ARE NOT THE SMALLEST -------------
+#
+# _get_batter_df / _get_pitcher_df are what a miss in any of the above
+# falls through to. If they are smaller than their callers, raising the
+# callers just moves the thrash one level down.
+by_name = {f"{f}:{n}": e for f, n, e, _a in CACHES}
+assert by_name["statcast_engine.py:_get_batter_df"] >= SLATE_BATTERS, (
+    "_get_batter_df is under one slate's batters — the layer everything "
+    "else falls through to is the bottleneck")
+assert by_name["statcast_engine.py:_get_pitcher_df"] >= SLATE_ARMS, (
+    "_get_pitcher_df is under one slate's arms")
+print("PASS: the frame caches hold at least one slate each")
+
+
+# --- 4. THE NAMED FOUR, IN ADDITION TO THE GLOB ----------------------
+#
+# Section 1 classifies by parameter name, so renaming a parameter would
+# quietly drop a cache out of it without failing anything. These four
+# have measured floors and are checked by name as well.
+for func, need in (("get_batter_iso_vs_hand", SLATE_BATTERS * 2),
+                   ("get_batter_profile_windowed", SLATE_BATTERS * 2),
+                   ("get_batter_vs_pitch_types", 128),
+                   ("weak_spots_json", SLATE_ARMS)):
+    key = next((k for k in by_name if k.endswith(f":{func}")), None)
+    assert key is not None, f"{func} is no longer cached, or it moved"
+    assert by_name[key] >= need, (
+        f"{func} caches {by_name[key]} entries, under the {need} it needs")
+print("PASS: the four named caches are each at their measured floor")
