@@ -10,6 +10,111 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — probe crash fixed, Daily 13 docstring. 2026-08-12 (last)
+
+**3 files. Suite 88, FAILING: none.** Control confirmed red.
+
+### THE PROBE CRASHED ON ITS FIRST REAL RUN
+
+```
+if (p.get("gp") or 0) < MIN_GP:
+AttributeError: 'str' object has no attribute 'get'
+```
+
+**`players.json` is keyed BY PLAYER ID, not a list.** Iterating it yields
+the id strings. `league_percentiles()` in `engines/wnba_props.py` does
+exactly this unwrap — `if isinstance(players, dict): players =
+list(players.values())` — three lines from where it reads the same file,
+and the probe was written without copying it.
+
+The lesson is not "remember the unwrap." It is that **the shape of a
+payload belongs in one place**, and a probe reading a file the engine
+already reads should look at how the engine reads it. Rule 21 in a form
+it had not taken here before: not duplicated LOGIC, duplicated
+ASSUMPTIONS about a file.
+
+Fixed, then verified against a synthetic 308-player fixture built with
+the dict-keyed shape that crashed it — the previous fixture used a list,
+which is why the probe passed its pre-ship run and failed in the field.
+**A fixture that does not reproduce production's shape is not a test of
+production.**
+
+`test_probe_imports.py` now asserts BOTH readers unwrap it: if the
+engine ever stops, the probe's copy is the only one left and it rots
+silently.
+
+### Daily 13 docstring
+
+Said the floor was 60% of games with a hit; `MIN_HIT_RATE` is 50.0. The
+page body renders the real constant, so nothing on screen contradicted
+the wrong text — the worst version, because the next reader goes looking
+for a floor that does not exist.
+
+**Now it names the constants and states no number.** A threshold copied
+into prose has no way to stay true. (The first pass at this fix restated
+"currently 50%" one line after saying the number was not repeated —
+caught by the check, not by reading it back.)
+
+### STILL OUTSTANDING
+`wnba_props_probe.py` has still not produced real output. Run it after
+this lands; the WNBA section of READING_THE_BOARDS is the last place in
+the guide that tells the reader to measure something themselves.
+
+---
+
+## PICK UP HERE — the other two colour scales were broken too. 2026-08-12 (night)
+
+**4 files. Suite 88, FAILING: none.** Control confirmed red.
+
+### MEASURED, AND BOTH WERE WRONG
+
+`FB95%` and `HRWindow%` were flagged as suspect in the previous entry
+and deliberately left alone until measured. Measured now, 373 hitters at
+150+ PA:
+
+| stat | median | 65th | 75th | 90th | **MAX** | old scale |
+|---|---|---|---|---|---|---|
+| FB95 % | 11.49 | 13.45 | 15.07 | 18.66 | **30.89** | (15, 25, 35, 45) |
+| HRWindow % | 25.10 | 26.62 | 27.74 | 30.14 | **41.94** | (15, 25, 35, 45) |
+
+**FB95% was the worse of the two.** The top two tiers were unreachable —
+nobody in the league hit 35 — and the 90th percentile did not clear the
+SECOND cut. Three quarters of hitters sat in the bottom tier.
+
+**HRWindow% was broken only at the top**, which is why it survived
+longer: the league maximum fell short of the fourth cut, so the elite
+tier could never be earned, and the 90th percentile did not reach the
+third. The bottom half of that scale worked fine. **A scale can be half
+right and still tell the reader nothing where it matters.**
+
+Both are now median / 65th / 75th / 90th, the same shape as the Clears%
+fix. HRWindow%'s cut points are deliberately close together (std 4.19) —
+small differences flip tiers because that is what the league actually
+looks like. A wider, prettier scale would just be the old bug again.
+
+**THREE SCALES, ONE DEFECT, and the pattern is worth naming.** All three
+were round numbers spanning 15-45 (or 10-40) for a per-batted-ball rate.
+None was caught by looking at the site — a uniformly-coloured column
+looks graded. All three were caught by measuring. **Assume any scale not
+in `_LEAGUE_MAX` in test_number_formats.py is unverified.**
+
+The guard now covers six stats and asserts both directions: the bottom
+cut must be beatable and the top cut must be reachable.
+
+### STILL OUTSTANDING
+`wnba_props_probe.py` has not been run — the WNBA section of
+READING_THE_BOARDS still tells the reader to measure it themselves.
+That is the last "measure this" left in the guide.
+
+Also unresolved: `app/views/Daily_13.py`'s module docstring says the
+floor is 60% of games with a hit. `daily_13.MIN_HIT_RATE` is 50.0. The
+page body renders the real constant, so only the docstring lies — but it
+will send someone hunting for a floor that does not exist.
+
+---
+
+---
+
 ## PICK UP HERE — the WNBA had no measured bar. 2026-08-12 (late)
 
 **3 files (2 new). Suite 88, FAILING: none.** Two controls red.
