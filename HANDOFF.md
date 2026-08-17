@@ -139,6 +139,149 @@ measurement clock.
 
 ---
 
+## PICK UP HERE — the morning lineup now says which parts it is unsure about. 2026-08-17 (2)
+
+**Suite 107, FAILING: none.** Eight negative controls, red by EXIT
+CODE — and **two of them came back green on the first attempt and had
+to be fixed.** That is in section 4 and it is the most useful part of
+this entry.
+
+### 1. THE PROBLEM
+
+Slate breakdowns get recorded in the MORNING. MLB posts a real lineup
+1-3 hours before first pitch, so at 8am there is no lineup for any game
+on the board — not here, not at Rotowire, nowhere. Every morning read
+is a projection.
+
+Measured on our own research log, 2026-08-12..16:
+
+    ~80% of a team's bats repeat from one game to the next
+    40% of bats started EVERY game their team played
+    28% started two thirds or more
+    24% sat between a third and two thirds   <- the coin flips
+     9% rare
+
+So last night's nine gets about seven right and two wrong, every night,
+and the two are not random: catcher, platoon corner, DH rotation.
+
+**The uncertainty is not evenly spread, and that is the whole opening.**
+
+### 2. AND THE SLOT BARELY MATTERS — CHECK THE MODEL'S OWN NUMBERS
+
+From the same log, mean absolute contribution per rated bat:
+
+    slot_adj    0.59   (capped +/-1.2)   <- the smallest term in the model
+    zone_adj    3.80   (range -9..+15)
+    pen_adj     1.99
+    ctx_adj     1.97
+
+Batting 2nd instead of 5th moves a bat by at most 2.4 points. A bat who
+does not play at all costs the whole pick. **Second-guessing the ORDER
+in the morning is solving the wrong problem; presence is the problem.**
+
+### 3. WHAT SHIPPED
+
+`lineup_lock_precompute.py` (new, nightly) — per team, how often each
+bat actually started over the last WINDOW_GAMES completed games, plus
+the same split by the hand of the opposing STARTER. Every start counted
+is a real posted lineup from MLB's boxscore endpoint. Writes
+`data/mlb/lineup_lock.json`, committed by the nightly like
+calibration.json. Self-verifies in the log: if every bat comes back at
+100% or none do, that is a boxscore parse failure, not a league.
+
+`app/engines/lineup_lock.py` (new) — READER ONLY. No requests, no
+roster, no statcast import, and `tests/test_lineup_lock` asserts that
+from the AST so a future edit cannot quietly add one. The Boards column
+took the Game Card down on 08-16 by building during a render; this
+cannot.
+
+`app/views/GameCard.py` — one caption above the PROJECTED lineup:
+
+    Projected lineup — 7 locks, 2 in question (Caratini, Crooks) ·
+    start rates over the last 14 team games · provisional, not yet
+    checked against outcomes.
+
+Deliberately not a single confidence percentage. One number over nine
+rows hides WHICH two are soft, and which two is the entire useful part
+when you are talking through a slate on camera. Confirmed lineups skip
+it entirely — once MLB posts the order there is nothing to project, and
+a test asserts the call sits inside the unconfirmed branch.
+
+`lineup_lock_probe.py` + `.github/workflows/lineup-lock-probe.yml`
+(new, manual) — the measurement. **WINDOW_GAMES = 14 IS A GUESS AND IS
+LABELLED AS ONE** (`window_is_measured: false`, and the caption says
+"provisional" until it flips). The probe answers the forecast question
+— given a bat started N of the last W, how often does he start the NEXT
+one — across windows 7/14/21, with the hand split on and off, against
+the naive baseline "he started last game". **If the rate does not beat
+that baseline, drop the column and keep showing last game's nine.**
+Same trap as the HR Edge 11.9% baseline: any plausible method clears a
+bar nobody checked.
+
+### 4. TWO CONTROLS CAME BACK GREEN, AND WHY
+
+Both were caused by the perf fix in section 5, and both are standing
+rules biting again.
+
+**A duplicated guard is a half-tested guard.** After the rewrite, the
+`not team` check existed in BOTH `start_rate` and `_lookup`. Breaking
+`_lookup`'s copy left the suite green, because the test only ever
+called `start_rate` — while `attach()`, the function the Game Card
+actually uses, goes through `_lookup`. One guard now, in `_lookup`, and
+the test exercises both entry points.
+
+**A test that clears a cache by hand cannot test that the cache
+notices.** The memo control stayed green because the fixture called
+`clear_cache()` before every read — it told the memo to forget instead
+of checking it noticed. The new check rewrites the file and re-reads
+WITHOUT clearing. That is rule 4 in its exact documented form: a
+control that did not modify anything is not a passing control, and a
+fixture that cannot tell the two behaviours apart proves nothing.
+
+### 5. THE FEATURE WAS 19 MS PER CARD BEFORE IT SHIPPED
+
+First version wrapped the file read in `st.cache_data` and parsed the
+JSON per call. On a real-sized file (30 teams, ~1,000 bats, 110 KB),
+attaching one nine-man lineup cost **19.03 ms** — nine asks, nine full
+league parses.
+
+`st.cache_data` is the wrong tool one layer down: it SERIALISES what it
+stores, so even a cached dict is re-unpickled per call and the 110 KB
+is paid again. Replaced with a plain memo keyed on
+(path, mtime_ns, size), plus resolving the team once for the lineup
+instead of once per bat.
+
+    attach + caption per card:  19.03 ms  ->  0.049 ms
+    first read, cold:            2.17 ms
+
+`roster.py` already keeps a response memo below `st.cache_data` for the
+same reason. **Generalise: st.cache_data is for expensive results, not
+for a file you are about to read nine times in a row.**
+
+### FILES TOUCHED, 2026-08-17 (2)
+
+    lineup_lock_precompute.py                 NEW  nightly builder
+    lineup_lock_probe.py                      NEW  the measurement
+    app/engines/lineup_lock.py                NEW  reader only
+    app/views/GameCard.py                     projected-lineup caption
+    .github/workflows/nightly-data.yml        build + commit steps
+    .github/workflows/lineup-lock-probe.yml   NEW  manual
+    tests/test_lineup_lock.py                 NEW
+
+Suite 106 -> 107.
+
+### NEXT — IN ORDER
+
+1. **Run the probe.** Until it has, the caption says provisional and it
+   should. Set WINDOW_GAMES from the widest spread that still beats the
+   naive baseline, then flip `window_is_measured` to True.
+2. **If the hand split does not beat the flat rate, take it out.** It
+   is complexity that has to earn its place.
+3. Still standing from 08-16: **do not touch HR Edge.** Rule 10.
+   `benchmark_probe.py` in 2-3 weeks.
+
+---
+
 ## PICK UP HERE — two caches were smaller than a slate. 2026-08-17
 
 **Suite 106, FAILING: none.** Six negative controls, all confirmed red
@@ -1167,140 +1310,5 @@ Unchanged. Research page part 2 (the view, plus deciding where saved
 filter presets live), then WNBA. The per-game log table builds on the
 next nightly. Tomorrow's checkpoint is still
 `hr_research: graded N bat(s) for 2026-08-12`.
-
----
-
-## PICK UP HERE — dead code cleared, and what is deliberately NOT fixed. 2026-08-12 (close)
-
-**5 files. Suite 88, FAILING: none.**
-
-### DELETED, promised at the start of the day and not delivered until now
-
-- `calibration.implied_pct()` — zero references anywhere including
-  tests. It converted American odds to an implied percentage; nothing in
-  this app has ever had a price to convert.
-- `slate_guard.today_et()` — zero references, superseded by
-  `today_for(league)`.
-
-**Deleting `today_et` ORPHANED `EASTERN`,** which was its only consumer
-and then sat defined-and-unused with a comment still pointing at it.
-That is the shape this kind of cleanup usually takes: removing a
-function leaves its constants behind, and the second pass is the one
-people skip. `EASTERN` is gone too, and the comment that referenced it
-now says which module actually holds one — slate_guard holds no timezone
-of its own, every zone comes from the league table, so a league's
-timezone is stated in exactly one place instead of two that can
-disagree.
-
-Also trimmed: `import json` in kbo_probables_probe, `timedelta` in
-kbo_fragment_probe. The remaining `from __future__ import annotations`
-hits in the scan are false positives.
-
-### NOT FIXED, ON PURPOSE — read before "finishing" these
-
-**1. The WNBA form band.** It saturates: 75th percentile of 3PM form is
-94.9, the 90th is exactly 100. The defect is real and measured. The FIX
-is not, because it requires choosing a new band, and the raw deviation
-distribution needed to choose one honestly has not been printed yet —
-`wnba_props_probe.py` now reports it (with the 10th percentile, so both
-edges of a band are visible) but has not been re-run since.
-
-Picking a nicer-looking number here is precisely what produced three
-broken colour scales earlier today. **Run the probe, read the raw dev %
-rows, then set the band per stat** — and consider whether a stat whose
-typical line is 1.0 should use a percentage band at all.
-
-**2. Consistency cannot reach 100 and form can.** Consistency tops out
-near 70 league-wide. So the effective weight of form at the top of the
-range exceeds its nominal 25%. Fixing this means rescaling a component,
-which changes every WNBA score, and it should be done together with (1)
-rather than twice.
-
-**3. `hr_intent_pct` and `hr_threat_pct` are published and read by
-nothing.** Verified this time: no dynamic `_pct` access exists in any
-view. They are still LEFT IN — deleting parquet columns has downstream
-reach this repo cannot see from a grep, and they cost almost nothing.
-Decide deliberately, not as cleanup.
-
-**4. The 103 `hr_research` rows logged before the afternoon fix** lack
-`game_pk`, `edge_raw`, `AvgEV` and `floors_met`. Nothing to backfill:
-the board state and the thresholds that produced them are gone. They
-remain valid for score-versus-outcome.
-
-### THE STATE TO COME BACK TO
-
-Nothing is queued. `hr_research_log` runs at 1, 5 and 7 PM and grades
-each morning after the nightly. The next real step is **three to four
-weeks of graded bat-nights**, then refit the HR axis weights and re-set
-the nine floors against outcomes instead of choosing them.
-
-Everything decided today was decided by measurement, and the two things
-above are unfinished for exactly that reason — there is no measurement
-for them yet.
-
----
-
-## PICK UP HERE — WNBA measured, and the props form component saturates. 2026-08-12 (final)
-
-**3 files. Suite 88, FAILING: none.**
-
-### THE WNBA BAR, MEASURED (123 qualified players of 308)
-
-| stat | CONSISTENCY median | 75th | 90th | **league max** |
-|---|---|---|---|---|
-| Points | 33.3 | 41.8 | 50.3 | 63.6 |
-| Rebounds | 28.5 | 38.2 | 50.3 | 70.9 |
-| Assists | 27.3 | 36.4 | 48.8 | 62.4 |
-| PRA | 40.6 | 50.3 | 57.3 | 69.7 |
-| 3PM | 18.2 | 29.6 | 43.8 | 68.5 |
-
-Written into READING_THE_BOARDS. **A consistency score of 50 is a strong
-reading, not a mediocre one** — nobody in the league exceeds ~71 and the
-medians sit in the twenties and thirties. The bar differs per stat: 45
-is top-decile on 3PM and ordinary on PRA.
-
-### TWO PROBLEMS THE FIRST RUN EXPOSED. NEITHER IS FIXED, ON PURPOSE.
-
-**1. FORM SATURATES ON LOW-COUNT STATS.** `form` scales
-`(l10 - season) / season * 100` across a +/-25% band. For 3PM, where a
-typical line is 1.0, going 1.0 -> 1.4 is +40% and clamps to 100.
-Measured: the 75th percentile of 3PM form is **94.9** and the 90th is
-**exactly 100**. A quarter of the league pinned at the ceiling of a
-component means that component has stopped separating anyone.
-
-This is the Clears% defect in a new place: a fixed band chosen by
-eye, applied to a quantity whose real spread nobody measured.
-
-**2. CONSISTENCY CANNOT REACH 100 AND FORM CAN.** Consistency tops out
-near 70 league-wide; form regularly hits 100. So although the board
-weights consistency 35% and form 25%, **at the top of the range form has
-more room to move a score than consistency does.** Nominal weights and
-effective weights are not the same thing, and the docstring describes
-the nominal ones.
-
-**Why nothing was changed:** picking a nicer-looking band is exactly
-what produced three broken colour scales earlier today. The probe now
-also reports the RAW deviation percentages (and the 10th percentile, so
-both edges of a band are visible — a median/75th/90th table only shows
-one). Set the band from that distribution, per stat, and consider
-whether a stat with a typical line of 1.0 should use a percentage band
-at all.
-
-**The prediction I got wrong, recorded because it is the useful part:**
-I told the user form would sit near 50 by construction, since it
-measures a player against her own baseline. Measured medians run 50 to
-58 with a saturating upper tail. The reasoning was sound and the number
-was not — which is the argument for the probe existing.
-
-### STATE OF PLAY
-
-Nothing structural is queued. `hr_research_log` runs nightly; the honest
-next step is three to four weeks of graded bat-nights, then refit the HR
-axis weights and re-set the floors against outcomes rather than
-choosing them. The WNBA form band wants the same treatment: measure,
-then set.
-
-READING_THE_BOARDS.md is complete — every "measure this yourself" in it
-is now a real number.
 
 ---
