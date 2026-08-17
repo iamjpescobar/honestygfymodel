@@ -63,12 +63,21 @@ def check(label, ok):
 # ----------------------------------------------------------------------
 # 1. THE SLICER ACTUALLY SLICES. Twelve games, ten pitches each.
 # ----------------------------------------------------------------------
-df = pd.DataFrame({
-    "game_date": sum([[f"2026-08-{d:02d}"] * 10 for d in range(1, 13)], []),
-    "game_pk": sum([[d] * 10 for d in range(1, 13)], []),
-    "at_bat_number": list(range(120)),
-    "pitch_number": [1] * 120,
-})
+def games_frame(n_games):
+    """n games, ten pitches each. Parameterised because section 2 now
+    needs a frame longer than the longest window the control offers —
+    a 12-game frame makes a correctly-implemented L25 look like a
+    no-op, which is a failing test on working code."""
+    return pd.DataFrame({
+        "game_date": sum([[f"2026-{(d - 1) // 28 + 4:02d}-{(d - 1) % 28 + 1:02d}"] * 10
+                          for d in range(1, n_games + 1)], []),
+        "game_pk": sum([[d] * 10 for d in range(1, n_games + 1)], []),
+        "at_bat_number": list(range(n_games * 10)),
+        "pitch_number": [1] * (n_games * 10),
+    })
+
+
+df = games_frame(12)
 
 for window, expected in (("season", 12), ("l10", 10), ("l5", 5),
                          ("l3", 3), ("l1", 1)):
@@ -99,10 +108,26 @@ m = re.search(r"_sw_opts = (\{[^}]*\})", gc, re.S)
 check("the splits window control exists", m is not None)
 if m:
     opts = ast.literal_eval(m.group(1))
-    check("it offers Season, L10, L5, L3 and Last game",
-          set(opts.values()) == {"season", "l10", "l5", "l3", "l1"})
+    # PINNED AS A FLOOR, NOT AS AN EXACT SET.
+    #
+    # This asserted equality with {season, l10, l5, l3, l1} and went red
+    # on 2026-08-17 when L25/L20/L15 were added — a correct change
+    # failing a test that had frozen the menu rather than the property.
+    # What actually matters is that the short windows survive (they are
+    # the "is he right, right now" read that this control exists for)
+    # and that everything offered really slices. Adding a window is not
+    # a regression; losing one is.
+    check("the short windows survive",
+          {"season", "l10", "l5", "l3", "l1"} <= set(opts.values()))
+    # The long end, added 2026-08-17. A starter's L15 is ~85 IP, which
+    # is past the ~70 BIP where the batted-ball rates carry signal.
+    check("the long windows are offered",
+          {"l25", "l20", "l15"} <= set(opts.values()))
+    # A frame longer than the largest window offered, so a genuinely
+    # implemented long window cannot look like a no-op for lack of data.
+    long_df = games_frame(60)
     bad = [v for v in opts.values()
-           if v != "season" and len(apply_window(df, v, "games")) == len(df)]
+           if v != "season" and len(apply_window(long_df, v, "games")) == len(long_df)]
     check("every offered window really slices (none is season in disguise)",
           not bad)
 
