@@ -1,0 +1,7961 @@
+{
+  "window_games": 14,
+  "window_is_measured": false,
+  "generated_at_et": "2026-08-17T02:58:35-04:00",
+  "slate_date_et": "2026-08-17",
+  "teams": {
+    "Athletics": {
+      "games": 14,
+      "players": {
+        "671732": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 7,
+              "games": 7,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 7,
+              "rate": 1.0
+            }
+          }
+        },
+        "641680": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 7,
+              "games": 7,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 7,
+              "rate": 0.857
+            }
+          }
+        },
+        "695720": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 7,
+              "games": 7,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 7,
+              "rate": 0.857
+            }
+          }
+        },
+        "622268": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 7,
+              "rate": 0.714
+            },
+            "R": {
+              "starts": 7,
+              "games": 7,
+              "rate": 1.0
+            }
+          }
+        },
+        "680869": {
+          "starts": 6,
+          "games": 14,
+          "rate": 0.429,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 7,
+              "rate": 0.286
+            },
+            "R": {
+              "starts": 4,
+              "games": 7,
+              "rate": 0.571
+            }
+          }
+        },
+        "643446": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 7,
+              "rate": 0.714
+            },
+            "R": {
+              "starts": 6,
+              "games": 7,
+              "rate": 0.857
+            }
+          }
+        },
+        "661531": {
+          "starts": 7,
+          "games": 14,
+          "rate": 0.5,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 7,
+              "rate": 0.714
+            },
+            "R": {
+              "starts": 2,
+              "games": 7,
+              "rate": 0.286
+            }
+          }
+        },
+        "675961": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 7,
+              "games": 7,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 5,
+              "games": 7,
+              "rate": 0.714
+            }
+          }
+        },
+        "691777": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 7,
+              "rate": 0.857
+            },
+            "R": {
+              "starts": 5,
+              "games": 7,
+              "rate": 0.714
+            }
+          }
+        },
+        "703607": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 7,
+              "games": 7,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 7,
+              "rate": 1.0
+            }
+          }
+        },
+        "687231": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 7,
+              "rate": 0.143
+            },
+            "R": {
+              "starts": 0,
+              "games": 7,
+              "rate": 0.0
+            }
+          }
+        },
+        "805779": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 7,
+              "rate": 0.714
+            },
+            "R": {
+              "starts": 5,
+              "games": 7,
+              "rate": 0.714
+            }
+          }
+        },
+        "666126": {
+          "starts": 7,
+          "games": 14,
+          "rate": 0.5,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 7,
+              "rate": 0.286
+            },
+            "R": {
+              "starts": 5,
+              "games": 7,
+              "rate": 0.714
+            }
+          }
+        },
+        "691016": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 7,
+              "rate": 0.714
+            },
+            "R": {
+              "starts": 6,
+              "games": 7,
+              "rate": 0.857
+            }
+          }
+        },
+        "680716": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 7,
+              "rate": 0.571
+            },
+            "R": {
+              "starts": 1,
+              "games": 7,
+              "rate": 0.143
+            }
+          }
+        }
+      }
+    },
+    "Pittsburgh Pirates": {
+      "games": 14,
+      "players": {
+        "694377": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 5,
+              "rate": 0.2
+            },
+            "R": {
+              "starts": 0,
+              "games": 9,
+              "rate": 0.0
+            }
+          }
+        },
+        "664040": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "668804": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "669707": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 9,
+              "rate": 0.778
+            }
+          }
+        },
+        "699013": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 9,
+              "rate": 0.889
+            }
+          }
+        },
+        "663968": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "695257": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 0,
+              "games": 9,
+              "rate": 0.0
+            }
+          }
+        },
+        "680779": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 5,
+              "rate": 0.6
+            },
+            "R": {
+              "starts": 5,
+              "games": 9,
+              "rate": 0.556
+            }
+          }
+        },
+        "804668": {
+          "starts": 6,
+          "games": 14,
+          "rate": 0.429,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 2,
+              "games": 9,
+              "rate": 0.222
+            }
+          }
+        },
+        "694378": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "687462": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "682927": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 5,
+              "games": 9,
+              "rate": 0.556
+            }
+          }
+        },
+        "693304": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 8,
+              "games": 9,
+              "rate": 0.889
+            }
+          }
+        },
+        "691373": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 3,
+              "games": 9,
+              "rate": 0.333
+            }
+          }
+        },
+        "687394": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 5,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 1,
+              "games": 9,
+              "rate": 0.111
+            }
+          }
+        },
+        "682848": {
+          "starts": 6,
+          "games": 14,
+          "rate": 0.429,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 4,
+              "games": 9,
+              "rate": 0.444
+            }
+          }
+        }
+      }
+    },
+    "San Diego Padres": {
+      "games": 14,
+      "players": {
+        "650859": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "666023": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 5,
+              "rate": 0.6
+            },
+            "R": {
+              "starts": 6,
+              "games": 9,
+              "rate": 0.667
+            }
+          }
+        },
+        "701538": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "823550": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 5,
+              "rate": 0.6
+            },
+            "R": {
+              "starts": 7,
+              "games": 9,
+              "rate": 0.778
+            }
+          }
+        },
+        "657757": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 8,
+              "games": 9,
+              "rate": 0.889
+            }
+          }
+        },
+        "592518": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "665487": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "664034": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "593428": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 9,
+              "rate": 0.889
+            }
+          }
+        },
+        "687749": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 9,
+              "rate": 0.889
+            }
+          }
+        },
+        "630105": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "669134": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 5,
+              "rate": 0.6
+            },
+            "R": {
+              "starts": 5,
+              "games": 9,
+              "rate": 0.556
+            }
+          }
+        },
+        "669720": {
+          "starts": 4,
+          "games": 14,
+          "rate": 0.286,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 2,
+              "games": 9,
+              "rate": 0.222
+            }
+          }
+        },
+        "669398": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 0,
+              "games": 9,
+              "rate": 0.0
+            }
+          }
+        }
+      }
+    },
+    "Seattle Mariners": {
+      "games": 14,
+      "players": {
+        "647304": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 4,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "702284": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "642215": {
+          "starts": 7,
+          "games": 14,
+          "rate": 0.5,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 3,
+              "games": 10,
+              "rate": 0.3
+            }
+          }
+        },
+        "668227": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "686527": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "663728": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 4,
+              "rate": 0.75
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "801126": {
+          "starts": 3,
+          "games": 14,
+          "rate": 0.214,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 4,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 3,
+              "games": 10,
+              "rate": 0.3
+            }
+          }
+        },
+        "680977": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 4,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 8,
+              "games": 10,
+              "rate": 0.8
+            }
+          }
+        },
+        "677594": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "645302": {
+          "starts": 6,
+          "games": 14,
+          "rate": 0.429,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 4,
+              "rate": 0.25
+            },
+            "R": {
+              "starts": 5,
+              "games": 10,
+              "rate": 0.5
+            }
+          }
+        },
+        "640902": {
+          "starts": 3,
+          "games": 14,
+          "rate": 0.214,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 4,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 1,
+              "games": 10,
+              "rate": 0.1
+            }
+          }
+        },
+        "806068": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 10,
+              "rate": 0.7
+            }
+          }
+        },
+        "660844": {
+          "starts": 4,
+          "games": 14,
+          "rate": 0.286,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 4,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 2,
+              "games": 10,
+              "rate": 0.2
+            }
+          }
+        },
+        "621493": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 4,
+              "rate": 0.75
+            },
+            "R": {
+              "starts": 5,
+              "games": 10,
+              "rate": 0.5
+            }
+          }
+        },
+        "656413": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 4,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 1,
+              "games": 10,
+              "rate": 0.1
+            }
+          }
+        },
+        "641598": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 4,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 1,
+              "games": 10,
+              "rate": 0.1
+            }
+          }
+        }
+      }
+    },
+    "San Francisco Giants": {
+      "games": 14,
+      "players": {
+        "813841": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 5,
+              "rate": 0.2
+            },
+            "R": {
+              "starts": 1,
+              "games": 9,
+              "rate": 0.111
+            }
+          }
+        },
+        "701852": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 5,
+              "rate": 0.6
+            },
+            "R": {
+              "starts": 6,
+              "games": 9,
+              "rate": 0.667
+            }
+          }
+        },
+        "671083": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 4,
+              "games": 9,
+              "rate": 0.444
+            }
+          }
+        },
+        "687551": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "808982": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "646240": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "683766": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "806367": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 5,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 2,
+              "games": 9,
+              "rate": 0.222
+            }
+          }
+        },
+        "805811": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 9,
+              "rate": 0.889
+            }
+          }
+        },
+        "678545": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "668800": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 0,
+              "games": 9,
+              "rate": 0.0
+            }
+          }
+        },
+        "682674": {
+          "starts": 3,
+          "games": 14,
+          "rate": 0.214,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 1,
+              "games": 9,
+              "rate": 0.111
+            }
+          }
+        },
+        "687529": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 5,
+              "rate": 0.6
+            },
+            "R": {
+              "starts": 7,
+              "games": 9,
+              "rate": 0.778
+            }
+          }
+        },
+        "642715": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 7,
+              "games": 9,
+              "rate": 0.778
+            }
+          }
+        },
+        "691740": {
+          "starts": 7,
+          "games": 14,
+          "rate": 0.5,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 5,
+              "games": 9,
+              "rate": 0.556
+            }
+          }
+        },
+        "801501": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 3,
+              "games": 9,
+              "rate": 0.333
+            }
+          }
+        },
+        "678760": {
+          "starts": 3,
+          "games": 14,
+          "rate": 0.214,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 1,
+              "games": 9,
+              "rate": 0.111
+            }
+          }
+        },
+        "671218": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 5,
+              "rate": 0.2
+            },
+            "R": {
+              "starts": 1,
+              "games": 9,
+              "rate": 0.111
+            }
+          }
+        },
+        "650333": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 5,
+              "rate": 0.2
+            },
+            "R": {
+              "starts": 0,
+              "games": 9,
+              "rate": 0.0
+            }
+          }
+        }
+      }
+    },
+    "St. Louis Cardinals": {
+      "games": 14,
+      "players": {
+        "691023": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 4,
+              "rate": 0.75
+            },
+            "R": {
+              "starts": 9,
+              "games": 10,
+              "rate": 0.9
+            }
+          }
+        },
+        "701675": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 4,
+              "rate": 0.75
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "802139": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 10,
+              "rate": 0.9
+            }
+          }
+        },
+        "691458": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 10,
+              "rate": 0.7
+            }
+          }
+        },
+        "676475": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "695491": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 4,
+              "rate": 0.25
+            },
+            "R": {
+              "starts": 1,
+              "games": 10,
+              "rate": 0.1
+            }
+          }
+        },
+        "677592": {
+          "starts": 6,
+          "games": 14,
+          "rate": 0.429,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 4,
+              "rate": 0.75
+            },
+            "R": {
+              "starts": 3,
+              "games": 10,
+              "rate": 0.3
+            }
+          }
+        },
+        "691026": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "671056": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "699625": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 4,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 10,
+              "rate": 0.8
+            }
+          }
+        },
+        "686780": {
+          "starts": 4,
+          "games": 14,
+          "rate": 0.286,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 4,
+              "rate": 0.75
+            },
+            "R": {
+              "starts": 1,
+              "games": 10,
+              "rate": 0.1
+            }
+          }
+        },
+        "663494": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 4,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 8,
+              "games": 10,
+              "rate": 0.8
+            }
+          }
+        },
+        "665877": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 4,
+              "rate": 0.75
+            },
+            "R": {
+              "starts": 8,
+              "games": 10,
+              "rate": 0.8
+            }
+          }
+        },
+        "693409": {
+          "starts": 6,
+          "games": 14,
+          "rate": 0.429,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 4,
+              "rate": 0.25
+            },
+            "R": {
+              "starts": 5,
+              "games": 10,
+              "rate": 0.5
+            }
+          }
+        },
+        "676369": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 4,
+              "rate": 0.25
+            },
+            "R": {
+              "starts": 0,
+              "games": 10,
+              "rate": 0.0
+            }
+          }
+        },
+        "663457": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 4,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 2,
+              "games": 10,
+              "rate": 0.2
+            }
+          }
+        }
+      }
+    },
+    "Tampa Bay Rays": {
+      "games": 14,
+      "players": {
+        "670764": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 3,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "680700": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 11,
+              "rate": 0.909
+            }
+          }
+        },
+        "622761": {
+          "starts": 3,
+          "games": 14,
+          "rate": 0.214,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 3,
+              "rate": 0.333
+            },
+            "R": {
+              "starts": 2,
+              "games": 11,
+              "rate": 0.182
+            }
+          }
+        },
+        "668723": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 11,
+              "rate": 0.636
+            }
+          }
+        },
+        "802415": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 11,
+              "rate": 0.909
+            }
+          }
+        },
+        "676356": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 11,
+              "rate": 0.636
+            }
+          }
+        },
+        "666018": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 11,
+              "rate": 0.909
+            }
+          }
+        },
+        "663743": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 5,
+              "games": 11,
+              "rate": 0.455
+            }
+          }
+        },
+        "650490": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 11,
+              "rate": 0.909
+            }
+          }
+        },
+        "691406": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "689414": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 3,
+              "rate": 0.333
+            },
+            "R": {
+              "starts": 9,
+              "games": 11,
+              "rate": 0.818
+            }
+          }
+        },
+        "683748": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 3,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "656775": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 3,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 10,
+              "games": 11,
+              "rate": 0.909
+            }
+          }
+        },
+        "700246": {
+          "starts": 4,
+          "games": 14,
+          "rate": 0.286,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 3,
+              "rate": 0.333
+            },
+            "R": {
+              "starts": 3,
+              "games": 11,
+              "rate": 0.273
+            }
+          }
+        },
+        "810938": {
+          "starts": 4,
+          "games": 14,
+          "rate": 0.286,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 3,
+              "rate": 0.333
+            },
+            "R": {
+              "starts": 3,
+              "games": 11,
+              "rate": 0.273
+            }
+          }
+        },
+        "700652": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 3,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 1,
+              "games": 11,
+              "rate": 0.091
+            }
+          }
+        }
+      }
+    },
+    "Texas Rangers": {
+      "games": 14,
+      "players": {
+        "694497": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "694671": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "669394": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 9,
+              "rate": 0.889
+            }
+          }
+        },
+        "642851": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 6,
+              "games": 9,
+              "rate": 0.667
+            }
+          }
+        },
+        "592626": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "608369": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 5,
+              "rate": 0.6
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "670032": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "677649": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "607043": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "553869": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 9,
+              "rate": 0.889
+            }
+          }
+        },
+        "672284": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 5,
+              "rate": 0.2
+            },
+            "R": {
+              "starts": 4,
+              "games": 9,
+              "rate": 0.444
+            }
+          }
+        },
+        "679822": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 9,
+              "rate": 0.667
+            }
+          }
+        },
+        "683227": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 0,
+              "games": 9,
+              "rate": 0.0
+            }
+          }
+        },
+        "695508": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 5,
+              "rate": 0.6
+            },
+            "R": {
+              "starts": 5,
+              "games": 9,
+              "rate": 0.556
+            }
+          }
+        },
+        "681146": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 0,
+              "games": 9,
+              "rate": 0.0
+            }
+          }
+        },
+        "696030": {
+          "starts": 4,
+          "games": 14,
+          "rate": 0.286,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 5,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 4,
+              "games": 9,
+              "rate": 0.444
+            }
+          }
+        }
+      }
+    },
+    "Toronto Blue Jays": {
+      "games": 14,
+      "players": {
+        "676391": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "807727": {
+          "starts": 7,
+          "games": 14,
+          "rate": 0.5,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 3,
+              "games": 8,
+              "rate": 0.375
+            }
+          }
+        },
+        "665926": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "678218": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 4,
+              "games": 8,
+              "rate": 0.5
+            }
+          }
+        },
+        "703520": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 5,
+              "games": 8,
+              "rate": 0.625
+            }
+          }
+        },
+        "664770": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "543807": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "669701": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 8,
+              "rate": 0.75
+            }
+          }
+        },
+        "663662": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 6,
+              "rate": 0.167
+            },
+            "R": {
+              "starts": 0,
+              "games": 8,
+              "rate": 0.0
+            }
+          }
+        },
+        "664702": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "672386": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "672960": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "660821": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 6,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "665489": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 5,
+              "games": 8,
+              "rate": 0.625
+            }
+          }
+        },
+        "676914": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 6,
+              "rate": 0.333
+            },
+            "R": {
+              "starts": 3,
+              "games": 8,
+              "rate": 0.375
+            }
+          }
+        },
+        "649966": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 6,
+              "rate": 0.167
+            },
+            "R": {
+              "starts": 1,
+              "games": 8,
+              "rate": 0.125
+            }
+          }
+        }
+      }
+    },
+    "Minnesota Twins": {
+      "games": 14,
+      "players": {
+        "605170": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 5,
+              "rate": 0.6
+            },
+            "R": {
+              "starts": 6,
+              "games": 9,
+              "rate": 0.667
+            }
+          }
+        },
+        "665019": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 5,
+              "rate": 0.6
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "686797": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "668885": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 9,
+              "rate": 0.778
+            }
+          }
+        },
+        "605137": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "701785": {
+          "starts": 7,
+          "games": 14,
+          "rate": 0.5,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 3,
+              "games": 9,
+              "rate": 0.333
+            }
+          }
+        },
+        "680777": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 9,
+              "rate": 0.889
+            }
+          }
+        },
+        "668952": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 9,
+              "rate": 0.778
+            }
+          }
+        },
+        "668904": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "663616": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "621439": {
+          "starts": 3,
+          "games": 14,
+          "rate": 0.214,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 5,
+              "rate": 0.2
+            },
+            "R": {
+              "starts": 2,
+              "games": 9,
+              "rate": 0.222
+            }
+          }
+        },
+        "807712": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "702176": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 5,
+              "rate": 0.2
+            },
+            "R": {
+              "starts": 7,
+              "games": 9,
+              "rate": 0.778
+            }
+          }
+        },
+        "656577": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 5,
+              "rate": 0.2
+            },
+            "R": {
+              "starts": 1,
+              "games": 9,
+              "rate": 0.111
+            }
+          }
+        },
+        "656484": {
+          "starts": 3,
+          "games": 14,
+          "rate": 0.214,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 5,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 3,
+              "games": 9,
+              "rate": 0.333
+            }
+          }
+        }
+      }
+    },
+    "Philadelphia Phillies": {
+      "games": 14,
+      "players": {
+        "669016": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 3,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "702222": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "650559": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 3,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 6,
+              "games": 11,
+              "rate": 0.545
+            }
+          }
+        },
+        "547180": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "592663": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 3,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 9,
+              "games": 11,
+              "rate": 0.818
+            }
+          }
+        },
+        "624641": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 3,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 3,
+              "games": 11,
+              "rate": 0.273
+            }
+          }
+        },
+        "664761": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "681082": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "656941": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "650333": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 3,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 10,
+              "games": 11,
+              "rate": 0.909
+            }
+          }
+        },
+        "656537": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 11,
+              "rate": 0.636
+            }
+          }
+        },
+        "596117": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 3,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 3,
+              "games": 11,
+              "rate": 0.273
+            }
+          }
+        },
+        "607208": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 11,
+              "rate": 0.818
+            }
+          }
+        }
+      }
+    },
+    "Atlanta Braves": {
+      "games": 14,
+      "players": {
+        "671739": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "686948": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "805347": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 3,
+              "rate": 0.333
+            },
+            "R": {
+              "starts": 10,
+              "games": 11,
+              "rate": 0.909
+            }
+          }
+        },
+        "621566": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "642086": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 3,
+              "rate": 0.333
+            },
+            "R": {
+              "starts": 8,
+              "games": 11,
+              "rate": 0.727
+            }
+          }
+        },
+        "660670": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "645277": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "663586": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "573262": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 3,
+              "rate": 0.333
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "643289": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 11,
+              "rate": 0.727
+            }
+          }
+        },
+        "669221": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 2,
+              "games": 11,
+              "rate": 0.182
+            }
+          }
+        },
+        "673490": {
+          "starts": 4,
+          "games": 14,
+          "rate": 0.286,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 3,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 2,
+              "games": 11,
+              "rate": 0.182
+            }
+          }
+        },
+        "657041": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 5,
+              "games": 11,
+              "rate": 0.455
+            }
+          }
+        },
+        "642201": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 3,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 1,
+              "games": 11,
+              "rate": 0.091
+            }
+          }
+        }
+      }
+    },
+    "Chicago White Sox": {
+      "games": 14,
+      "players": {
+        "671976": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "545341": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 8,
+              "rate": 0.75
+            }
+          }
+        },
+        "808959": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "805367": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "695657": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "691011": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 6,
+              "rate": 0.333
+            },
+            "R": {
+              "starts": 6,
+              "games": 8,
+              "rate": 0.75
+            }
+          }
+        },
+        "695731": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "643217": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "686668": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 8,
+              "rate": 0.75
+            }
+          }
+        },
+        "803011": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "678246": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "668670": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 6,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 1,
+              "games": 8,
+              "rate": 0.125
+            }
+          }
+        },
+        "682668": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 2,
+              "games": 8,
+              "rate": 0.25
+            }
+          }
+        },
+        "700337": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 1,
+              "games": 8,
+              "rate": 0.125
+            }
+          }
+        },
+        "663698": {
+          "starts": 3,
+          "games": 14,
+          "rate": 0.214,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 6,
+              "rate": 0.333
+            },
+            "R": {
+              "starts": 1,
+              "games": 8,
+              "rate": 0.125
+            }
+          }
+        },
+        "677592": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 6,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 2,
+              "games": 8,
+              "rate": 0.25
+            }
+          }
+        }
+      }
+    },
+    "Miami Marlins": {
+      "games": 14,
+      "players": {
+        "665052": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "681715": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 11,
+              "rate": 0.818
+            }
+          }
+        },
+        "665923": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 11,
+              "rate": 0.545
+            }
+          }
+        },
+        "805300": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "691594": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 3,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 10,
+              "games": 11,
+              "rate": 0.909
+            }
+          }
+        },
+        "669364": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "688363": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 3,
+              "rate": 0.333
+            },
+            "R": {
+              "starts": 4,
+              "games": 11,
+              "rate": 0.364
+            }
+          }
+        },
+        "682663": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 3,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 8,
+              "games": 11,
+              "rate": 0.727
+            }
+          }
+        },
+        "677870": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 11,
+              "rate": 0.545
+            }
+          }
+        },
+        "640459": {
+          "starts": 4,
+          "games": 14,
+          "rate": 0.286,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 3,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 2,
+              "games": 11,
+              "rate": 0.182
+            }
+          }
+        },
+        "672640": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "683357": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 3,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "691788": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 3,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 11,
+              "rate": 0.909
+            }
+          }
+        },
+        "669065": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 3,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 6,
+              "games": 11,
+              "rate": 0.545
+            }
+          }
+        },
+        "689414": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 3,
+              "rate": 0.333
+            },
+            "R": {
+              "starts": 1,
+              "games": 11,
+              "rate": 0.091
+            }
+          }
+        }
+      }
+    },
+    "New York Yankees": {
+      "games": 14,
+      "players": {
+        "645305": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 2,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 7,
+              "games": 12,
+              "rate": 0.583
+            }
+          }
+        },
+        "671218": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 2,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 10,
+              "games": 12,
+              "rate": 0.833
+            }
+          }
+        },
+        "676609": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 12,
+              "rate": 0.583
+            }
+          }
+        },
+        "682987": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 12,
+              "games": 12,
+              "rate": 1.0
+            }
+          }
+        },
+        "642708": {
+          "starts": 7,
+          "games": 14,
+          "rate": 0.5,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 5,
+              "games": 12,
+              "rate": 0.417
+            }
+          }
+        },
+        "641857": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 12,
+              "games": 12,
+              "rate": 1.0
+            }
+          }
+        },
+        "502671": {
+          "starts": 7,
+          "games": 14,
+          "rate": 0.5,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 5,
+              "games": 12,
+              "rate": 0.417
+            }
+          }
+        },
+        "669224": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 2,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 12,
+              "games": 12,
+              "rate": 1.0
+            }
+          }
+        },
+        "700250": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 12,
+              "games": 12,
+              "rate": 1.0
+            }
+          }
+        },
+        "665862": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 2,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 12,
+              "games": 12,
+              "rate": 1.0
+            }
+          }
+        },
+        "663757": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 12,
+              "games": 12,
+              "rate": 1.0
+            }
+          }
+        },
+        "806146": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 2,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 10,
+              "games": 12,
+              "rate": 0.833
+            }
+          }
+        },
+        "671277": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 2,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 12,
+              "rate": 0.917
+            }
+          }
+        },
+        "691176": {
+          "starts": 3,
+          "games": 14,
+          "rate": 0.214,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 2,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 2,
+              "games": 12,
+              "rate": 0.167
+            }
+          }
+        },
+        "680474": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 2,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 0,
+              "games": 12,
+              "rate": 0.0
+            }
+          }
+        },
+        "683011": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 2,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 0,
+              "games": 12,
+              "rate": 0.0
+            }
+          }
+        }
+      }
+    },
+    "Milwaukee Brewers": {
+      "games": 14,
+      "players": {
+        "687401": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 4,
+              "rate": 0.75
+            },
+            "R": {
+              "starts": 5,
+              "games": 10,
+              "rate": 0.5
+            }
+          }
+        },
+        "694192": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "641343": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 10,
+              "rate": 0.7
+            }
+          }
+        },
+        "683734": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 10,
+              "rate": 0.9
+            }
+          }
+        },
+        "663604": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 4,
+              "games": 10,
+              "rate": 0.4
+            }
+          }
+        },
+        "666152": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "680716": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 4,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 0,
+              "games": 10,
+              "rate": 0.0
+            }
+          }
+        },
+        "661388": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 10,
+              "rate": 0.9
+            }
+          }
+        },
+        "596142": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 4,
+              "games": 10,
+              "rate": 0.4
+            }
+          }
+        },
+        "800325": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 10,
+              "rate": 0.9
+            }
+          }
+        },
+        "592885": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 4,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "669003": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 4,
+              "rate": 0.75
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "678225": {
+          "starts": 4,
+          "games": 14,
+          "rate": 0.286,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 4,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 2,
+              "games": 10,
+              "rate": 0.2
+            }
+          }
+        },
+        "668930": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 4,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 8,
+              "games": 10,
+              "rate": 0.8
+            }
+          }
+        },
+        "806198": {
+          "starts": 6,
+          "games": 14,
+          "rate": 0.429,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 4,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 10,
+              "rate": 0.6
+            }
+          }
+        }
+      }
+    },
+    "Los Angeles Angels": {
+      "games": 14,
+      "players": {
+        "624428": {
+          "starts": 7,
+          "games": 14,
+          "rate": 0.5,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 6,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 4,
+              "games": 8,
+              "rate": 0.5
+            }
+          }
+        },
+        "642350": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "687263": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "545361": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "694208": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "694203": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "694384": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "685133": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "666139": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "623168": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 4,
+              "games": 8,
+              "rate": 0.5
+            }
+          }
+        },
+        "672724": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 6,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 5,
+              "games": 8,
+              "rate": 0.625
+            }
+          }
+        },
+        "518595": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 0,
+              "games": 8,
+              "rate": 0.0
+            }
+          }
+        },
+        "687093": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 8,
+              "rate": 0.75
+            }
+          }
+        },
+        "624585": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 6,
+              "rate": 0.167
+            },
+            "R": {
+              "starts": 0,
+              "games": 8,
+              "rate": 0.0
+            }
+          }
+        },
+        "666176": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 6,
+              "rate": 0.167
+            },
+            "R": {
+              "starts": 0,
+              "games": 8,
+              "rate": 0.0
+            }
+          }
+        }
+      }
+    },
+    "Arizona Diamondbacks": {
+      "games": 14,
+      "players": {
+        "694374": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 12,
+              "games": 12,
+              "rate": 1.0
+            }
+          }
+        },
+        "571448": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 12,
+              "rate": 0.917
+            }
+          }
+        },
+        "606466": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 12,
+              "rate": 0.833
+            }
+          }
+        },
+        "545121": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 12,
+              "rate": 0.833
+            }
+          }
+        },
+        "672695": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 12,
+              "rate": 0.917
+            }
+          }
+        },
+        "672515": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 12,
+              "rate": 0.833
+            }
+          }
+        },
+        "682998": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 12,
+              "games": 12,
+              "rate": 1.0
+            }
+          }
+        },
+        "596146": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 2,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 12,
+              "rate": 0.75
+            }
+          }
+        },
+        "543510": {
+          "starts": 6,
+          "games": 14,
+          "rate": 0.429,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 2,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 12,
+              "rate": 0.5
+            }
+          }
+        },
+        "678489": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 12,
+              "rate": 0.75
+            }
+          }
+        },
+        "663457": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 2,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 9,
+              "games": 12,
+              "rate": 0.75
+            }
+          }
+        },
+        "814439": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 12,
+              "rate": 0.833
+            }
+          }
+        },
+        "682988": {
+          "starts": 7,
+          "games": 14,
+          "rate": 0.5,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 5,
+              "games": 12,
+              "rate": 0.417
+            }
+          }
+        },
+        "680728": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 2,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 2,
+              "games": 12,
+              "rate": 0.167
+            }
+          }
+        }
+      }
+    },
+    "Baltimore Orioles": {
+      "games": 14,
+      "players": {
+        "669236": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 4,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 7,
+              "games": 10,
+              "rate": 0.7
+            }
+          }
+        },
+        "683002": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "665750": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 10,
+              "rate": 0.9
+            }
+          }
+        },
+        "681047": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 4,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 8,
+              "games": 10,
+              "rate": 0.8
+            }
+          }
+        },
+        "687637": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 10,
+              "rate": 0.9
+            }
+          }
+        },
+        "650968": {
+          "starts": 6,
+          "games": 14,
+          "rate": 0.429,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 4,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 4,
+              "games": 10,
+              "rate": 0.4
+            }
+          }
+        },
+        "624413": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "702616": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "687952": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "681297": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 4,
+              "rate": 0.75
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "691723": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 10,
+              "rate": 0.9
+            }
+          }
+        },
+        "641933": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 10,
+              "rate": 0.8
+            }
+          }
+        },
+        "665966": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 4,
+              "rate": 0.75
+            },
+            "R": {
+              "starts": 7,
+              "games": 10,
+              "rate": 0.7
+            }
+          }
+        },
+        "621493": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 4,
+              "rate": 0.25
+            },
+            "R": {
+              "starts": 1,
+              "games": 10,
+              "rate": 0.1
+            }
+          }
+        },
+        "668670": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 4,
+              "rate": 0.25
+            },
+            "R": {
+              "starts": 1,
+              "games": 10,
+              "rate": 0.1
+            }
+          }
+        }
+      }
+    },
+    "Boston Red Sox": {
+      "games": 14,
+      "players": {
+        "678011": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 1,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 13,
+              "rate": 0.692
+            }
+          }
+        },
+        "657136": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 1,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 13,
+              "rate": 0.538
+            }
+          }
+        },
+        "668939": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 1,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 5,
+              "games": 13,
+              "rate": 0.385
+            }
+          }
+        },
+        "677800": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 1,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 13,
+              "games": 13,
+              "rate": 1.0
+            }
+          }
+        },
+        "655316": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 1,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 13,
+              "games": 13,
+              "rate": 1.0
+            }
+          }
+        },
+        "702332": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 1,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 13,
+              "games": 13,
+              "rate": 1.0
+            }
+          }
+        },
+        "686765": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 1,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 13,
+              "games": 13,
+              "rate": 1.0
+            }
+          }
+        },
+        "680776": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 1,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 13,
+              "games": 13,
+              "rate": 1.0
+            }
+          }
+        },
+        "642201": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 1,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 13,
+              "rate": 0.538
+            }
+          }
+        },
+        "678882": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 1,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 12,
+              "games": 13,
+              "rate": 0.923
+            }
+          }
+        },
+        "575929": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 1,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 13,
+              "rate": 0.692
+            }
+          }
+        },
+        "663330": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 1,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 4,
+              "games": 13,
+              "rate": 0.308
+            }
+          }
+        },
+        "807799": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 1,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 13,
+              "rate": 0.846
+            }
+          }
+        },
+        "668670": {
+          "starts": 3,
+          "games": 14,
+          "rate": 0.214,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 1,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 3,
+              "games": 13,
+              "rate": 0.231
+            }
+          }
+        }
+      }
+    },
+    "Chicago Cubs": {
+      "games": 14,
+      "players": {
+        "621438": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 6,
+              "games": 8,
+              "rate": 0.75
+            }
+          }
+        },
+        "624424": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 6,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "664023": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "608324": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "699393": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "691718": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "665804": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 6,
+              "rate": 0.333
+            },
+            "R": {
+              "starts": 6,
+              "games": 8,
+              "rate": 0.75
+            }
+          }
+        },
+        "673548": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "701649": {
+          "starts": 4,
+          "games": 14,
+          "rate": 0.286,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 6,
+              "rate": 0.167
+            },
+            "R": {
+              "starts": 3,
+              "games": 8,
+              "rate": 0.375
+            }
+          }
+        },
+        "621020": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "663538": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "683737": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "608348": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 4,
+              "games": 8,
+              "rate": 0.5
+            }
+          }
+        },
+        "682634": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 6,
+              "rate": 0.167
+            },
+            "R": {
+              "starts": 0,
+              "games": 8,
+              "rate": 0.0
+            }
+          }
+        },
+        "681909": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 6,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 1,
+              "games": 8,
+              "rate": 0.125
+            }
+          }
+        }
+      }
+    },
+    "Cincinnati Reds": {
+      "games": 14,
+      "players": {
+        "682829": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 12,
+              "games": 12,
+              "rate": 1.0
+            }
+          }
+        },
+        "701398": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 12,
+              "games": 12,
+              "rate": 1.0
+            }
+          }
+        },
+        "669911": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 2,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 5,
+              "games": 12,
+              "rate": 0.417
+            }
+          }
+        },
+        "682622": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 12,
+              "rate": 0.667
+            }
+          }
+        },
+        "680574": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 12,
+              "games": 12,
+              "rate": 1.0
+            }
+          }
+        },
+        "663647": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 12,
+              "rate": 0.833
+            }
+          }
+        },
+        "670770": {
+          "starts": 6,
+          "games": 14,
+          "rate": 0.429,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 2,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 12,
+              "rate": 0.5
+            }
+          }
+        },
+        "624431": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 3,
+              "games": 12,
+              "rate": 0.25
+            }
+          }
+        },
+        "553993": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 12,
+              "rate": 0.917
+            }
+          }
+        },
+        "663886": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 2,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 12,
+              "rate": 0.917
+            }
+          }
+        },
+        "668709": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 12,
+              "games": 12,
+              "rate": 1.0
+            }
+          }
+        },
+        "667472": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 12,
+              "rate": 0.75
+            }
+          }
+        },
+        "699302": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 2,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 8,
+              "games": 12,
+              "rate": 0.667
+            }
+          }
+        },
+        "671155": {
+          "starts": 4,
+          "games": 14,
+          "rate": 0.286,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 2,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 3,
+              "games": 12,
+              "rate": 0.25
+            }
+          }
+        },
+        "663993": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 2,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 2,
+              "games": 12,
+              "rate": 0.167
+            }
+          }
+        }
+      }
+    },
+    "Cleveland Guardians": {
+      "games": 14,
+      "players": {
+        "800050": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "595978": {
+          "starts": 7,
+          "games": 14,
+          "rate": 0.5,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 2,
+              "games": 8,
+              "rate": 0.25
+            }
+          }
+        },
+        "663993": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 6,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "683953": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "677587": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "666176": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "608070": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "680757": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "682657": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "656555": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 4,
+              "games": 8,
+              "rate": 0.5
+            }
+          }
+        },
+        "694197": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 6,
+              "games": 8,
+              "rate": 0.75
+            }
+          }
+        },
+        "672275": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 6,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "690984": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 4,
+              "games": 8,
+              "rate": 0.5
+            }
+          }
+        },
+        "672356": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 6,
+              "rate": 0.167
+            },
+            "R": {
+              "starts": 1,
+              "games": 8,
+              "rate": 0.125
+            }
+          }
+        },
+        "700932": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 6,
+              "rate": 0.167
+            },
+            "R": {
+              "starts": 1,
+              "games": 8,
+              "rate": 0.125
+            }
+          }
+        },
+        "681807": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 6,
+              "rate": 0.167
+            },
+            "R": {
+              "starts": 0,
+              "games": 8,
+              "rate": 0.0
+            }
+          }
+        }
+      }
+    },
+    "Colorado Rockies": {
+      "games": 14,
+      "players": {
+        "666160": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "691182": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 3,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 2,
+              "games": 11,
+              "rate": 0.182
+            }
+          }
+        },
+        "664983": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "687859": {
+          "starts": 7,
+          "games": 14,
+          "rate": 0.5,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 3,
+              "rate": 0.333
+            },
+            "R": {
+              "starts": 6,
+              "games": 11,
+              "rate": 0.545
+            }
+          }
+        },
+        "650489": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 11,
+              "rate": 0.909
+            }
+          }
+        },
+        "694249": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 11,
+              "rate": 1.0
+            }
+          }
+        },
+        "687597": {
+          "starts": 7,
+          "games": 14,
+          "rate": 0.5,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 3,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 5,
+              "games": 11,
+              "rate": 0.455
+            }
+          }
+        },
+        "664954": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 3,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 11,
+              "rate": 0.818
+            }
+          }
+        },
+        "678662": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 11,
+              "rate": 0.909
+            }
+          }
+        },
+        "681393": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 3,
+              "rate": 0.333
+            },
+            "R": {
+              "starts": 4,
+              "games": 11,
+              "rate": 0.364
+            }
+          }
+        },
+        "691728": {
+          "starts": 4,
+          "games": 14,
+          "rate": 0.286,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 3,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 4,
+              "games": 11,
+              "rate": 0.364
+            }
+          }
+        },
+        "681198": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 11,
+              "rate": 0.909
+            }
+          }
+        },
+        "696100": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 11,
+              "rate": 0.636
+            }
+          }
+        },
+        "691720": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 11,
+              "rate": 0.545
+            }
+          }
+        },
+        "671289": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 3,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 3,
+              "games": 11,
+              "rate": 0.273
+            }
+          }
+        },
+        "666397": {
+          "starts": 3,
+          "games": 14,
+          "rate": 0.214,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 3,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 3,
+              "games": 11,
+              "rate": 0.273
+            }
+          }
+        },
+        "686668": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 3,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 1,
+              "games": 11,
+              "rate": 0.091
+            }
+          }
+        }
+      }
+    },
+    "Detroit Tigers": {
+      "games": 14,
+      "players": {
+        "814430": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 5,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 1,
+              "games": 9,
+              "rate": 0.111
+            }
+          }
+        },
+        "656716": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "701678": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 7,
+              "games": 9,
+              "rate": 0.778
+            }
+          }
+        },
+        "680664": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 6,
+              "games": 9,
+              "rate": 0.667
+            }
+          }
+        },
+        "595879": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 5,
+              "rate": 0.6
+            },
+            "R": {
+              "starts": 7,
+              "games": 9,
+              "rate": 0.778
+            }
+          }
+        },
+        "805808": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "679529": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "701162": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 4,
+              "games": 9,
+              "rate": 0.444
+            }
+          }
+        },
+        "650402": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "703601": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "693307": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "690993": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "667452": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 0,
+              "games": 9,
+              "rate": 0.0
+            }
+          }
+        },
+        "681546": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 7,
+              "games": 9,
+              "rate": 0.778
+            }
+          }
+        },
+        "682985": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 5,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 9,
+              "rate": 0.889
+            }
+          }
+        }
+      }
+    },
+    "Houston Astros": {
+      "games": 14,
+      "players": {
+        "670623": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 12,
+              "games": 12,
+              "rate": 1.0
+            }
+          }
+        },
+        "669397": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 12,
+              "rate": 0.667
+            }
+          }
+        },
+        "701358": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 12,
+              "rate": 0.917
+            }
+          }
+        },
+        "662139": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 12,
+              "rate": 0.833
+            }
+          }
+        },
+        "514888": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 12,
+              "rate": 0.917
+            }
+          }
+        },
+        "666211": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 2,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 12,
+              "games": 12,
+              "rate": 1.0
+            }
+          }
+        },
+        "665161": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 12,
+              "games": 12,
+              "rate": 1.0
+            }
+          }
+        },
+        "664774": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 2,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 10,
+              "games": 12,
+              "rate": 0.833
+            }
+          }
+        },
+        "572233": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 12,
+              "games": 12,
+              "rate": 1.0
+            }
+          }
+        },
+        "673237": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 11,
+              "games": 12,
+              "rate": 0.917
+            }
+          }
+        },
+        "670541": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 12,
+              "games": 12,
+              "rate": 1.0
+            }
+          }
+        },
+        "676369": {
+          "starts": 3,
+          "games": 14,
+          "rate": 0.214,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 2,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 2,
+              "games": 12,
+              "rate": 0.167
+            }
+          }
+        },
+        "543877": {
+          "starts": 6,
+          "games": 14,
+          "rate": 0.429,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 2,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 12,
+              "rate": 0.5
+            }
+          }
+        },
+        "676694": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 2,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 1,
+              "games": 12,
+              "rate": 0.083
+            }
+          }
+        },
+        "701305": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 2,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 2,
+              "games": 12,
+              "rate": 0.167
+            }
+          }
+        },
+        "828599": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 2,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 2,
+              "games": 12,
+              "rate": 0.167
+            }
+          }
+        }
+      }
+    },
+    "Kansas City Royals": {
+      "games": 14,
+      "players": {
+        "695600": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "686475": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 4,
+              "games": 8,
+              "rate": 0.5
+            }
+          }
+        },
+        "686555": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "521692": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 8,
+              "rate": 0.75
+            }
+          }
+        },
+        "679845": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "670231": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "686681": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "516782": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 3,
+              "games": 8,
+              "rate": 0.375
+            }
+          }
+        },
+        "571912": {
+          "starts": 4,
+          "games": 14,
+          "rate": 0.286,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 0,
+              "games": 8,
+              "rate": 0.0
+            }
+          }
+        },
+        "664728": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "695506": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            }
+          }
+        },
+        "677951": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            },
+            "R": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            }
+          }
+        },
+        "668942": {
+          "starts": 5,
+          "games": 14,
+          "rate": 0.357,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 6,
+              "rate": 0.333
+            },
+            "R": {
+              "starts": 3,
+              "games": 8,
+              "rate": 0.375
+            }
+          }
+        },
+        "657041": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 6,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 1,
+              "games": 8,
+              "rate": 0.125
+            }
+          }
+        }
+      }
+    },
+    "Los Angeles Dodgers": {
+      "games": 14,
+      "players": {
+        "666163": {
+          "starts": 7,
+          "games": 14,
+          "rate": 0.5,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 8,
+              "rate": 0.375
+            },
+            "R": {
+              "starts": 4,
+              "games": 6,
+              "rate": 0.667
+            }
+          }
+        },
+        "663656": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
+            }
+          }
+        },
+        "571970": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            },
+            "R": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            }
+          }
+        },
+        "518692": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            },
+            "R": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            }
+          }
+        },
+        "676439": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 8,
+              "rate": 0.625
+            },
+            "R": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            }
+          }
+        },
+        "669242": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            }
+          }
+        },
+        "660271": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            }
+          }
+        },
+        "606192": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            }
+          }
+        },
+        "681624": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            }
+          }
+        },
+        "605141": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 8,
+              "games": 8,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
+            }
+          }
+        },
+        "500743": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 6,
+              "games": 8,
+              "rate": 0.75
+            },
+            "R": {
+              "starts": 3,
+              "games": 6,
+              "rate": 0.5
+            }
+          }
+        },
+        "571771": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 7,
+              "games": 8,
+              "rate": 0.875
+            },
+            "R": {
+              "starts": 1,
+              "games": 6,
+              "rate": 0.167
+            }
+          }
+        },
+        "669743": {
+          "starts": 6,
+          "games": 14,
+          "rate": 0.429,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 8,
+              "rate": 0.375
+            },
+            "R": {
+              "starts": 3,
+              "games": 6,
+              "rate": 0.5
+            }
+          }
+        },
+        "672613": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 8,
+              "rate": 0.125
+            },
+            "R": {
+              "starts": 0,
+              "games": 6,
+              "rate": 0.0
+            }
+          }
+        },
+        "687221": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 8,
+              "rate": 0.125
+            },
+            "R": {
+              "starts": 0,
+              "games": 6,
+              "rate": 0.0
+            }
+          }
+        }
+      }
+    },
+    "Washington Nationals": {
+      "games": 14,
+      "players": {
+        "691781": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 9,
+              "rate": 0.889
+            }
+          }
+        },
+        "694673": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 9,
+              "rate": 0.889
+            }
+          }
+        },
+        "682928": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "665953": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 9,
+              "rate": 0.778
+            }
+          }
+        },
+        "678391": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "686611": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "695734": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 9,
+              "rate": 1.0
+            }
+          }
+        },
+        "677588": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 8,
+              "games": 9,
+              "rate": 0.889
+            }
+          }
+        },
+        "695670": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 4,
+              "games": 9,
+              "rate": 0.444
+            }
+          }
+        },
+        "696285": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 9,
+              "rate": 0.778
+            }
+          }
+        },
+        "660688": {
+          "starts": 9,
+          "games": 14,
+          "rate": 0.643,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 5,
+              "rate": 0.2
+            },
+            "R": {
+              "starts": 8,
+              "games": 9,
+              "rate": 0.889
+            }
+          }
+        },
+        "683083": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 9,
+              "rate": 0.778
+            }
+          }
+        },
+        "687605": {
+          "starts": 7,
+          "games": 14,
+          "rate": 0.5,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
+            },
+            "R": {
+              "starts": 3,
+              "games": 9,
+              "rate": 0.333
+            }
+          }
+        },
+        "571945": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 5,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 1,
+              "games": 9,
+              "rate": 0.111
+            }
+          }
+        },
+        "695578": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 5,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 2,
+              "games": 9,
+              "rate": 0.222
+            }
+          }
+        }
+      }
+    },
+    "New York Mets": {
+      "games": 14,
+      "players": {
+        "620443": {
+          "starts": 7,
+          "games": 14,
+          "rate": 0.5,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 4,
+              "rate": 0.75
+            },
+            "R": {
+              "starts": 4,
+              "games": 10,
+              "rate": 0.4
+            }
+          }
+        },
+        "666182": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "683146": {
+          "starts": 10,
+          "games": 14,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 4,
+              "rate": 0.25
+            },
+            "R": {
+              "starts": 9,
+              "games": 10,
+              "rate": 0.9
+            }
+          }
+        },
+        "701807": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 10,
+              "rate": 0.9
+            }
+          }
+        },
+        "596019": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "593871": {
+          "starts": 8,
+          "games": 14,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 4,
+              "rate": 0.25
+            },
+            "R": {
+              "starts": 7,
+              "games": 10,
+              "rate": 0.7
+            }
+          }
+        },
+        "676724": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 4,
+              "rate": 0.75
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "673357": {
+          "starts": 12,
+          "games": 14,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 8,
+              "games": 10,
+              "rate": 0.8
+            }
+          }
+        },
+        "805999": {
+          "starts": 14,
+          "games": 14,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 10,
+              "games": 10,
+              "rate": 1.0
+            }
+          }
+        },
+        "682626": {
+          "starts": 11,
+          "games": 14,
+          "rate": 0.786,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 7,
+              "games": 10,
+              "rate": 0.7
+            }
+          }
+        },
+        "665506": {
+          "starts": 6,
+          "games": 14,
+          "rate": 0.429,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 4,
+              "rate": 0.25
+            },
+            "R": {
+              "starts": 5,
+              "games": 10,
+              "rate": 0.5
+            }
+          }
+        },
+        "543760": {
+          "starts": 13,
+          "games": 14,
+          "rate": 0.929,
+          "vs": {
+            "L": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 9,
+              "games": 10,
+              "rate": 0.9
+            }
+          }
+        },
+        "672356": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 4,
+              "rate": 0.25
+            },
+            "R": {
+              "starts": 1,
+              "games": 10,
+              "rate": 0.1
+            }
+          }
+        },
+        "676572": {
+          "starts": 1,
+          "games": 14,
+          "rate": 0.071,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 4,
+              "rate": 0.25
+            },
+            "R": {
+              "starts": 0,
+              "games": 10,
+              "rate": 0.0
+            }
+          }
+        },
+        "621438": {
+          "starts": 2,
+          "games": 14,
+          "rate": 0.143,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 4,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 2,
+              "games": 10,
+              "rate": 0.2
+            }
+          }
+        }
+      }
+    }
+  }
+}
