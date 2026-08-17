@@ -10,6 +10,143 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — dead code cleared, and what is deliberately NOT fixed. 2026-08-12 (close)
+
+**5 files. Suite 88, FAILING: none.**
+
+### DELETED, promised at the start of the day and not delivered until now
+
+- `calibration.implied_pct()` — zero references anywhere including
+  tests. It converted American odds to an implied percentage; nothing in
+  this app has ever had a price to convert.
+- `slate_guard.today_et()` — zero references, superseded by
+  `today_for(league)`.
+
+**Deleting `today_et` ORPHANED `EASTERN`,** which was its only consumer
+and then sat defined-and-unused with a comment still pointing at it.
+That is the shape this kind of cleanup usually takes: removing a
+function leaves its constants behind, and the second pass is the one
+people skip. `EASTERN` is gone too, and the comment that referenced it
+now says which module actually holds one — slate_guard holds no timezone
+of its own, every zone comes from the league table, so a league's
+timezone is stated in exactly one place instead of two that can
+disagree.
+
+Also trimmed: `import json` in kbo_probables_probe, `timedelta` in
+kbo_fragment_probe. The remaining `from __future__ import annotations`
+hits in the scan are false positives.
+
+### NOT FIXED, ON PURPOSE — read before "finishing" these
+
+**1. The WNBA form band.** It saturates: 75th percentile of 3PM form is
+94.9, the 90th is exactly 100. The defect is real and measured. The FIX
+is not, because it requires choosing a new band, and the raw deviation
+distribution needed to choose one honestly has not been printed yet —
+`wnba_props_probe.py` now reports it (with the 10th percentile, so both
+edges of a band are visible) but has not been re-run since.
+
+Picking a nicer-looking number here is precisely what produced three
+broken colour scales earlier today. **Run the probe, read the raw dev %
+rows, then set the band per stat** — and consider whether a stat whose
+typical line is 1.0 should use a percentage band at all.
+
+**2. Consistency cannot reach 100 and form can.** Consistency tops out
+near 70 league-wide. So the effective weight of form at the top of the
+range exceeds its nominal 25%. Fixing this means rescaling a component,
+which changes every WNBA score, and it should be done together with (1)
+rather than twice.
+
+**3. `hr_intent_pct` and `hr_threat_pct` are published and read by
+nothing.** Verified this time: no dynamic `_pct` access exists in any
+view. They are still LEFT IN — deleting parquet columns has downstream
+reach this repo cannot see from a grep, and they cost almost nothing.
+Decide deliberately, not as cleanup.
+
+**4. The 103 `hr_research` rows logged before the afternoon fix** lack
+`game_pk`, `edge_raw`, `AvgEV` and `floors_met`. Nothing to backfill:
+the board state and the thresholds that produced them are gone. They
+remain valid for score-versus-outcome.
+
+### THE STATE TO COME BACK TO
+
+Nothing is queued. `hr_research_log` runs at 1, 5 and 7 PM and grades
+each morning after the nightly. The next real step is **three to four
+weeks of graded bat-nights**, then refit the HR axis weights and re-set
+the nine floors against outcomes instead of choosing them.
+
+Everything decided today was decided by measurement, and the two things
+above are unfinished for exactly that reason — there is no measurement
+for them yet.
+
+---
+
+## PICK UP HERE — WNBA measured, and the props form component saturates. 2026-08-12 (final)
+
+**3 files. Suite 88, FAILING: none.**
+
+### THE WNBA BAR, MEASURED (123 qualified players of 308)
+
+| stat | CONSISTENCY median | 75th | 90th | **league max** |
+|---|---|---|---|---|
+| Points | 33.3 | 41.8 | 50.3 | 63.6 |
+| Rebounds | 28.5 | 38.2 | 50.3 | 70.9 |
+| Assists | 27.3 | 36.4 | 48.8 | 62.4 |
+| PRA | 40.6 | 50.3 | 57.3 | 69.7 |
+| 3PM | 18.2 | 29.6 | 43.8 | 68.5 |
+
+Written into READING_THE_BOARDS. **A consistency score of 50 is a strong
+reading, not a mediocre one** — nobody in the league exceeds ~71 and the
+medians sit in the twenties and thirties. The bar differs per stat: 45
+is top-decile on 3PM and ordinary on PRA.
+
+### TWO PROBLEMS THE FIRST RUN EXPOSED. NEITHER IS FIXED, ON PURPOSE.
+
+**1. FORM SATURATES ON LOW-COUNT STATS.** `form` scales
+`(l10 - season) / season * 100` across a +/-25% band. For 3PM, where a
+typical line is 1.0, going 1.0 -> 1.4 is +40% and clamps to 100.
+Measured: the 75th percentile of 3PM form is **94.9** and the 90th is
+**exactly 100**. A quarter of the league pinned at the ceiling of a
+component means that component has stopped separating anyone.
+
+This is the Clears% defect in a new place: a fixed band chosen by
+eye, applied to a quantity whose real spread nobody measured.
+
+**2. CONSISTENCY CANNOT REACH 100 AND FORM CAN.** Consistency tops out
+near 70 league-wide; form regularly hits 100. So although the board
+weights consistency 35% and form 25%, **at the top of the range form has
+more room to move a score than consistency does.** Nominal weights and
+effective weights are not the same thing, and the docstring describes
+the nominal ones.
+
+**Why nothing was changed:** picking a nicer-looking band is exactly
+what produced three broken colour scales earlier today. The probe now
+also reports the RAW deviation percentages (and the 10th percentile, so
+both edges of a band are visible — a median/75th/90th table only shows
+one). Set the band from that distribution, per stat, and consider
+whether a stat with a typical line of 1.0 should use a percentage band
+at all.
+
+**The prediction I got wrong, recorded because it is the useful part:**
+I told the user form would sit near 50 by construction, since it
+measures a player against her own baseline. Measured medians run 50 to
+58 with a saturating upper tail. The reasoning was sound and the number
+was not — which is the argument for the probe existing.
+
+### STATE OF PLAY
+
+Nothing structural is queued. `hr_research_log` runs nightly; the honest
+next step is three to four weeks of graded bat-nights, then refit the HR
+axis weights and re-set the floors against outcomes rather than
+choosing them. The WNBA form band wants the same treatment: measure,
+then set.
+
+READING_THE_BOARDS.md is complete — every "measure this yourself" in it
+is now a real number.
+
+---
+
+---
+
 ## PICK UP HERE — probe crash fixed, Daily 13 docstring. 2026-08-12 (last)
 
 **3 files. Suite 88, FAILING: none.** Control confirmed red.
