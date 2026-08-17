@@ -41,7 +41,13 @@ _STAT_KEY = {
 _WIN_N = {"L25": 25, "L15": 15, "L5": 5}
 
 
-@st.cache_data(ttl=1800, max_entries=32, show_spinner=False)
+# A MISS HERE IS A NETWORK ROUND-TRIP, not a disk read.
+#
+# The trend picker walks a lineup, and a research session walks the
+# slate: ~270 bats across fifteen cards. At 32 slots every bat you go
+# back to re-hits statsapi. Payload is a small JSON string, so holding
+# a slate of them costs a few MB.
+@st.cache_data(ttl=1800, max_entries=512, show_spinner=False)
 def _game_log_json(batter_id: int, season: int) -> str:
     try:
         data = _get_json(
