@@ -139,6 +139,106 @@ measurement clock.
 
 ---
 
+## PICK UP HERE — the longest window on the card was under the stabilisation point. 2026-08-17 (3)
+
+**Suite 108, FAILING: none.** Seven negative controls red by exit code.
+One existing test went red on a CORRECT change and was rewritten — that
+is section 3.
+
+### 1. THE PROBLEM: 25 GAMES IS ~110 PA
+
+The Game Card's longest batter window was Last 25 Games / Last 60 PA.
+Against the published stabilisation points:
+
+    HR rate       170 PA        <- the longest window was UNDER this
+    ISO           160 AB        <- and this
+    HR/FB          50 FB
+    barrel/EV/LA   50 BBE       (~18 games — well covered already)
+
+So every power read on the lineup table was taken on a sample too thin
+for the stat being read. The contact-quality columns were fine; the
+outcome-shaped ones were not, and they rendered in the same font.
+
+Added, batter side: **Last 75 / Last 50 Games** and **Last 300 / 250 /
+200 PA**. Ask in PA when the target is a PA count — games-to-PA moves
+with playing time, so a platoon bat's 50 games is ~150 PA where a
+regular's is ~215.
+
+Pitcher splits went Season / L10 / L5 / L3 / Last game. Added **L25 /
+L20 / L15** (~140 / 110 / 85 IP).
+
+### 2. WHAT THE PITCHER WINDOWS ARE NOT FOR
+
+Everything on the pitcher side that stabilises does so around **70
+balls in play — five or six starts**. L15, L20 and L25 are all well
+past it, so the longer two buy no extra stability, only more April.
+**L15 is the one to use.**
+
+And the number a long pitcher window LOOKS like it should give you is
+the one it cannot: a pitcher's HR rate needs ~1,320 batters faced,
+HR/FB ~400 fly balls. That is 200+ innings, more than a season. **No
+window offerable in-season makes HR-allowed reliable.** Use these for
+the batted-ball profile — FB%, hard contact allowed, what the arsenal
+does — which is what zone_adj already leans on. The comment above
+_sw_opts says this so the next reader does not have to rediscover it.
+
+### 3. A TEST FROZE THE MENU INSTEAD OF THE PROPERTY
+
+`test_pitcher_splits_window` asserted
+`set(opts.values()) == {season, l10, l5, l3, l1}` — exact equality. It
+went red the moment a window was ADDED, which is a correct change
+failing a test that had pinned the wrong thing.
+
+Rewritten as a floor: the short windows must SURVIVE (they are the "is
+he right, right now" read the control exists for), the long ones must
+be present, and everything offered must really slice. **Adding a window
+is not a regression; losing one is.** Both directions have controls —
+dropping L3 and dropping L15 each fail it now.
+
+Its 12-game fixture also made a correct L25 look like a no-op, so the
+frame builder is parameterised and section 2 measures against 60 games.
+Same bug shape in the new test on its first run: the vacuity guard
+counted deduped window KEYS (14 across three controls) rather than the
+controls themselves. Guard the thing you mean.
+
+### 4. THE LONG WINDOWS LIE QUIETLY, AND THE CONTROL SAYS SO
+
+Every slice is a `tail()`. Ask for the last 250 PA from a rookie with
+90 and you get 90, correctly computed, under a label reading 250.
+Nothing errors, no rate is wrong — the sample is just a third of what
+the label claims, next to a veteran's real 250.
+
+This is the mirror of THIN_WINDOWS, so `LONG_WINDOWS` now exists beside
+it in recency_windows with that written down, the lineup control
+carries help text saying it, and a test asserts the help text still
+says it. Also worth remembering: **the parquet only holds this season.**
+In April every long window IS the season; by late August "Last 300 PA"
+and "season" converge for an everyday bat. These windows earn most from
+April to June.
+
+### FILES TOUCHED, 2026-08-17 (3)
+
+    app/engines/recency_windows.py       l20/l50/l75/l200/l250/l300 + LONG_WINDOWS
+    app/views/GameCard.py                both window controls + help text
+    tests/test_pitcher_splits_window.py  exact set -> floor; fixture parameterised
+    tests/test_long_windows.py           NEW
+
+Suite 107 -> 108.
+
+### NOT MEASURED — SAY IT OUT LOUD
+
+The stabilisation points above are PUBLISHED research, not measured on
+this model. Carleton has since warned that a stat at its stabilisation
+point is not thereby predictive of the NEXT sample of the same size.
+Which window best predicts an actual HR **for this model** is an open
+question the research log could answer — it already carries per-bat
+components and graded outcomes. **No window here is a measured default,
+and none is set as the default.** Season still is.
+
+Still standing: **do not touch HR Edge.** Rule 10.
+
+---
+
 ## PICK UP HERE — the morning lineup now says which parts it is unsure about. 2026-08-17 (2)
 
 **Suite 107, FAILING: none.** Eight negative controls, red by EXIT
@@ -1230,85 +1330,5 @@ Schwarber, Harper, Encarnacion-Strand). Four picks, not five — the
 
 Last four nights: 1/5, 1/5, 2/5, 0/4 = **4 of 19, ~21% against a 12%
 baseline.** Ahead of the league rate, and nineteen picks.
-
----
-
-## PICK UP HERE — every HTML table on the site shared one CSS selector. 2026-08-12 (late)
-
-**3 files (1 new test). Suite 90, FAILING: none.** Three controls red.
-
-### IT WAS NEVER THE COLOURS
-
-Reported as "the WNBA FG%/3P% columns grade backwards": 56.7 FG% rendered
-poor, 30.0 rendered elite, in a table captioned "higher is better".
-
-**They were not inverted.** An inversion is still ordered, and this was
-not — 0.0 rendered good on one team while 33.1 rendered elite on another.
-No value-based theory fits, and three were killed by measurement before
-the real one turned up:
-
-1. Fractions vs percentages — dead. `fg_pct` runs 0.0-100.0 consistently.
-2. Values arriving as strings — real (every stat column is `object`
-   dtype by design, so numbers sit flush under left-aligned headers) but
-   NOT the cause: `to_numeric` parses them, and the debug panel showed
-   `FG%: min=30.0 max=56.7 nulls=0/14`.
-3. The grader itself — dead, and decisively. Fed the exact 14-row Sky
-   frame, the Styler returns ELITE for 56.7 and POOR for 30.0. Correct
-   at both ends.
-
-### THE ACTUAL CAUSE
-
-pandas builds Styler selectors from `table_uuid`:
-
-    #T_{uuid}_row0_col10 { background-image: ... }
-
-`render_html_table` used `f"lc{key}"`, and **key defaults to `""`**. Of
-24 call sites only 9 pass a key at all. Every keyless table emitted CSS
-under `#T_lc_row*_col*` — identical selectors, equal specificity, so in
-one DOM **the last table rendered wins for all of them.**
-
-The WNBA team table is the worst case: it renders inside two nested
-loops (once per prop tab, once per side) under a single hardcoded
-`key="wnba_636"`, so a three-game slate painted dozens of grids all
-claiming the same selectors. Every team's table wore the colours
-computed for whichever rendered last. **GameCard has nine keyless tables
-on one page** with the same collision.
-
-That explains what nothing else could: FG% and 3P% matching each OTHER
-within a row (both taking col10/col11 from a different table where those
-landed in one tier), and MIN looking right most of the time (after the
-same sort, minutes correlate by row position across teams, so the wrong
-colours land plausibly).
-
-**Every colour in every one of these tables has been wrong** — just
-invisible in columns where teams happen to look alike.
-
-### THE FIX
-
-`uid = f"lc{key}_{next(_TABLE_SEQ)}"` — a module-level `itertools.count`.
-
-**`key` is now a readable LABEL, not the uniqueness mechanism.** A
-counter guarantees distinct selectors even when two callers pass the same
-key or none. Uniqueness must not depend on every future caller
-remembering to invent a name; this bug is the proof nobody sustains that.
-The key survives in the uuid so devtools shows
-`lcwnba_Points_away_7` rather than `lc_7`, and the WNBA call site now
-passes `f"wnba_{label}_{side}"`.
-
-No other call site needs touching — the counter covers them all.
-
-### THE DIAGNOSTIC THAT FOUND IT
-
-A temporary expander rendered ON THE PAGE (not to logs) printing
-`df.columns`, dtype, nulls, min/max and samples. Removed in this commit.
-Worth repeating as a technique: reading Render logs from a tablet is
-worse than looking at the table already open, and it took one tap to
-produce the `FG%: min=30.0 max=56.7` line that killed hypothesis 2.
-
-### NEXT
-Unchanged. Research page part 2 (the view, plus deciding where saved
-filter presets live), then WNBA. The per-game log table builds on the
-next nightly. Tomorrow's checkpoint is still
-`hr_research: graded N bat(s) for 2026-08-12`.
 
 ---
