@@ -40,11 +40,19 @@ _STAT_KEY = {"Strikeouts": "k", "Earned Runs": "er", "Hits Allowed": "ha",
 _WIN_N = {"Season": None, "L25": 25, "L10": 10, "L5": 5}
 
 
-@st.cache_data(ttl=1800, max_entries=32, show_spinner=False)
-def _game_log_json(batter_id: int, season: int) -> str:
+# A MISS HERE IS A NETWORK ROUND-TRIP, not a disk read. The picker
+# walks the slate's probables, so size it for the arms a session can
+# touch rather than for one board's worth.
+#
+# The parameter was named `batter_id` — copied from batter_trends —
+# on a function that only ever receives a PITCHER id. A right value
+# under a wrong label is the error nobody downstream can catch, so it
+# is renamed here. Its one caller passes positionally.
+@st.cache_data(ttl=1800, max_entries=256, show_spinner=False)
+def _game_log_json(pitcher_id: int, season: int) -> str:
     try:
         data = _get_json(
-            _URL.format(pid=batter_id),
+            _URL.format(pid=pitcher_id),
             params={"stats": "gameLog", "group": "pitching", "season": season},
         ) or {}
         stats = data.get("stats") or []
