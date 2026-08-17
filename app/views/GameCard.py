@@ -22,8 +22,9 @@ from engines.roster import get_live_team_roster, get_active_player_ids, get_all_
 from engines.statcast_engine import (
     get_pitcher_statcast, get_pitcher_advanced_splits, get_batter_profile_windowed, get_batter_vs_pitch_types,
     get_first_pitch_swing
-, get_batter_iso_vs_hand, hand_tag
+, get_batter_iso_vs_hand, hand_tag, get_pitcher_hand
 )
+from engines import lineup_lock
 from engines.savant_leaderboard import load_percentile_ranks
 from engines.live_sync import sync_latest_button
 from engines.batter_trends import render_batter_trend
@@ -688,8 +689,15 @@ def _render_bullpen_browser(_arsenal_bars, game):
                     else:
                         st.caption("No ID for that pitcher \u2014 no data to show.")
 
-def _resolve_lineup_batters(confirmed_lineup, lineup_confirmed, opposing_team):
-    """Tonight’s batters, from the confirmed or projected lineup."""
+def _resolve_lineup_batters(confirmed_lineup, lineup_confirmed, opposing_team,
+                            vs_hand=None):
+    """Tonight’s batters, from the confirmed or projected lineup.
+
+    vs_hand is the opposing STARTER's throwing hand. It is used only on
+    the projected path, to read each bat's start rate against that hand
+    — which is the half of the lineup that actually moves, and is
+    knowable in the morning because probables are announced a day
+    ahead."""
     if lineup_confirmed:
         batters = [p for p in confirmed_lineup if not p["is_pitcher"]]
     else:
@@ -771,6 +779,25 @@ def _resolve_lineup_batters(confirmed_lineup, lineup_confirmed, opposing_team):
                 f"below instead. This will switch to the real confirmed batting order automatically "
                 f"once MLB posts it."
             )
+
+        # WHICH OF THESE NINE IS ACTUALLY GOING TO PLAY.
+        #
+        # Everything above produces a real, honestly-labelled projected
+        # lineup, and every row in it looked equally certain. Measured
+        # on the research log, about 80% of a team's bats repeat from
+        # one game to the next — so roughly two of these nine are wrong
+        # by first pitch, and they are not random: the catcher, the
+        # platoon corner, the DH rotation.
+        #
+        # Read-only (engines/lineup_lock has no build path), so this
+        # costs one cached file read. Confirmed lineups skip it
+        # entirely: once MLB has posted the order there is nothing left
+        # to project.
+        if lineup_lock.available():
+            lineup_lock.attach(batters, opposing_team, vs_hand)
+            _cap = lineup_lock.caption(batters)
+            if _cap:
+                st.caption(_cap)
     return batters
 
 def _attach_batter_profiles(batter_profiles, batters):
@@ -1437,7 +1464,8 @@ with content_col:
     opposing_side = "home" if opposing_team == game["home"] else "away"
     confirmed_lineup, lineup_confirmed = get_confirmed_lineup(game.get("game_pk"), opposing_side)
 
-    batters = _resolve_lineup_batters(confirmed_lineup, lineup_confirmed, opposing_team)
+    batters = _resolve_lineup_batters(confirmed_lineup, lineup_confirmed, opposing_team,
+                                     vs_hand=get_pitcher_hand(pitcher_id) if pitcher_id else None)
 
     # HR Score / Hit Score / K Score come from a SEPARATE, real, live
     # source: MLB's own Statcast percentile rankings, matched by player
