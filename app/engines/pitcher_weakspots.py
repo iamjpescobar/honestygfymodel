@@ -168,7 +168,29 @@ def _xslg_of(sub):
     return None, 0
 
 
-@st.cache_data(ttl=3600, max_entries=16, show_spinner=False)
+# SIZED FOR A SLATE, NOT FOR ONE CARD.
+#
+# 16 was right when the only consumer was the weak-spots expander on
+# the card you were looking at. It is not right now — this function
+# gained callers and nobody resized it:
+#
+#   1. the weak-spots quadrant           (_render_pitcher_detail)
+#   2. the per-slot leak panel           (GameCard, sorted by leak)
+#   3. edge.py's zone-fit component, via zone_band_xslg — which runs
+#      PER BATTER, so every rated bat asks for its pitcher again
+#
+# Measured on a 30-starter slate: revisiting the first eight starters
+# after browsing the rest cost 291 ms of recomputation against 1.6 ms
+# warm, because all eight had been evicted. Nothing errors when this
+# happens; the page just gets slower the longer you use it, which is
+# the worst version on camera.
+#
+# Payload is a 2.4 KB JSON string, so 256 entries is ~0.6 MB — free
+# next to the frame caches in statcast_engine. This is standing rule
+# "when a function gains a caller, re-size its cache", and
+# tests/test_cache_sizing now checks it against the glob rather than
+# against the callers I happened to know about.
+@st.cache_data(ttl=3600, max_entries=256, show_spinner=False)
 def weak_spots_json(pitcher_id, window: str = "season") -> str:
     """All four reads for one pitcher. JSON string (pickle-safe)."""
     try:
