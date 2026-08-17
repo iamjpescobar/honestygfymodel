@@ -74,8 +74,14 @@ def last_n_bbe(df: pd.DataFrame, n: int) -> pd.DataFrame:
 
 WINDOW_LABELS = {
     "season": "This Season",
+    "l300": "Last 300",
+    "l250": "Last 250",
+    "l200": "Last 200",
+    "l75": "Last 75 Games",
     "l60": "Last 60 Games",
+    "l50": "Last 50 Games",
     "l25": "Last 25",
+    "l20": "Last 20",
     "l15": "Last 15",
     "l10": "Last 10",
     "l5": "Last 5",
@@ -103,10 +109,36 @@ WINDOW_LABELS = {
 THIN_WINDOWS = {"l1", "l3", "l5"}
 
 
+# THE LONG WINDOWS HAVE THE OPPOSITE PROBLEM, AND IT IS QUIETER.
+#
+# l50 / l75 / l200 / l250 / l300 were added 2026-08-17 for research that
+# wants a baseline past the point where the power stats carry real
+# signal — HR rate needs ~170 PA and ISO ~160 AB, so a 25-game window
+# (~110 PA) is under both.
+#
+# The failure mode is not a thin sample rendered as thick. It is a
+# window that SILENTLY RETURNS LESS THAN IT SAYS. Every slice below is
+# a tail(): ask for the last 250 PA from a rookie who has 90 and you get
+# 90, correctly computed, under a label that reads 250. Nothing errors
+# and no rate is wrong — the number is just built on a third of the
+# sample the label claims, and on a page where it sits in the same font
+# beside a veteran's real 250.
+#
+# Also worth knowing before setting one of these as a default: the
+# parquet only holds THIS season. Nothing here can reach back further,
+# so by late season "last 300 PA" and "season" converge for an everyday
+# bat, while in April every long window IS the season.
+#
+# Any control offering these has to say so. The Game Card's window
+# selector carries that note in its help text.
+LONG_WINDOWS = {"l50", "l75", "l200", "l250", "l300"}
+
+
 def apply_window(df: pd.DataFrame, window: str, unit: str) -> pd.DataFrame:
     """
-    Slices df by a named window ("season"/"l60"/"l25"/"l15"/"l10"/"l5"/
-    "l3"/"l1") and unit ("games"/"pa"/"bbe"). "season" returns df
+    Slices df by a named window ("season"/"l300"/"l250"/"l200"/"l75"/
+    "l60"/"l50"/"l25"/"l20"/"l15"/"l10"/"l5"/"l3"/"l1") and unit
+    ("games"/"pa"/"bbe"). "season" returns df
     unchanged — the full pull already covers the season since
     statcast_engine.py pulls from the season start by default.
 
@@ -118,7 +150,8 @@ def apply_window(df: pd.DataFrame, window: str, unit: str) -> pd.DataFrame:
     if window == "season" or df.empty:
         return df
 
-    n = {"l60": 60, "l25": 25, "l15": 15, "l10": 10,
+    n = {"l300": 300, "l250": 250, "l200": 200, "l75": 75, "l60": 60,
+         "l50": 50, "l25": 25, "l20": 20, "l15": 15, "l10": 10,
          "l5": 5, "l3": 3, "l1": 1}.get(window)
     if n is None:
         return df
