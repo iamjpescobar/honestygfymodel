@@ -2423,9 +2423,9 @@
     "2026-08-18": {
       "picks": [
         {
-          "id": "664761",
-          "name": "Alec Bohm",
-          "team": "PHI",
+          "id": "695506",
+          "name": "Jac Caglianone",
+          "team": "KC",
           "stat": null,
           "line": null,
           "result": null
@@ -2439,16 +2439,8 @@
           "result": null
         },
         {
-          "id": "695506",
-          "name": "Jac Caglianone",
-          "team": "KC",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "681082",
-          "name": "Bryson Stott",
+          "id": "664761",
+          "name": "Alec Bohm",
           "team": "PHI",
           "stat": null,
           "line": null,
@@ -2471,16 +2463,8 @@
           "result": null
         },
         {
-          "id": "665926",
-          "name": "Andr\u00e9s Gim\u00e9nez",
-          "team": "TOR",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "702222",
-          "name": "Justin Crawford",
+          "id": "681082",
+          "name": "Bryson Stott",
           "team": "PHI",
           "stat": null,
           "line": null,
@@ -2503,17 +2487,33 @@
           "result": null
         },
         {
-          "id": "630105",
-          "name": "Jake Cronenworth",
-          "team": "SD",
+          "id": "665926",
+          "name": "Andr\u00e9s Gim\u00e9nez",
+          "team": "TOR",
           "stat": null,
           "line": null,
           "result": null
         },
         {
-          "id": "691458",
-          "name": "Blaze Jordan",
-          "team": "STL",
+          "id": "666182",
+          "name": "Bo Bichette",
+          "team": "NYM",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "673548",
+          "name": "Seiya Suzuki",
+          "team": "CHC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "650489",
+          "name": "Willi Castro",
+          "team": "COL",
           "stat": null,
           "line": null,
           "result": null
@@ -2843,9 +2843,9 @@
     "2026-08-18": {
       "picks": [
         {
-          "id": "660271",
-          "name": "Shohei Ohtani",
-          "team": "Los Angeles Dodgers",
+          "id": "686948",
+          "name": "Drake Baldwin",
+          "team": "Atlanta Braves",
           "stat": null,
           "line": null,
           "result": null
@@ -3812,6 +3812,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-18": {
+      "picks": [
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "670541",
+          "name": "Yordan Alvarez",
+          "team": "Houston Astros",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "678246",
+          "name": "Miguel Vargas",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "808959",
+          "name": "Munetaka Murakami",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "677800",
+          "name": "Wilyer Abreu",
+          "team": "Boston Red Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
