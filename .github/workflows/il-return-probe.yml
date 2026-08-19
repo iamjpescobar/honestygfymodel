@@ -1,0 +1,39 @@
+name: IL return probe
+
+# Manual only. Measures whether a bat activated off the IL actually
+# starts that day, and whether PA-per-game separates the ones who do
+# from the ones who don't — which is the assumption the returning-bat
+# floor in app/views/GameCard.py rests on.
+#
+# Not a nightly step, on purpose: this is a measurement, not a feed. It
+# walks a month of transactions plus a boxscore per return, so it costs
+# a few hundred API calls. Re-run every few weeks — distributions drift,
+# which is what standing rule 1 says about every number here.
+#
+# Touches nothing: no commit, no release, no deploy hook. Read the run
+# log, then set _RET_MIN_PA and _RET_MIN_PA_PER_GAME in
+# app/views/GameCard.py from section 3 of its output and record in the
+# comment above them that they are measured.
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Lookback in days (default 30). Widen if the sample is thin."
+        required: false
+        default: "30"
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      # Names here, VERSION from requirements.txt via -c. A hand-pinned
+      # list drifts from production — the mistake intl-late-refresh.yml
+      # documents making and reverting.
+      - run: pip install -c requirements.txt requests
+      - name: Measure whether a returning bat starts that day
+        run: python il_return_probe.py ${{ inputs.days }}
