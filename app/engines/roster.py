@@ -369,6 +369,96 @@ def get_live_team_roster(team_name: str):
 
 
 @st.cache_data(ttl=300, max_entries=40, show_spinner=False)
+def get_recent_activations(team_name: str, days: int = 4):
+    """{pid: "Aug 19 — <MLB's own wording>"} for bats who just became
+    available.
+
+    WHY THIS EXISTS
+
+    The projected lineup is last game's posted nine INTERSECTED with the
+    active roster. An intersection can only ever REMOVE names. So a
+    regular activated off the IL today is not in last night's card, is
+    not added back by the active-roster filter, and appears nowhere on
+    the site — no row, no badge, no warning. O'Neil Cruz, 2026-08-19.
+
+    That is not a small miss. It is structurally guaranteed to hit the
+    exact player most worth talking about, because the bats that come
+    off the IL are the ones that went on it — the regulars. And it
+    cannot be recovered from usage data: a returning bat has zero starts
+    in any recent window, so every rate-based method scores him 0% and
+    leaves him out. The information lives in the roster MOVE, not in the
+    boxscores.
+
+    MLB publishes the move. This reads it.
+
+    ONE REQUEST PER TEAM, cached for five minutes like the roster call
+    beside it. That is affordable at render time; walking boxscores is
+    not, which is why lineup_lock is a nightly job and this is not.
+
+    FAILS OPEN. Any error returns {} and the caller falls through to
+    exactly the behaviour it had before. A returning bat missing from
+    the page is the bug this fixes; a page that won't load because
+    statsapi hiccuped would be a worse one.
+
+    `days` is deliberately short. This answers "did he just become
+    available", not "what has this team done lately" — a move from two
+    weeks ago is already reflected in the posted lineups.
+    """
+    team_id = _team_id(team_name)
+    if not team_id:
+        return {}
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+    today = datetime.now(ZoneInfo("America/New_York")).date()
+    start = today - timedelta(days=days)
+    resp = _get_json(
+        "https://statsapi.mlb.com/api/v1/transactions",
+        params={"teamId": team_id,
+                "startDate": start.isoformat(),
+                "endDate": today.isoformat()}) or {}
+
+    # Words that mean "this player just became available to start".
+    # Matched against MLB's own description text, case-insensitively.
+    #
+    # Deliberately broad, and deliberately NOT a list of what to exclude:
+    # a missed word costs a returning regular his row, which is the whole
+    # failure being fixed here. "Placed ... on the injured list" contains
+    # none of these, so the common opposite move is excluded by not
+    # matching rather than by a blacklist that has to stay complete.
+    RETURNED = ("activated", "reinstated", "recalled", "selected the contract",
+                "returned from")
+
+    out = {}
+    for tx in resp.get("transactions", []) or []:
+        pid = ((tx.get("person") or {}).get("id"))
+        desc = (tx.get("description") or "").strip()
+        when = (tx.get("date") or "")
+        if pid is None or not desc:
+            continue
+        if not any(w in desc.lower() for w in RETURNED):
+            continue
+        # LATEST MOVE WINS. A bat activated on the 17th and re-IL'd on
+        # the 18th must not read as available; the later row is a
+        # placement, does not match RETURNED, and so overwrites nothing —
+        # which is why the placement is tracked too.
+        prev = out.get(pid)
+        if prev is None or when >= prev[0]:
+            out[pid] = (when, desc)
+
+    # Second pass: anything placed BACK on the IL after its activation
+    # inside the same window drops out again.
+    for tx in resp.get("transactions", []) or []:
+        pid = ((tx.get("person") or {}).get("id"))
+        desc = (tx.get("description") or "").lower()
+        when = (tx.get("date") or "")
+        if pid in out and "injured list" in desc and "activated" not in desc \
+                and "reinstated" not in desc and when > out[pid][0]:
+            out.pop(pid, None)
+
+    return {str(pid): f"{when} \u2014 {desc}" for pid, (when, desc) in out.items()}
+
+
+@st.cache_data(ttl=300, max_entries=40, show_spinner=False)
 def get_last_starting_lineup(team_name: str):
     """
     The real 9 starters from this team's most recently COMPLETED game —
