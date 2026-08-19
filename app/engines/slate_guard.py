@@ -47,7 +47,7 @@ from zoneinfo import ZoneInfo
 # the bug that came from reading only one of them.
 #
 # MLB uses the repo path because its slate is written by
-# calibration_picks.py at 1, 5 and 7 PM ET — the only clock on which
+# calibration_picks.py across the day — the only clock on which
 # probable starters exist — and that job publishes no archive. Writing it
 # to app/data/ would have left it on the Actions runner to die with the
 # job: correct-looking code, a green run, and a file production never
@@ -72,7 +72,7 @@ _LEAGUES = {
     # MLB arrives last and is the odd one: its schedule is a live API
     # call, so for a long time no MLB slate existed on disk at all and
     # every board built one on demand. Home cannot do that (rule 5), so
-    # calibration_picks now writes one in CI at 1, 5 and 7 PM ET, and it
+    # calibration_picks now writes one in CI across the day, and it
     # goes through the same guard as every other league rather than
     # getting its own private staleness check.
     #
@@ -90,8 +90,8 @@ _LEAGUES = {
 #
 # The message used to say "the nightly build hasn't published since" for
 # every league. True for three of them and WRONG for MLB, whose slate is
-# written by slate-picks at 1, 5 and 7 PM ET because that is the only
-# clock on which probable starters exist. A stale MLB board would have
+# written by slate-picks across the day (10:35 AM through 7:05 PM ET)
+# because that is the only clock on which probable starters exist. A stale MLB board would have
 # sent whoever read it to debug nightly-data, which is working.
 #
 # The codebase already learned this once: the WNBA staleness threshold
@@ -114,12 +114,11 @@ _WRITER = {
 #
 # MLB is different because its slate needs PROBABLE STARTERS, and MLB
 # posts those one to three hours before first pitch. slate-picks
-# therefore runs at 1, 5 and 7 PM ET. Which means that from midnight
-# until 1 PM — THIRTEEN HOURS, over half the day — there is legitimately
-# no MLB slate for today, and the page was reporting it as
-# "the slate-picks job hasn't published since": the sentence for a broken
-# workflow, fired daily at a workflow that is fine, sending whoever read
-# it to debug something green.
+# therefore runs through the day rather than overnight, so for the hours
+# before its first run there is legitimately no MLB slate for today, and
+# the page was reporting it as "the slate-picks job hasn't published
+# since": the sentence for a broken workflow, fired daily at a workflow
+# that is fine, sending whoever read it to debug something green.
 #
 # This codebase has already made this mistake once. The WNBA staleness
 # warning said "the nightly fetch may be failing" through the All-Star
@@ -127,20 +126,28 @@ _WRITER = {
 # playing. The rule left behind: A CONFIDENT WRONG DIAGNOSIS IS WORSE
 # THAN NO MESSAGE.
 #
-# 13 duplicates the first cron in .github/workflows/slate-picks.yml
-# ("0 17 * * *" UTC). The duplication is real and deliberate — reading a
-# workflow file at request time to render a sentence is worse — so
-# tests/test_slate_guard.py pins the two together and fails if the cron
-# moves without this constant following.
+# 10 duplicates the FIRST cron in .github/workflows/slate-picks.yml
+# ("35 14 * * *" UTC = 10:35 AM ET). The duplication is real and
+# deliberate — reading a workflow file at request time to render a
+# sentence is worse — so tests/test_slate_guard.py pins the two together
+# and fails if the cron moves without this constant following.
+#
+# WHY IT MOVED FROM 13 TO 10: the first run used to be 17:00 UTC (1 PM
+# ET), which is AFTER first pitch on any getaway-day slate — a 12:35 PM
+# start has had confirmed lineups since roughly 9:35 AM. Two morning runs
+# were added so an early slate gets recorded before it begins, and this
+# constant follows the earliest of them. The gentle "not due yet" window
+# is correspondingly three hours shorter, which is correct: from 10:35 AM
+# onward a missing MLB slate really is worth reporting.
 #
 # DST caveat, stated because it is a real one-hour hole: the cron is
-# fixed in UTC, so 17:00 UTC is 1 PM in EDT and noon in EST. Under EST
-# the job runs an hour before this threshold, so a job that RUNS AND
-# FAILS at noon gets the gentle message for one hour instead of the loud
+# fixed in UTC, so 14:35 UTC is 10:35 AM in EDT and 9:35 AM in EST. Under
+# EST the job runs an hour before this threshold, so a job that RUNS AND
+# FAILS at 9:35 gets the gentle message for one hour instead of the loud
 # one. That is the safe direction to be wrong in — an hour late to shout
 # beats shouting every morning — but it is not free, so it is written
 # down rather than discovered.
-_FIRST_BUILD_HOUR = {"mlb": 13}
+_FIRST_BUILD_HOUR = {"mlb": 10}
 
 
 def _cfg(league: str):
