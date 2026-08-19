@@ -28,7 +28,8 @@ from engines import lineup_lock
 from engines.savant_leaderboard import load_percentile_ranks
 from engines.live_sync import sync_latest_button
 from engines.batter_trends import render_batter_trend
-from engines.bvp import render_bvp_card, render_zone_map, render_spray_chart
+from engines.bvp import (render_bvp_card, render_zone_map, render_spray_chart,
+                         career_bvp_short, prefetch_career_bvp)
 from engines.edge import edge_components, pen_context, bvp_component
 from engines.pick_badges import compute_badges, render_badge_row
 from engines.pitcher_weakspots import get_weak_spots, XSLG_HOT, XSLG_COLD
@@ -1204,7 +1205,7 @@ def _stat_row(name, bats_label, profile, *, boards="", form_pct=None, form_dir=N
               matchup=None, slam=None,
               hr_edge=None, hr_score=None, hit_score=None, form_deltas=None,
               edge_cell=None, edge_label="", edge_tier="neutral",
-              confidence="", batting_order=None):
+              confidence="", batting_order=None, bvp=""):
     """One table row. Score/matchup fields are optional so a
                     switch hitter's non-matchup side can show stats only (its
                     HR/Hit scores would be for the wrong platoon side, so we
@@ -1253,6 +1254,23 @@ def _stat_row(name, bats_label, profile, *, boards="", form_pct=None, form_dir=N
         # another page.
         "Boards": boards,
         "Form": form_engine.form_cell(form_pct, form_dir),
+        # CAREER vs TONIGHT'S STARTER — "0-6, 3K".
+        #
+        # Moved out of the per-batter expander, where the one column
+        # about THIS matchup specifically was the hardest thing on the
+        # page to reach. Blank rather than a dash when there is no
+        # history: most bats have never faced tonight's starter, and a
+        # column of dashes reads as missing data instead of a clean no
+        # (same rule as Boards). Raw counts, no average — 0-for-6 is a
+        # fact about six at-bats and ".000" would invite confidence it
+        # has not earned; the edge.py tiers that let this move SLAM
+        # require 8-12 PA before they do anything.
+        #
+        # DECLARED HERE, DISPLAYED WITH THE VERDICTS. Position on the
+        # table comes from _COL_ORDER, not from where a key sits in this
+        # dict, so this lives below Form to keep Form adjacent to SLAM
+        # (tests/test_form_percentile) while rendering beside Boards.
+        "BvP": bvp,
         # HR and NEAR HR side by side, deliberately.
         #
         # NEAR HR counts balls hit hard enough AND at an angle to leave a
@@ -2126,6 +2144,24 @@ with content_col:
                 # the ADJUSTED number — real career ownership of this
                 # starter now moves a bat between tiers.
                 _name_to_id = {_rr["name"]: _rr.get("id") for _rr in ranked}
+                # WARM EVERY CAREER SPLIT AT ONCE, BEFORE THE LOOP.
+                #
+                # bvp_component below calls career_bvp once per batter,
+                # and each call is its own round-trip to MLB waiting on
+                # the last — eighteen sequential requests on every render
+                # of the page you spend the most time in. Daily 13 hit
+                # exactly this and already fixed it; the Game Card was
+                # never given the same treatment.
+                #
+                # Optimisation only: career_bvp still works if this never
+                # runs, it just goes back to waiting eighteen times in a
+                # row. Everything below reads the same cache either way.
+                if pitcher_id:
+                    try:
+                        prefetch_career_bvp(
+                            (_rr.get("id"), pitcher_id) for _rr in ranked)
+                    except Exception:
+                        pass
                 slam_bvp_cache = {}
                 for _nm, _sr in slam_cache.items():
                     _base = _sr.get("slam_score")
@@ -2299,6 +2335,10 @@ with content_col:
                         # hours before any board exists.
                         form_deltas={c: r.get(c) for c in form_engine.FORM_COLUMNS
                                      if r.get(c) is not None},
+                        # Warmed by the prefetch above, so this is a
+                        # cache hit rather than a round-trip.
+                        bvp=(career_bvp_short(r.get("id"), pitcher_id)
+                             if pitcher_id else ""),
                         edge_cell=edge_tag(tag_label, tag_tier),
                         edge_label=tag_label, edge_tier=tag_tier,
                         confidence=f"{conf_label} \u2014 n={sample}",
@@ -2403,6 +2443,10 @@ with content_col:
                         # and a spot-driven bat is the one that
                         # evaporates on a lineup change or a wind flip.
                         ["HR Edge", "HR Score", "Hit Score", "SLAM", "Boards",
+                         # Career vs tonight's starter — a verdict about
+                         # THIS matchup, so it sits with the other
+                         # verdicts rather than in the rate run.
+                         "BvP",
 
                          # --- is he that hitter RIGHT NOW ---------------
                          # Form beside its own magnitude. The percentile
