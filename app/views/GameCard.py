@@ -1099,17 +1099,57 @@ def _stat_row(name, bats_label, profile, *, boards="", form_pct=None, form_dir=N
         "AvgDist": avg_dist,
         "300+": dist_300,
         "350+": dist_350,
-        # NO ", 0" DEFAULTS ANYWHERE IN THIS ROW.
+        # THE THREE DENOMINATORS, TOGETHER.
+        #
+        # Every rate on this row is one of these three counts divided by
+        # something, and none of them was on the table. _COL_ORDER below
+        # has reserved a slot for PA since the column reorder — and
+        # READING_THE_BOARDS documents it twice ("65 PA and 543 PA sit
+        # in the same column"; "PA last - equal bats, take the one with
+        # 500 behind him") — but _stat_row never emitted the key, so
+        # _ordered's `if c in cols` filter dropped it silently and the
+        # documented column has never once rendered.
+        #
+        # They widen left to right, and each one is the denominator of a
+        # different family of columns:
+        #
+        #   Pitches  every pitch seen in the window. Denominator of
+        #            SwStr%, and the honest sample behind Whiff% and
+        #            anything read off swing decisions.
+        #   PA       plate appearances. Denominator of Brl/PA, and the
+        #            sample behind BA/ISO/SLG.
+        #   BIP      balls in play (Statcast's BBE — type == "X").
+        #            Denominator of Brl%, HH%, FB%, GB%, LD%,
+        #            SweetSpot%, HRWindow%, PullAir%, FB95% and
+        #            Clears% — over half this table.
+        #
+        # These are COUNTS, so 0 is a real measured value and stays 0.
+        # That is the opposite of the rule three lines down for the
+        # rates, and deliberately so: a 0.0 HH% is a fabricated
+        # measurement, while 0 balls in play is the true and useful
+        # reason every rate on that row is blank.
+        "Pitches": profile.get("Pitches"),
+        "PA": profile.get("PA"),
+        "BIP": profile.get("BBE"),
+        # NO ", 0" DEFAULTS ON ANY RATE IN THIS ROW.
         #
         # A missing BA is not a .000 BA, a missing HH% is
-        # not a 0.0 HH%. The engine now returns None for
+        # not a 0.0 HH%. The engine returns None for
         # anything it couldn't measure (see
         # _compute_batted_ball_metrics), and na_rep="N/A"
         # on the formatter below renders that honestly.
         # A zero-default here would have quietly undone
-        # that at the last step — this table has no PA
-        # column, so a fabricated 0.0 is indistinguishable
-        # from a measured one.
+        # that at the last step.
+        #
+        # This used to read "this table has no PA column,
+        # so a fabricated 0.0 is indistinguishable from a
+        # measured one." It now HAS one, three lines up,
+        # which makes the two cases distinguishable for the
+        # first time — a rate blank beside BIP 0 is missing
+        # data, and a rate blank beside BIP 40 is a real
+        # gap in what Statcast tracked. That is a reason to
+        # keep the rule, not to relax it: the counts explain
+        # the blanks, they do not license filling them in.
         "BA": profile.get("BA"),
         "xwOBA": profile.get("xwOBA"),
         "xSLG": profile.get("xSLG"),
@@ -2209,7 +2249,22 @@ with content_col:
                          # A .300 ISO on 65 PA and on 543 PA are not the
                          # same claim. It sits here as the veto, before
                          # the numbers it qualifies rather than after.
-                         "PA",
+                         #
+                         # Pitches and BIP flank it because PA alone is
+                         # the WRONG denominator for most of this table.
+                         # Brl%, HH%, FB%, GB%, LD%, SweetSpot%,
+                         # HRWindow%, PullAir%, FB95% and Clears% are all
+                         # per BALL IN PLAY, and a hitter with 200 PA can
+                         # have 90 or 140 balls in play depending on how
+                         # much he walks and whiffs. Reading those rates
+                         # against PA overstates the sample by a third.
+                         # Pitches is the widest and is what SwStr% and
+                         # the whiff numbers actually rest on.
+                         #
+                         # Widening left to right, so the eye reads the
+                         # three as one scale rather than three unrelated
+                         # counts.
+                         "Pitches", "PA", "BIP",
 
                          # --- the power claim: actual, then expected ----
                          # ISO first because it is SLG minus BA — power
@@ -2399,6 +2454,14 @@ with content_col:
                         # home runs. AvgDist too — a foot of precision on
                         # a projected landing point is false precision.
                         "HR": "{:.0f}", "NearHR": "{:.0f}",
+                        # SAMPLE SIZES, WHOLE. Without these three the
+                        # global .format(precision=2) in style_stat_table
+                        # renders them as 412.00 / 187.00 / 96.00 — the
+                        # exact failure the comment at the top of this
+                        # dict describes, and the one that caught PA
+                        # printing as 543.000000 the last time it was
+                        # briefly on this table.
+                        "Pitches": "{:.0f}", "PA": "{:.0f}", "BIP": "{:.0f}",
                         "300+": "{:.0f}", "350+": "{:.0f}",
                         "AvgDist": "{:.0f}", "L5 PA/G": "{:.1f}",
                         # SIGNED, always. These are the only columns on
@@ -2849,28 +2912,99 @@ with content_col:
                     for r in filtered:
                         vs_profile = get_batter_vs_pitch_types(r.get("id"), tuple(top_3_pitches), window=window_key, unit=unit_key)
                         pitches_seen = vs_profile.get("_pitches_seen", 0)
+                        # BIP IS THE SECOND SAMPLE, AND IT IS THE ONE
+                        # THAT MATTERS FOR FOUR OF THESE COLUMNS.
+                        #
+                        # Pitches Seen was the only sample shown, and it
+                        # is the wrong denominator for Brl%, HH%, FB% and
+                        # AvgEV — all four are per BALL IN PLAY. Against
+                        # three pitch types in a recent window a hitter
+                        # can easily see 60 pitches and put 9 of them in
+                        # play, and a barrel rate off 9 batted balls is
+                        # noise wearing a percentage sign. Pitches Seen
+                        # 60 looks like a usable sample; BIP 9 says what
+                        # it actually is.
+                        #
+                        # Whiff% stays governed by Pitches Seen, which is
+                        # why both columns are here rather than one
+                        # replacing the other.
+                        _bip = vs_profile.get("BBE") or 0
                         matchup_rows.append({
                             "Player": r["name"],
                             "Bats": r["bats"],
                             "Pitches Seen": pitches_seen,
+                            "BIP": _bip,
                             "xwOBA": vs_profile.get("xwOBA") if pitches_seen > 0 else None,
                             "ISO": vs_profile.get("ISO") if pitches_seen > 0 else None,
                             "Brl%": vs_profile.get("Brl %") if pitches_seen > 0 else None,
                             "HH%": vs_profile.get("HH %") if pitches_seen > 0 else None,
+                            # FB% AND AvgEV — the two halves of a home-run
+                            # ball, against the pitches he will actually
+                            # see tonight.
+                            #
+                            # The lineup table above carries both, but for
+                            # EVERYTHING he has faced. That is the wrong
+                            # question here. A hitter who lifts the ball
+                            # at 42% overall and 19% against sliders has a
+                            # slider problem, and only this table can show
+                            # it — the season number averages it away.
+                            # Read as a pair: FB% is whether he gets it in
+                            # the air off this stuff, AvgEV is whether
+                            # there is anything behind it when he does.
+                            # Neither alone is a power read (a 78 mph fly
+                            # ball is an out; a 104 mph grounder is a
+                            # single), which is exactly why HR Score
+                            # weights their intersection and not either
+                            # parent.
+                            #
+                            # Both gated on _bip, not pitches_seen: they
+                            # are batted-ball measurements, so a row with
+                            # pitches but no contact has genuinely not
+                            # measured them and must stay blank rather
+                            # than print whatever a zero-BBE division
+                            # produced.
+                            "FB%": vs_profile.get("FB %") if _bip > 0 else None,
+                            "AvgEV": vs_profile.get("AvgEV") if _bip > 0 else None,
                             "Whiff%": vs_profile.get("Whiff %") if pitches_seen > 0 else None,
                             "Zone Fit": (f'{r["zone_adj"]:+d}' if r.get("zone_adj") else "\u2014"),
                             "BvP (career)": r.get("bvp_line") or "\u2014",
                         })
                     matchup_df = pd.DataFrame(matchup_rows)
                     render_html_table(
-                        style_stat_table(matchup_df, favor_high=["xwOBA", "ISO", "Brl%", "HH%", "Zone Fit"], favor_low=["Whiff%"], gradient=True).format(
-                            {"xwOBA": "{:.3f}", "ISO": "{:.3f}", "Brl%": "{:.1f}", "HH%": "{:.1f}", "Whiff%": "{:.1f}"}, na_rep="\u2014"), key="gc_1809")
+                        style_stat_table(
+                            matchup_df,
+                            # Pitches Seen and BIP are deliberately NOT
+                            # graded. They are sample sizes, not skill:
+                            # colouring 140 pitches green and 40 red would
+                            # say the bat with more data is the better
+                            # matchup, which is a different claim and a
+                            # false one. They stay plain so they read as
+                            # the qualifier they are.
+                            favor_high=["xwOBA", "ISO", "Brl%", "HH%", "FB%",
+                                        "AvgEV", "Zone Fit"],
+                            favor_low=["Whiff%"], gradient=True).format(
+                            {"xwOBA": "{:.3f}", "ISO": "{:.3f}", "Brl%": "{:.1f}",
+                             "HH%": "{:.1f}", "Whiff%": "{:.1f}",
+                             "FB%": "{:.1f}",
+                             # mph, one decimal — how Statcast publishes
+                             # exit velocity and how the lineup table
+                             # above formats the same measurement.
+                             "AvgEV": "{:.1f}",
+                             # Counts, whole.
+                             "Pitches Seen": "{:.0f}", "BIP": "{:.0f}"},
+                            na_rep="\u2014"), key="gc_1809")
                     st.caption(
-                        "\"Pitches Seen\" is the real sample size behind each row \u2014 a low number is a real, honest "
-                        "small sample, not a hidden flaw. Blank cells mean this batter hasn't faced any of these "
-                        "specific pitch types in the selected window yet. BvP (career) is his real career line vs "
-                        "THIS starter (MLB official vs-player split) \u2014 the same history that now moves SLAM and "
-                        "the Matchup Edges tiers, per the tiers documented in engines/edge.py."
+                        "\"Pitches Seen\" and \"BIP\" are the two real sample sizes behind each row, and they "
+                        "govern different columns: Whiff% rests on pitches, while Brl%, HH%, FB% and AvgEV are "
+                        "all per BALL IN PLAY. A low number in either is a real, honest small sample, not a "
+                        "hidden flaw \u2014 60 pitches seen with 9 balls in play means the rates to the right are "
+                        "off nine swings. Blank cells mean this batter hasn't faced any of these specific pitch "
+                        "types in the selected window yet; a blank FB%/AvgEV beside a live Whiff% means he has "
+                        "faced them and simply hasn't put one in play. FB% and AvgEV are the two halves of a "
+                        "home-run ball against THIS arsenal \u2014 whether he gets it airborne, and whether there "
+                        "is anything behind it \u2014 and either alone is not a power read. BvP (career) is his "
+                        "real career line vs THIS starter (MLB official vs-player split) \u2014 the same history "
+                        "that moves SLAM and the Matchup Edges tiers, per the tiers documented in engines/edge.py."
                     )
 
         if table_rows:
