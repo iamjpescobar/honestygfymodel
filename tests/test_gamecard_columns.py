@@ -141,6 +141,10 @@ declared = _row_dict
 # caught PA rendering as 543.000000.
 NON_NUMERIC = {"Player", "Bats", "Matchup", "Edge", "EdgeLabel", "EdgeTier",
                "Confidence", "Form",
+               # "BvP" is a career line rendered as text ("0-6, 3K"), not
+               # a number. A float format applied to it would print the
+               # spec instead of the value, same as Form and Boards.
+               "BvP",
                # "Boards" is pre-rendered text like "HR13 \u00b7 H4" —
                # a rank and a board label glued together. A float format
                # applied to it would print the spec instead of the value,
