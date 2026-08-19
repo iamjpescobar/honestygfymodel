@@ -2533,17 +2533,17 @@
     "2026-08-19": {
       "picks": [
         {
-          "id": "660271",
-          "name": "Shohei Ohtani",
-          "team": "LAD",
+          "id": "630105",
+          "name": "Jake Cronenworth",
+          "team": "SD",
           "stat": null,
           "line": null,
           "result": null
         },
         {
-          "id": "630105",
-          "name": "Jake Cronenworth",
-          "team": "SD",
+          "id": "660271",
+          "name": "Shohei Ohtani",
+          "team": "LAD",
           "stat": null,
           "line": null,
           "result": null
@@ -2597,6 +2597,22 @@
           "result": null
         },
         {
+          "id": "666182",
+          "name": "Bo Bichette",
+          "team": "NYM",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664040",
+          "name": "Brandon Lowe",
+          "team": "PIT",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
           "id": "666018",
           "name": "Jonathan Aranda",
           "team": "TB",
@@ -2616,22 +2632,6 @@
           "id": "681082",
           "name": "Bryson Stott",
           "team": "PHI",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "677594",
-          "name": "Julio Rodr\u00edguez",
-          "team": "SEA",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "673548",
-          "name": "Seiya Suzuki",
-          "team": "CHC",
           "stat": null,
           "line": null,
           "result": null
@@ -3982,6 +3982,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-19": {
+      "picks": [
+        {
+          "id": "808959",
+          "name": "Munetaka Murakami",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "678246",
+          "name": "Miguel Vargas",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663586",
+          "name": "Austin Riley",
+          "team": "Atlanta Braves",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "621566",
+          "name": "Matt Olson",
+          "team": "Atlanta Braves",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664040",
+          "name": "Brandon Lowe",
+          "team": "Pittsburgh Pirates",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
