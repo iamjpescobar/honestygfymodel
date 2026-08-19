@@ -56,12 +56,36 @@ OUT_PATH = Path(__file__).resolve().parent / "data" / "mlb" / "lineup_lock.json"
 # The window is the number of a team's most recent COMPLETED games this
 # reads back over.
 #
-# 14 IS A STARTING VALUE, NOT A MEASURED ONE, and it is labelled that
-# way in the output so nothing downstream can quote it as settled.
-# lineup_lock_probe.py measures 7 / 14 / 21 against what actually
-# happened and prints which one predicts best; set this from that
-# output, not from this comment. Standing rule 1.
-WINDOW_GAMES = 14
+# 7 IS MEASURED. lineup_lock_probe.py ran on 2026-08-19 over 30 teams and
+# 9,417 bat-games and compared 7 / 14 / 21 against the naive baseline the
+# rate has to beat ("he started last game, so he starts tonight",
+# which agreed 81.7% of the time):
+#
+#   window   best accuracy   vs naive   top-to-bottom spread
+#      7         82.2%          +0.5            80.0 pts
+#     14         79.3%          -2.4            76.1 pts
+#     21         77.4%          -4.3            70.6 pts
+#
+# SEVEN IS THE ONLY WINDOW THAT BEATS THE BASELINE AT ALL, and it also
+# has the widest calibration spread, so the probe's own selection rule
+# ("widest spread that still beats the naive baseline") lands on it
+# unambiguously.
+#
+# 14 was the previous value and was a GUESS. It is 2.4 points WORSE than
+# simply copying last night's lineup — so for as long as it was set, this
+# whole build was a slower way of being wrong. That is the standing-rule-1
+# lesson in one number, and it is why nothing here gets set by eye.
+#
+# The split by opposing hand did NOT earn its complexity: it narrowed the
+# spread at every window (80.0 -> 74.7 at 7, 76.1 -> 73.7 at 14,
+# 70.6 -> 70.2 at 21). It is still computed and published, because the
+# per-hand counts are real and a reader can use them, but nothing should
+# treat it as the better signal until a probe says otherwise.
+#
+# RE-MEASURE PERIODICALLY. Distributions drift, which is what standing
+# rule 1 says about every number on this site. Re-run the probe every few
+# weeks and reset this from its output, not from this comment.
+WINDOW_GAMES = 7
 LOOKBACK_DAYS = 30          # calendar reach needed to find WINDOW_GAMES
 
 # Below this many team games the rates are noise, so they are published
@@ -174,7 +198,20 @@ def build():
 
     out = {
         "window_games": WINDOW_GAMES,
-        "window_is_measured": False,   # see WINDOW_GAMES; probe sets this
+        # True since 2026-08-19: WINDOW_GAMES is set from
+        # lineup_lock_probe.py output, not by eye. See the block
+        # above WINDOW_GAMES for the table it was set from.
+        "window_is_measured": True,
+        # WHAT THE MEASUREMENT ACTUALLY SAYS, carried in the file so
+        # a reader of the data does not have to find this script.
+        # The rate is WELL CALIBRATED (a bat in the 90-100% bucket
+        # started 92.9% of the time; one in the 0-33% bucket, 12.9%)
+        # but it is only +0.5 points better than copying last night's
+        # lineup as a BINARY predictor. So it earns its place as a
+        # confidence tier, not as a replacement for the posted nine.
+        "measured_on": "2026-08-19",
+        "naive_baseline_pct": 81.7,
+        "window_accuracy_pct": 82.2,
         "generated_at_et": datetime.now(EASTERN).isoformat(timespec="seconds"),
         "slate_date_et": datetime.now(EASTERN).date().isoformat(),
         "teams": {},
