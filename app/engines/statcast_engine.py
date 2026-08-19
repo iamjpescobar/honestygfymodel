@@ -1073,6 +1073,12 @@ def get_batter_vs_pitch_types(batter_id, pitch_types: tuple, window: str = "seas
     metrics["_error"] = error
     metrics["_pitches_seen"] = len(matchup_df)
     metrics["_window_rows"] = len(windowed_df)
+    # PUBLIC ALIAS for the same count. _pitches_seen is a diagnostic
+    # name and it is now a DISPLAYED COLUMN on two tables, so it gets a
+    # name a reader of the view can recognise. Both are kept: the
+    # underscore key has existing callers, and dropping it to rename a
+    # thing is how a column quietly goes blank.
+    metrics["Pitches"] = len(matchup_df)
     return metrics
 
 
@@ -1196,6 +1202,20 @@ def get_batter_profile_windowed(batter_id, window: str = "season", unit: str = "
     _add_expected_stats(metrics, windowed_df)
     metrics["_error"] = error
     metrics["_window_rows"] = len(windowed_df)
+    # PITCHES SEEN, as a named stat rather than a diagnostic.
+    #
+    # This is the row count of the windowed PITCH-level frame, so it is
+    # literally how many pitches this hitter saw in the selected window.
+    # It sits beside PA and BBE as the third sample-size denominator,
+    # and it is the widest of the three: a hitter can have 40 PA and 25
+    # balls in play off 180 pitches, and the 180 is what tells you the
+    # whiff/swing rates on this row are worth reading.
+    #
+    # A count, so 0 is honest and stays 0 — unlike every RATE in this
+    # bundle, where 0.0 would be a fabricated measurement (see the
+    # `empty` dict above). Zero pitches seen is a real, correct,
+    # readable statement about a bat with no tracked data.
+    metrics["Pitches"] = len(windowed_df)
     return metrics
 
 
