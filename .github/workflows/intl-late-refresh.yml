@@ -141,11 +141,31 @@ jobs:
       # republishing would trigger a Render deploy — a cold start on the
       # free tier for whoever is on the site, in exchange for a
       # byte-identical archive.
+      # ONE CONDITION, DEFINED ONCE — see the note above "Repack and
+      # verify". This used to be spelled out inline on three separate
+      # steps, WNBA was accidentally repeated three times in one of them
+      # and omitted entirely from the other two, and the omission was
+      # invisible because the repeated clause made the block LOOK like it
+      # covered everything.
+      - name: Decide whether anything is worth publishing
+        id: gate
+        if: always()
+        env:
+          NPB_OUTCOME: ${{ steps.npb.outcome }}
+          KBO_OUTCOME: ${{ steps.kbo.outcome }}
+          WNBA_OUTCOME: ${{ steps.wnba.outcome }}
+        run: |
+          if [ "$NPB_OUTCOME" = "success" ] || [ "$KBO_OUTCOME" = "success" ] \
+             || [ "$WNBA_OUTCOME" = "success" ]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            echo "At least one slate refreshed - the archive is worth republishing."
+          else
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "No slate refreshed - nothing new to ship, leaving the release alone."
+          fi
+
       - name: Repack and verify
-        if: steps.npb.outcome == 'success' || steps.kbo.outcome == 'success'
-          || steps.wnba.outcome == 'success'
-          || steps.wnba.outcome == 'success'
-          || steps.wnba.outcome == 'success'
+        if: steps.gate.outputs.publish == 'true'
         run: |
           set -e
           rm -f statcast_data.tar.gz
@@ -170,8 +190,17 @@ jobs:
           print(f"Repacked archive verified: {len(names)} entries.")
           PY
 
+      # THIS IS WHERE THE WNBA RECOVERY PATH WAS SILENTLY DEAD.
+      #
+      # The step above was extended to include WNBA; this one and the
+      # deploy below were not. So on the exact day this workflow exists
+      # for - the nightly failed, KBO and NPB are also down or on a
+      # break, and WNBA is the league with "NO OTHER WAY BACK" - the job
+      # downloaded the archive, refetched the WNBA slate, repacked it,
+      # verified it, and then skipped the upload and went green. All the
+      # work, none of the recovery, and no red X to say so.
       - name: Publish the refreshed archive
-        if: steps.npb.outcome == 'success' || steps.kbo.outcome == 'success'
+        if: steps.gate.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -181,7 +210,7 @@ jobs:
       # at build time, not per request — so without this the refreshed
       # slate sits in the release and never reaches anyone.
       - name: Trigger Render deploy
-        if: steps.npb.outcome == 'success' || steps.kbo.outcome == 'success'
+        if: steps.gate.outputs.publish == 'true'
         env:
           HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
