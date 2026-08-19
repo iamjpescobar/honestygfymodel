@@ -563,7 +563,7 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
         "Blast %": None, "BBE": 0,
         "HRWindow %": None, "FB95 %": None, "EV90": None, "MaxEV": None,
         "ClearsAnywhere %": None,
-        "Brl/PA": None, "PA": 0, "HRIntent": None, "HRThreat": None,
+        "Brl/PA": None, "PA": 0, "Games": 0, "HRIntent": None, "HRThreat": None,
         "AvgEV": None,
         "BA": None, "AB": 0,
         "SLG": None, "ISO": None,
@@ -603,10 +603,28 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
             slg = round(_tb / ab, 3)
             iso = round(slg - ba, 3)
 
+    pa_count = int(df["events"].notna().sum()) if "events" in df.columns else 0
+    # GAMES HE ACTUALLY APPEARED IN, in this window.
+    #
+    # Distinct game_date on his own pitch rows, so a game he did not
+    # appear in simply is not here. Paired with PA above it answers a
+    # question neither can alone: PA per game separates a STARTER from a
+    # bench bat far more reliably than raw PA does, because raw PA also
+    # falls when a regular misses time. A nine-inning starter takes 4+
+    # trips; a defensive replacement or pinch hitter takes 1.
+    #
+    # That distinction is what the returning-bat floor in
+    # views/GameCard.py rests on, and it is the reason this is a count
+    # rather than a rate: 0 is honest here (no appearances measured),
+    # unlike every percentage in this bundle.
+    games_played = (int(df["game_date"].dropna().nunique())
+                    if "game_date" in df.columns else 0)
+
     bbe_df = df[df["type"] == "X"].copy()
     bbe_count = len(bbe_df)
     if bbe_count == 0:
-        return {**empty, "BA": ba, "AB": ab, "SLG": slg, "ISO": iso}
+        return {**empty, "BA": ba, "AB": ab, "SLG": slg, "ISO": iso,
+                "PA": pa_count, "Games": games_played}
 
     ls = pd.to_numeric(bbe_df.get("launch_speed"), errors="coerce")
     la = pd.to_numeric(bbe_df.get("launch_angle"), errors="coerce")
@@ -825,7 +843,6 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
     #
     # PA denominator = every row carrying a terminal event, which is
     # exactly one per plate appearance in Statcast's pitch-level data.
-    pa_count = int(df["events"].notna().sum()) if "events" in df.columns else 0
     brl_per_pa = (round(barrels / pa_count * 100, 2)
                   if barrels is not None and pa_count > 0 else None)
 
@@ -882,6 +899,7 @@ def _compute_batted_ball_metrics(df: pd.DataFrame):
         "MaxEV": max_ev_actual,
         "Brl/PA": brl_per_pa,
         "PA": pa_count,
+        "Games": games_played,
         "HRIntent": hr_intent,
         "HRThreat": hr_threat,
         "ClearsAnywhere %": clears_anywhere,
