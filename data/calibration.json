@@ -2529,6 +2529,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-08-19": {
+      "picks": [
+        {
+          "id": "660271",
+          "name": "Shohei Ohtani",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "630105",
+          "name": "Jake Cronenworth",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "802415",
+          "name": "Chandler Simpson",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "681624",
+          "name": "Andy Pages",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701398",
+          "name": "Sal Stewart",
+          "team": "CIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664761",
+          "name": "Alec Bohm",
+          "team": "PHI",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "695506",
+          "name": "Jac Caglianone",
+          "team": "KC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701538",
+          "name": "Jackson Merrill",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666018",
+          "name": "Jonathan Aranda",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "678882",
+          "name": "Ceddanne Rafaela",
+          "team": "BOS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "681082",
+          "name": "Bryson Stott",
+          "team": "PHI",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "677594",
+          "name": "Julio Rodr\u00edguez",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "673548",
+          "name": "Seiya Suzuki",
+          "team": "CHC",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -2852,6 +2962,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-19": {
+      "picks": [
+        {
+          "id": "660271",
+          "name": "Shohei Ohtani",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -10223,6 +10347,412 @@
       ],
       "graded": false,
       "source": "ci"
+    },
+    "2026-08-19": {
+      "picks": [
+        {
+          "id": "4398911",
+          "name": "S. Austin",
+          "team": "Washington Mystics",
+          "stat": "pts",
+          "line": 20.5,
+          "result": null
+        },
+        {
+          "id": "1054",
+          "name": "T. Hayes",
+          "team": "Golden State Valkyries",
+          "stat": "pts",
+          "line": 9.5,
+          "result": null
+        },
+        {
+          "id": "4433524",
+          "name": "S. Citron",
+          "team": "Washington Mystics",
+          "stat": "pts",
+          "line": 15.0,
+          "result": null
+        },
+        {
+          "id": "4898384",
+          "name": "K. Iriafen",
+          "team": "Washington Mystics",
+          "stat": "pts",
+          "line": 14.0,
+          "result": null
+        },
+        {
+          "id": "2590093",
+          "name": "K. Stokes",
+          "team": "Golden State Valkyries",
+          "stat": "pts",
+          "line": 4.5,
+          "result": null
+        },
+        {
+          "id": "4583144",
+          "name": "C. McMahon",
+          "team": "Washington Mystics",
+          "stat": "pts",
+          "line": 7.0,
+          "result": null
+        },
+        {
+          "id": "2529622",
+          "name": "K. Thornton",
+          "team": "Golden State Valkyries",
+          "stat": "pts",
+          "line": 8.5,
+          "result": null
+        },
+        {
+          "id": "4398935",
+          "name": "V. Burton",
+          "team": "Golden State Valkyries",
+          "stat": "pts",
+          "line": 12.5,
+          "result": null
+        },
+        {
+          "id": "3904576",
+          "name": "M. Mabrey",
+          "team": "Toronto Tempo",
+          "stat": "pts",
+          "line": 20.5,
+          "result": null
+        },
+        {
+          "id": "5345444",
+          "name": "L. Juskaite",
+          "team": "Toronto Tempo",
+          "stat": "pts",
+          "line": 11.5,
+          "result": null
+        },
+        {
+          "id": "5105737",
+          "name": "L. Betts",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 5.5,
+          "result": null
+        },
+        {
+          "id": "4583144",
+          "name": "C. McMahon",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 4.0,
+          "result": null
+        },
+        {
+          "id": "4898384",
+          "name": "K. Iriafen",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 8.5,
+          "result": null
+        },
+        {
+          "id": "4398911",
+          "name": "S. Austin",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 10.0,
+          "result": null
+        },
+        {
+          "id": "4398935",
+          "name": "V. Burton",
+          "team": "Golden State Valkyries",
+          "stat": "reb",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "1054",
+          "name": "T. Hayes",
+          "team": "Golden State Valkyries",
+          "stat": "reb",
+          "line": 2.0,
+          "result": null
+        },
+        {
+          "id": "2590093",
+          "name": "K. Stokes",
+          "team": "Golden State Valkyries",
+          "stat": "reb",
+          "line": 6.0,
+          "result": null
+        },
+        {
+          "id": "4433524",
+          "name": "S. Citron",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "4433791",
+          "name": "O. Miles",
+          "team": "Minnesota Lynx",
+          "stat": "reb",
+          "line": 5.0,
+          "result": null
+        },
+        {
+          "id": "5345444",
+          "name": "L. Juskaite",
+          "team": "Toronto Tempo",
+          "stat": "reb",
+          "line": 4.0,
+          "result": null
+        },
+        {
+          "id": "4433524",
+          "name": "S. Citron",
+          "team": "Washington Mystics",
+          "stat": "ast",
+          "line": 4.5,
+          "result": null
+        },
+        {
+          "id": "4583144",
+          "name": "C. McMahon",
+          "team": "Washington Mystics",
+          "stat": "ast",
+          "line": 2.0,
+          "result": null
+        },
+        {
+          "id": "1054",
+          "name": "T. Hayes",
+          "team": "Golden State Valkyries",
+          "stat": "ast",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "4398935",
+          "name": "V. Burton",
+          "team": "Golden State Valkyries",
+          "stat": "ast",
+          "line": 6.0,
+          "result": null
+        },
+        {
+          "id": "2529130",
+          "name": "N. Howard",
+          "team": "Minnesota Lynx",
+          "stat": "ast",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "4704180",
+          "name": "G. Amoore",
+          "team": "Washington Mystics",
+          "stat": "ast",
+          "line": 3.0,
+          "result": null
+        },
+        {
+          "id": "3904576",
+          "name": "M. Mabrey",
+          "team": "Toronto Tempo",
+          "stat": "ast",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "4282173",
+          "name": "M. Onyenwere",
+          "team": "Washington Mystics",
+          "stat": "ast",
+          "line": 2.0,
+          "result": null
+        },
+        {
+          "id": "4433791",
+          "name": "O. Miles",
+          "team": "Minnesota Lynx",
+          "stat": "ast",
+          "line": 7.0,
+          "result": null
+        },
+        {
+          "id": "2529622",
+          "name": "K. Thornton",
+          "team": "Golden State Valkyries",
+          "stat": "ast",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "4398911",
+          "name": "S. Austin",
+          "team": "Washington Mystics",
+          "stat": "pra",
+          "line": 33.0,
+          "result": null
+        },
+        {
+          "id": "1054",
+          "name": "T. Hayes",
+          "team": "Golden State Valkyries",
+          "stat": "pra",
+          "line": 14.5,
+          "result": null
+        },
+        {
+          "id": "4583144",
+          "name": "C. McMahon",
+          "team": "Washington Mystics",
+          "stat": "pra",
+          "line": 12.5,
+          "result": null
+        },
+        {
+          "id": "4433791",
+          "name": "O. Miles",
+          "team": "Minnesota Lynx",
+          "stat": "pra",
+          "line": 33.0,
+          "result": null
+        },
+        {
+          "id": "4433524",
+          "name": "S. Citron",
+          "team": "Washington Mystics",
+          "stat": "pra",
+          "line": 23.0,
+          "result": null
+        },
+        {
+          "id": "5105737",
+          "name": "L. Betts",
+          "team": "Washington Mystics",
+          "stat": "pra",
+          "line": 13.0,
+          "result": null
+        },
+        {
+          "id": "2529622",
+          "name": "K. Thornton",
+          "team": "Golden State Valkyries",
+          "stat": "pra",
+          "line": 14.0,
+          "result": null
+        },
+        {
+          "id": "4398935",
+          "name": "V. Burton",
+          "team": "Golden State Valkyries",
+          "stat": "pra",
+          "line": 22.0,
+          "result": null
+        },
+        {
+          "id": "2590093",
+          "name": "K. Stokes",
+          "team": "Golden State Valkyries",
+          "stat": "pra",
+          "line": 11.5,
+          "result": null
+        },
+        {
+          "id": "3904576",
+          "name": "M. Mabrey",
+          "team": "Toronto Tempo",
+          "stat": "pra",
+          "line": 27.0,
+          "result": null
+        },
+        {
+          "id": "4433791",
+          "name": "O. Miles",
+          "team": "Minnesota Lynx",
+          "stat": "tpm",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "4398935",
+          "name": "V. Burton",
+          "team": "Golden State Valkyries",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "2590093",
+          "name": "K. Stokes",
+          "team": "Golden State Valkyries",
+          "stat": "tpm",
+          "line": 0.5,
+          "result": null
+        },
+        {
+          "id": "2529622",
+          "name": "K. Thornton",
+          "team": "Golden State Valkyries",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "4065780",
+          "name": "K. Charles",
+          "team": "Golden State Valkyries",
+          "stat": "tpm",
+          "line": 0.5,
+          "result": null
+        },
+        {
+          "id": "4398911",
+          "name": "S. Austin",
+          "team": "Washington Mystics",
+          "stat": "tpm",
+          "line": 0.5,
+          "result": null
+        },
+        {
+          "id": "1054",
+          "name": "T. Hayes",
+          "team": "Golden State Valkyries",
+          "stat": "tpm",
+          "line": 0.5,
+          "result": null
+        },
+        {
+          "id": "4433524",
+          "name": "S. Citron",
+          "team": "Washington Mystics",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "2529205",
+          "name": "K. McBride",
+          "team": "Minnesota Lynx",
+          "stat": "tpm",
+          "line": 4.0,
+          "result": null
+        },
+        {
+          "id": "4257500",
+          "name": "C. Zandalasini",
+          "team": "Golden State Valkyries",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "wnba_defense": {
@@ -12259,6 +12789,132 @@
       ],
       "graded": false,
       "source": "ci"
+    },
+    "2026-08-19": {
+      "picks": [
+        {
+          "id": "4898384",
+          "name": "K. Iriafen",
+          "team": "Washington Mystics",
+          "stat": "pts",
+          "line": 14.1,
+          "result": null
+        },
+        {
+          "id": "4282173",
+          "name": "M. Onyenwere",
+          "team": "Washington Mystics",
+          "stat": "pts",
+          "line": 6.6,
+          "result": null
+        },
+        {
+          "id": "4433524",
+          "name": "S. Citron",
+          "team": "Washington Mystics",
+          "stat": "pts",
+          "line": 16.8,
+          "result": null
+        },
+        {
+          "id": "4398911",
+          "name": "S. Austin",
+          "team": "Washington Mystics",
+          "stat": "pts",
+          "line": 21.8,
+          "result": null
+        },
+        {
+          "id": "4583144",
+          "name": "C. McMahon",
+          "team": "Washington Mystics",
+          "stat": "pts",
+          "line": 8.2,
+          "result": null
+        },
+        {
+          "id": "4898384",
+          "name": "K. Iriafen",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 8.5,
+          "result": null
+        },
+        {
+          "id": "2590093",
+          "name": "K. Stokes",
+          "team": "Golden State Valkyries",
+          "stat": "reb",
+          "line": 6.0,
+          "result": null
+        },
+        {
+          "id": "4398911",
+          "name": "S. Austin",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 9.9,
+          "result": null
+        },
+        {
+          "id": "4282173",
+          "name": "M. Onyenwere",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 2.8,
+          "result": null
+        },
+        {
+          "id": "4433524",
+          "name": "S. Citron",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 3.8,
+          "result": null
+        },
+        {
+          "id": "4433524",
+          "name": "S. Citron",
+          "team": "Washington Mystics",
+          "stat": "ast",
+          "line": 4.9,
+          "result": null
+        },
+        {
+          "id": "4704180",
+          "name": "G. Amoore",
+          "team": "Washington Mystics",
+          "stat": "ast",
+          "line": 3.3,
+          "result": null
+        },
+        {
+          "id": "4583144",
+          "name": "C. McMahon",
+          "team": "Washington Mystics",
+          "stat": "ast",
+          "line": 1.9,
+          "result": null
+        },
+        {
+          "id": "2593770",
+          "name": "B. Laney-Hamilton",
+          "team": "Washington Mystics",
+          "stat": "ast",
+          "line": 1.3,
+          "result": null
+        },
+        {
+          "id": "5349415",
+          "name": "A. Florez",
+          "team": "Washington Mystics",
+          "stat": "ast",
+          "line": 0.8,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "k_board": {
@@ -13042,6 +13698,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-19": {
+      "picks": [
+        {
+          "id": 694973,
+          "name": "Paul Skenes (RHP)",
+          "team": "PIT",
+          "stat": "strikeOuts",
+          "line": 6.7,
+          "result": null
+        },
+        {
+          "id": 669302,
+          "name": "Logan Gilbert (RHP)",
+          "team": "SEA",
+          "stat": "strikeOuts",
+          "line": 6.2,
+          "result": null
+        },
+        {
+          "id": 671737,
+          "name": "Taj Bradley (RHP)",
+          "team": "MIN",
+          "stat": "strikeOuts",
+          "line": 6.0,
+          "result": null
+        },
+        {
+          "id": 695505,
+          "name": "Chase Burns (RHP)",
+          "team": "CIN",
+          "stat": "strikeOuts",
+          "line": 5.9,
+          "result": null
+        },
+        {
+          "id": 676917,
+          "name": "Cade Cavalli (RHP)",
+          "team": "WSH",
+          "stat": "strikeOuts",
+          "line": 5.8,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
