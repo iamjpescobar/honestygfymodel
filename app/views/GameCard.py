@@ -18,7 +18,7 @@ from engines.weather_engine import get_todays_games_with_weather
 from engines.park_factors import get_park_factor
 from engines.pitch_matchup import batter_pitch_profile as _batter_pitch_profile
 from engines.headshots import get_headshot_url
-from engines.roster import get_live_team_roster, get_active_player_ids, get_all_teams, get_confirmed_lineup, get_last_starting_lineup
+from engines.roster import get_live_team_roster, get_active_player_ids, get_all_teams, get_confirmed_lineup, get_last_starting_lineup, get_recent_activations
 from engines.statcast_engine import (
     get_pitcher_statcast, get_pitcher_advanced_splits, get_batter_profile_windowed, get_batter_vs_pitch_types,
     get_first_pitch_swing
@@ -95,6 +95,36 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
+# RETURNING-BAT FLOORS — provisional, not measured.
+#
+# A bat activated off the IL cannot appear in the projected lineup,
+# because that pool is last game's nine intersected with the active
+# roster and an intersection only removes names. These two numbers
+# decide which returning bats are added back (see
+# _resolve_lineup_batters, which documents what each one is for).
+#
+# STATED AS PROVISIONAL ON THE PAGE ITSELF. They are reasoned from how
+# baseball is played rather than cut from this league's own
+# distribution, which is the bar every other floor in this repo is held
+# to. The probe that would set them: take every IL activation over a
+# month, measure what share started that day at each PA-per-game level,
+# and cut where the curve separates. Until that has run, nothing may
+# quote these as settled.
+#
+# 40 PA: below this a row is mostly blank cells, and on this board blank
+# means NOT MEASURED — a screenful of dashes beside eight real hitters
+# reads as a bad hitter rather than an unmeasured one.
+#
+# 3.0 PA per game appeared: a nine-inning starter takes four or more
+# trips, a defensive replacement or pinch hitter takes one or two. 3.0
+# sits in the gap and is forgiving of a regular who got pulled early a
+# few times. This is the floor that separates a returning REGULAR from a
+# returning bench bat, and it is why the denominator is games he
+# appeared in rather than team games — the latter collapses for exactly
+# the player this feature exists for.
+_RET_MIN_PA = 40
+_RET_MIN_PA_PER_GAME = 3.0
 
 # ---------------------------------------------------------------------
 # Helpers hoisted out of the render block.
@@ -755,6 +785,150 @@ def _resolve_lineup_batters(confirmed_lineup, lineup_confirmed, opposing_team,
                     f"restricted). They played on {last_game_date} but aren't "
                     f"available today, so scoring them here would be a real-looking "
                     f"number on someone who isn't in the building."
+                )
+            # ADD BACK ANYONE WHO JUST BECAME AVAILABLE.
+            #
+            # The filter directly above SUBTRACTS. That is the whole
+            # shape of the bug this fixes: the projected pool is last
+            # game's nine INTERSECTED with the active roster, and an
+            # intersection can only ever remove names. A regular
+            # activated off the IL today is in neither set — not in last
+            # night's card, and not added by a filter that only takes
+            # away — so he appears nowhere. No row, no badge, no warning.
+            # O'Neil Cruz, 2026-08-19: available, hitting in the middle
+            # of the order, and invisible on this page until Pittsburgh
+            # posted the card.
+            #
+            # THIS CANNOT BE RECOVERED FROM USAGE DATA. A returning bat
+            # has zero starts in every recent window, so lineup_lock
+            # scores him 0% and every rate-based method leaves him out.
+            # Measured: the probe on 2026-08-19 put the whole
+            # start-rate approach within half a point of simply copying
+            # last night's nine, and neither method can produce a name
+            # that is in no boxscore. The signal is the roster MOVE.
+            #
+            # ADDITIVE ON PURPOSE. Nothing above is removed or reordered,
+            # so every row that rendered before still renders identically
+            # and a failure here costs a returning bat rather than the
+            # lineup. get_recent_activations fails open to {}.
+            #
+            # Not silently: each addition is named, with MLB's own
+            # wording and the date, because a bat with no batting order
+            # sitting in a projected nine has to say why he is there.
+            # WHAT A RETURNING BAT HAS TO CLEAR TO EARN A ROW.
+            #
+            # Being available is not enough. Every activation adds a
+            # name — a backup catcher, a fifth outfielder, a September
+            # call-up with eleven career plate appearances — and a row
+            # of dashes next to eight real hitters is worse than an
+            # absence, because it reads as a hitter who is terrible
+            # rather than one who was never measured. This board's whole
+            # rule is that blank means NOT MEASURED; a bat who can only
+            # ever be blank should not be given the cells.
+            #
+            # So the same shape as every other board here: FLOOR, then
+            # show. Three floors, and what each one is actually for:
+            #
+            #   1. AVAILABLE — on the active 26, position player, and
+            #      his latest roster move is a return not superseded by
+            #      a later IL placement. Handled in
+            #      roster.get_recent_activations.
+            #
+            #   2. HE WAS A STARTER, NOT A BENCH BAT.
+            #      PA per game appeared >= _RET_MIN_PA_PER_GAME. This is
+            #      the floor that does the real work. A bat who plays
+            #      nine innings takes four or more trips; a defensive
+            #      replacement or pinch hitter takes one or two. Raw PA
+            #      cannot separate them, because raw PA also collapses
+            #      for a regular who missed two months — which is
+            #      exactly the player this whole feature exists for.
+            #      Cruz sits above 4; a bench bat sits near 2.
+            #
+            #   3. THERE IS SOMETHING TO READ.
+            #      >= _RET_MIN_PA plate appearances this season, or the
+            #      row is a name with no numbers. This is a floor on the
+            #      SAMPLE, not on quality: nothing here asks whether he
+            #      is any good, only whether the page can say anything
+            #      true about him.
+            #
+            # BOTH NUMBERS ARE PROVISIONAL AND LABELLED AS SUCH. They
+            # are reasoned from how the game is played, not measured off
+            # this league's own distribution, which is the standard the
+            # rest of this repo holds floors to (see hr_floors_probe.py,
+            # and the lineup-lock probe that killed a WINDOW_GAMES of 14
+            # on 2026-08-19). The probe that would set them properly is
+            # the IL-return one: take every activation over a month,
+            # measure what share started that day, and cut where the
+            # curve actually separates. Until that runs, these are a
+            # starting value and nothing downstream may quote them as
+            # settled.
+            #
+            # HELD-BACK BATS ARE NAMED, NEVER SILENTLY DROPPED — the
+            # same rule the HR Edge cap follows with its expander. A bat
+            # who is available and did not clear the floor is still
+            # information; he just does not get scored cells.
+            try:
+                _returning = get_recent_activations(opposing_team)
+            except Exception:
+                _returning = {}
+            _added, _held = [], []
+            if _returning:
+                _have = {str(b.get("id")) for b in batters}
+                for _p in get_live_team_roster(opposing_team) or []:
+                    _pid = str(_p.get("id"))
+                    if (_p.get("is_pitcher") or not _p.get("active")
+                            or _pid in _have or _pid not in _returning):
+                        continue
+                    # Season profile, the same cached call every other
+                    # bat on this page already makes — so for the one or
+                    # two names this loop ever sees, it is free.
+                    try:
+                        _prof = get_batter_profile_windowed(
+                            _p.get("id"), window="season", unit="bbe")
+                    except Exception:
+                        _prof = {}
+                    _pa = _prof.get("PA") or 0
+                    _gp = _prof.get("Games") or 0
+                    _papg = (_pa / _gp) if _gp else 0.0
+                    if _pa < _RET_MIN_PA or _papg < _RET_MIN_PA_PER_GAME:
+                        _held.append(
+                            f"{_p.get('name')} ({_pa} PA"
+                            + (f", {_papg:.1f} per game" if _gp else "")
+                            + ")")
+                        continue
+                    _row = dict(_p)
+                    # No batting order exists for him — he is not in any
+                    # posted lineup. Left absent rather than invented, so
+                    # the Ord column renders blank exactly as it does for
+                    # every other projected row.
+                    _row["battingOrder"] = None
+                    _row["returning_note"] = _returning[_pid]
+                    batters.append(_row)
+                    _added.append(
+                        f"{_p.get('name')} \u2014 {_returning[_pid]} "
+                        f"[{_pa} PA, {_papg:.1f} per game]")
+            if _added:
+                st.success(
+                    "Added back \u2014 available today but not in that lineup: "
+                    + "; ".join(_added)
+                    + ". These bats were activated, reinstated or recalled "
+                    "since that game, so they could not appear in it, and "
+                    "each clears the returning-bat floor "
+                    f"({_RET_MIN_PA}+ PA this season and {_RET_MIN_PA_PER_GAME}+ "
+                    "PA per game appeared \u2014 a starter's workload, not a "
+                    "bench bat's). They carry no batting order because MLB "
+                    "hasn't posted one yet; every stat on their row is their "
+                    "own real history. The floor is provisional, not measured."
+                )
+            if _held:
+                st.caption(
+                    "Also available today but held back from the table: "
+                    + "; ".join(_held)
+                    + f" \u2014 below the {_RET_MIN_PA} PA / "
+                    f"{_RET_MIN_PA_PER_GAME} per game floor, so a row for them "
+                    "would be mostly blank cells. Named here rather than "
+                    "dropped, because he is on the roster whether or not this "
+                    "page can say anything true about him."
                 )
             # The other half of a trade. A player acquired since that game
             # was never in it, so he cannot appear in this fallback — the
