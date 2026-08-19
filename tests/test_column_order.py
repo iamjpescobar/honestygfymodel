@@ -95,10 +95,18 @@ _HEAD = ["HR Edge", "HR Score", "Hit Score", "SLAM",
          # +/-7.3% against dHH%'s +/-48%, so it is the one that means
          # something at a glance.
          "Form", "\u0394EV",
-         # PA is the DENOMINATOR under every rate to its right, and it
-         # was buried with the volume stats. A .300 ISO on 65 PA and on
-         # 543 PA are not the same claim.
-         "PA",
+         # THE THREE DENOMINATORS, widening left to right. They were
+         # buried with the volume stats, and PA was worse than buried:
+         # _COL_ORDER named it but _stat_row never emitted the key, so
+         # _ordered's membership filter dropped it and the column this
+         # test has been pinning never actually rendered. A .300 ISO on
+         # 65 PA and on 543 PA are not the same claim.
+         #
+         # All three, not just PA, because PA is the WRONG denominator
+         # for most of this table: Brl%, HH%, FB%, GB%, LD%, SweetSpot%,
+         # HRWindow%, PullAir%, FB95% and Clears% are per ball in play,
+         # and SwStr% is per pitch.
+         "Pitches", "PA", "BIP",
          # ISO first (SLG minus BA — power with singles removed), BA
          # last (a hitter can bat .320 entirely on singles). ISO beside
          # xSLG on purpose: the gap is the luck still owed.
