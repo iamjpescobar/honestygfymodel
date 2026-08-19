@@ -94,6 +94,10 @@ _HEAD = ["HR Edge", "HR Score", "Hit Score", "SLAM",
          # columns in between. Only dEV rides along — measured band
          # +/-7.3% against dHH%'s +/-48%, so it is the one that means
          # something at a glance.
+         # Career vs tonight's starter, with the other verdicts. It is a
+         # history rather than a rate, and it is the only column on the
+         # table about THIS pitcher specifically.
+         "BvP",
          "Form", "\u0394EV",
          # THE THREE DENOMINATORS, widening left to right. They were
          # buried with the volume stats, and PA was worse than buried:
