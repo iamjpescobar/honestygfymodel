@@ -1,0 +1,156 @@
+"""The pick record has to be written BEFORE first pitch, not after it.
+
+TWO FAILURES THIS PINS, both of which were silent and both of which cost
+a whole day of record rather than throwing anything.
+
+1. THE FIRST RUN WAS AFTER THE SLATE STARTED.
+
+   slate-picks used to fire at 17:00, 21:00 and 23:00 UTC — 1, 5 and
+   7 PM ET. MLB posts confirmed lineups one to three hours before first
+   pitch, so on a getaway day with a 12:35 PM ET start the lineups exist
+   from roughly 9:35 AM and the first run was twenty-five minutes after
+   the game began. Nothing ran in that four-hour window. The board for an
+   early slate was, in practice, never recorded before it was played.
+
+2. EVERY CRON SAT ON THE HOUR.
+
+   GitHub queues scheduled workflows rather than guaranteeing them, and
+   the top of the hour is the most contended minute there is — a run
+   booked for "0 17" routinely starts 15-45 minutes late. So the job
+   scheduled 25 minutes after first pitch was really running an hour
+   after it. This is the half of the fix that costs nothing.
+
+Neither is checkable from a green Actions tab, because both produce
+successful runs. The only evidence is a thin pick record on days the
+slate started early, which is exactly the shape of evidence nobody goes
+looking for.
+"""
+import re
+from datetime import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+failures = []
+
+
+def _crons(name):
+    """[(minute, hour), ...] in schedule order, from a workflow file."""
+    src = (ROOT / ".github" / "workflows" / name).read_text()
+    return [(int(m), int(h))
+            for m, h in re.findall(r'cron:\s*"(\d+)\s+(\d+)', src)]
+
+
+picks = _crons("slate-picks.yml")
+
+if not picks:
+    failures.append("slate-picks.yml has no cron schedule at all")
+else:
+    # EDT, because that is when a baseball season happens. The DST hole
+    # is documented in slate_guard._FIRST_BUILD_HOUR and is deliberately
+    # not modelled here — under EST every run lands an hour earlier,
+    # which is the safe direction.
+    et = [((h - 4) % 24, m) for m, h in picks]
+
+    # A 12:35 PM ET first pitch has confirmed lineups from about 9:35.
+    # At least one run must land inside that window, or an early slate
+    # gets recorded after it has already started.
+    EARLIEST_FIRST_PITCH = time(12, 35)
+    before_first_pitch = [t for t in et if time(*t) < EARLIEST_FIRST_PITCH]
+    if len(before_first_pitch) < 2:
+        failures.append(
+            f"only {len(before_first_pitch)} slate-picks run(s) land before a "
+            f"12:35 PM ET first pitch: {sorted(before_first_pitch)}. A getaway "
+            f"day slate needs at least two — one to catch the early lineups "
+            f"and one to pick up the stragglers — or the board is recorded "
+            f"against games already in progress.")
+    else:
+        print(f"PASS: {len(before_first_pitch)} runs land before a 12:35 ET "
+              f"first pitch")
+
+    # Ordered earliest-first. tests/test_slate_guard.py reads cron[0] and
+    # pins slate_guard._FIRST_BUILD_HOUR to it, so a schedule listed out
+    # of order would pin the constant to the wrong run and Home would
+    # call a working workflow broken for three hours every morning.
+    if picks != sorted(picks, key=lambda c: (c[1], c[0])):
+        failures.append(
+            "slate-picks crons are not in earliest-first order. "
+            "test_slate_guard pins _FIRST_BUILD_HOUR to cron[0]; out of "
+            "order, that constant describes the wrong run.")
+    else:
+        print("PASS: slate-picks crons are listed earliest-first")
+
+    # Off the hour, on purpose. See the module docstring.
+    on_the_hour = [f"{h:02d}:{m:02d} UTC" for m, h in picks if m == 0]
+    if on_the_hour:
+        failures.append(
+            f"slate-picks crons on the top of the hour: {on_the_hour}. That is "
+            f"the most contended minute on GitHub's scheduler and routinely "
+            f"costs 15-45 minutes of queue delay, which is enough to push a "
+            f"pre-slate run past first pitch.")
+    else:
+        print("PASS: no slate-picks cron sits on the top of the hour")
+
+
+# ----------------------------------------------------------------------
+# The late refresh must PUBLISH whatever it successfully rebuilt.
+#
+# WNBA was added to this workflow because it has no other recovery path:
+# its slate is built only inside nightly-data, downstream of the
+# fifteen-minute Statcast pull, so when the nightly fails the site shows
+# "no WNBA slate on disk" until the next one succeeds.
+#
+# The fetch step was added and the repack condition was extended — three
+# times over, the same clause repeated — but the PUBLISH and DEPLOY steps
+# still tested only NPB and KBO. So in the one scenario this exists for
+# (nightly failed, KBO and NPB down or on a break, WNBA is what needs
+# recovering) the job downloaded the archive, refetched WNBA, repacked
+# it, verified it, skipped the upload, and went green.
+# ----------------------------------------------------------------------
+refresh = (ROOT / ".github" / "workflows" / "intl-late-refresh.yml").read_text()
+
+# Every step that ships something must be gated on the SAME decision, and
+# that decision has to be written once. Three hand-copied boolean
+# expressions is how one of them drifted.
+_shipping = ["Repack and verify", "Publish the refreshed archive",
+             "Trigger Render deploy"]
+for step in _shipping:
+    _i = refresh.find(f"- name: {step}")
+    if _i < 0:
+        failures.append(f"intl-late-refresh has no {step!r} step")
+        continue
+    _block = refresh[_i:_i + 400]
+    _cond = re.search(r"if:\s*(.+)", _block)
+    if not _cond:
+        failures.append(f"{step!r} has no `if:` guard at all")
+    elif "steps.gate.outputs.publish" not in _cond.group(1):
+        failures.append(
+            f"{step!r} rolls its own publish condition "
+            f"({_cond.group(1).strip()!r}) instead of the shared gate. Every "
+            f"league that can be refreshed must reach every shipping step, "
+            f"and hand-copied conditions are exactly how WNBA was refetched, "
+            f"repacked, verified and then never uploaded.")
+if not failures:
+    print("PASS: every shipping step in the late refresh shares one gate")
+
+# And the gate itself must actually consider all three leagues.
+_gate_i = refresh.find("- name: Decide whether anything is worth publishing")
+if _gate_i < 0:
+    failures.append("intl-late-refresh has no shared publish gate step")
+else:
+    _gate = refresh[_gate_i:_gate_i + 900]
+    for lg in ("NPB", "KBO", "WNBA"):
+        if f"{lg}_OUTCOME" not in _gate:
+            failures.append(
+                f"the publish gate never reads {lg}'s outcome, so a run where "
+                f"only {lg} refreshed would rebuild the archive and throw it "
+                f"away")
+    else:
+        print("PASS: the publish gate considers NPB, KBO and WNBA")
+
+
+if failures:
+    print("\nFAILURES:")
+    for f in failures:
+        print(f"  - {f}")
+    raise SystemExit(1)
+print("\nA board recorded after first pitch is a board that measured nothing.")
