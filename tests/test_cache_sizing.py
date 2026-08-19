@@ -123,6 +123,77 @@ print(f"PASS: every per-player cache holds a slate "
       f"({SLATE_BATTERS} bats / {SLATE_ARMS} arms)")
 
 
+# --- 1b. A COLLECTION IN THE KEY MULTIPLIES THE WORKING SET ----------
+#
+# Rule 1 above assumes ONE cache entry per player. That is true only
+# when the player id is effectively the whole key. When the key also
+# carries a COLLECTION — get_batter_vs_pitch_types takes
+# `pitch_types: tuple` — the entry count is players times distinct
+# collections, because the collection varies per OPPOSING PITCHER, not
+# per player.
+#
+# get_batter_vs_pitch_types sat at 384 and passed rule 1 cleanly, which
+# is the same failure this file's docstring describes twice: the check
+# was calibrated to the callers someone had in mind rather than to the
+# shape of the key. Counted on one game card — starter's top 3 across
+# the lineup, three pitch families per batter opened, plus every
+# reliever picked in the bullpen browser against all ~13 opposing bats —
+# a single game can spend ~85 entries and five games blows the cache.
+#
+# Detected from the ANNOTATION, so a new cache keyed on a tuple of
+# anything is covered the day it is written, with no name list to keep
+# current.
+_COLLECTION_ANNOTATIONS = {"tuple", "list", "set", "frozenset"}
+# How many distinct collections one player is realistically asked about
+# in a session: tonight's starter, the three pitch families, and a
+# handful of relievers opened in the bullpen browser.
+COLLECTIONS_PER_PLAYER = 6
+
+multiplied = []
+for path in sorted(ENGINES.glob("*.py")):
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.FunctionDef):
+            continue
+        if not any("cache_data" in ast.unparse(d) for d in node.decorator_list):
+            continue
+        args = node.args.args
+        if not args:
+            continue
+        key = args[0].arg
+        if key in _BATTER_KEYS:
+            base = SLATE_BATTERS
+        elif key in _PITCHER_KEYS or key in _GENERIC_KEYS:
+            base = SLATE_ARMS
+        else:
+            continue
+        has_collection = any(
+            a.annotation is not None
+            and ast.unparse(a.annotation) in _COLLECTION_ANNOTATIONS
+            for a in args[1:])
+        if not has_collection:
+            continue
+        entries = None
+        for dec in node.decorator_list:
+            if isinstance(dec, ast.Call):
+                for kw in dec.keywords:
+                    if kw.arg == "max_entries":
+                        entries = ast.literal_eval(kw.value)
+        floor = base * COLLECTIONS_PER_PLAYER
+        if entries is None or entries < floor:
+            multiplied.append(
+                f"{path.name}:{node.name} holds {entries}, but its key "
+                f"carries a collection so the working set is "
+                f"{base} x {COLLECTIONS_PER_PLAYER} = {floor}")
+
+assert not multiplied, (
+    "caches keyed on a collection are sized as if keyed on the player "
+    "alone — each eviction re-slices a parquet and recomputes every "
+    "metric on it:\n  " + "\n  ".join(multiplied))
+print(f"PASS: collection-keyed caches sized for players x "
+      f"{COLLECTIONS_PER_PLAYER} collections")
+
+
 # --- 2. THE EXEMPTION'S CONDITION STILL HOLDS ------------------------
 #
 # The moment an exempt cache is called from another module, the reason
