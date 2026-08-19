@@ -364,6 +364,33 @@ def render_spray_chart(batter_id, batter_name, window_label: str = "L10",
                "Gold = HR, blue = other hits, red = outs.")
 
 
+def career_bvp_short(batter_id, pitcher_id):
+    """"0-6, 3K" — the career line compressed to fit a table cell.
+
+    The long form bvp_component builds ('0-for-6, 0 HR, SLG .000 (6 PA)')
+    is right for a card and far too wide for a column sitting among
+    thirty others. This keeps the two numbers that actually decide
+    whether you look further: how he has hit this pitcher, and how often
+    the pitcher has put him away.
+
+    Returns "" — not a dash — when there is no history. A column of
+    dashes reads as missing data; blank reads as a clean no, which is
+    what it is. Same convention the Boards column on that table uses,
+    and most bats will be blank because most bats have never faced
+    tonight's starter.
+
+    Strikeouts are included and hits-per-AB is not spelled out as an
+    average on purpose: a .167 average off 6 at-bats is a number that
+    invites more confidence than 1-for-6 does, and they are the same
+    fact. The raw counts carry their own sample size.
+    """
+    d = career_bvp(batter_id, pitcher_id)
+    if not d or not d.get("ab"):
+        return ""
+    k = d.get("k") or 0
+    return f'{d["h"]}-{d["ab"]}' + (f", {k}K" if k else "")
+
+
 def prefetch_career_bvp(pairs):
     """Warm every (batter, opposing starter) split at once.
 
