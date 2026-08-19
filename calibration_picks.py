@@ -303,7 +303,7 @@ BUILDERS = {"daily13": _rows_daily13, "potd": _rows_potd,
 # there would carry no edge on any game and the card would rank three
 # games alphabetically and look exactly like a recommendation.
 #
-# This script already runs at 1, 5 and 7 PM ET with network, already
+# This script already runs five times across the day with network, already
 # fetches the same slate, and is already idempotent-by-retry. The card's
 # data belongs on the same clock as the picks it sits above.
 #
