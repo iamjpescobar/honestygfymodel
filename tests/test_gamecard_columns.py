@@ -21,6 +21,24 @@ produced |= {a for _, a in re.findall(r'\("([^"]+)", "([^"]+)"\)', eng)}
 # metrics["xHR Allowed"] = ...
 produced |= set(re.findall(r'metrics\["([^"]+)"\]\s*=', eng))
 
+# THE SAMPLE-SIZE COLUMNS.
+#
+# PA is in this list because it is the one column on this table that was
+# NAMED everywhere and emitted nowhere: _COL_ORDER reserved a slot for
+# it, test_column_order pinned its position, and READING_THE_BOARDS
+# documents it twice — but _stat_row never wrote the key, so _ordered's
+# `if c in cols` filter dropped it and the documented column rendered
+# zero times. A position test cannot catch that on its own; it passes
+# happily on a column that does not exist. This asserts the key is
+# actually produced and actually read.
+SAMPLE_KEYS = ["Pitches", "PA", "BBE"]
+for key in SAMPLE_KEYS:
+    assert f'profile.get("{key}")' in gc, (
+        f'the lineup table never reads "{key}" — a sample-size column '
+        f'named in _COL_ORDER but never emitted renders as nothing at all')
+    assert key in produced, f'"{key}" is read by the view but never produced'
+print(f"PASS: all {len(SAMPLE_KEYS)} sample-size columns are read and produced")
+
 NEW_BATTER = ["Brl/PA", "EV90", "MaxEV", "HRWindow %", "HRIntent"]
 for key in NEW_BATTER:
     assert f'profile.get("{key}")' in gc, f'batter table never reads "{key}"'
