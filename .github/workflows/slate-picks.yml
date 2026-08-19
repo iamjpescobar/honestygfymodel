@@ -6,16 +6,53 @@ name: Slate Picks (calibration)
 # TIMING: MLB posts confirmed lineups 1-3 hours before first pitch, so
 # the 6 AM nightly data job is far too early to see a real board. These
 # runs straddle the slate instead:
-#   17:00 UTC = 1:00 PM ET  - day games
-#   21:00 UTC = 5:00 PM ET  - most evening lineups are posted
-#   23:00 UTC = 7:00 PM ET  - late/West Coast starts
-# The script is idempotent, so the first run that finds a real board
-# records it and the later ones leave it alone.
+#   14:35 UTC = 10:35 AM ET - earliest getaway/day games (12:05-12:35 ET)
+#   15:35 UTC = 11:35 AM ET - the rest of an early slate's lineups
+#   17:05 UTC =  1:05 PM ET - afternoon starts
+#   21:05 UTC =  5:05 PM ET - most evening lineups are posted
+#   23:05 UTC =  7:05 PM ET - late/West Coast starts
+#
+# THE TWO MORNING RUNS EXIST FOR A SLATE THAT STARTS BEFORE 1 PM.
+#
+# The old first run was 17:00 UTC. On a 12:35 PM ET first pitch that is
+# twenty-five minutes AFTER the slate has already started, so the first
+# board of the day was recorded against games in progress — and the
+# lineups it needed had been posted since roughly 9:35 AM, four hours
+# earlier. There was no run in that entire window. A getaway day slate
+# was, in practice, never recorded before it began.
+#
+# NOTHING BELOW :05 IS A ROUNDING CHOICE.
+#
+# Every cron in this repo used to sit on the hour. The top of the hour is
+# the single most contended minute on GitHub's scheduler, and scheduled
+# workflows are queued, not guaranteed — a run booked for "0 17" commonly
+# starts 15-45 minutes late. So the 1 PM run was really a 1:20-1:40 PM
+# run, which is how a job scheduled 25 minutes after first pitch became a
+# job scheduled an hour after it. Odd minutes are materially less
+# contended. This costs nothing and is the larger half of the fix.
+#
+# SAFE TO ADD EARLY RUNS — this was checked, not assumed. An early board
+# built off two confirmed lineups does NOT freeze the day: see the
+# "REPLACE ONLY WITH AT LEAST AS MUCH BOARD" rule in calibration_picks.py
+# (`len(rows) >= len(existing["picks"])`). A later run seeing more
+# confirmed lineups replaces the record, and a DEGRADED later run cannot
+# destroy a good one. Without that guard these two runs would have
+# recreated the 2026-08-12 incident documented there, where hr_edge
+# graded four picks on a fifteen-game slate because it froze at lunchtime.
+#
+# IF YOU MOVE THE FIRST CRON, MOVE _FIRST_BUILD_HOUR TOO.
+# app/engines/slate_guard.py duplicates the first entry here as an int so
+# Home can say "no board yet" instead of "the job is broken" during the
+# hours before it runs. tests/test_slate_guard.py reads the FIRST cron in
+# this file and fails if the constant hasn't followed it, so the order of
+# these lines is load-bearing: earliest first.
 on:
   schedule:
-    - cron: "0 17 * * *"
-    - cron: "0 21 * * *"
-    - cron: "0 23 * * *"
+    - cron: "35 14 * * *"
+    - cron: "35 15 * * *"
+    - cron: "5 17 * * *"
+    - cron: "5 21 * * *"
+    - cron: "5 23 * * *"
   workflow_dispatch: {}
 
 permissions:
