@@ -113,10 +113,36 @@ def available() -> bool:
 def measured() -> bool:
     """True once the probe has confirmed the window predicts anything.
 
-    Ships False. A number on screen that has never been checked against
-    an outcome is exactly what standing rule 1 exists to stop, so the
-    caption says 'provisional' until this flips."""
+    Flipped True by lineup_lock_precompute on 2026-08-19, after
+    lineup_lock_probe.py compared 7 / 14 / 21 game windows against the
+    naive baseline over 9,417 bat-games. A number on screen that has
+    never been checked against an outcome is exactly what standing rule 1
+    exists to stop, so the caption said 'provisional' until this flipped.
+
+    READ THE FLAG, NOT THE DATE. It comes from the published file, so an
+    older archive still correctly reports False and the caption still
+    says provisional — which is the right behaviour, because that file's
+    window really was unchecked."""
     return bool(load().get("window_is_measured"))
+
+
+def accuracy_note():
+    """What the measurement actually SAYS, for the caption.
+
+    Returns None on an unmeasured or older file. This exists because
+    "measured" on its own overstates the result: the window is well
+    CALIBRATED (a bat in the top bucket started 92.9% of the time, one in
+    the bottom bucket 12.9%) but as a BINARY predictor it beats simply
+    copying last night's lineup by half a point. Those are different
+    claims and the page should make the smaller one."""
+    d = load()
+    if not d.get("window_is_measured"):
+        return None
+    acc, naive = d.get("window_accuracy_pct"), d.get("naive_baseline_pct")
+    if acc is None or naive is None:
+        return None
+    return (f"measured {acc:.1f}% against {naive:.1f}% for last game's nine "
+            f"— read these as confidence, not as a better lineup")
 
 
 def window_games():
@@ -232,4 +258,12 @@ def caption(batters):
             if win else "")
     if not measured():
         tail += " · provisional, not yet checked against outcomes"
+    else:
+        # SAY WHAT WAS MEASURED, not just that something was.
+        # "measured" alone would let a reader take these tiers for a
+        # better lineup than the posted nine. They are not — they are a
+        # better statement of how sure each row is.
+        _note = accuracy_note()
+        if _note:
+            tail += f" · {_note}"
     return head + tail + "."
