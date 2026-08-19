@@ -1050,7 +1050,28 @@ def _add_expected_stats(metrics: dict, frame) -> dict:
     return metrics
 
 
-@st.cache_data(ttl=1800, max_entries=384, show_spinner=False)
+# SIZED FOR (BATTER x ARSENAL), NOT FOR BATTERS.
+#
+# This was 384, which cleared tests/test_cache_sizing's 300-batter floor
+# and was still wrong — because that floor assumes ONE entry per batter
+# and this key is (batter_id, pitch_types, window, unit). pitch_types
+# varies per PITCHER, so the real cardinality is batters times distinct
+# arsenals asked about.
+#
+# Count it on one game card: the starter's top 3 against ~18 batters
+# (18), the three pitch FAMILIES for each batter opened in the Batter vs
+# Pitch Type card (3 each), and — the one that actually blows it — every
+# reliever picked in the bullpen browser, which asks the same question
+# for that arm's top 3 against all ~13 opposing bats. Open five arms and
+# that single game has spent ~85 entries. Five games explored that way
+# is past 384, and every eviction re-slices a parquet and recomputes
+# every metric on it.
+#
+# 2048 covers a slate browsed hard. The entries are small dicts of
+# scalars, so the memory cost of being generous here is trivial next to
+# the cost of being wrong — and being wrong is invisible, which is the
+# whole argument in test_cache_sizing's docstring.
+@st.cache_data(ttl=1800, max_entries=2048, show_spinner=False)
 def get_batter_vs_pitch_types(batter_id, pitch_types: tuple, window: str = "season", unit: str = "bbe"):
     """
     Real batter performance specifically against a given set of pitch
