@@ -13,7 +13,7 @@ one on a page whose only job is to orient you.
 
 It does not have to pay that price, because the work is already done.
 calibration_picks.py computes the same boards from the same engines in
-CI at 1, 5 and 7 PM ET and commits them to data/calibration.json, and
+CI five times across the day and commits them to data/calibration.json, and
 the nightly writes each league's slate to data/<league>/games.json. So
 every number on this page comes off disk, and the ONLY thing it cannot
 show is a board CI has not built yet — a real fact about the time of
@@ -483,7 +483,7 @@ def _render_best_games():
     them.
 
     RULE 5 HOLDS. Zero network calls. calibration_picks writes the MLB
-    slate in CI at 1, 5 and 7 PM ET with every ranking input already
+    slate in CI five times across the day with every ranking input already
     computed; this reads it through slate_guard.load_slate and sorts.
     Nothing here fetches, and nothing here computes baseball.
 
@@ -718,7 +718,10 @@ def _render_today(record, today):
                 f'<div style="color:{COLOR["text_muted"]}; font-size:var(--lc-text-caption); '
                 f'line-height:1.7;">Picks are locked in once lineups are confirmed \u2014 '
                 f'MLB posts those one to three hours before first pitch, so the board is '
-                f'recorded at 1, 5 and 7 PM ET. Nothing is shown here before then, because '
+                f'recorded at 10:35 and 11:35 AM and 1:05, 5:05 and 7:05 PM ET. The two '
+                f'morning runs are there for getaway days \u2014 a 12:35 first pitch has had '
+                f'its lineups since about 9:35, and the board used to wait until 1 PM to '
+                f'notice. Nothing is shown here before the first run, because '
                 f'a pick built off a projected lineup isn\'t the pick this site would have '
                 f'made.<br><br>Any board below will build live right now if you don\'t want '
                 f'to wait \u2014 it takes a moment, and it\'s the same computation.</div>'
