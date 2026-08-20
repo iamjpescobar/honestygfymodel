@@ -97,35 +97,121 @@ st.markdown(
 )
 
 
-# RETURNING-BAT FLOORS — provisional, not measured.
+# RETURNING-BAT FLOORS — MEASURED 2026-08-19.
 #
 # A bat activated off the IL cannot appear in the projected lineup,
 # because that pool is last game's nine intersected with the active
 # roster and an intersection only removes names. These two numbers
-# decide which returning bats are added back (see
-# _resolve_lineup_batters, which documents what each one is for).
+# decide which returning bats get added back (see
+# _resolve_lineup_batters).
 #
-# STATED AS PROVISIONAL ON THE PAGE ITSELF. They are reasoned from how
-# baseball is played rather than cut from this league's own
-# distribution, which is the bar every other floor in this repo is held
-# to. The probe that would set them: take every IL activation over a
-# month, measure what share started that day at each PA-per-game level,
-# and cut where the curve separates. Until that has run, nothing may
-# quote these as settled.
+# il_return_probe.py, 60 days, 290 usable returns:
 #
-# 40 PA: below this a row is mostly blank cells, and on this board blank
-# means NOT MEASURED — a screenful of dashes beside eight real hitters
-# reads as a bad hitter rather than an unmeasured one.
+#   PA/game     started that day      n
+#   0-1.5             15.0%          20
+#   1.5-2.5           32.7%          55
+#   2.5-3.0           44.6%          65
+#   3.0-3.5           56.1%          57
+#   3.5+              81.7%          93
 #
-# 3.0 PA per game appeared: a nine-inning starter takes four or more
-# trips, a defensive replacement or pinch hitter takes one or two. 3.0
-# sits in the gap and is forgiving of a regular who got pulled early a
-# few times. This is the floor that separates a returning REGULAR from a
-# returning bench bat, and it is why the denominator is games he
-# appeared in rather than team games — the latter collapses for exactly
-# the player this feature exists for.
+# Monotonic across a 66.7-point spread, so PA-PER-GAME IS THE
+# DISCRIMINATOR — the load-bearing assumption behind this floor held up.
+#
+# WHY 2.5 AND NOT THE 3.0 THIS SHIPPED WITH. The probe prints the trade
+# at each cut. 3.0 showed 150 bats at 72.0% and HID 50 who started; 2.5
+# shows 215 at 63.7% and hides 21. The two errors are not equal — a
+# returning regular the page hides is the exact failure this feature was
+# built to fix, while a bat shown who sits is clutter next to a caption
+# that already says he might. Trading 8 points of precision to recover
+# 29 of 50 hidden starters is the right side of that.
+#
+# Not lower: 2.0 recovers only 13 more and drops precision to 58.8%,
+# which is inside touching distance of the 54.5% base rate — a floor
+# that barely beats no floor is not worth having.
+#
+# 40 PA is UNCHANGED and is still reasoned, not measured. It is a floor
+# on the SAMPLE, not on skill: below it a row is mostly blank cells, and
+# blank means NOT MEASURED on this board. Sub-floor bats are still named
+# in the held-back caption, so nobody disappears.
+#
+# RE-MEASURE PERIODICALLY — standing rule 1. Re-run the probe every few
+# weeks and reset from its section 3.
 _RET_MIN_PA = 40
-_RET_MIN_PA_PER_GAME = 3.0
+_RET_MIN_PA_PER_GAME = 2.5
+
+# WHAT A RETURNING BAT ACTUALLY IS: A COIN FLIP THAT LEANS.
+#
+# Measured over the same 290 returns, only 54.5% of activated bats
+# started that day, and 63.7% of the ones clearing the floor above. That
+# is NOT a projected starter, and these rows must not sit in the table
+# looking like the eight around them that came off a real posted lineup.
+#
+# 63.7% lands inside engines/lineup_lock's own FLUX band (0.34-0.66),
+# whose label is "In question" — so the site already had the right
+# vocabulary for this and it is reused rather than reinvented.
+#
+# The single most useful check on this: O'Neil Cruz, 286 PA, 4.4 PA per
+# game, activated off the 60-day IL — and he DID NOT START that day. The
+# bat that motivated this entire feature is itself an example of why the
+# row has to be labelled rather than assumed.
+_RET_START_RATE = 0.637
+
+# ---------------------------------------------------------------------
+# ONE WINDOW SETTING, SEVERAL PLACES TO CHANGE IT.
+#
+# The Window control lived only above the batting-order table, at the
+# top of a very long card. Every table below it obeys that setting —
+# Vs Top 3 Pitches most of all — so reading one of them at a different
+# window meant scrolling back up, changing it, and scrolling down again
+# to find your place. On a phone that is most of a minute, every time.
+#
+# The fix is NOT a second independent control. Two Window pickers that
+# can disagree is worse than one that is far away: you would read a
+# table under a setting the rest of the card is not using and have no
+# way to tell. So there is exactly one VALUE
+# (st.session_state["lineup_window_value"]) and any number of widgets
+# that read and write it.
+#
+# HOW THE TWO-WAY SYNC WORKS, because Streamlit makes this subtle:
+# each widget owns a distinct key (Streamlit forbids sharing one), and
+# a widget key that already exists in session_state IGNORES the index=
+# argument. So changing the top control would leave the bottom one
+# rendering its own stale value. Writing the canonical value into every
+# widget's key BEFORE instantiating it is what keeps them honest — that
+# assignment is legal precisely because the widget does not exist yet
+# on this run.
+#
+# Changing either one triggers a normal rerun, so window_key/unit_key
+# and every table below are recomputed from the new value. Nothing
+# downstream needs to know there is more than one picker.
+_WINDOW_OPTIONS = [
+    "Season",
+    "Last 75 Games", "Last 50 Games", "Last 25 Games",
+    "Last 15 Games", "Last 10 Games", "Last 5 Games",
+    "Last 300 PA", "Last 250 PA", "Last 200 PA",
+    "Last 60 PA", "Last 25 PA", "Last 15 PA",
+    "Last 60 BBE", "Last 25 BBE", "Last 15 BBE", "Last 5 BBE",
+]
+_WINDOW_STATE = "lineup_window_value"
+
+
+def _window_control(widget_key, label="Window", label_visibility="visible",
+                    help=None):
+    """Render a Window picker wired to the single shared setting."""
+    current = st.session_state.get(_WINDOW_STATE, "Season")
+    if current not in _WINDOW_OPTIONS:
+        current = "Season"
+    st.session_state[_WINDOW_STATE] = current
+    # Seed THIS widget from the shared value before it exists.
+    st.session_state[widget_key] = current
+
+    def _sync():
+        st.session_state[_WINDOW_STATE] = st.session_state[widget_key]
+
+    return st.selectbox(label, _WINDOW_OPTIONS, key=widget_key,
+                        on_change=_sync, label_visibility=label_visibility,
+                        help=help)
+
 
 # ---------------------------------------------------------------------
 # Helpers hoisted out of the render block.
@@ -919,7 +1005,12 @@ def _resolve_lineup_batters(confirmed_lineup, lineup_confirmed, opposing_team,
                     "PA per game appeared \u2014 a starter's workload, not a "
                     "bench bat's). They carry no batting order because MLB "
                     "hasn't posted one yet; every stat on their row is their "
-                    "own real history. The floor is provisional, not measured."
+                    "own real history. MEASURED: only "
+                    f"{_RET_START_RATE * 100:.0f}% of returning bats clearing "
+                    "this floor actually started that day (60-day sample, 290 "
+                    "returns), so treat these as in question rather than as "
+                    "projected starters — O'Neil Cruz came off the 60-day "
+                    "IL at 4.4 PA per game and did not start."
                 )
             if _held:
                 st.caption(
@@ -931,15 +1022,73 @@ def _resolve_lineup_batters(confirmed_lineup, lineup_confirmed, opposing_team,
                     "dropped, because he is on the roster whether or not this "
                     "page can say anything true about him."
                 )
+            # SHOW THE POOL, NOT A GUESS AT THE NINE.
+            #
+            # Everything above still tries to reconstruct a starting
+            # nine, and a nine is the one thing that genuinely cannot be
+            # known before MLB posts it. Measured 2026-08-19: repeating
+            # last game's lineup is right about 81.7% of the time, so
+            # roughly two of any nine here are wrong, and no method
+            # beats that by more than half a point.
+            #
+            # So stop competing on the nine. An active roster carries
+            # about 13 position players, and the useful question before
+            # first pitch is not "which nine" but "which of these 13,
+            # and how sure are we about each". Showing all 13 cannot
+            # omit a starter — the failure mode that hid O'Neil Cruz,
+            # and that leaves an acquired bat off this card entirely.
+            #
+            # ADDITIVE, like the returning-bat block above. The nine
+            # from the last posted lineup keep their batting order and
+            # their position at the top; the rest arrive under them with
+            # a blank Ord, which is exactly what they are — available,
+            # unordered. lineup_lock.attach below then tiers every row
+            # Lock / Usual / In question / Rare, so the extras are
+            # labelled rather than dumped in looking like starters.
+            #
+            # NO FLOOR HERE, unlike the returning-bat add-back. That
+            # floor exists because a returning bat is ASSERTED to be
+            # interesting; these are explicitly the bench, they are
+            # labelled as such by their tier, and a thin row among them
+            # reads correctly as a thin bench bat.
+            _pool_mode = st.segmented_control(
+                "Show", ["Full roster", "Projected 9"],
+                default="Full roster", key="lineup_pool_mode",
+                help=("Full roster shows every available position player "
+                      "(~13) with a Lock / Usual / In question tier on "
+                      "each \u2014 nobody can be missing. Projected 9 shows "
+                      "only last game's posted lineup, which is right "
+                      "about 81.7% of the time.")
+            )
+            if _pool_mode != "Projected 9":
+                _have = {str(b.get("id")) for b in batters}
+                _extra = 0
+                for _p in get_live_team_roster(opposing_team) or []:
+                    if _p.get("is_pitcher") or not _p.get("active"):
+                        continue
+                    if str(_p.get("id")) in _have:
+                        continue
+                    _row = dict(_p)
+                    _row["battingOrder"] = None
+                    batters.append(_row)
+                    _extra += 1
+                if _extra:
+                    st.caption(
+                        f"Plus {_extra} more available position player(s) with "
+                        "no batting order \u2014 they were not in that lineup but "
+                        "are on the active roster today. Read their tier, not "
+                        "their position in this table: a bat with no Ord is a "
+                        "candidate, not a projected starter."
+                    )
             # The other half of a trade. A player acquired since that game
-            # was never in it, so he cannot appear in this fallback — the
-            # nine below are real, they are just the nine from BEFORE the
-            # deal. Without this line the omission is invisible: a card
-            # showing nine correct hitters looks complete whether or not a
-            # new bat is missing from it.
+            # was never in it, so he cannot appear in the nine above — the
+            # nine are real, they are just the nine from BEFORE the deal.
+            # Full roster mode does pick him up, which is one more reason
+            # it is the default.
             st.caption(
-                "This is the lineup from that date. Anyone acquired since then "
-                "won't appear until MLB posts today's confirmed order."
+                "The ordered nine are from that date. Anyone acquired since "
+                "then appears only in Full roster mode, without an order, "
+                "until MLB posts today's confirmed lineup."
             )
         else:
             # Fallback #2: no completed game in the last 14 days to pull a
@@ -2023,21 +2172,14 @@ with content_col:
                         key="lineup_sort_by"
                     )
                 with window_col:
-                    window_choice = st.selectbox(
-                        "Window",
-                        [
-                            "Season",
-                            "Last 75 Games", "Last 50 Games", "Last 25 Games",
-                            "Last 15 Games", "Last 10 Games", "Last 5 Games",
-                            "Last 300 PA", "Last 250 PA", "Last 200 PA",
-                            "Last 60 PA", "Last 25 PA", "Last 15 PA",
-                            "Last 60 BBE", "Last 25 BBE", "Last 15 BBE", "Last 5 BBE",
-                        ],
-                        key="lineup_window",
+                    # Same control now also sits above Vs Top 3 Pitches;
+                    # both drive one shared value. See _window_control.
+                    window_choice = _window_control(
+                        "lineup_window_top",
                         help=(
                             "PA windows are the honest ones for power: HR rate "
                             "needs ~170 PA and ISO ~160 AB, and 25 games is only "
-                            "~110 PA. Games windows vary with playing time — a "
+                            "~110 PA. Games windows vary with playing time \u2014 a "
                             "platoon bat's 50 games is not a regular's 50 games. "
                             "A window longer than a hitter has played returns his "
                             "whole season under the longer label, and the parquet "
@@ -3126,6 +3268,27 @@ with content_col:
                 if not top_3_pitches:
                     st.info("No real pitch arsenal data available for this pitcher yet \u2014 nothing to honestly compare batters against.")
                 else:
+                    # THE SAME WINDOW SETTING, REACHABLE FROM HERE.
+                    #
+                    # This table obeys the Window control at the top of
+                    # the card, hundreds of pixels up past the lineup
+                    # table. Reading it at a different window meant
+                    # scrolling up, changing it, and hunting back down
+                    # for your place — on a phone, most of a minute,
+                    # every time.
+                    #
+                    # Not a second setting: _window_control writes the
+                    # one shared value, so this and the top picker can
+                    # never disagree. Changing it here reruns the card
+                    # and the lineup table above moves with it.
+                    _tp_l, _tp_r = st.columns([1, 2])
+                    with _tp_l:
+                        _window_control(
+                            "lineup_window_top3",
+                            help=("Shared with the Lineup table above \u2014 "
+                                  "changing it here changes it there too, so "
+                                  "the two can never show different windows."),
+                        )
                     matchup_rows = []
                     for r in filtered:
                         vs_profile = get_batter_vs_pitch_types(r.get("id"), tuple(top_3_pitches), window=window_key, unit=unit_key)
