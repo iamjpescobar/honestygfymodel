@@ -2651,22 +2651,6 @@
           "result": null
         },
         {
-          "id": "695506",
-          "name": "Jac Caglianone",
-          "team": "KC",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "670764",
-          "name": "Taylor Walls",
-          "team": "TB",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
           "id": "701398",
           "name": "Sal Stewart",
           "team": "CIN",
@@ -2675,17 +2659,9 @@
           "result": null
         },
         {
-          "id": "701675",
-          "name": "Nathan Church",
-          "team": "STL",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "671739",
-          "name": "Michael Harris II",
-          "team": "ATL",
+          "id": "666018",
+          "name": "Jonathan Aranda",
+          "team": "TB",
           "stat": null,
           "line": null,
           "result": null
@@ -2707,6 +2683,22 @@
           "result": null
         },
         {
+          "id": "671739",
+          "name": "Michael Harris II",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701675",
+          "name": "Nathan Church",
+          "team": "STL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
           "id": "703607",
           "name": "Henry Bolte",
           "team": "ATH",
@@ -2715,25 +2707,25 @@
           "result": null
         },
         {
-          "id": "666018",
-          "name": "Jonathan Aranda",
+          "id": "680757",
+          "name": "Steven Kwan",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672386",
+          "name": "Alejandro Kirk",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
           "team": "TB",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "691458",
-          "name": "Blaze Jordan",
-          "team": "STL",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "514888",
-          "name": "Jose Altuve",
-          "team": "HOU",
           "stat": null,
           "line": null,
           "result": null
@@ -2741,6 +2733,14 @@
         {
           "id": "656775",
           "name": "Cedric Mullins",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "650490",
+          "name": "Yandy D\u00edaz",
           "team": "TB",
           "stat": null,
           "line": null,
@@ -4152,6 +4152,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-20": {
+      "picks": [
+        {
+          "id": "676475",
+          "name": "Alec Burleson",
+          "team": "St. Louis Cardinals",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "646240",
+          "name": "Rafael Devers",
+          "team": "San Francisco Giants",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "678246",
+          "name": "Miguel Vargas",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "808959",
+          "name": "Munetaka Murakami",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "521692",
+          "name": "Salvador Perez",
+          "team": "Kansas City Royals",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
