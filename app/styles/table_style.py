@@ -1237,3 +1237,40 @@ def style_vs_league(df, favor_low=None):
                   "text-align": "right",
               })
               .hide(axis="index"))
+
+def team_filter(df, key: str, column: str = "Team", label: str = "Team"):
+    """Narrow a board to one team. Returns the filtered frame.
+
+    Every slate-wide board — HR Edge, the props boards, the WNBA
+    defensive matchups — arrives as one ranked list across fifteen
+    games. That ranking is the point of the board, but it is the wrong
+    shape for the job it gets used for most: talking through ONE game.
+    Finding a team's bats meant reading forty rows and picking them out
+    by eye, on camera, live.
+
+    RANK IS PRESERVED, NOT RECOMPUTED. Whatever "#" or ordering the
+    board assigned before this ran stays exactly as it was, so a bat
+    that sits seventh on the slate still reads seventh after filtering.
+    Renumbering 1..n would quietly turn a slate ranking into a team
+    ranking and make the eleventh-best bat on the board look like
+    somebody's top play.
+
+    NO CONTROL WHEN THERE IS NOTHING TO CHOOSE. Fewer than two teams
+    present and this returns the frame untouched without rendering a
+    widget — an empty filter above a one-team board is furniture.
+
+    `key` must be unique per table, and stable: Streamlit ties widget
+    state to it, so a key built from a changing value resets the
+    selection on every rerun.
+    """
+    import streamlit as st
+
+    if df is None or column not in getattr(df, "columns", []):
+        return df
+    teams = sorted({str(v) for v in df[column].dropna().tolist() if str(v).strip()})
+    if len(teams) < 2:
+        return df
+    choice = st.selectbox(label, ["All teams"] + teams, key=key)
+    if not choice or choice == "All teams":
+        return df
+    return df[df[column].astype(str) == choice]
