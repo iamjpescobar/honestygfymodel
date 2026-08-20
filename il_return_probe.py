@@ -210,9 +210,21 @@ def main():
         spread.append(pct)
         print(f"  {f'{lo}-{hi}':<12}{pct:>9.1f}%{len(rows):>8}")
     if len(spread) >= 2:
-        print(f"  spread top-to-bottom: {max(spread) - min(spread):.1f} pts")
-        print("  FLAT MEANS PA-PER-GAME IS NOT THE DISCRIMINATOR and the")
-        print("  floor should come out rather than be retuned.")
+        gap = max(spread) - min(spread)
+        print(f"  spread top-to-bottom: {gap:.1f} pts")
+        # VERDICT, NOT A STANDING WARNING. The first version of this
+        # printed "FLAT MEANS PA-PER-GAME IS NOT THE DISCRIMINATOR"
+        # unconditionally, under a table showing a 66.7-point spread —
+        # advisory text that read as a finding and contradicted the
+        # numbers directly above it. A probe that says the same thing
+        # whatever it measured is not measuring.
+        if gap < 15:
+            print("  FLAT: PA-per-game is NOT the discriminator. The floor")
+            print("  should come OUT rather than be retuned — it is costing")
+            print("  you returning starters and buying nothing.")
+        else:
+            print("  SEPARATES: PA-per-game is a real discriminator here.")
+            print("  The floor is doing work; section 3 sets where to cut.")
 
     print(f"\n{'=' * 62}")
     print("=== 3. WHERE SHOULD THE CUT GO? ===")
