@@ -168,7 +168,13 @@ else:
 # human can press Manual Deploy. Pinned so the step cannot drift back to
 # job-fatal, or stop being last.
 # ----------------------------------------------------------------------
-for _wf in ("nightly-data.yml", "intl-late-refresh.yml"):
+# slate-picks is in this list since 2026-08-20. Render Auto-Deploy was
+# turned off (it rebuilt the service on every data commit), so a push no
+# longer ships anything and this job's own hook is the ONLY way the pick
+# record reaches the live site. Without it the board records five times a
+# day into a repo the site never re-reads — every step green, Home
+# quietly stale.
+for _wf in ("nightly-data.yml", "intl-late-refresh.yml", "slate-picks.yml"):
     _src = (ROOT / ".github" / "workflows" / _wf).read_text()
     _i = _src.find("- name: Trigger Render deploy")
     if _i < 0:
@@ -188,20 +194,31 @@ for _wf in ("nightly-data.yml", "intl-late-refresh.yml"):
             f"{_wf}'s deploy hook fails the job instead of warning. The "
             f"archive is published by this point; a red X here says the "
             f"data build broke when it did not.")
-    if "ALREADY PUBLISHED" not in _step.upper():
+    # The warning must say the work SURVIVED — otherwise "deploy hook
+    # failed" reads as "the run lost its output", which is the confident
+    # wrong diagnosis all over again. The archive jobs say "already
+    # published"; slate-picks says "already committed". Either is fine,
+    # nothing is not.
+    _u = _step.upper()
+    if "ALREADY PUBLISHED" not in _u and "ALREADY COMMITTED" not in _u:
         failures.append(
-            f"{_wf}'s warning does not say the archive is already "
-            f"published, so whoever reads it has to work that out")
+            f"{_wf}'s warning does not say the work is already saved, so "
+            f"whoever reads it has to work out that nothing was lost")
     # The entire argument for warning rather than failing rests on this
     # step running AFTER the upload. If it ever moves ahead of it, a
     # swallowed failure means no archive and no red X either.
+    # For the archive jobs the deploy must follow the release upload.
+    # slate-picks publishes nothing to a release — its durable artifact is
+    # the git commit — so the same rule applies against that instead.
     _i_pub = _src.find("release upload")
     if _i_pub < 0:
         _i_pub = _src.find("release create")
+    if _i_pub < 0:
+        _i_pub = _src.find("git commit")
     if 0 <= _i < _i_pub:
         failures.append(
-            f"{_wf} triggers the deploy BEFORE publishing the archive — a "
-            f"non-fatal hook is only safe as the last step")
+            f"{_wf} triggers the deploy BEFORE the artifact it ships is "
+            f"committed or published — a non-fatal hook is only safe last")
 if not failures:
     print("PASS: deploy hooks retry, warn rather than fail, and run last")
 
