@@ -18,7 +18,10 @@ from engines.weather_engine import get_todays_games_with_weather
 from engines.park_factors import get_park_factor
 from engines.pitch_matchup import batter_pitch_profile as _batter_pitch_profile
 from engines.headshots import get_headshot_url
-from engines.roster import get_live_team_roster, get_active_player_ids, get_all_teams, get_confirmed_lineup, get_last_starting_lineup, get_recent_activations
+from engines.roster import (get_live_team_roster, get_active_player_ids,
+                            get_all_teams, get_confirmed_lineup,
+                            get_last_starting_lineup, get_recent_activations,
+                            prefetch_slate)
 from engines.statcast_engine import (
     get_pitcher_statcast, get_pitcher_advanced_splits, get_batter_profile_windowed, get_batter_vs_pitch_types,
     get_first_pitch_swing
@@ -1670,6 +1673,28 @@ with content_col:
         unsafe_allow_html=True,
     )
     game = games[st.session_state["gc_selected_game_idx"]]
+
+    # WARM THIS GAME'S REQUESTS IN PARALLEL, ONCE, BEFORE ANYTHING READS.
+    #
+    # prefetch_slate already existed and hr_edge_board and daily_13
+    # already call it. This card never did — so the page a reader spends
+    # the most time in was the one place still making its MLB calls one
+    # at a time, each waiting on the last: both rosters, the boxscore,
+    # and (since the returning-bat work) each club's transactions.
+    #
+    # Warming them together turns that chain into one concurrent batch.
+    # PURELY AN OPTIMISATION — every function below still works if this
+    # never runs or fails; they just go back to fetching serially. Hence
+    # the bare except: a prefetch that raises must never take down a card
+    # that would otherwise render fine.
+    try:
+        prefetch_slate(
+            team_names=[t for t in (game.get("away"), game.get("home")) if t],
+            game_sides=[(game.get("game_pk"), s)
+                        for s in ("away", "home") if game.get("game_pk")],
+        )
+    except Exception:
+        pass
 
     # -----------------------------------------------------
     # BREADCRUMB
