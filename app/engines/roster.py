@@ -150,6 +150,27 @@ def _team_id(team_name: str):
     return _team_ids().get((team_name or "").lower())
 
 
+# THE TRANSACTIONS REQUEST, BUILT IN ONE PLACE.
+#
+# get_recent_activations reads it and prefetch_slate warms it, and the
+# memo key is (url, params) — so if the two built the URL separately and
+# ever drifted by a single day of window, the prefetch would warm one
+# key and the reader would miss on another. Silent: everything still
+# works, it just quietly goes back to being serial.
+_ACTIVATION_DAYS = 4
+
+
+def _transactions_spec(team_id, days=_ACTIVATION_DAYS):
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+    today = datetime.now(ZoneInfo("America/New_York")).date()
+    start = today - timedelta(days=days)
+    return ("https://statsapi.mlb.com/api/v1/transactions",
+            {"teamId": team_id,
+             "startDate": start.isoformat(),
+             "endDate": today.isoformat()})
+
+
 def prefetch_slate(team_names=(), game_sides=()):
     """Warm every request a slate build is about to make, concurrently.
 
@@ -172,6 +193,12 @@ def prefetch_slate(team_names=(), game_sides=()):
         for roster_type in ("40Man", "active"):
             specs.append((f"https://statsapi.mlb.com/api/v1/teams/{tid}/roster",
                           {"rosterType": roster_type, "hydrate": "person"}))
+        # Roster MOVES, warmed with the roster itself. The Game Card asks
+        # for these on every projected lineup (returning bats cannot come
+        # from any other source), and un-warmed it was one more serial
+        # round-trip waiting on the ones above it rather than running
+        # beside them.
+        specs.append(_transactions_spec(tid))
     # de-dupe: two sides of one game share a boxscore
     seen, uniq = set(), []
     for sp in specs:
@@ -396,7 +423,7 @@ def get_live_team_roster(team_name: str):
 
 
 @st.cache_data(ttl=300, max_entries=40, show_spinner=False)
-def get_recent_activations(team_name: str, days: int = 4):
+def get_recent_activations(team_name: str, days: int = _ACTIVATION_DAYS):
     """{pid: "Aug 19 — <MLB's own wording>"} for bats who just became
     available.
 
@@ -434,15 +461,8 @@ def get_recent_activations(team_name: str, days: int = 4):
     team_id = _team_id(team_name)
     if not team_id:
         return {}
-    from datetime import datetime, timedelta
-    from zoneinfo import ZoneInfo
-    today = datetime.now(ZoneInfo("America/New_York")).date()
-    start = today - timedelta(days=days)
-    resp = _get_json(
-        "https://statsapi.mlb.com/api/v1/transactions",
-        params={"teamId": team_id,
-                "startDate": start.isoformat(),
-                "endDate": today.isoformat()}) or {}
+    url, params = _transactions_spec(team_id, days)
+    resp = _get_json(url, params=params) or {}
 
     # Words that mean "this player just became available to start".
     # Matched against MLB's own description text, case-insensitively.
