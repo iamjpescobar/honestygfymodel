@@ -148,6 +148,63 @@ else:
         print("PASS: the publish gate considers NPB, KBO and WNBA")
 
 
+
+# ----------------------------------------------------------------------
+# A NOTIFICATION MUST NOT FAIL A JOB THAT DID ITS WORK.
+#
+# 2026-08-20: the Render deploy hook returned HTTP 500, `curl -fsS`
+# exited 22, and the nightly went red — after the tests passed and the
+# archive was built, verified and successfully uploaded to the release.
+# Everything the job exists to produce existed. Only the notification
+# failed.
+#
+# That red X is the "confident wrong diagnosis" this repo has a standing
+# rule against: it sends whoever reads it to debug a data build that is
+# fine, and it trains the eye to ignore red — which is how a REAL
+# failure gets missed on some later night.
+#
+# Warning instead of failing is safe ONLY because this step is last and
+# the release asset is already published: the data is reachable and a
+# human can press Manual Deploy. Pinned so the step cannot drift back to
+# job-fatal, or stop being last.
+# ----------------------------------------------------------------------
+for _wf in ("nightly-data.yml", "intl-late-refresh.yml"):
+    _src = (ROOT / ".github" / "workflows" / _wf).read_text()
+    _i = _src.find("- name: Trigger Render deploy")
+    if _i < 0:
+        failures.append(f"{_wf} has no Render deploy step")
+        continue
+    _step = _src[_i:]
+    _nxt = _step.find("\n      - name:", 1)
+    if _nxt > 0:
+        _step = _step[:_nxt]
+
+    if "for attempt in" not in _step:
+        failures.append(
+            f"{_wf}'s deploy hook has no retry loop — one transient 500 "
+            f"reds the whole run after the archive already published")
+    if "::warning::" not in _step:
+        failures.append(
+            f"{_wf}'s deploy hook fails the job instead of warning. The "
+            f"archive is published by this point; a red X here says the "
+            f"data build broke when it did not.")
+    if "ALREADY PUBLISHED" not in _step.upper():
+        failures.append(
+            f"{_wf}'s warning does not say the archive is already "
+            f"published, so whoever reads it has to work that out")
+    # The entire argument for warning rather than failing rests on this
+    # step running AFTER the upload. If it ever moves ahead of it, a
+    # swallowed failure means no archive and no red X either.
+    _i_pub = _src.find("release upload")
+    if _i_pub < 0:
+        _i_pub = _src.find("release create")
+    if 0 <= _i < _i_pub:
+        failures.append(
+            f"{_wf} triggers the deploy BEFORE publishing the archive — a "
+            f"non-fatal hook is only safe as the last step")
+if not failures:
+    print("PASS: deploy hooks retry, warn rather than fail, and run last")
+
 if failures:
     print("\nFAILURES:")
     for f in failures:
