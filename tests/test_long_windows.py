@@ -155,8 +155,10 @@ print("PASS: a window longer than the season returns the whole season")
 # already written into recency_windows for the thin windows. The long
 # ones need the mirror image of it, and help text is the only place the
 # reader will see it.
-assert "lineup_window" in gc_src
-help_block = gc_src.split('key="lineup_window"')[1][:900]
+assert '"lineup_window_top"' in gc_src, (
+    "the lineup Window control is gone or renamed; this test pins the help "
+    "text that hangs off it")
+help_block = gc_src.split('"lineup_window_top"')[1][:900]
 assert "help=" in help_block, "the lineup window control lost its help text"
 assert "170 PA" in help_block, (
     "the help text no longer says why PA windows matter for power — the "
@@ -166,6 +168,33 @@ assert "whole season" in help_block, (
     "the help text no longer warns that a window longer than a hitter has "
     "played silently returns less than the label claims")
 print("PASS: the lineup control explains what the long windows do and don't give")
+
+# --- 4b. EVERY WINDOW PICKER DRIVES THE SAME VALUE -------------------
+#
+# The control was duplicated above the Vs Top 3 Pitches table so that
+# table can be re-windowed without scrolling back to the top of the
+# card. Two INDEPENDENT pickers would be worse than one far away: you
+# would read a table under a setting the rest of the card is not using,
+# with nothing on screen saying so.
+#
+# So the rule is that no window selectbox is built by hand — they all go
+# through _window_control, which owns the one shared session value. This
+# pins the rule rather than the current call sites, so a third picker
+# added later is covered on the day it is written.
+assert "_WINDOW_STATE" in gc_src and "def _window_control" in gc_src, (
+    "the shared window helper is gone — a hand-rolled second picker can "
+    "silently disagree with the first")
+_win_calls = gc_src.count("_window_control(")
+assert _win_calls >= 3, (   # the def, plus at least two call sites
+    f"expected the window helper plus at least two call sites, found "
+    f"{_win_calls} references")
+for _stray in ('st.selectbox(\n                        "Window"',
+               'st.selectbox("Window"'):
+    assert _stray not in gc_src, (
+        "a Window selectbox is built directly instead of through "
+        "_window_control, so it carries its own state and can drift out of "
+        "sync with the others")
+print(f"PASS: all {_win_calls - 1} window pickers share one value")
 
 # --- 5. LONG AND THIN STAY DISJOINT ----------------------------------
 assert not (LONG_WINDOWS & THIN_WINDOWS), (
