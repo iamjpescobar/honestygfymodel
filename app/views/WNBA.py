@@ -780,11 +780,53 @@ def _render_slate():
                         # role order would make the two halves of the same
                         # matchup incomparable.
                         _sort_opts = ["Role", "Season", "L5", "L10", "vs OPP", "MIN"]
-                        _sort_by = st.segmented_control(
-                            "Sort", _sort_opts, default="Role",
-                            key=f"wnba_sort_{gi}_{label}",
-                            label_visibility="collapsed",
-                        ) or "Role"
+
+                        # ONE SORT VALUE, ONE CONTROL PER TEAM.
+                        #
+                        # This was a single control above the AWAY table,
+                        # with the comment "one control per tab, governing
+                        # BOTH team tables under it" — right about why the
+                        # two tables must share a value (sorting one side
+                        # by L10 and leaving the other in role order makes
+                        # the two halves of a matchup incomparable) and
+                        # wrong about where the widget goes. The home team
+                        # sits a full table below it, so changing the sort
+                        # while reading the home side meant scrolling up
+                        # past the entire away table and back down.
+                        #
+                        # Shared VALUE, duplicated WIDGET. Both stay in
+                        # lockstep, so the comparability the original
+                        # comment protects is untouched, and neither table
+                        # is ever far from a control.
+                        #
+                        # Keyed per game and per tab, so Points and
+                        # Rebounds each remember their own sort and two
+                        # games on the slate never collide.
+                        _sort_state = f"wnba_sort_val_{gi}_{label}"
+
+                        def _sort_control(_slot, _opts=_sort_opts,
+                                          _state=_sort_state, _gi=gi,
+                                          _label=label):
+                            _cur = st.session_state.get(_state, "Role")
+                            if _cur not in _opts:
+                                _cur = "Role"
+                            st.session_state[_state] = _cur
+                            _wk = f"wnba_sort_{_gi}_{_label}_{_slot}"
+                            # Seed this widget from the shared value before
+                            # it exists — a widget key already in
+                            # session_state ignores default=, so without
+                            # this the second control renders stale.
+                            st.session_state[_wk] = _cur
+
+                            def _sync(_k=_wk, _st=_state):
+                                st.session_state[_st] = st.session_state[_k]
+
+                            return st.segmented_control(
+                                "Sort", _opts, key=_wk, on_change=_sync,
+                                label_visibility="collapsed",
+                            ) or _cur
+
+                        _sort_by = st.session_state.get(_sort_state, "Role")
                         for side, col in (("away", a_col), ("home", h_col)):
                             plist = g.get(f"{side}_players")
                             if not plist:
@@ -796,6 +838,8 @@ def _render_slate():
                                 f'letter-spacing:0.05em; margin:var(--lc-space-lg) var(--lc-space-none) var(--lc-space-xs) var(--lc-space-none);">{g.get(side, "")}</div>',
                                 unsafe_allow_html=True,
                             )
+                            # This team's own copy of the shared sort.
+                            _sort_by = _sort_control(side)
                             rows = []
                             # Derived from RECENT minutes among available
                             # players — the WNBA feed publishes no starter
