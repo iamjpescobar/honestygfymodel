@@ -10,7 +10,8 @@ import streamlit as st
 from engines.slate_guard import load_slate, staleness_note
 
 from styles.kc_theme import SPORT_ACCENTS, card, footer, COLOR
-from styles.table_style import style_stat_table, render_html_table, score_bar, tier_legend, wnba_logo_cell
+from styles.table_style import (style_stat_table, render_html_table, score_bar,
+                                tier_legend, wnba_logo_cell, team_filter)
 from engines.wnba_props import (
     build_props, STATS, MIN_GP, MIN_MPG, MIN_LOG,
     W_CONSISTENCY, W_FORM, W_MATCHUP, W_PACE,
@@ -114,6 +115,14 @@ with card("wprops"):
             }
             for r in top
         ])
+        # Ranked across the whole slate, read one game at a time.
+        # Rank is preserved rather than recomputed: a prop sitting
+        # eleventh on the board still reads eleventh after
+        # filtering, instead of being renumbered into somebody's
+        # top play.
+        _fl, _fr = st.columns([1, 3])
+        with _fl:
+            df = team_filter(df, "wprops_team")
         # name -> ESPN id, from the rows themselves.
         _team_ids, _team_urls = {}, {}
         for _r in rows:
