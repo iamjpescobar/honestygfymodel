@@ -566,6 +566,24 @@ def _theme_css() -> str:
         .stTabs [data-baseweb="tab-list"] {{
             gap: 6px;
             border-bottom: 1px solid {COLOR["border"]};
+            /* STICKY, because the tab bar is a control and the content
+               under it is long. The WNBA prop-research block puts the
+               stat tabs (Points / Rebounds / Assists / ...) above TWO
+               full team tables, so switching stat while reading the
+               home side meant scrolling up past the entire away table
+               and then hunting back down for your place.
+
+               An opaque background is required, not decoration: without
+               it the table scrolls visibly through the tab labels.
+
+               Scoped to the tab list only. Sticky positioning inside a
+               scroll container can trap a header, so this is applied to
+               the one element that is genuinely a control and never to
+               a table or card. */
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            background-color: {COLOR["bg"]};
         }}
         .stTabs [data-baseweb="tab"] {{
             color: {COLOR["text_muted"]};
