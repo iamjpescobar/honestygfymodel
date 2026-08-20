@@ -259,8 +259,46 @@ jobs:
         env:
           HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
-          if [ -n "$HOOK" ]; then
-            curl -fsS "$HOOK" && echo "Render deploy triggered."
-          else
+          # RETRY, AND DO NOT KILL THE JOB OVER A NOTIFICATION.
+          #
+          # 2026-08-20: this returned HTTP 500, curl -fsS exited 22, and
+          # the whole nightly went red — AFTER the tests passed, the
+          # archive was built, verified, and successfully uploaded to
+          # the release. Everything the job exists to produce existed.
+          # The only thing that failed was telling Render about it.
+          #
+          # A red X on a run that did all its work is the "confident
+          # wrong diagnosis" this repo has a standing rule against: it
+          # sends whoever sees it to debug a data build that is fine,
+          # and it buries a real failure on some future night in a
+          # history of noisy ones.
+          #
+          # 500 is Render's server erroring, not a bad hook — a wrong
+          # URL gives 404 — so it is usually transient and a retry
+          # clears it. Three attempts, backing off.
+          #
+          # If all three fail the step WARNS rather than fails. That is
+          # deliberate and it is safe here specifically because this step
+          # is last: the release asset is already published, so the data
+          # is reachable and a human can press Manual Deploy. The
+          # annotation says exactly that, so nobody has to reconstruct it.
+          if [ -z "$HOOK" ]; then
             echo "RENDER_DEPLOY_HOOK secret not set - skipping deploy trigger."
+            exit 0
           fi
+          for attempt in 1 2 3; do
+            if curl -fsS --max-time 30 "$HOOK" >/dev/null; then
+              echo "Render deploy triggered (attempt $attempt)."
+              exit 0
+            fi
+            echo "Deploy hook failed on attempt $attempt."
+            # Written as a full if, not `[ ... ] && sleep`. These steps
+            # run under `bash -e`; a bare test that evaluates false on
+            # the last pass is a failing command, and relying on the
+            # and-list exemption to keep -e quiet is the kind of subtle
+            # that breaks when someone reorders two lines.
+            if [ "$attempt" -lt 3 ]; then
+              sleep $((attempt * 10))
+            fi
+          done
+          echo "::warning::Render deploy hook failed 3 times. THE ARCHIVE IS ALREADY PUBLISHED - the data is fine and reachable. Trigger a Manual Deploy from the Render dashboard to pick it up."
