@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-08-20 13:38",
+  "generated_at_et": "2026-08-20 17:37",
   "slate_date_et": "2026-08-20",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -35,7 +35,7 @@
         "Starters' avg HR/9 1.53 (high)",
         "Starters' avg SLG against 0.447 (high)"
       ],
-      "proj_total": 8.6
+      "proj_total": 8.7
     },
     {
       "game_pk": 824395,
@@ -59,7 +59,7 @@
         "Park factor 98 (pitcher-friendly)",
         "Starters' avg SLG against 0.377 (low)"
       ],
-      "proj_total": 7.9
+      "proj_total": 7.8
     },
     {
       "game_pk": 822934,
@@ -104,8 +104,8 @@
       "venue": "Kauffman Stadium",
       "game_time": "2026-08-20T18:10:00Z",
       "weather_condition": "Sunny",
-      "weather_temp": "81",
-      "weather_wind": "7 mph, R To L",
+      "weather_temp": "80",
+      "weather_wind": "3 mph, In From RF",
       "park_factor": 101,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -131,8 +131,8 @@
       "venue": "Rate Field",
       "game_time": "2026-08-20T18:10:00Z",
       "weather_condition": "Sunny",
-      "weather_temp": "74",
-      "weather_wind": "8 mph, L To R",
+      "weather_temp": "76",
+      "weather_wind": "13 mph, L To R",
       "park_factor": 98,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -152,7 +152,7 @@
         "Starters' avg HR/9 1.36 (high)",
         "Starters' avg SLG against 0.42 (high)"
       ],
-      "proj_total": 8.9
+      "proj_total": 8.8
     },
     {
       "game_pk": 823747,
@@ -163,8 +163,8 @@
       "venue": "American Family Field",
       "game_time": "2026-08-20T18:10:00Z",
       "weather_condition": "Sunny",
-      "weather_temp": "77",
-      "weather_wind": "3 mph, In From LF",
+      "weather_temp": "78",
+      "weather_wind": "7 mph, In From CF",
       "park_factor": 97,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -178,7 +178,7 @@
         "Starters' avg HR/9 1.35 (high)",
         "Starters' avg SLG against 0.443 (high)"
       ],
-      "proj_total": 8.0
+      "proj_total": 8.1
     },
     {
       "game_pk": 824802,
@@ -188,14 +188,14 @@
       "home_pitcher": "Kyle Bradish",
       "venue": "Oriole Park at Camden Yards",
       "game_time": "2026-08-20T22:35:00Z",
-      "weather_condition": "Chance Showers And Thunderstorms",
-      "weather_temp": 77,
-      "weather_wind": "N 7 mph",
+      "weather_condition": "Cloudy",
+      "weather_temp": "77",
+      "weather_wind": "11 mph, In From LF",
       "park_factor": 103,
       "park_verified": true,
-      "weather_source": "nws_forecast",
-      "wind_adj": -2.6,
-      "wind_note": "7 mph blowing in (-2.6)",
+      "weather_source": "mlb_posted",
+      "wind_adj": -3,
+      "wind_note": "wind in 11 mph (-3)",
       "edge_net": 2,
       "edge_lean": "New York Yankees",
       "edge_grade": "C",
@@ -218,12 +218,12 @@
       "home_pitcher": "Jacob deGrom",
       "venue": "Globe Life Field",
       "game_time": "2026-08-21T00:05:00Z",
-      "weather_condition": null,
-      "weather_temp": null,
-      "weather_wind": null,
+      "weather_condition": "Roof Closed",
+      "weather_temp": "72",
+      "weather_wind": "0 mph, None",
       "park_factor": 93,
       "park_verified": true,
-      "weather_source": null,
+      "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
       "ou_lean": "Under",
@@ -243,12 +243,12 @@
       "home_pitcher": "Peter Lambert",
       "venue": "Daikin Park",
       "game_time": "2026-08-21T00:10:00Z",
-      "weather_condition": null,
-      "weather_temp": null,
-      "weather_wind": null,
+      "weather_condition": "Roof Closed",
+      "weather_temp": "72",
+      "weather_wind": "0 mph, None",
       "park_factor": 100,
       "park_verified": true,
-      "weather_source": null,
+      "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
       "edge_net": 4,
