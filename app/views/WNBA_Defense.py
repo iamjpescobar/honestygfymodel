@@ -7,7 +7,8 @@ import streamlit as st
 from engines.slate_guard import load_slate, staleness_note
 
 from styles.kc_theme import SPORT_ACCENTS, card, footer, COLOR
-from styles.table_style import style_stat_table, render_html_table, tier_legend
+from styles.table_style import (style_stat_table, render_html_table, tier_legend,
+                                team_filter)
 from engines.wnba_defense import build_board, MIN_PLAYER_GP
 from engines.live_sync import sync_latest_button
 from engines.calibration import (log_picks, grade_pending, summary,
@@ -98,6 +99,10 @@ with card("wdef"):
             }
             for r in rows[:25]
         ])
+        # Ranked across the whole slate, read one game at a time.
+        _fl, _fr = st.columns([1, 3])
+        with _fl:
+            df = team_filter(df, "wdef_team")
         render_html_table(
             style_stat_table(
                 df,
