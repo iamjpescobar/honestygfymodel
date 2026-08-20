@@ -15,7 +15,8 @@ import streamlit as st
 
 from styles.kc_theme import card, footer, COLOR
 from styles.table_style import (style_stat_table, render_html_table, team_logo_cell,
-                                score_bar, sort_control, tier_legend, stat_formats)
+                                score_bar, sort_control, tier_legend, stat_formats,
+                                team_filter)
 from engines.hr_edge_board import (get_hr_edge_board, cap_per_game,
                                    GAME_CAP, CAP_UNIT)
 # Column headers come from the component, not from this file. Typing
@@ -203,6 +204,15 @@ else:
         # reordered nothing — the styled object already held the old
         # order. Moving off st.dataframe removed click-to-sort along with
         # drag-to-reorder; this puts sorting back.
+        # ONE GAME AT A TIME, WITHOUT LOSING THE SLATE RANK.
+        # This board is forty bats across fifteen games, which is
+        # the right shape for finding the best play and the wrong
+        # one for talking through a single matchup. Filtering runs
+        # AFTER "#" is assigned, so a bat that is seventh on the
+        # slate still reads seventh here.
+        _fl, _fr = st.columns([1, 3])
+        with _fl:
+            df = team_filter(df, "hredge_team")
         df = sort_control(df, "hredge", default="HR Edge")
         styled = style_stat_table(
             df,
