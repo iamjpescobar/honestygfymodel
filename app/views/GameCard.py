@@ -873,6 +873,33 @@ def _resolve_lineup_batters(confirmed_lineup, lineup_confirmed, opposing_team,
                     f"available today, so scoring them here would be a real-looking "
                     f"number on someone who isn't in the building."
                 )
+            # ASK FIRST WHICH POOL WE ARE BUILDING.
+            #
+            # This control used to sit BELOW the returning-bat block,
+            # and the two contradicted each other on screen: the floor
+            # would announce "Also available today but held back from
+            # the table: Will Banfield" and then Full roster mode would
+            # add Banfield to the table anyway, three lines further
+            # down. Both statements were individually true and the pair
+            # was nonsense.
+            #
+            # Reading the mode first makes the floor conditional on it,
+            # which is what it always should have been: a floor exists
+            # to decide who is worth ASSERTING into a projected nine.
+            # In Full roster mode nothing is being asserted — every
+            # available bat is shown by definition — so there is nothing
+            # for it to decide.
+            _pool_mode = st.segmented_control(
+                "Show", ["Full roster", "Projected 9"],
+                default="Full roster", key="lineup_pool_mode",
+                help=("Full roster shows every available position player "
+                      "(~13) with a Lock / Usual / In question tier on "
+                      "each \u2014 nobody can be missing. Projected 9 shows "
+                      "only last game's posted lineup, which is right "
+                      "about 81.7% of the time.")
+            )
+            _full_roster = _pool_mode != "Projected 9"
+
             # ADD BACK ANYONE WHO JUST BECAME AVAILABLE.
             #
             # The filter directly above SUBTRACTS. That is the whole
@@ -977,7 +1004,13 @@ def _resolve_lineup_batters(confirmed_lineup, lineup_confirmed, opposing_team,
                     _pa = _prof.get("PA") or 0
                     _gp = _prof.get("Games") or 0
                     _papg = (_pa / _gp) if _gp else 0.0
-                    if _pa < _RET_MIN_PA or _papg < _RET_MIN_PA_PER_GAME:
+                    # The floor only decides who is worth asserting into
+                    # a nine. In Full roster mode nothing is asserted, so
+                    # it does not apply — and applying it anyway is what
+                    # produced the "held back" caption above a table that
+                    # then showed them.
+                    if not _full_roster and (
+                            _pa < _RET_MIN_PA or _papg < _RET_MIN_PA_PER_GAME):
                         _held.append(
                             f"{_p.get('name')} ({_pa} PA"
                             + (f", {_papg:.1f} per game" if _gp else "")
@@ -1012,7 +1045,7 @@ def _resolve_lineup_batters(confirmed_lineup, lineup_confirmed, opposing_team,
                     "projected starters — O'Neil Cruz came off the 60-day "
                     "IL at 4.4 PA per game and did not start."
                 )
-            if _held:
+            if _held and not _full_roster:
                 st.caption(
                     "Also available today but held back from the table: "
                     + "; ".join(_held)
@@ -1051,16 +1084,7 @@ def _resolve_lineup_batters(confirmed_lineup, lineup_confirmed, opposing_team,
             # interesting; these are explicitly the bench, they are
             # labelled as such by their tier, and a thin row among them
             # reads correctly as a thin bench bat.
-            _pool_mode = st.segmented_control(
-                "Show", ["Full roster", "Projected 9"],
-                default="Full roster", key="lineup_pool_mode",
-                help=("Full roster shows every available position player "
-                      "(~13) with a Lock / Usual / In question tier on "
-                      "each \u2014 nobody can be missing. Projected 9 shows "
-                      "only last game's posted lineup, which is right "
-                      "about 81.7% of the time.")
-            )
-            if _pool_mode != "Projected 9":
+            if _full_roster:
                 _have = {str(b.get("id")) for b in batters}
                 _extra = 0
                 for _p in get_live_team_roster(opposing_team) or []:
