@@ -212,6 +212,33 @@ def get_confirmed_lineup(game_pk, side: str):
         batting_order = p.get("battingOrder")
         if not batting_order:
             continue  # not in today's real starting lineup (bench/bullpen/unused)
+        # STARTERS ONLY — MULTIPLES OF 100.
+        #
+        # MLB encodes the batting slot in the hundreds and the position
+        # WITHIN that slot in the tens and units: the starter batting
+        # fourth is "400", the man who pinch-hits for him is "401", the
+        # next replacement "402". Every one of them is truthy, so the
+        # check above let all of them through.
+        #
+        # This never showed on a CONFIRMED lineup, because MLB posts it
+        # before the game and no substitutions have happened yet —
+        # everything really is x00. It showed on the PROJECTED fallback,
+        # which calls this on a game that has already been played:
+        # Cincinnati came back with eleven "starters" for nine slots,
+        # Suarez AND Hayes both reading Ord 4, Toglia AND Friedl both
+        # reading Ord 6. A duplicate batting order on a lineup card is
+        # the kind of wrong that undermines every correct number beside
+        # it, and it is worse than it looks — the sub is a bat who
+        # DIDN'T start, presented as one who did.
+        #
+        # Guarded rather than assumed: MLB has typed this field as a
+        # string throughout, and a non-numeric value should drop the row
+        # rather than raise on a page that is otherwise fine.
+        try:
+            if int(batting_order) % 100 != 0:
+                continue
+        except (TypeError, ValueError):
+            continue
         person = p.get("person", {})
         position = p.get("position", {})
         pid = person.get("id")
