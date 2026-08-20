@@ -133,3 +133,43 @@ jobs:
           # rather than fail, so a race costs a retry and not a day.
           git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      # WITHOUT THIS THE RECORD NEVER REACHES THE SITE.
+      #
+      # This job commits the pick record and games.json, and until
+      # 2026-08-20 that was enough: Render auto-deployed on every push,
+      # so the commit above WAS the delivery. Auto-Deploy is now off (it
+      # was rebuilding the service on every data commit, several times a
+      # day, for no reason), which means a push no longer ships
+      # anything. The board would have recorded five times a day into a
+      # repo the live site never re-read.
+      #
+      # Silent, too: every step would stay green and Home would just
+      # keep showing an older board. That is the shape of failure this
+      # repo keeps finding, so it gets a step of its own rather than an
+      # assumption.
+      #
+      # Same retry-and-warn as nightly-data: three attempts, then a
+      # WARNING rather than a red X, because by this point the pick
+      # record is already committed and safe in git. A failed deploy
+      # delays delivery; it does not lose the record, and the next run a
+      # few hours later ships it.
+      - name: Trigger Render deploy
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "RENDER_DEPLOY_HOOK secret not set - skipping deploy trigger."
+            exit 0
+          fi
+          for attempt in 1 2 3; do
+            if curl -fsS --max-time 30 "$HOOK" >/dev/null; then
+              echo "Render deploy triggered (attempt $attempt)."
+              exit 0
+            fi
+            echo "Deploy hook failed on attempt $attempt."
+            if [ "$attempt" -lt 3 ]; then
+              sleep $((attempt * 10))
+            fi
+          done
+          echo "::warning::Render deploy hook failed 3 times. THE PICK RECORD IS ALREADY COMMITTED - nothing is lost, the site just has not picked it up yet. Trigger a Manual Deploy, or wait for the next scheduled run."
