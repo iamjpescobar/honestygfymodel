@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-08-22 10:52",
+  "generated_at_et": "2026-08-22 11:48",
   "slate_date_et": "2026-08-22",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -43,12 +43,12 @@
       "home_pitcher": "Logan Henderson",
       "venue": "American Family Field",
       "game_time": "2026-08-22T18:10:00Z",
-      "weather_condition": null,
-      "weather_temp": null,
-      "weather_wind": null,
+      "weather_condition": "Partly Cloudy",
+      "weather_temp": "77",
+      "weather_wind": "10 mph, Out To CF",
       "park_factor": 97,
       "park_verified": true,
-      "weather_source": null,
+      "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
       "edge_net": 1,
