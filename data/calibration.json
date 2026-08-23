@@ -2868,7 +2868,7 @@
           "team": "ARI",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "676475",
@@ -2876,7 +2876,7 @@
           "team": "STL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "802415",
@@ -2884,7 +2884,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "800050",
@@ -2892,7 +2892,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "691023",
@@ -2900,7 +2900,7 @@
           "team": "STL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "680757",
@@ -2908,7 +2908,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "650490",
@@ -2916,7 +2916,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "666182",
@@ -2924,7 +2924,7 @@
           "team": "NYM",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "701398",
@@ -2932,7 +2932,7 @@
           "team": "CIN",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "624413",
@@ -2940,7 +2940,7 @@
           "team": "BAL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "701675",
@@ -2948,7 +2948,7 @@
           "team": "STL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "701807",
@@ -2956,7 +2956,7 @@
           "team": "NYM",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "514888",
@@ -2964,10 +2964,10 @@
           "team": "HOU",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -3344,10 +3344,10 @@
           "team": "Los Angeles Dodgers",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -4502,7 +4502,7 @@
           "team": "Baltimore Orioles",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "670541",
@@ -4510,7 +4510,7 @@
           "team": "Houston Astros",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "621439",
@@ -4518,7 +4518,7 @@
           "team": "Minnesota Twins",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "665052",
@@ -4526,7 +4526,7 @@
           "team": "Miami Marlins",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "687952",
@@ -4534,10 +4534,10 @@
           "team": "Baltimore Orioles",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -10985,7 +10985,8 @@
           "team": "Toronto Tempo",
           "stat": "pts",
           "line": 20.5,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": "5345444",
@@ -11129,7 +11130,8 @@
           "team": "Toronto Tempo",
           "stat": "ast",
           "line": 3.5,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": "4282173",
@@ -11233,7 +11235,8 @@
           "team": "Toronto Tempo",
           "stat": "pra",
           "line": 27.0,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": "4433791",
@@ -11316,7 +11319,7 @@
           "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     },
     "2026-08-20": {
@@ -12139,7 +12142,7 @@
           "team": "Connecticut Sun",
           "stat": "pts",
           "line": 12.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4432831",
@@ -12147,7 +12150,7 @@
           "team": "Indiana Fever",
           "stat": "pts",
           "line": 15.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433635",
@@ -12155,7 +12158,7 @@
           "team": "Connecticut Sun",
           "stat": "pts",
           "line": 10.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433403",
@@ -12163,7 +12166,7 @@
           "team": "Indiana Fever",
           "stat": "pts",
           "line": 23.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3102133",
@@ -12171,7 +12174,7 @@
           "team": "New York Liberty",
           "stat": "pts",
           "line": 7.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3142191",
@@ -12179,7 +12182,7 @@
           "team": "Indiana Fever",
           "stat": "pts",
           "line": 28.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4066533",
@@ -12187,7 +12190,7 @@
           "team": "New York Liberty",
           "stat": "pts",
           "line": 19.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4398764",
@@ -12195,7 +12198,7 @@
           "team": "Los Angeles Sparks",
           "stat": "pts",
           "line": 17.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2998928",
@@ -12203,7 +12206,7 @@
           "team": "New York Liberty",
           "stat": "pts",
           "line": 20.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2327695",
@@ -12211,7 +12214,7 @@
           "team": "New York Liberty",
           "stat": "pts",
           "line": 5.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433404",
@@ -12219,7 +12222,7 @@
           "team": "Los Angeles Sparks",
           "stat": "reb",
           "line": 5.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4398966",
@@ -12227,7 +12230,7 @@
           "team": "Connecticut Sun",
           "stat": "reb",
           "line": 7.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433402",
@@ -12235,7 +12238,7 @@
           "team": "Atlanta Dream",
           "stat": "reb",
           "line": 11.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398764",
@@ -12243,7 +12246,7 @@
           "team": "Los Angeles Sparks",
           "stat": "reb",
           "line": 2.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433635",
@@ -12251,7 +12254,7 @@
           "team": "Connecticut Sun",
           "stat": "reb",
           "line": 3.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433546",
@@ -12259,7 +12262,7 @@
           "team": "Indiana Fever",
           "stat": "reb",
           "line": 6.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4432831",
@@ -12267,7 +12270,7 @@
           "team": "Indiana Fever",
           "stat": "reb",
           "line": 8.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "869",
@@ -12275,7 +12278,7 @@
           "team": "Phoenix Mercury",
           "stat": "reb",
           "line": 7.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433403",
@@ -12283,7 +12286,7 @@
           "team": "Indiana Fever",
           "stat": "reb",
           "line": 3.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2491214",
@@ -12291,7 +12294,7 @@
           "team": "Los Angeles Sparks",
           "stat": "reb",
           "line": 2.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433403",
@@ -12299,7 +12302,7 @@
           "team": "Indiana Fever",
           "stat": "ast",
           "line": 8.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3058901",
@@ -12307,7 +12310,7 @@
           "team": "Atlanta Dream",
           "stat": "ast",
           "line": 2.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398674",
@@ -12315,7 +12318,7 @@
           "team": "Atlanta Dream",
           "stat": "ast",
           "line": 4.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4432831",
@@ -12323,7 +12326,7 @@
           "team": "Indiana Fever",
           "stat": "ast",
           "line": 3.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4703609",
@@ -12331,7 +12334,7 @@
           "team": "Connecticut Sun",
           "stat": "ast",
           "line": 4.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2566106",
@@ -12339,7 +12342,7 @@
           "team": "Los Angeles Sparks",
           "stat": "ast",
           "line": 2.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2998928",
@@ -12347,7 +12350,7 @@
           "team": "New York Liberty",
           "stat": "ast",
           "line": 4.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3102133",
@@ -12355,7 +12358,7 @@
           "team": "New York Liberty",
           "stat": "ast",
           "line": 0.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3142250",
@@ -12363,7 +12366,7 @@
           "team": "Atlanta Dream",
           "stat": "ast",
           "line": 8.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4066533",
@@ -12371,7 +12374,7 @@
           "team": "New York Liberty",
           "stat": "ast",
           "line": 5.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "869",
@@ -12379,7 +12382,7 @@
           "team": "Phoenix Mercury",
           "stat": "pra",
           "line": 22.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3102133",
@@ -12387,7 +12390,7 @@
           "team": "New York Liberty",
           "stat": "pra",
           "line": 10.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3142191",
@@ -12395,7 +12398,7 @@
           "team": "Indiana Fever",
           "stat": "pra",
           "line": 32.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433402",
@@ -12403,7 +12406,7 @@
           "team": "Atlanta Dream",
           "stat": "pra",
           "line": 31.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4066533",
@@ -12411,7 +12414,7 @@
           "team": "New York Liberty",
           "stat": "pra",
           "line": 29.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4432831",
@@ -12419,7 +12422,7 @@
           "team": "Indiana Fever",
           "stat": "pra",
           "line": 26.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2327695",
@@ -12427,7 +12430,7 @@
           "team": "New York Liberty",
           "stat": "pra",
           "line": 9.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433546",
@@ -12435,7 +12438,7 @@
           "team": "Indiana Fever",
           "stat": "pra",
           "line": 14.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433635",
@@ -12443,7 +12446,7 @@
           "team": "Connecticut Sun",
           "stat": "pra",
           "line": 15.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4398966",
@@ -12451,7 +12454,7 @@
           "team": "Connecticut Sun",
           "stat": "pra",
           "line": 20.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2491214",
@@ -12459,7 +12462,7 @@
           "team": "Los Angeles Sparks",
           "stat": "tpm",
           "line": 1.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3142191",
@@ -12467,7 +12470,7 @@
           "team": "Indiana Fever",
           "stat": "tpm",
           "line": 3.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3102133",
@@ -12475,7 +12478,7 @@
           "team": "New York Liberty",
           "stat": "tpm",
           "line": 1.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4066533",
@@ -12483,7 +12486,7 @@
           "team": "New York Liberty",
           "stat": "tpm",
           "line": 2.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "869",
@@ -12491,7 +12494,7 @@
           "team": "Phoenix Mercury",
           "stat": "tpm",
           "line": 1.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3922628",
@@ -12499,7 +12502,7 @@
           "team": "Connecticut Sun",
           "stat": "tpm",
           "line": 1.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433404",
@@ -12507,7 +12510,7 @@
           "team": "Los Angeles Sparks",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4703609",
@@ -12515,7 +12518,7 @@
           "team": "Connecticut Sun",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398764",
@@ -12523,7 +12526,7 @@
           "team": "Los Angeles Sparks",
           "stat": "tpm",
           "line": 2.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433635",
@@ -12531,10 +12534,10 @@
           "team": "Connecticut Sun",
           "stat": "tpm",
           "line": 1.5,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -14964,7 +14967,7 @@
           "team": "New York Liberty",
           "stat": "pts",
           "line": 19.8,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4432831",
@@ -14972,7 +14975,7 @@
           "team": "Indiana Fever",
           "stat": "pts",
           "line": 15.7,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398966",
@@ -14980,7 +14983,7 @@
           "team": "Connecticut Sun",
           "stat": "pts",
           "line": 12.6,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3922628",
@@ -14988,7 +14991,7 @@
           "team": "Connecticut Sun",
           "stat": "pts",
           "line": 10.4,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "5208981",
@@ -14996,7 +14999,7 @@
           "team": "Connecticut Sun",
           "stat": "pts",
           "line": 8.8,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398966",
@@ -15004,7 +15007,7 @@
           "team": "Connecticut Sun",
           "stat": "reb",
           "line": 7.1,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433402",
@@ -15012,7 +15015,7 @@
           "team": "Atlanta Dream",
           "stat": "reb",
           "line": 13.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433635",
@@ -15020,7 +15023,7 @@
           "team": "Connecticut Sun",
           "stat": "reb",
           "line": 3.2,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5105732",
@@ -15028,7 +15031,7 @@
           "team": "Connecticut Sun",
           "stat": "reb",
           "line": 3.2,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "5108587",
@@ -15036,7 +15039,7 @@
           "team": "Atlanta Dream",
           "stat": "reb",
           "line": 2.9,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3142250",
@@ -15044,7 +15047,7 @@
           "team": "Atlanta Dream",
           "stat": "ast",
           "line": 7.3,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433403",
@@ -15052,7 +15055,7 @@
           "team": "Indiana Fever",
           "stat": "ast",
           "line": 9.1,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4432831",
@@ -15060,7 +15063,7 @@
           "team": "Indiana Fever",
           "stat": "ast",
           "line": 3.2,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2998928",
@@ -15068,7 +15071,7 @@
           "team": "New York Liberty",
           "stat": "ast",
           "line": 3.7,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398674",
@@ -15076,10 +15079,10 @@
           "team": "Atlanta Dream",
           "stat": "ast",
           "line": 4.5,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -16012,7 +16015,7 @@
           "team": "TOR",
           "stat": "strikeOuts",
           "line": 9.7,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 669373,
@@ -16020,7 +16023,7 @@
           "team": "LAD",
           "stat": "strikeOuts",
           "line": 7.6,
-          "result": null
+          "result": "hit"
         },
         {
           "id": 681035,
@@ -16028,7 +16031,7 @@
           "team": "NYM",
           "stat": "strikeOuts",
           "line": 6.2,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 647336,
@@ -16036,7 +16039,7 @@
           "team": "ARI",
           "stat": "strikeOuts",
           "line": 6.1,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 701656,
@@ -16044,10 +16047,10 @@
           "team": "MIL",
           "stat": "strikeOuts",
           "line": 5.9,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   }
