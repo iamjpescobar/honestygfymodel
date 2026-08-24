@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-08-24 12:05",
+  "generated_at_et": "2026-08-24 13:38",
   "slate_date_et": "2026-08-24",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -11,14 +11,14 @@
       "home_pitcher": "Framber Valdez",
       "venue": "Comerica Park",
       "game_time": "2026-08-24T22:40:00Z",
-      "weather_condition": "Partly Cloudy",
-      "weather_temp": 77,
-      "weather_wind": "WNW 10 mph",
+      "weather_condition": "Cloudy",
+      "weather_temp": 76,
+      "weather_wind": "WNW 9 mph",
       "park_factor": 100,
       "park_verified": true,
       "weather_source": "nws_forecast",
-      "wind_adj": 2.8,
-      "wind_note": "10 mph blowing out (+2.8)",
+      "wind_adj": 2.5,
+      "wind_note": "9 mph blowing out (+2.5)",
       "edge_net": 3,
       "edge_lean": "Tampa Bay Rays",
       "edge_grade": "B",
@@ -290,7 +290,7 @@
       "away": "Cincinnati Reds",
       "home": "San Francisco Giants",
       "away_pitcher": "Chase Burns",
-      "home_pitcher": "TBD",
+      "home_pitcher": "Carson Whisenhunt",
       "venue": "Oracle Park",
       "game_time": "2026-08-25T01:45:00Z",
       "weather_condition": "Mostly Clear",
@@ -301,6 +301,22 @@
       "weather_source": "nws_forecast",
       "wind_adj": 2.3,
       "wind_note": "8 mph blowing out (+2.3)",
+      "edge_net": 4,
+      "edge_lean": "Cincinnati Reds",
+      "edge_grade": "A",
+      "edge_signals": [
+        "WHIP: edge Cincinnati Reds (1.15 vs 1.94)",
+        "K%: edge Cincinnati Reds (29.1 vs 15)",
+        "HR/9: edge Cincinnati Reds (0.91 vs 1.45)",
+        "SLG against: edge Cincinnati Reds (0.345 vs 0.485)"
+      ],
+      "ou_lean": "Under",
+      "ou_grade": "C-",
+      "ou_signals": [
+        "Park factor 97 (pitcher-friendly)",
+        "Temp 63F (cold suppresses)",
+        "Starters' avg WHIP 1.54 (high)"
+      ],
       "proj_total": 8.6
     }
   ]
