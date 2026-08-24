@@ -3099,8 +3099,8 @@
           "result": null
         },
         {
-          "id": "802415",
-          "name": "Chandler Simpson",
+          "id": "650490",
+          "name": "Yandy D\u00edaz",
           "team": "TB",
           "stat": null,
           "line": null,
@@ -3115,49 +3115,9 @@
           "result": null
         },
         {
-          "id": "650490",
-          "name": "Yandy D\u00edaz",
+          "id": "802415",
+          "name": "Chandler Simpson",
           "team": "TB",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "660688",
-          "name": "Keibert Ruiz",
-          "team": "WSH",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "683737",
-          "name": "Michael Busch",
-          "team": "CHC",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "678246",
-          "name": "Miguel Vargas",
-          "team": "CWS",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "691718",
-          "name": "Pete Crow-Armstrong",
-          "team": "CHC",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "686797",
-          "name": "Brooks Lee",
-          "team": "MIN",
           "stat": null,
           "line": null,
           "result": null
@@ -3171,16 +3131,56 @@
           "result": null
         },
         {
-          "id": "695734",
-          "name": "Daylen Lile",
+          "id": "678246",
+          "name": "Miguel Vargas",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683737",
+          "name": "Michael Busch",
+          "team": "CHC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "660688",
+          "name": "Keibert Ruiz",
           "team": "WSH",
           "stat": null,
           "line": null,
           "result": null
         },
         {
-          "id": "696285",
-          "name": "Jacob Young",
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691718",
+          "name": "Pete Crow-Armstrong",
+          "team": "CHC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686765",
+          "name": "Nick Sogard",
+          "team": "BOS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682928",
+          "name": "CJ Abrams",
           "team": "WSH",
           "stat": null,
           "line": null,
@@ -3587,9 +3587,9 @@
     "2026-08-24": {
       "picks": [
         {
-          "id": "808959",
-          "name": "Munetaka Murakami",
-          "team": "Chicago White Sox",
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "Tampa Bay Rays",
           "stat": null,
           "line": null,
           "result": null
@@ -4832,6 +4832,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-24": {
+      "picks": [
+        {
+          "id": "621439",
+          "name": "Byron Buxton",
+          "team": "Minnesota Twins",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "677800",
+          "name": "Wilyer Abreu",
+          "team": "Boston Red Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663728",
+          "name": "Cal Raleigh",
+          "team": "Seattle Mariners",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "668904",
+          "name": "Royce Lewis",
+          "team": "Minnesota Twins",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "678246",
+          "name": "Miguel Vargas",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
