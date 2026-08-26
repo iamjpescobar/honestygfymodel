@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-08-26 12:03",
+  "generated_at_et": "2026-08-26 12:37",
   "slate_date_et": "2026-08-26",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -76,11 +76,11 @@
       "venue": "Oracle Park",
       "game_time": "2026-08-26T19:45:00Z",
       "weather_condition": "Sunny",
-      "weather_temp": 65,
-      "weather_wind": "S 2 mph",
+      "weather_temp": "66",
+      "weather_wind": "2 mph, Out To LF",
       "park_factor": 97,
       "park_verified": true,
-      "weather_source": "nws_forecast",
+      "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
       "edge_net": 4,
@@ -93,10 +93,9 @@
         "SLG against: edge San Francisco Giants (0.49 vs 0.354)"
       ],
       "ou_lean": "Over",
-      "ou_grade": "C-",
+      "ou_grade": "C",
       "ou_signals": [
         "Park factor 97 (pitcher-friendly)",
-        "Temp 65F (cold suppresses)",
         "Starters' avg WHIP 1.56 (high)",
         "Starters' avg HR/9 1.26 (high)",
         "Starters' avg SLG against 0.422 (high)"
@@ -390,7 +389,7 @@
       "home_pitcher": "Sean Burke",
       "venue": "Rate Field",
       "game_time": "2026-08-26T23:40:00Z",
-      "weather_condition": "Slight Chance Showers And Thunderstorms",
+      "weather_condition": "Slight Chance Rain Showers",
       "weather_temp": 81,
       "weather_wind": "W 10 mph",
       "park_factor": 98,
