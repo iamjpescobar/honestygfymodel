@@ -3198,7 +3198,7 @@
           "team": "STL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "701398",
@@ -3206,7 +3206,7 @@
           "team": "CIN",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "650490",
@@ -3214,7 +3214,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "672960",
@@ -3222,7 +3222,7 @@
           "team": "TOR",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "624413",
@@ -3230,7 +3230,7 @@
           "team": "BAL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "807712",
@@ -3238,7 +3238,7 @@
           "team": "MIN",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "521692",
@@ -3246,7 +3246,7 @@
           "team": "KC",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "802415",
@@ -3254,7 +3254,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "691406",
@@ -3262,7 +3262,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "701675",
@@ -3270,7 +3270,7 @@
           "team": "STL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "678882",
@@ -3278,7 +3278,7 @@
           "team": "BOS",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "691023",
@@ -3286,7 +3286,7 @@
           "team": "STL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "647304",
@@ -3294,10 +3294,10 @@
           "team": "SEA",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -3716,10 +3716,10 @@
           "team": "Houston Astros",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -5012,7 +5012,7 @@
           "team": "Houston Astros",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "646240",
@@ -5020,7 +5020,7 @@
           "team": "San Francisco Giants",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "624413",
@@ -5028,7 +5028,7 @@
           "team": "Baltimore Orioles",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "621439",
@@ -5036,7 +5036,7 @@
           "team": "Minnesota Twins",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "547180",
@@ -5044,10 +5044,10 @@
           "team": "Philadelphia Phillies",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -13870,7 +13870,7 @@
           "team": "Dallas Wings",
           "stat": "pts",
           "line": 8.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433635",
@@ -13878,7 +13878,7 @@
           "team": "Connecticut Sun",
           "stat": "pts",
           "line": 10.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4594786",
@@ -13886,7 +13886,7 @@
           "team": "Chicago Sky",
           "stat": "pts",
           "line": 16.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2529137",
@@ -13894,7 +13894,7 @@
           "team": "Chicago Sky",
           "stat": "pts",
           "line": 14.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3934218",
@@ -13902,7 +13902,7 @@
           "team": "Portland Fire",
           "stat": "pts",
           "line": 15.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4398911",
@@ -13910,7 +13910,7 @@
           "team": "Washington Mystics",
           "stat": "pts",
           "line": 21.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4398966",
@@ -13926,7 +13926,7 @@
           "team": "Connecticut Sun",
           "stat": "pts",
           "line": 9.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3906972",
@@ -13934,7 +13934,7 @@
           "team": "Portland Fire",
           "stat": "pts",
           "line": 16.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2529140",
@@ -13942,7 +13942,7 @@
           "team": "Phoenix Mercury",
           "stat": "pts",
           "line": 15.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3934218",
@@ -13950,7 +13950,7 @@
           "team": "Portland Fire",
           "stat": "reb",
           "line": 5.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5209202",
@@ -13958,7 +13958,7 @@
           "team": "Portland Fire",
           "stat": "reb",
           "line": 2.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433514",
@@ -13966,7 +13966,7 @@
           "team": "Connecticut Sun",
           "stat": "reb",
           "line": 2.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "5105737",
@@ -13974,7 +13974,7 @@
           "team": "Washington Mystics",
           "stat": "reb",
           "line": 5.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "5105406",
@@ -13982,7 +13982,7 @@
           "team": "Portland Fire",
           "stat": "reb",
           "line": 2.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "981",
@@ -13990,7 +13990,7 @@
           "team": "Chicago Sky",
           "stat": "reb",
           "line": 2.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3913881",
@@ -13998,7 +13998,7 @@
           "team": "Dallas Wings",
           "stat": "reb",
           "line": 5.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2529137",
@@ -14006,7 +14006,7 @@
           "team": "Chicago Sky",
           "stat": "reb",
           "line": 4.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4790266",
@@ -14014,7 +14014,7 @@
           "team": "Dallas Wings",
           "stat": "reb",
           "line": 3.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398911",
@@ -14022,7 +14022,7 @@
           "team": "Washington Mystics",
           "stat": "reb",
           "line": 10.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5105737",
@@ -14030,7 +14030,7 @@
           "team": "Washington Mystics",
           "stat": "ast",
           "line": 1.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433524",
@@ -14038,7 +14038,7 @@
           "team": "Washington Mystics",
           "stat": "ast",
           "line": 5.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3904577",
@@ -14046,7 +14046,7 @@
           "team": "Dallas Wings",
           "stat": "ast",
           "line": 3.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398911",
@@ -14054,7 +14054,7 @@
           "team": "Washington Mystics",
           "stat": "ast",
           "line": 2.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2529137",
@@ -14062,7 +14062,7 @@
           "team": "Chicago Sky",
           "stat": "ast",
           "line": 6.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5208982",
@@ -14070,7 +14070,7 @@
           "team": "Portland Fire",
           "stat": "ast",
           "line": 7.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3056730",
@@ -14078,7 +14078,7 @@
           "team": "Portland Fire",
           "stat": "ast",
           "line": 0.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3906972",
@@ -14086,7 +14086,7 @@
           "team": "Portland Fire",
           "stat": "ast",
           "line": 2.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4594786",
@@ -14094,7 +14094,7 @@
           "team": "Chicago Sky",
           "stat": "ast",
           "line": 2.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2529140",
@@ -14102,7 +14102,7 @@
           "team": "Phoenix Mercury",
           "stat": "ast",
           "line": 8.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4594786",
@@ -14110,7 +14110,7 @@
           "team": "Chicago Sky",
           "stat": "pra",
           "line": 20.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3913881",
@@ -14118,7 +14118,7 @@
           "team": "Dallas Wings",
           "stat": "pra",
           "line": 14.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3934218",
@@ -14126,7 +14126,7 @@
           "team": "Portland Fire",
           "stat": "pra",
           "line": 21.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3906972",
@@ -14134,7 +14134,7 @@
           "team": "Portland Fire",
           "stat": "pra",
           "line": 24.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4398911",
@@ -14142,7 +14142,7 @@
           "team": "Washington Mystics",
           "stat": "pra",
           "line": 33.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2529137",
@@ -14150,7 +14150,7 @@
           "team": "Chicago Sky",
           "stat": "pra",
           "line": 24.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5209202",
@@ -14158,7 +14158,7 @@
           "team": "Portland Fire",
           "stat": "pra",
           "line": 7.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433635",
@@ -14166,7 +14166,7 @@
           "team": "Connecticut Sun",
           "stat": "pra",
           "line": 14.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2529140",
@@ -14174,7 +14174,7 @@
           "team": "Phoenix Mercury",
           "stat": "pra",
           "line": 32.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3056730",
@@ -14182,7 +14182,7 @@
           "team": "Portland Fire",
           "stat": "pra",
           "line": 7.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4594786",
@@ -14190,7 +14190,7 @@
           "team": "Chicago Sky",
           "stat": "tpm",
           "line": 2.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3056730",
@@ -14198,7 +14198,7 @@
           "team": "Portland Fire",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3906972",
@@ -14206,7 +14206,7 @@
           "team": "Portland Fire",
           "stat": "tpm",
           "line": 3.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5105406",
@@ -14214,7 +14214,7 @@
           "team": "Portland Fire",
           "stat": "tpm",
           "line": 1.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "981",
@@ -14222,7 +14222,7 @@
           "team": "Chicago Sky",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3913881",
@@ -14230,7 +14230,7 @@
           "team": "Dallas Wings",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433635",
@@ -14238,7 +14238,7 @@
           "team": "Connecticut Sun",
           "stat": "tpm",
           "line": 1.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3934218",
@@ -14246,7 +14246,7 @@
           "team": "Portland Fire",
           "stat": "tpm",
           "line": 1.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4703609",
@@ -14254,7 +14254,7 @@
           "team": "Connecticut Sun",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5208982",
@@ -14262,7 +14262,7 @@
           "team": "Portland Fire",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "hit"
         }
       ],
       "graded": false,
@@ -17074,7 +17074,7 @@
           "team": "Portland Fire",
           "stat": "pts",
           "line": 14.8,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433635",
@@ -17082,7 +17082,7 @@
           "team": "Connecticut Sun",
           "stat": "pts",
           "line": 10.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4336633",
@@ -17090,7 +17090,7 @@
           "team": "Dallas Wings",
           "stat": "pts",
           "line": 3.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4594786",
@@ -17098,7 +17098,7 @@
           "team": "Chicago Sky",
           "stat": "pts",
           "line": 16.9,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3906949",
@@ -17106,7 +17106,7 @@
           "team": "Dallas Wings",
           "stat": "pts",
           "line": 11.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398911",
@@ -17114,7 +17114,7 @@
           "team": "Washington Mystics",
           "stat": "reb",
           "line": 10.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4398966",
@@ -17130,7 +17130,7 @@
           "team": "Portland Fire",
           "stat": "reb",
           "line": 5.3,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5105737",
@@ -17138,7 +17138,7 @@
           "team": "Washington Mystics",
           "stat": "reb",
           "line": 5.8,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "5105732",
@@ -17146,7 +17146,7 @@
           "team": "Connecticut Sun",
           "stat": "reb",
           "line": 3.8,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433730",
@@ -17154,7 +17154,7 @@
           "team": "Dallas Wings",
           "stat": "ast",
           "line": 4.8,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433524",
@@ -17162,7 +17162,7 @@
           "team": "Washington Mystics",
           "stat": "ast",
           "line": 5.2,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3904577",
@@ -17170,7 +17170,7 @@
           "team": "Dallas Wings",
           "stat": "ast",
           "line": 3.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398911",
@@ -17178,7 +17178,7 @@
           "team": "Washington Mystics",
           "stat": "ast",
           "line": 2.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4704180",
@@ -17186,7 +17186,7 @@
           "team": "Washington Mystics",
           "stat": "ast",
           "line": 2.8,
-          "result": null
+          "result": "hit"
         }
       ],
       "graded": false,
@@ -18260,7 +18260,7 @@
           "team": "CLE",
           "stat": "strikeOuts",
           "line": 8.6,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 607192,
@@ -18268,7 +18268,7 @@
           "team": "LAD",
           "stat": "strikeOuts",
           "line": 7.2,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 594798,
@@ -18276,7 +18276,7 @@
           "team": "TEX",
           "stat": "strikeOuts",
           "line": 7.1,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 694973,
@@ -18284,7 +18284,7 @@
           "team": "PIT",
           "stat": "strikeOuts",
           "line": 6.4,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 671737,
@@ -18292,10 +18292,10 @@
           "team": "MIN",
           "stat": "strikeOuts",
           "line": 6.3,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   }
