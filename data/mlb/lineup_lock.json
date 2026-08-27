@@ -4,7 +4,7 @@
   "measured_on": "2026-08-19",
   "naive_baseline_pct": 81.7,
   "window_accuracy_pct": 82.2,
-  "generated_at_et": "2026-08-27T14:32:26-04:00",
+  "generated_at_et": "2026-08-27T16:10:04-04:00",
   "slate_date_et": "2026-08-27",
   "teams": {
     "Athletics": {
@@ -5466,23 +5466,6 @@
     "Colorado Rockies": {
       "games": 7,
       "players": {
-        "666160": {
-          "starts": 7,
-          "games": 7,
-          "rate": 1.0,
-          "vs": {
-            "L": {
-              "starts": 3,
-              "games": 3,
-              "rate": 1.0
-            },
-            "R": {
-              "starts": 4,
-              "games": 4,
-              "rate": 1.0
-            }
-          }
-        },
         "664983": {
           "starts": 7,
           "games": 7,
@@ -5501,9 +5484,9 @@
           }
         },
         "687859": {
-          "starts": 3,
+          "starts": 4,
           "games": 7,
-          "rate": 0.429,
+          "rate": 0.571,
           "vs": {
             "L": {
               "starts": 1,
@@ -5511,9 +5494,9 @@
               "rate": 0.333
             },
             "R": {
-              "starts": 2,
+              "starts": 3,
               "games": 4,
-              "rate": 0.5
+              "rate": 0.75
             }
           }
         },
@@ -5551,15 +5534,15 @@
             }
           }
         },
-        "690022": {
-          "starts": 4,
+        "696100": {
+          "starts": 3,
           "games": 7,
-          "rate": 0.571,
+          "rate": 0.429,
           "vs": {
             "L": {
-              "starts": 2,
+              "starts": 1,
               "games": 3,
-              "rate": 0.667
+              "rate": 0.333
             },
             "R": {
               "starts": 2,
@@ -5568,10 +5551,10 @@
             }
           }
         },
-        "696100": {
-          "starts": 2,
+        "664954": {
+          "starts": 4,
           "games": 7,
-          "rate": 0.286,
+          "rate": 0.571,
           "vs": {
             "L": {
               "starts": 1,
@@ -5579,9 +5562,26 @@
               "rate": 0.333
             },
             "R": {
-              "starts": 1,
+              "starts": 3,
               "games": 4,
-              "rate": 0.25
+              "rate": 0.75
+            }
+          }
+        },
+        "687597": {
+          "starts": 5,
+          "games": 7,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 2,
+              "games": 4,
+              "rate": 0.5
             }
           }
         },
@@ -5653,15 +5653,32 @@
             }
           }
         },
-        "687597": {
-          "starts": 5,
+        "666160": {
+          "starts": 6,
           "games": 7,
-          "rate": 0.714,
+          "rate": 0.857,
           "vs": {
             "L": {
               "starts": 3,
               "games": 3,
               "rate": 1.0
+            },
+            "R": {
+              "starts": 3,
+              "games": 4,
+              "rate": 0.75
+            }
+          }
+        },
+        "690022": {
+          "starts": 4,
+          "games": 7,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 3,
+              "rate": 0.667
             },
             "R": {
               "starts": 2,
@@ -5687,23 +5704,6 @@
             }
           }
         },
-        "664954": {
-          "starts": 4,
-          "games": 7,
-          "rate": 0.571,
-          "vs": {
-            "L": {
-              "starts": 1,
-              "games": 3,
-              "rate": 0.333
-            },
-            "R": {
-              "starts": 3,
-              "games": 4,
-              "rate": 0.75
-            }
-          }
-        },
         "691720": {
           "starts": 2,
           "games": 7,
@@ -5713,23 +5713,6 @@
               "starts": 1,
               "games": 3,
               "rate": 0.333
-            },
-            "R": {
-              "starts": 1,
-              "games": 4,
-              "rate": 0.25
-            }
-          }
-        },
-        "691182": {
-          "starts": 1,
-          "games": 7,
-          "rate": 0.143,
-          "vs": {
-            "L": {
-              "starts": 0,
-              "games": 3,
-              "rate": 0.0
             },
             "R": {
               "starts": 1,
@@ -6681,27 +6664,27 @@
     "Washington Nationals": {
       "games": 7,
       "players": {
-        "694673": {
-          "starts": 7,
+        "691781": {
+          "starts": 5,
           "games": 7,
-          "rate": 1.0,
+          "rate": 0.714,
           "vs": {
             "R": {
-              "starts": 7,
+              "starts": 5,
               "games": 7,
-              "rate": 1.0
+              "rate": 0.714
             }
           }
         },
         "682928": {
-          "starts": 3,
+          "starts": 4,
           "games": 7,
-          "rate": 0.429,
+          "rate": 0.571,
           "vs": {
             "R": {
-              "starts": 3,
+              "starts": 4,
               "games": 7,
-              "rate": 0.429
+              "rate": 0.571
             }
           }
         },
@@ -6729,6 +6712,18 @@
             }
           }
         },
+        "678391": {
+          "starts": 6,
+          "games": 7,
+          "rate": 0.857,
+          "vs": {
+            "R": {
+              "starts": 6,
+              "games": 7,
+              "rate": 0.857
+            }
+          }
+        },
         "686611": {
           "starts": 7,
           "games": 7,
@@ -6753,67 +6748,7 @@
             }
           }
         },
-        "677588": {
-          "starts": 6,
-          "games": 7,
-          "rate": 0.857,
-          "vs": {
-            "R": {
-              "starts": 6,
-              "games": 7,
-              "rate": 0.857
-            }
-          }
-        },
-        "695670": {
-          "starts": 4,
-          "games": 7,
-          "rate": 0.571,
-          "vs": {
-            "R": {
-              "starts": 4,
-              "games": 7,
-              "rate": 0.571
-            }
-          }
-        },
         "696285": {
-          "starts": 6,
-          "games": 7,
-          "rate": 0.857,
-          "vs": {
-            "R": {
-              "starts": 6,
-              "games": 7,
-              "rate": 0.857
-            }
-          }
-        },
-        "687605": {
-          "starts": 3,
-          "games": 7,
-          "rate": 0.429,
-          "vs": {
-            "R": {
-              "starts": 3,
-              "games": 7,
-              "rate": 0.429
-            }
-          }
-        },
-        "691781": {
-          "starts": 5,
-          "games": 7,
-          "rate": 0.714,
-          "vs": {
-            "R": {
-              "starts": 5,
-              "games": 7,
-              "rate": 0.714
-            }
-          }
-        },
-        "678391": {
           "starts": 6,
           "games": 7,
           "rate": 0.857,
@@ -6834,6 +6769,54 @@
               "starts": 5,
               "games": 7,
               "rate": 0.714
+            }
+          }
+        },
+        "694673": {
+          "starts": 6,
+          "games": 7,
+          "rate": 0.857,
+          "vs": {
+            "R": {
+              "starts": 6,
+              "games": 7,
+              "rate": 0.857
+            }
+          }
+        },
+        "677588": {
+          "starts": 5,
+          "games": 7,
+          "rate": 0.714,
+          "vs": {
+            "R": {
+              "starts": 5,
+              "games": 7,
+              "rate": 0.714
+            }
+          }
+        },
+        "695670": {
+          "starts": 4,
+          "games": 7,
+          "rate": 0.571,
+          "vs": {
+            "R": {
+              "starts": 4,
+              "games": 7,
+              "rate": 0.571
+            }
+          }
+        },
+        "687605": {
+          "starts": 3,
+          "games": 7,
+          "rate": 0.429,
+          "vs": {
+            "R": {
+              "starts": 3,
+              "games": 7,
+              "rate": 0.429
             }
           }
         }
