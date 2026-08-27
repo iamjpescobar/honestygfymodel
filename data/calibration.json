@@ -3409,6 +3409,116 @@
       ],
       "graded": false,
       "source": "ci"
+    },
+    "2026-08-27": {
+      "picks": [
+        {
+          "id": "676475",
+          "name": "Alec Burleson",
+          "team": "STL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "BAL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701675",
+          "name": "Nathan Church",
+          "team": "STL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "665926",
+          "name": "Andr\u00e9s Gim\u00e9nez",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641355",
+          "name": "Cody Bellinger",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672386",
+          "name": "Alejandro Kirk",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "650489",
+          "name": "Willi Castro",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "695734",
+          "name": "Daylen Lile",
+          "team": "WSH",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682928",
+          "name": "CJ Abrams",
+          "team": "WSH",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "696285",
+          "name": "Jacob Young",
+          "team": "WSH",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686611",
+          "name": "Dylan Crews",
+          "team": "WSH",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "521692",
+          "name": "Salvador Perez",
+          "team": "KC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "695506",
+          "name": "Jac Caglianone",
+          "team": "KC",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -3838,6 +3948,20 @@
           "id": "686948",
           "name": "Drake Baldwin",
           "team": "Atlanta Braves",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    },
+    "2026-08-27": {
+      "picks": [
+        {
+          "id": "661388",
+          "name": "William Contreras",
+          "team": "Milwaukee Brewers",
           "stat": null,
           "line": null,
           "result": null
@@ -19040,6 +19164,52 @@
           "team": "SF",
           "stat": "strikeOuts",
           "line": 6.0,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    },
+    "2026-08-27": {
+      "picks": [
+        {
+          "id": 694819,
+          "name": "Jacob Misiorowski (RHP)",
+          "team": "MIL",
+          "stat": "strikeOuts",
+          "line": 9.0,
+          "result": null
+        },
+        {
+          "id": 519242,
+          "name": "Chris Sale (LHP)",
+          "team": "ATL",
+          "stat": "strikeOuts",
+          "line": 6.4,
+          "result": null
+        },
+        {
+          "id": 808967,
+          "name": "Yoshinobu Yamamoto (RHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 6.2,
+          "result": null
+        },
+        {
+          "id": 543037,
+          "name": "Gerrit Cole (RHP)",
+          "team": "NYY",
+          "stat": "strikeOuts",
+          "line": 5.6,
+          "result": null
+        },
+        {
+          "id": 663623,
+          "name": "Jake Irvin (RHP)",
+          "team": "WSH",
+          "stat": "strikeOuts",
+          "line": 4.9,
           "result": null
         }
       ],
