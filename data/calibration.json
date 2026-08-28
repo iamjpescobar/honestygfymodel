@@ -3523,6 +3523,22 @@
     "2026-08-28": {
       "picks": [
         {
+          "id": "805811",
+          "name": "Bryce Eldridge",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "681715",
+          "name": "Heriberto Hern\u00e1ndez",
+          "team": "MIA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
           "id": "671739",
           "name": "Michael Harris II",
           "team": "ATL",
@@ -3547,25 +3563,9 @@
           "result": null
         },
         {
-          "id": "671732",
-          "name": "Lawrence Butler",
-          "team": "ATH",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "681715",
-          "name": "Heriberto Hern\u00e1ndez",
-          "team": "MIA",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "643289",
-          "name": "Mauricio Dub\u00f3n",
-          "team": "ATL",
+          "id": "686797",
+          "name": "Brooks Lee",
+          "team": "MIN",
           "stat": null,
           "line": null,
           "result": null
@@ -3579,17 +3579,25 @@
           "result": null
         },
         {
-          "id": "686797",
-          "name": "Brooks Lee",
-          "team": "MIN",
+          "id": "671732",
+          "name": "Lawrence Butler",
+          "team": "ATH",
           "stat": null,
           "line": null,
           "result": null
         },
         {
-          "id": "621566",
-          "name": "Matt Olson",
+          "id": "645277",
+          "name": "Ozzie Albies",
           "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "677951",
+          "name": "Bobby Witt Jr.",
+          "team": "KC",
           "stat": null,
           "line": null,
           "result": null
@@ -3603,25 +3611,17 @@
           "result": null
         },
         {
-          "id": "800325",
-          "name": "Luis Lara",
-          "team": "MIL",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "683734",
-          "name": "Andrew Vaughn",
-          "team": "MIL",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
           "id": "686948",
           "name": "Drake Baldwin",
           "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "687263",
+          "name": "Zach Neto",
+          "team": "LAA",
           "stat": null,
           "line": null,
           "result": null
@@ -5512,6 +5512,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-28": {
+      "picks": [
+        {
+          "id": "670541",
+          "name": "Yordan Alvarez",
+          "team": "Houston Astros",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "621566",
+          "name": "Matt Olson",
+          "team": "Atlanta Braves",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "677800",
+          "name": "Wilyer Abreu",
+          "team": "Boston Red Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "687952",
+          "name": "Christian Encarnacion-Strand",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
