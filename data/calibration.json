@@ -15550,6 +15550,412 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-08-28": {
+      "picks": [
+        {
+          "id": "4065870",
+          "name": "J. Young",
+          "team": "Las Vegas Aces",
+          "stat": "pts",
+          "line": 22.0,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 17.5,
+          "result": null
+        },
+        {
+          "id": "3142191",
+          "name": "K. Mitchell",
+          "team": "Indiana Fever",
+          "stat": "pts",
+          "line": 28.0,
+          "result": null
+        },
+        {
+          "id": "4565505",
+          "name": "K. Rice",
+          "team": "Toronto Tempo",
+          "stat": "pts",
+          "line": 12.5,
+          "result": null
+        },
+        {
+          "id": "4433403",
+          "name": "C. Clark",
+          "team": "Indiana Fever",
+          "stat": "pts",
+          "line": 23.5,
+          "result": null
+        },
+        {
+          "id": "4433635",
+          "name": "D. Miller",
+          "team": "Connecticut Sun",
+          "stat": "pts",
+          "line": 10.5,
+          "result": null
+        },
+        {
+          "id": "3149391",
+          "name": "A. Wilson",
+          "team": "Las Vegas Aces",
+          "stat": "pts",
+          "line": 25.5,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 16.5,
+          "result": null
+        },
+        {
+          "id": "4433408",
+          "name": "A. Edwards",
+          "team": "Connecticut Sun",
+          "stat": "pts",
+          "line": 10.5,
+          "result": null
+        },
+        {
+          "id": "4432831",
+          "name": "A. Boston",
+          "team": "Indiana Fever",
+          "stat": "pts",
+          "line": 15.5,
+          "result": null
+        },
+        {
+          "id": "5105737",
+          "name": "L. Betts",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 5.5,
+          "result": null
+        },
+        {
+          "id": "5345444",
+          "name": "L. Juskaite",
+          "team": "Toronto Tempo",
+          "stat": "reb",
+          "line": 4.5,
+          "result": null
+        },
+        {
+          "id": "4433404",
+          "name": "C. Brink",
+          "team": "Los Angeles Sparks",
+          "stat": "reb",
+          "line": 5.5,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 13.0,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "5209202",
+          "name": "N. Puoch",
+          "team": "Portland Fire",
+          "stat": "reb",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "4898384",
+          "name": "K. Iriafen",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 9.5,
+          "result": null
+        },
+        {
+          "id": "4433546",
+          "name": "M. Timpson",
+          "team": "Indiana Fever",
+          "stat": "reb",
+          "line": 6.5,
+          "result": null
+        },
+        {
+          "id": "4398911",
+          "name": "S. Austin",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 9.5,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 4.5,
+          "result": null
+        },
+        {
+          "id": "4433403",
+          "name": "C. Clark",
+          "team": "Indiana Fever",
+          "stat": "ast",
+          "line": 8.5,
+          "result": null
+        },
+        {
+          "id": "4433404",
+          "name": "C. Brink",
+          "team": "Los Angeles Sparks",
+          "stat": "ast",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "4433524",
+          "name": "S. Citron",
+          "team": "Washington Mystics",
+          "stat": "ast",
+          "line": 5.5,
+          "result": null
+        },
+        {
+          "id": "3142191",
+          "name": "K. Mitchell",
+          "team": "Indiana Fever",
+          "stat": "ast",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "2987869",
+          "name": "J. Loyd",
+          "team": "Las Vegas Aces",
+          "stat": "ast",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "4433635",
+          "name": "D. Miller",
+          "team": "Connecticut Sun",
+          "stat": "ast",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 3.0,
+          "result": null
+        },
+        {
+          "id": "4565505",
+          "name": "K. Rice",
+          "team": "Toronto Tempo",
+          "stat": "ast",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "5105737",
+          "name": "L. Betts",
+          "team": "Washington Mystics",
+          "stat": "ast",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "4065870",
+          "name": "J. Young",
+          "team": "Las Vegas Aces",
+          "stat": "pra",
+          "line": 32.5,
+          "result": null
+        },
+        {
+          "id": "3142191",
+          "name": "K. Mitchell",
+          "team": "Indiana Fever",
+          "stat": "pra",
+          "line": 32.5,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "pra",
+          "line": 32.0,
+          "result": null
+        },
+        {
+          "id": "4432831",
+          "name": "A. Boston",
+          "team": "Indiana Fever",
+          "stat": "pra",
+          "line": 26.0,
+          "result": null
+        },
+        {
+          "id": "3906972",
+          "name": "B. Carleton",
+          "team": "Portland Fire",
+          "stat": "pra",
+          "line": 24.5,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "pra",
+          "line": 25.5,
+          "result": null
+        },
+        {
+          "id": "4703609",
+          "name": "C. Leger-Walker",
+          "team": "Connecticut Sun",
+          "stat": "pra",
+          "line": 14.0,
+          "result": null
+        },
+        {
+          "id": "4565505",
+          "name": "K. Rice",
+          "team": "Toronto Tempo",
+          "stat": "pra",
+          "line": 19.5,
+          "result": null
+        },
+        {
+          "id": "5345444",
+          "name": "L. Juskaite",
+          "team": "Toronto Tempo",
+          "stat": "pra",
+          "line": 17.5,
+          "result": null
+        },
+        {
+          "id": "4898384",
+          "name": "K. Iriafen",
+          "team": "Washington Mystics",
+          "stat": "pra",
+          "line": 27.0,
+          "result": null
+        },
+        {
+          "id": "3142191",
+          "name": "K. Mitchell",
+          "team": "Indiana Fever",
+          "stat": "tpm",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "2491214",
+          "name": "E. Wheeler",
+          "team": "Los Angeles Sparks",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "4065870",
+          "name": "J. Young",
+          "team": "Las Vegas Aces",
+          "stat": "tpm",
+          "line": 3.0,
+          "result": null
+        },
+        {
+          "id": "4433635",
+          "name": "D. Miller",
+          "team": "Connecticut Sun",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "tpm",
+          "line": 3.0,
+          "result": null
+        },
+        {
+          "id": "5208982",
+          "name": "C. Leite",
+          "team": "Portland Fire",
+          "stat": "tpm",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "4703609",
+          "name": "C. Leger-Walker",
+          "team": "Connecticut Sun",
+          "stat": "tpm",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "tpm",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "4433403",
+          "name": "C. Clark",
+          "team": "Indiana Fever",
+          "stat": "tpm",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "3934218",
+          "name": "Gustafson",
+          "team": "Portland Fire",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "wnba_defense": {
@@ -18727,6 +19133,132 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-28": {
+      "picks": [
+        {
+          "id": "3149391",
+          "name": "A. Wilson",
+          "team": "Las Vegas Aces",
+          "stat": "pts",
+          "line": 24.8,
+          "result": null
+        },
+        {
+          "id": "4433524",
+          "name": "S. Citron",
+          "team": "Washington Mystics",
+          "stat": "pts",
+          "line": 15.5,
+          "result": null
+        },
+        {
+          "id": "3142191",
+          "name": "K. Mitchell",
+          "team": "Indiana Fever",
+          "stat": "pts",
+          "line": 28.4,
+          "result": null
+        },
+        {
+          "id": "5108587",
+          "name": "M. Okot",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 4.0,
+          "result": null
+        },
+        {
+          "id": "4433403",
+          "name": "C. Clark",
+          "team": "Indiana Fever",
+          "stat": "pts",
+          "line": 23.4,
+          "result": null
+        },
+        {
+          "id": "4398911",
+          "name": "S. Austin",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 9.0,
+          "result": null
+        },
+        {
+          "id": "3149391",
+          "name": "A. Wilson",
+          "team": "Las Vegas Aces",
+          "stat": "reb",
+          "line": 8.9,
+          "result": null
+        },
+        {
+          "id": "5105737",
+          "name": "L. Betts",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 5.8,
+          "result": null
+        },
+        {
+          "id": "2566453",
+          "name": "I. Harrison",
+          "team": "Toronto Tempo",
+          "stat": "reb",
+          "line": 6.3,
+          "result": null
+        },
+        {
+          "id": "4898384",
+          "name": "K. Iriafen",
+          "team": "Washington Mystics",
+          "stat": "reb",
+          "line": 10.2,
+          "result": null
+        },
+        {
+          "id": "4065870",
+          "name": "J. Young",
+          "team": "Las Vegas Aces",
+          "stat": "ast",
+          "line": 6.2,
+          "result": null
+        },
+        {
+          "id": "2529122",
+          "name": "C. Gray",
+          "team": "Las Vegas Aces",
+          "stat": "ast",
+          "line": 6.0,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 6.5,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 4.3,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 3.5,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
