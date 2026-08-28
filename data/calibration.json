@@ -3519,6 +3519,116 @@
       ],
       "graded": false,
       "source": "ci"
+    },
+    "2026-08-28": {
+      "picks": [
+        {
+          "id": "671739",
+          "name": "Michael Harris II",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "669364",
+          "name": "Xavier Edwards",
+          "team": "MIA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641355",
+          "name": "Cody Bellinger",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "671732",
+          "name": "Lawrence Butler",
+          "team": "ATH",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "681715",
+          "name": "Heriberto Hern\u00e1ndez",
+          "team": "MIA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "643289",
+          "name": "Mauricio Dub\u00f3n",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701398",
+          "name": "Sal Stewart",
+          "team": "CIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686797",
+          "name": "Brooks Lee",
+          "team": "MIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "621566",
+          "name": "Matt Olson",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "BAL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "800325",
+          "name": "Luis Lara",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683734",
+          "name": "Andrew Vaughn",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686948",
+          "name": "Drake Baldwin",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -3962,6 +4072,20 @@
           "id": "661388",
           "name": "William Contreras",
           "team": "Milwaukee Brewers",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    },
+    "2026-08-28": {
+      "picks": [
+        {
+          "id": "686948",
+          "name": "Drake Baldwin",
+          "team": "Atlanta Braves",
           "stat": null,
           "line": null,
           "result": null
@@ -19794,6 +19918,52 @@
           "team": "WSH",
           "stat": "strikeOuts",
           "line": 4.9,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    },
+    "2026-08-28": {
+      "picks": [
+        {
+          "id": 656302,
+          "name": "Dylan Cease (RHP)",
+          "team": "TOR",
+          "stat": "strikeOuts",
+          "line": 9.0,
+          "result": null
+        },
+        {
+          "id": 669373,
+          "name": "Tarik Skubal (LHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 7.3,
+          "result": null
+        },
+        {
+          "id": 693645,
+          "name": "Cam Schlittler (RHP)",
+          "team": "NYY",
+          "stat": "strikeOuts",
+          "line": 6.7,
+          "result": null
+        },
+        {
+          "id": 672282,
+          "name": "Reid Detmers (LHP)",
+          "team": "LAA",
+          "stat": "strikeOuts",
+          "line": 6.6,
+          "result": null
+        },
+        {
+          "id": 701656,
+          "name": "Logan Henderson (RHP)",
+          "team": "MIL",
+          "stat": "strikeOuts",
+          "line": 6.0,
           "result": null
         }
       ],
