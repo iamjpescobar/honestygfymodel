@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-08-28 20:56",
+  "generated_at_et": "2026-08-28 23:08",
   "slate_date_et": "2026-08-28",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -159,7 +159,7 @@
         "Starters' avg HR/9 0.765 (low)",
         "Starters' avg SLG against 0.349 (low)"
       ],
-      "proj_total": 8.0
+      "proj_total": 8.1
     },
     {
       "game_pk": 822769,
@@ -258,7 +258,7 @@
         "Temp 81F (carry weather)",
         "Starters' avg WHIP 1.46 (high)"
       ],
-      "proj_total": 7.5
+      "proj_total": 7.4
     },
     {
       "game_pk": 823744,
@@ -361,8 +361,8 @@
       "venue": "Angel Stadium",
       "game_time": "2026-08-29T01:38:00Z",
       "weather_condition": "Clear",
-      "weather_temp": "87",
-      "weather_wind": "7 mph, R To L",
+      "weather_temp": "89",
+      "weather_wind": "5 mph, R To L",
       "park_factor": 100,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -380,7 +380,7 @@
       "ou_lean": "Over",
       "ou_grade": "B",
       "ou_signals": [
-        "Temp 87F (carry weather)",
+        "Temp 89F (carry weather)",
         "Starters' avg WHIP 1.33 (high)",
         "Starters' avg HR/9 1.33 (high)"
       ],
@@ -395,7 +395,7 @@
       "venue": "Sutter Health Park",
       "game_time": "2026-08-29T01:40:00Z",
       "weather_condition": "Cloudy",
-      "weather_temp": "76",
+      "weather_temp": "74",
       "weather_wind": "7 mph, Out To LF",
       "park_factor": null,
       "park_verified": false,
@@ -425,13 +425,13 @@
       "venue": "Oracle Park",
       "game_time": "2026-08-29T02:15:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": "61",
-      "weather_wind": "13 mph, Out To CF",
+      "weather_temp": "63",
+      "weather_wind": "13 mph, Varies",
       "park_factor": 97,
       "park_verified": true,
       "weather_source": "mlb_posted",
-      "wind_adj": 3,
-      "wind_note": "wind out 13 mph (+3)",
+      "wind_adj": 0,
+      "wind_note": null,
       "edge_net": 4,
       "edge_lean": "San Francisco Giants",
       "edge_grade": "A",
