@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-08-29 13:52",
+  "generated_at_et": "2026-08-29 14:46",
   "slate_date_et": "2026-08-29",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -42,13 +42,13 @@
       "venue": "Yankee Stadium",
       "game_time": "2026-08-29T23:15:00Z",
       "weather_condition": "Mostly Clear",
-      "weather_temp": 77,
-      "weather_wind": "SW 2 mph",
+      "weather_temp": 76,
+      "weather_wind": "SW 3 mph",
       "park_factor": 101,
       "park_verified": true,
       "weather_source": "nws_forecast",
-      "wind_adj": 0.7,
-      "wind_note": "2 mph blowing out (+0.7)",
+      "wind_adj": 1.1,
+      "wind_note": "3 mph blowing out (+1.1)",
       "proj_total": 7.4
     },
     {
@@ -93,14 +93,14 @@
       "home_pitcher": "Bailey Ober",
       "venue": "Target Field",
       "game_time": "2026-08-29T18:10:00Z",
-      "weather_condition": "Partly Cloudy",
+      "weather_condition": "Cloudy",
       "weather_temp": "75",
-      "weather_wind": "11 mph, R To L",
+      "weather_wind": "10 mph, In From LF",
       "park_factor": 103,
       "park_verified": true,
       "weather_source": "mlb_posted",
-      "wind_adj": 0,
-      "wind_note": null,
+      "wind_adj": -3,
+      "wind_note": "wind in 10 mph (-3)",
       "ou_lean": "Over",
       "ou_grade": "A",
       "ou_signals": [
@@ -120,7 +120,7 @@
       "venue": "Busch Stadium",
       "game_time": "2026-08-29T18:15:00Z",
       "weather_condition": "Cloudy",
-      "weather_temp": "84",
+      "weather_temp": "87",
       "weather_wind": "7 mph, In From RF",
       "park_factor": 97,
       "park_verified": true,
@@ -140,7 +140,7 @@
       "ou_grade": "C-",
       "ou_signals": [
         "Park factor 97 (pitcher-friendly)",
-        "Temp 84F (carry weather)",
+        "Temp 87F (carry weather)",
         "Starters' avg SLG against 0.375 (low)"
       ],
       "proj_total": 9.6
@@ -154,7 +154,7 @@
       "venue": "Wrigley Field",
       "game_time": "2026-08-29T18:20:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": "79",
+      "weather_temp": "81",
       "weather_wind": "10 mph, Out To CF",
       "park_factor": 96,
       "park_verified": true,
@@ -167,6 +167,13 @@
       "edge_signals": [
         "WHIP: edge Chicago Cubs (1.49 vs 1.31)",
         "K%: edge Chicago Cubs (18.3 vs 22.9)"
+      ],
+      "ou_lean": "Over",
+      "ou_grade": "C-",
+      "ou_signals": [
+        "Park factor 96 (pitcher-friendly)",
+        "Temp 81F (carry weather)",
+        "Starters' avg WHIP 1.4 (high)"
       ],
       "proj_total": 9.7
     },
@@ -207,7 +214,7 @@
       "away": "Arizona Diamondbacks",
       "home": "San Francisco Giants",
       "away_pitcher": "Merrill Kelly",
-      "home_pitcher": "TBD",
+      "home_pitcher": "Matt Wilkinson",
       "venue": "Oracle Park",
       "game_time": "2026-08-29T20:05:00Z",
       "weather_condition": "Sunny",
@@ -217,7 +224,24 @@
       "park_verified": true,
       "weather_source": "mlb_posted",
       "wind_adj": 3,
-      "wind_note": "wind out 13 mph (+3)"
+      "wind_note": "wind out 13 mph (+3)",
+      "edge_net": 1,
+      "edge_lean": "Arizona Diamondbacks",
+      "edge_grade": "C-",
+      "edge_signals": [
+        "WHIP: edge San Francisco Giants (1.64 vs 1.41)",
+        "K%: edge Arizona Diamondbacks (14.4 vs 8)",
+        "SLG against: edge Arizona Diamondbacks (0.501 vs 0.6)"
+      ],
+      "ou_lean": "Over",
+      "ou_grade": "C-",
+      "ou_signals": [
+        "Park factor 97 (pitcher-friendly)",
+        "Temp 63F (cold suppresses)",
+        "Starters' avg WHIP 1.52 (high)",
+        "Starters' avg HR/9 1.75 (high)",
+        "Starters' avg SLG against 0.55 (high)"
+      ]
     },
     {
       "game_pk": 823176,
@@ -310,7 +334,7 @@
       "venue": "Citi Field",
       "game_time": "2026-08-29T20:10:00Z",
       "weather_condition": "Sunny",
-      "weather_temp": "80",
+      "weather_temp": "76",
       "weather_wind": "5 mph, Out To CF",
       "park_factor": 99,
       "park_verified": true,
@@ -326,9 +350,8 @@
         "SLG against: edge New York Mets (0.442 vs 0.335)"
       ],
       "ou_lean": "Over",
-      "ou_grade": "C",
+      "ou_grade": "C-",
       "ou_signals": [
-        "Temp 80F (carry weather)",
         "Starters' avg WHIP 1.59 (high)"
       ],
       "proj_total": 9.1
@@ -362,7 +385,7 @@
       "game_pk": 824874,
       "away": "Colorado Rockies",
       "home": "Atlanta Braves",
-      "away_pitcher": "Ryan Feltner",
+      "away_pitcher": "Zach Agnos",
       "home_pitcher": "Mart\u00edn P\u00e9rez",
       "venue": "Truist Park",
       "game_time": "2026-08-29T20:10:00Z",
@@ -374,21 +397,19 @@
       "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
-      "edge_net": 3,
+      "edge_net": 2,
       "edge_lean": "Atlanta Braves",
-      "edge_grade": "B",
+      "edge_grade": "C",
       "edge_signals": [
-        "WHIP: edge Atlanta Braves (1.6 vs 1.3)",
-        "HR/9: edge Atlanta Braves (1.67 vs 0.94)",
-        "SLG against: edge Atlanta Braves (0.51 vs 0.367)"
+        "WHIP: edge Atlanta Braves (1.56 vs 1.3)",
+        "SLG against: edge Atlanta Braves (0.476 vs 0.367)"
       ],
       "ou_lean": "Over",
-      "ou_grade": "A",
+      "ou_grade": "B",
       "ou_signals": [
         "Temp 86F (carry weather)",
-        "Starters' avg WHIP 1.45 (high)",
-        "Starters' avg HR/9 1.3 (high)",
-        "Starters' avg SLG against 0.439 (high)"
+        "Starters' avg WHIP 1.43 (high)",
+        "Starters' avg SLG against 0.421 (high)"
       ],
       "proj_total": 10.1
     },
