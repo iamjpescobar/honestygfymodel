@@ -3629,6 +3629,116 @@
       ],
       "graded": false,
       "source": "ci"
+    },
+    "2026-08-29": {
+      "picks": [
+        {
+          "id": "671739",
+          "name": "Michael Harris II",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "678246",
+          "name": "Miguel Vargas",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686797",
+          "name": "Brooks Lee",
+          "team": "MIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "645277",
+          "name": "Ozzie Albies",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666023",
+          "name": "Freddy Fermin",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "676475",
+          "name": "Alec Burleson",
+          "team": "STL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "673357",
+          "name": "Luis Robert Jr.",
+          "team": "NYM",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686948",
+          "name": "Drake Baldwin",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701398",
+          "name": "Sal Stewart",
+          "team": "CIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "671732",
+          "name": "Lawrence Butler",
+          "team": "ATH",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "802415",
+          "name": "Chandler Simpson",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "805811",
+          "name": "Bryce Eldridge",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "805811",
+          "name": "Bryce Eldridge",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -4081,6 +4191,20 @@
       "source": "ci"
     },
     "2026-08-28": {
+      "picks": [
+        {
+          "id": "686948",
+          "name": "Drake Baldwin",
+          "team": "Atlanta Braves",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    },
+    "2026-08-29": {
       "picks": [
         {
           "id": "686948",
@@ -20545,6 +20669,52 @@
           "team": "MIL",
           "stat": "strikeOuts",
           "line": 6.0,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    },
+    "2026-08-29": {
+      "picks": [
+        {
+          "id": 650911,
+          "name": "Cristopher S\u00e1nchez (LHP)",
+          "team": "PHI",
+          "stat": "strikeOuts",
+          "line": 8.0,
+          "result": null
+        },
+        {
+          "id": 605483,
+          "name": "Blake Snell (LHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 6.6,
+          "result": null
+        },
+        {
+          "id": 690997,
+          "name": "Nolan McLean (RHP)",
+          "team": "NYM",
+          "stat": "strikeOuts",
+          "line": 6.3,
+          "result": null
+        },
+        {
+          "id": 592332,
+          "name": "Kevin Gausman (RHP)",
+          "team": "CHC",
+          "stat": "strikeOuts",
+          "line": 6.2,
+          "result": null
+        },
+        {
+          "id": 667755,
+          "name": "Jos\u00e9 Soriano (RHP)",
+          "team": "TOR",
+          "stat": "strikeOuts",
+          "line": 5.7,
           "result": null
         }
       ],
