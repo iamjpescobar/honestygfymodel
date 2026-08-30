@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-08-30 14:10",
+  "generated_at_et": "2026-08-30 14:44",
   "slate_date_et": "2026-08-30",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -175,8 +175,8 @@
       "venue": "Comerica Park",
       "game_time": "2026-08-30T17:40:00Z",
       "weather_condition": "Cloudy",
-      "weather_temp": "73",
-      "weather_wind": "8 mph, R To L",
+      "weather_temp": "76",
+      "weather_wind": "5 mph, R To L",
       "park_factor": 100,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -269,7 +269,7 @@
       "venue": "American Family Field",
       "game_time": "2026-08-30T18:10:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": "82",
+      "weather_temp": "87",
       "weather_wind": "15 mph, R To L",
       "park_factor": 97,
       "park_verified": true,
@@ -287,7 +287,7 @@
       "ou_grade": "C-",
       "ou_signals": [
         "Park factor 97 (pitcher-friendly)",
-        "Temp 82F (carry weather)",
+        "Temp 87F (carry weather)",
         "Starters' avg WHIP 1.44 (high)"
       ],
       "proj_total": 8.3
@@ -301,7 +301,7 @@
       "venue": "Busch Stadium",
       "game_time": "2026-08-30T18:15:00Z",
       "weather_condition": "Sunny",
-      "weather_temp": "89",
+      "weather_temp": "92",
       "weather_wind": "9 mph, Out To LF",
       "park_factor": 97,
       "park_verified": true,
@@ -320,7 +320,7 @@
       "ou_grade": "C",
       "ou_signals": [
         "Park factor 97 (pitcher-friendly)",
-        "Temp 89F (carry weather)",
+        "Temp 92F (carry weather)",
         "Starters' avg WHIP 1.34 (high)",
         "Starters' avg HR/9 1.42 (high)"
       ],
@@ -404,13 +404,13 @@
       "venue": "Angel Stadium",
       "game_time": "2026-08-30T20:07:00Z",
       "weather_condition": "Sunny",
-      "weather_temp": "87",
-      "weather_wind": "9 mph, Out To CF",
+      "weather_temp": "89",
+      "weather_wind": "8 mph, R To L",
       "park_factor": 100,
       "park_verified": true,
       "weather_source": "mlb_posted",
-      "wind_adj": 2,
-      "wind_note": "wind out 9 mph (+2)",
+      "wind_adj": 0,
+      "wind_note": null,
       "edge_net": 3,
       "edge_lean": "Philadelphia Phillies",
       "edge_grade": "B",
@@ -422,7 +422,7 @@
       "ou_lean": "Over",
       "ou_grade": "A",
       "ou_signals": [
-        "Temp 87F (carry weather)",
+        "Temp 89F (carry weather)",
         "Starters' avg WHIP 1.38 (high)",
         "Starters' avg HR/9 1.39 (high)",
         "Starters' avg SLG against 0.432 (high)"
