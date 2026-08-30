@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-08-30 14:44",
+  "generated_at_et": "2026-08-30 15:44",
   "slate_date_et": "2026-08-30",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -335,8 +335,8 @@
       "venue": "Citi Field",
       "game_time": "2026-08-30T19:10:00Z",
       "weather_condition": "Cloudy",
-      "weather_temp": "80",
-      "weather_wind": "9 mph, Out To RF",
+      "weather_temp": "81",
+      "weather_wind": "9 mph, Out To CF",
       "park_factor": 99,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -354,7 +354,7 @@
       "ou_lean": "Over",
       "ou_grade": "A",
       "ou_signals": [
-        "Temp 80F (carry weather)",
+        "Temp 81F (carry weather)",
         "Starters' avg WHIP 1.67 (high)",
         "Starters' avg HR/9 1.66 (high)",
         "Starters' avg SLG against 0.424 (high)"
@@ -437,14 +437,14 @@
       "home_pitcher": "Shota Imanaga",
       "venue": "Wrigley Field",
       "game_time": "2026-08-30T23:20:00Z",
-      "weather_condition": "Scattered Showers And Thunderstorms",
-      "weather_temp": 81,
-      "weather_wind": "S 10 mph",
+      "weather_condition": "Cloudy",
+      "weather_temp": "79",
+      "weather_wind": "11 mph, Varies",
       "park_factor": 96,
       "park_verified": true,
-      "weather_source": "nws_forecast",
-      "wind_adj": 2.8,
-      "wind_note": "10 mph blowing out (+2.8)",
+      "weather_source": "mlb_posted",
+      "wind_adj": 0,
+      "wind_note": null,
       "edge_net": 3,
       "edge_lean": "Cincinnati Reds",
       "edge_grade": "B",
@@ -452,13 +452,6 @@
         "K%: edge Cincinnati Reds (29 vs 24.8)",
         "HR/9: edge Cincinnati Reds (0.95 vs 1.86)",
         "SLG against: edge Cincinnati Reds (0.365 vs 0.43)"
-      ],
-      "ou_lean": "Over",
-      "ou_grade": "C-",
-      "ou_signals": [
-        "Park factor 96 (pitcher-friendly)",
-        "Temp 81F (carry weather)",
-        "Starters' avg HR/9 1.41 (high)"
       ],
       "proj_total": 9.9
     }
