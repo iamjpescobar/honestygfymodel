@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-08-30 15:44",
+  "generated_at_et": "2026-08-30 19:25",
   "slate_date_et": "2026-08-30",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -99,7 +99,7 @@
       "ou_signals": [
         "Starters' avg WHIP 1.38 (high)"
       ],
-      "proj_total": 7.4
+      "proj_total": 7.6
     },
     {
       "game_pk": 822766,
@@ -258,7 +258,7 @@
         "Temp 85F (carry weather)",
         "Starters' avg WHIP 1.44 (high)"
       ],
-      "proj_total": 10.0
+      "proj_total": 9.9
     },
     {
       "game_pk": 823740,
@@ -370,8 +370,8 @@
       "venue": "Sutter Health Park",
       "game_time": "2026-08-30T20:05:00Z",
       "weather_condition": "Sunny",
-      "weather_temp": "83",
-      "weather_wind": "3 mph, Out To CF",
+      "weather_temp": "82",
+      "weather_wind": "4 mph, Out To LF",
       "park_factor": null,
       "park_verified": false,
       "weather_source": "mlb_posted",
@@ -388,12 +388,12 @@
       "ou_lean": "Over",
       "ou_grade": "A",
       "ou_signals": [
-        "Temp 83F (carry weather)",
+        "Temp 82F (carry weather)",
         "Starters' avg WHIP 1.59 (high)",
         "Starters' avg HR/9 1.56 (high)",
         "Starters' avg SLG against 0.459 (high)"
       ],
-      "proj_total": 10.4
+      "proj_total": 10.5
     },
     {
       "game_pk": 823987,
@@ -404,7 +404,7 @@
       "venue": "Angel Stadium",
       "game_time": "2026-08-30T20:07:00Z",
       "weather_condition": "Sunny",
-      "weather_temp": "89",
+      "weather_temp": "90",
       "weather_wind": "8 mph, R To L",
       "park_factor": 100,
       "park_verified": true,
@@ -422,7 +422,7 @@
       "ou_lean": "Over",
       "ou_grade": "A",
       "ou_signals": [
-        "Temp 89F (carry weather)",
+        "Temp 90F (carry weather)",
         "Starters' avg WHIP 1.38 (high)",
         "Starters' avg HR/9 1.39 (high)",
         "Starters' avg SLG against 0.432 (high)"
