@@ -3638,7 +3638,7 @@
           "team": "ATL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "678246",
@@ -3646,7 +3646,7 @@
           "team": "CWS",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "686948",
@@ -3654,7 +3654,7 @@
           "team": "ATL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "686797",
@@ -3662,7 +3662,7 @@
           "team": "MIN",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "805811",
@@ -3670,7 +3670,7 @@
           "team": "SF",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "805811",
@@ -3678,7 +3678,7 @@
           "team": "SF",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "547180",
@@ -3686,7 +3686,7 @@
           "team": "PHI",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "701398",
@@ -3694,7 +3694,7 @@
           "team": "CIN",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "701807",
@@ -3702,7 +3702,7 @@
           "team": "NYM",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "802415",
@@ -3710,7 +3710,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "672386",
@@ -3718,7 +3718,7 @@
           "team": "TOR",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "645277",
@@ -3726,7 +3726,7 @@
           "team": "ATL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "671732",
@@ -3734,10 +3734,10 @@
           "team": "ATH",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -4212,10 +4212,10 @@
           "team": "Tampa Bay Rays",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -5692,7 +5692,7 @@
           "team": "Baltimore Orioles",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "694212",
@@ -5700,7 +5700,7 @@
           "team": "Baltimore Orioles",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "547180",
@@ -5708,7 +5708,7 @@
           "team": "Philadelphia Phillies",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "665052",
@@ -5716,7 +5716,7 @@
           "team": "Miami Marlins",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "646240",
@@ -5724,10 +5724,10 @@
           "team": "San Francisco Giants",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -16182,7 +16182,7 @@
           "team": "Chicago Sky",
           "stat": "pts",
           "line": 13.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4683006",
@@ -16190,7 +16190,7 @@
           "team": "New York Liberty",
           "stat": "pts",
           "line": 10.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433405",
@@ -16198,7 +16198,7 @@
           "team": "Chicago Sky",
           "stat": "pts",
           "line": 16.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2529140",
@@ -16206,7 +16206,7 @@
           "team": "Phoenix Mercury",
           "stat": "pts",
           "line": 15.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5345524",
@@ -16214,7 +16214,7 @@
           "team": "Phoenix Mercury",
           "stat": "pts",
           "line": 6.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3102133",
@@ -16222,7 +16222,7 @@
           "team": "New York Liberty",
           "stat": "pts",
           "line": 8.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4565505",
@@ -16230,7 +16230,7 @@
           "team": "Toronto Tempo",
           "stat": "pts",
           "line": 12.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4594786",
@@ -16238,7 +16238,7 @@
           "team": "Chicago Sky",
           "stat": "pts",
           "line": 15.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5345444",
@@ -16246,7 +16246,7 @@
           "team": "Toronto Tempo",
           "stat": "pts",
           "line": 11.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2998938",
@@ -16262,7 +16262,7 @@
           "team": "Toronto Tempo",
           "stat": "reb",
           "line": 5.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2529140",
@@ -16270,7 +16270,7 @@
           "team": "Phoenix Mercury",
           "stat": "reb",
           "line": 9.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3102133",
@@ -16278,7 +16278,7 @@
           "team": "New York Liberty",
           "stat": "reb",
           "line": 3.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2529137",
@@ -16286,7 +16286,7 @@
           "team": "Chicago Sky",
           "stat": "reb",
           "line": 4.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2327695",
@@ -16294,7 +16294,7 @@
           "team": "New York Liberty",
           "stat": "reb",
           "line": 3.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2999101",
@@ -16302,7 +16302,7 @@
           "team": "New York Liberty",
           "stat": "reb",
           "line": 9.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4594786",
@@ -16310,7 +16310,7 @@
           "team": "Chicago Sky",
           "stat": "reb",
           "line": 1.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433405",
@@ -16318,7 +16318,7 @@
           "team": "Chicago Sky",
           "stat": "reb",
           "line": 9.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4683006",
@@ -16326,7 +16326,7 @@
           "team": "New York Liberty",
           "stat": "reb",
           "line": 3.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2566453",
@@ -16334,7 +16334,7 @@
           "team": "Toronto Tempo",
           "stat": "reb",
           "line": 6.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "887",
@@ -16342,7 +16342,7 @@
           "team": "Phoenix Mercury",
           "stat": "ast",
           "line": 2.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4565505",
@@ -16350,7 +16350,7 @@
           "team": "Toronto Tempo",
           "stat": "ast",
           "line": 3.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4594786",
@@ -16358,7 +16358,7 @@
           "team": "Chicago Sky",
           "stat": "ast",
           "line": 2.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2998928",
@@ -16366,7 +16366,7 @@
           "team": "New York Liberty",
           "stat": "ast",
           "line": 4.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "981",
@@ -16374,7 +16374,7 @@
           "team": "Chicago Sky",
           "stat": "ast",
           "line": 5.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2529137",
@@ -16382,7 +16382,7 @@
           "team": "Chicago Sky",
           "stat": "ast",
           "line": 6.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433405",
@@ -16390,7 +16390,7 @@
           "team": "Chicago Sky",
           "stat": "ast",
           "line": 2.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4683006",
@@ -16398,7 +16398,7 @@
           "team": "New York Liberty",
           "stat": "ast",
           "line": 2.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3102133",
@@ -16406,7 +16406,7 @@
           "team": "New York Liberty",
           "stat": "ast",
           "line": 0.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2998938",
@@ -16422,7 +16422,7 @@
           "team": "Chicago Sky",
           "stat": "pra",
           "line": 23.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433405",
@@ -16430,7 +16430,7 @@
           "team": "Chicago Sky",
           "stat": "pra",
           "line": 27.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3102133",
@@ -16438,7 +16438,7 @@
           "team": "New York Liberty",
           "stat": "pra",
           "line": 11.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "5345444",
@@ -16446,7 +16446,7 @@
           "team": "Toronto Tempo",
           "stat": "pra",
           "line": 18.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4594786",
@@ -16454,7 +16454,7 @@
           "team": "Chicago Sky",
           "stat": "pra",
           "line": 19.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4565505",
@@ -16462,7 +16462,7 @@
           "team": "Toronto Tempo",
           "stat": "pra",
           "line": 18.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2999101",
@@ -16470,7 +16470,7 @@
           "team": "New York Liberty",
           "stat": "pra",
           "line": 27.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4683006",
@@ -16478,7 +16478,7 @@
           "team": "New York Liberty",
           "stat": "pra",
           "line": 16.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2327695",
@@ -16486,7 +16486,7 @@
           "team": "New York Liberty",
           "stat": "pra",
           "line": 9.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4066533",
@@ -16494,7 +16494,7 @@
           "team": "New York Liberty",
           "stat": "pra",
           "line": 27.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4594786",
@@ -16502,7 +16502,7 @@
           "team": "Chicago Sky",
           "stat": "tpm",
           "line": 2.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "981",
@@ -16510,7 +16510,7 @@
           "team": "Chicago Sky",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3102133",
@@ -16518,7 +16518,7 @@
           "team": "New York Liberty",
           "stat": "tpm",
           "line": 2.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4683006",
@@ -16526,7 +16526,7 @@
           "team": "New York Liberty",
           "stat": "tpm",
           "line": 2.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4432865",
@@ -16534,7 +16534,7 @@
           "team": "Chicago Sky",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4565505",
@@ -16542,7 +16542,7 @@
           "team": "Toronto Tempo",
           "stat": "tpm",
           "line": 0.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2569044",
@@ -16550,7 +16550,7 @@
           "team": "Toronto Tempo",
           "stat": "tpm",
           "line": 0.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5345524",
@@ -16558,7 +16558,7 @@
           "team": "Phoenix Mercury",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2999101",
@@ -16566,7 +16566,7 @@
           "team": "New York Liberty",
           "stat": "tpm",
           "line": 2.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2529137",
@@ -16574,7 +16574,7 @@
           "team": "Chicago Sky",
           "stat": "tpm",
           "line": 1.5,
-          "result": null
+          "result": "miss"
         }
       ],
       "graded": false,
@@ -19893,7 +19893,7 @@
           "team": "Phoenix Mercury",
           "stat": "pts",
           "line": 13.7,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2998928",
@@ -19901,7 +19901,7 @@
           "team": "New York Liberty",
           "stat": "pts",
           "line": 18.1,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5345524",
@@ -19909,7 +19909,7 @@
           "team": "Phoenix Mercury",
           "stat": "pts",
           "line": 7.7,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433405",
@@ -19917,7 +19917,7 @@
           "team": "Chicago Sky",
           "stat": "pts",
           "line": 16.8,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4068042",
@@ -19925,7 +19925,7 @@
           "team": "Phoenix Mercury",
           "stat": "pts",
           "line": 7.3,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2998928",
@@ -19933,7 +19933,7 @@
           "team": "New York Liberty",
           "stat": "reb",
           "line": 6.9,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2529140",
@@ -19941,7 +19941,7 @@
           "team": "Phoenix Mercury",
           "stat": "reb",
           "line": 9.4,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4066533",
@@ -19949,7 +19949,7 @@
           "team": "New York Liberty",
           "stat": "reb",
           "line": 4.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4683006",
@@ -19957,7 +19957,7 @@
           "team": "New York Liberty",
           "stat": "reb",
           "line": 3.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3102133",
@@ -19965,7 +19965,7 @@
           "team": "New York Liberty",
           "stat": "reb",
           "line": 3.3,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2998928",
@@ -19973,7 +19973,7 @@
           "team": "New York Liberty",
           "stat": "ast",
           "line": 3.8,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433405",
@@ -19981,7 +19981,7 @@
           "team": "Chicago Sky",
           "stat": "ast",
           "line": 2.3,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4683006",
@@ -19989,7 +19989,7 @@
           "team": "New York Liberty",
           "stat": "ast",
           "line": 2.1,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2566081",
@@ -19997,7 +19997,7 @@
           "team": "Chicago Sky",
           "stat": "ast",
           "line": 1.2,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "887",
@@ -20005,10 +20005,10 @@
           "team": "Phoenix Mercury",
           "stat": "ast",
           "line": 2.5,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -21157,10 +21157,11 @@
           "team": "SF",
           "stat": "strikeOuts",
           "line": 6.0,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     },
     "2026-08-27": {
@@ -21263,7 +21264,7 @@
           "team": "PHI",
           "stat": "strikeOuts",
           "line": 8.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": 605483,
@@ -21271,7 +21272,7 @@
           "team": "LAD",
           "stat": "strikeOuts",
           "line": 6.6,
-          "result": null
+          "result": "hit"
         },
         {
           "id": 690997,
@@ -21279,7 +21280,7 @@
           "team": "NYM",
           "stat": "strikeOuts",
           "line": 6.3,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 592332,
@@ -21287,7 +21288,7 @@
           "team": "CHC",
           "stat": "strikeOuts",
           "line": 6.2,
-          "result": null
+          "result": "hit"
         },
         {
           "id": 667755,
@@ -21295,10 +21296,10 @@
           "team": "TOR",
           "stat": "strikeOuts",
           "line": 5.7,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   }
