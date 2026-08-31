@@ -3849,6 +3849,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-08-31": {
+      "picks": [
+        {
+          "id": "681393",
+          "name": "Connor Norby",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664983",
+          "name": "Jake McCarthy",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "650490",
+          "name": "Yandy D\u00edaz",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "646240",
+          "name": "Rafael Devers",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "677942",
+          "name": "Blaze Alexander",
+          "team": "BAL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "671739",
+          "name": "Michael Harris II",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "807712",
+          "name": "Luke Keaschall",
+          "team": "MIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "802415",
+          "name": "Chandler Simpson",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "650489",
+          "name": "Willi Castro",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691723",
+          "name": "Coby Mayo",
+          "team": "BAL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "514888",
+          "name": "Jose Altuve",
+          "team": "HOU",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "BAL",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -4340,6 +4450,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-31": {
+      "picks": [
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -5898,6 +6022,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-31": {
+      "picks": [
+        {
+          "id": "646240",
+          "name": "Rafael Devers",
+          "team": "San Francisco Giants",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "677800",
+          "name": "Wilyer Abreu",
+          "team": "Boston Red Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701538",
+          "name": "Jackson Merrill",
+          "team": "San Diego Padres",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "621566",
+          "name": "Matt Olson",
+          "team": "Atlanta Braves",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "668901",
+          "name": "Mark Vientos",
+          "team": "New York Mets",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -22048,6 +22218,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-08-31": {
+      "picks": [
+        {
+          "id": 801139,
+          "name": "Payton Tolle (LHP)",
+          "team": "BOS",
+          "stat": "strikeOuts",
+          "line": 6.7,
+          "result": null
+        },
+        {
+          "id": 671737,
+          "name": "Taj Bradley (RHP)",
+          "team": "MIN",
+          "stat": "strikeOuts",
+          "line": 6.6,
+          "result": null
+        },
+        {
+          "id": 594798,
+          "name": "Jacob deGrom (RHP)",
+          "team": "TEX",
+          "stat": "strikeOuts",
+          "line": 6.5,
+          "result": null
+        },
+        {
+          "id": 695611,
+          "name": "Gage Jump (LHP)",
+          "team": "ATH",
+          "stat": "strikeOuts",
+          "line": 5.9,
+          "result": null
+        },
+        {
+          "id": 650633,
+          "name": "Michael King (RHP)",
+          "team": "SD",
+          "stat": "strikeOuts",
+          "line": 5.7,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
