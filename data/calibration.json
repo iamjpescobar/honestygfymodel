@@ -3959,6 +3959,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-01": {
+      "picks": [
+        {
+          "id": "672640",
+          "name": "Otto Lopez",
+          "team": "MIA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701398",
+          "name": "Sal Stewart",
+          "team": "CIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "681393",
+          "name": "Connor Norby",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "605141",
+          "name": "Mookie Betts",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "694192",
+          "name": "Jackson Chourio",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "671739",
+          "name": "Michael Harris II",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691723",
+          "name": "Coby Mayo",
+          "team": "BAL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641355",
+          "name": "Cody Bellinger",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664983",
+          "name": "Jake McCarthy",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "650489",
+          "name": "Willi Castro",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "677649",
+          "name": "Ezequiel Duran",
+          "team": "TEX",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "669394",
+          "name": "Jake Burger",
+          "team": "TEX",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -4464,6 +4574,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-01": {
+      "picks": [
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -22264,6 +22388,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-01": {
+      "picks": [
+        {
+          "id": 543037,
+          "name": "Gerrit Cole (RHP)",
+          "team": "NYY",
+          "stat": "strikeOuts",
+          "line": 6.5,
+          "result": null
+        },
+        {
+          "id": 668909,
+          "name": "Gavin Williams (RHP)",
+          "team": "CLE",
+          "stat": "strikeOuts",
+          "line": 6.4,
+          "result": null
+        },
+        {
+          "id": 666200,
+          "name": "Jes\u00fas Luzardo (LHP)",
+          "team": "PHI",
+          "stat": "strikeOuts",
+          "line": 6.4,
+          "result": null
+        },
+        {
+          "id": 694973,
+          "name": "Paul Skenes (RHP)",
+          "team": "PIT",
+          "stat": "strikeOuts",
+          "line": 6.2,
+          "result": null
+        },
+        {
+          "id": 669022,
+          "name": "MacKenzie Gore (LHP)",
+          "team": "TEX",
+          "stat": "strikeOuts",
+          "line": 5.8,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
