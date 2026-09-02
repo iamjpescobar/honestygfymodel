@@ -4069,6 +4069,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-02": {
+      "picks": [
+        {
+          "id": "671732",
+          "name": "Lawrence Butler",
+          "team": "ATH",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "694192",
+          "name": "Jackson Chourio",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664983",
+          "name": "Jake McCarthy",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672640",
+          "name": "Otto Lopez",
+          "team": "MIA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "681393",
+          "name": "Connor Norby",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "800325",
+          "name": "Luis Lara",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701398",
+          "name": "Sal Stewart",
+          "team": "CIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691723",
+          "name": "Coby Mayo",
+          "team": "BAL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "645277",
+          "name": "Ozzie Albies",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "643446",
+          "name": "Jeff McNeil",
+          "team": "ATH",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "671739",
+          "name": "Michael Harris II",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "703607",
+          "name": "Henry Bolte",
+          "team": "ATH",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683734",
+          "name": "Andrew Vaughn",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -4588,6 +4698,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-02": {
+      "picks": [
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -6238,6 +6362,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-02": {
+      "picks": [
+        {
+          "id": "695578",
+          "name": "James Wood",
+          "team": "Washington Nationals",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "694212",
+          "name": "Samuel Basallo",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "547180",
+          "name": "Bryce Harper",
+          "team": "Philadelphia Phillies",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "677800",
+          "name": "Wilyer Abreu",
+          "team": "Boston Red Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -22482,6 +22652,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-02": {
+      "picks": [
+        {
+          "id": 694819,
+          "name": "Jacob Misiorowski (RHP)",
+          "team": "MIL",
+          "stat": "strikeOuts",
+          "line": 8.4,
+          "result": null
+        },
+        {
+          "id": 656302,
+          "name": "Dylan Cease (RHP)",
+          "team": "TOR",
+          "stat": "strikeOuts",
+          "line": 8.3,
+          "result": null
+        },
+        {
+          "id": 693645,
+          "name": "Cam Schlittler (RHP)",
+          "team": "NYY",
+          "stat": "strikeOuts",
+          "line": 7.9,
+          "result": null
+        },
+        {
+          "id": 672282,
+          "name": "Reid Detmers (LHP)",
+          "team": "LAA",
+          "stat": "strikeOuts",
+          "line": 7.1,
+          "result": null
+        },
+        {
+          "id": 808967,
+          "name": "Yoshinobu Yamamoto (RHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 6.0,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
