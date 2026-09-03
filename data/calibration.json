@@ -4179,6 +4179,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-03": {
+      "picks": [
+        {
+          "id": "605141",
+          "name": "Mookie Betts",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "665489",
+          "name": "Vladimir Guerrero Jr.",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672640",
+          "name": "Otto Lopez",
+          "team": "MIA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "694192",
+          "name": "Jackson Chourio",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "596115",
+          "name": "Trevor Story",
+          "team": "BOS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "671732",
+          "name": "Lawrence Butler",
+          "team": "ATH",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "640902",
+          "name": "Jhonny Pereda",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "668804",
+          "name": "Bryan Reynolds",
+          "team": "PIT",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "800325",
+          "name": "Luis Lara",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691594",
+          "name": "Javier Sanoja",
+          "team": "MIA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "665161",
+          "name": "Jeremy Pe\u00f1a",
+          "team": "HOU",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683734",
+          "name": "Andrew Vaughn",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -4712,6 +4822,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-03": {
+      "picks": [
+        {
+          "id": "670541",
+          "name": "Yordan Alvarez",
+          "team": "Houston Astros",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -6408,6 +6532,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-03": {
+      "picks": [
+        {
+          "id": "670541",
+          "name": "Yordan Alvarez",
+          "team": "Houston Astros",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "646240",
+          "name": "Rafael Devers",
+          "team": "San Francisco Giants",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "643217",
+          "name": "Andrew Benintendi",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "678246",
+          "name": "Miguel Vargas",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664040",
+          "name": "Brandon Lowe",
+          "team": "Pittsburgh Pirates",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -22698,6 +22868,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-03": {
+      "picks": [
+        {
+          "id": 669373,
+          "name": "Tarik Skubal (LHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 6.7,
+          "result": null
+        },
+        {
+          "id": 686613,
+          "name": "Hunter Brown (RHP)",
+          "team": "HOU",
+          "stat": "strikeOuts",
+          "line": 6.2,
+          "result": null
+        },
+        {
+          "id": 701656,
+          "name": "Logan Henderson (RHP)",
+          "team": "MIL",
+          "stat": "strikeOuts",
+          "line": 5.8,
+          "result": null
+        },
+        {
+          "id": 667755,
+          "name": "Jos\u00e9 Soriano (RHP)",
+          "team": "TOR",
+          "stat": "strikeOuts",
+          "line": 5.3,
+          "result": null
+        },
+        {
+          "id": 592332,
+          "name": "Kevin Gausman (RHP)",
+          "team": "CHC",
+          "stat": "strikeOuts",
+          "line": 5.3,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
