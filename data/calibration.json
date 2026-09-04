@@ -4289,6 +4289,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-04": {
+      "picks": [
+        {
+          "id": "807712",
+          "name": "Luke Keaschall",
+          "team": "MIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664983",
+          "name": "Jake McCarthy",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683734",
+          "name": "Andrew Vaughn",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "680757",
+          "name": "Steven Kwan",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686527",
+          "name": "Dominic Canzone",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663728",
+          "name": "Cal Raleigh",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641355",
+          "name": "Cody Bellinger",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701675",
+          "name": "Nathan Church",
+          "team": "STL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "665877",
+          "name": "Jos\u00e9 Ferm\u00edn",
+          "team": "STL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "694192",
+          "name": "Jackson Chourio",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701807",
+          "name": "Carson Benge",
+          "team": "NYM",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "608070",
+          "name": "Jos\u00e9 Ram\u00edrez",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "668227",
+          "name": "Randy Arozarena",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -4836,6 +4946,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-04": {
+      "picks": [
+        {
+          "id": "695506",
+          "name": "Jac Caglianone",
+          "team": "Kansas City Royals",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -6578,6 +6702,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-04": {
+      "picks": [
+        {
+          "id": "682985",
+          "name": "Riley Greene",
+          "team": "Detroit Tigers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "679529",
+          "name": "Spencer Torkelson",
+          "team": "Detroit Tigers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682829",
+          "name": "Elly De La Cruz",
+          "team": "Cincinnati Reds",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701398",
+          "name": "Sal Stewart",
+          "team": "Cincinnati Reds",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "680574",
+          "name": "Matt McLain",
+          "team": "Cincinnati Reds",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -22914,6 +23084,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-04": {
+      "picks": [
+        {
+          "id": 519242,
+          "name": "Chris Sale (LHP)",
+          "team": "ATL",
+          "stat": "strikeOuts",
+          "line": 7.1,
+          "result": null
+        },
+        {
+          "id": 650911,
+          "name": "Cristopher S\u00e1nchez (LHP)",
+          "team": "PHI",
+          "stat": "strikeOuts",
+          "line": 7.0,
+          "result": null
+        },
+        {
+          "id": 605483,
+          "name": "Blake Snell (LHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 7.0,
+          "result": null
+        },
+        {
+          "id": 669302,
+          "name": "Logan Gilbert (RHP)",
+          "team": "SEA",
+          "stat": "strikeOuts",
+          "line": 6.3,
+          "result": null
+        },
+        {
+          "id": 690997,
+          "name": "Nolan McLean (RHP)",
+          "team": "NYM",
+          "stat": "strikeOuts",
+          "line": 6.1,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
