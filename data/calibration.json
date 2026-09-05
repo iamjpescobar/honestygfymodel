@@ -4399,6 +4399,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-05": {
+      "picks": [
+        {
+          "id": "596115",
+          "name": "Trevor Story",
+          "team": "BOS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672386",
+          "name": "Alejandro Kirk",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "671732",
+          "name": "Lawrence Butler",
+          "team": "ATH",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "694192",
+          "name": "Jackson Chourio",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "643446",
+          "name": "Jeff McNeil",
+          "team": "ATH",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701807",
+          "name": "Carson Benge",
+          "team": "NYM",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691594",
+          "name": "Javier Sanoja",
+          "team": "MIA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "521692",
+          "name": "Salvador Perez",
+          "team": "KC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "807712",
+          "name": "Luke Keaschall",
+          "team": "MIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664983",
+          "name": "Jake McCarthy",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "681508",
+          "name": "Mickey Gasper",
+          "team": "BOS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701675",
+          "name": "Nathan Church",
+          "team": "STL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "592885",
+          "name": "Christian Yelich",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -4960,6 +5070,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-05": {
+      "picks": [
+        {
+          "id": "676475",
+          "name": "Alec Burleson",
+          "team": "St. Louis Cardinals",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -6748,6 +6872,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-05": {
+      "picks": [
+        {
+          "id": "665742",
+          "name": "Juan Soto",
+          "team": "New York Mets",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664023",
+          "name": "Ian Happ",
+          "team": "Chicago Cubs",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682626",
+          "name": "Francisco Alvarez",
+          "team": "New York Mets",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683146",
+          "name": "Brett Baty",
+          "team": "New York Mets",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691718",
+          "name": "Pete Crow-Armstrong",
+          "team": "Chicago Cubs",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -23130,6 +23300,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-05": {
+      "picks": [
+        {
+          "id": 677952,
+          "name": "Braxton Ashcraft (RHP)",
+          "team": "PIT",
+          "stat": "strikeOuts",
+          "line": 7.0,
+          "result": null
+        },
+        {
+          "id": 671737,
+          "name": "Taj Bradley (RHP)",
+          "team": "MIN",
+          "stat": "strikeOuts",
+          "line": 7.0,
+          "result": null
+        },
+        {
+          "id": 607192,
+          "name": "Tyler Glasnow (RHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 7.0,
+          "result": null
+        },
+        {
+          "id": 554430,
+          "name": "Zack Wheeler (RHP)",
+          "team": "PHI",
+          "stat": "strikeOuts",
+          "line": 6.6,
+          "result": null
+        },
+        {
+          "id": 800048,
+          "name": "Parker Messick (LHP)",
+          "team": "CLE",
+          "stat": "strikeOuts",
+          "line": 6.1,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
