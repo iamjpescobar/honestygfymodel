@@ -4298,7 +4298,7 @@
           "team": "MIN",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "664983",
@@ -4306,7 +4306,7 @@
           "team": "COL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "641355",
@@ -4314,7 +4314,7 @@
           "team": "NYY",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "686527",
@@ -4322,7 +4322,7 @@
           "team": "SEA",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "694192",
@@ -4330,7 +4330,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "672695",
@@ -4338,7 +4338,7 @@
           "team": "ARI",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "668227",
@@ -4346,7 +4346,7 @@
           "team": "SEA",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "680757",
@@ -4354,7 +4354,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "680757",
@@ -4362,7 +4362,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "695600",
@@ -4370,7 +4370,7 @@
           "team": "KC",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "663728",
@@ -4378,7 +4378,7 @@
           "team": "SEA",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "645277",
@@ -4386,7 +4386,7 @@
           "team": "ATL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "701807",
@@ -4394,10 +4394,10 @@
           "team": "NYM",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -4956,10 +4956,10 @@
           "team": "St. Louis Cardinals",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -6712,7 +6712,7 @@
           "team": "San Francisco Giants",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "621566",
@@ -6720,7 +6720,7 @@
           "team": "Atlanta Braves",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "670541",
@@ -6728,7 +6728,7 @@
           "team": "Houston Astros",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "663586",
@@ -6736,7 +6736,7 @@
           "team": "Atlanta Braves",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "676475",
@@ -6744,10 +6744,10 @@
           "team": "St. Louis Cardinals",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -23094,7 +23094,7 @@
           "team": "ATL",
           "stat": "strikeOuts",
           "line": 7.1,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 650911,
@@ -23102,7 +23102,7 @@
           "team": "PHI",
           "stat": "strikeOuts",
           "line": 7.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 605483,
@@ -23110,7 +23110,7 @@
           "team": "LAD",
           "stat": "strikeOuts",
           "line": 7.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": 669302,
@@ -23118,7 +23118,7 @@
           "team": "SEA",
           "stat": "strikeOuts",
           "line": 6.3,
-          "result": null
+          "result": "hit"
         },
         {
           "id": 690997,
@@ -23126,10 +23126,10 @@
           "team": "NYM",
           "stat": "strikeOuts",
           "line": 6.1,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   }
