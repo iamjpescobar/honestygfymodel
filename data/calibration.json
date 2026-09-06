@@ -4509,6 +4509,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-06": {
+      "picks": [
+        {
+          "id": "701675",
+          "name": "Nathan Church",
+          "team": "STL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "703520",
+          "name": "Brett Bateman",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "678246",
+          "name": "Miguel Vargas",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664983",
+          "name": "Jake McCarthy",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663728",
+          "name": "Cal Raleigh",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "694192",
+          "name": "Jackson Chourio",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "671056",
+          "name": "Iv\u00e1n Herrera",
+          "team": "STL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691718",
+          "name": "Pete Crow-Armstrong",
+          "team": "CHC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "677951",
+          "name": "Bobby Witt Jr.",
+          "team": "KC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691023",
+          "name": "Jordan Walker",
+          "team": "STL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664770",
+          "name": "Nathan Lukes",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "669065",
+          "name": "Kyle Stowers",
+          "team": "MIA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "547180",
+          "name": "Bryce Harper",
+          "team": "PHI",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -5084,6 +5194,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-06": {
+      "picks": [
+        {
+          "id": "676475",
+          "name": "Alec Burleson",
+          "team": "St. Louis Cardinals",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -6918,6 +7042,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-06": {
+      "picks": [
+        {
+          "id": "621566",
+          "name": "Matt Olson",
+          "team": "Atlanta Braves",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "670541",
+          "name": "Yordan Alvarez",
+          "team": "Houston Astros",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "646240",
+          "name": "Rafael Devers",
+          "team": "San Francisco Giants",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663586",
+          "name": "Austin Riley",
+          "team": "Atlanta Braves",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "665052",
+          "name": "Griffin Conine",
+          "team": "Miami Marlins",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -23346,6 +23516,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-06": {
+      "picks": [
+        {
+          "id": 668909,
+          "name": "Gavin Williams (RHP)",
+          "team": "CLE",
+          "stat": "strikeOuts",
+          "line": 7.8,
+          "result": null
+        },
+        {
+          "id": 694973,
+          "name": "Paul Skenes (RHP)",
+          "team": "PIT",
+          "stat": "strikeOuts",
+          "line": 7.3,
+          "result": null
+        },
+        {
+          "id": 801139,
+          "name": "Payton Tolle (LHP)",
+          "team": "BOS",
+          "stat": "strikeOuts",
+          "line": 7.0,
+          "result": null
+        },
+        {
+          "id": 690986,
+          "name": "Kyle Harrison (LHP)",
+          "team": "MIL",
+          "stat": "strikeOuts",
+          "line": 6.6,
+          "result": null
+        },
+        {
+          "id": 695611,
+          "name": "Gage Jump (LHP)",
+          "team": "ATH",
+          "stat": "strikeOuts",
+          "line": 5.8,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
