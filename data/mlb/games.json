@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-09-07 14:50",
+  "generated_at_et": "2026-09-07 15:21",
   "slate_date_et": "2026-09-07",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -34,7 +34,7 @@
         "Starters' avg WHIP 1.3 (high)",
         "Starters' avg SLG against 0.366 (low)"
       ],
-      "proj_total": 8.2
+      "proj_total": 8.1
     },
     {
       "game_pk": 823820,
@@ -191,13 +191,13 @@
       "venue": "Comerica Park",
       "game_time": "2026-09-07T19:10:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": "77",
-      "weather_wind": "8 mph, In From LF",
+      "weather_temp": "78",
+      "weather_wind": "7 mph, In From LF",
       "park_factor": 100,
       "park_verified": true,
       "weather_source": "mlb_posted",
       "wind_adj": -2,
-      "wind_note": "wind in 8 mph (-2)",
+      "wind_note": "wind in 7 mph (-2)",
       "ou_lean": "Under",
       "ou_grade": "C-",
       "ou_signals": [
@@ -247,7 +247,7 @@
       "venue": "Oracle Park",
       "game_time": "2026-09-08T00:10:00Z",
       "weather_condition": "Sunny",
-      "weather_temp": 69,
+      "weather_temp": 70,
       "weather_wind": "W 9 mph",
       "park_factor": 97,
       "park_verified": true,
@@ -272,7 +272,7 @@
       "venue": "UNIQLO Field at Dodger Stadium",
       "game_time": "2026-09-08T01:10:00Z",
       "weather_condition": "Mostly Clear",
-      "weather_temp": 80,
+      "weather_temp": 82,
       "weather_wind": "WSW 5 mph",
       "park_factor": 101,
       "park_verified": true,
