@@ -4729,6 +4729,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-08": {
+      "picks": [
+        {
+          "id": "641355",
+          "name": "Cody Bellinger",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "545361",
+          "name": "Mike Trout",
+          "team": "LAA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "646240",
+          "name": "Rafael Devers",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683734",
+          "name": "Andrew Vaughn",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664770",
+          "name": "Nathan Lukes",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691594",
+          "name": "Javier Sanoja",
+          "team": "MIA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663728",
+          "name": "Cal Raleigh",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "805811",
+          "name": "Bryce Eldridge",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "521692",
+          "name": "Salvador Perez",
+          "team": "KC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691176",
+          "name": "Jasson Dom\u00ednguez",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682987",
+          "name": "Spencer Jones",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "703520",
+          "name": "Brett Bateman",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672386",
+          "name": "Alejandro Kirk",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -5332,6 +5442,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-08": {
+      "picks": [
+        {
+          "id": "670541",
+          "name": "Yordan Alvarez",
+          "team": "Houston Astros",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -23778,6 +23902,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-08": {
+      "picks": [
+        {
+          "id": 694819,
+          "name": "Jacob Misiorowski (RHP)",
+          "team": "MIL",
+          "stat": "strikeOuts",
+          "line": 8.2,
+          "result": null
+        },
+        {
+          "id": 669373,
+          "name": "Tarik Skubal (LHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 8.2,
+          "result": null
+        },
+        {
+          "id": 693645,
+          "name": "Cam Schlittler (RHP)",
+          "team": "NYY",
+          "stat": "strikeOuts",
+          "line": 7.3,
+          "result": null
+        },
+        {
+          "id": 680732,
+          "name": "Sean Burke (RHP)",
+          "team": "CWS",
+          "stat": "strikeOuts",
+          "line": 6.5,
+          "result": null
+        },
+        {
+          "id": 672282,
+          "name": "Reid Detmers (LHP)",
+          "team": "LAA",
+          "stat": "strikeOuts",
+          "line": 6.2,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
