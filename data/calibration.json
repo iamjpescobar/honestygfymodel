@@ -4839,6 +4839,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-09": {
+      "picks": [
+        {
+          "id": "663728",
+          "name": "Cal Raleigh",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641355",
+          "name": "Cody Bellinger",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686527",
+          "name": "Dominic Canzone",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "703520",
+          "name": "Brett Bateman",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "521692",
+          "name": "Salvador Perez",
+          "team": "KC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672386",
+          "name": "Alejandro Kirk",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691594",
+          "name": "Javier Sanoja",
+          "team": "MIA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686681",
+          "name": "Michael Massey",
+          "team": "KC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "805811",
+          "name": "Bryce Eldridge",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672640",
+          "name": "Otto Lopez",
+          "team": "MIA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "679845",
+          "name": "Nick Loftin",
+          "team": "KC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "606192",
+          "name": "Teoscar Hern\u00e1ndez",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682987",
+          "name": "Spencer Jones",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -5456,6 +5566,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-09": {
+      "picks": [
+        {
+          "id": "671277",
+          "name": "Luis Garc\u00eda Jr.",
+          "team": "New York Yankees",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -7428,6 +7552,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-09": {
+      "picks": [
+        {
+          "id": "682985",
+          "name": "Riley Greene",
+          "team": "Detroit Tigers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "676475",
+          "name": "Alec Burleson",
+          "team": "St. Louis Cardinals",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672960",
+          "name": "Kazuma Okamoto",
+          "team": "Toronto Blue Jays",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663728",
+          "name": "Cal Raleigh",
+          "team": "Seattle Mariners",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "608369",
+          "name": "Corey Seager",
+          "team": "Texas Rangers",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -23994,6 +24164,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-09": {
+      "picks": [
+        {
+          "id": 808967,
+          "name": "Yoshinobu Yamamoto (RHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 7.4,
+          "result": null
+        },
+        {
+          "id": 650911,
+          "name": "Cristopher S\u00e1nchez (LHP)",
+          "team": "PHI",
+          "stat": "strikeOuts",
+          "line": 6.9,
+          "result": null
+        },
+        {
+          "id": 686613,
+          "name": "Hunter Brown (RHP)",
+          "team": "HOU",
+          "stat": "strikeOuts",
+          "line": 5.8,
+          "result": null
+        },
+        {
+          "id": 701656,
+          "name": "Logan Henderson (RHP)",
+          "team": "MIL",
+          "stat": "strikeOuts",
+          "line": 5.8,
+          "result": null
+        },
+        {
+          "id": 656492,
+          "name": "Foster Griffin (LHP)",
+          "team": "CLE",
+          "stat": "strikeOuts",
+          "line": 5.6,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
