@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-09-10 15:32",
+  "generated_at_et": "2026-09-10 19:06",
   "slate_date_et": "2026-09-10",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -66,7 +66,7 @@
         "Starters' avg WHIP 1.34 (high)",
         "Starters' avg HR/9 1.48 (high)"
       ],
-      "proj_total": 9.1
+      "proj_total": 9.0
     },
     {
       "game_pk": 823088,
@@ -77,8 +77,8 @@
       "venue": "T-Mobile Park",
       "game_time": "2026-09-10T20:10:00Z",
       "weather_condition": "Cloudy",
-      "weather_temp": "67",
-      "weather_wind": "4 mph, In From LF",
+      "weather_temp": "68",
+      "weather_wind": "3 mph, L To R",
       "park_factor": 91,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -108,14 +108,14 @@
       "home_pitcher": "Max Fried",
       "venue": "Yankee Stadium",
       "game_time": "2026-09-10T23:05:00Z",
-      "weather_condition": "Partly Cloudy",
-      "weather_temp": "84",
-      "weather_wind": "8 mph, In From RF",
+      "weather_condition": "Cloudy",
+      "weather_temp": "82",
+      "weather_wind": "5 mph, In From RF",
       "park_factor": 101,
       "park_verified": true,
       "weather_source": "mlb_posted",
       "wind_adj": -2,
-      "wind_note": "wind in 8 mph (-2)",
+      "wind_note": "wind in 5 mph (-2)",
       "edge_net": 4,
       "edge_lean": "New York Yankees",
       "edge_grade": "A",
@@ -128,7 +128,7 @@
       "ou_lean": "Over",
       "ou_grade": "C",
       "ou_signals": [
-        "Temp 84F (carry weather)",
+        "Temp 82F (carry weather)",
         "Starters' avg WHIP 1.38 (high)"
       ],
       "proj_total": 9.6
@@ -142,13 +142,13 @@
       "venue": "Rate Field",
       "game_time": "2026-09-10T23:40:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": 72,
-      "weather_wind": "NE 10 mph",
+      "weather_temp": "71",
+      "weather_wind": "8 mph, R To L",
       "park_factor": 98,
       "park_verified": true,
-      "weather_source": "nws_forecast",
-      "wind_adj": -1.5,
-      "wind_note": "10 mph crosswind (-1.5)",
+      "weather_source": "mlb_posted",
+      "wind_adj": 0,
+      "wind_note": null,
       "edge_net": 4,
       "edge_lean": "Chicago White Sox",
       "edge_grade": "A",
