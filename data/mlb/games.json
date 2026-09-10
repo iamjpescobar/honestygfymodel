@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-09-10 14:38",
+  "generated_at_et": "2026-09-10 15:32",
   "slate_date_et": "2026-09-10",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -78,7 +78,7 @@
       "game_time": "2026-09-10T20:10:00Z",
       "weather_condition": "Cloudy",
       "weather_temp": "67",
-      "weather_wind": "5 mph, Out To CF",
+      "weather_wind": "4 mph, In From LF",
       "park_factor": 91,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -109,13 +109,13 @@
       "venue": "Yankee Stadium",
       "game_time": "2026-09-10T23:05:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": 85,
-      "weather_wind": "NW 7 mph",
+      "weather_temp": "84",
+      "weather_wind": "8 mph, In From RF",
       "park_factor": 101,
       "park_verified": true,
-      "weather_source": "nws_forecast",
-      "wind_adj": 1.1,
-      "wind_note": "7 mph crosswind (+1.1)",
+      "weather_source": "mlb_posted",
+      "wind_adj": -2,
+      "wind_note": "wind in 8 mph (-2)",
       "edge_net": 4,
       "edge_lean": "New York Yankees",
       "edge_grade": "A",
@@ -128,7 +128,7 @@
       "ou_lean": "Over",
       "ou_grade": "C",
       "ou_signals": [
-        "Temp 85F (carry weather)",
+        "Temp 84F (carry weather)",
         "Starters' avg WHIP 1.38 (high)"
       ],
       "proj_total": 9.6
