@@ -4949,6 +4949,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-10": {
+      "picks": [
+        {
+          "id": "641355",
+          "name": "Cody Bellinger",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686948",
+          "name": "Drake Baldwin",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "660670",
+          "name": "Ronald Acu\u00f1a Jr.",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682987",
+          "name": "Spencer Jones",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "671277",
+          "name": "Luis Garc\u00eda Jr.",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "650490",
+          "name": "Yandy D\u00edaz",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "700250",
+          "name": "Ben Rice",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664983",
+          "name": "Jake McCarthy",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "806146",
+          "name": "George Lombard Jr.",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "607208",
+          "name": "Trea Turner",
+          "team": "PHI",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686527",
+          "name": "Dominic Canzone",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "656941",
+          "name": "Kyle Schwarber",
+          "team": "PHI",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -5580,6 +5690,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-10": {
+      "picks": [
+        {
+          "id": "670541",
+          "name": "Yordan Alvarez",
+          "team": "Houston Astros",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -7598,6 +7722,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-10": {
+      "picks": [
+        {
+          "id": "621566",
+          "name": "Matt Olson",
+          "team": "Atlanta Braves",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "608369",
+          "name": "Corey Seager",
+          "team": "Texas Rangers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "547180",
+          "name": "Bryce Harper",
+          "team": "Philadelphia Phillies",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "670541",
+          "name": "Yordan Alvarez",
+          "team": "Houston Astros",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663728",
+          "name": "Cal Raleigh",
+          "team": "Seattle Mariners",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -24210,6 +24380,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-10": {
+      "picks": [
+        {
+          "id": 594798,
+          "name": "Jacob deGrom (RHP)",
+          "team": "TEX",
+          "stat": "strikeOuts",
+          "line": 6.8,
+          "result": null
+        },
+        {
+          "id": 554430,
+          "name": "Zack Wheeler (RHP)",
+          "team": "PHI",
+          "stat": "strikeOuts",
+          "line": 6.7,
+          "result": null
+        },
+        {
+          "id": 669302,
+          "name": "Logan Gilbert (RHP)",
+          "team": "SEA",
+          "stat": "strikeOuts",
+          "line": 6.5,
+          "result": null
+        },
+        {
+          "id": 683003,
+          "name": "Jared Jones (RHP)",
+          "team": "PIT",
+          "stat": "strikeOuts",
+          "line": 5.9,
+          "result": null
+        },
+        {
+          "id": 608331,
+          "name": "Max Fried (LHP)",
+          "team": "NYY",
+          "stat": "strikeOuts",
+          "line": 5.1,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
