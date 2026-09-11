@@ -5059,6 +5059,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-11": {
+      "picks": [
+        {
+          "id": "672386",
+          "name": "Alejandro Kirk",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "703520",
+          "name": "Brett Bateman",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701675",
+          "name": "Nathan Church",
+          "team": "STL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664983",
+          "name": "Jake McCarthy",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "596115",
+          "name": "Trevor Story",
+          "team": "BOS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686527",
+          "name": "Dominic Canzone",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686948",
+          "name": "Drake Baldwin",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "606192",
+          "name": "Teoscar Hern\u00e1ndez",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "605141",
+          "name": "Mookie Betts",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672640",
+          "name": "Otto Lopez",
+          "team": "MIA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691594",
+          "name": "Javier Sanoja",
+          "team": "MIA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691718",
+          "name": "Pete Crow-Armstrong",
+          "team": "CHC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "695491",
+          "name": "Joshua B\u00e1ez",
+          "team": "STL",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -5704,6 +5814,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-11": {
+      "picks": [
+        {
+          "id": "660670",
+          "name": "Ronald Acu\u00f1a Jr.",
+          "team": "Atlanta Braves",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -7768,6 +7892,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-11": {
+      "picks": [
+        {
+          "id": "699013",
+          "name": "Esmerlyn Valdez",
+          "team": "Pittsburgh Pirates",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664023",
+          "name": "Ian Happ",
+          "team": "Chicago Cubs",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "804668",
+          "name": "Rafael Flores Jr.",
+          "team": "Pittsburgh Pirates",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "665833",
+          "name": "Oneil Cruz",
+          "team": "Pittsburgh Pirates",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691718",
+          "name": "Pete Crow-Armstrong",
+          "team": "Chicago Cubs",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -24426,6 +24596,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-11": {
+      "picks": [
+        {
+          "id": 690997,
+          "name": "Nolan McLean (RHP)",
+          "team": "NYM",
+          "stat": "strikeOuts",
+          "line": 7.1,
+          "result": null
+        },
+        {
+          "id": 519242,
+          "name": "Chris Sale (LHP)",
+          "team": "ATL",
+          "stat": "strikeOuts",
+          "line": 7.1,
+          "result": null
+        },
+        {
+          "id": 676917,
+          "name": "Cade Cavalli (RHP)",
+          "team": "WSH",
+          "stat": "strikeOuts",
+          "line": 6.9,
+          "result": null
+        },
+        {
+          "id": 671737,
+          "name": "Taj Bradley (RHP)",
+          "team": "MIN",
+          "stat": "strikeOuts",
+          "line": 6.2,
+          "result": null
+        },
+        {
+          "id": 684007,
+          "name": "Shota Imanaga (LHP)",
+          "team": "CHC",
+          "stat": "strikeOuts",
+          "line": 6.0,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
