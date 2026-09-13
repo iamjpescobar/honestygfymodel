@@ -5279,6 +5279,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-13": {
+      "picks": [
+        {
+          "id": "664983",
+          "name": "Jake McCarthy",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686948",
+          "name": "Drake Baldwin",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "703520",
+          "name": "Brett Bateman",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "660670",
+          "name": "Ronald Acu\u00f1a Jr.",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686527",
+          "name": "Dominic Canzone",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "596115",
+          "name": "Trevor Story",
+          "team": "BOS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682829",
+          "name": "Elly De La Cruz",
+          "team": "CIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691718",
+          "name": "Pete Crow-Armstrong",
+          "team": "CHC",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "703607",
+          "name": "Henry Bolte",
+          "team": "ATH",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "681198",
+          "name": "TJ Rumfield",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "606466",
+          "name": "Ketel Marte",
+          "team": "ARI",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641355",
+          "name": "Cody Bellinger",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "695578",
+          "name": "James Wood",
+          "team": "WSH",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -5952,6 +6062,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-13": {
+      "picks": [
+        {
+          "id": "695578",
+          "name": "James Wood",
+          "team": "Washington Nationals",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -8108,6 +8232,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-13": {
+      "picks": [
+        {
+          "id": "547180",
+          "name": "Bryce Harper",
+          "team": "Philadelphia Phillies",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "592450",
+          "name": "Aaron Judge",
+          "team": "New York Yankees",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "621566",
+          "name": "Matt Olson",
+          "team": "Atlanta Braves",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "695578",
+          "name": "James Wood",
+          "team": "Washington Nationals",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -24858,6 +25028,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-13": {
+      "picks": [
+        {
+          "id": 656302,
+          "name": "Dylan Cease (RHP)",
+          "team": "TOR",
+          "stat": "strikeOuts",
+          "line": 9.3,
+          "result": null
+        },
+        {
+          "id": 693645,
+          "name": "Cam Schlittler (RHP)",
+          "team": "NYY",
+          "stat": "strikeOuts",
+          "line": 7.2,
+          "result": null
+        },
+        {
+          "id": 681035,
+          "name": "Christian Scott (RHP)",
+          "team": "NYM",
+          "stat": "strikeOuts",
+          "line": 6.3,
+          "result": null
+        },
+        {
+          "id": 695505,
+          "name": "Chase Burns (RHP)",
+          "team": "CIN",
+          "stat": "strikeOuts",
+          "line": 6.2,
+          "result": null
+        },
+        {
+          "id": 801139,
+          "name": "Payton Tolle (LHP)",
+          "team": "BOS",
+          "stat": "strikeOuts",
+          "line": 6.2,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
