@@ -5389,6 +5389,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-14": {
+      "picks": [
+        {
+          "id": "686948",
+          "name": "Drake Baldwin",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "665487",
+          "name": "Fernando Tatis Jr.",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "805811",
+          "name": "Bryce Eldridge",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "669392",
+          "name": "Samad Taylor",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "660670",
+          "name": "Ronald Acu\u00f1a Jr.",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "545361",
+          "name": "Mike Trout",
+          "team": "LAA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664983",
+          "name": "Jake McCarthy",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "680757",
+          "name": "Steven Kwan",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "687957",
+          "name": "Dustin Harris",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701538",
+          "name": "Jackson Merrill",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "593428",
+          "name": "Xander Bogaerts",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672640",
+          "name": "Otto Lopez",
+          "team": "MIA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682987",
+          "name": "Spencer Jones",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -6076,6 +6186,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-14": {
+      "picks": [
+        {
+          "id": "701538",
+          "name": "Jackson Merrill",
+          "team": "San Diego Padres",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -8278,6 +8402,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-14": {
+      "picks": [
+        {
+          "id": "665742",
+          "name": "Juan Soto",
+          "team": "New York Mets",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "606192",
+          "name": "Teoscar Hern\u00e1ndez",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683146",
+          "name": "Brett Baty",
+          "team": "New York Mets",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "571970",
+          "name": "Max Muncy",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -25074,6 +25244,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-14": {
+      "picks": [
+        {
+          "id": 668909,
+          "name": "Gavin Williams (RHP)",
+          "team": "CLE",
+          "stat": "strikeOuts",
+          "line": 8.4,
+          "result": null
+        },
+        {
+          "id": 669373,
+          "name": "Tarik Skubal (LHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 8.1,
+          "result": null
+        },
+        {
+          "id": 672282,
+          "name": "Reid Detmers (LHP)",
+          "team": "LAA",
+          "stat": "strikeOuts",
+          "line": 6.8,
+          "result": null
+        },
+        {
+          "id": 665152,
+          "name": "Dean Kremer (RHP)",
+          "team": "MIN",
+          "stat": "strikeOuts",
+          "line": 5.7,
+          "result": null
+        },
+        {
+          "id": 667755,
+          "name": "Jos\u00e9 Soriano (RHP)",
+          "team": "TOR",
+          "stat": "strikeOuts",
+          "line": 5.4,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
