@@ -5288,7 +5288,7 @@
           "team": "COL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "703520",
@@ -5296,7 +5296,7 @@
           "team": "TOR",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "660670",
@@ -5304,7 +5304,7 @@
           "team": "ATL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "703607",
@@ -5312,7 +5312,7 @@
           "team": "ATH",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "686948",
@@ -5320,7 +5320,7 @@
           "team": "ATL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "686527",
@@ -5328,7 +5328,7 @@
           "team": "SEA",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "682829",
@@ -5336,7 +5336,7 @@
           "team": "CIN",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "681198",
@@ -5344,7 +5344,7 @@
           "team": "COL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "596115",
@@ -5352,7 +5352,7 @@
           "team": "BOS",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "641355",
@@ -5360,7 +5360,7 @@
           "team": "NYY",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "695578",
@@ -5368,7 +5368,7 @@
           "team": "WSH",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "672640",
@@ -5376,7 +5376,7 @@
           "team": "MIA",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "606466",
@@ -5384,10 +5384,10 @@
           "team": "ARI",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -6072,10 +6072,10 @@
           "team": "Washington Nationals",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -8242,7 +8242,7 @@
           "team": "Baltimore Orioles",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "547180",
@@ -8250,7 +8250,7 @@
           "team": "Philadelphia Phillies",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "592450",
@@ -8258,7 +8258,7 @@
           "team": "New York Yankees",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "701538",
@@ -8266,7 +8266,7 @@
           "team": "San Diego Padres",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "621566",
@@ -8274,10 +8274,10 @@
           "team": "Atlanta Braves",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -25038,7 +25038,7 @@
           "team": "TOR",
           "stat": "strikeOuts",
           "line": 9.3,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 693645,
@@ -25046,7 +25046,7 @@
           "team": "NYY",
           "stat": "strikeOuts",
           "line": 7.2,
-          "result": null
+          "result": "hit"
         },
         {
           "id": 681035,
@@ -25054,7 +25054,7 @@
           "team": "NYM",
           "stat": "strikeOuts",
           "line": 6.3,
-          "result": null
+          "result": "hit"
         },
         {
           "id": 695505,
@@ -25062,7 +25062,7 @@
           "team": "CIN",
           "stat": "strikeOuts",
           "line": 6.2,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 801139,
@@ -25070,10 +25070,10 @@
           "team": "BOS",
           "stat": "strikeOuts",
           "line": 6.2,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   }
