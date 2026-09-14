@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-09-14 15:55",
+  "generated_at_et": "2026-09-14 16:53",
   "slate_date_et": "2026-09-14",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -162,14 +162,14 @@
       "home_pitcher": "Dean Kremer",
       "venue": "Target Field",
       "game_time": "2026-09-14T23:40:00Z",
-      "weather_condition": "Showers And Thunderstorms Likely",
-      "weather_temp": 60,
-      "weather_wind": "SSE 20 mph",
+      "weather_condition": "Cloudy",
+      "weather_temp": "61",
+      "weather_wind": "18 mph, R To L",
       "park_factor": 103,
       "park_verified": true,
-      "weather_source": "nws_forecast",
-      "wind_adj": -3.1,
-      "wind_note": "20 mph crosswind (-3.1)",
+      "weather_source": "mlb_posted",
+      "wind_adj": 0,
+      "wind_note": null,
       "edge_net": 2,
       "edge_lean": "New York Yankees",
       "edge_grade": "C",
@@ -181,7 +181,7 @@
       "ou_grade": "B",
       "ou_signals": [
         "Park factor 103 (hitter-friendly)",
-        "Temp 60F (cold suppresses)",
+        "Temp 61F (cold suppresses)",
         "Starters' avg WHIP 1.35 (high)",
         "Starters' avg HR/9 1.62 (high)",
         "Starters' avg SLG against 0.456 (high)"
