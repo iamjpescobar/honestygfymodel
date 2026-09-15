@@ -5499,6 +5499,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-15": {
+      "picks": [
+        {
+          "id": "606466",
+          "name": "Ketel Marte",
+          "team": "ARI",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641355",
+          "name": "Cody Bellinger",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "593428",
+          "name": "Xander Bogaerts",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686948",
+          "name": "Drake Baldwin",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691723",
+          "name": "Coby Mayo",
+          "team": "BAL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "665487",
+          "name": "Fernando Tatis Jr.",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "606192",
+          "name": "Teoscar Hern\u00e1ndez",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "687957",
+          "name": "Dustin Harris",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701538",
+          "name": "Jackson Merrill",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686527",
+          "name": "Dominic Canzone",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682987",
+          "name": "Spencer Jones",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "805811",
+          "name": "Bryce Eldridge",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664983",
+          "name": "Jake McCarthy",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -6200,6 +6310,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-15": {
+      "picks": [
+        {
+          "id": "665487",
+          "name": "Fernando Tatis Jr.",
+          "team": "San Diego Padres",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -8448,6 +8572,36 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-15": {
+      "picks": [
+        {
+          "id": "678246",
+          "name": "Miguel Vargas",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "808959",
+          "name": "Munetaka Murakami",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "545341",
+          "name": "Randal Grichuk",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -25290,6 +25444,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-15": {
+      "picks": [
+        {
+          "id": 694819,
+          "name": "Jacob Misiorowski (RHP)",
+          "team": "MIL",
+          "stat": "strikeOuts",
+          "line": 9.3,
+          "result": null
+        },
+        {
+          "id": 808967,
+          "name": "Yoshinobu Yamamoto (RHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 7.6,
+          "result": null
+        },
+        {
+          "id": 669302,
+          "name": "Logan Gilbert (RHP)",
+          "team": "SEA",
+          "stat": "strikeOuts",
+          "line": 7.4,
+          "result": null
+        },
+        {
+          "id": 650911,
+          "name": "Cristopher S\u00e1nchez (LHP)",
+          "team": "PHI",
+          "stat": "strikeOuts",
+          "line": 6.8,
+          "result": null
+        },
+        {
+          "id": 594798,
+          "name": "Jacob deGrom (RHP)",
+          "team": "TEX",
+          "stat": "strikeOuts",
+          "line": 6.4,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
