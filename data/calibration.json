@@ -5609,6 +5609,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-16": {
+      "picks": [
+        {
+          "id": "691594",
+          "name": "Javier Sanoja",
+          "team": "MIA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "680757",
+          "name": "Steven Kwan",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "813841",
+          "name": "Jonah Cox",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "805811",
+          "name": "Bryce Eldridge",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666182",
+          "name": "Bo Bichette",
+          "team": "NYM",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "669127",
+          "name": "Shea Langeliers",
+          "team": "ATH",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641355",
+          "name": "Cody Bellinger",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691723",
+          "name": "Coby Mayo",
+          "team": "BAL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672515",
+          "name": "Gabriel Moreno",
+          "team": "ARI",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664770",
+          "name": "Nathan Lukes",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686527",
+          "name": "Dominic Canzone",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "703607",
+          "name": "Henry Bolte",
+          "team": "ATH",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -6324,6 +6434,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-16": {
+      "picks": [
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -8618,6 +8742,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-16": {
+      "picks": [
+        {
+          "id": "682985",
+          "name": "Riley Greene",
+          "team": "Detroit Tigers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "592450",
+          "name": "Aaron Judge",
+          "team": "New York Yankees",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "700250",
+          "name": "Ben Rice",
+          "team": "New York Yankees",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682987",
+          "name": "Spencer Jones",
+          "team": "New York Yankees",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "676475",
+          "name": "Alec Burleson",
+          "team": "St. Louis Cardinals",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -25506,6 +25676,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-16": {
+      "picks": [
+        {
+          "id": 605483,
+          "name": "Blake Snell (LHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 8.4,
+          "result": null
+        },
+        {
+          "id": 554430,
+          "name": "Zack Wheeler (RHP)",
+          "team": "PHI",
+          "stat": "strikeOuts",
+          "line": 6.8,
+          "result": null
+        },
+        {
+          "id": 800048,
+          "name": "Parker Messick (LHP)",
+          "team": "CLE",
+          "stat": "strikeOuts",
+          "line": 6.6,
+          "result": null
+        },
+        {
+          "id": 701656,
+          "name": "Logan Henderson (RHP)",
+          "team": "MIL",
+          "stat": "strikeOuts",
+          "line": 6.5,
+          "result": null
+        },
+        {
+          "id": 669923,
+          "name": "George Kirby (RHP)",
+          "team": "SEA",
+          "stat": "strikeOuts",
+          "line": 5.6,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
