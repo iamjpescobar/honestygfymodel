@@ -10,6 +10,77 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — the research grader was reading the wrong data root. 2026-08-13
+
+**3 files. Suite 90, FAILING: none.** Control red.
+
+### 270 ROWS SAT UNGRADED FOR A DAY
+
+The nightly ran and graded calibration for 2026-08-12 normally. The
+research log did not grade a single row.
+
+**precompute writes to `build_data/data/statcast/batters/`. The grader
+read `app/data/statcast/batters/`.**
+
+    OUT_ROOT = Path("build_data")                        precompute.py:62
+    BATTER_DIR = ROOT / "app" / "data" / ...       hr_research_log.py:63
+
+`app/data/` only exists once `fetch_data.py` unpacks the published
+release asset — which happens on Render and in a Codespace and **never on
+the CI runner**. So the grader found zero files, every lookup returned
+"cannot tell", and the coverage guard refused to close the night.
+
+**The guard worked exactly as designed.** It stopped 270 rows being
+written as DNP against games that had been played. What it could not do
+was say why: inside `_homered`, "no rows for this batter" and "no file
+for this batter" are the same return value, and they mean opposite
+things — a pull that has not caught up versus a path that is wrong.
+
+### FIXED
+
+- `BATTER_DIRS` is now a tuple, build_data first (freshest at grading
+  time), app/data second (Codespace and Render).
+- The refusal message now reports **how many bats had NO FILE AT ALL**
+  and **which roots exist**, so the two causes are distinguishable from
+  the log.
+
+### THE TEST THAT WOULD HAVE CAUGHT IT — and why the other nine could not
+
+Every existing case monkeypatches `BATTER_DIRS` to a temp directory. **A
+fixture cannot test a constant it replaces.** Flipping the module back to
+the broken single path left all nine green.
+
+Case 10 compares the two modules' own literals: it reads `OUT_ROOT` and
+`DATA_DIR` out of precompute's SOURCE and asserts one of the grader's
+roots resolves to `<that>/batters`. Reads the source rather than
+importing precompute, because precompute pulls in engines.hr_floors and
+needs app/ on sys.path plus a streamlit shim — dragging an import graph
+in to compare two string literals is how a test starts failing for
+reasons unrelated to what it checks.
+
+**Generalise this.** Any two modules agreeing on a filesystem path by
+convention have this exposure, and no amount of behavioural testing finds
+it. The metrics reader pointing at the wrong directory for weeks was the
+same defect class.
+
+### WHAT TO EXPECT ON THE NEXT NIGHTLY
+
+`hr_research: graded 270 bat(s) for 2026-08-12` — the backlog clears in
+one run, because grade() walks every ungraded date, not just yesterday.
+
+### YESTERDAY'S RECORD, for the avoidance of doubt
+
+hr_edge 2026-08-12: **0 for 4**, all four graded `miss` (Alonso,
+Schwarber, Harper, Encarnacion-Strand). Four picks, not five — the
+2-per-game cap on a thin slate, as designed.
+
+Last four nights: 1/5, 1/5, 2/5, 0/4 = **4 of 19, ~21% against a 12%
+baseline.** Ahead of the league rate, and nineteen picks.
+
+---
+
+---
+
 ## PICK UP HERE — every HTML table on the site shared one CSS selector. 2026-08-12 (late)
 
 **3 files (1 new test). Suite 90, FAILING: none.** Three controls red.

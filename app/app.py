@@ -290,6 +290,21 @@ SPORT_SUBPAGES = {
         # track record belongs to the site, not to one sport.
         ("Results", "views/Results.py"),
     ],
+    # Football is read by the WEEK, so its three pages all read the same
+    # Tuesday-to-Monday file (engines/nfl_week.load_week). None of them
+    # logs calibration picks, which is why Home still lists no NFL board.
+    "NFL": [
+        ("The Week", "views/NFL.py"),
+        ("Mismatch Finder", "views/NFL_Mismatch.py"),
+        ("Prop Lab", "views/NFL_Props.py"),
+    ],
+    # Hockey is a nightly slate through slate_guard("nhl"). The Crease
+    # Report and Shots Lab read regular-season box scores only.
+    "NHL": [
+        ("Tonight's Ice", "views/NHL.py"),
+        ("Crease Report", "views/NHL_Crease.py"),
+        ("Shots Lab", "views/NHL_Shots.py"),
+    ],
 }
 
 

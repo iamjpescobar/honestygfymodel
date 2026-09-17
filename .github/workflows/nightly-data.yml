@@ -129,6 +129,17 @@ jobs:
       - name: Fetch WNBA slate (real ESPN data)
         run: python wnba_precompute.py || echo "WNBA fetch failed - continuing without it"
 
+      # NFL is a WEEK file (Tuesday-Monday); the 10:00 UTC run on Tuesday
+      # is the one that rolls it to the new week. Tolerant like every
+      # league fetch: one league down must not cost the others.
+      - name: Fetch NFL week (real ESPN data)
+        run: python nfl_precompute.py || echo "NFL fetch failed - continuing without it"
+
+      # NHL looks ahead to the next date with games, so through the
+      # preseason gap it still publishes a real (exhibition) slate.
+      - name: Fetch NHL slate (real ESPN data)
+        run: python nhl_precompute.py || echo "NHL fetch failed - continuing without it"
+
       # Who actually starts, from MLB's own posted lineups. Feeds the
       # projected-lineup caption on the Game Card, which is what a
       # morning read has instead of a real lineup.
@@ -220,7 +231,9 @@ jobs:
           required = {"data/statcast/manifest.json": "Statcast manifest"}
           expected = {"data/wnba/games.json": "WNBA slate",
                       "data/kbo/games.json": "KBO slate",
-                      "data/npb/games.json": "NPB slate"}
+                      "data/npb/games.json": "NPB slate",
+                      "data/nfl/games.json": "NFL week",
+                      "data/nhl/games.json": "NHL slate"}
 
           missing_required = [d for p, d in required.items() if p not in names]
           missing_expected = [d for p, d in expected.items() if p not in names]

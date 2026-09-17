@@ -84,6 +84,12 @@ _LEAGUES = {
     # the table below, so a league's timezone is stated in exactly one
     # place instead of two that can disagree.)
     "mlb":  ("slate_date_et",  "generated_at_et",  "America/New_York"),
+    # NHL is a nightly Eastern slate like WNBA, with the KBO/NPB-style
+    # lookahead (nhl_precompute advances to the next date with games), so
+    # the future-slate branch below already labels it correctly. NFL is
+    # NOT here: a football slate is a Tuesday-to-Monday RANGE and a single
+    # date key would be a wrong label on it — see engines/nfl_week.py.
+    "nhl":  ("slate_date_et",  "generated_at_et",  "America/New_York"),
 }
 
 # WHICH JOB PUBLISHES EACH SLATE — for the staleness sentence only.
@@ -103,6 +109,7 @@ _WRITER = {
     "kbo":  "the nightly build",
     "npb":  "the nightly build",
     "mlb":  "the slate-picks job",
+    "nhl":  "the nightly build",
 }
 
 # WHEN EACH LEAGUE'S SLATE FIRST EXISTS, in the league's own timezone.
@@ -258,6 +265,19 @@ def generated_at(league: str):
     """
     payload, _dk, gen_key = _read(league)
     return (payload or {}).get(gen_key) or None
+
+
+def payload_field(league: str, key: str, default=None):
+    """One extra top-level field from the league's slate file (the same
+    file load_slate chose), or `default`.
+
+    For side tables a slate carries beside its games — the NHL goalie
+    sheet — so a view never has to re-read the file by hand, which is
+    how readers drift out from under this guard.
+    """
+    payload, _dk, _gk = _read(league)
+    val = (payload or {}).get(key)
+    return default if val is None else val
 
 
 def _not_built_yet(league: str, on_date: str, slate_date):

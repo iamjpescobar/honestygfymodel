@@ -1,0 +1,32 @@
+name: NFL + NHL feed probe
+
+# Manual only. Prints what ESPN's NFL and NHL feeds return from an
+# Actions runner — hosts, shapes, box-score column names — and what the
+# real parsers read from one final. Run it once before trusting the
+# nightly NFL/NHL steps, and again if either league's numbers look off.
+#
+# Touches nothing: no commit, no release, no deploy hook.
+on:
+  workflow_dispatch:
+    inputs:
+      nfl_date:
+        description: "NFL date with finals (YYYY-MM-DD)"
+        required: false
+        default: "2026-09-13"
+      nhl_date:
+        description: "NHL date with finals (YYYY-MM-DD) — preseason starts 2026-09-19"
+        required: false
+        default: "2026-09-20"
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: pip install -c requirements.txt requests
+      - name: Probe NFL and NHL
+        run: python nfl_nhl_probe.py "${{ inputs.nfl_date }}" "${{ inputs.nhl_date }}"

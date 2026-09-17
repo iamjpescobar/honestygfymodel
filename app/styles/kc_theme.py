@@ -1067,8 +1067,8 @@ def sport_switcher(active: str = "MLB"):
     so it exists on every page. Uses st.segmented_control (the same
     native component the Game Card's pitcher picker uses) so it renders
     compact and consistent on any Streamlit version, with no CSS hacks.
-    MLB, KBO, NPB and WNBA are wired to real data; NBA, NHL and NFL lead
-    to their own "coming soon" pages rather than pretending to be live.
+    MLB, KBO, NPB, WNBA, NFL and NHL are wired to real data; NBA leads
+    to its "coming soon" page rather than pretending to be live.
     This said "only MLB" long after three more leagues shipped, which
     contradicted the caption rendered twenty lines below it in this same
     function — a reader checking which boards were live got opposite
@@ -1092,7 +1092,7 @@ def sport_switcher(active: str = "MLB"):
         f'<div style="text-align:center; font-size:var(--lc-text-micro); font-weight:700; '
         f'letter-spacing:0.14em; color:{COLOR["text_faint"]}; opacity:0.75; '
         f'margin-top:var(--lc-space-hair); text-transform:uppercase;">'
-        f'MLB · KBO · NPB · WNBA live — NBA / NHL / NFL soon</div>',
+        f'MLB · KBO · NPB · WNBA · NFL · NHL live — NBA soon</div>',
         unsafe_allow_html=True,
     )
 
@@ -1194,6 +1194,8 @@ def coming_soon_page(sport: str, emoji: str, blurb_tail: str, planned):
     promise ("no placeholders, no estimates, no filler") had to be made
     in three places or the pages quietly disagreed with each other, which
     is a bad look on the one line that IS the site's pitch.
+
+    NFL and NHL have since shipped real pages; NBA still uses this.
 
     `planned` is a list of (title, description) pairs, rendered in order.
 

@@ -139,6 +139,139 @@ measurement clock.
 
 ---
 
+## PICK UP HERE — NFL and NHL are live tabs, each built its own way. 2026-09-15
+
+**Suite 113, FAILING: none.** 18 negative controls, all red by EXIT
+CODE, and **one came back green on the first attempt** (section 5).
+Every new page rendered with zero exceptions in Streamlit's AppTest
+harness in all four data states: full, stale, preseason, nothing on disk.
+All files compile under Python 3.11 (Render's version), checked with a
+real 3.11 interpreter rather than the 3.12 container.
+
+Repo audit first, before any change: 110/110 green, pyflakes zero
+undefined names, the pipeline alive (MLB slate for 09-15 on disk, HR
+research log grading into September).
+
+### 1. WHY EACH LEAGUE LOOKS DIFFERENT
+
+**NFL is a WEEK, not a night.** Football is researched days ahead and a
+week runs Tuesday to Monday, so `data/nfl/games.json` is stamped
+`week`, `week_start_et`, `week_end_et`. Three pages:
+
+- **The Week** — every game grouped by TV window (TNF, Sunday
+  Early/Late/Night, MNF), line, weather or roof, network, injuries, key
+  players, and a ranked tale of the tape.
+- **Mismatch Finder** — every offense-vs-defense pairing on the slate,
+  sorted by `edge = defender rank - attacker rank`. Tiers are the gap as
+  a share of the league (60/35/15%) and are labelled as DISTANCE, not
+  probability. Nothing fitted.
+- **Prop Lab** — QBs / backs / pass-catchers, season / L3 / last game,
+  beside what the opposing defense allows in that phase.
+
+**NHL is the crease and the shot clock.** Nightly Eastern slate.
+
+- **Tonight's Ice** — goalie duel, top shooters, tale of the tape
+  (W-L-OTL, points %, shot share, PP/PK), and a countdown banner.
+- **Crease Report** — every goalie: starts, crease share of the last 10,
+  pooled SV%/GAA, L5 SV% over STARTS, SA/60.
+- **Shots Lab** — per-game SOG/P/G/A/TOI/HIT/BLK for season, L10, L5,
+  plus hit-rate COUNTS (2+ SOG, 3+ SOG, 1+ PT).
+
+Neither logs calibration picks, which is why Home still lists no board
+for either (test_wnba_routing_and_home_scope still passes as written).
+
+### 2. DATES — VERIFIED, NOT ASSUMED
+
+NFL 2026 kicked off **Wed Sep 9**; week 1 is Tue Sep 8 – Mon Sep 14, so
+`week_of` counts from `WEEK1_TUESDAY`. NHL preseason is **Sep 19–26**,
+opening night **Tue Sep 29** (84 games). Both checked against the
+leagues' own announcements on 09-15. Next season these constants move —
+`nfl_week.SEASON_START/WEEK1_TUESDAY`, `nhl_rink.PRESEASON_START/
+REGULAR_SEASON_START`.
+
+### 3. WHY NFL IS NOT IN slate_guard
+
+slate_guard compares ONE date. A week is a range, and stamping a fake
+single date on it is a right number under a wrong label (rule 9). So
+`nfl_week.load_week` applies the same contract to the range: a week that
+ended before today returns `games=[]` and the state "stale". NHL IS in
+slate_guard (`slate_date_et`, Eastern) and uses the existing
+future-slate branch for its lookahead.
+
+`slate_guard.payload_field(league, key)` is new: side tables beside the
+games (the goalie sheet) are read through the guard's own file choice
+instead of a second hand-rolled read.
+
+### 4. PRESEASON IS PARSED AND COUNTED NOWHERE
+
+Exhibition box scores are the wrong sample (split squads, prospects),
+but they are REAL hockey box scores two weeks before opening night. So
+`nhl_precompute` parses them, reports `exhibition_finals_parsed`, and
+excludes them from every number. That makes Sep 19–26 a free parser
+check. **Read the nightly log on Sep 20 for the `[verify]` line.**
+
+An OT loss is an OTL only when the summary says so (`period > 3`, or
+"OT"/"SO" in the detail). A loss whose length cannot be known is counted
+as regulation AND flagged on the profile (`otl_unverified`) and on the
+card — never silently guessed.
+
+### 5. THE CONTROL THAT STAYED GREEN
+
+"Credit every goalie in the game with a start" passed the first NHL
+fixture, because every fixture game had exactly one goalie per team — so
+correct and broken were indistinguishable (rule 4, again). Fixed by
+adding a RELIEF appearance (Kochetkov pulled, Andersen finishes); now
+the control is red and the test also proves a relief outing is a GP, not
+a start, and that L5 SV% reads starts only.
+
+### 6. WHAT IS NOT MEASURED — SAY IT OUT LOUD
+
+**ESPN's NFL and NHL feeds have not been measured from Actions.** They
+are the same hosts the WNBA probe measured with a different sport
+segment, and `espn_feed` reuses espn_wnba's `get_json` and
+`_normalize_header_events` rather than copying them. Box-score column
+names are matched two ways (machine `keys`, then display `labels`), and
+both fetchers refuse to publish when finals exist but nothing parsed.
+
+**Run the `NFL + NHL feed probe` workflow once** (manual, touches
+nothing). It prints each host's status and shape, every player group's
+keys/labels, and what the real parsers read. If a column is missing,
+add its name to the alias tuple at the top of the fetcher — do not
+default it to zero.
+
+Also not built: NFL playoffs (the page says so after week 18), NHL
+playoffs, confirmed NHL starting goalies (crease share is labelled as
+NOT a confirmation), and caching of past NHL summaries — by March the
+NHL backfill is ~1,000 summary calls a night. Measure its runtime in
+the nightly before optimising.
+
+### FILES, 2026-09-15
+
+    app/engines/espn_feed.py          NEW  league-parameterised ESPN access
+    app/engines/nfl_week.py           NEW  week math, week guard, mismatches, prop rows
+    app/engines/nhl_rink.py           NEW  phase/countdown, crease + shots rows, tape
+    app/engines/slate_guard.py        nhl registered; payload_field()
+    app/views/NFL.py                  REWRITTEN (was coming-soon)
+    app/views/NFL_Mismatch.py         NEW
+    app/views/NFL_Props.py            NEW
+    app/views/NHL.py                  REWRITTEN (was coming-soon)
+    app/views/NHL_Crease.py           NEW
+    app/views/NHL_Shots.py            NEW
+    app/app.py                        NFL + NHL subpage navs
+    app/styles/kc_theme.py            caption: "...NFL · NHL live — NBA soon"
+    nfl_precompute.py                 NEW  (repo root)
+    nhl_precompute.py                 NEW  (repo root)
+    nfl_nhl_probe.py                  NEW  (repo root)
+    .github/workflows/nightly-data.yml   NFL + NHL steps, verifier entries
+    .github/workflows/nfl-nhl-probe.yml  NEW  manual
+    tests/test_nfl_pipeline.py        NEW
+    tests/test_nhl_pipeline.py        NEW
+    tests/test_nfl_nhl_wiring.py      NEW
+
+Suite 110 -> 113.
+
+---
+
 ## PICK UP HERE — the longest window on the card was under the stabilisation point. 2026-08-17 (3)
 
 **Suite 108, FAILING: none.** Seven negative controls red by exit code.
@@ -1261,74 +1394,3 @@ rather than three locked ones. Revisit if projected rows prove unstable.
 Research page part 2 (the view; presets storage still undecided). The
 per-game log table builds on the next nightly. The research grader's
 data-root fix is in — expect `graded 270 bat(s) for 2026-08-12`.
-
----
-
-## PICK UP HERE — the research grader was reading the wrong data root. 2026-08-13
-
-**3 files. Suite 90, FAILING: none.** Control red.
-
-### 270 ROWS SAT UNGRADED FOR A DAY
-
-The nightly ran and graded calibration for 2026-08-12 normally. The
-research log did not grade a single row.
-
-**precompute writes to `build_data/data/statcast/batters/`. The grader
-read `app/data/statcast/batters/`.**
-
-    OUT_ROOT = Path("build_data")                        precompute.py:62
-    BATTER_DIR = ROOT / "app" / "data" / ...       hr_research_log.py:63
-
-`app/data/` only exists once `fetch_data.py` unpacks the published
-release asset — which happens on Render and in a Codespace and **never on
-the CI runner**. So the grader found zero files, every lookup returned
-"cannot tell", and the coverage guard refused to close the night.
-
-**The guard worked exactly as designed.** It stopped 270 rows being
-written as DNP against games that had been played. What it could not do
-was say why: inside `_homered`, "no rows for this batter" and "no file
-for this batter" are the same return value, and they mean opposite
-things — a pull that has not caught up versus a path that is wrong.
-
-### FIXED
-
-- `BATTER_DIRS` is now a tuple, build_data first (freshest at grading
-  time), app/data second (Codespace and Render).
-- The refusal message now reports **how many bats had NO FILE AT ALL**
-  and **which roots exist**, so the two causes are distinguishable from
-  the log.
-
-### THE TEST THAT WOULD HAVE CAUGHT IT — and why the other nine could not
-
-Every existing case monkeypatches `BATTER_DIRS` to a temp directory. **A
-fixture cannot test a constant it replaces.** Flipping the module back to
-the broken single path left all nine green.
-
-Case 10 compares the two modules' own literals: it reads `OUT_ROOT` and
-`DATA_DIR` out of precompute's SOURCE and asserts one of the grader's
-roots resolves to `<that>/batters`. Reads the source rather than
-importing precompute, because precompute pulls in engines.hr_floors and
-needs app/ on sys.path plus a streamlit shim — dragging an import graph
-in to compare two string literals is how a test starts failing for
-reasons unrelated to what it checks.
-
-**Generalise this.** Any two modules agreeing on a filesystem path by
-convention have this exposure, and no amount of behavioural testing finds
-it. The metrics reader pointing at the wrong directory for weeks was the
-same defect class.
-
-### WHAT TO EXPECT ON THE NEXT NIGHTLY
-
-`hr_research: graded 270 bat(s) for 2026-08-12` — the backlog clears in
-one run, because grade() walks every ungraded date, not just yesterday.
-
-### YESTERDAY'S RECORD, for the avoidance of doubt
-
-hr_edge 2026-08-12: **0 for 4**, all four graded `miss` (Alonso,
-Schwarber, Harper, Encarnacion-Strand). Four picks, not five — the
-2-per-game cap on a thin slate, as designed.
-
-Last four nights: 1/5, 1/5, 2/5, 0/4 = **4 of 19, ~21% against a 12%
-baseline.** Ahead of the league rate, and nineteen picks.
-
----
