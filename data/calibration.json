@@ -5829,6 +5829,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-18": {
+      "picks": [
+        {
+          "id": "687401",
+          "name": "Joey Ortiz",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664040",
+          "name": "Brandon Lowe",
+          "team": "PIT",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "606192",
+          "name": "Teoscar Hern\u00e1ndez",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "668227",
+          "name": "Randy Arozarena",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686527",
+          "name": "Dominic Canzone",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "665019",
+          "name": "Kody Clemens",
+          "team": "MIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641355",
+          "name": "Cody Bellinger",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664770",
+          "name": "Nathan Lukes",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "703520",
+          "name": "Brett Bateman",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682829",
+          "name": "Elly De La Cruz",
+          "team": "CIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666182",
+          "name": "Bo Bichette",
+          "team": "NYM",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "681198",
+          "name": "TJ Rumfield",
+          "team": "COL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "693304",
+          "name": "Nick Gonzales",
+          "team": "PIT",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -6572,6 +6682,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-18": {
+      "picks": [
+        {
+          "id": "665742",
+          "name": "Juan Soto",
+          "team": "New York Mets",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -20623,6 +20747,212 @@
       ],
       "graded": false,
       "source": "ci"
+    },
+    "2026-09-18": {
+      "picks": [
+        {
+          "id": "4433403",
+          "name": "C. Clark",
+          "team": "Indiana Fever",
+          "stat": "pts",
+          "line": 24.5,
+          "result": null
+        },
+        {
+          "id": "5209202",
+          "name": "N. Puoch",
+          "team": "Portland Fire",
+          "stat": "pts",
+          "line": 5.5,
+          "result": null
+        },
+        {
+          "id": "4398729",
+          "name": "E. Engstler",
+          "team": "Portland Fire",
+          "stat": "pts",
+          "line": 12.0,
+          "result": null
+        },
+        {
+          "id": "3056730",
+          "name": "K. Samuelson",
+          "team": "Portland Fire",
+          "stat": "pts",
+          "line": 6.0,
+          "result": null
+        },
+        {
+          "id": "5105406",
+          "name": "F. Buhner",
+          "team": "Portland Fire",
+          "stat": "pts",
+          "line": 6.5,
+          "result": null
+        },
+        {
+          "id": "5209202",
+          "name": "N. Puoch",
+          "team": "Portland Fire",
+          "stat": "reb",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "3056730",
+          "name": "K. Samuelson",
+          "team": "Portland Fire",
+          "stat": "reb",
+          "line": 2.0,
+          "result": null
+        },
+        {
+          "id": "4398729",
+          "name": "E. Engstler",
+          "team": "Portland Fire",
+          "stat": "reb",
+          "line": 6.0,
+          "result": null
+        },
+        {
+          "id": "5105406",
+          "name": "F. Buhner",
+          "team": "Portland Fire",
+          "stat": "reb",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "4433403",
+          "name": "C. Clark",
+          "team": "Indiana Fever",
+          "stat": "reb",
+          "line": 4.0,
+          "result": null
+        },
+        {
+          "id": "4433403",
+          "name": "C. Clark",
+          "team": "Indiana Fever",
+          "stat": "ast",
+          "line": 9.0,
+          "result": null
+        },
+        {
+          "id": "4398729",
+          "name": "E. Engstler",
+          "team": "Portland Fire",
+          "stat": "ast",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "5209202",
+          "name": "N. Puoch",
+          "team": "Portland Fire",
+          "stat": "ast",
+          "line": 0.5,
+          "result": null
+        },
+        {
+          "id": "3056730",
+          "name": "K. Samuelson",
+          "team": "Portland Fire",
+          "stat": "ast",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "5105406",
+          "name": "F. Buhner",
+          "team": "Portland Fire",
+          "stat": "ast",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "4433403",
+          "name": "C. Clark",
+          "team": "Indiana Fever",
+          "stat": "pra",
+          "line": 37.5,
+          "result": null
+        },
+        {
+          "id": "4398729",
+          "name": "E. Engstler",
+          "team": "Portland Fire",
+          "stat": "pra",
+          "line": 20.0,
+          "result": null
+        },
+        {
+          "id": "5209202",
+          "name": "N. Puoch",
+          "team": "Portland Fire",
+          "stat": "pra",
+          "line": 9.0,
+          "result": null
+        },
+        {
+          "id": "3056730",
+          "name": "K. Samuelson",
+          "team": "Portland Fire",
+          "stat": "pra",
+          "line": 8.5,
+          "result": null
+        },
+        {
+          "id": "5105406",
+          "name": "F. Buhner",
+          "team": "Portland Fire",
+          "stat": "pra",
+          "line": 10.0,
+          "result": null
+        },
+        {
+          "id": "4433403",
+          "name": "C. Clark",
+          "team": "Indiana Fever",
+          "stat": "tpm",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "5105406",
+          "name": "F. Buhner",
+          "team": "Portland Fire",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "4398729",
+          "name": "E. Engstler",
+          "team": "Portland Fire",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "5209202",
+          "name": "N. Puoch",
+          "team": "Portland Fire",
+          "stat": "tpm",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "3056730",
+          "name": "K. Samuelson",
+          "team": "Portland Fire",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "wnba_defense": {
@@ -24306,6 +24636,132 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-18": {
+      "picks": [
+        {
+          "id": "4433403",
+          "name": "C. Clark",
+          "team": "Indiana Fever",
+          "stat": "pts",
+          "line": 24.9,
+          "result": null
+        },
+        {
+          "id": "5108550",
+          "name": "S. Williams",
+          "team": "Portland Fire",
+          "stat": "pts",
+          "line": 4.5,
+          "result": null
+        },
+        {
+          "id": "3142242",
+          "name": "A. Okonkwo",
+          "team": "Portland Fire",
+          "stat": "pts",
+          "line": 4.9,
+          "result": null
+        },
+        {
+          "id": "5105406",
+          "name": "F. Buhner",
+          "team": "Portland Fire",
+          "stat": "pts",
+          "line": 5.7,
+          "result": null
+        },
+        {
+          "id": "5209202",
+          "name": "N. Puoch",
+          "team": "Portland Fire",
+          "stat": "pts",
+          "line": 5.8,
+          "result": null
+        },
+        {
+          "id": "5108550",
+          "name": "S. Williams",
+          "team": "Portland Fire",
+          "stat": "reb",
+          "line": 3.1,
+          "result": null
+        },
+        {
+          "id": "4433403",
+          "name": "C. Clark",
+          "team": "Indiana Fever",
+          "stat": "reb",
+          "line": 3.6,
+          "result": null
+        },
+        {
+          "id": "3056730",
+          "name": "K. Samuelson",
+          "team": "Portland Fire",
+          "stat": "reb",
+          "line": 1.9,
+          "result": null
+        },
+        {
+          "id": "5108051",
+          "name": "J. Harrison",
+          "team": "Portland Fire",
+          "stat": "reb",
+          "line": 2.1,
+          "result": null
+        },
+        {
+          "id": "4433690",
+          "name": "H. Winterburn",
+          "team": "Portland Fire",
+          "stat": "reb",
+          "line": 2.4,
+          "result": null
+        },
+        {
+          "id": "4433403",
+          "name": "C. Clark",
+          "team": "Indiana Fever",
+          "stat": "ast",
+          "line": 9.3,
+          "result": null
+        },
+        {
+          "id": "3142242",
+          "name": "A. Okonkwo",
+          "team": "Portland Fire",
+          "stat": "ast",
+          "line": 0.1,
+          "result": null
+        },
+        {
+          "id": "5105406",
+          "name": "F. Buhner",
+          "team": "Portland Fire",
+          "stat": "ast",
+          "line": 0.5,
+          "result": null
+        },
+        {
+          "id": "5108550",
+          "name": "S. Williams",
+          "team": "Portland Fire",
+          "stat": "ast",
+          "line": 0.5,
+          "result": null
+        },
+        {
+          "id": "3056730",
+          "name": "K. Samuelson",
+          "team": "Portland Fire",
+          "stat": "ast",
+          "line": 0.6,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "k_board": {
@@ -26470,6 +26926,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-18": {
+      "picks": [
+        {
+          "id": 656302,
+          "name": "Dylan Cease (RHP)",
+          "team": "TOR",
+          "stat": "strikeOuts",
+          "line": 8.6,
+          "result": null
+        },
+        {
+          "id": 607192,
+          "name": "Tyler Glasnow (RHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 7.0,
+          "result": null
+        },
+        {
+          "id": 687570,
+          "name": "Connor Prielipp (LHP)",
+          "team": "MIN",
+          "stat": "strikeOuts",
+          "line": 6.1,
+          "result": null
+        },
+        {
+          "id": 695505,
+          "name": "Chase Burns (RHP)",
+          "team": "CIN",
+          "stat": "strikeOuts",
+          "line": 6.0,
+          "result": null
+        },
+        {
+          "id": 693433,
+          "name": "Bryan Woo (RHP)",
+          "team": "SEA",
+          "stat": "strikeOuts",
+          "line": 5.9,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
