@@ -5833,6 +5833,22 @@
     "2026-09-18": {
       "picks": [
         {
+          "id": "668227",
+          "name": "Randy Arozarena",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686527",
+          "name": "Dominic Canzone",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
           "id": "687401",
           "name": "Joey Ortiz",
           "team": "MIL",
@@ -5857,25 +5873,41 @@
           "result": null
         },
         {
-          "id": "668227",
-          "name": "Randy Arozarena",
-          "team": "SEA",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "686527",
-          "name": "Dominic Canzone",
-          "team": "SEA",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
           "id": "665019",
           "name": "Kody Clemens",
           "team": "MIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "647304",
+          "name": "Josh Naylor",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "677594",
+          "name": "Julio Rodr\u00edguez",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641487",
+          "name": "J.P. Crawford",
+          "team": "SEA",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682829",
+          "name": "Elly De La Cruz",
+          "team": "CIN",
           "stat": null,
           "line": null,
           "result": null
@@ -5897,41 +5929,9 @@
           "result": null
         },
         {
-          "id": "703520",
-          "name": "Brett Bateman",
-          "team": "TOR",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "682829",
-          "name": "Elly De La Cruz",
-          "team": "CIN",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "666182",
-          "name": "Bo Bichette",
-          "team": "NYM",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "681198",
-          "name": "TJ Rumfield",
-          "team": "COL",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "693304",
-          "name": "Nick Gonzales",
-          "team": "PIT",
+          "id": "680757",
+          "name": "Steven Kwan",
+          "team": "CLE",
           "stat": null,
           "line": null,
           "result": null
@@ -9082,6 +9082,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-18": {
+      "picks": [
+        {
+          "id": "677800",
+          "name": "Wilyer Abreu",
+          "team": "Boston Red Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "695600",
+          "name": "Carter Jensen",
+          "team": "Kansas City Royals",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "665833",
+          "name": "Oneil Cruz",
+          "team": "Pittsburgh Pirates",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663330",
+          "name": "Jahmai Jones",
+          "team": "Boston Red Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682829",
+          "name": "Elly De La Cruz",
+          "team": "Cincinnati Reds",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
