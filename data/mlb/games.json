@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-09-19 18:55",
+  "generated_at_et": "2026-09-19 20:44",
   "slate_date_et": "2026-09-19",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -268,7 +268,7 @@
       "venue": "Busch Stadium",
       "game_time": "2026-09-19T23:15:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": "94",
+      "weather_temp": "95",
       "weather_wind": "5 mph, R To L",
       "park_factor": 97,
       "park_verified": true,
@@ -287,12 +287,12 @@
       "ou_grade": "C-",
       "ou_signals": [
         "Park factor 97 (pitcher-friendly)",
-        "Temp 94F (carry weather)",
+        "Temp 95F (carry weather)",
         "Starters' avg WHIP 1.33 (high)",
         "Starters' avg HR/9 0.83 (low)",
         "Starters' avg SLG against 0.374 (low)"
       ],
-      "proj_total": 10.4
+      "proj_total": 10.3
     },
     {
       "game_pk": 824304,
@@ -302,9 +302,9 @@
       "home_pitcher": "Jose Quintana",
       "venue": "Coors Field",
       "game_time": "2026-09-20T00:10:00Z",
-      "weather_condition": "Partly Cloudy",
-      "weather_temp": "67",
-      "weather_wind": "8 mph, R To L",
+      "weather_condition": "Cloudy",
+      "weather_temp": "74",
+      "weather_wind": "5 mph, R To L",
       "park_factor": 113,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -338,7 +338,7 @@
       "venue": "Chase Field",
       "game_time": "2026-09-20T00:10:00Z",
       "weather_condition": "Roof Closed",
-      "weather_temp": "72",
+      "weather_temp": "73",
       "weather_wind": "0 mph, None",
       "park_factor": 103,
       "park_verified": true,
@@ -434,12 +434,12 @@
       "game_time": "2026-09-20T01:38:00Z",
       "weather_condition": "Clear",
       "weather_temp": "76",
-      "weather_wind": "8 mph, Out To RF",
+      "weather_wind": "7 mph, R To L",
       "park_factor": 100,
       "park_verified": true,
       "weather_source": "mlb_posted",
-      "wind_adj": 2,
-      "wind_note": "wind out 8 mph (+2)",
+      "wind_adj": 0,
+      "wind_note": null,
       "edge_net": 2,
       "edge_lean": "Los Angeles Angels",
       "edge_grade": "C",
