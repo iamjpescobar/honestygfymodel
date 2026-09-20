@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-09-20 13:38",
+  "generated_at_et": "2026-09-20 14:16",
   "slate_date_et": "2026-09-20",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -72,7 +72,7 @@
       "venue": "Great American Ball Park",
       "game_time": "2026-09-20T17:40:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": "87",
+      "weather_temp": "86",
       "weather_wind": "6 mph, R To L",
       "park_factor": 102,
       "park_verified": true,
@@ -90,7 +90,7 @@
       "ou_grade": "A",
       "ou_signals": [
         "Park factor 102 (hitter-friendly)",
-        "Temp 87F (carry weather)",
+        "Temp 86F (carry weather)",
         "Starters' avg WHIP 1.6 (high)",
         "Starters' avg SLG against 0.426 (high)"
       ],
@@ -339,7 +339,7 @@
       "away": "San Francisco Giants",
       "home": "Los Angeles Dodgers",
       "away_pitcher": "Matt Wilkinson",
-      "home_pitcher": "TBD",
+      "home_pitcher": "Jack Dreyer",
       "venue": "UNIQLO Field at Dodger Stadium",
       "game_time": "2026-09-20T20:10:00Z",
       "weather_condition": "Partly Cloudy",
@@ -350,6 +350,14 @@
       "weather_source": "mlb_posted",
       "wind_adj": 2,
       "wind_note": "wind out 8 mph (+2)",
+      "edge_net": 3,
+      "edge_lean": "Los Angeles Dodgers",
+      "edge_grade": "B",
+      "edge_signals": [
+        "K%: edge Los Angeles Dodgers (14.8 vs 28.2)",
+        "HR/9: edge Los Angeles Dodgers (1.83 vs 1.08)",
+        "SLG against: edge Los Angeles Dodgers (0.442 vs 0.35)"
+      ],
       "proj_total": 8.9
     },
     {
