@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-09-20 19:11",
+  "generated_at_et": "2026-09-20 20:53",
   "slate_date_et": "2026-09-20",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -443,7 +443,7 @@
       "venue": "Oriole Park at Camden Yards",
       "game_time": "2026-09-20T23:20:00Z",
       "weather_condition": "Cloudy",
-      "weather_temp": "77",
+      "weather_temp": "81",
       "weather_wind": "6 mph, Out To RF",
       "park_factor": 103,
       "park_verified": true,
@@ -458,6 +458,13 @@
         "K%: edge Milwaukee Brewers (37.4 vs 18.7)",
         "HR/9: edge Milwaukee Brewers (0.75 vs 1.34)",
         "SLG against: edge Milwaukee Brewers (0.256 vs 0.419)"
+      ],
+      "ou_lean": "Over",
+      "ou_grade": "C-",
+      "ou_signals": [
+        "Park factor 103 (hitter-friendly)",
+        "Temp 81F (carry weather)",
+        "Starters' avg SLG against 0.338 (low)"
       ],
       "proj_total": 9.2
     }
