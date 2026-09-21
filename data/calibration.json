@@ -6159,6 +6159,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-21": {
+      "picks": [
+        {
+          "id": "672386",
+          "name": "Alejandro Kirk",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "703520",
+          "name": "Brett Bateman",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682985",
+          "name": "Riley Greene",
+          "team": "DET",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672960",
+          "name": "Kazuma Okamoto",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664770",
+          "name": "Nathan Lukes",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "813841",
+          "name": "Jonah Cox",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686797",
+          "name": "Brooks Lee",
+          "team": "MIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "650402",
+          "name": "Gleyber Torres",
+          "team": "DET",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "680664",
+          "name": "Eduardo Valencia",
+          "team": "DET",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "808982",
+          "name": "Jung Hoo Lee",
+          "team": "SF",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "605137",
+          "name": "Josh Bell",
+          "team": "MIN",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "695578",
+          "name": "James Wood",
+          "team": "WSH",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "693307",
+          "name": "Dillon Dingler",
+          "team": "DET",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -6944,6 +7054,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-21": {
+      "picks": [
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -9468,6 +9592,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-21": {
+      "picks": [
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "694212",
+          "name": "Samuel Basallo",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682985",
+          "name": "Riley Greene",
+          "team": "Detroit Tigers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "695578",
+          "name": "James Wood",
+          "team": "Washington Nationals",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "695734",
+          "name": "Daylen Lile",
+          "team": "Washington Nationals",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -22152,6 +22322,412 @@
       ],
       "graded": false,
       "source": "ci"
+    },
+    "2026-09-21": {
+      "picks": [
+        {
+          "id": "4433730",
+          "name": "P. Bueckers",
+          "team": "Dallas Wings",
+          "stat": "pts",
+          "line": 20.0,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 19.5,
+          "result": null
+        },
+        {
+          "id": "3904577",
+          "name": "A. Ogunbowale",
+          "team": "Dallas Wings",
+          "stat": "pts",
+          "line": 16.5,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 18.5,
+          "result": null
+        },
+        {
+          "id": "3102133",
+          "name": "R. Allen",
+          "team": "New York Liberty",
+          "stat": "pts",
+          "line": 8.5,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 18.5,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 11.0,
+          "result": null
+        },
+        {
+          "id": "4790266",
+          "name": "A. Kuier",
+          "team": "Dallas Wings",
+          "stat": "pts",
+          "line": 7.0,
+          "result": null
+        },
+        {
+          "id": "5345524",
+          "name": "N. Brochant",
+          "team": "Phoenix Mercury",
+          "stat": "pts",
+          "line": 8.0,
+          "result": null
+        },
+        {
+          "id": "4068042",
+          "name": "N. Mack",
+          "team": "Phoenix Mercury",
+          "stat": "pts",
+          "line": 8.5,
+          "result": null
+        },
+        {
+          "id": "4790266",
+          "name": "A. Kuier",
+          "team": "Dallas Wings",
+          "stat": "reb",
+          "line": 5.0,
+          "result": null
+        },
+        {
+          "id": "5345320",
+          "name": "P. Astier",
+          "team": "New York Liberty",
+          "stat": "reb",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "2529140",
+          "name": "A. Thomas",
+          "team": "Phoenix Mercury",
+          "stat": "reb",
+          "line": 9.0,
+          "result": null
+        },
+        {
+          "id": "2327695",
+          "name": "R. Gardner",
+          "team": "New York Liberty",
+          "stat": "reb",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "4398915",
+          "name": "N. Hillmon",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 5.0,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 4.0,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 13.5,
+          "result": null
+        },
+        {
+          "id": "4683006",
+          "name": "L. Fiebich",
+          "team": "New York Liberty",
+          "stat": "reb",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "869",
+          "name": "D. Bonner",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 7.0,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "887",
+          "name": "S. Whitcomb",
+          "team": "Phoenix Mercury",
+          "stat": "ast",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "3904577",
+          "name": "A. Ogunbowale",
+          "team": "Dallas Wings",
+          "stat": "ast",
+          "line": 4.0,
+          "result": null
+        },
+        {
+          "id": "2998928",
+          "name": "B. Stewart",
+          "team": "New York Liberty",
+          "stat": "ast",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "4398915",
+          "name": "N. Hillmon",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 2.0,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 4.5,
+          "result": null
+        },
+        {
+          "id": "4433730",
+          "name": "P. Bueckers",
+          "team": "Dallas Wings",
+          "stat": "ast",
+          "line": 5.5,
+          "result": null
+        },
+        {
+          "id": "2529140",
+          "name": "A. Thomas",
+          "team": "Phoenix Mercury",
+          "stat": "ast",
+          "line": 9.0,
+          "result": null
+        },
+        {
+          "id": "869",
+          "name": "D. Bonner",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 2.0,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "pra",
+          "line": 35.5,
+          "result": null
+        },
+        {
+          "id": "3102133",
+          "name": "R. Allen",
+          "team": "New York Liberty",
+          "stat": "pra",
+          "line": 12.0,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "pra",
+          "line": 27.0,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "pra",
+          "line": 26.0,
+          "result": null
+        },
+        {
+          "id": "3904577",
+          "name": "A. Ogunbowale",
+          "team": "Dallas Wings",
+          "stat": "pra",
+          "line": 23.5,
+          "result": null
+        },
+        {
+          "id": "4790266",
+          "name": "A. Kuier",
+          "team": "Dallas Wings",
+          "stat": "pra",
+          "line": 13.0,
+          "result": null
+        },
+        {
+          "id": "4433730",
+          "name": "P. Bueckers",
+          "team": "Dallas Wings",
+          "stat": "pra",
+          "line": 29.5,
+          "result": null
+        },
+        {
+          "id": "5345524",
+          "name": "N. Brochant",
+          "team": "Phoenix Mercury",
+          "stat": "pra",
+          "line": 11.5,
+          "result": null
+        },
+        {
+          "id": "869",
+          "name": "D. Bonner",
+          "team": "Atlanta Dream",
+          "stat": "pra",
+          "line": 21.0,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "pra",
+          "line": 21.0,
+          "result": null
+        },
+        {
+          "id": "3102133",
+          "name": "R. Allen",
+          "team": "New York Liberty",
+          "stat": "tpm",
+          "line": 2.0,
+          "result": null
+        },
+        {
+          "id": "4790266",
+          "name": "A. Kuier",
+          "team": "Dallas Wings",
+          "stat": "tpm",
+          "line": 0.5,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "tpm",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "tpm",
+          "line": 2.0,
+          "result": null
+        },
+        {
+          "id": "4398915",
+          "name": "N. Hillmon",
+          "team": "Atlanta Dream",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "869",
+          "name": "D. Bonner",
+          "team": "Atlanta Dream",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "5345524",
+          "name": "N. Brochant",
+          "team": "Phoenix Mercury",
+          "stat": "tpm",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "4038379",
+          "name": "M. Johannes",
+          "team": "New York Liberty",
+          "stat": "tpm",
+          "line": 2.0,
+          "result": null
+        },
+        {
+          "id": "4399342",
+          "name": "L. Held",
+          "team": "Phoenix Mercury",
+          "stat": "tpm",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "tpm",
+          "line": 0.5,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "wnba_defense": {
@@ -26213,6 +26789,132 @@
       ],
       "graded": false,
       "source": "ci"
+    },
+    "2026-09-21": {
+      "picks": [
+        {
+          "id": "4433730",
+          "name": "P. Bueckers",
+          "team": "Dallas Wings",
+          "stat": "pts",
+          "line": 22.2,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 19.9,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 19.3,
+          "result": null
+        },
+        {
+          "id": "3904577",
+          "name": "A. Ogunbowale",
+          "team": "Dallas Wings",
+          "stat": "pts",
+          "line": 17.0,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 11.9,
+          "result": null
+        },
+        {
+          "id": "2529140",
+          "name": "A. Thomas",
+          "team": "Phoenix Mercury",
+          "stat": "reb",
+          "line": 9.2,
+          "result": null
+        },
+        {
+          "id": "4068042",
+          "name": "N. Mack",
+          "team": "Phoenix Mercury",
+          "stat": "reb",
+          "line": 6.3,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 4.5,
+          "result": null
+        },
+        {
+          "id": "3906949",
+          "name": "J. Shepard",
+          "team": "Dallas Wings",
+          "stat": "reb",
+          "line": 8.4,
+          "result": null
+        },
+        {
+          "id": "4790266",
+          "name": "A. Kuier",
+          "team": "Dallas Wings",
+          "stat": "reb",
+          "line": 6.9,
+          "result": null
+        },
+        {
+          "id": "2529140",
+          "name": "A. Thomas",
+          "team": "Phoenix Mercury",
+          "stat": "ast",
+          "line": 8.6,
+          "result": null
+        },
+        {
+          "id": "4433730",
+          "name": "P. Bueckers",
+          "team": "Dallas Wings",
+          "stat": "ast",
+          "line": 6.2,
+          "result": null
+        },
+        {
+          "id": "3904577",
+          "name": "A. Ogunbowale",
+          "team": "Dallas Wings",
+          "stat": "ast",
+          "line": 3.9,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 6.5,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 4.1,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "k_board": {
@@ -28515,6 +29217,44 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-21": {
+      "picks": [
+        {
+          "id": 702056,
+          "name": "Trey Yesavage (RHP)",
+          "team": "TOR",
+          "stat": "strikeOuts",
+          "line": 5.7,
+          "result": null
+        },
+        {
+          "id": 805673,
+          "name": "Zebby Matthews (RHP)",
+          "team": "MIN",
+          "stat": "strikeOuts",
+          "line": 4.6,
+          "result": null
+        },
+        {
+          "id": 669358,
+          "name": "Shane Baz (RHP)",
+          "team": "BAL",
+          "stat": "strikeOuts",
+          "line": 4.4,
+          "result": null
+        },
+        {
+          "id": 694918,
+          "name": "Blade Tidwell (RHP)",
+          "team": "SF",
+          "stat": "strikeOuts",
+          "line": 2.4,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
