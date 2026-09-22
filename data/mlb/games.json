@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-09-22 15:03",
+  "generated_at_et": "2026-09-22 16:07",
   "slate_date_et": "2026-09-22",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -32,7 +32,7 @@
       "ou_signals": [
         "Starters' avg SLG against 0.364 (low)"
       ],
-      "proj_total": 7.9
+      "proj_total": 7.8
     },
     {
       "game_pk": 823494,
@@ -65,7 +65,7 @@
         "Starters' avg HR/9 0.675 (low)",
         "Starters' avg SLG against 0.305 (low)"
       ],
-      "proj_total": 7.9
+      "proj_total": 7.8
     },
     {
       "game_pk": 824222,
@@ -173,13 +173,13 @@
       "venue": "Fenway Park",
       "game_time": "2026-09-22T22:45:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": 59,
-      "weather_wind": "E 14 mph",
+      "weather_temp": "59",
+      "weather_wind": "12 mph, In From CF",
       "park_factor": 102,
       "park_verified": true,
-      "weather_source": "nws_forecast",
-      "wind_adj": -4.0,
-      "wind_note": "14 mph blowing in (-4.0)",
+      "weather_source": "mlb_posted",
+      "wind_adj": -3,
+      "wind_note": "wind in 12 mph (-3)",
       "edge_net": 1,
       "edge_lean": "Boston Red Sox",
       "edge_grade": "C-",
@@ -204,14 +204,14 @@
       "home_pitcher": "JR Ritchie",
       "venue": "Truist Park",
       "game_time": "2026-09-22T23:15:00Z",
-      "weather_condition": "Chance Showers And Thunderstorms",
-      "weather_temp": 77,
-      "weather_wind": "NE 5 mph",
+      "weather_condition": "Overcast",
+      "weather_temp": "80",
+      "weather_wind": "5 mph, Out To RF",
       "park_factor": 99,
       "park_verified": true,
-      "weather_source": "nws_forecast",
-      "wind_adj": 0.8,
-      "wind_note": "5 mph crosswind (+0.8)",
+      "weather_source": "mlb_posted",
+      "wind_adj": 2,
+      "wind_note": "wind out 5 mph (+2)",
       "edge_net": 1,
       "edge_lean": "Atlanta Braves",
       "edge_grade": "C-",
@@ -219,8 +219,9 @@
         "K%: edge Atlanta Braves (15.9 vs 21.9)"
       ],
       "ou_lean": "Over",
-      "ou_grade": "C",
+      "ou_grade": "B",
       "ou_signals": [
+        "Temp 80F (carry weather)",
         "Starters' avg WHIP 1.56 (high)",
         "Starters' avg HR/9 1.58 (high)"
       ],
@@ -265,14 +266,14 @@
       "home_pitcher": "Shota Imanaga",
       "venue": "Wrigley Field",
       "game_time": "2026-09-22T23:40:00Z",
-      "weather_condition": "Slight Chance Rain Showers",
-      "weather_temp": 62,
-      "weather_wind": "ENE 15 mph",
+      "weather_condition": "Partly Cloudy",
+      "weather_temp": "61",
+      "weather_wind": "14 mph, In From CF",
       "park_factor": 96,
       "park_verified": true,
-      "weather_source": "nws_forecast",
-      "wind_adj": -5.5,
-      "wind_note": "15 mph blowing in (-5.5)",
+      "weather_source": "mlb_posted",
+      "wind_adj": -3,
+      "wind_note": "wind in 14 mph (-3)",
       "edge_net": 1,
       "edge_lean": "Chicago Cubs",
       "edge_grade": "C-",
@@ -285,7 +286,7 @@
       "ou_grade": "C-",
       "ou_signals": [
         "Park factor 96 (pitcher-friendly)",
-        "Temp 62F (cold suppresses)",
+        "Temp 61F (cold suppresses)",
         "Starters' avg WHIP 1.34 (high)",
         "Starters' avg HR/9 1.5 (high)",
         "Starters' avg SLG against 0.434 (high)"
@@ -300,12 +301,12 @@
       "home_pitcher": "MacKenzie Gore",
       "venue": "Globe Life Field",
       "game_time": "2026-09-23T00:05:00Z",
-      "weather_condition": null,
-      "weather_temp": null,
-      "weather_wind": null,
+      "weather_condition": "Roof Closed",
+      "weather_temp": "72",
+      "weather_wind": "0 mph, None",
       "park_factor": 93,
       "park_verified": true,
-      "weather_source": null,
+      "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
       "edge_net": 2,
