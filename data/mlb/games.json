@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-09-24 16:22",
+  "generated_at_et": "2026-09-24 19:51",
   "slate_date_et": "2026-09-24",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -77,7 +77,7 @@
       "weather_source": "mlb_posted",
       "wind_adj": -2,
       "wind_note": "wind in 9 mph (-2)",
-      "proj_total": 9.6
+      "proj_total": 9.5
     },
     {
       "game_pk": 822842,
@@ -103,7 +103,7 @@
         "Starters' avg HR/9 1.38 (high)",
         "Starters' avg SLG against 0.42 (high)"
       ],
-      "proj_total": 8.5
+      "proj_total": 8.4
     },
     {
       "game_pk": 824298,
@@ -146,9 +146,9 @@
       "home_pitcher": "Andrew Painter",
       "venue": "Citizens Bank Park",
       "game_time": "2026-09-24T22:05:00Z",
-      "weather_condition": "Partly Cloudy",
-      "weather_temp": "64",
-      "weather_wind": "11 mph, In From CF",
+      "weather_condition": "Overcast",
+      "weather_temp": "66",
+      "weather_wind": "11 mph, In From RF",
       "park_factor": 102,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -162,10 +162,9 @@
         "HR/9: edge Milwaukee Brewers (1.14 vs 1.56)"
       ],
       "ou_lean": "Over",
-      "ou_grade": "B",
+      "ou_grade": "A",
       "ou_signals": [
         "Park factor 102 (hitter-friendly)",
-        "Temp 64F (cold suppresses)",
         "Starters' avg WHIP 1.47 (high)",
         "Starters' avg HR/9 1.35 (high)",
         "Starters' avg SLG against 0.43 (high)"
@@ -181,13 +180,13 @@
       "venue": "Fenway Park",
       "game_time": "2026-09-24T22:45:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": "59",
-      "weather_wind": "13 mph, In From CF",
+      "weather_temp": "58",
+      "weather_wind": "6 mph, In From CF",
       "park_factor": 102,
       "park_verified": true,
       "weather_source": "mlb_posted",
-      "wind_adj": -3,
-      "wind_note": "wind in 13 mph (-3)",
+      "wind_adj": -2,
+      "wind_note": "wind in 6 mph (-2)",
       "edge_net": 1,
       "edge_lean": "Boston Red Sox",
       "edge_grade": "C-",
@@ -200,7 +199,7 @@
       "ou_grade": "C",
       "ou_signals": [
         "Park factor 102 (hitter-friendly)",
-        "Temp 59F (cold suppresses)",
+        "Temp 58F (cold suppresses)",
         "Starters' avg WHIP 1.38 (high)",
         "Starters' avg HR/9 1.36 (high)"
       ],
@@ -248,9 +247,9 @@
       "home_pitcher": "Tyler Mahle",
       "venue": "Truist Park",
       "game_time": "2026-09-24T23:15:00Z",
-      "weather_condition": "Partly Cloudy",
-      "weather_temp": "71",
-      "weather_wind": "9 mph, L To R",
+      "weather_condition": "Clear",
+      "weather_temp": "70",
+      "weather_wind": "8 mph, L To R",
       "park_factor": 99,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -282,14 +281,14 @@
       "home_pitcher": "Mason Barnett",
       "venue": "Sutter Health Park",
       "game_time": "2026-09-25T01:40:00Z",
-      "weather_condition": "Partly Cloudy",
-      "weather_temp": 89,
-      "weather_wind": "SW 8 mph",
+      "weather_condition": "Cloudy",
+      "weather_temp": "92",
+      "weather_wind": "6 mph, Out To RF",
       "park_factor": null,
       "park_verified": false,
-      "weather_source": "nws_forecast",
-      "wind_adj": 0,
-      "wind_note": null,
+      "weather_source": "mlb_posted",
+      "wind_adj": 2,
+      "wind_note": "wind out 6 mph (+2)",
       "edge_net": 3,
       "edge_lean": "Houston Astros",
       "edge_grade": "B",
@@ -301,7 +300,7 @@
       "ou_lean": "Over",
       "ou_grade": "A",
       "ou_signals": [
-        "Temp 89F (carry weather)",
+        "Temp 92F (carry weather)",
         "Starters' avg WHIP 1.6 (high)",
         "Starters' avg HR/9 1.74 (high)",
         "Starters' avg SLG against 0.44 (high)"
@@ -316,12 +315,12 @@
       "home_pitcher": "Bryan Woo",
       "venue": "T-Mobile Park",
       "game_time": "2026-09-25T01:40:00Z",
-      "weather_condition": null,
-      "weather_temp": null,
-      "weather_wind": null,
+      "weather_condition": "Cloudy",
+      "weather_temp": "60",
+      "weather_wind": "5 mph, In From CF",
       "park_factor": 91,
       "park_verified": true,
-      "weather_source": null,
+      "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
       "edge_net": 4,
@@ -334,9 +333,10 @@
         "SLG against: edge Seattle Mariners (0.484 vs 0.364)"
       ],
       "ou_lean": "Over",
-      "ou_grade": "C",
+      "ou_grade": "C-",
       "ou_signals": [
         "Park factor 91 (pitcher-friendly)",
+        "Temp 60F (cold suppresses)",
         "Starters' avg WHIP 1.39 (high)",
         "Starters' avg HR/9 1.23 (high)",
         "Starters' avg SLG against 0.424 (high)"
@@ -351,14 +351,14 @@
       "home_pitcher": "Tyler Glasnow",
       "venue": "UNIQLO Field at Dodger Stadium",
       "game_time": "2026-09-25T02:10:00Z",
-      "weather_condition": "Partly Cloudy",
-      "weather_temp": 74,
-      "weather_wind": "SW 5 mph",
+      "weather_condition": "Clear",
+      "weather_temp": "82",
+      "weather_wind": "7 mph, Out To RF",
       "park_factor": 101,
       "park_verified": true,
-      "weather_source": "nws_forecast",
-      "wind_adj": 1.8,
-      "wind_note": "5 mph blowing out (+1.8)",
+      "weather_source": "mlb_posted",
+      "wind_adj": 2,
+      "wind_note": "wind out 7 mph (+2)",
       "edge_net": 3,
       "edge_lean": "Los Angeles Dodgers",
       "edge_grade": "B",
@@ -368,8 +368,9 @@
         "SLG against: edge Los Angeles Dodgers (0.379 vs 0.311)"
       ],
       "ou_lean": "Under",
-      "ou_grade": "C",
+      "ou_grade": "C-",
       "ou_signals": [
+        "Temp 82F (carry weather)",
         "Starters' avg WHIP 1.06 (low)",
         "Starters' avg SLG against 0.345 (low)"
       ],
