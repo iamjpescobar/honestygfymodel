@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-09-24 14:37",
+  "generated_at_et": "2026-09-24 15:26",
   "slate_date_et": "2026-09-24",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -27,7 +27,7 @@
         "K%: edge Pittsburgh Pirates (22.3 vs 27.9)",
         "SLG against: edge Pittsburgh Pirates (0.412 vs 0.377)"
       ],
-      "proj_total": 9.5
+      "proj_total": 9.4
     },
     {
       "game_pk": 824059,
@@ -113,9 +113,9 @@
       "home_pitcher": "Tanner Gordon",
       "venue": "Coors Field",
       "game_time": "2026-09-24T19:10:00Z",
-      "weather_condition": "Partly Cloudy",
+      "weather_condition": "Cloudy",
       "weather_temp": "70",
-      "weather_wind": "8 mph, In From CF",
+      "weather_wind": "8 mph, In From RF",
       "park_factor": 113,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -282,8 +282,8 @@
       "home_pitcher": "Mason Barnett",
       "venue": "Sutter Health Park",
       "game_time": "2026-09-25T01:40:00Z",
-      "weather_condition": "Mostly Clear",
-      "weather_temp": 88,
+      "weather_condition": "Partly Cloudy",
+      "weather_temp": 89,
       "weather_wind": "SW 8 mph",
       "park_factor": null,
       "park_verified": false,
@@ -301,7 +301,7 @@
       "ou_lean": "Over",
       "ou_grade": "A",
       "ou_signals": [
-        "Temp 88F (carry weather)",
+        "Temp 89F (carry weather)",
         "Starters' avg WHIP 1.6 (high)",
         "Starters' avg HR/9 1.74 (high)",
         "Starters' avg SLG against 0.44 (high)"
