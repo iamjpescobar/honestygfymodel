@@ -6599,6 +6599,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-09-25": {
+      "picks": [
+        {
+          "id": "678246",
+          "name": "Miguel Vargas",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "670623",
+          "name": "Isaac Paredes",
+          "team": "HOU",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672386",
+          "name": "Alejandro Kirk",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664770",
+          "name": "Nathan Lukes",
+          "team": "TOR",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "661388",
+          "name": "William Contreras",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "687401",
+          "name": "Joey Ortiz",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "805367",
+          "name": "Chase Meidroth",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "803011",
+          "name": "Sam Antonacci",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672515",
+          "name": "Gabriel Moreno",
+          "team": "ARI",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "571448",
+          "name": "Nolan Arenado",
+          "team": "ARI",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683146",
+          "name": "Brett Baty",
+          "team": "NYM",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "703601",
+          "name": "Max Clark",
+          "team": "DET",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "665487",
+          "name": "Fernando Tatis Jr.",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -7440,6 +7550,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-25": {
+      "picks": [
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -10148,6 +10272,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-25": {
+      "picks": [
+        {
+          "id": "682987",
+          "name": "Spencer Jones",
+          "team": "New York Yankees",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "624413",
+          "name": "Pete Alonso",
+          "team": "Baltimore Orioles",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "677800",
+          "name": "Wilyer Abreu",
+          "team": "Boston Red Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682985",
+          "name": "Riley Greene",
+          "team": "Detroit Tigers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "679529",
+          "name": "Spencer Torkelson",
+          "team": "Detroit Tigers",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -31510,6 +31680,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-09-25": {
+      "picks": [
+        {
+          "id": 668909,
+          "name": "Gavin Williams (RHP)",
+          "team": "CLE",
+          "stat": "strikeOuts",
+          "line": 7.3,
+          "result": null
+        },
+        {
+          "id": 669373,
+          "name": "Tarik Skubal (LHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 6.9,
+          "result": null
+        },
+        {
+          "id": 672282,
+          "name": "Reid Detmers (LHP)",
+          "team": "LAA",
+          "stat": "strikeOuts",
+          "line": 6.7,
+          "result": null
+        },
+        {
+          "id": 686613,
+          "name": "Hunter Brown (RHP)",
+          "team": "HOU",
+          "stat": "strikeOuts",
+          "line": 6.4,
+          "result": null
+        },
+        {
+          "id": 594798,
+          "name": "Jacob deGrom (RHP)",
+          "team": "TEX",
+          "stat": "strikeOuts",
+          "line": 6.3,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }
