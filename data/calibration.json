@@ -6608,7 +6608,7 @@
           "team": "CWS",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "672386",
@@ -6616,7 +6616,7 @@
           "team": "TOR",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "661388",
@@ -6624,7 +6624,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "670623",
@@ -6632,7 +6632,7 @@
           "team": "HOU",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "665487",
@@ -6640,7 +6640,7 @@
           "team": "SD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "672515",
@@ -6648,7 +6648,7 @@
           "team": "ARI",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "803011",
@@ -6656,7 +6656,7 @@
           "team": "CWS",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "687401",
@@ -6664,7 +6664,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "664770",
@@ -6672,7 +6672,7 @@
           "team": "TOR",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "703601",
@@ -6680,7 +6680,7 @@
           "team": "DET",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "670541",
@@ -6688,7 +6688,7 @@
           "team": "HOU",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "571448",
@@ -6696,7 +6696,7 @@
           "team": "ARI",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "680757",
@@ -6704,10 +6704,10 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -7560,10 +7560,10 @@
           "team": "Baltimore Orioles",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -10282,7 +10282,7 @@
           "team": "Houston Astros",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "545361",
@@ -10290,7 +10290,7 @@
           "team": "Los Angeles Angels",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "547180",
@@ -10298,7 +10298,7 @@
           "team": "Philadelphia Phillies",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "682987",
@@ -10306,7 +10306,7 @@
           "team": "New York Yankees",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "624413",
@@ -10314,10 +10314,10 @@
           "team": "Baltimore Orioles",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -23497,7 +23497,8 @@
           "team": "Toronto Tempo",
           "stat": "pts",
           "line": 6.0,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": "2566453",
@@ -23633,7 +23634,8 @@
           "team": "Minnesota Lynx",
           "stat": "ast",
           "line": 6.0,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": "1054",
@@ -23761,7 +23763,8 @@
           "team": "Minnesota Lynx",
           "stat": "tpm",
           "line": 2.0,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": "2491214",
@@ -23809,7 +23812,8 @@
           "team": "Toronto Tempo",
           "stat": "tpm",
           "line": 0.5,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": "5105406",
@@ -23820,7 +23824,7 @@
           "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     },
     "2026-09-23": {
@@ -31690,7 +31694,7 @@
           "team": "CLE",
           "stat": "strikeOuts",
           "line": 7.3,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 669373,
@@ -31698,7 +31702,7 @@
           "team": "LAD",
           "stat": "strikeOuts",
           "line": 6.9,
-          "result": null
+          "result": "hit"
         },
         {
           "id": 672282,
@@ -31706,7 +31710,7 @@
           "team": "LAA",
           "stat": "strikeOuts",
           "line": 6.7,
-          "result": null
+          "result": "hit"
         },
         {
           "id": 686613,
@@ -31714,7 +31718,7 @@
           "team": "HOU",
           "stat": "strikeOuts",
           "line": 6.4,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 594798,
@@ -31722,10 +31726,10 @@
           "team": "TEX",
           "stat": "strikeOuts",
           "line": 6.3,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   }
