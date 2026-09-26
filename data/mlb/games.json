@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-09-25 19:55",
+  "generated_at_et": "2026-09-25 21:14",
   "slate_date_et": "2026-09-25",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -295,7 +295,7 @@
         "Starters' avg WHIP 1.01 (low)",
         "Starters' avg SLG against 0.329 (low)"
       ],
-      "proj_total": 8.4
+      "proj_total": 8.3
     },
     {
       "game_pk": 824058,
@@ -306,8 +306,8 @@
       "venue": "Kauffman Stadium",
       "game_time": "2026-09-25T23:40:00Z",
       "weather_condition": "Rain",
-      "weather_temp": "64",
-      "weather_wind": "8 mph, R To L",
+      "weather_temp": "65",
+      "weather_wind": "4 mph, R To L",
       "park_factor": 101,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -420,13 +420,13 @@
       "venue": "Sutter Health Park",
       "game_time": "2026-09-26T01:40:00Z",
       "weather_condition": "Clear",
-      "weather_temp": "82",
-      "weather_wind": "11 mph, Out To CF",
+      "weather_temp": "77",
+      "weather_wind": "8 mph, Out To LF",
       "park_factor": null,
       "park_verified": false,
       "weather_source": "mlb_posted",
-      "wind_adj": 3,
-      "wind_note": "wind out 11 mph (+3)",
+      "wind_adj": 2,
+      "wind_note": "wind out 8 mph (+2)",
       "edge_net": 4,
       "edge_lean": "Houston Astros",
       "edge_grade": "A",
@@ -437,9 +437,8 @@
         "SLG against: edge Houston Astros (0.329 vs 0.462)"
       ],
       "ou_lean": "Over",
-      "ou_grade": "B",
+      "ou_grade": "C",
       "ou_signals": [
-        "Temp 82F (carry weather)",
         "Starters' avg WHIP 1.52 (high)",
         "Starters' avg HR/9 1.33 (high)"
       ],
@@ -455,12 +454,12 @@
       "game_time": "2026-09-26T01:40:00Z",
       "weather_condition": "Clear",
       "weather_temp": "75",
-      "weather_wind": "10 mph, In From LF",
+      "weather_wind": "10 mph, L To R",
       "park_factor": 97,
       "park_verified": true,
       "weather_source": "mlb_posted",
-      "wind_adj": -3,
-      "wind_note": "wind in 10 mph (-3)",
+      "wind_adj": 0,
+      "wind_note": null,
       "ou_lean": "Under",
       "ou_grade": "C-",
       "ou_signals": [
@@ -475,9 +474,9 @@
       "home_pitcher": "Bryce Miller",
       "venue": "T-Mobile Park",
       "game_time": "2026-09-26T02:10:00Z",
-      "weather_condition": "Roof Closed",
-      "weather_temp": "72",
-      "weather_wind": "0 mph, None",
+      "weather_condition": "Partly Cloudy",
+      "weather_temp": "56",
+      "weather_wind": "7 mph, R To L",
       "park_factor": 91,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -490,6 +489,13 @@
         "K%: edge Los Angeles Angels (28.3 vs 24.4)",
         "HR/9: edge Los Angeles Angels (0.96 vs 1.66)",
         "SLG against: edge Los Angeles Angels (0.348 vs 0.414)"
+      ],
+      "ou_lean": "Under",
+      "ou_grade": "C-",
+      "ou_signals": [
+        "Park factor 91 (pitcher-friendly)",
+        "Temp 56F (cold suppresses)",
+        "Starters' avg HR/9 1.31 (high)"
       ],
       "proj_total": 8.2
     },
