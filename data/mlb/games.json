@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-09-26 15:42",
+  "generated_at_et": "2026-09-26 19:32",
   "slate_date_et": "2026-09-26",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -67,7 +67,7 @@
         "Starters' avg HR/9 1.72 (high)",
         "Starters' avg SLG against 0.502 (high)"
       ],
-      "proj_total": 8.9
+      "proj_total": 8.8
     },
     {
       "game_pk": 822759,
@@ -98,7 +98,7 @@
       "ou_signals": [
         "Starters' avg WHIP 1.4 (high)"
       ],
-      "proj_total": 8.6
+      "proj_total": 8.5
     },
     {
       "game_pk": 823165,
@@ -109,7 +109,7 @@
       "venue": "Oracle Park",
       "game_time": "2026-09-26T20:05:00Z",
       "weather_condition": "Sunny",
-      "weather_temp": "69",
+      "weather_temp": "63",
       "weather_wind": "7 mph, Out To CF",
       "park_factor": 97,
       "park_verified": true,
@@ -128,6 +128,7 @@
       "ou_grade": "A",
       "ou_signals": [
         "Park factor 97 (pitcher-friendly)",
+        "Temp 63F (cold suppresses)",
         "Starters' avg WHIP 1.07 (low)",
         "Starters' avg HR/9 0.73 (low)",
         "Starters' avg SLG against 0.318 (low)"
@@ -143,13 +144,13 @@
       "venue": "Target Field",
       "game_time": "2026-09-26T20:10:00Z",
       "weather_condition": "Drizzle",
-      "weather_temp": "60",
-      "weather_wind": "11 mph, In From RF",
+      "weather_temp": "62",
+      "weather_wind": "10 mph, In From CF",
       "park_factor": 103,
       "park_verified": true,
       "weather_source": "mlb_posted",
       "wind_adj": -3,
-      "wind_note": "wind in 11 mph (-3)",
+      "wind_note": "wind in 10 mph (-3)",
       "edge_net": 1,
       "edge_lean": "Texas Rangers",
       "edge_grade": "C-",
@@ -160,7 +161,7 @@
       "ou_grade": "B",
       "ou_signals": [
         "Park factor 103 (hitter-friendly)",
-        "Temp 60F (cold suppresses)",
+        "Temp 62F (cold suppresses)",
         "Starters' avg WHIP 1.33 (high)",
         "Starters' avg HR/9 1.49 (high)",
         "Starters' avg SLG against 0.43 (high)"
@@ -207,8 +208,8 @@
       "venue": "Kauffman Stadium",
       "game_time": "2026-09-26T23:10:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": "75",
-      "weather_wind": "8 mph, R To L",
+      "weather_temp": "74",
+      "weather_wind": "5 mph, R To L",
       "park_factor": 101,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -237,8 +238,8 @@
       "venue": "Rate Field",
       "game_time": "2026-09-26T23:10:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": "62",
-      "weather_wind": "7 mph, L To R",
+      "weather_temp": "64",
+      "weather_wind": "8 mph, L To R",
       "park_factor": 98,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -257,7 +258,7 @@
       "ou_grade": "C-",
       "ou_signals": [
         "Park factor 98 (pitcher-friendly)",
-        "Temp 62F (cold suppresses)",
+        "Temp 64F (cold suppresses)",
         "Starters' avg WHIP 1.54 (high)",
         "Starters' avg HR/9 1.22 (high)",
         "Starters' avg SLG against 0.459 (high)"
@@ -272,12 +273,12 @@
       "home_pitcher": "Dustin May",
       "venue": "American Family Field",
       "game_time": "2026-09-26T23:10:00Z",
-      "weather_condition": null,
-      "weather_temp": null,
-      "weather_wind": null,
+      "weather_condition": "Roof Closed",
+      "weather_temp": "70",
+      "weather_wind": "0 mph, None",
       "park_factor": 97,
       "park_verified": true,
-      "weather_source": null,
+      "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
       "ou_lean": "Under",
@@ -295,17 +296,34 @@
       "away": "Tampa Bay Rays",
       "home": "Philadelphia Phillies",
       "away_pitcher": "Griffin Jax",
-      "home_pitcher": "TBD",
+      "home_pitcher": "Aaron Nola",
       "venue": "Citizens Bank Park",
       "game_time": "2026-09-26T23:15:00Z",
-      "weather_condition": "Overcast",
-      "weather_temp": "59",
-      "weather_wind": "16 mph, In From LF",
+      "weather_condition": "Cloudy",
+      "weather_temp": "62",
+      "weather_wind": "14 mph, In From CF",
       "park_factor": 102,
       "park_verified": true,
       "weather_source": "mlb_posted",
-      "wind_adj": -5,
-      "wind_note": "wind in 16 mph (-5)",
+      "wind_adj": -3,
+      "wind_note": "wind in 14 mph (-3)",
+      "edge_net": 3,
+      "edge_lean": "Tampa Bay Rays",
+      "edge_grade": "B",
+      "edge_signals": [
+        "WHIP: edge Tampa Bay Rays (1.24 vs 1.41)",
+        "HR/9: edge Tampa Bay Rays (1.28 vs 1.94)",
+        "SLG against: edge Tampa Bay Rays (0.386 vs 0.474)"
+      ],
+      "ou_lean": "Over",
+      "ou_grade": "B",
+      "ou_signals": [
+        "Park factor 102 (hitter-friendly)",
+        "Temp 62F (cold suppresses)",
+        "Starters' avg WHIP 1.32 (high)",
+        "Starters' avg HR/9 1.61 (high)",
+        "Starters' avg SLG against 0.43 (high)"
+      ],
       "proj_total": 8.2
     },
     {
@@ -316,12 +334,12 @@
       "home_pitcher": "Walker Buehler",
       "venue": "Petco Park",
       "game_time": "2026-09-27T00:40:00Z",
-      "weather_condition": "Partly Sunny",
-      "weather_temp": 81,
-      "weather_wind": "W 5 mph",
+      "weather_condition": "Partly Cloudy",
+      "weather_temp": "79",
+      "weather_wind": "9 mph, L To R",
       "park_factor": 97,
       "park_verified": true,
-      "weather_source": "nws_forecast",
+      "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null
     },
@@ -333,14 +351,14 @@
       "home_pitcher": "Jack Perkins",
       "venue": "Sutter Health Park",
       "game_time": "2026-09-27T01:40:00Z",
-      "weather_condition": "Mostly Cloudy",
-      "weather_temp": 78,
-      "weather_wind": "SW 5 mph",
+      "weather_condition": "Partly Cloudy",
+      "weather_temp": "79",
+      "weather_wind": "7 mph, Out To CF",
       "park_factor": null,
       "park_verified": false,
-      "weather_source": "nws_forecast",
-      "wind_adj": 0,
-      "wind_note": null,
+      "weather_source": "mlb_posted",
+      "wind_adj": 2,
+      "wind_note": "wind out 7 mph (+2)",
       "edge_net": 2,
       "edge_lean": "Houston Astros",
       "edge_grade": "C",
@@ -365,12 +383,12 @@
       "home_pitcher": "Kade Anderson",
       "venue": "T-Mobile Park",
       "game_time": "2026-09-27T01:40:00Z",
-      "weather_condition": null,
-      "weather_temp": null,
-      "weather_wind": null,
+      "weather_condition": "Partly Cloudy",
+      "weather_temp": "59",
+      "weather_wind": "9 mph, In From LF",
       "park_factor": 91,
       "park_verified": true,
-      "weather_source": null,
+      "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
       "edge_net": 2,
@@ -379,13 +397,6 @@
       "edge_signals": [
         "WHIP: edge Seattle Mariners (1.44 vs 1.27)",
         "HR/9: edge Seattle Mariners (1.61 vs 1.17)"
-      ],
-      "ou_lean": "Over",
-      "ou_grade": "C-",
-      "ou_signals": [
-        "Park factor 91 (pitcher-friendly)",
-        "Starters' avg WHIP 1.35 (high)",
-        "Starters' avg HR/9 1.39 (high)"
       ],
       "proj_total": 8.2
     }
