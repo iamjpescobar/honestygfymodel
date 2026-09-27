@@ -807,7 +807,26 @@ def main(today=None):
         return
 
     w_start, w_end = week_window(wk)
-    finals, logs, week_events = [], {}, []
+    # KEYED BY EVENT ID, NOT APPENDED.
+    #
+    # ESPN's NFL scoreboard answers a date inside the current week with
+    # the WHOLE week's games, not that day's. This loop walks every day
+    # from the season opener to the end of the week, so each of those
+    # days handed back the same sixteen fixtures and every one was
+    # appended again: the 09-27 file held 49 entries for 16 real games,
+    # each player appeared three or four times on every board, and the
+    # Projections page died outright on a duplicate Streamlit key.
+    #
+    # The numbers themselves were never wrong — each duplicate carried
+    # the same correctly-normalised projection, and `logs` was already
+    # keyed by event id so the league constants and team profiles were
+    # unaffected. It was the ROWS that multiplied.
+    #
+    # Dicts here rather than a dedupe pass at the end, so a game cannot
+    # be double-counted no matter how many days return it. Later fetches
+    # of the same event overwrite the earlier one, which is what we want:
+    # the last read is the freshest status and score.
+    finals, logs, week_events = {}, {}, {}
     days = failed = finals_seen = parsed = 0
     first = True
     d = SEASON_START
@@ -826,7 +845,7 @@ def main(today=None):
                 continue
             gw = week_of(d)
             if w_start <= d <= w_end:
-                week_events.append(g)
+                week_events[g["event_id"]] = g
             if g["status"] != "final" or g.get("away_score") is None:
                 continue
             if d > today:
@@ -845,10 +864,12 @@ def main(today=None):
                 first = False
             if n_pl:
                 parsed += 1
-            finals.append({"date": d.isoformat(), "week": gw, "event_id": g["event_id"],
+            finals[g["event_id"]] = ({"date": d.isoformat(), "week": gw,
+                           "event_id": g["event_id"],
                            "away": g["away"], "home": g["home"],
                            "away_score": g["away_score"], "home_score": g["home_score"],
-                           "away_box": box.get(g["away"]), "home_box": box.get(g["home"])})
+                           "away_box": box.get(g["away"]),
+                           "home_box": box.get(g["home"])})
             time.sleep(0.1)
         time.sleep(0.1)
         d += timedelta(days=1)
@@ -856,6 +877,8 @@ def main(today=None):
     # A league whose finals parsed into nothing is an outage, not a data
     # state — same rule as wnba_precompute. Before week 1 finishes there
     # are legitimately no finals, and that is allowed through.
+    finals = list(finals.values())
+    week_events = list(week_events.values())
     if finals_seen and not parsed:
         raise RuntimeError(f"NFL: {finals_seen} finals seen, ZERO box scores parsed "
                            f"({failed}/{days} scoreboard days unreachable). Refusing "

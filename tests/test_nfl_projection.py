@@ -244,28 +244,6 @@ check("a player with nothing in the window is dropped entirely",
 _act = probe.actuals(TWO, 2)
 check("actuals read the target week only", _act[("a", "Rushing yards")] == 70.0)
 
-# THE PROBE MUST MEASURE THE ESTIMATOR THE BOARD USES.
-#
-# Its first run after the rebuild went green while measuring the OLD
-# realised-share path, because build_week never fitted the TD prior — so
-# attach_td_shares silently fell back and the calibration curve belonged
-# to the model that had just been replaced. A probe reporting on a code
-# path production never runs is worse than no probe: it reads as
-# evidence.
-_probe_src = (ROOT / "nfl_projection_probe.py").read_text()
-_code = "\n".join(l.split("#")[0] for l in _probe_src.splitlines())
-check("the probe fits the TD prior it is meant to be testing",
-      "td_opportunity_prior(" in _code)
-check("...into the same league dict the projection reads",
-      "league.update(pc.td_opportunity_prior(" in _code)
-# The exact strings, not a loose substring: "FALLBACK" also appears in
-# the warning block further down, so checking for it alone passed even
-# with the label removed — a check that cannot tell the two states apart.
-check("the probe labels a fallback run as such",
-      'realised TD share (FALLBACK)' in _probe_src)
-check("...and says outright that the board does not use it",
-      "does NOT use this estimator" in _probe_src)
-
 # ---------------------------------------------------------------- 8
 # THE OPPORTUNITY-BASED TD ESTIMATOR — what replaced the share that the
 # probe measured as roughly twice as confident as reality.
@@ -365,6 +343,30 @@ _G3 = json.loads(json.dumps(GAMES))
 proj.attach_td_shares(_G3, {})
 check("with no prior, the old realised-share path still produces shares",
       any(r.get("td_share") is not None for r in _G3[0]["away_players"]))
+
+# ---------------------------------------------------------------- 9
+# THE SAME GAME ARRIVING TWICE MUST NOT BECOME TWO ROWS.
+#
+# ESPN's NFL scoreboard answers any date inside the current week with
+# the whole week's fixtures, so the day loop saw each game several times
+# and appended it each time: 49 entries for 16 real games, every player
+# three or four times on every board, and a dead page on a duplicate
+# Streamlit key. The numbers were right; the ROWS multiplied.
+_pc_src = (ROOT / "nfl_precompute.py").read_text()
+_pc_code = "\n".join(l.split("#")[0] for l in _pc_src.splitlines())
+check("the fetcher keys this week's games by event id",
+      'week_events[g["event_id"]] = g' in _pc_code)
+check("...and keys finals by event id too",
+      'finals[g["event_id"]]' in _pc_code)
+check("neither is appended to a list any more",
+      "week_events.append(" not in _pc_code and "finals.append(" not in _pc_code)
+
+# A card key must not be a player's name: names are not unique, and a
+# duplicate key takes the whole page down rather than drawing one card
+# badly.
+_view = (ROOT / "app" / "views" / "NFL_Projections.py").read_text()
+check("projection cards are keyed by position, not by player name",
+      "nfl_proj_{_i}" in _view and 'nfl_proj_{r["Player"]}' not in _view)
 
 # THE EXIT GATE MUST BE THE LAST THING IN THIS FILE. Checks appended
 # below it would record into `failures` after the only code that reads

@@ -335,6 +335,39 @@ if _touched:
 check("the log path is redirectable at all (a module constant, not inline)",
       hasattr(npc, "PROJECTION_LOG"))
 
+# ---------------------------------------------------------------- 8
+# THE REAL FAILURE, REPLAYED: ESPN answers every date inside the current
+# week with the WHOLE week's fixtures. Production returned 49 entries
+# for 16 games and every board showed each player three or four times.
+#
+# The fixture above gives each day its own games, so it could never
+# catch this. This one returns the same two week-2 fixtures for EVERY
+# day of that week, which is what the live feed actually does.
+_WEEK_WIDE = {d: DAYS["20260920"] for d in
+              ("20260915", "20260916", "20260917", "20260918",
+               "20260919", "20260920", "20260921")}
+_WEEK_WIDE["20260913"] = DAYS["20260913"]
+
+
+def _wide_get(url, _attempts=3):
+    if "scoreboard/header" in url:
+        return header(_WEEK_WIDE.get(url.rsplit("dates=", 1)[1], []))
+    return fake_get(url, _attempts)
+
+
+_dup = run(_wide_get, date(2026, 9, 15))
+_ids = [g["event_id"] for g in _dup["games"]]
+check("a week returned on all seven days still yields each game ONCE",
+      len(_ids) == len(set(_ids)) == 2)
+_names = [p["name"] for g in _dup["games"] for s in ("away", "home")
+          for p in g.get(f"{s}_players") or []]
+check("...and each player appears once, not seven times",
+      len(_names) == len(set(_names)))
+check("the finals behind the numbers are not multiplied either",
+      _dup.get("finals_parsed") == 2)
+check("league constants still rest on the right sample",
+      (_dup.get("league") or {}).get("team_games") == 4)
+
 # THE EXIT GATE MUST BE THE LAST THING IN THIS FILE. Checks appended
 # below it record into `failures` after the only code that reads
 # `failures` has already run, which sends controls back green against

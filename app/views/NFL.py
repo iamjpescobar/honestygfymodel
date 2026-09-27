@@ -258,12 +258,17 @@ def _render_result(g, a_s, h_s):
         unsafe_allow_html=True)
 
 
-def _render_game(g, live):
+def _render_game(g, live, slot=""):
     lv = live.get((g.get("away"), g.get("home"))) or {}
     status = lv.get("status") or g.get("status") or "scheduled"
     a_s = lv.get("away_score", g.get("away_score"))
     h_s = lv.get("home_score", g.get("home_score"))
-    with card(f'nfl_{g.get("event_id")}'):
+    # THE SLOT, not the event id. A feed that hands the same fixture back
+    # twice is a data bug, but a duplicate Streamlit key kills the ENTIRE
+    # page — which is exactly what happened when ESPN returned the whole
+    # week for every date. The fetcher no longer produces duplicates; this
+    # makes sure a future one cannot take the board down with it.
+    with card(f'nfl_{slot}_{g.get("event_id")}'):
         score = ""
         if status in ("in progress", "final") and a_s is not None and h_s is not None:
             tag = "FINAL" if status == "final" else _esc(lv.get("detail") or "LIVE")
@@ -346,10 +351,10 @@ else:
             f'font-weight:800; letter-spacing:0.12em; text-transform:uppercase; '
             f'font-size:var(--lc-text-caption);">{w} \u00b7 {len(grp)}</div>',
             unsafe_allow_html=True)
-        for g in grp:
-            _render_game(g, live)
-    for g in (x for x in shown if x.get("window") not in WINDOW_ORDER):
-        _render_game(g, live)
+        for _j, g in enumerate(grp):
+            _render_game(g, live, f"{w}{_j}")
+    for _j, g in enumerate(x for x in shown if x.get("window") not in WINDOW_ORDER):
+        _render_game(g, live, f"loose{_j}")
 
     st.caption(f'Week built {payload.get("generated_at_et")} ET from '
                f'{payload.get("source")}. Lines are shown as ESPN lists them, '

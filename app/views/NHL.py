@@ -132,12 +132,14 @@ def _render_shooters(g):
                     unsafe_allow_html=True)
 
 
-def _render_game(g, live):
+def _render_game(g, live, slot=""):
     lv = live.get((g.get("away"), g.get("home"))) or {}
     status = lv.get("status") or g.get("status") or "scheduled"
     a_s = lv.get("away_score", g.get("away_score"))
     h_s = lv.get("home_score", g.get("home_score"))
-    with card(f'nhl_{g.get("event_id")}'):
+    # Slot, not event id — see the note in NFL.py. A duplicated fixture
+    # must not be able to kill the page.
+    with card(f'nhl_{slot}_{g.get("event_id")}'):
         def _team(side):
             logo = g.get(f"{side}_logo")
             img = (f'<img src="{_esc(logo)}" style="height:26px; vertical-align:middle; '
@@ -205,8 +207,8 @@ if games:
     live = _live(_today) if current else {}
     st.markdown(badge(f"{slate_date}", "accent") + badge(f"{len(games)} games", "neutral"),
                 unsafe_allow_html=True)
-    for g in sorted(games, key=lambda x: x.get("start_et") or ""):
-        _render_game(g, live)
+    for _j, g in enumerate(sorted(games, key=lambda x: x.get("start_et") or "")):
+        _render_game(g, live, str(_j))
     if built:
         st.caption(f"Built {built} ET from ESPN's public NHL feed. Lines as listed, "
                    f"not a recommendation.")

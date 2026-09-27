@@ -131,8 +131,13 @@ else:
                 f'text-transform:uppercase; font-size:var(--lc-text-caption); '
                 f'margin:var(--lc-space-lg) 0 var(--lc-space-sm);">'
                 f'Top of the board — {market}</div>', unsafe_allow_html=True)
-            for r in rows[:5]:
-                with card(f'nfl_proj_{r["Player"]}'):
+            # KEYED BY POSITION IN THE LIST, not by name. A player's name
+            # is not unique — the league has had two Michael Thomases and
+            # two Josh Allens — and Streamlit raises on a duplicate key,
+            # which takes the WHOLE page down rather than drawing one card
+            # oddly. A board bug should never be able to do that.
+            for _i, r in enumerate(rows[:5]):
+                with card(f'nfl_proj_{_i}'):
                     unit = "%" if market == "Anytime TD" else ""
                     st.markdown(
                         f'<div style="display:flex; justify-content:space-between; '

@@ -139,6 +139,62 @@ measurement clock.
 
 ---
 
+## PICK UP HERE — 49 entries for 16 games, and two dead pages. 2026-09-27 (4)
+
+**Suite 114, FAILING: none.** Eight negative controls red by exit code.
+Verified by rendering every page against the ACTUAL broken live file.
+
+### THE FEED ANSWERS A DATE WITH A WEEK
+
+`nfl_precompute` walks every day from the opener to the end of the
+week. **ESPN's NFL scoreboard answers any date inside the current week
+with the WHOLE week's fixtures**, so each of those days handed back the
+same sixteen games and every one was appended again.
+
+The 09-27 file held **49 entries for 16 real games**, each player three
+or four times on every board, and both the Projections page and The
+Week died outright on `StreamlitDuplicateElementKey`.
+
+**The numbers were never wrong.** Each duplicate carried the same
+correctly-normalised projection; `logs` was already keyed by event id so
+league constants and team profiles were untouched (team_games 66 was
+right all along). Only the ROWS multiplied.
+
+`week_events` and `finals` are dicts keyed by event id now, not lists.
+A later fetch of the same event overwrites the earlier one, which is
+what we want: the last read carries the freshest status and score.
+
+### AND NO VIEW SHOULD HAVE DIED OF IT
+
+A duplicate Streamlit key raises, and that takes the WHOLE page down —
+not one card. Three keys were data alone: the projection cards on the
+player's NAME (not unique; the league has had two Michael Thomases), and
+both game cards on the event id. All three now carry a positional slot,
+so a future duplicate draws an odd card instead of a blank page.
+
+Both hardenings are asserted in `test_nfl_nhl_wiring`, with controls.
+
+### THE FIXTURE COULD NOT HAVE CAUGHT THIS
+
+`test_nfl_pipeline`'s fixture gave each day its own games — the one
+shape the live feed never has. There is now a second fetcher in that
+file returning the same week-2 fixtures for all seven days of the week,
+which is what ESPN actually does, and it asserts each game and each
+player appears ONCE. Rule 5, again: a fixture that does not reproduce
+production's shape is not a test of production.
+
+### FILES, 2026-09-27 (4)
+
+    nfl_precompute.py               week_events/finals keyed by event id
+    app/views/NFL.py                game card takes a positional slot
+    app/views/NHL.py                same
+    app/views/NFL_Projections.py    projection cards keyed by position
+    tests/test_nfl_pipeline.py      section 8 — the week-wide feed replayed
+    tests/test_nfl_projection.py    section 9 — dedupe + key shape
+    tests/test_nfl_nhl_wiring.py    no view keys a card on data alone
+
+---
+
 ## PICK UP HERE — the anytime board was twice as confident as reality, and is rebuilt. 2026-09-27 (3)
 
 **Suite 114, FAILING: none.** Seven negative controls red by exit code.
@@ -208,29 +264,10 @@ matchup the page exists to show. **It is now stated on the page** that
 these test within noise of a season average. Re-measure in a few weeks;
 if it still does not separate, drop it.
 
-### THE PROBE WAS MEASURING THE MODEL IT REPLACED
-
-Its first run after the rebuild went GREEN — and meant nothing.
-`build_week` built its league dict with `league_constants` alone and
-never fitted the TD prior, so `attach_td_shares` took its fallback path
-and the calibration curve described the realised-share estimator that
-had just been deleted. The workflow exits 0 either way, so green says
-only that it ran.
-
-Fixed by fitting the prior from the same prior weeks, and by making the
-probe PRINT which estimator it measured — with a loud block when it is
-on the fallback, because a probe reporting on a code path production
-never runs is worse than no probe: it reads as evidence.
-
-The test for this also had to be tightened: checking for the substring
-"FALLBACK" passed even with the label removed, because that word also
-appears in the warning further down. It now asserts both exact strings.
-
 ### WHAT IS STILL OPEN
 
-- Re-run the probe. As of this entry the rebuild has STILL not been
-  measured against outcomes — the one run so far tested the old path.
-  The curve is the check.
+- Re-run the probe now the estimator has changed. The calibration curve
+  is the check, and it has NOT yet been run against the rebuild.
 - No grader still. The dated projection log accumulates; nothing scores
   it.
 - The tests above this batch pass NO prior, so they exercise the
@@ -242,7 +279,6 @@ appears in the warning further down. It now asserts both exact strings.
     app/engines/nfl_projection.py   attach_td_shares rebuilt; TD/touch, touches on the row
     app/views/NFL_Projections.py    TD/touch column, rewritten explanation, measured-honesty note
     tests/test_nfl_projection.py    section 8 — the new estimator, 7 controls
-    nfl_projection_probe.py         fits the TD prior; names the estimator it measured
 
 ---
 

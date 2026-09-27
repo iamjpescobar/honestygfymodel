@@ -77,6 +77,23 @@ _wf = (ROOT / ".github" / "workflows" / "nightly-data.yml").read_text()
 check("the nightly commits the NFL projection log",
       "data/nfl/projections" in _wf and "git add data/nfl/projections" in _wf)
 
+# NO VIEW MAY KEY A CARD ON DATA ALONE.
+#
+# A duplicate Streamlit key raises, and that kills the WHOLE page — not
+# one card. When ESPN returned the same fixture on every day of the week,
+# both the Projections board and The Week died outright. The fetcher no
+# longer produces duplicates; these keys mean a future one cannot take a
+# board down with it.
+for _v, _bad in (("NFL", 'card(f\'nfl_{g.get("event_id")}\')'),
+                 ("NHL", 'card(f\'nhl_{g.get("event_id")}\')'),
+                 ("NFL_Projections", 'card(f\'nfl_proj_{r["Player"]}\')')):
+    _src = (ROOT / "app" / "views" / f"{_v}.py").read_text()
+    check(f"{_v} does not key a card on data alone", _bad not in _src)
+for _v in ("NFL", "NHL"):
+    _src = (ROOT / "app" / "views" / f"{_v}.py").read_text()
+    check(f"{_v} passes a unique slot into its game card",
+          "slot=" in _src and "_render_game(g, live, " in _src)
+
 check("NBA is still the honest coming-soon page",
       "coming_soon_page(" in (ROOT / "app" / "views" / "NBA.py").read_text())
 
