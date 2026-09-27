@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-09-27 11:55",
+  "generated_at_et": "2026-09-27 14:38",
   "slate_date_et": "2026-09-27",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -11,9 +11,9 @@
       "home_pitcher": "DJ Herz",
       "venue": "Nationals Park",
       "game_time": "2026-09-27T17:05:00Z",
-      "weather_condition": "Drizzle",
-      "weather_temp": "65",
-      "weather_wind": "13 mph, L To R",
+      "weather_condition": "Rain",
+      "weather_temp": "62",
+      "weather_wind": "14 mph, L To R",
       "park_factor": 102,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -23,18 +23,18 @@
       "edge_lean": "New York Mets",
       "edge_grade": "B",
       "edge_signals": [
-        "WHIP: edge New York Mets (1.42 vs 1.75)",
-        "HR/9: edge New York Mets (1.5 vs 2.25)",
-        "SLG against: edge New York Mets (0.467 vs 0.647)"
+        "WHIP: edge New York Mets (1.41 vs 1.75)",
+        "HR/9: edge New York Mets (1.43 vs 2.25)",
+        "SLG against: edge New York Mets (0.457 vs 0.647)"
       ],
       "ou_lean": "Over",
       "ou_grade": "B",
       "ou_signals": [
         "Park factor 102 (hitter-friendly)",
-        "Temp 65F (cold suppresses)",
+        "Temp 62F (cold suppresses)",
         "Starters' avg WHIP 1.58 (high)",
-        "Starters' avg HR/9 1.88 (high)",
-        "Starters' avg SLG against 0.557 (high)"
+        "Starters' avg HR/9 1.84 (high)",
+        "Starters' avg SLG against 0.552 (high)"
       ],
       "proj_total": 9.9
     },
@@ -59,16 +59,16 @@
       "edge_grade": "C-",
       "edge_signals": [
         "WHIP: edge Baltimore Orioles (1.4 vs 1.83)",
-        "K%: edge Baltimore Orioles (20.4 vs 16.8)",
-        "SLG against: edge New York Yankees (0.386 vs 0.353)"
+        "K%: edge Baltimore Orioles (20.2 vs 16.8)",
+        "SLG against: edge New York Yankees (0.389 vs 0.353)"
       ],
       "ou_lean": "Under",
       "ou_grade": "C",
       "ou_signals": [
         "Temp 65F (cold suppresses)",
         "Starters' avg WHIP 1.61 (high)",
-        "Starters' avg HR/9 0.72 (low)",
-        "Starters' avg SLG against 0.369 (low)"
+        "Starters' avg HR/9 0.73 (low)",
+        "Starters' avg SLG against 0.371 (low)"
       ],
       "proj_total": 8.4
     },
@@ -80,27 +80,27 @@
       "home_pitcher": "Zack Wheeler",
       "venue": "Citizens Bank Park",
       "game_time": "2026-09-27T18:30:00Z",
-      "weather_condition": "Rain Showers Likely",
-      "weather_temp": 64,
-      "weather_wind": "N 15 mph",
+      "weather_condition": "Overcast",
+      "weather_temp": "65",
+      "weather_wind": "19 mph, In From RF",
       "park_factor": 102,
       "park_verified": true,
-      "weather_source": "nws_forecast",
-      "wind_adj": -5.5,
-      "wind_note": "15 mph blowing in (-5.5)",
+      "weather_source": "mlb_posted",
+      "wind_adj": -5,
+      "wind_note": "wind in 19 mph (-5)",
       "edge_net": 2,
       "edge_lean": "Philadelphia Phillies",
       "edge_grade": "C",
       "edge_signals": [
-        "K%: edge Philadelphia Phillies (14.9 vs 30.2)",
+        "K%: edge Philadelphia Phillies (14.5 vs 30.2)",
         "SLG against: edge Philadelphia Phillies (0.425 vs 0.356)"
       ],
       "ou_lean": "Over",
       "ou_grade": "C-",
       "ou_signals": [
         "Park factor 102 (hitter-friendly)",
-        "Temp 64F (cold suppresses)",
-        "Starters' avg HR/9 1.27 (high)"
+        "Temp 65F (cold suppresses)",
+        "Starters' avg HR/9 1.25 (high)"
       ],
       "proj_total": 8.3
     },
@@ -109,17 +109,22 @@
       "away": "Chicago Cubs",
       "home": "Boston Red Sox",
       "away_pitcher": "Shota Imanaga",
-      "home_pitcher": "TBD",
+      "home_pitcher": "Tanner Houck",
       "venue": "Tropicana Field",
       "game_time": "2026-09-27T19:05:00Z",
-      "weather_condition": null,
-      "weather_temp": null,
-      "weather_wind": null,
+      "weather_condition": "Dome",
+      "weather_temp": "72",
+      "weather_wind": "0 mph, None",
       "park_factor": 102,
       "park_verified": true,
-      "weather_source": null,
+      "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
+      "ou_lean": "Over",
+      "ou_grade": "C-",
+      "ou_signals": [
+        "Park factor 102 (hitter-friendly)"
+      ],
       "proj_total": 8.5
     },
     {
@@ -130,26 +135,26 @@
       "home_pitcher": "Seth Johnson",
       "venue": "Sutter Health Park",
       "game_time": "2026-09-27T19:05:00Z",
-      "weather_condition": "Partly Sunny",
-      "weather_temp": 69,
-      "weather_wind": "SSW 6 mph",
+      "weather_condition": "Partly Cloudy",
+      "weather_temp": "70",
+      "weather_wind": "6 mph, Out To CF",
       "park_factor": null,
       "park_verified": false,
-      "weather_source": "nws_forecast",
-      "wind_adj": 0,
-      "wind_note": null,
-      "edge_net": 3,
+      "weather_source": "mlb_posted",
+      "wind_adj": 2,
+      "wind_note": "wind out 6 mph (+2)",
+      "edge_net": 1,
       "edge_lean": "Houston Astros",
-      "edge_grade": "B",
+      "edge_grade": "C-",
       "edge_signals": [
-        "WHIP: edge Houston Astros (1.4 vs 1.71)",
-        "HR/9: edge Houston Astros (0.97 vs 1.42)",
-        "SLG against: edge Houston Astros (0.359 vs 0.455)"
+        "WHIP: edge Houston Astros (1.37 vs 1.74)",
+        "K%: edge Athletics (22.9 vs 25.9)",
+        "SLG against: edge Houston Astros (0.359 vs 0.46)"
       ],
       "ou_lean": "Over",
       "ou_grade": "C-",
       "ou_signals": [
-        "Starters' avg WHIP 1.55 (high)"
+        "Starters' avg WHIP 1.56 (high)"
       ],
       "proj_total": 10.4
     },
@@ -157,18 +162,27 @@
       "game_pk": 823164,
       "away": "Los Angeles Dodgers",
       "home": "San Francisco Giants",
-      "away_pitcher": "TBD",
+      "away_pitcher": "Jack Dreyer",
       "home_pitcher": "Carson Seymour",
       "venue": "Oracle Park",
       "game_time": "2026-09-27T19:05:00Z",
-      "weather_condition": "Mostly Sunny",
-      "weather_temp": 60,
-      "weather_wind": "WSW 9 mph",
+      "weather_condition": "Cloudy",
+      "weather_temp": "62",
+      "weather_wind": "8 mph, Out To CF",
       "park_factor": 97,
       "park_verified": true,
-      "weather_source": "nws_forecast",
-      "wind_adj": 2.5,
-      "wind_note": "9 mph blowing out (+2.5)",
+      "weather_source": "mlb_posted",
+      "wind_adj": 2,
+      "wind_note": "wind out 8 mph (+2)",
+      "edge_net": 4,
+      "edge_lean": "Los Angeles Dodgers",
+      "edge_grade": "A",
+      "edge_signals": [
+        "WHIP: edge Los Angeles Dodgers (1.15 vs 1.48)",
+        "K%: edge Los Angeles Dodgers (28 vs 16.3)",
+        "HR/9: edge Los Angeles Dodgers (1.02 vs 1.67)",
+        "SLG against: edge Los Angeles Dodgers (0.338 vs 0.437)"
+      ],
       "proj_total": 8.6
     },
     {
@@ -179,9 +193,9 @@
       "home_pitcher": "Max Scherzer",
       "venue": "Rogers Centre",
       "game_time": "2026-09-27T19:07:00Z",
-      "weather_condition": "Partly Cloudy",
-      "weather_temp": "73",
-      "weather_wind": "13 mph, In From CF",
+      "weather_condition": "Sunny",
+      "weather_temp": "75",
+      "weather_wind": "21 mph, In From CF",
       "park_factor": 101,
       "park_verified": true,
       "weather_source": "mlb_posted",
@@ -190,8 +204,8 @@
       "ou_lean": "Over",
       "ou_grade": "C",
       "ou_signals": [
-        "Starters' avg WHIP 1.36 (high)",
-        "Starters' avg HR/9 1.43 (high)"
+        "Starters' avg WHIP 1.44 (high)",
+        "Starters' avg HR/9 1.56 (high)"
       ],
       "proj_total": 8.5
     },
@@ -203,7 +217,7 @@
       "home_pitcher": "Daniel Lynch IV",
       "venue": "Kauffman Stadium",
       "game_time": "2026-09-27T19:10:00Z",
-      "weather_condition": "Partly Cloudy",
+      "weather_condition": "Cloudy",
       "weather_temp": "73",
       "weather_wind": "6 mph, L To R",
       "park_factor": 101,
@@ -215,13 +229,13 @@
       "edge_lean": "Cleveland Guardians",
       "edge_grade": "C-",
       "edge_signals": [
-        "K%: edge Cleveland Guardians (25.9 vs 17.5)"
+        "K%: edge Cleveland Guardians (25.9 vs 17.4)"
       ],
       "ou_lean": "Under",
       "ou_grade": "C",
       "ou_signals": [
         "Starters' avg WHIP 1.15 (low)",
-        "Starters' avg SLG against 0.362 (low)"
+        "Starters' avg SLG against 0.363 (low)"
       ],
       "proj_total": 8.6
     },
@@ -241,17 +255,18 @@
       "weather_source": "mlb_posted",
       "wind_adj": 3,
       "wind_note": "wind out 11 mph (+3)",
-      "edge_net": 1,
+      "edge_net": 2,
       "edge_lean": "Detroit Tigers",
-      "edge_grade": "C-",
+      "edge_grade": "C",
       "edge_signals": [
-        "SLG against: edge Detroit Tigers (0.374 vs 0.275)"
+        "HR/9: edge Detroit Tigers (1.11 vs 0)",
+        "SLG against: edge Detroit Tigers (0.374 vs 0.28)"
       ],
       "ou_lean": "Under",
       "ou_grade": "C",
       "ou_signals": [
-        "Starters' avg WHIP 1.11 (low)",
-        "Starters' avg SLG against 0.325 (low)"
+        "Starters' avg HR/9 0.555 (low)",
+        "Starters' avg SLG against 0.327 (low)"
       ],
       "proj_total": 8.8
     },
@@ -263,27 +278,26 @@
       "home_pitcher": "Randy V\u00e1squez",
       "venue": "Petco Park",
       "game_time": "2026-09-27T19:10:00Z",
-      "weather_condition": "Mostly Cloudy",
-      "weather_temp": 81,
-      "weather_wind": "W 5 mph",
+      "weather_condition": "Partly Cloudy",
+      "weather_temp": "77",
+      "weather_wind": "7 mph, L To R",
       "park_factor": 97,
       "park_verified": true,
-      "weather_source": "nws_forecast",
+      "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
-      "edge_net": 2,
+      "edge_net": 3,
       "edge_lean": "Arizona Diamondbacks",
-      "edge_grade": "C",
+      "edge_grade": "B",
       "edge_signals": [
-        "K%: edge Arizona Diamondbacks (24.5 vs 15.2)",
-        "SLG against: edge Arizona Diamondbacks (0.38 vs 0.441)"
+        "WHIP: edge Arizona Diamondbacks (1.21 vs 1.38)",
+        "K%: edge Arizona Diamondbacks (24.8 vs 15.3)",
+        "SLG against: edge Arizona Diamondbacks (0.367 vs 0.444)"
       ],
-      "ou_lean": "Over",
+      "ou_lean": "Under",
       "ou_grade": "C-",
       "ou_signals": [
-        "Park factor 97 (pitcher-friendly)",
-        "Temp 81F (carry weather)",
-        "Starters' avg WHIP 1.32 (high)"
+        "Park factor 97 (pitcher-friendly)"
       ]
     },
     {
@@ -294,29 +308,30 @@
       "home_pitcher": "Logan Gilbert",
       "venue": "T-Mobile Park",
       "game_time": "2026-09-27T19:10:00Z",
-      "weather_condition": null,
-      "weather_temp": null,
-      "weather_wind": null,
+      "weather_condition": "Partly Cloudy",
+      "weather_temp": "57",
+      "weather_wind": "10 mph, In From LF",
       "park_factor": 91,
       "park_verified": true,
-      "weather_source": null,
+      "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
       "edge_net": 3,
       "edge_lean": "Seattle Mariners",
       "edge_grade": "B",
       "edge_signals": [
-        "WHIP: edge Seattle Mariners (1.58 vs 1.2)",
-        "K%: edge Seattle Mariners (20.6 vs 26.4)",
-        "SLG against: edge Seattle Mariners (0.452 vs 0.415)"
+        "WHIP: edge Seattle Mariners (1.58 vs 1.17)",
+        "K%: edge Seattle Mariners (20.6 vs 26.6)",
+        "SLG against: edge Seattle Mariners (0.452 vs 0.413)"
       ],
       "ou_lean": "Over",
-      "ou_grade": "C",
+      "ou_grade": "C-",
       "ou_signals": [
         "Park factor 91 (pitcher-friendly)",
-        "Starters' avg WHIP 1.39 (high)",
+        "Temp 57F (cold suppresses)",
+        "Starters' avg WHIP 1.38 (high)",
         "Starters' avg HR/9 1.29 (high)",
-        "Starters' avg SLG against 0.433 (high)"
+        "Starters' avg SLG against 0.432 (high)"
       ],
       "proj_total": 8.3
     },
@@ -328,29 +343,28 @@
       "home_pitcher": "Dean Kremer",
       "venue": "Target Field",
       "game_time": "2026-09-27T19:10:00Z",
-      "weather_condition": "Mostly Cloudy",
-      "weather_temp": 68,
-      "weather_wind": "0 mph",
+      "weather_condition": "Partly Cloudy",
+      "weather_temp": "62",
+      "weather_wind": "2 mph, In From LF",
       "park_factor": 103,
       "park_verified": true,
-      "weather_source": "nws_forecast",
+      "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
-      "edge_net": 1,
+      "edge_net": 2,
       "edge_lean": "Texas Rangers",
-      "edge_grade": "C-",
+      "edge_grade": "C",
       "edge_signals": [
-        "WHIP: edge Minnesota Twins (1.43 vs 1.26)",
-        "HR/9: edge Texas Rangers (0.96 vs 1.81)",
-        "SLG against: edge Texas Rangers (0.397 vs 0.444)"
+        "HR/9: edge Texas Rangers (0.97 vs 1.81)",
+        "SLG against: edge Texas Rangers (0.391 vs 0.444)"
       ],
       "ou_lean": "Over",
-      "ou_grade": "A",
+      "ou_grade": "C",
       "ou_signals": [
         "Park factor 103 (hitter-friendly)",
-        "Starters' avg WHIP 1.34 (high)",
-        "Starters' avg HR/9 1.39 (high)",
-        "Starters' avg SLG against 0.42 (high)"
+        "Temp 62F (cold suppresses)",
+        "Starters' avg WHIP 1.32 (high)",
+        "Starters' avg HR/9 1.39 (high)"
       ],
       "proj_total": 9.1
     },
@@ -374,16 +388,16 @@
       "edge_lean": "Chicago White Sox",
       "edge_grade": "C",
       "edge_signals": [
-        "HR/9: edge Chicago White Sox (1.84 vs 1.35)",
-        "SLG against: edge Chicago White Sox (0.541 vs 0.439)"
+        "HR/9: edge Chicago White Sox (1.84 vs 1.32)",
+        "SLG against: edge Chicago White Sox (0.544 vs 0.439)"
       ],
       "ou_lean": "Over",
       "ou_grade": "C",
       "ou_signals": [
         "Park factor 98 (pitcher-friendly)",
-        "Starters' avg WHIP 1.58 (high)",
-        "Starters' avg HR/9 1.6 (high)",
-        "Starters' avg SLG against 0.49 (high)"
+        "Starters' avg WHIP 1.6 (high)",
+        "Starters' avg HR/9 1.58 (high)",
+        "Starters' avg SLG against 0.492 (high)"
       ],
       "proj_total": 10.9
     },
@@ -395,26 +409,19 @@
       "home_pitcher": "Janson Junk",
       "venue": "loanDepot park",
       "game_time": "2026-09-27T19:10:00Z",
-      "weather_condition": null,
-      "weather_temp": null,
-      "weather_wind": null,
+      "weather_condition": "Roof Closed",
+      "weather_temp": "72",
+      "weather_wind": "0 mph, None",
       "park_factor": 100,
       "park_verified": true,
-      "weather_source": null,
+      "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
-      "edge_net": 2,
-      "edge_lean": "Atlanta Braves",
-      "edge_grade": "C",
-      "edge_signals": [
-        "K%: edge Atlanta Braves (22.3 vs 16.7)",
-        "SLG against: edge Atlanta Braves (0.391 vs 0.431)"
-      ],
       "ou_lean": "Over",
       "ou_grade": "C",
       "ou_signals": [
         "Starters' avg WHIP 1.5 (high)",
-        "Starters' avg HR/9 1.34 (high)"
+        "Starters' avg HR/9 1.35 (high)"
       ],
       "proj_total": 8.3
     },
@@ -438,17 +445,17 @@
       "edge_lean": "Milwaukee Brewers",
       "edge_grade": "B",
       "edge_signals": [
-        "WHIP: edge Milwaukee Brewers (1.33 vs 0.91)",
-        "K%: edge Milwaukee Brewers (16.4 vs 37.6)",
-        "SLG against: edge Milwaukee Brewers (0.354 vs 0.259)"
+        "WHIP: edge Milwaukee Brewers (1.35 vs 0.89)",
+        "K%: edge Milwaukee Brewers (16.2 vs 37.5)",
+        "SLG against: edge Milwaukee Brewers (0.361 vs 0.253)"
       ],
       "ou_lean": "Under",
       "ou_grade": "A",
       "ou_signals": [
         "Park factor 97 (pitcher-friendly)",
         "Starters' avg WHIP 1.12 (low)",
-        "Starters' avg HR/9 0.715 (low)",
-        "Starters' avg SLG against 0.306 (low)"
+        "Starters' avg HR/9 0.7 (low)",
+        "Starters' avg SLG against 0.307 (low)"
       ],
       "proj_total": 9.1
     }
