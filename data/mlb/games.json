@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-09-27 16:02",
+  "generated_at_et": "2026-09-27 19:46",
   "slate_date_et": "2026-09-27",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -37,40 +37,6 @@
         "Starters' avg SLG against 0.552 (high)"
       ],
       "proj_total": 9.9
-    },
-    {
-      "game_pk": 823490,
-      "away": "Baltimore Orioles",
-      "home": "New York Yankees",
-      "away_pitcher": "Shane Baz",
-      "home_pitcher": "Elmer Rodr\u00edguez",
-      "venue": "Yankee Stadium",
-      "game_time": "2026-09-27T17:05:00Z",
-      "weather_condition": "Overcast",
-      "weather_temp": "65",
-      "weather_wind": "17 mph, In From LF",
-      "park_factor": 101,
-      "park_verified": true,
-      "weather_source": "mlb_posted",
-      "wind_adj": -5,
-      "wind_note": "wind in 17 mph (-5)",
-      "edge_net": 1,
-      "edge_lean": "Baltimore Orioles",
-      "edge_grade": "C-",
-      "edge_signals": [
-        "WHIP: edge Baltimore Orioles (1.4 vs 1.83)",
-        "K%: edge Baltimore Orioles (20.2 vs 16.8)",
-        "SLG against: edge New York Yankees (0.389 vs 0.353)"
-      ],
-      "ou_lean": "Under",
-      "ou_grade": "C",
-      "ou_signals": [
-        "Temp 65F (cold suppresses)",
-        "Starters' avg WHIP 1.61 (high)",
-        "Starters' avg HR/9 0.73 (low)",
-        "Starters' avg SLG against 0.371 (low)"
-      ],
-      "proj_total": 8.4
     },
     {
       "game_pk": 823408,
@@ -399,7 +365,7 @@
         "Starters' avg HR/9 1.58 (high)",
         "Starters' avg SLG against 0.492 (high)"
       ],
-      "proj_total": 10.9
+      "proj_total": 10.8
     },
     {
       "game_pk": 823814,
@@ -458,6 +424,39 @@
         "Starters' avg SLG against 0.307 (low)"
       ],
       "proj_total": 9.1
+    },
+    {
+      "game_pk": 823490,
+      "away": "Baltimore Orioles",
+      "home": "New York Yankees",
+      "away_pitcher": "Shane Baz",
+      "home_pitcher": "Elmer Rodr\u00edguez",
+      "venue": "Yankee Stadium",
+      "game_time": "2026-09-27T17:05:00Z",
+      "weather_condition": "Light Rain",
+      "weather_temp": 66,
+      "weather_wind": "NE 15 mph",
+      "park_factor": 101,
+      "park_verified": true,
+      "weather_source": "nws_forecast",
+      "wind_adj": -5.5,
+      "wind_note": "15 mph blowing in (-5.5)",
+      "edge_net": 1,
+      "edge_lean": "Baltimore Orioles",
+      "edge_grade": "C-",
+      "edge_signals": [
+        "WHIP: edge Baltimore Orioles (1.4 vs 1.83)",
+        "K%: edge Baltimore Orioles (20.2 vs 16.8)",
+        "SLG against: edge New York Yankees (0.389 vs 0.353)"
+      ],
+      "ou_lean": "Under",
+      "ou_grade": "C-",
+      "ou_signals": [
+        "Starters' avg WHIP 1.61 (high)",
+        "Starters' avg HR/9 0.73 (low)",
+        "Starters' avg SLG against 0.371 (low)"
+      ],
+      "proj_total": 8.4
     }
   ]
 }
