@@ -4,7 +4,7 @@
   "measured_on": "2026-08-19",
   "naive_baseline_pct": 81.7,
   "window_accuracy_pct": 82.2,
-  "generated_at_et": "2026-09-27T12:02:47-04:00",
+  "generated_at_et": "2026-09-27T12:46:21-04:00",
   "slate_date_et": "2026-09-27",
   "teams": {
     "Athletics": {
@@ -1201,23 +1201,6 @@
             }
           }
         },
-        "663494": {
-          "starts": 5,
-          "games": 7,
-          "rate": 0.714,
-          "vs": {
-            "L": {
-              "starts": 0,
-              "games": 1,
-              "rate": 0.0
-            },
-            "R": {
-              "starts": 5,
-              "games": 6,
-              "rate": 0.833
-            }
-          }
-        },
         "691023": {
           "starts": 7,
           "games": 7,
@@ -1232,6 +1215,23 @@
               "starts": 6,
               "games": 6,
               "rate": 1.0
+            }
+          }
+        },
+        "663494": {
+          "starts": 5,
+          "games": 7,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 1,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 5,
+              "games": 6,
+              "rate": 0.833
             }
           }
         },
@@ -5157,23 +5157,6 @@
             }
           }
         },
-        "663886": {
-          "starts": 6,
-          "games": 7,
-          "rate": 0.857,
-          "vs": {
-            "L": {
-              "starts": 3,
-              "games": 3,
-              "rate": 1.0
-            },
-            "R": {
-              "starts": 3,
-              "games": 4,
-              "rate": 0.75
-            }
-          }
-        },
         "553993": {
           "starts": 6,
           "games": 7,
@@ -5188,6 +5171,23 @@
               "starts": 4,
               "games": 4,
               "rate": 1.0
+            }
+          }
+        },
+        "663886": {
+          "starts": 6,
+          "games": 7,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 3,
+              "games": 4,
+              "rate": 0.75
             }
           }
         },
@@ -5818,20 +5818,20 @@
             }
           }
         },
-        "595879": {
-          "starts": 3,
+        "680664": {
+          "starts": 7,
           "games": 7,
-          "rate": 0.429,
+          "rate": 1.0,
           "vs": {
             "L": {
-              "starts": 1,
+              "starts": 2,
               "games": 2,
-              "rate": 0.5
+              "rate": 1.0
             },
             "R": {
-              "starts": 2,
+              "starts": 5,
               "games": 5,
-              "rate": 0.4
+              "rate": 1.0
             }
           }
         },
@@ -5852,20 +5852,20 @@
             }
           }
         },
-        "680664": {
-          "starts": 7,
+        "595879": {
+          "starts": 3,
           "games": 7,
-          "rate": 1.0,
+          "rate": 0.429,
           "vs": {
             "L": {
-              "starts": 2,
+              "starts": 1,
               "games": 2,
-              "rate": 1.0
+              "rate": 0.5
             },
             "R": {
-              "starts": 5,
+              "starts": 2,
               "games": 5,
-              "rate": 1.0
+              "rate": 0.4
             }
           }
         },
@@ -6858,23 +6858,6 @@
             }
           }
         },
-        "691002": {
-          "starts": 6,
-          "games": 7,
-          "rate": 0.857,
-          "vs": {
-            "L": {
-              "starts": 2,
-              "games": 3,
-              "rate": 0.667
-            },
-            "R": {
-              "starts": 4,
-              "games": 4,
-              "rate": 1.0
-            }
-          }
-        },
         "694673": {
           "starts": 4,
           "games": 7,
@@ -6889,6 +6872,23 @@
               "starts": 2,
               "games": 4,
               "rate": 0.5
+            }
+          }
+        },
+        "691002": {
+          "starts": 6,
+          "games": 7,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 3,
+              "rate": 0.667
+            },
+            "R": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
             }
           }
         },
@@ -6960,23 +6960,6 @@
             }
           }
         },
-        "695734": {
-          "starts": 7,
-          "games": 7,
-          "rate": 1.0,
-          "vs": {
-            "L": {
-              "starts": 3,
-              "games": 3,
-              "rate": 1.0
-            },
-            "R": {
-              "starts": 4,
-              "games": 4,
-              "rate": 1.0
-            }
-          }
-        },
         "677588": {
           "starts": 2,
           "games": 7,
@@ -6991,6 +6974,23 @@
               "starts": 2,
               "games": 4,
               "rate": 0.5
+            }
+          }
+        },
+        "695734": {
+          "starts": 7,
+          "games": 7,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
             }
           }
         },
