@@ -13,6 +13,7 @@ Checks:
   4. a week whose finals parse into nothing REFUSES to publish.
   5. load_week blanks a stale week; mismatches() ranks the biggest gap.
 """
+import hashlib
 import json
 import os
 import sys
@@ -29,6 +30,35 @@ from engines import espn_feed as ef  # noqa: E402
 from engines import nfl_week as nw  # noqa: E402
 
 failures = []
+
+# THE REAL PROJECTION LOG, SNAPSHOTTED BEFORE ANYTHING RUNS.
+#
+# The check at the bottom compares this against the same directory
+# afterwards. The FIRST version asserted the directory was EMPTY, which
+# was the wrong property and took the nightly down: main() writes a file
+# there on every successful run and the workflow commits it, so from the
+# first good night onward the checkout contains one, the gate failed,
+# and the job refused to fetch — for every league, not just football.
+#
+# What this actually means to guard is that running the pipeline UNDER
+# TEST adds nothing to the real record. Guard the thing you mean.
+# CONTENTS, not just filenames. A leak writes to TODAY's filename, and
+# on any day the nightly has already committed one, a set of names is
+# identical before and after while the real record has been silently
+# overwritten with fixture data. Both negative controls came back green
+# against exactly that — a check that cannot tell the two behaviours
+# apart (rule 4).
+_REPO_LOG = ROOT / "data" / "nfl" / "projections"
+
+
+def _log_state():
+    if not _REPO_LOG.exists():
+        return {}
+    return {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in _REPO_LOG.glob("*.json")}
+
+
+_LOG_BEFORE = _log_state()
 
 
 def check(label, ok):
@@ -295,9 +325,13 @@ check("live_days returns a tuple (it is used as a cache key)",
 # not redirected therefore files synthetic projections under today's
 # date, indistinguishable from a real record, for a grader to score
 # later as claims the site never made.
-_repo_log = ROOT / "data" / "nfl" / "projections"
-check("running the pipeline left no fixture projections in the repo",
-      not _repo_log.exists() or not any(_repo_log.glob("*.json")))
+_log_after = _log_state()
+_touched = sorted(n for n in set(_log_after) | set(_LOG_BEFORE)
+                  if _log_after.get(n) != _LOG_BEFORE.get(n))
+check("running the pipeline neither added to nor overwrote the real "
+      "projection log", not _touched)
+if _touched:
+    print(f"      touched: {_touched}")
 check("the log path is redirectable at all (a module constant, not inline)",
       hasattr(npc, "PROJECTION_LOG"))
 

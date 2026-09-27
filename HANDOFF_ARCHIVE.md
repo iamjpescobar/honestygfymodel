@@ -10,6 +10,119 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — slam_engine.py was overwritten with statcast_engine.py. Restored from git. 2026-08-13 (3)
+
+**3 files (1 new test). Suite 94, FAILING: none.** Control confirmed red
+against the break.
+
+### THE SYMPTOM
+
+    ImportError: cannot import name 'slam_from_profile'
+                 from 'engines.slam_engine'
+    app/views/GameCard.py, line 38
+
+Whole page down in production, found by a user.
+
+### THE CAUSE — not a rename, a clobber
+
+    commit dd9f481  Thu Aug 13 17:17:52 2026
+    Update fmt.Println message from 'Hello' to 'Goodbye'
+    app/engines/slam_engine.py | 1730 +++++++++++++++++++++++++++++---
+    1 file changed, 1618 insertions(+), 112 deletions(-)
+
+A 112-line engine replaced by 1,730 lines, under a commit message from
+some other language's tutorial. `diff` against `statcast_engine.py`
+returns ONE hunk: the seventeen-line, three-column addition dated today
+(`swing_length`, `bat_score`, `post_bat_score`). Those columns belonged
+in `statcast_engine._KEEP_COLS`. What was actually written was
+statcast_engine's entire contents, plus the columns, into slam_engine.py.
+
+`slam_from_profile` was not renamed and did not move. It, and
+`_league_hrfb`, were deleted. Nothing in the repo documents SLAM's
+formula either — `grep -i slam` across HANDOFF.md, README.md and
+READING_THE_BOARDS.md returns zero lines — so there was no path to
+rebuilding it from the working tree. **Only git had it.**
+
+Two already-red tests were downstream of this one commit:
+`test_league_anchors` (`slam_engine no longer reads the measured
+anchor` — `_league_hrfb` gone with the file) and `test_columns` (`build
+writes columns the engine discards` — the addition landed in the wrong
+file, so the nightly wrote three columns statcast_engine threw away).
+
+### THE FIX
+
+    git show --stat dd9f481                       # confirm the clobber
+    git show 95614a4:app/engines/slam_engine.py \
+      | grep -n "def slam_from_profile\|def _league_hrfb"
+    git checkout 95614a4 -- app/engines/slam_engine.py
+
+`95614a4` ("Refactor slam_engine.py by removing
+compute_slam_all_windows") is the last commit that touched the file
+before dd9f481. Both functions verified present — `_league_hrfb` at 45,
+`slam_from_profile` at 59 — BEFORE the checkout, not after.
+`test_league_anchors` green immediately: both engines read the same
+anchor, a measured value is used when present, neither scores against
+the raw literal.
+
+**No tourniquet shipped.** A guarded import with a stub returning `{}`
+was written and held while history was checked; the restore made it
+unnecessary and it was thrown away rather than committed. A permanent
+stub is an empty panel that looks like measured data.
+
+### WHAT SHIPPED BESIDE THE RESTORE
+
+**1. `app/engines/statcast_engine.py`** — the three columns, verbatim
+with their comment, in the file they were meant for. `test_columns`
+green. Matters tonight: they only populate going forward.
+
+**2. `app/views/GameCard.py`** — one line.
+`tier = matchup_tier(slam) if slam is not None else None`. It previously
+fed `0.0` into `matchup_tier`, which returns **"Weak"** — a fabricated
+read on a bat that was never measured, sitting in the same column as
+tiers that were. Two lines above, SLAM itself already renders as an em
+dash in exactly that case. Matchup is derived from SLAM; a missing SLAM
+now blanks both. Unrelated to the outage, found while reading the path.
+
+**3. `tests/test_view_engine_imports.py` — NEW. The control.**
+Checks via `ast` that every name in every `from engines.X import ...`
+across `app/views/` exists in that engine — 183 imports today. Reads
+both sides as source, so no streamlit and no data archive; runs bare.
+
+Two neighbours existed and neither covers this case.
+`test_view_imports.py` checks that every name a view CALLS is bound
+somewhere in that view — it passes on this break, because the import
+line was present and correctly spelled; the name it asked for is what
+stopped existing. `test_probe_imports.py` guards the probes' reach into
+engine internals, the cheaper direction: a broken probe is noticed by
+whoever runs it, a broken view is a dead page in production.
+
+Negative control confirmed against the clobbered tree:
+
+    BROKEN: GameCard.py imports slam_from_profile from
+            engines.slam_engine — that name does not exist
+
+`KNOWN_TOURNIQUETS` is deliberately empty. Any `except ImportError`
+fallback added to a view must be listed there, and the test fails both
+ways — unlisted fallback appears, or a listed one starts resolving again
+and the dead stub is still sitting in front of it.
+
+### THE RULE THIS ADDS
+
+**A whole-file write is a deletion of everything in that file.**
+The three-column edit was correct, small, and reviewed. It went to the
+wrong path and cost the SLAM engine, because writing a file replaces it
+— an edit that only ADDS lines cannot do this. Prefer targeted edits;
+when a full-file write is unavoidable, diff against what is on disk
+first. `diff` would have shown 1,618 unexplained insertions in a
+seventeen-line change, and so would `git show --stat` before the push.
+
+**Corollary, from a near-miss the same night:** the new test was first
+written as `tests/test_view_imports.py`, which already existed and does
+something different. Check the directory before naming a file. Same
+failure, one directory over.
+
+---
+
 ## PICK UP HERE — Daily 13 was picking bench bats, and the grader was mislabelling starters. 2026-08-13 (2)
 
 **4 files (1 new test). Suite 92, FAILING: none.** Four controls red.
