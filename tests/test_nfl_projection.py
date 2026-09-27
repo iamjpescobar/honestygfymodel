@@ -15,6 +15,7 @@ Checks:
   6. league constants are measured from the finals, not assumed;
   7. the walk-forward probe's slicing never leaks the target week.
 """
+import json
 import math
 import sys
 from pathlib import Path
@@ -242,6 +243,106 @@ check("a player with nothing in the window is dropped entirely",
       probe.slice_logs(TWO, {3}) == {})
 _act = probe.actuals(TWO, 2)
 check("actuals read the target week only", _act[("a", "Rushing yards")] == 70.0)
+
+# ---------------------------------------------------------------- 8
+# THE OPPORTUNITY-BASED TD ESTIMATOR — what replaced the share that the
+# probe measured as roughly twice as confident as reality.
+#
+# Everything above this point deliberately passes NO prior, so it
+# exercises the fallback. These tests supply one.
+_PRIOR = pc.td_opportunity_prior(LOGS)
+check("a prior is fitted from real logs at all", bool(_PRIOR))
+check("TD per touch is measured, not assumed",
+      0.0 < _PRIOR["td_per_opportunity"] < 1.0)
+check("the fit reports what it was fitted on",
+      _PRIOR["players_fitted"] > 0 and _PRIOR["touches_fitted"] > 0)
+check("no logs -> no prior, rather than an invented one",
+      pc.td_opportunity_prior({}) == {})
+
+# A league where NOBODY converts differently must fit a strong prior;
+# one where players differ wildly must fit a weaker one. That ordering
+# is the whole mechanism — it is what makes the estimator loosen as
+# real differences emerge instead of needing a hand retune.
+def _synth(rates, touches=40):
+    out = {}
+    for i, rate in enumerate(rates):
+        scores = round(rate * touches)
+        out[str(i)] = {"games": {"1": {"week": 1,
+                                       "rushing": {"att": touches, "td": scores},
+                                       "receiving": {"tgt": 0, "td": 0}}}}
+    return out
+
+
+_same = pc.td_opportunity_prior(_synth([0.1] * 40))
+_split = pc.td_opportunity_prior(_synth([0.02, 0.30] * 20))
+check("a league of identical converters fits a STRONGER prior than a "
+      "league of very different ones",
+      _same["prior_strength"] > _split["prior_strength"])
+
+_LG_PRIOR = dict(LG, **_PRIOR)
+_G2 = json.loads(json.dumps(GAMES))
+proj.attach_td_shares(_G2, _LG_PRIOR)
+_rows = _G2[0]["away_players"]
+check("every skill player gets a share, including one who has never scored",
+      all(r.get("td_share") is not None for r in _rows if r.get("role") in ("RB", "REC")))
+_cook2 = next(r for r in _rows if r["name"] == "James Cook")
+check("a player with zero scores is NOT handed a flat zero",
+      _cook2["td_share"] > 0)
+check("his rate is shrunk toward the league, not left at 0",
+      _cook2["td_rate"] > 0)
+check("touches are counted and shown", _cook2["touches"] > 0)
+
+# OVER EVERY ROW, not just RB/REC. A quarterback's carries score too, so
+# he takes a slice of the team's expected touchdowns — he is simply not
+# shown on this board, because quarterback anytime is its own market.
+# Summing only the skill players would assert they absorb scores that
+# are not theirs.
+check("a team's shares sum to 1 (they divide the team's expected TDs)",
+      abs(sum(r["td_share"] for r in _rows) - 1.0) < 0.01)
+_qb = next(r for r in _rows if r.get("role") == "QB")
+check("the quarterback takes a slice for his carries",
+      0 < _qb["td_share"] < 1)
+check("...but is not on the anytime board",
+      not any(r["Pos"] == "QB"
+              for r in proj.projection_rows(_G2, _LG_PRIOR, "Anytime TD")))
+
+# The defect the probe found, reproduced directly: one score on very few
+# touches must not outrank a proven high-volume back.
+_ONE = [{"away": "A", "home": "B", "away_abbr": "A", "home_abbr": "B",
+         "status": "scheduled", "window": "",
+         "odds": {"total": 44, "spread": -3, "details": "B -3"},
+         "away_profile": {"carries_pg": 25.0, "targets_pg": 30.0},
+         "home_profile": {"carries_pg": 25.0, "targets_pg": 30.0,
+                          "ypc_allowed": 4.2, "ypt_allowed": 7.8,
+                          "catch_rate_allowed": 0.65},
+         "away_players": [
+             {"pid": "fluke", "name": "One Catch One Score", "role": "REC",
+              "pos": "TE", "gp": 3, "opps": 3.0, "td_games": 3, "td_total": 1,
+              "target_share": 0.10, "yards_per_target": 8.0, "catch_rate": 0.7},
+             {"pid": "bell", "name": "Every Down Back", "role": "RB",
+              "pos": "RB", "gp": 3, "opps": 22.0, "td_games": 3, "td_total": 2,
+              "carry_share": 0.70, "ypc": 4.4}],
+         "home_players": []}]
+proj.attach_td_shares(_ONE, _LG_PRIOR)
+_fluke = _ONE[0]["away_players"][0]
+_bell = _ONE[0]["away_players"][1]
+check("a one-score-on-nine-touches tight end no longer outranks a "
+      "22-touch back", _bell["td_share"] > _fluke["td_share"])
+_td_rows = proj.projection_rows(_ONE, _LG_PRIOR, "Anytime TD")
+_pct = {r["Player"]: r["Proj"] for r in _td_rows}
+check("...and that ordering survives into the board",
+      _pct["Every Down Back"] > _pct["One Catch One Score"])
+check("no player on the board is projected at a flat 0%",
+      all(r["Proj"] > 0 for r in _td_rows))
+check("the row shows scores ON TOUCHES, not a team share",
+      "on" in (_td_rows[0]["TD sample"] or ""))
+
+# The fallback must still work, so an older data file renders rather
+# than blanking.
+_G3 = json.loads(json.dumps(GAMES))
+proj.attach_td_shares(_G3, {})
+check("with no prior, the old realised-share path still produces shares",
+      any(r.get("td_share") is not None for r in _G3[0]["away_players"]))
 
 # THE EXIT GATE MUST BE THE LAST THING IN THIS FILE. Checks appended
 # below it would record into `failures` after the only code that reads

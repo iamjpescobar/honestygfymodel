@@ -214,30 +214,62 @@ def project_player(p, team, opp, league, implied_pts):
     return out
 
 
-def attach_td_shares(games):
-    """Each player's share of his team's touchdowns, in place.
+def attach_td_shares(games, league=None):
+    """Each player's expected share of his team's touchdowns, in place.
 
-    Computed HERE rather than in the fetcher because it needs both sides
-    of a division that live in different files — the player's own scores
-    and his team's total. Carries the raw counts alongside so the board
-    can show "2 of his team's 6" instead of a bare 33%, which on a
-    three-game sample is the only honest way to print it.
+    REPLACED WHAT THE PROBE KILLED. This used to be his share of his
+    team's ACTUAL scores, which measured terribly: 65% of skill players
+    had none and were handed a flat 0% against a real 23% base rate,
+    while one score in one game came out at 88%.
+
+    Now the share is built from OPPORTUNITY — carries plus targets, the
+    part of scoring that repeats — times his own conversion rate shrunk
+    toward the league by the fitted beta-binomial prior (see
+    nfl_precompute.td_opportunity_prior). The shares are then normalised
+    so a team's skill players divide that team's expected touchdowns
+    between them.
+
+    Normalising to the FULL team expectation deliberately: measured on
+    the week-3 slate it reproduced the real 23.0% base rate to within
+    0.2 points, because the listed skill players take nearly all of a
+    team's offensive scores. Scaling it down for quarterback rushing
+    would have made it worse, not better.
+
+    Falls back to the old realised-share method only when no prior has
+    been fitted, so an old data file still renders rather than blanking.
     """
+    a = (league or {}).get("prior_a")
+    b = (league or {}).get("prior_b")
     for g in games or []:
         for side in ("away", "home"):
             rows = g.get(f"{side}_players") or []
             team_td = sum(r.get("td_total") or 0 for r in rows)
             for r in rows:
                 r["team_td_total"] = team_td
-                if team_td:
-                    r["td_share"] = round((r.get("td_total") or 0) / team_td, 3)
+            if a is None or b is None:
+                for r in rows:
+                    if team_td:
+                        r["td_share"] = round((r.get("td_total") or 0) / team_td, 3)
+                continue
+            raw = []
+            for r in rows:
+                opps = r.get("opps") or 0
+                touches = round(opps * (r.get("td_games") or 0))
+                scores = min(r.get("td_total") or 0, touches)
+                rate = (scores + a) / (touches + a + b) if (touches + a + b) else 0.0
+                r["td_rate"] = round(rate, 4)
+                r["touches"] = touches
+                raw.append(opps * rate)
+            total = sum(raw)
+            for r, v in zip(rows, raw):
+                r["td_share"] = round(v / total, 4) if total else None
 
 
 def projection_rows(games, league, market):
     """Every player on the slate for one market, best projection first."""
     key, _suffix = MARKETS[market]
     roles = MARKET_ROLES[market]
-    attach_td_shares(games)
+    attach_td_shares(games, league)
     out = []
     for g in games or []:
         odds = g.get("odds") or {}
@@ -272,9 +304,16 @@ def projection_rows(games, league, market):
                     # BOTH halves guarded: a player with no scoring game
                     # at all has td_total None, not 0, and formatting a
                     # None crashed the whole board on the first such row.
-                    "TD sample": (f'{p.get("td_total") or 0:.0f} of '
-                                  f'{p["team_td_total"]:.0f}'
-                                  if p.get("team_td_total") else None),
+                    # TOUCHES, not team share. What drives the number now
+                    # is how often he gets the ball; the scores he has
+                    # ride alongside so the reader sees both.
+                    "TD sample": (f'{p.get("td_total") or 0:.0f} on {p["touches"]:.0f}'
+                                  if p.get("touches") else
+                                  (f'{p.get("td_total") or 0:.0f} of '
+                                   f'{p["team_td_total"]:.0f}'
+                                   if p.get("team_td_total") else None)),
+                    "TD/touch": (round((p.get("td_rate") or 0) * 100, 1)
+                                 if p.get("td_rate") is not None else None),
                     "Matchup": (proj.get("rush_matchup") if market in
                                 ("Rushing yards", "Carries") else proj.get("rec_matchup")),
                     "Implied pts": implied,
@@ -315,7 +354,12 @@ def why(row, market):
         if row.get("Implied pts") is not None:
             bits.append(f'market implies {row["Team"]} score {row["Implied pts"]:g} '
                         f'→ {proj.get("team_td_exp", 0):.2f} offensive TDs')
-        if p.get("td_total") is not None and p.get("team_td_total"):
+        if p.get("touches") is not None:
+            bits.append(f'{p.get("opps") or 0:.1f} touches a game, and he has '
+                        f'{p.get("td_total") or 0:.0f} score(s) on {p["touches"]:.0f} '
+                        f'of them \u2014 shrunk toward the league that gives '
+                        f'{(p.get("td_rate") or 0) * 100:.1f}% a touch')
+        elif p.get("td_total") is not None and p.get("team_td_total"):
             bits.append(f'he has {p["td_total"]:.0f} of their {p["team_td_total"]:.0f} '
                         f'scores in {p.get("td_games", 0)} games')
         if proj.get("td_exp") is not None:

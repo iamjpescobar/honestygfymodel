@@ -37,7 +37,7 @@ def _load_week_for(day):
 # purpose: the full arithmetic is in the WHY line above the table, and a
 # table wide enough to hold all of it is one nobody reads on a phone.
 _EXTRA = {
-    "Anytime TD": ["TD exp", "TD sample", "Implied pts"],
+    "Anytime TD": ["TD exp", "TD sample", "TD/touch", "Implied pts"],
     "Rushing yards": ["Carries", "Matchup"],
     "Carries": ["Rush yds", "Matchup"],
     "Receiving yards": ["Targets", "Rec", "Matchup"],
@@ -94,11 +94,17 @@ else:
              "Games behind his numbers. Early in a season a share rests on two "
              "or three games and can move a lot; the count is on every row for "
              "that reason."),
+            ("Measured against outcomes",
+             "The anytime numbers were rebuilt after a walk-forward test over "
+             "weeks 1–3 showed the first version was about twice as "
+             "confident as reality at the top end. The yardage projections "
+             "test within noise of simply using a player's season average "
+             "— worth reading for the matchup context they show, not "
+             "because they are known to be sharper."),
             ("What this is not",
-             "Not tuned, not fitted, and not compared against a sportsbook's "
-             "posted prop — those are not in the public feed. Use it to "
-             "find where the matchup and the volume agree, then check the "
-             "number against your own book."),
+             "Not compared against a sportsbook's posted prop — those are "
+             "not in the public feed. Use it to find where the volume and the "
+             "matchup agree, then check the number against your own book."),
         ])
 
         c1, c2 = st.columns([3, 2])
@@ -156,9 +162,9 @@ else:
                 df, favor_high=[c for c in df.columns
                                 if c in ("Proj", "Carries", "Targets", "Rush yds",
                                          "Rec yds", "Rec", "Pass yds", "TD exp",
-                                         "Implied pts", "Matchup")],
+                                         "TD/touch", "Implied pts", "Matchup")],
                 gradient=False)
-            _fmt = {"Proj": "{:.1f}", "Carries": "{:.1f}", "Targets": "{:.1f}",
+            _fmt = {"TD/touch": "{:.1f}%", "Proj": "{:.1f}", "Carries": "{:.1f}", "Targets": "{:.1f}",
                     "Rush yds": "{:.1f}", "Rec yds": "{:.1f}", "Rec": "{:.1f}",
                     "Pass yds": "{:.1f}", "TD exp": "{:.2f}", "Matchup": "{:.2f}x",
                     "Implied pts": "{:g}", "GP": "{:.0f}"}

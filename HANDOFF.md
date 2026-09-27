@@ -139,6 +139,93 @@ measurement clock.
 
 ---
 
+## PICK UP HERE — the anytime board was twice as confident as reality, and is rebuilt. 2026-09-27 (3)
+
+**Suite 114, FAILING: none.** Seven negative controls red by exit code.
+Validated against the REAL week-3 slate pulled from the nightly release,
+not a fixture.
+
+### WHAT THE PROBE FOUND
+
+Walk-forward over weeks 1-3 (`nfl_projection_probe`, 09-27):
+
+    projected 0- 9%  ->  actually scored 16.2%   (n=185)
+    projected 50-59% ->  actually scored 33.3%   (n=9)
+    projected 90-99% ->  actually scored 50.0%   (n=6)
+
+Every band above 30% came in around half its claim, and there was no
+middle at all: 185 of 243 player-games sat in 0-9% and the rest jumped
+past 30%. Measured on the real slate, **65% of skill players had a flat
+0%** against a **23.0% real base rate**, while a tight end with ONE score
+in ONE game rendered at 88%.
+
+Cause: splitting a team's expected touchdowns by the player's share of
+its ACTUAL scores. On three games that is noise — zero for most, and
+enormous for whoever happened to score.
+
+### THE REBUILD
+
+Share now comes from OPPORTUNITY (carries + targets, which repeats) x
+his own conversion rate, shrunk toward the league by a beta-binomial
+prior, then normalised so a team's players divide its expected TDs.
+
+**The shrinkage is fitted, not chosen.** `td_opportunity_prior()` fits
+the prior by maximum likelihood over every skill player in the league,
+by golden-section search on log(strength). Method of moments was tried
+first and rejected: it needs a minimum-touches cutoff to keep its
+variance estimate sane, and that cutoff would be a number chosen by eye
+(rule 1).
+
+Result on the real slate:
+
+    live before   mean 18.1%   zeros 65%   median  0.0%   max 90.8%
+    rebuilt       mean 21.7%   zeros  0%   median 18.0%   max 76.0%
+    reality       23.0%
+
+**The fitted strength came out at 164 touches, and the likelihood is
+nearly flat above it** (-590.4 at the fit vs -590.7 at 1000). That is a
+real finding, not a fitting artefact: after three weeks the data cannot
+yet tell one converter from another, so the honest model is "scores
+follow the ball". As real differences emerge the fitted strength falls
+on its own and good red-zone players come through. **Nothing to retune
+by hand — do not add one.**
+
+The board now leads with Henry, Walker, Gibbs, Taylor, which is how
+anytime markets actually behave.
+
+### THE YARDAGE MARKETS DO NOT BEAT A SEASON AVERAGE
+
+Also from the probe, and left alone deliberately:
+
+    rushing yards   projection 25.01  vs season average 25.09
+    receiving yards            25.53                    25.90
+    receptions                  1.86                     1.83  (loses)
+
+Within noise on every market. The matchup multiplier is NOT earning its
+complexity — but it was not removed, because three weeks is too thin to
+kill a feature on (rule 10), and it is the mechanism that expresses the
+matchup the page exists to show. **It is now stated on the page** that
+these test within noise of a season average. Re-measure in a few weeks;
+if it still does not separate, drop it.
+
+### WHAT IS STILL OPEN
+
+- Re-run the probe now the estimator has changed. The calibration curve
+  is the check, and it has NOT yet been run against the rebuild.
+- No grader still. The dated projection log accumulates; nothing scores
+  it.
+- The tests above this batch pass NO prior, so they exercise the
+  fallback path. The new path has its own section; keep both.
+
+### FILES, 2026-09-27 (3)
+
+    nfl_precompute.py               td_opportunity_prior() + fitted into league
+    app/engines/nfl_projection.py   attach_td_shares rebuilt; TD/touch, touches on the row
+    app/views/NFL_Projections.py    TD/touch column, rewritten explanation, measured-honesty note
+    tests/test_nfl_projection.py    section 8 — the new estimator, 7 controls
+
+---
+
 ## PICK UP HERE — a test of mine took the whole nightly down. 2026-09-27 (2)
 
 **Suite 114, FAILING: none.** Four negative controls red by exit code,
@@ -1224,105 +1311,3 @@ with dEV +1.7 is a real move, 96% with +0.2 is a technicality.
 Nothing structural. The research log needs weeks. Re-run
 mlb_form_probe / mlb_platoon_probe / mlb_weakspot_probe every few weeks;
 distributions drift.
-
----
-
-## PICK UP HERE — weak spots redrawn, thresholds measured. 2026-08-14
-
-**5 files (2 new). Suite 96, FAILING: none.** Six controls red.
-
-### THE THRESHOLDS WERE FLAGGING 40% OF EVERYTHING
-
-`mlb_weakspot_probe.py`, 5,032 buckets across 451 pitchers — every
-bucket the panel actually draws:
-
-    10th   25th   median   75th   90th
-   0.394  0.453   0.523   0.598  0.675
-
-At `XSLG_HOT = 0.550` the panel flagged **40.2%** of buckets as "hitters
-do real damage here". A phrase that marks the dangerous QUARTER cannot
-apply to two buckets in five: a panel where nearly half the bars are red
-says nothing about WHERE a pitcher gets hurt, which is its only job.
-
-xSLG measured ON CONTACT excludes strikeouts, so it sits far above the
-per-PA figure people quote. 0.550 sat near the MIDDLE of this
-distribution, not near its top.
-
-Now the measured 75th and 25th: `XSLG_HOT = 0.598`, `XSLG_COLD = 0.453`.
-
-**Fifth scale on this site set by eye.** Clears%, FB95%, HRWindow% and an
-EV floor were the others — all measured, all wrong, three unreachable at
-one end. Re-run the probe every few weeks.
-
-### THE BARS ARE GONE — `app/engines/weakspot_view.py`
-
-Nineteen horizontal bars, no shape. Three of the groups were the wrong
-form for their data:
-
-- **A pitch type carries TWO numbers** — usage and damage. A bar draws
-  one, so usage was demoted to a subtitle where it stopped being
-  comparable across pitches.
-- **Up/middle/down is a strike zone** that was being drawn sideways.
-- **Times through the order is a three-point trend** drawn as three
-  unconnected bars, which hides the only thing it says.
-
-Replaced by:
-
-| panel | why |
-|---|---|
-| `arsenal_svg` | usage on x, damage on y, bubble area = batted balls. Position answers the question — top right is "thrown often, gets hit", the only quadrant worth acting on |
-| `zone_svg` | up / middle / down stacked as an actual zone, shaded by damage |
-| `tto_svg` | three passes as a connected line; the SHAPE is the finding |
-
-Pitches under the sample floor are **named** underneath rather than
-dropped — "he throws a sweeper 9% of the time and we cannot rate it" is
-worth knowing, and omitting it makes the arsenal look smaller than it is.
-
-These are SVG STRINGS, not Streamlit widgets: one markdown call instead
-of ~19 nested column layouts, and the whole thing is unit-testable
-without a Streamlit runtime. The old version could not be.
-
-### THE SLOT PANEL BECAME THE GEM
-
-The flat 1-9 slot list is gone from the weak-spots card entirely. Nine
-slots in batting order is a roster printout, and the panel's own caveat
-admits a slot line partly reflects WHICH hitters batted there rather
-than the pitcher — close to unactionable alone.
-
-`slot_rows()` **sorts by leak** and joins to tonight's lineup. That
-ordering is the change: sorted by damage, the top rows ARE the answer
-instead of something to scan for. And the join answers the caveat — the
-claim is no longer "he is bad at slot 4", it is "the soft spots in this
-order line up with these bats tonight", which is true whatever causes
-the softness. Unmeasured slots drop out rather than rendering empty.
-
-The "vs this lineup" section in GameCard (~line 2020) already did the
-join; it now has the sorted, hitter-joined rows to draw.
-
-### AN EXISTING TEST HAD TO CHANGE, AND WHY THAT WAS RIGHT
-
-`test_gamecard_ui` asserted "every group uses the same row unit"
-(`_ws_group(` >= 5). Correct for a bar stack: one shape, repeated, no
-hand-rolled variants. Wrong now that three groups are deliberately
-spatial.
-
-The rule it was really protecting — **don't hand-roll a new visual
-language inline in the view** — still holds and is what it asserts now:
-the panels come from one engine module, the view contains no `<svg>` of
-its own, and whatever stays a bar still goes through the one bar
-renderer. Changed rather than deleted.
-
-### ALSO
-
-- WNBA combo tabs (Pts+Reb / Pts+Ast / Reb+Ast) lost their colour
-  because `f"wnba_{label}_{side}"` put a **`+`** into the CSS selector,
-  which is not a legal identifier — the browser discarded the whole rule
-  block. Sanitised in `render_html_table`; two cases pin it.
-- `AvgEV` and `Form` are on the HR Edge board with measured scales.
-  Form reads AvgEV and HH% only, per-input bands 7.3% and 48%.
-- Cap is `GAME_CAP = 3`, `CAP_UNIT = "team"` — looser than 2-per-game by
-  design; both constants in one place to revert.
-
-### NEXT
-Nothing structural. The research log needs weeks. `mlb_form_probe` and
-`mlb_platoon_probe` are in the repo; re-run every few weeks.

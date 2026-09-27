@@ -29,6 +29,7 @@ import json
 import sys
 import time
 from datetime import datetime, timedelta
+from math import exp, lgamma
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -279,6 +280,87 @@ def team_game_usage(logs):
             # otherwise (rule 9).
             t["td"] += (r.get("td") or 0) + (c.get("td") or 0)
     return out
+
+
+def td_opportunity_prior(logs):
+    """How often a touch becomes a touchdown, and how much to trust one
+    player's own rate over the league's. BOTH MEASURED.
+
+    THE PROBLEM THIS SOLVES. The first version of the projection split a
+    team's expected touchdowns by the player's share of his team's
+    ACTUAL scores. Measured against outcomes over weeks 1-3
+    (nfl_projection_probe, 2026-09-27), that was badly wrong in both
+    directions: 65% of skill players had scored zero and were handed a
+    flat 0% when the real base rate for a skill player is 23%, while a
+    tight end with ONE score in ONE game came out at 88%. The
+    calibration curve showed every band above 30% coming in at roughly
+    half its claim.
+
+    The fix is to estimate from OPPORTUNITY — carries plus targets,
+    which is stable week to week — rather than from realised scores,
+    which on three games are almost pure noise. A player's own
+    conversion rate still counts, shrunk toward the league in proportion
+    to how much evidence he has:
+
+        rate = (his TDs + a) / (his touches + a + b)
+
+    a and b are NOT chosen. They come from fitting a beta-binomial to
+    every skill player in the league by maximum likelihood, so the
+    amount of shrinkage is whatever the season's own spread supports.
+    Early on the fit is strong (a player needs many touches before his
+    own rate outweighs the league's) because three weeks genuinely
+    cannot tell one converter from another; as the sample grows and real
+    differences emerge, the fitted strength falls and good red-zone
+    players come through on their own. It self-adjusts, with nothing to
+    retune by hand.
+
+    Returns {} when there is nothing to fit, so the caller falls back
+    rather than inventing a prior.
+    """
+    obs = []
+    for rec in logs.values():
+        k = n = 0
+        for g in (rec.get("games") or {}).values():
+            r, c = g.get("rushing") or {}, g.get("receiving") or {}
+            n += (r.get("att") or 0) + (c.get("tgt") or 0)
+            k += (r.get("td") or 0) + (c.get("td") or 0)
+        if n > 0:
+            obs.append((min(k, n), n))
+    total_n = sum(n for _, n in obs)
+    if not obs or not total_n:
+        return {}
+    mu = sum(k for k, _ in obs) / total_n
+    if mu <= 0 or mu >= 1:
+        return {}
+
+    def _lbeta(x, y):
+        return lgamma(x) + lgamma(y) - lgamma(x + y)
+
+    def _ll(strength):
+        a, b = mu * strength, (1.0 - mu) * strength
+        base = _lbeta(a, b)
+        return sum(_lbeta(k + a, n - k + b) - base for k, n in obs)
+
+    # Golden-section search on log(strength). A search rather than a
+    # closed form because the method-of-moments alternative needs a
+    # minimum-touches cutoff to keep its variance estimate sane, and that
+    # cutoff would be a number chosen by eye (rule 1).
+    lo, hi = 0.0, 8.0
+    g = (5 ** 0.5 - 1) / 2
+    c, d = hi - g * (hi - lo), lo + g * (hi - lo)
+    for _ in range(80):
+        if _ll(exp(c)) > _ll(exp(d)):
+            hi = d
+        else:
+            lo = c
+        c, d = hi - g * (hi - lo), lo + g * (hi - lo)
+    strength = exp((lo + hi) / 2)
+    return {"td_per_opportunity": round(mu, 5),
+            "prior_strength": round(strength, 1),
+            "prior_a": round(mu * strength, 4),
+            "prior_b": round((1.0 - mu) * strength, 4),
+            "players_fitted": len(obs),
+            "touches_fitted": int(total_n)}
 
 
 def league_constants(finals, usage):
@@ -781,6 +863,7 @@ def main(today=None):
 
     usage = team_game_usage(logs)
     league = league_constants(finals, usage)
+    league.update(td_opportunity_prior(logs))
     teams = attach_ranks(team_research(finals, usage))
     players = player_summaries(logs, usage)
     print(f"NFL: week {wk} ({w_start}..{w_end}) — {len(week_events)} games; "
@@ -798,6 +881,11 @@ def main(today=None):
     # td_per_point that drifts far from ~0.10, or a league ypc far from
     # ~4.2, means the parse changed shape — and that would move every
     # projection on the board with nothing else to show for it.
+    print(f"  [verify] TD prior fitted on {league.get('players_fitted')} players / "
+          f"{league.get('touches_fitted')} touches: {league.get('td_per_opportunity')} "
+          f"TD per touch, shrink strength {league.get('prior_strength')} touches "
+          f"(a high strength early is correct — three weeks cannot tell one "
+          f"converter from another)")
     print(f"  [verify] league constants over {league.get('team_games')} team-games: "
           f"{league.get('points_pg')} pts/G, {league.get('td_pg')} off TD/G, "
           f"td_per_point {league.get('td_per_point')}, ypc {league.get('ypc')}, "
