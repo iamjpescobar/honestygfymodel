@@ -135,6 +135,15 @@ def build_week(finals, logs, weeks, target_week):
     plogs = slice_logs(logs, weeks)
     usage = pc.team_game_usage(plogs)
     league = pc.league_constants(prior, usage)
+    # FIT THE TD PRIOR TOO, from the same prior weeks.
+    #
+    # Without this, `league` carries no prior_a/prior_b, attach_td_shares
+    # silently takes its fallback path, and the probe measures the OLD
+    # realised-share estimator while appearing to test the current one.
+    # It did exactly that on its first run after the rebuild: the
+    # workflow went green and the calibration curve it printed belonged
+    # to the model that had just been replaced.
+    league.update(pc.td_opportunity_prior(plogs))
     teams = pc.attach_ranks(pc.team_research(prior, usage))
     players = pc.player_summaries(plogs, usage)
 
@@ -170,12 +179,26 @@ def main(through=None):
 
     err = defaultdict(list)       # (market, method) -> [abs error]
     pois = defaultdict(lambda: [0, 0])   # probability bucket -> [scored, n]
+    # WHICH ESTIMATOR IS ACTUALLY BEING MEASURED, printed rather than
+    # assumed. A probe that reports on a code path nobody is running is
+    # worse than no probe: it reads as evidence.
+    estimator = None
 
     for w in weeks[1:]:
         prior = [x for x in weeks if x < w]
         games, league, players = build_week(finals, logs, prior, w)
         if not league:
             continue
+        if estimator is None:
+            estimator = ("opportunity + fitted shrinkage"
+                         if league.get("prior_a") is not None
+                         else "realised TD share (FALLBACK)")
+            print(f"\nanytime TD estimator under test: {estimator}")
+            if league.get("prior_a") is not None:
+                print(f"  prior fitted on {league.get('players_fitted')} players / "
+                      f"{league.get('touches_fitted')} touches: "
+                      f"{league.get('td_per_opportunity')} TD per touch, "
+                      f"shrink strength {league.get('prior_strength')}")
         real = actuals(logs, w)
         for market in proj.MARKETS:
             rows = proj.projection_rows(games, league, market)
@@ -241,6 +264,11 @@ def main(through=None):
     print("\nA curve that runs consistently above or below the projected band "
           "means the\nPoisson assumption or the TD share is biased — fix it "
           "there, not with a fudge\nfactor on the board (rule 1).")
+    print(f"\nMeasured against: {estimator or 'nothing — no week had a league fit'}")
+    if estimator and "FALLBACK" in estimator:
+        print("*** The board does NOT use this estimator. The prior failed to "
+              "fit, so\n*** these numbers describe a code path production "
+              "never runs. Fix that\n*** before reading anything above.")
 
 
 if __name__ == "__main__":

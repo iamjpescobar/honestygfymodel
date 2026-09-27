@@ -244,6 +244,28 @@ check("a player with nothing in the window is dropped entirely",
 _act = probe.actuals(TWO, 2)
 check("actuals read the target week only", _act[("a", "Rushing yards")] == 70.0)
 
+# THE PROBE MUST MEASURE THE ESTIMATOR THE BOARD USES.
+#
+# Its first run after the rebuild went green while measuring the OLD
+# realised-share path, because build_week never fitted the TD prior — so
+# attach_td_shares silently fell back and the calibration curve belonged
+# to the model that had just been replaced. A probe reporting on a code
+# path production never runs is worse than no probe: it reads as
+# evidence.
+_probe_src = (ROOT / "nfl_projection_probe.py").read_text()
+_code = "\n".join(l.split("#")[0] for l in _probe_src.splitlines())
+check("the probe fits the TD prior it is meant to be testing",
+      "td_opportunity_prior(" in _code)
+check("...into the same league dict the projection reads",
+      "league.update(pc.td_opportunity_prior(" in _code)
+# The exact strings, not a loose substring: "FALLBACK" also appears in
+# the warning block further down, so checking for it alone passed even
+# with the label removed — a check that cannot tell the two states apart.
+check("the probe labels a fallback run as such",
+      'realised TD share (FALLBACK)' in _probe_src)
+check("...and says outright that the board does not use it",
+      "does NOT use this estimator" in _probe_src)
+
 # ---------------------------------------------------------------- 8
 # THE OPPORTUNITY-BASED TD ESTIMATOR — what replaced the share that the
 # probe measured as roughly twice as confident as reality.

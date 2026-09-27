@@ -208,10 +208,29 @@ matchup the page exists to show. **It is now stated on the page** that
 these test within noise of a season average. Re-measure in a few weeks;
 if it still does not separate, drop it.
 
+### THE PROBE WAS MEASURING THE MODEL IT REPLACED
+
+Its first run after the rebuild went GREEN — and meant nothing.
+`build_week` built its league dict with `league_constants` alone and
+never fitted the TD prior, so `attach_td_shares` took its fallback path
+and the calibration curve described the realised-share estimator that
+had just been deleted. The workflow exits 0 either way, so green says
+only that it ran.
+
+Fixed by fitting the prior from the same prior weeks, and by making the
+probe PRINT which estimator it measured — with a loud block when it is
+on the fallback, because a probe reporting on a code path production
+never runs is worse than no probe: it reads as evidence.
+
+The test for this also had to be tightened: checking for the substring
+"FALLBACK" passed even with the label removed, because that word also
+appears in the warning further down. It now asserts both exact strings.
+
 ### WHAT IS STILL OPEN
 
-- Re-run the probe now the estimator has changed. The calibration curve
-  is the check, and it has NOT yet been run against the rebuild.
+- Re-run the probe. As of this entry the rebuild has STILL not been
+  measured against outcomes — the one run so far tested the old path.
+  The curve is the check.
 - No grader still. The dated projection log accumulates; nothing scores
   it.
 - The tests above this batch pass NO prior, so they exercise the
@@ -223,6 +242,7 @@ if it still does not separate, drop it.
     app/engines/nfl_projection.py   attach_td_shares rebuilt; TD/touch, touches on the row
     app/views/NFL_Projections.py    TD/touch column, rewritten explanation, measured-honesty note
     tests/test_nfl_projection.py    section 8 — the new estimator, 7 controls
+    nfl_projection_probe.py         fits the TD prior; names the estimator it measured
 
 ---
 
