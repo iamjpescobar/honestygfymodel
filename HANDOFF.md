@@ -139,6 +139,162 @@ measurement clock.
 
 ---
 
+## PICK UP HERE — projections for every NFL market, with no fitted weights in them. 2026-09-27
+
+**Suite 114, FAILING: none.** 15 negative controls red by EXIT CODE —
+**three came back green first** (section 5). Every page rendered in
+AppTest against current-week data with zero exceptions; all files
+compile under a real 3.11.
+
+### 0. FIRST: THE 09-18 BATCH NEVER LANDED
+
+The repo had three NFL tabs and no `live_days`, so that whole batch —
+the week-wide live overlay, the final result line, the how-to-read
+panels — was rebuilt here from scratch. **Check `git log` against the
+handoff before assuming a batch shipped.** What reached production was
+the 09-16 build, which is why Thursday's final still sat on the card as
+"scheduled" days later.
+
+### 1. WHAT THE PROJECTION IS
+
+`app/engines/nfl_projection.py`. A projection is a volume times a rate:
+
+    expected volume    = his share of his team's carries or targets
+                         x his team's carries or targets a game
+    matchup multiplier = what the defence allows per attempt
+                         / the league average per attempt
+    projected yards    = volume x his own rate x that multiplier
+
+Touchdowns anchor to the MARKET rather than to our own guess at scoring:
+
+    implied points = (total -/+ spread) / 2          EXACT arithmetic
+    team TDs       = implied points x td_per_point   MEASURED nightly
+    lambda         = team TDs x his share of them
+    P(anytime)     = 1 - exp(-lambda)                THE ONE ASSUMPTION
+
+Nine markets: anytime TD, rushing and receiving yards, receptions,
+targets, carries, passing yards, attempts, scrimmage yards.
+
+### 2. NO FREE PARAMETERS, DELIBERATELY
+
+Rule 1 is the whole design constraint. There is no blend weight, no
+shrinkage factor, no fitted coefficient anywhere in the engine. Every
+constant it divides by — `td_per_point`, league ypc, yards per target,
+catch rate — is recomputed by `league_constants()` from the season's
+real finals on every nightly, shipped in games.json, and printed in the
+run log and on the page. Every multiplier is a ratio of two measured
+numbers.
+
+That is a v1 restriction, NOT a claim of optimality, and the page says
+so. Three questions stay open and `nfl_projection_probe.py` measures
+them walk-forward (profiles from weeks before W, projections for W,
+scored against W's real box scores):
+
+  1. does the full-strength matchup multiplier help, or overshoot?
+  2. does a share measured over a few games predict the next one?
+  3. is the Poisson anytime step calibrated?
+
+It prints mean absolute error against two baselines — his season
+average and his last game — and says outright when the projection
+**does not beat the season average**, because a model that cannot is
+not earning its complexity. **Run it (`NFL projection probe`, manual)
+before trusting any of this, and again every few weeks.**
+
+### 3. THE SAMPLE TRAVELS WITH THE NUMBER
+
+A TD share of 2-of-2 and one of 9-of-18 both read as "high" and are not
+the same claim. There is no shrinkage applied to the first — that would
+be a number chosen by eye — so the raw fraction is a COLUMN ("3 of 4")
+and appears in the why-line. In the fixture a 1-of-1 player outranks a
+3-of-4 player, which is the honest output and exactly why the counts
+are on the row.
+
+Every row also carries the arithmetic that produced it, as a sentence:
+share → volume, own rate → adjusted rate, implied points → team TDs →
+lambda. A projection nobody can take apart is indistinguishable from
+one that was made up.
+
+### 4. THE LINE IS CHECKED AGAINST ITSELF
+
+ESPN states `spread` relative to the HOME team. That convention is the
+one thing that could silently invert every projection on a card, so
+`implied_totals` does not trust it: `details` names the favourite by
+abbreviation, and when the name contradicts the sign it returns **no
+implied totals at all** plus the reason, which the page prints. A
+backwards implied total would not look wrong — it would look like a
+confident projection of the wrong team.
+
+### 5. THREE CONTROLS CAME BACK GREEN
+
+- **"defensive rates read from own offence"** — the fixture hand-wrote
+  `ypc_allowed` into the team profiles, so `team_research`'s defensive
+  computation was never executed. Rule 2, exactly: a fixture cannot test
+  a constant it replaces. Now run on real finals and asked directly.
+- Then that new check ALSO could not fail: the fixture's MIA rushed 2
+  for 10, so their own ypc and the 130/26 they allowed were both 5.00.
+  Two different behaviours, one number. Changed to 2 for 4.
+- **"live overlay today-only"** and **"Projections dropped from nav"** —
+  no tests existed for either; both were lost with the 09-18 batch.
+
+### 6. THE LOG, AND WHAT IS STILL MISSING
+
+The nightly writes each slate's projections to
+`data/nfl/projections/<date>.json` **in the repo**, committed by its own
+workflow step — build_data/ is rebuilt every run, so a record written
+there cannot accumulate. Only games that have NOT kicked off are logged:
+a projection made after the whistle is not a projection.
+
+**NOT BUILT: the grader.** Nothing yet scores those logged files
+against box scores or puts NFL on the Results page. The log exists so
+that when the grader is written there is a real record to grade rather
+than a standing start. That is the next job, with the probe.
+
+Also absent, and stated on the page: no sportsbook prop lines. The
+public feed carries game odds only, so the board projects and the
+reader compares against his own book. Do not invent lines to fill that
+column.
+
+### 7. THE SUITE WAS WRITING INTO THE REAL PROJECTION LOG
+
+Caught only because an uncommitted-changes check flagged a `data/nfl/`
+that had been deleted minutes earlier. `main()` writes the log to a REPO
+path on purpose — that is the only way it accumulates — so every run of
+`tests/test_nfl_pipeline.py`, which calls `main()` four times against
+synthetic games, filed fixture projections under today's date. Nothing
+in the file would have said so, and a grader reading it later would
+have scored claims the site never made, for players who were never on
+the slate.
+
+The path is now the module constant `nfl_precompute.PROJECTION_LOG`,
+the test redirects it to a temp dir, and a check asserts the repo log is
+empty after the suite runs. Both controls red. **Any future test that
+calls main() must redirect it too.**
+
+### FILES, 2026-09-27
+
+    app/engines/nfl_projection.py     NEW  the engine
+    nfl_projection_probe.py           NEW  walk-forward measurement
+    app/views/NFL_Projections.py      NEW  the board
+    nfl_precompute.py                 team_game_usage, league_constants, per-attempt
+                                      allowed rates, shares, TD counts, projection log
+    app/engines/nfl_week.py           live_days()
+    app/styles/kc_theme.py            how_to_read()
+    app/views/NFL.py                  week-wide overlay, final result line, panel
+    app/views/NFL_Mismatch.py         panel
+    app/views/NFL_Props.py            panel
+    app/views/NHL_Crease.py           panel
+    app/views/NHL_Shots.py            panel
+    app/app.py                        "Projections" in the NFL nav
+    .github/workflows/nightly-data.yml      commit the projection log
+    .github/workflows/nfl-projection-probe.yml  NEW  manual
+    tests/test_nfl_projection.py      NEW
+    tests/test_nfl_pipeline.py        live_days checks
+    tests/test_nfl_nhl_wiring.py      Projections page, panels, log committed
+
+Suite 113 -> 114.
+
+---
+
 ## PICK UP HERE — NFL and NHL are live tabs, each built its own way. 2026-09-15
 
 **Suite 113, FAILING: none.** 18 negative controls, all red by EXIT
@@ -1234,163 +1390,3 @@ seventeen-line change, and so would `git show --stat` before the push.
 written as `tests/test_view_imports.py`, which already existed and does
 something different. Check the directory before naming a file. Same
 failure, one directory over.
-
----
-
-## PICK UP HERE — Daily 13 was picking bench bats, and the grader was mislabelling starters. 2026-08-13 (2)
-
-**4 files (1 new test). Suite 92, FAILING: none.** Four controls red.
-
-### THE NUMBER THAT STARTED IT
-
-    daily13   221 picks | hit 133  miss 67  dnp 16 (7.2%)
-    hr_edge    79 picks | hit  18  miss 61  dnp  0 (0.0%)
-    potd       17 picks | hit   8  miss  9  dnp  0 (0.0%)
-
-One Daily 13 slot in fourteen went to someone who never appeared, while
-two other boards had ZERO across 96 picks. That gap is the whole story
-and it had two separate causes.
-
-### CAUSE 1 — the fallback pool was a 26-man ROSTER
-
-`get_confirmed_lineup` failing dropped Daily 13 to
-`get_live_team_roster`, which contains every bench bat and backup
-catcher. The recency cutoff is a weak filter: a backup who started twice
-last week clears it.
-
-HR Edge and Player of the Day fall back to the last STARTING LINEUP —
-nine men who start. That is the entire difference in the table above.
-
-Daily 13 now does the same, with the roster kept as a last resort for a
-team with no posted lineup to fall back on at all.
-
-### CAUSE 2 — a starter was being recorded as a DNP
-
-**James McCann appeared ungraded on two Daily 13 days while playing —
-and homering — for Arizona.** So the 7.2% is not purely bench bats;
-some of it is real starters the grader could not find.
-
-`_mlb_line` read **`stats[0]`** and ignored every other entry. A player
-who changes teams mid-season can come back as more than one, so every
-game after the move was invisible. Now every entry's splits are read.
-
-And there was no way to say *"the API answered, he wasn't there."* A
-timeout, a rate limit and a genuine bench night all returned None, were
-held open three days, then closed `dnp` — identical permanent records
-for completely different events.
-
-Three returns now:
-
-| return | meaning | grade() does |
-|---|---|---|
-| dict | he played | grade it |
-| `DID_NOT_PLAY` | API answered, not in his log | close `dnp` at once |
-| `None` | request failed | hold, retry |
-
-A pick still closed after FINALIZE_AFTER_DAYS with no answer gets
-`dnp_reason` and prints a warning naming the player. **A collection
-failure must be visible, not filed under the same word as a bench
-night.**
-
-### WHAT WAS NOT A BUG
-
-The three "ungraded" picks from 2026-08-12 are one day old and inside
-the three-day window by design. Closing early is what poisoned whole
-days before. They resolve on their own.
-
-### WORTH SEEING
-
-**Daily 13 is 133 of 200 resolved — 66.5% against a 62% baseline, over
-200 picks.** That is the strongest evidence on the site, and it is
-currently buried under a board that reads "8/13" on a day where three
-picks had not resolved.
-
-### NEXT
-Research page part 2. Then the calibration bands — score to observed
-rate from the research log, which is what turns a score into something
-a subscriber can act on. Do not tune weights before that exists.
-
----
-
-## PICK UP HERE — the record was grading the 1 PM board. 2026-08-13
-
-**5 files (1 new test). Suite 91, FAILING: none.** Four controls red.
-
-### THE RECORD AND THE BOARD WERE DIFFERENT LISTS
-
-hr_edge graded FOUR picks on 2026-08-12 — Alonso, Schwarber, Harper,
-Encarnacion-Strand, all miss. The user reported seeing Ohtani, Carroll
-and Riley in the top 5. Both were right.
-
-Reconstructed from the 270-row research log, the board's real ranking:
-
-     1. Cal Raleigh     edge 100  raw 106.8
-     2. Shohei Ohtani   edge 100  raw  99.7
-     3. Pete Alonso     edge  99  raw  None
-     4. Kyle Schwarber  edge  99  raw  None
-     5. Austin Riley    edge  99  raw  98.7
-
-**Four picks on a fifteen-game slate is two confirmed lineups at 1 PM
-against a 2-per-game cap.** The record froze there and never looked
-again.
-
-### CAUSE 1 — stat=None IS A MARKET
-
-    logged_markets = {p.get("stat") for p in existing["picks"]}
-    fresh = [r for r in rows if r.get("stat") not in logged_markets]
-
-hr_edge, daily13 and potd carry `stat=None` on every pick. After the
-1 PM run `logged_markets == {None}`; at 5 and 7 PM every row was also
-None, so `fresh` was empty. **Every single-market board froze at the
-first run that produced anything.** The per-market rule was written for
-the WNBA boards, which have five real markets, and silently froze the
-MLB ones. The log said "every market already logged" — true, and
-completely misleading.
-
-Fixed: a board whose markets are all None REPLACES its picks each run.
-
-**BUT REPLACEMENT ALONE WAS WRONG, and an existing test caught it.**
-`test_calibration_picks.py` re-runs with a thinner board and asserts the
-fuller one survives — retry safety is what three daily runs are FOR, and
-plain replacement traded it away: a 7 PM hiccup returning two games would
-overwrite a good fifteen-game record. Guard is
-`len(rows) >= len(existing["picks"])`. `>=` not `>`, because an
-equal-sized evening board rests on more confirmed lineups and should win
-a tie.
-
-### CAUSE 2 — the board threw away every unconfirmed game
-
-`get_hr_edge_board(confirmed_only=True)` was the default, so before a
-lineup posted the game was simply absent. The list therefore APPEARED
-through the afternoon rather than refining, and reordered wholesale under
-anyone reading it.
-
-`_lineup_for` already falls back to the team's last posted lineup,
-already drops anyone since placed on the IL, and already reports
-`confirmed=False` upward so the weaker claim stays visible. **That good
-information was being discarded to avoid labelling it.**
-
-Now: `confirmed_only=False` by default on both `get_hr_edge_board` and
-`top_hr_edge`. Every game is rated from the morning. A **Lineup** column
-reads CONFIRMED or *projected* per row, and the caption reads
-"N of M lineups confirmed" with the fallback explained.
-
-`get_confirmed_lineup` already has ttl=300, so a lineup posted at 5:32 is
-on the board by 5:37. "Soonest possible" needed no work.
-
-### WHAT THIS DOES AND DOES NOT SOLVE
-
-Solved: the board no longer materialises out of nowhere, the record no
-longer grades lunchtime, and a projected row is visibly a weaker claim.
-
-**NOT solved: a projected row can still change.** A bat rated off
-yesterday's card may not be in tonight's lineup at all. The badge makes
-that visible; nothing makes it stop. The user considered per-window locks
-(11 AM / 5:30 PM / 8 PM for the late West Coast games, and the same shape
-for WNBA) and chose this instead — one always-complete list that refines,
-rather than three locked ones. Revisit if projected rows prove unstable.
-
-### NEXT
-Research page part 2 (the view; presets storage still undecided). The
-per-game log table builds on the next nightly. The research grader's
-data-root fix is in — expect `graded 270 bat(s) for 2026-08-12`.

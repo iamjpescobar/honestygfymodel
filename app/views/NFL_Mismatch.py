@@ -13,7 +13,8 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from styles.kc_theme import page_header, badge, footer, card, COLOR, SPORT_ACCENTS
+from styles.kc_theme import (page_header, badge, footer, card, how_to_read,
+                             COLOR, SPORT_ACCENTS)
 from styles.table_style import style_stat_table
 from engines.nfl_week import (EASTERN, UNIT_PAIRS, load_week, staleness_note,
                               mismatches, edge_tier)
@@ -42,6 +43,23 @@ else:
         st.info("No ranked units yet \u2014 the finder fills in once teams have "
                 "a final on the books.")
     else:
+        how_to_read([
+            ("The question", "Where is one unit much better than the unit "
+                             "lined up across from it this week?"),
+            ("Rank", "1 to 32, where #1 is best at that thing for the team "
+                     "that owns the number \u2014 most yards gained, or fewest "
+                     "allowed."),
+            ("Edge", "The defending unit's rank minus the attacking unit's. A "
+                     "#3 offence against a #30 defence is +27."),
+            ("Read", "A word for the size of that gap as a share of the "
+                     "league. It describes DISTANCE between two ranks, not a "
+                     "probability."),
+            ("Pass rush", "Reads the other way round: a defence's sacks per "
+                          "game against the other team's offensive line."),
+            ("GP", "Games behind the ranks. One game is a first read, not a "
+                   "verdict."),
+        ])
+
         units = [u for u, _a, _d in UNIT_PAIRS]
         c1, c2 = st.columns([3, 2])
         with c1:

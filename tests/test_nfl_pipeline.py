@@ -177,19 +177,24 @@ def fake_get(url, _attempts=3, summaries=None):
 
 
 def run(get, today):
-    saved = (ef.get_json, npc.time.sleep)
+    saved = (ef.get_json, npc.time.sleep, npc.PROJECTION_LOG)
     ef.get_json = get
     npc.time.sleep = lambda *_a: None
     ef._PREFERRED.clear()
     cwd = os.getcwd()
     tmp = tempfile.mkdtemp()
+    # THE PROJECTION LOG GOES TO THE TEMP DIR, NOT THE REPO. main()
+    # writes it to a repo path on purpose so CI can commit it, which
+    # means an un-redirected test run drops fixture projections into the
+    # real record — see the note on npc.PROJECTION_LOG.
+    npc.PROJECTION_LOG = Path(tmp) / "projlog"
     os.chdir(tmp)
     try:
         npc.main(today=today)
         return json.loads((Path(tmp) / "build_data/data/nfl/games.json").read_text())
     finally:
         os.chdir(cwd)
-        ef.get_json, npc.time.sleep = saved
+        ef.get_json, npc.time.sleep, npc.PROJECTION_LOG = saved
 
 
 # ---------------------------------------------------------------- 2
@@ -263,6 +268,43 @@ check("prop rows: 4 QBs, most pass yards first",
 check("edge tiers scale with league size",
       nw.edge_tier(20, 32) == "Glaring" and nw.edge_tier(2, 4) == "Strong")
 
+# ---------------------------------------------------------------- 6
+# THE LIVE OVERLAY BUG: Thursday night's final never reached the card,
+# because the view asked the live feed about TODAY only. On Friday that
+# is no day at all, so a finished game sat there as "scheduled" with a
+# kickoff two days in the past.
+_wk = [
+    {"kick_date_et": "2026-09-17", "status": "scheduled"},   # TNF, played
+    {"kick_date_et": "2026-09-20", "status": "scheduled"},   # Sunday, ahead
+    {"kick_date_et": "2026-09-21", "status": "scheduled"},   # MNF, ahead
+]
+check("Friday still asks about Thursday's game",
+      nw.live_days(_wk, date(2026, 9, 18)) == ("2026-09-17",))
+check("a day in the future is never asked about",
+      nw.live_days(_wk, date(2026, 9, 16)) == ())
+check("Sunday asks about both days that have started",
+      nw.live_days(_wk, date(2026, 9, 20)) == ("2026-09-17", "2026-09-20"))
+check("a day already recorded final is not re-asked",
+      nw.live_days([dict(_wk[0], status="final")], date(2026, 9, 18)) == ())
+check("live_days returns a tuple (it is used as a cache key)",
+      isinstance(nw.live_days(_wk, date(2026, 9, 18)), tuple))
+
+# ---------------------------------------------------------------- 7
+# THE SUITE MUST NOT WRITE INTO THE REAL PROJECTION LOG. main() writes
+# it to a repo path deliberately so CI commits it; a test run that is
+# not redirected therefore files synthetic projections under today's
+# date, indistinguishable from a real record, for a grader to score
+# later as claims the site never made.
+_repo_log = ROOT / "data" / "nfl" / "projections"
+check("running the pipeline left no fixture projections in the repo",
+      not _repo_log.exists() or not any(_repo_log.glob("*.json")))
+check("the log path is redirectable at all (a module constant, not inline)",
+      hasattr(npc, "PROJECTION_LOG"))
+
+# THE EXIT GATE MUST BE THE LAST THING IN THIS FILE. Checks appended
+# below it record into `failures` after the only code that reads
+# `failures` has already run, which sends controls back green against
+# deliberately broken code.
 if failures:
     print(f"\n{len(failures)} FAILED")
     sys.exit(1)

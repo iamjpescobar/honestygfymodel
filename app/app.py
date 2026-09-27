@@ -297,6 +297,7 @@ SPORT_SUBPAGES = {
         ("The Week", "views/NFL.py"),
         ("Mismatch Finder", "views/NFL_Mismatch.py"),
         ("Prop Lab", "views/NFL_Props.py"),
+        ("Projections", "views/NFL_Projections.py"),
     ],
     # Hockey is a nightly slate through slate_guard("nhl"). The Crease
     # Report and Shots Lab read regular-season box scores only.

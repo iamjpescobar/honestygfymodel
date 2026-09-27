@@ -10,6 +10,166 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — Daily 13 was picking bench bats, and the grader was mislabelling starters. 2026-08-13 (2)
+
+**4 files (1 new test). Suite 92, FAILING: none.** Four controls red.
+
+### THE NUMBER THAT STARTED IT
+
+    daily13   221 picks | hit 133  miss 67  dnp 16 (7.2%)
+    hr_edge    79 picks | hit  18  miss 61  dnp  0 (0.0%)
+    potd       17 picks | hit   8  miss  9  dnp  0 (0.0%)
+
+One Daily 13 slot in fourteen went to someone who never appeared, while
+two other boards had ZERO across 96 picks. That gap is the whole story
+and it had two separate causes.
+
+### CAUSE 1 — the fallback pool was a 26-man ROSTER
+
+`get_confirmed_lineup` failing dropped Daily 13 to
+`get_live_team_roster`, which contains every bench bat and backup
+catcher. The recency cutoff is a weak filter: a backup who started twice
+last week clears it.
+
+HR Edge and Player of the Day fall back to the last STARTING LINEUP —
+nine men who start. That is the entire difference in the table above.
+
+Daily 13 now does the same, with the roster kept as a last resort for a
+team with no posted lineup to fall back on at all.
+
+### CAUSE 2 — a starter was being recorded as a DNP
+
+**James McCann appeared ungraded on two Daily 13 days while playing —
+and homering — for Arizona.** So the 7.2% is not purely bench bats;
+some of it is real starters the grader could not find.
+
+`_mlb_line` read **`stats[0]`** and ignored every other entry. A player
+who changes teams mid-season can come back as more than one, so every
+game after the move was invisible. Now every entry's splits are read.
+
+And there was no way to say *"the API answered, he wasn't there."* A
+timeout, a rate limit and a genuine bench night all returned None, were
+held open three days, then closed `dnp` — identical permanent records
+for completely different events.
+
+Three returns now:
+
+| return | meaning | grade() does |
+|---|---|---|
+| dict | he played | grade it |
+| `DID_NOT_PLAY` | API answered, not in his log | close `dnp` at once |
+| `None` | request failed | hold, retry |
+
+A pick still closed after FINALIZE_AFTER_DAYS with no answer gets
+`dnp_reason` and prints a warning naming the player. **A collection
+failure must be visible, not filed under the same word as a bench
+night.**
+
+### WHAT WAS NOT A BUG
+
+The three "ungraded" picks from 2026-08-12 are one day old and inside
+the three-day window by design. Closing early is what poisoned whole
+days before. They resolve on their own.
+
+### WORTH SEEING
+
+**Daily 13 is 133 of 200 resolved — 66.5% against a 62% baseline, over
+200 picks.** That is the strongest evidence on the site, and it is
+currently buried under a board that reads "8/13" on a day where three
+picks had not resolved.
+
+### NEXT
+Research page part 2. Then the calibration bands — score to observed
+rate from the research log, which is what turns a score into something
+a subscriber can act on. Do not tune weights before that exists.
+
+---
+
+## PICK UP HERE — the record was grading the 1 PM board. 2026-08-13
+
+**5 files (1 new test). Suite 91, FAILING: none.** Four controls red.
+
+### THE RECORD AND THE BOARD WERE DIFFERENT LISTS
+
+hr_edge graded FOUR picks on 2026-08-12 — Alonso, Schwarber, Harper,
+Encarnacion-Strand, all miss. The user reported seeing Ohtani, Carroll
+and Riley in the top 5. Both were right.
+
+Reconstructed from the 270-row research log, the board's real ranking:
+
+     1. Cal Raleigh     edge 100  raw 106.8
+     2. Shohei Ohtani   edge 100  raw  99.7
+     3. Pete Alonso     edge  99  raw  None
+     4. Kyle Schwarber  edge  99  raw  None
+     5. Austin Riley    edge  99  raw  98.7
+
+**Four picks on a fifteen-game slate is two confirmed lineups at 1 PM
+against a 2-per-game cap.** The record froze there and never looked
+again.
+
+### CAUSE 1 — stat=None IS A MARKET
+
+    logged_markets = {p.get("stat") for p in existing["picks"]}
+    fresh = [r for r in rows if r.get("stat") not in logged_markets]
+
+hr_edge, daily13 and potd carry `stat=None` on every pick. After the
+1 PM run `logged_markets == {None}`; at 5 and 7 PM every row was also
+None, so `fresh` was empty. **Every single-market board froze at the
+first run that produced anything.** The per-market rule was written for
+the WNBA boards, which have five real markets, and silently froze the
+MLB ones. The log said "every market already logged" — true, and
+completely misleading.
+
+Fixed: a board whose markets are all None REPLACES its picks each run.
+
+**BUT REPLACEMENT ALONE WAS WRONG, and an existing test caught it.**
+`test_calibration_picks.py` re-runs with a thinner board and asserts the
+fuller one survives — retry safety is what three daily runs are FOR, and
+plain replacement traded it away: a 7 PM hiccup returning two games would
+overwrite a good fifteen-game record. Guard is
+`len(rows) >= len(existing["picks"])`. `>=` not `>`, because an
+equal-sized evening board rests on more confirmed lineups and should win
+a tie.
+
+### CAUSE 2 — the board threw away every unconfirmed game
+
+`get_hr_edge_board(confirmed_only=True)` was the default, so before a
+lineup posted the game was simply absent. The list therefore APPEARED
+through the afternoon rather than refining, and reordered wholesale under
+anyone reading it.
+
+`_lineup_for` already falls back to the team's last posted lineup,
+already drops anyone since placed on the IL, and already reports
+`confirmed=False` upward so the weaker claim stays visible. **That good
+information was being discarded to avoid labelling it.**
+
+Now: `confirmed_only=False` by default on both `get_hr_edge_board` and
+`top_hr_edge`. Every game is rated from the morning. A **Lineup** column
+reads CONFIRMED or *projected* per row, and the caption reads
+"N of M lineups confirmed" with the fallback explained.
+
+`get_confirmed_lineup` already has ttl=300, so a lineup posted at 5:32 is
+on the board by 5:37. "Soonest possible" needed no work.
+
+### WHAT THIS DOES AND DOES NOT SOLVE
+
+Solved: the board no longer materialises out of nowhere, the record no
+longer grades lunchtime, and a projected row is visibly a weaker claim.
+
+**NOT solved: a projected row can still change.** A bat rated off
+yesterday's card may not be in tonight's lineup at all. The badge makes
+that visible; nothing makes it stop. The user considered per-window locks
+(11 AM / 5:30 PM / 8 PM for the late West Coast games, and the same shape
+for WNBA) and chose this instead — one always-complete list that refines,
+rather than three locked ones. Revisit if projected rows prove unstable.
+
+### NEXT
+Research page part 2 (the view; presets storage still undecided). The
+per-game log table builds on the next nightly. The research grader's
+data-root fix is in — expect `graded 270 bat(s) for 2026-08-12`.
+
+---
+
 ## PICK UP HERE — the research grader was reading the wrong data root. 2026-08-13
 
 **3 files. Suite 90, FAILING: none.** Control red.

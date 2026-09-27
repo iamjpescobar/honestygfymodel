@@ -13,7 +13,7 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from styles.kc_theme import page_header, footer, COLOR, SPORT_ACCENTS
+from styles.kc_theme import page_header, footer, how_to_read, COLOR, SPORT_ACCENTS
 from styles.table_style import style_stat_table
 from engines.nfl_week import (EASTERN, PROP_COLUMNS, load_week,
                               staleness_note, prop_rows)
@@ -39,6 +39,22 @@ if state != "current":
     st.info(staleness_note(payload or {}, state, _today))
 else:
     games = payload.get("games") or []
+    how_to_read([
+        ("Per-game averages", "From real box scores, over the games in which "
+                              "the player HAS a line in that category \u2014 a "
+                              "quarterback who never carried the ball has no "
+                              "rushing game, not a zero."),
+        ("Season / Last 3 / Last game", "The same players against three "
+                                        "windows. Where they disagree is the "
+                                        "useful part."),
+        ("Opp allows", "Yards that defence gives up per game in this phase."),
+        ("Opp rank", "1 to 32, where a HIGH number is a SOFT defence."),
+        ("Who is listed", "The team's current roster, ranked by volume "
+                          "\u2014 attempts, carries, targets."),
+        ("Projections", "This page is what has happened. The Projections tab "
+                        "is what the volume and the matchup imply next."),
+    ])
+
     c1, c2 = st.columns([3, 2])
     with c1:
         role_lab = st.segmented_control("Position group", list(_ROLES),

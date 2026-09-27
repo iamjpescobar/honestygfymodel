@@ -14,10 +14,10 @@ from datetime import datetime
 
 import streamlit as st
 
-from styles.kc_theme import (page_header, badge, footer, card, COLOR,
-                             SPORT_ACCENTS)
+from styles.kc_theme import (page_header, badge, footer, card, how_to_read,
+                             COLOR, SPORT_ACCENTS)
 from engines.live_sync import sync_latest_button
-from engines.nfl_week import (EASTERN, WINDOW_ORDER, load_week,
+from engines.nfl_week import (EASTERN, WINDOW_ORDER, load_week, live_days,
                               staleness_note, mismatches, edge_tier)
 from engines.espn_feed import live_scores
 
@@ -36,9 +36,18 @@ def _load_week_for(day):
     return load_week()
 
 
-@st.cache_data(ttl=60, max_entries=4, show_spinner=False)
-def _live(day):
-    return live_scores("nfl", day.replace("-", ""))
+@st.cache_data(ttl=60, max_entries=8, show_spinner=False)
+def _live(days):
+    """Live and final scores for every day of the week that has started.
+
+    One request per day, shared across sessions for a minute, {} on any
+    failure. Which days to ask about is nfl_week.live_days — see the
+    note there for the bug this replaced.
+    """
+    out = {}
+    for d in days:
+        out.update(live_scores("nfl", d.replace("-", "")))
+    return out
 
 
 def _esc(s):
@@ -226,6 +235,29 @@ def _chips(g):
     return " ".join(chips)
 
 
+def _render_result(g, a_s, h_s):
+    """What the final says about the two numbers the card showed before
+    it — the posted total and the posted line. Stated as arithmetic on
+    the final score, NOT graded as a pick: nothing on this page was one.
+    """
+    if a_s is None or h_s is None:
+        return
+    bits = [f'Final: {_esc(g.get("away_abbr"))} {a_s} \u2013 {h_s} {_esc(g.get("home_abbr"))}']
+    odds = g.get("odds") or {}
+    total = odds.get("total")
+    if total is not None:
+        combined = a_s + h_s
+        side = "OVER" if combined > total else ("UNDER" if combined < total else "PUSH")
+        bits.append(f'{combined} combined against a posted total of {total:g} '
+                    f'\u2014 {side}')
+    if odds.get("details"):
+        bits.append(f'posted line {_esc(odds["details"])}')
+    st.markdown(
+        f'<div style="font-size:var(--lc-text-small); color:{COLOR["text_muted"]}; '
+        f'line-height:1.8;">' + " \u00b7 ".join(bits) + "</div>",
+        unsafe_allow_html=True)
+
+
 def _render_game(g, live):
     lv = live.get((g.get("away"), g.get("home"))) or {}
     status = lv.get("status") or g.get("status") or "scheduled"
@@ -248,6 +280,8 @@ def _render_game(g, live):
             f'{_team_line(g, "home")}</div>{score}</div>',
             unsafe_allow_html=True)
         st.markdown(_chips(g), unsafe_allow_html=True)
+        if status == "final":
+            _render_result(g, a_s, h_s)
         _render_edges(g)
         _render_key_players(g)
         with st.expander("Tale of the tape"):
@@ -269,13 +303,37 @@ else:
         + badge(f'{payload.get("finals_parsed", 0)} box scores behind the numbers', "good"),
         unsafe_allow_html=True)
 
+    how_to_read([
+        ("The week, not tonight",
+         "Football is read days ahead, so this board covers Tuesday to "
+         "Monday. It rolls over to the next week on Tuesday morning."),
+        ("TV windows",
+         "Games are grouped by slot \u2014 Thursday Night, the Sunday early "
+         "and late kickoffs, Sunday Night, Monday Night."),
+        ("#N beside a number",
+         "That team's rank among the 32 in that stat, where #1 is best AT "
+         "THAT THING: most yards gained, or fewest allowed. Cyan is a top "
+         "third of the league, red a bottom third."),
+        ("Biggest edge each side",
+         "The widest gap between one team's unit and the unit across from it. "
+         "\u201cBUF pass game #4 vs #32\u201d is the 4th-ranked passing offence "
+         "against the worst pass defence. Every pairing is on Mismatch Finder."),
+        ("GP and sample size",
+         "Every average is real box scores only. In September that is one or "
+         "two games, so the GP count sits beside the numbers \u2014 an early "
+         "rank is a first read, not a verdict."),
+        ("Lines and weather",
+         "Shown exactly as ESPN lists them, as context. Nothing on this page "
+         "is a pick, and no line here is a recommendation."),
+    ])
+
     present = [w for w in WINDOW_ORDER if any(g.get("window") == w for g in games)]
     pick = st.segmented_control("Window", ["All"] + present, default="All",
                                 key="nfl_window", label_visibility="collapsed")
     shown = games if pick in (None, "All") else [g for g in games if g.get("window") == pick]
 
-    today_s = _today.isoformat()
-    live = _live(today_s) if any(g.get("kick_date_et") == today_s for g in games) else {}
+    _days = live_days(games, _today)
+    live = _live(_days) if _days else {}
 
     if not shown:
         st.info("No games in that window this week.")

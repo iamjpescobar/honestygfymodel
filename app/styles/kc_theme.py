@@ -1246,6 +1246,28 @@ def coming_soon_page(sport: str, emoji: str, blurb_tail: str, planned):
     footer()
 
 
+def how_to_read(lines, title="How to read this page"):
+    """A collapsed panel explaining a board in plain language.
+
+    Every board on this site is dense on purpose, and a reader who cannot
+    tell a rank that counts up from one that counts down will either
+    misread it or ignore it — both worse than the space this costs.
+    Collapsed by default so it never gets in the way of someone who
+    already knows.
+
+    `lines` is a list of (term, explanation) pairs.
+    """
+    import streamlit as st
+
+    with st.expander(title):
+        for term, body in lines:
+            st.markdown(
+                f'<div style="margin-bottom:var(--lc-space-md);">'
+                f'<span style="color:{COLOR["stat_high"]}; font-weight:700;">{term}</span>'
+                f'<span style="color:{COLOR["text_muted"]};"> \u2014 {body}</span></div>',
+                unsafe_allow_html=True)
+
+
 def footer():
     """Shared site footer — disclosure + build identity. Call once at the
     bottom of every page so the legal/responsible-gambling language is

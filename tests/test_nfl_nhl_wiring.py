@@ -32,7 +32,8 @@ for node in tree.body:
         subpages = ast.literal_eval(node.value)
 check("SPORT_SUBPAGES is a literal", isinstance(subpages, dict))
 subpages = subpages or {}
-for lg, want in (("NFL", {"views/NFL.py", "views/NFL_Mismatch.py", "views/NFL_Props.py"}),
+for lg, want in (("NFL", {"views/NFL.py", "views/NFL_Mismatch.py",
+                          "views/NFL_Props.py", "views/NFL_Projections.py"}),
                  ("NHL", {"views/NHL.py", "views/NHL_Crease.py", "views/NHL_Shots.py"})):
     paths = {p for _t, p in subpages.get(lg, [])}
     check(f"{lg} has its three pages in the nav", paths == want)
@@ -48,13 +49,34 @@ if cap:
     check("caption no longer lists NFL/NHL as soon", "NFL" not in soon and "NHL" not in soon)
     check("caption still lists NBA as soon", "NBA" in soon)
 
-for v in ("NFL", "NFL_Mismatch", "NFL_Props", "NHL", "NHL_Crease", "NHL_Shots"):
+for v in ("NFL", "NFL_Mismatch", "NFL_Props", "NFL_Projections", "NHL",
+          "NHL_Crease", "NHL_Shots"):
     code = "\n".join(l.split("#")[0] for l in
                      (ROOT / "app" / "views" / f"{v}.py").read_text().splitlines())
     check(f"{v} is not a coming-soon stub", "coming_soon_page(" not in code)
     # st.stop() inside a view ends the WHOLE app run, so the right-hand
     # sidebar (account card, Sign out) rendered after it never appears.
     check(f"{v} never calls st.stop()", "st.stop(" not in code)
+# EVERY DENSE BOARD EXPLAINS ITSELF. These pages carry ranks running in
+# two directions, rates per attempt, and a probability resting on a named
+# assumption. A reader who cannot tell those apart either misreads the
+# board or ignores it.
+for v in ("NFL", "NFL_Mismatch", "NFL_Props", "NFL_Projections",
+          "NHL_Crease", "NHL_Shots"):
+    check(f"{v} carries a how-to-read panel",
+          "how_to_read(" in (ROOT / "app" / "views" / f"{v}.py").read_text())
+
+# The live-overlay rule lives in the ENGINE, where it can be tested. It
+# was one untestable line in the view, and it was wrong.
+nfl_view = (ROOT / "app" / "views" / "NFL.py").read_text()
+check("NFL view uses nfl_week.live_days", "live_days(games" in nfl_view)
+
+# The projection log is a record for grading. A log the nightly writes
+# and never commits is a log that does not exist.
+_wf = (ROOT / ".github" / "workflows" / "nightly-data.yml").read_text()
+check("the nightly commits the NFL projection log",
+      "data/nfl/projections" in _wf and "git add data/nfl/projections" in _wf)
+
 check("NBA is still the honest coming-soon page",
       "coming_soon_page(" in (ROOT / "app" / "views" / "NBA.py").read_text())
 

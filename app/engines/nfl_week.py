@@ -132,6 +132,32 @@ def staleness_note(payload, state, today=None):
     return ""
 
 
+def live_days(games, today):
+    """The week's dates worth asking the live feed about, as a tuple.
+
+    A day qualifies when it has already started (<= today) AND still
+    holds a game the recorded file does not have as final. A future day
+    cannot have a score; a day whose games are all final needs no
+    overlay.
+
+    THIS WAS ONE LINE INSIDE THE VIEW AND IT WAS WRONG: it asked only
+    about TODAY. The week file is built in the morning, so Thursday
+    night's final was never recorded, was never overlaid on Friday, and
+    the card showed a finished game as "scheduled" with a kickoff time
+    two days in the past. Silent, and exactly the staleness failure the
+    WNBA overlay had one league over.
+
+    Pure, and returns a tuple so the view can hand it straight to
+    st.cache_data as a key — and so this can be tested, which the line
+    inside the view could not be.
+    """
+    day = today.isoformat() if hasattr(today, "isoformat") else str(today)
+    return tuple(sorted({
+        g["kick_date_et"] for g in games or []
+        if g.get("kick_date_et") and g["kick_date_et"] <= day
+        and g.get("status") != "final"}))
+
+
 # ----------------------------------------------------------------------
 # Mismatch Finder
 # ----------------------------------------------------------------------

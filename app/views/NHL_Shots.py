@@ -13,7 +13,8 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from styles.kc_theme import page_header, footer, card, COLOR, SPORT_ACCENTS
+from styles.kc_theme import (page_header, footer, card, how_to_read,
+                             COLOR, SPORT_ACCENTS)
 from styles.table_style import style_stat_table
 from engines.slate_guard import load_slate, staleness_note, today_for
 from engines.nhl_rink import (phase, countdown_text, shots_rows, HIT_RATES,
@@ -53,6 +54,19 @@ if not has_skaters:
     if note:
         st.caption(note)
 else:
+    how_to_read([
+        ("SOG/G", "Shots on goal per game \u2014 the most repeatable number a "
+                  "skater produces, which is why the board sorts on it."),
+        ("Season / L10 / L5", "The same skaters over three windows. TOI is "
+                              "average minutes."),
+        ("Hit-rate columns", "Always SEASON counts: the share of his games "
+                             "with 2+ shots, 3+ shots, or at least a point. A "
+                             "count of what happened, not a forecast."),
+        ("Opp SA/G", "Shots the opponent allows per game \u2014 higher means "
+                     "more room to shoot."),
+        ("Preseason", "Exhibition box scores are excluded from every number."),
+    ])
+
     c1, c2, c3 = st.columns([2, 2, 2])
     with c1:
         wlab = st.segmented_control("Window", list(_WINDOWS), default="Season",

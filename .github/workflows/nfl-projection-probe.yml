@@ -1,0 +1,32 @@
+name: NFL projection probe
+
+# Manual only. Walk-forward test of the projection engine: profiles are
+# built from the weeks BEFORE each week, projections are made for that
+# week, and they are scored against that week's real box scores.
+#
+# Answers the three questions nfl_projection.py ships with open — does
+# the matchup multiplier help, does a measured share predict, and is the
+# Poisson anytime-TD step calibrated. Run it after every few weeks of
+# football; distributions drift and one week proves nothing.
+#
+# Touches nothing: no commit, no release, no deploy hook.
+on:
+  workflow_dispatch:
+    inputs:
+      through:
+        description: "Score every week through this date (YYYY-MM-DD). Blank = today."
+        required: false
+        default: ""
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Walk-forward the projections
+        run: python nfl_projection_probe.py "${{ inputs.through }}"

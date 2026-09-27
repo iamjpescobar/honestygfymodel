@@ -43,6 +43,19 @@ EASTERN = ZoneInfo("America/New_York")
 LEAGUE = "nfl"
 OUT = Path("build_data") / "data" / "nfl"
 
+# THE PROJECTION LOG IS THE ONE THING HERE THAT WRITES TO THE REPO, and
+# it is a module constant so a test can point it somewhere else.
+#
+# It was ROOT / "data" / ... inline, which meant every run of
+# tests/test_nfl_pipeline.py — which calls main() four times against
+# synthetic games — wrote FIXTURE projections into the real log
+# directory, under today's date, looking exactly like a genuine record.
+# A grader reading that later would score claims the site never made,
+# against players who were never on the slate, and nothing about the
+# file would say so. The suite polluting production data is the bug;
+# the repo path is correct and stays.
+PROJECTION_LOG = ROOT / "data" / "nfl" / "projections"
+
 # ----------------------------------------------------------------------
 # Box-score column maps. keys first, labels second — see
 # espn_feed.box_group_index. Group NAME decides the category, because
@@ -236,6 +249,85 @@ def game_info(summary):
 # ----------------------------------------------------------------------
 # Team research
 # ----------------------------------------------------------------------
+# ----------------------------------------------------------------------
+# PER-GAME TEAM USAGE, summed from the player lines.
+#
+# Derived from the players rather than read off the team box on purpose:
+# a share needs a numerator and a denominator from the SAME source. Team
+# box "rushing attempts" and the sum of the backs' carries disagree on
+# scrambles and laterals, and a share built across that mismatch can
+# exceed 1.0 for no visible reason.
+# ----------------------------------------------------------------------
+def team_game_usage(logs):
+    """{(event_id, team): {carries, targets, rec, rush_yds, rec_yds, td}}."""
+    out = {}
+    for rec in logs.values():
+        for eid, g in (rec.get("games") or {}).items():
+            key = (str(eid), g.get("team"))
+            t = out.setdefault(key, {"carries": 0.0, "targets": 0.0, "rec": 0.0,
+                                     "rush_yds": 0.0, "rec_yds": 0.0, "td": 0.0})
+            r, c = g.get("rushing") or {}, g.get("receiving") or {}
+            t["carries"] += r.get("att") or 0
+            t["rush_yds"] += r.get("yds") or 0
+            t["targets"] += c.get("tgt") or 0
+            t["rec"] += c.get("rec") or 0
+            t["rec_yds"] += c.get("yds") or 0
+            # RUSHING + RECEIVING ONLY. A passing TD IS the receiving TD
+            # on the other end of the same throw — adding both would
+            # double every passing score, inflating team TD rates and
+            # every opponent's TDs allowed under a label saying
+            # otherwise (rule 9).
+            t["td"] += (r.get("td") or 0) + (c.get("td") or 0)
+    return out
+
+
+def league_constants(finals, usage):
+    """The league-average rates the projection divides by, MEASURED.
+
+    Every one of these was a candidate to be typed in by eye, and rule 1
+    says everything on this site chosen that way turned out wrong. They
+    are recomputed from the season's real finals on every nightly and
+    shipped in games.json, so the page can show what it used and a
+    reader can check it.
+
+    td_per_point is the load-bearing one: given the market implies a
+    team scores N points, how many offensive touchdowns has a point
+    historically been worth? Measured as offensive TDs over team points,
+    which correctly nets out field goals — and, deliberately, counts a
+    defensive score in the denominator, because the market's total
+    includes those points too and the projection is dividing that same
+    total.
+    """
+    pts = tds = carries = rush_yds = targets = recs = rec_yds = 0.0
+    games = 0
+    for f in finals:
+        for side, opp in (("away", "home"), ("home", "away")):
+            u = usage.get((str(f.get("event_id")), f[side]))
+            if not u:
+                continue
+            games += 1
+            pts += f[f"{side}_score"]
+            tds += u["td"]
+            carries += u["carries"]
+            rush_yds += u["rush_yds"]
+            targets += u["targets"]
+            recs += u["rec"]
+            rec_yds += u["rec_yds"]
+    if not games:
+        return {}
+    return {
+        "team_games": games,
+        "td_per_point": round(tds / pts, 4) if pts else None,
+        "points_pg": round(pts / games, 1),
+        "td_pg": round(tds / games, 2),
+        "ypc": round(rush_yds / carries, 2) if carries else None,
+        "yards_per_target": round(rec_yds / targets, 2) if targets else None,
+        "catch_rate": round(recs / targets, 3) if targets else None,
+        "carries_pg": round(carries / games, 1),
+        "targets_pg": round(targets / games, 1),
+    }
+
+
 def _avg(vals, nd=1):
     vals = [v for v in vals if v is not None]
     return round(sum(vals) / len(vals), nd) if vals else None
@@ -248,7 +340,7 @@ def _rate(m_vals, a_vals):
     return round(100.0 * sum(m for m, _ in pairs) / sum(a for _, a in pairs), 1)
 
 
-def team_research(finals):
+def team_research(finals, usage=None):
     """{team: profile} from final game records.
 
     `finals` items: {date, week, away, home, away_score, home_score,
@@ -265,6 +357,10 @@ def team_research(finals):
                 "pf": f[f"{side}_score"], "pa": f[f"{opp}_score"],
                 "off": f.get(f"{side}_box") or {},
                 "dff": f.get(f"{opp}_box") or {},
+                # None, not 0, when this game's player block did not
+                # parse — an unparsed game is not a shutout (rule 6).
+                "use": (usage or {}).get((str(f.get("event_id")), f[side])),
+                "use_opp": (usage or {}).get((str(f.get("event_id")), f[opp])),
             })
     out = {}
     for team, games in per.items():
@@ -287,6 +383,10 @@ def team_research(finals):
             "third_pct": _rate([o.get("third_m") for o in off], [o.get("third_a") for o in off]),
             "rz_td_pct": _rate([o.get("rz_m") for o in off], [o.get("rz_a") for o in off]),
             "top": _avg([o.get("top") for o in off]),
+            "td_pg": _avg([(g["use"] or {}).get("td") if g["use"] else None
+                           for g in games], 2),
+            "td_allowed_pg": _avg([(g["use_opp"] or {}).get("td") if g["use_opp"] else None
+                                   for g in games], 2),
             "ypg_allowed": _avg([d.get("yds") for d in dff]),
             "pass_allowed": _avg([d.get("pass_yds") for d in dff]),
             "rush_allowed": _avg([d.get("rush_yds") for d in dff]),
@@ -298,6 +398,43 @@ def team_research(finals):
             "results": [f'{"W" if g["pf"] > g["pa"] else "L" if g["pf"] < g["pa"] else "T"}'
                         for g in games],
         }
+        # VOLUME AND EFFICIENCY, on both sides of the ball, per attempt.
+        #
+        # Yards per game says a defense is leaky; yards per CARRY says
+        # whether that is the defense or just how often it was run on.
+        # The projection multiplies a volume by a rate, so it needs the
+        # rate — a per-game figure would smuggle the opponent's play
+        # count into this team's number.
+        own = [g["use"] for g in games if g["use"]]
+        opp_use = [g["use_opp"] for g in games if g["use_opp"]]
+
+        # NOT named _rate. A module-level _rate() already exists and is
+        # called higher up in this same function for third-down and
+        # red-zone conversion; a nested def with that name shadows it for
+        # the ENTIRE function body, including those earlier calls, and
+        # Python raises UnboundLocalError on the first of them. Caught by
+        # the suite, which is the only reason this is a comment and not a
+        # production outage.
+        def _per(rows, num, den, nd=2):
+            n = sum(r[num] for r in rows)
+            d = sum(r[den] for r in rows)
+            return round(n / d, nd) if d else None
+
+        if own:
+            prof["carries_pg"] = round(sum(r["carries"] for r in own) / len(own), 1)
+            prof["targets_pg"] = round(sum(r["targets"] for r in own) / len(own), 1)
+            prof["ypc"] = _per(own, "rush_yds", "carries")
+            prof["yards_per_target"] = _per(own, "rec_yds", "targets")
+            prof["catch_rate"] = _per(own, "rec", "targets", 3)
+        if opp_use:
+            prof["ypc_allowed"] = _per(opp_use, "rush_yds", "carries")
+            prof["ypt_allowed"] = _per(opp_use, "rec_yds", "targets")
+            prof["catch_rate_allowed"] = _per(opp_use, "rec", "targets", 3)
+            prof["carries_faced_pg"] = round(
+                sum(r["carries"] for r in opp_use) / len(opp_use), 1)
+            prof["targets_faced_pg"] = round(
+                sum(r["targets"] for r in opp_use) / len(opp_use), 1)
+
         if prof["to_pg"] is not None and prof["takeaways_pg"] is not None:
             prof["to_margin_pg"] = round(prof["takeaways_pg"] - prof["to_pg"], 1)
         out[team] = prof
@@ -306,7 +443,8 @@ def team_research(finals):
 
 # (stat, True when HIGHER is better for the team that owns it)
 RANKED = [
-    ("pf_pg", True), ("pa_pg", False),
+    ("pf_pg", True), ("pa_pg", False), ("td_pg", True), ("td_allowed_pg", False),
+    ("ypc_allowed", False), ("ypt_allowed", False), ("catch_rate_allowed", False),
     ("ypg", True), ("pass_ypg", True), ("rush_ypg", True),
     ("to_pg", False), ("sacked_pg", False), ("third_pct", True), ("rz_td_pct", True),
     ("ypg_allowed", False), ("pass_allowed", False), ("rush_allowed", False),
@@ -349,7 +487,7 @@ PLAYER_STATS = [
 ]
 
 
-def player_summaries(logs):
+def player_summaries(logs, usage=None):
     """{pid: summary} with season / L3 / last per stat, from logs only."""
     out = {}
     for pid, rec in logs.items():
@@ -373,13 +511,67 @@ def player_summaries(logs):
             s[f"{key}_l3"] = round(sum(vals[-3:]) / len(vals[-3:]), 1)
             s[f"{key}_last"] = vals[-1]
             s[f"{cat[:4]}_gp"] = len(vals)
+        # SHARES, from season totals rather than an average of per-game
+        # shares. A back who took 2 carries in a blowout and 20 the week
+        # before has two very different game shares; averaging them
+        # weights the 2-carry game equally. Totals over totals is the
+        # share he actually had of the football.
+        tc = tt = 0.0
+        for g in games:
+            u = (usage or {}).get((str(g.get("event_id")), g.get("team")))
+            if not u:
+                continue
+            tc += u["carries"]
+            tt += u["targets"]
+        own_car = sum((g.get("rushing") or {}).get("att") or 0 for g in games)
+        own_tgt = sum((g.get("receiving") or {}).get("tgt") or 0 for g in games)
+        own_rec = sum((g.get("receiving") or {}).get("rec") or 0 for g in games)
+        own_ry = sum((g.get("rushing") or {}).get("yds") or 0 for g in games)
+        own_cy = sum((g.get("receiving") or {}).get("yds") or 0 for g in games)
+        if tc:
+            s["carry_share"] = round(own_car / tc, 3)
+        if tt:
+            s["target_share"] = round(own_tgt / tt, 3)
+        if own_car:
+            s["ypc"] = round(own_ry / own_car, 2)
+        if own_tgt:
+            s["yards_per_target"] = round(own_cy / own_tgt, 2)
+            s["catch_rate"] = round(own_rec / own_tgt, 3)
+
+        # TOUCHDOWNS, per game rather than per category. A rushing score
+        # and a receiving score are different plays and add; a passing
+        # score is the same play as somebody's receiving score and is
+        # kept in its own column (see team_game_usage).
+        per_game_td, per_game_opps = [], []
+        for g in games:
+            r, c = g.get("rushing"), g.get("receiving")
+            if r is None and c is None:
+                continue
+            per_game_td.append(((r or {}).get("td") or 0) + ((c or {}).get("td") or 0))
+            per_game_opps.append(((r or {}).get("att") or 0) + ((c or {}).get("tgt") or 0))
+        if per_game_td:
+            s["td"] = round(sum(per_game_td) / len(per_game_td), 2)
+            s["td_total"] = sum(per_game_td)
+            s["td_games"] = len(per_game_td)
+            # A COUNT of what happened, never a probability of what will:
+            # the share of his games with a score in them.
+            s["anytime_rate"] = round(
+                100.0 * sum(1 for v in per_game_td if v >= 1) / len(per_game_td))
+        if per_game_opps:
+            s["opps"] = round(sum(per_game_opps) / len(per_game_opps), 1)
+            s["opps_l3"] = round(sum(per_game_opps[-3:]) / len(per_game_opps[-3:]), 1)
+
         s["log"] = [
             {"week": g.get("week"), "opp": g.get("opp"),
              "pass_yds": (g.get("passing") or {}).get("yds"),
              "rush_yds": (g.get("rushing") or {}).get("yds"),
              "rec_yds": (g.get("receiving") or {}).get("yds"),
              "rec": (g.get("receiving") or {}).get("rec"),
-             "tgt": (g.get("receiving") or {}).get("tgt")}
+             "tgt": (g.get("receiving") or {}).get("tgt"),
+             "td": (((g.get("rushing") or {}).get("td") or 0)
+                    + ((g.get("receiving") or {}).get("td") or 0)
+                    if (g.get("rushing") or g.get("receiving")) else None),
+             "pass_td": (g.get("passing") or {}).get("td")}
             for g in games
         ]
         out[pid] = s
@@ -571,7 +763,7 @@ def main(today=None):
                 first = False
             if n_pl:
                 parsed += 1
-            finals.append({"date": d.isoformat(), "week": gw,
+            finals.append({"date": d.isoformat(), "week": gw, "event_id": g["event_id"],
                            "away": g["away"], "home": g["home"],
                            "away_score": g["away_score"], "home_score": g["home_score"],
                            "away_box": box.get(g["away"]), "home_box": box.get(g["home"])})
@@ -587,8 +779,10 @@ def main(today=None):
                            f"({failed}/{days} scoreboard days unreachable). Refusing "
                            f"to publish a week with no numbers behind it.")
 
-    teams = attach_ranks(team_research(finals))
-    players = player_summaries(logs)
+    usage = team_game_usage(logs)
+    league = league_constants(finals, usage)
+    teams = attach_ranks(team_research(finals, usage))
+    players = player_summaries(logs, usage)
     print(f"NFL: week {wk} ({w_start}..{w_end}) — {len(week_events)} games; "
           f"{parsed}/{finals_seen} finals parsed -> {len(teams)} teams, "
           f"{len(players)} players")
@@ -596,6 +790,19 @@ def main(today=None):
         top = max(players.values(), key=lambda p: p.get("pass_yds") or 0)
         print(f"  [verify] passing-yards leader parsed: {top['name']} ({top['team']}) "
               f"{top.get('pass_yds')} per game over {top.get('pass_gp')} GP")
+        scorer = max(players.values(), key=lambda p: p.get("td_total") or 0)
+        print(f"  [verify] TD leader parsed: {scorer['name']} ({scorer['team']}) "
+              f"{scorer.get('td_total')} TD in {scorer.get('td_games')} games, "
+              f"{scorer.get('opps')} opportunities/G")
+    # THE CONSTANTS THE PROJECTION DIVIDES BY, printed every run. A
+    # td_per_point that drifts far from ~0.10, or a league ypc far from
+    # ~4.2, means the parse changed shape — and that would move every
+    # projection on the board with nothing else to show for it.
+    print(f"  [verify] league constants over {league.get('team_games')} team-games: "
+          f"{league.get('points_pg')} pts/G, {league.get('td_pg')} off TD/G, "
+          f"td_per_point {league.get('td_per_point')}, ypc {league.get('ypc')}, "
+          f"yds/target {league.get('yards_per_target')}, "
+          f"catch rate {league.get('catch_rate')}")
 
     rosters = {}
     for g in week_events:
@@ -624,6 +831,49 @@ def main(today=None):
                 g[side], players, rosters.get(g.get(f"{side}_id")) or {})
 
     week_events.sort(key=lambda g: g.get("kickoff_et") or "")
+
+    # ------------------------------------------------------------------
+    # THE PROJECTION LOG — written to the REPO, not the archive.
+    #
+    # build_data/ is rebuilt from scratch every run and only survives as
+    # the tarball the app unpacks, so a record written there is a record
+    # that vanishes. calibration.json and lineup_lock.json already take
+    # the repo route for exactly this reason, and the workflow commits
+    # them; this joins them.
+    #
+    # Only games that have NOT kicked off are logged. A projection made
+    # after the whistle is not a projection, and grading one later would
+    # measure a claim the site never made — the same rule hr_edge
+    # follows about confirmed lineups.
+    # ------------------------------------------------------------------
+    try:
+        from engines.nfl_projection import MARKETS, projection_rows
+        _pending = [g for g in week_events if g.get("status") == "scheduled"]
+        if _pending and league:
+            _log = {}
+            for _m in MARKETS:
+                _log[_m] = [
+                    {"player": r["Player"], "team": r["Team"], "opp": r["Opp"],
+                     "pos": r["Pos"], "gp": r["GP"], "proj": r["Proj"],
+                     "window": r["_window"]}
+                    for r in projection_rows(_pending, league, _m)[:40]
+                ]
+            _dir = PROJECTION_LOG
+            _dir.mkdir(parents=True, exist_ok=True)
+            (_dir / f"{now_et:%Y-%m-%d}.json").write_text(json.dumps({
+                "generated_at_et": now_et.strftime("%Y-%m-%d %H:%M"),
+                "week": wk,
+                "league": league,
+                "markets": _log,
+            }, ensure_ascii=False, indent=2))
+            print(f"NFL: logged projections for {len(_pending)} unplayed games "
+                  f"across {len(_log)} markets -> data/nfl/projections/"
+                  f"{now_et:%Y-%m-%d}.json")
+    except Exception as exc:
+        # A failed log must never cost the week file — the board is the
+        # product, the log is a record for grading it later.
+        print(f"NFL: projection log skipped ({type(exc).__name__}: {exc})")
+
     (OUT / "games.json").write_text(json.dumps({
         "generated_at_et": now_et.strftime("%Y-%m-%d %H:%M"),
         "source": "ESPN public NFL API (scoreboard + game summaries + rosters)",
@@ -633,6 +883,7 @@ def main(today=None):
         "week_start_et": w_start.isoformat(),
         "week_end_et": w_end.isoformat(),
         "finals_parsed": parsed,
+        "league": league,
         "games": week_events,
         "teams": teams,
     }, ensure_ascii=False, indent=2))

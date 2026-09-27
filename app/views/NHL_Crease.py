@@ -12,7 +12,8 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from styles.kc_theme import page_header, footer, card, COLOR, SPORT_ACCENTS
+from styles.kc_theme import (page_header, footer, card, how_to_read,
+                             COLOR, SPORT_ACCENTS)
 from styles.table_style import style_stat_table
 from engines.slate_guard import load_slate, today_for, payload_field, staleness_note
 from engines.nhl_rink import (phase, countdown_text, crease_rows,
@@ -57,6 +58,19 @@ if not goalies:
 else:
     tonight = {g.get(s) for g in games for s in ("away", "home")
                if g.get("game_type") != "preseason"}
+    how_to_read([
+        ("SV% and GAA", "Pooled over every regular-season appearance: saves "
+                        "divided by shots, and goals times 60 divided by "
+                        "minutes."),
+        ("L5 SV%", "His last five STARTS, not appearances \u2014 relief "
+                   "outings are a handful of shots and would swamp it."),
+        ("Crease share", "How many of his team's last 10 games he started. A "
+                         "workload count, NOT a confirmed starter for tonight."),
+        ("SA/60", "Shots faced per sixty minutes \u2014 how much work the "
+                  "team in front of him leaves him."),
+        ("Preseason", "Exhibition games are excluded from every number here."),
+    ])
+
     only = st.toggle("Only teams playing on the current slate", value=bool(tonight),
                      key="nhl_crease_tonight", disabled=not tonight)
     min_gs = st.slider("Minimum starts", 0, 20, 1, key="nhl_crease_min")
