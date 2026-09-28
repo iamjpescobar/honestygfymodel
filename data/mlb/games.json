@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-09-27 19:46",
+  "generated_at_et": "2026-09-27 21:26",
   "slate_date_et": "2026-09-27",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -434,7 +434,7 @@
       "venue": "Yankee Stadium",
       "game_time": "2026-09-27T17:05:00Z",
       "weather_condition": "Light Rain",
-      "weather_temp": 66,
+      "weather_temp": 64,
       "weather_wind": "NE 15 mph",
       "park_factor": 101,
       "park_verified": true,
@@ -450,8 +450,9 @@
         "SLG against: edge New York Yankees (0.389 vs 0.353)"
       ],
       "ou_lean": "Under",
-      "ou_grade": "C-",
+      "ou_grade": "C",
       "ou_signals": [
+        "Temp 64F (cold suppresses)",
         "Starters' avg WHIP 1.61 (high)",
         "Starters' avg HR/9 0.73 (low)",
         "Starters' avg SLG against 0.371 (low)"
