@@ -1,0 +1,932 @@
+{
+  "generated_at_et": "2026-09-28 12:14",
+  "week": 3,
+  "league": {
+    "team_games": 94,
+    "td_per_point": 0.1079,
+    "points_pg": 23.0,
+    "td_pg": 2.48,
+    "ypc": 4.18,
+    "yards_per_target": 7.51,
+    "catch_rate": 0.678,
+    "carries_pg": 26.8,
+    "targets_pg": 30.9,
+    "td_per_opportunity": 0.04298,
+    "prior_strength": 83.1,
+    "prior_a": 3.5719,
+    "prior_b": 79.5315,
+    "players_fitted": 409,
+    "touches_fitted": 5421
+  },
+  "markets": {
+    "Anytime TD": [
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 52,
+        "window": "Monday Night"
+      },
+      {
+        "player": "DeVonta Smith",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 35,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 33,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tank Bigsby",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 31,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Monangai",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 30,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dontayvion Wicks",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 22,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dallas Goedert",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 22,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kalif Raymond",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 16,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Darius Cooper",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 15,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Luther Burden III",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 15,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Johnny Mundt",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 1,
+        "proj": 12,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Makai Lemon",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 12,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rome Odunze",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Hollywood Brown",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Sam Roush",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 1,
+        "proj": 8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Colston Loveland",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Cole Kmet",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 7,
+        "window": "Monday Night"
+      }
+    ],
+    "Rushing yards": [
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 84.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Monangai",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 73.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 53.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Caleb Williams",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 53.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jalen Hurts",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 36.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tank Bigsby",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 21.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Hollywood Brown",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 12.6,
+        "window": "Monday Night"
+      }
+    ],
+    "Carries": [
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 17.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Monangai",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 10.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 9.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tank Bigsby",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 7.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Hollywood Brown",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 1.8,
+        "window": "Monday Night"
+      }
+    ],
+    "Receiving yards": [
+      {
+        "player": "DeVonta Smith",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 107.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dontayvion Wicks",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 93.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kalif Raymond",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 62.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dallas Goedert",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 51.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Luther Burden III",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 47.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rome Odunze",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 47.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 32.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Darius Cooper",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 27.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Monangai",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 17.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Cole Kmet",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 17.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Johnny Mundt",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 1,
+        "proj": 8.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Sam Roush",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 1,
+        "proj": 8.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Makai Lemon",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 5.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 5.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tank Bigsby",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 3.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Colston Loveland",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 1.5,
+        "window": "Monday Night"
+      }
+    ],
+    "Receptions": [
+      {
+        "player": "Kalif Raymond",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 6.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "DeVonta Smith",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 6.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Luther Burden III",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 4.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dontayvion Wicks",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 3.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 3.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rome Odunze",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 2.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dallas Goedert",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 2.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Monangai",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 2.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Makai Lemon",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 1.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Darius Cooper",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 1.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Johnny Mundt",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 1,
+        "proj": 1.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Cole Kmet",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 1.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 0.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tank Bigsby",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 0.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Sam Roush",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 1,
+        "proj": 0.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Colston Loveland",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 0.5,
+        "window": "Monday Night"
+      }
+    ],
+    "Targets": [
+      {
+        "player": "DeVonta Smith",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 9.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kalif Raymond",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 7.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Luther Burden III",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 6.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dontayvion Wicks",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 5.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dallas Goedert",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 4.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 3.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rome Odunze",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 3.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Sam Roush",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 1,
+        "proj": 2.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Darius Cooper",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 2.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Johnny Mundt",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 1,
+        "proj": 2.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Makai Lemon",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 2.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Colston Loveland",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 2.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 2.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Monangai",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 2.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Cole Kmet",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 2.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tank Bigsby",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 1.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Hollywood Brown",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 0.0,
+        "window": "Monday Night"
+      }
+    ],
+    "Passing yards": [
+      {
+        "player": "Jalen Hurts",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 271.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Caleb Williams",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 211.8,
+        "window": "Monday Night"
+      }
+    ],
+    "Pass attempts": [
+      {
+        "player": "Jalen Hurts",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 28.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Caleb Williams",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 28.5,
+        "window": "Monday Night"
+      }
+    ],
+    "Rush + rec yards": [
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 116.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "DeVonta Smith",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 107.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dontayvion Wicks",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 93.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Monangai",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 90.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kalif Raymond",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 62.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 58.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dallas Goedert",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 51.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Luther Burden III",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 48.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rome Odunze",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 47.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Darius Cooper",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 27.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tank Bigsby",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 24.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Cole Kmet",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 17.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Hollywood Brown",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 12.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Johnny Mundt",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 1,
+        "proj": 8.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Sam Roush",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 1,
+        "proj": 8.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Makai Lemon",
+        "team": "PHI",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 2.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Colston Loveland",
+        "team": "CHI",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 1.5,
+        "window": "Monday Night"
+      }
+    ]
+  }
+}
