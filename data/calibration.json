@@ -7158,7 +7158,7 @@
           "team": "ATL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "686948",
@@ -7166,7 +7166,7 @@
           "team": "ATL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "607208",
@@ -7174,7 +7174,7 @@
           "team": "PHI",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "681082",
@@ -7182,7 +7182,7 @@
           "team": "PHI",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "671739",
@@ -7190,7 +7190,7 @@
           "team": "ATL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "547180",
@@ -7198,7 +7198,7 @@
           "team": "PHI",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "660670",
@@ -7206,7 +7206,7 @@
           "team": "ATL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "621566",
@@ -7214,7 +7214,7 @@
           "team": "ATL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "702222",
@@ -7222,7 +7222,7 @@
           "team": "PHI",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "663586",
@@ -7230,7 +7230,7 @@
           "team": "ATL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "664761",
@@ -7238,7 +7238,7 @@
           "team": "PHI",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "656941",
@@ -7246,7 +7246,7 @@
           "team": "PHI",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "624641",
@@ -7254,10 +7254,10 @@
           "team": "PHI",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -8180,10 +8180,10 @@
           "team": "Atlanta Braves",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -11132,7 +11132,7 @@
           "team": "Atlanta Braves",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "660670",
@@ -11140,7 +11140,7 @@
           "team": "Atlanta Braves",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "663586",
@@ -11148,7 +11148,7 @@
           "team": "Atlanta Braves",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "656941",
@@ -11156,7 +11156,7 @@
           "team": "Philadelphia Phillies",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "547180",
@@ -11164,10 +11164,10 @@
           "team": "Philadelphia Phillies",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -26716,7 +26716,7 @@
           "team": "Las Vegas Aces",
           "stat": "pts",
           "line": 22.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3099736",
@@ -26732,7 +26732,7 @@
           "team": "Indiana Fever",
           "stat": "pts",
           "line": 23.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3142191",
@@ -26740,7 +26740,7 @@
           "team": "Indiana Fever",
           "stat": "pts",
           "line": 25.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3149391",
@@ -26748,7 +26748,7 @@
           "team": "Las Vegas Aces",
           "stat": "pts",
           "line": 26.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433546",
@@ -26756,7 +26756,7 @@
           "team": "Indiana Fever",
           "stat": "pts",
           "line": 8.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2529122",
@@ -26764,7 +26764,7 @@
           "team": "Las Vegas Aces",
           "stat": "pts",
           "line": 10.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398829",
@@ -26772,7 +26772,7 @@
           "team": "Indiana Fever",
           "stat": "pts",
           "line": 4.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4432831",
@@ -26780,7 +26780,7 @@
           "team": "Indiana Fever",
           "stat": "pts",
           "line": 15.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2987869",
@@ -26788,7 +26788,7 @@
           "team": "Las Vegas Aces",
           "stat": "pts",
           "line": 8.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433546",
@@ -26796,7 +26796,7 @@
           "team": "Indiana Fever",
           "stat": "reb",
           "line": 6.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3099736",
@@ -26812,7 +26812,7 @@
           "team": "Indiana Fever",
           "stat": "reb",
           "line": 4.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3149391",
@@ -26820,7 +26820,7 @@
           "team": "Las Vegas Aces",
           "stat": "reb",
           "line": 9.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4065870",
@@ -26828,7 +26828,7 @@
           "team": "Las Vegas Aces",
           "stat": "reb",
           "line": 3.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2987869",
@@ -26836,7 +26836,7 @@
           "team": "Las Vegas Aces",
           "stat": "reb",
           "line": 2.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "5220104",
@@ -26844,7 +26844,7 @@
           "team": "Las Vegas Aces",
           "stat": "reb",
           "line": 1.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2529122",
@@ -26852,7 +26852,7 @@
           "team": "Las Vegas Aces",
           "stat": "reb",
           "line": 3.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3142191",
@@ -26860,7 +26860,7 @@
           "team": "Indiana Fever",
           "stat": "reb",
           "line": 2.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3907781",
@@ -26868,7 +26868,7 @@
           "team": "Indiana Fever",
           "stat": "reb",
           "line": 2.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3142191",
@@ -26876,7 +26876,7 @@
           "team": "Indiana Fever",
           "stat": "ast",
           "line": 2.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433403",
@@ -26884,7 +26884,7 @@
           "team": "Indiana Fever",
           "stat": "ast",
           "line": 9.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3099736",
@@ -26900,7 +26900,7 @@
           "team": "Las Vegas Aces",
           "stat": "ast",
           "line": 7.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4432831",
@@ -26908,7 +26908,7 @@
           "team": "Indiana Fever",
           "stat": "ast",
           "line": 3.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3149391",
@@ -26916,7 +26916,7 @@
           "team": "Las Vegas Aces",
           "stat": "ast",
           "line": 3.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2529122",
@@ -26924,7 +26924,7 @@
           "team": "Las Vegas Aces",
           "stat": "ast",
           "line": 5.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433546",
@@ -26932,7 +26932,7 @@
           "team": "Indiana Fever",
           "stat": "ast",
           "line": 0.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2987869",
@@ -26940,7 +26940,7 @@
           "team": "Las Vegas Aces",
           "stat": "ast",
           "line": 1.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398829",
@@ -26948,7 +26948,7 @@
           "team": "Indiana Fever",
           "stat": "ast",
           "line": 0.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4065870",
@@ -26956,7 +26956,7 @@
           "team": "Las Vegas Aces",
           "stat": "pra",
           "line": 32.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433546",
@@ -26964,7 +26964,7 @@
           "team": "Indiana Fever",
           "stat": "pra",
           "line": 15.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433403",
@@ -26972,7 +26972,7 @@
           "team": "Indiana Fever",
           "stat": "pra",
           "line": 37.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3099736",
@@ -26988,7 +26988,7 @@
           "team": "Las Vegas Aces",
           "stat": "pra",
           "line": 38.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3142191",
@@ -26996,7 +26996,7 @@
           "team": "Indiana Fever",
           "stat": "pra",
           "line": 29.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2529122",
@@ -27004,7 +27004,7 @@
           "team": "Las Vegas Aces",
           "stat": "pra",
           "line": 19.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2987869",
@@ -27012,7 +27012,7 @@
           "team": "Las Vegas Aces",
           "stat": "pra",
           "line": 11.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4432831",
@@ -27020,7 +27020,7 @@
           "team": "Indiana Fever",
           "stat": "pra",
           "line": 25.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398829",
@@ -27028,7 +27028,7 @@
           "team": "Indiana Fever",
           "stat": "pra",
           "line": 8.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4065870",
@@ -27036,7 +27036,7 @@
           "team": "Las Vegas Aces",
           "stat": "tpm",
           "line": 3.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3099736",
@@ -27052,7 +27052,7 @@
           "team": "Las Vegas Aces",
           "stat": "tpm",
           "line": 1.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3142191",
@@ -27060,7 +27060,7 @@
           "team": "Indiana Fever",
           "stat": "tpm",
           "line": 3.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433403",
@@ -27068,7 +27068,7 @@
           "team": "Indiana Fever",
           "stat": "tpm",
           "line": 3.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3149391",
@@ -27076,7 +27076,7 @@
           "team": "Las Vegas Aces",
           "stat": "tpm",
           "line": 0.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398829",
@@ -27084,7 +27084,7 @@
           "team": "Indiana Fever",
           "stat": "tpm",
           "line": 0.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "5220104",
@@ -27092,7 +27092,7 @@
           "team": "Las Vegas Aces",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2529122",
@@ -27100,7 +27100,7 @@
           "team": "Las Vegas Aces",
           "stat": "tpm",
           "line": 1.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3907781",
@@ -27108,7 +27108,7 @@
           "team": "Indiana Fever",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "hit"
         }
       ],
       "graded": false,
@@ -32077,7 +32077,7 @@
           "team": "Las Vegas Aces",
           "stat": "pts",
           "line": 7.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4432831",
@@ -32085,7 +32085,7 @@
           "team": "Indiana Fever",
           "stat": "pts",
           "line": 14.2,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3142191",
@@ -32093,7 +32093,7 @@
           "team": "Indiana Fever",
           "stat": "pts",
           "line": 24.9,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433403",
@@ -32101,7 +32101,7 @@
           "team": "Indiana Fever",
           "stat": "pts",
           "line": 22.6,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3149391",
@@ -32109,7 +32109,7 @@
           "team": "Las Vegas Aces",
           "stat": "reb",
           "line": 9.2,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433546",
@@ -32117,7 +32117,7 @@
           "team": "Indiana Fever",
           "stat": "reb",
           "line": 6.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433403",
@@ -32125,7 +32125,7 @@
           "team": "Indiana Fever",
           "stat": "reb",
           "line": 4.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3142055",
@@ -32133,7 +32133,7 @@
           "team": "Indiana Fever",
           "stat": "reb",
           "line": 4.2,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398829",
@@ -32141,7 +32141,7 @@
           "team": "Indiana Fever",
           "stat": "reb",
           "line": 2.6,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4065870",
@@ -32149,7 +32149,7 @@
           "team": "Las Vegas Aces",
           "stat": "ast",
           "line": 7.3,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4432831",
@@ -32157,7 +32157,7 @@
           "team": "Indiana Fever",
           "stat": "ast",
           "line": 3.2,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2529122",
@@ -32165,7 +32165,7 @@
           "team": "Las Vegas Aces",
           "stat": "ast",
           "line": 5.4,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3099736",
@@ -32181,7 +32181,7 @@
           "team": "Las Vegas Aces",
           "stat": "ast",
           "line": 0.9,
-          "result": null
+          "result": "hit"
         }
       ],
       "graded": false,
