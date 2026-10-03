@@ -43,7 +43,7 @@ back. A control that stays green proves nothing, and several have —
 because the fixture could not tell the two behaviours apart, or because
 the edit never applied at all.
 
-**The suite is 105 files and stays green.** Five fail in a bare
+**The suite is 115 files and stays green.** Five fail in a bare
 container for want of streamlit and pass in Codespaces:
 test_data_paths, test_home, test_pen_roster_drift,
 test_wnba_grading_honesty, test_wnba_injury_gate. Run it with:
@@ -136,6 +136,39 @@ DOWNSTREAM CAN CATCH.** The board capped per TEAM while its caption said
 **10. DO NOT TUNE AFTER A BAD NIGHT.** At a 12% base rate a bad week and
 a broken model are indistinguishable, and every change resets the
 measurement clock.
+
+---
+
+## PICK UP HERE — audit before the model: clean, plus one time bomb defused. 2026-10-03
+
+**Suite 115, FAILING: none.** One negative control red by exit code.
+Audited on a bare container: all 114 prior scripts green, compiles under
+a real 3.11, pyflakes zero undefined names, every view rendered in
+AppTest with zero exceptions (offline — live feeds are blocked from the
+audit box, so this proves no-crash paths, not live numbers).
+
+### THE ONE REAL FINDING
+
+Eight call sites still passed `use_container_width=`, which Streamlit
+marks "will be removed after 2025-12-31". 1.59.2 still accepts it, so
+nothing was broken — but app.py's nav uses it, so the first Streamlit
+bump that drops it takes down EVERY page at once. All eight now use
+`width="stretch"` / `width="content"` (Home keeps its compact switch).
+`tests/test_no_deprecated_width.py` is tokenize-based, so the word in a
+comment never counts, and self-checks its own detector first.
+
+### HOUSEKEEPING
+
+`dedupe-fix.zip` deleted from the repo root — byte-identical to the
+09-27 (4) batch already on main. `*.zip` was listed twice in
+.gitignore. README now names NFL/NHL and the real suite size.
+
+### FILES, 2026-10-03
+
+    app/app.py, app/views/{Home,HR_Edge_Board,GameCard}.py
+    app/engines/{bvp,trend_chart,calibration_trend}.py
+    tests/test_no_deprecated_width.py   NEW
+    README.md, HANDOFF.md, .gitignore   dedupe-fix.zip DELETED
 
 ---
 
@@ -1287,83 +1320,3 @@ Nothing. The research log needs weeks. Re-run mlb_form_probe /
 mlb_platoon_probe / mlb_weakspot_probe every few weeks.
 
 ---
-
-## PICK UP HERE — six new columns, weak-spot gem wired. 2026-08-14 (2)
-
-**7 files (1 new test). Suite 99, FAILING: none.** Four controls red.
-
-### THE WEAK-SPOT PANEL WAS HALF-FINISHED
-
-`slot_rows` shipped in engines/weakspot_view and **was never called**.
-The "Weak spot vs this lineup" section in GameCard still built its own
-list in batting order 1-9 — the roster-printout problem the function was
-written to fix.
-
-Now wired. Slots are SORTED BY LEAK, so the top rows ARE the answer
-instead of nine numbers to scan, and slots below the sample floor drop
-out entirely rather than rendering an empty track. The caption says the
-ordering out loud and states the caveat that makes the join necessary: a
-slot line partly reflects WHICH hitters have batted there, which is
-exactly why it is shown against tonight's order rather than alone.
-
-Import moved to module scope — it is used ~1,700 lines from the function
-that had the local import.
-
-### SIX NEW COLUMNS ON THE LINEUP TABLE
-
-| column | what it answers | needs a re-pull |
-|---|---|---|
-| **HR** | season home runs | no |
-| **NearHR** | hit hard enough AND at an angle to leave, and did not | no |
-| **L5 PA/G** | how many swings he actually gets | no |
-| **AvgDist / 300+ / 350+** | how FAR his contact travels | **yes** |
-
-**NEAR HR reuses `in_window`** — the same launch window the LAUNCH axis
-uses — rather than inventing a second threshold, so a near miss and a
-home-run trajectory are the same shape by construction. Read against HR
-as a PAIR: 1 home run against 60 near misses is a hitter the ball is not
-falling for; 26 against 0 is one who has cashed everything.
-
-**L5 PA/G is the volume column.** Every other number on that table is a
-RATE, and a bat hitting ninth simply gets fewer chances than one hitting
-second. Built from the per-game lines `build_player_game_logs` already
-writes — factored into `_player_game_logs()` so build_hr_metrics does
-not depend on another function's side effect or on ordering in main().
-
-**`hit_distance_sc` added to ENGINE_COLS and _KEEP_COLS.** Only
-populates going forward, so historical rows are NaN — and they must STAY
-NaN. A 0 in a count column is indistinguishable from a hitter who
-genuinely never cleared 300 feet. Control C3 makes it 0 and goes red.
-
-### ON FORM — WHY YOURS REACHES 98 AND A COMPETITOR'S TOPS OUT NEAR 69
-
-Not a bug, a different measurement. **A percentile is uniform by
-construction**: rank 502 hitters and somebody is at 98 and somebody is
-at 4, every night. Their column clusters 41-69, which is the shape of a
-RATE, not a rank.
-
-The trade, stated plainly:
-- **ours always discriminates** — guaranteed spread, no night where
-  everyone looks alike
-- **theirs is comparable across nights** — 62% means the same in April
-
-**The weakness in ours worth knowing:** on a night when nobody is
-moving, the 98th-percentile bat may be barely above his own baseline and
-still read 98%. The percentile ranks; it cannot size. That is what dEV
-and dHH% are for, and why keeping them was right. Read together: 96%
-with dEV +1.7 is a real move, 96% with +0.2 is a technicality.
-
-### FIXTURE LESSONS (both cost a cycle here)
-
-- `_mask()` rejects a scalar from a missing column, so a fixture must
-  carry EVERY column the builder reads, not just the ones under test.
-- **A control that cannot distinguish the two behaviours stays green.**
-  C4 (L5 PA/G over all games instead of the last five) passed twice
-  because every fixture game had the same PA count — last-five and
-  all-games gave the identical mean. Only games of DIFFERENT sizes
-  (8 PA x7 then 4 PA x5) made it fire.
-
-### NEXT
-Nothing structural. The research log needs weeks. Re-run
-mlb_form_probe / mlb_platoon_probe / mlb_weakspot_probe every few weeks;
-distributions drift.

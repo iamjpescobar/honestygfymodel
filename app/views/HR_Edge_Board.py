@@ -301,7 +301,7 @@ else:
                 "Floors": (f'{r.get("floors_met")}/{r.get("floors_total")}'
                            if r.get("floors_met") is not None else None),
             } for r in _overflow[:20]])
-            st.dataframe(_ov, hide_index=True, use_container_width=True)
+            st.dataframe(_ov, hide_index=True, width="stretch")
 
     if meta.get("skipped"):
         with st.expander(f"Games not included ({len(meta['skipped'])})"):

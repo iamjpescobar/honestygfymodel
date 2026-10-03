@@ -1,6 +1,7 @@
 # Los Cappers
 
-Streamlit sports-betting analytics app — MLB, WNBA, KBO, NPB. Every
+Streamlit sports-betting analytics app — MLB, WNBA, KBO, NPB, NFL, NHL
+(NBA tab is coming-soon). Every
 board it publishes is graded against what actually happened, and the
 grades are on the site.
 
@@ -22,7 +23,7 @@ and WNBA pages read their own slate files and still work.
 
 ## Tests
 
-55+ files in `tests/`, all **plain scripts, not pytest**. Each one exits
+115 files in `tests/`, all **plain scripts, not pytest**. Each one exits
 non-zero on failure and CI checks exit codes. There is no pytest
 anywhere in this repo — don't add `assert`-collecting fixtures and
 expect them to run.

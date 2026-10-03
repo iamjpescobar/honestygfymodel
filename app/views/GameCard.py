@@ -345,7 +345,7 @@ def _render_game_carousel(_labels, games):
                     unsafe_allow_html=True,
                 )
                 st.button(
-                    _lbl, key=f"gpick_{_gidx}", use_container_width=True,
+                    _lbl, key=f"gpick_{_gidx}", width="stretch",
                     type="primary" if _sel else "secondary",
                     on_click=_pick_game, args=(_gidx,),
                 )

@@ -357,7 +357,7 @@ def render_spray_chart(batter_id, batter_name, window_label: str = "L10",
     )
     chart = alt.layer(*_field_layers(alt), dots).properties(
         height=280).configure_view(strokeOpacity=0)
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(chart, width="stretch")
     _wind_widget(wind)
     st.caption("Real Statcast landing coordinates over a generic field (orientation only \u2014 "
                "not the actual park's dimensions; this window spans multiple parks). "

@@ -437,7 +437,7 @@ def _goto(page_title, key, label=None, compact=False):
     # own. The card header carries the link now; the box is gone.
     if st.button(label or f"Open {page_title}", key=key,
                  type="tertiary" if compact else "secondary",
-                 use_container_width=not compact):
+                 width=("content" if compact else "stretch")):
         st.session_state["lc_view"] = "sport"
         if CURRENT_SPORT == "WNBA":
             st.session_state["lc_sub_WNBA"] = page_title

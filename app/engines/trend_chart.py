@@ -166,5 +166,5 @@ def render_trend_bars(labels, values, stat_label: str, line: float,
             )
     st.altair_chart(
         alt.layer(*layers).properties(height=250).configure_view(strokeOpacity=0),
-        use_container_width=True,
+        width="stretch",
     )

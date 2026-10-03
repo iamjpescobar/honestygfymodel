@@ -571,7 +571,7 @@ def render_right_sidebar(nav_titles=None, active_page=None, show_glossary=False,
                         unsafe_allow_html=True,
                     )
                 elif st.button(_title, key=f"lc_nav_btn_{_i}",
-                               type="tertiary", use_container_width=True):
+                               type="tertiary", width="stretch"):
                     # ONLY lc_nav_radio. Setting lc_active_page here too
                     # is what broke Home's nav: the check near the top of
                     # this file leaves Home when the two keys DISAGREE,
@@ -739,7 +739,7 @@ else:
                             unsafe_allow_html=True,
                         )
                     elif st.button(_t, key=f"{_key}_btn_{_t}",
-                                   type="tertiary", use_container_width=True):
+                                   type="tertiary", width="stretch"):
                         st.session_state[_key] = _t
                         st.rerun()
 

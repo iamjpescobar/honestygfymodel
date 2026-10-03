@@ -81,7 +81,7 @@ def render_calibration_trend(days: dict, baseline=None, label: str = ""):
 
     st.altair_chart(
         alt.layer(*layers).properties(height=220).configure_view(strokeWidth=0),
-        use_container_width=True,
+        width="stretch",
     )
     if baseline is not None:
         st.caption(
