@@ -149,5 +149,37 @@ check("a higher line is always less likely to clear",
 check("an unmeasured market gives no chance, not a guess",
       npo.p_over("Receptions", 5, 4.5, {}) is None)
 
+# ----------------------------------------- 8. colour and trust verdicts
+from engines import model_math as mm2      # noqa: E402
+from engines import model_view as mv       # noqa: E402
+
+check("paired verdict: a clear improvement BEATS",
+      mm2.paired_verdict([0.60] * 200, [0.70] * 100 + [0.66] * 100)["verdict"] == "beats")
+noisy_m = [0.5 + (0.3 if i % 2 else -0.3) for i in range(60)]
+noisy_b = [m + (0.01 if i % 3 == 0 else -0.004) for i, m in enumerate(noisy_m)]
+check("paired verdict: better on average but inside noise is THIN",
+      mm2.paired_verdict(noisy_m, noisy_b)["verdict"] == "thin")
+check("paired verdict: worse FAILS", mm2.paired_verdict([0.7] * 50, [0.6] * 50)["verdict"] == "fails")
+check("tiers use the Results buckets: 1 pt thin, 3 pts value, 6 pts strong",
+      (mv.edge_tier(0.01, True), mv.edge_tier(0.03, True), mv.edge_tier(0.06, True))
+      == ("thin", "value", "strong"))
+check("no value -> no tier, whatever the edge number", mv.edge_tier(0.06, False) == "none")
+check("1.997 pts (prints +2.0) is VALUE, matching how the log stores and buckets it",
+      mv.edge_tier(0.01997, True) == "value"
+      and mpk.summary([{"result": "win", "units": 1, "edge": round(0.01997, 4),
+                        "market": "moneyline"}])["by_edge"][1]["n"] == 1)
+check("bucket edges land in the higher tier (2.0 pts is VALUE, 5.0 is STRONG)",
+      mv.edge_tier(0.02, True) == "value" and mv.edge_tier(0.05, True) == "strong")
+val = {"n": 100, "beats_coin": True, "beats_home_rate": True, "total_beats_league_avg": True,
+       "total_verdict": {"verdict": "thin"}}
+check("the significance verdict wins over the plain boolean (total THIN)",
+      mv.market_trust(val, "total") == "thin")
+check("an older model file falls back to the boolean (moneyline BEATS)",
+      mv.market_trust(val, "moneyline") == "beats")
+check("an untested model is UNTESTED, not a pass", mv.market_trust({}, "moneyline") is None)
+check("THIN and STRONG are visibly different colours",
+      mv.TIER_STYLE["thin"][1] != mv.TIER_STYLE["strong"][1]
+      and mv.TIER_STYLE["thin"][2] != mv.TIER_STYLE["strong"][2])
+
 print(f"\n{len(failures)} failure(s)")
 sys.exit(1 if failures else 0)

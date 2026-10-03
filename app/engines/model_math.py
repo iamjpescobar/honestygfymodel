@@ -355,3 +355,34 @@ def score_predictions(preds):
         "brier": round(sum((p - y) ** 2 for p, y in preds) / n, 4),
         "log_loss": round(sum(log_loss(p, y) for p, y in preds) / n, 4),
     }
+
+
+# How many standard errors an improvement must clear before the site
+# calls it real. 2 is the conventional ~95% bar — a statistical
+# convention, not a tuned number, and it is printed beside every verdict.
+SIGNIFICANCE_Z = 2.0
+
+
+def paired_verdict(model_losses, base_losses):
+    """Is the model's loss lower than the baseline's on the SAME games by
+    more than noise? Paired, because both are scored on identical games:
+
+        d_i = base_loss_i - model_loss_i      (positive = model better)
+        z   = mean(d) / (sd(d) / sqrt(n))
+
+    verdict: "beats" (z >= SIGNIFICANCE_Z), "thin" (better on average but
+    within noise), "fails" (not better). This is what the trust badges on
+    the model pages show.
+    """
+    d = [b - m for m, b in zip(model_losses, base_losses)
+         if m is not None and b is not None]
+    n = len(d)
+    if n < 2:
+        return {"n": n, "verdict": None}
+    mean = sum(d) / n
+    var = sum((x - mean) ** 2 for x in d) / (n - 1)
+    se = (var / n) ** 0.5
+    z = mean / se if se > 0 else (float("inf") if mean > 0 else 0.0)
+    verdict = "beats" if z >= SIGNIFICANCE_Z else ("thin" if mean > 0 else "fails")
+    return {"n": n, "diff": round(mean, 5), "se": round(se, 5),
+            "z": round(z, 2) if z != float("inf") else 99.0, "verdict": verdict}

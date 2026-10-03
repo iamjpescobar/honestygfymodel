@@ -254,7 +254,9 @@ def validate(pa, model, validation_days):
     out = {"from": cut, "to": dates[-1], "days": validation_days}
     for k, *_ in mp.MARKETS:
         m, b = mm.score_predictions(preds[k]), mm.score_predictions(base[k])
-        out[k] = {"n": m["n"], "model_brier": m["brier"], "baseline_brier": b["brier"],
+        out[k] = {"verdict": mm.paired_verdict([(p_ - y) ** 2 for p_, y in preds[k]],
+                                               [(q - y) ** 2 for q, y in base[k]]),
+                  "n": m["n"], "model_brier": m["brier"], "baseline_brier": b["brier"],
                   "model_log_loss": m["log_loss"], "baseline_log_loss": b["log_loss"],
                   "beats_baseline": bool(m["brier"] is not None and b["brier"] is not None
                                          and m["brier"] < b["brier"]),

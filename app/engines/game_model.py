@@ -310,7 +310,15 @@ def validate(finals, params, prior_totals=None, prior_league=None,
     mae_model = sum(abs(p["mu_h"] + p["mu_a"] - p["total"]) for p in preds) / n
     mae_base = sum(abs(p["base_total"] - p["total"]) for p in preds) / n
     picks_right = sum(1 for p in preds if (p["p_home"] >= 0.5) == (p["y"] == 1))
+    # Paired against the STRONGER of the two win baselines per game (the
+    # measured home rate) and the league-average total: what the trust
+    # badges read.
+    ml_v = mm.paired_verdict([mm.log_loss(p["p_home"], p["y"]) for p in preds],
+                             [mm.log_loss(p["base_home"], p["y"]) for p in preds])
+    tot_v = mm.paired_verdict([abs(p["mu_h"] + p["mu_a"] - p["total"]) for p in preds],
+                              [abs(p["base_total"] - p["total"]) for p in preds])
     return {
+        "ml_verdict": ml_v, "total_verdict": tot_v,
         "n": n,
         "from": preds[0]["date"], "to": preds[-1]["date"],
         "model": model, "coin_flip": coin, "home_rate": home,

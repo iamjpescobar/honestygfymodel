@@ -139,6 +139,91 @@ measurement clock.
 
 ---
 
+## PICK UP HERE — colour that says what to do, badges that say what to trust. 2026-10-03 (9)
+
+**Suite 122, FAILING: none.** Six negative controls red by exit code.
+Looked at in a real browser (Playwright screenshots of NFL/NHL Model
+with the site theme) — that pass caught two things no test would:
+steel-blue THIN read as a paler STRONG (now grey), and a raw 1.997-pt
+edge printed "+2.0" under a THIN label (tier now on the printed 0.1-pt
+grid, which is also how the log stores and Results buckets it).
+
+### WHAT SHIPPED
+
+**Edge tiers** on every value row and the new strip — STRONG (5+ pts,
+cyan), VALUE (2-5, gold), THIN (0-2, grey), none — cut points shared
+with model_picks.EDGE_BUCKETS so a colour names the Results bucket its
+record lands in. Text label on every colour.
+
+**Trust badges** per market: BEATS BASELINE / THIN EDGE / NOT PROVEN /
+UNTESTED, from `model_math.paired_verdict` — paired per-game loss
+differences vs the baseline, z >= 2 (a statistical convention, printed)
+= beats, better-on-average = thin, else fails. Written into every
+validation by the nightly (ml / total / spread verdicts on the game
+models, a verdict per prop market). Older files fall back to the plain
+booleans and can never show THIN. NFL prop chances are UNTESTED by
+construction until graded.
+
+**Best value tonight** atop MLB/NHL/NFL Model: every side with positive
+EV at the POSTED price across the slate, strongest first, tinted, with
+stake and trust. Games are projected once up front so strip and cards
+read the same numbers.
+
+Known: an editable data_editor cell ignores Styler formatting, so an
+empty Price shows Streamlit's grey "None" placeholder; the caption says
+what it means. Never pre-filled.
+
+### FILES, 2026-10-03 (9)
+
+    app/engines/model_math.py       paired_verdict, SIGNIFICANCE_Z
+    app/engines/{game_model,nfl_game_model,nhl_model}.py, mlb_prop_precompute.py  verdicts
+    app/engines/model_view.py       tiers, trust, legend, styled tables, best-value strip
+    app/engines/mlb_props.py        market_verdicts -> verdict strings
+    app/views/{MLB_Model,NHL_Model,NFL_Model,GameCard,NFL_Projections}.py
+    tests/test_value_picks.py       section 8
+
+---
+
+## PICK UP HERE — a picks file with two writers, and a second leaking test. 2026-10-03 (8)
+
+**Suite 122, FAILING: none.** Four negative controls red by exit code.
+
+The first nightly after the value batch died at "Commit graded model
+picks": `CONFLICT (add/add) in data/model_picks/mlb.json`. Two causes,
+both fixed at the mechanism:
+
+1. **A second test leaked.** tests/test_calibration_lines ran
+   calibration_picks.main() with only RECORD_PATH sandboxed, so in CI it
+   wrote the real games.json AND created data/model_picks/mlb.json (3
+   real value picks off real ESPN lines — the odds path works: "4/4
+   projected, 4 with an ESPN line"). The restore step fixed the tracked
+   file but not the NEW one. It now also removes untracked files under
+   data/ by explicit path (never git clean — rule 7); run against a
+   throwaway repo before shipping: tracked restored, leaked file gone,
+   ignored app/data and root files untouched.
+2. **mlb.json had two writers** — slate-picks logs it, the nightly
+   graded it, and Izzy ran both at once. ONE OWNER PER FILE now:
+   slate-picks logs AND grades MLB (`model_picks_grade.py mlb`); the
+   nightly logs and grades NHL/NFL (`model_picks_grade.py nhl nfl`) and
+   never stages mlb.json.
+
+tests/test_ci_hygiene.py now pins all of it, reading CODE not comments
+(its first draft failed on its own explanatory comments): restore step
+position and untracked cleanup; every test that runs calibration_picks
+.main() sandboxes BOTH MLB_SLATE_PATH and PICKS_ROOT (suite-wide — the
+leak moved from one test to another); every log_picks call passes
+root=PICKS_ROOT (AST); grading ownership per workflow.
+
+### FILES, 2026-10-03 (8)
+
+    tests/test_calibration_lines.py, tests/test_calibration_picks.py
+    calibration_picks.py      PICKS_ROOT module-level
+    model_picks_grade.py      sports as arguments
+    .github/workflows/nightly-data.yml, slate-picks.yml
+    tests/test_ci_hygiene.py
+
+---
+
 ## PICK UP HERE — value, stakes and a graded record for every model pick. 2026-10-03 (7)
 
 **Suite 122, FAILING: none.** Three negative controls red by exit code.
@@ -956,248 +1041,5 @@ the nightly before optimising.
     tests/test_nfl_nhl_wiring.py      NEW
 
 Suite 110 -> 113.
-
----
-
-## PICK UP HERE — the longest window on the card was under the stabilisation point. 2026-08-17 (3)
-
-**Suite 108, FAILING: none.** Seven negative controls red by exit code.
-One existing test went red on a CORRECT change and was rewritten — that
-is section 3.
-
-### 1. THE PROBLEM: 25 GAMES IS ~110 PA
-
-The Game Card's longest batter window was Last 25 Games / Last 60 PA.
-Against the published stabilisation points:
-
-    HR rate       170 PA        <- the longest window was UNDER this
-    ISO           160 AB        <- and this
-    HR/FB          50 FB
-    barrel/EV/LA   50 BBE       (~18 games — well covered already)
-
-So every power read on the lineup table was taken on a sample too thin
-for the stat being read. The contact-quality columns were fine; the
-outcome-shaped ones were not, and they rendered in the same font.
-
-Added, batter side: **Last 75 / Last 50 Games** and **Last 300 / 250 /
-200 PA**. Ask in PA when the target is a PA count — games-to-PA moves
-with playing time, so a platoon bat's 50 games is ~150 PA where a
-regular's is ~215.
-
-Pitcher splits went Season / L10 / L5 / L3 / Last game. Added **L25 /
-L20 / L15** (~140 / 110 / 85 IP).
-
-### 2. WHAT THE PITCHER WINDOWS ARE NOT FOR
-
-Everything on the pitcher side that stabilises does so around **70
-balls in play — five or six starts**. L15, L20 and L25 are all well
-past it, so the longer two buy no extra stability, only more April.
-**L15 is the one to use.**
-
-And the number a long pitcher window LOOKS like it should give you is
-the one it cannot: a pitcher's HR rate needs ~1,320 batters faced,
-HR/FB ~400 fly balls. That is 200+ innings, more than a season. **No
-window offerable in-season makes HR-allowed reliable.** Use these for
-the batted-ball profile — FB%, hard contact allowed, what the arsenal
-does — which is what zone_adj already leans on. The comment above
-_sw_opts says this so the next reader does not have to rediscover it.
-
-### 3. A TEST FROZE THE MENU INSTEAD OF THE PROPERTY
-
-`test_pitcher_splits_window` asserted
-`set(opts.values()) == {season, l10, l5, l3, l1}` — exact equality. It
-went red the moment a window was ADDED, which is a correct change
-failing a test that had pinned the wrong thing.
-
-Rewritten as a floor: the short windows must SURVIVE (they are the "is
-he right, right now" read the control exists for), the long ones must
-be present, and everything offered must really slice. **Adding a window
-is not a regression; losing one is.** Both directions have controls —
-dropping L3 and dropping L15 each fail it now.
-
-Its 12-game fixture also made a correct L25 look like a no-op, so the
-frame builder is parameterised and section 2 measures against 60 games.
-Same bug shape in the new test on its first run: the vacuity guard
-counted deduped window KEYS (14 across three controls) rather than the
-controls themselves. Guard the thing you mean.
-
-### 4. THE LONG WINDOWS LIE QUIETLY, AND THE CONTROL SAYS SO
-
-Every slice is a `tail()`. Ask for the last 250 PA from a rookie with
-90 and you get 90, correctly computed, under a label reading 250.
-Nothing errors, no rate is wrong — the sample is just a third of what
-the label claims, next to a veteran's real 250.
-
-This is the mirror of THIN_WINDOWS, so `LONG_WINDOWS` now exists beside
-it in recency_windows with that written down, the lineup control
-carries help text saying it, and a test asserts the help text still
-says it. Also worth remembering: **the parquet only holds this season.**
-In April every long window IS the season; by late August "Last 300 PA"
-and "season" converge for an everyday bat. These windows earn most from
-April to June.
-
-### FILES TOUCHED, 2026-08-17 (3)
-
-    app/engines/recency_windows.py       l20/l50/l75/l200/l250/l300 + LONG_WINDOWS
-    app/views/GameCard.py                both window controls + help text
-    tests/test_pitcher_splits_window.py  exact set -> floor; fixture parameterised
-    tests/test_long_windows.py           NEW
-
-Suite 107 -> 108.
-
-### NOT MEASURED — SAY IT OUT LOUD
-
-The stabilisation points above are PUBLISHED research, not measured on
-this model. Carleton has since warned that a stat at its stabilisation
-point is not thereby predictive of the NEXT sample of the same size.
-Which window best predicts an actual HR **for this model** is an open
-question the research log could answer — it already carries per-bat
-components and graded outcomes. **No window here is a measured default,
-and none is set as the default.** Season still is.
-
-Still standing: **do not touch HR Edge.** Rule 10.
-
----
-
-## PICK UP HERE — the morning lineup now says which parts it is unsure about. 2026-08-17 (2)
-
-**Suite 107, FAILING: none.** Eight negative controls, red by EXIT
-CODE — and **two of them came back green on the first attempt and had
-to be fixed.** That is in section 4 and it is the most useful part of
-this entry.
-
-### 1. THE PROBLEM
-
-Slate breakdowns get recorded in the MORNING. MLB posts a real lineup
-1-3 hours before first pitch, so at 8am there is no lineup for any game
-on the board — not here, not at Rotowire, nowhere. Every morning read
-is a projection.
-
-Measured on our own research log, 2026-08-12..16:
-
-    ~80% of a team's bats repeat from one game to the next
-    40% of bats started EVERY game their team played
-    28% started two thirds or more
-    24% sat between a third and two thirds   <- the coin flips
-     9% rare
-
-So last night's nine gets about seven right and two wrong, every night,
-and the two are not random: catcher, platoon corner, DH rotation.
-
-**The uncertainty is not evenly spread, and that is the whole opening.**
-
-### 2. AND THE SLOT BARELY MATTERS — CHECK THE MODEL'S OWN NUMBERS
-
-From the same log, mean absolute contribution per rated bat:
-
-    slot_adj    0.59   (capped +/-1.2)   <- the smallest term in the model
-    zone_adj    3.80   (range -9..+15)
-    pen_adj     1.99
-    ctx_adj     1.97
-
-Batting 2nd instead of 5th moves a bat by at most 2.4 points. A bat who
-does not play at all costs the whole pick. **Second-guessing the ORDER
-in the morning is solving the wrong problem; presence is the problem.**
-
-### 3. WHAT SHIPPED
-
-`lineup_lock_precompute.py` (new, nightly) — per team, how often each
-bat actually started over the last WINDOW_GAMES completed games, plus
-the same split by the hand of the opposing STARTER. Every start counted
-is a real posted lineup from MLB's boxscore endpoint. Writes
-`data/mlb/lineup_lock.json`, committed by the nightly like
-calibration.json. Self-verifies in the log: if every bat comes back at
-100% or none do, that is a boxscore parse failure, not a league.
-
-`app/engines/lineup_lock.py` (new) — READER ONLY. No requests, no
-roster, no statcast import, and `tests/test_lineup_lock` asserts that
-from the AST so a future edit cannot quietly add one. The Boards column
-took the Game Card down on 08-16 by building during a render; this
-cannot.
-
-`app/views/GameCard.py` — one caption above the PROJECTED lineup:
-
-    Projected lineup — 7 locks, 2 in question (Caratini, Crooks) ·
-    start rates over the last 14 team games · provisional, not yet
-    checked against outcomes.
-
-Deliberately not a single confidence percentage. One number over nine
-rows hides WHICH two are soft, and which two is the entire useful part
-when you are talking through a slate on camera. Confirmed lineups skip
-it entirely — once MLB posts the order there is nothing to project, and
-a test asserts the call sits inside the unconfirmed branch.
-
-`lineup_lock_probe.py` + `.github/workflows/lineup-lock-probe.yml`
-(new, manual) — the measurement. **WINDOW_GAMES = 14 IS A GUESS AND IS
-LABELLED AS ONE** (`window_is_measured: false`, and the caption says
-"provisional" until it flips). The probe answers the forecast question
-— given a bat started N of the last W, how often does he start the NEXT
-one — across windows 7/14/21, with the hand split on and off, against
-the naive baseline "he started last game". **If the rate does not beat
-that baseline, drop the column and keep showing last game's nine.**
-Same trap as the HR Edge 11.9% baseline: any plausible method clears a
-bar nobody checked.
-
-### 4. TWO CONTROLS CAME BACK GREEN, AND WHY
-
-Both were caused by the perf fix in section 5, and both are standing
-rules biting again.
-
-**A duplicated guard is a half-tested guard.** After the rewrite, the
-`not team` check existed in BOTH `start_rate` and `_lookup`. Breaking
-`_lookup`'s copy left the suite green, because the test only ever
-called `start_rate` — while `attach()`, the function the Game Card
-actually uses, goes through `_lookup`. One guard now, in `_lookup`, and
-the test exercises both entry points.
-
-**A test that clears a cache by hand cannot test that the cache
-notices.** The memo control stayed green because the fixture called
-`clear_cache()` before every read — it told the memo to forget instead
-of checking it noticed. The new check rewrites the file and re-reads
-WITHOUT clearing. That is rule 4 in its exact documented form: a
-control that did not modify anything is not a passing control, and a
-fixture that cannot tell the two behaviours apart proves nothing.
-
-### 5. THE FEATURE WAS 19 MS PER CARD BEFORE IT SHIPPED
-
-First version wrapped the file read in `st.cache_data` and parsed the
-JSON per call. On a real-sized file (30 teams, ~1,000 bats, 110 KB),
-attaching one nine-man lineup cost **19.03 ms** — nine asks, nine full
-league parses.
-
-`st.cache_data` is the wrong tool one layer down: it SERIALISES what it
-stores, so even a cached dict is re-unpickled per call and the 110 KB
-is paid again. Replaced with a plain memo keyed on
-(path, mtime_ns, size), plus resolving the team once for the lineup
-instead of once per bat.
-
-    attach + caption per card:  19.03 ms  ->  0.049 ms
-    first read, cold:            2.17 ms
-
-`roster.py` already keeps a response memo below `st.cache_data` for the
-same reason. **Generalise: st.cache_data is for expensive results, not
-for a file you are about to read nine times in a row.**
-
-### FILES TOUCHED, 2026-08-17 (2)
-
-    lineup_lock_precompute.py                 NEW  nightly builder
-    lineup_lock_probe.py                      NEW  the measurement
-    app/engines/lineup_lock.py                NEW  reader only
-    app/views/GameCard.py                     projected-lineup caption
-    .github/workflows/nightly-data.yml        build + commit steps
-    .github/workflows/lineup-lock-probe.yml   NEW  manual
-    tests/test_lineup_lock.py                 NEW
-
-Suite 106 -> 107.
-
-### NEXT — IN ORDER
-
-1. **Run the probe.** Until it has, the caption says provisional and it
-   should. Set WINDOW_GAMES from the widest spread that still beats the
-   naive baseline, then flip `window_is_measured` to True.
-2. **If the hand split does not beat the flat rate, take it out.** It
-   is complexity that has to earn its place.
-3. Still standing from 08-16: **do not touch HR Edge.** Rule 10.
-   `benchmark_probe.py` in 2-3 weeks.
 
 ---

@@ -93,13 +93,25 @@ def grade(sport, finals_for_day, today=None, root=None):
     return graded, voided
 
 
-def main():
+def main(argv=None):
+    """Grade the sports named on the command line (default: all).
+
+    ONE OWNER PER FILE. slate-picks logs MLB picks, so slate-picks grades
+    them (`model_picks_grade.py mlb`); the nightly logs and grades NHL and
+    NFL (`model_picks_grade.py nhl nfl`). 2026-10-03 the nightly graded
+    mlb.json while slate-picks appended to it and the two commits
+    conflicted — a file with two writers in two workflows will.
+    """
+    wanted = [a for a in (argv if argv is not None else sys.argv[1:]) if a in mpk.SPORTS] \
+        or list(mpk.SPORTS)
     sources = {
         "mlb": mlb_finals,
         "nhl": lambda d: espn_finals("nhl", d),
         "nfl": lambda d: espn_finals("nfl", d),
     }
     for sport, fn in sources.items():
+        if sport not in wanted:
+            continue
         g, v = grade(sport, fn)
         s = mpk.summary(mpk.load(sport)["picks"])["all"]
         print(f"model picks {sport}: graded {g}, voided {v} this run | record "

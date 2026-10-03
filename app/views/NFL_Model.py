@@ -64,6 +64,17 @@ mv.render_validation(
 _stk = mv.staking_controls("nfl")
 if not games:
     st.info("No games in this week's file yet.")
+else:
+    mv.render_trust_row([("Moneyline", mv.market_trust(v, "moneyline")),
+                         ("Spread", mv.market_trust(v, "spread")),
+                         ("Total", mv.market_trust(v, "total"))])
+    mv.render_best_value(
+        [{"label": f"{g.get('away_abbr') or g.get('away')} @ {g.get('home_abbr') or g.get('home')}",
+          "away": g.get("away_abbr") or g.get("away"), "home": g.get("home_abbr") or g.get("home"),
+          "proj": g.get("model"), "odds": g.get("odds")}
+         for g in games if g.get("status") != "final"], v, _stk, key="nfl")
+    with st.expander("Colour key", expanded=False):
+        mv.render_model_legend()
 
 for i, g in enumerate(games):
     pj = g.get("model")
@@ -78,7 +89,8 @@ for i, g in enumerate(games):
             st.caption("No projection — a team here has no finals on record.")
             continue
         mv.render_game_projection(pj, a, h, key=f"nflm_{i}")
-        mv.render_value_panel(pj, g.get("odds"), a, h, key=f"nflm_{i}", staking=_stk)
+        mv.render_value_panel(pj, g.get("odds"), a, h, key=f"nflm_{i}", staking=_stk,
+                              validation=v)
         bits = [f"Model line: {h} {pj['fair_spread_home']:+.1f}"]
         if pj.get("market_spread_home") is not None:
             bits.append(f"posted {h} {pj['market_spread_home']:+g} → {h} covers "

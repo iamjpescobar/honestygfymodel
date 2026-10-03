@@ -43,6 +43,13 @@ def _fake_rows():
 
 with tempfile.TemporaryDirectory() as td:
     cp.RECORD_PATH = Path(td) / "calibration.json"
+    # The slate and the model-picks log too: main() writes both, and in
+    # CI (network up) this test wrote the REAL data/mlb/games.json and
+    # created data/model_picks/mlb.json, which then collided with the
+    # real one slate-picks committed (2026-10-03, add/add conflict).
+    cp.MLB_SLATE_PATH = Path(td) / "games.json"
+    cp.PICKS_ROOT = Path(td) / "model_picks"
+    cp._write_mlb_slate = lambda date_str: 0
     cp.BUILDERS = {"k_board": _fake_rows}
     cp.main()
     rec = json.loads(cp.RECORD_PATH.read_text())

@@ -1889,9 +1889,13 @@ with content_col:
                 _gm_proj, team_abbr(game["away"]), team_abbr(game["home"]),
                 key="gc_model", note=_gm_note)
             _gc_stk = _model_view.staking_controls("gc")
+            _model_view.render_trust_row(
+                [("Moneyline", _model_view.market_trust(_mlb_model.get("validation"), "moneyline")),
+                 ("Total", _model_view.market_trust(_mlb_model.get("validation"), "total"))])
             _model_view.render_value_panel(_gm_proj, _gm_odds, team_abbr(game["away"]),
                                            team_abbr(game["home"]), key="gc_model",
-                                           staking=_gc_stk)
+                                           staking=_gc_stk,
+                                           validation=_mlb_model.get("validation"))
             _model_view.render_validation(_mlb_model.get("validation"), key="gc_model",
                                           total_unit="runs")
 

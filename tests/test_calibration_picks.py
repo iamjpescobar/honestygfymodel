@@ -30,6 +30,7 @@ cp.RECORD_PATH = tmp / "calibration.json"
 # (exit 128). This test is about picks: the slate writer is stubbed AND
 # its path sandboxed, so no network and no repo file either way.
 cp.MLB_SLATE_PATH = tmp / "games.json"
+cp.PICKS_ROOT = tmp / "model_picks"
 cp._write_mlb_slate = lambda date_str: 0
 
 # --- 1. Happy path: both boards logged ---

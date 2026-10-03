@@ -87,6 +87,10 @@ jobs:
       - name: Fetch nightly data archive
         run: python app/fetch_data.py
 
+      # MLB model picks: graded HERE, because this workflow is the one that
+      # logs them — one owner per file (model_picks_grade.main).
+      - name: Grade MLB model picks
+        run: python model_picks_grade.py mlb || echo "::warning::MLB model picks grading failed - left pending"
       - name: Log today's picks
         run: python calibration_picks.py
 

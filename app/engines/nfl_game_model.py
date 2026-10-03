@@ -120,7 +120,14 @@ def validate(finals, params, prior_totals=None, prior_league=None):
     mae_t = sum(abs(p["mu_h"] + p["mu_a"] - p["total"]) for p in preds) / n
     mae_tb = sum(abs(p["base_total"] - p["total"]) for p in preds) / n
     right = sum(1 for (p_, y) in pp if (p_ >= 0.5) == (y == 1))
+    ml_v = mm.paired_verdict([mm.log_loss(p_, y) for p_, y in pp],
+                             [mm.log_loss(p["base_home"], p["y"]) for p in preds])
+    sp_v = mm.paired_verdict([abs((p["mu_h"] - p["mu_a"]) - (p["hs"] - p["as"])) for p in preds],
+                             [abs(edge_before[p["date"]] - (p["hs"] - p["as"])) for p in preds])
+    tot_v = mm.paired_verdict([abs(p["mu_h"] + p["mu_a"] - p["total"]) for p in preds],
+                              [abs(p["base_total"] - p["total"]) for p in preds])
     return {
+        "ml_verdict": ml_v, "spread_verdict": sp_v, "total_verdict": tot_v,
         "n": n, "from": preds[0]["date"], "to": preds[-1]["date"],
         "model": model, "coin_flip": coin, "home_rate": home,
         "beats_coin": model["log_loss"] < coin["log_loss"],

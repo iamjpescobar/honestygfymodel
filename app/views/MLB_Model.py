@@ -65,11 +65,25 @@ mv.render_validation(
            f"season's finals."],
     total_unit="runs")
 
-for i, g in enumerate(games or []):
+# Every game projected ONCE, up front, so the best-value strip and the
+# cards below read the same numbers.
+_val = model.get("validation")
+_slate = []
+for g in games or []:
+    _o = _lines.get(g.get("game_pk"))
+    _slate.append((g, _o, mgm.project_game(g.get("home"), g.get("away"), g.get("home_pitcher_id"),
+                                           g.get("away_pitcher_id"), model=model, market=_o)))
+mv.render_trust_row([("Moneyline", mv.market_trust(_val, "moneyline")),
+                     ("Total", mv.market_trust(_val, "total"))])
+mv.render_best_value(
+    [{"label": f"{team_abbr(g.get('away'))} @ {team_abbr(g.get('home'))}",
+      "away": team_abbr(g.get("away")), "home": team_abbr(g.get("home")), "proj": pj, "odds": o}
+     for g, o, pj in _slate], _val, _stk, key="mlb")
+with st.expander("Colour key", expanded=False):
+    mv.render_model_legend()
+
+for i, (g, _odds, proj) in enumerate(_slate):
     away, home = g.get("away"), g.get("home")
-    _odds = _lines.get(g.get("game_pk"))
-    proj = mgm.project_game(home, away, g.get("home_pitcher_id"), g.get("away_pitcher_id"),
-                            model=model, market=_odds)
     with card(f"mlbm_{i}"):
         st.markdown(
             f'<div class="pf-card-title" style="color:{COLOR["gold"]};">'
@@ -83,7 +97,7 @@ for i, g in enumerate(games or []):
         mv.render_game_projection(proj, team_abbr(away), team_abbr(home),
                                   key=f"mlbm_{i}", note=note)
         mv.render_value_panel(proj, _odds, team_abbr(away), team_abbr(home),
-                              key=f"mlbm_{i}", staking=_stk)
+                              key=f"mlbm_{i}", staking=_stk, validation=_val)
         with st.expander("Player props", expanded=False):
             for side, team, opp_sp in (("away", away, g.get("home_pitcher_id")),
                                        ("home", home, g.get("away_pitcher_id"))):

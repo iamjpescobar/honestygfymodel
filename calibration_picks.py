@@ -316,6 +316,10 @@ BUILDERS = {"daily13": _rows_daily13, "potd": _rows_potd,
 # tonight", and it is what lets Home say "3 games, starters not posted"
 # instead of nothing at all.
 MLB_SLATE_PATH = ROOT / "data" / "mlb" / "games.json"
+# The MLB model-picks log (engines/model_picks). Module-level so a test
+# can point it at a sandbox — and tests/test_ci_hygiene requires every
+# test that runs main() to do so.
+PICKS_ROOT = ROOT / "data" / "model_picks"
 
 
 def _write_mlb_slate(date_str: str) -> int:
@@ -656,7 +660,7 @@ def _attach_model_and_odds(rows, date_str):
             to_log.append({"id": row.get("game_pk"), "date": date_str, "start": row["game_time"],
                            "home": row.get("home"), "away": row.get("away"),
                            "proj": pj, "odds": o})
-    new = mpk.log_picks("mlb", to_log) if to_log else 0
+    new = mpk.log_picks("mlb", to_log, root=PICKS_ROOT) if to_log else 0
     print(f"mlb model: {projected}/{len(rows)} games projected, {priced} with an ESPN line, "
           f"{new} new value pick(s) logged", flush=True)
 

@@ -211,10 +211,12 @@ else:
                     _po = p_over(market, _r["Proj"], _line, _spreads)
                     _sides = [(f"Over {_line:g}", _po, _po_px),
                               (f"Under {_line:g}", None if _po is None else 1 - _po, _pu_px)]
-                _out = []
+                _out, _tiers = [], []
                 for _lab, _p, _price in _sides:
                     _a = _vl.assess(_p, _price, _stk[0] or None, _stk[1], _stk[2]) if _p is not None else None
+                    _tiers.append(_mv.edge_tier(_a["edge"] if _a else None, bool(_a and _a["value"])))
                     _out.append({
+                        "Tier": _mv.TIER_STYLE[_tiers[-1]][0],
                         "Bet": _lab,
                         "Model": "\u2014" if _p is None else f"{100 * _p:.1f}%",
                         "Fair": _mm.fmt_american(_mm.fair_american(_p)) if _p is not None else "\u2014",
@@ -224,7 +226,12 @@ else:
                         "Stake": (f"${_a['stake']:.2f}" if _a and _a.get("stake") else "\u2014"),
                         "Value": "\u2705" if _a and _a["value"] else "",
                     })
-                st.dataframe(_out, hide_index=True, width="stretch", key="nfl_pc_table")
+                # NFL prop chances have NOT been graded against outcomes,
+                # so the badge is UNTESTED until they are — whatever the
+                # edge colour says.
+                _mv.render_trust_row([(f"{market} chances", None)])
+                st.dataframe(_mv._tier_styler(pd.DataFrame(_out), _tiers), hide_index=True,
+                             width="stretch", key="nfl_pc_table")
                 _sp = _spreads.get(market)
                 if market != "Anytime TD":
                     st.caption(

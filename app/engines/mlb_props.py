@@ -281,7 +281,15 @@ def load_prop_model():
 
 
 def market_verdicts(model):
-    """{market_key: bool} — True when the walk-forward showed the model
-    beat the batter's own season frequency for that market."""
+    """{market_key: 'beats' | 'thin' | 'fails' | None} — the paired
+    significance verdict vs the batter's own frequency; a prop model from
+    before verdicts existed falls back to the plain beat/fail boolean."""
     v = (model or {}).get("validation") or {}
-    return {k: bool((v.get(k) or {}).get("beats_baseline")) for k, *_ in MARKETS}
+    out = {}
+    for k, *_ in MARKETS:
+        x = v.get(k) or {}
+        verdict = (x.get("verdict") or {}).get("verdict")
+        if verdict is None and "beats_baseline" in x:
+            verdict = "beats" if x["beats_baseline"] else "fails"
+        out[k] = verdict
+    return out

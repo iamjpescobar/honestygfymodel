@@ -132,13 +132,18 @@ def render_prop_table(rows, columns, verdicts, key, favor_note=None):
         return
     df = pd.DataFrame([{k: v for k, v in r.items() if not str(k).startswith("_")}
                        for r in rows])
+    def _ok(v):
+        return v is True or v == "beats"
+    render_trust_row([(h, (verdicts.get(k) if isinstance(verdicts.get(k), str) or verdicts.get(k) is None
+                          else ("beats" if verdicts.get(k) else "fails")))
+                      for k, h in columns])
     rename = {}
     for k, header in columns:
         if k in df.columns:
-            rename[k] = header if verdicts.get(k) else f"{header} *"
+            rename[k] = header if _ok(verdicts.get(k)) else f"{header} *"
     df = df.rename(columns=rename)
     st.dataframe(df, hide_index=True, width="stretch", key=f"props_{key}")
-    flagged = [h for k, h in columns if k in rename and not verdicts.get(k)]
+    flagged = [h for k, h in columns if k in rename and not _ok(verdicts.get(k))]
     if flagged:
         st.caption("* did not beat the player's own hit rate on games it had not seen "
                    "— shown, but don't lean on it: " + ", ".join(flagged) + ".")
@@ -281,7 +286,7 @@ def _bet_label(b, away, home):
     return f"{team} {b['line']:+g}"
 
 
-def render_value_panel(proj, odds, away, home, key, staking):
+def render_value_panel(proj, odds, away, home, key, staking, validation=None):
     """Model % vs price for every side the model prices. Prices default
     to the posted line where there is one; type your own book's price in
     the Price column and the row recomputes."""
@@ -291,30 +296,44 @@ def render_value_panel(proj, odds, away, home, key, staking):
     bankroll, frac, cap = staking
     ed_key = f"val_{key}"
     edits = (st.session_state.get(ed_key) or {}).get("edited_rows") or {}
-    rows = []
+    rows, tiers, trusts = [], [], []
     for i, b in enumerate(bets):
         price = (edits.get(i) or {}).get("Price", b["price"])
+        if isinstance(price, float) and price != price:      # NaN = empty cell
+            price = None
         a = vl.assess(b["p"], price, bankroll or None, frac, cap) if price not in (None, "") else None
+        tiers.append(edge_tier(a["edge"] if a else None, bool(a and a["value"])))
+        trusts.append(market_trust(validation, b["market"]))
         rows.append({
+            "Tier": TIER_STYLE[tiers[-1]][0],
             "Bet": _bet_label(b, away, home),
             "Model": f"{100 * b['p']:.1f}%",
             "Fair": mm.fmt_american(mm.fair_american(b["p"])),
-            "Price": price,
+            # An EMPTY cell, not the word "None", where no price was
+            # posted — the reader types his book's price there.
+            "Price": float("nan") if price in (None, "") else price,
             "Break-even": f"{100 * a['break_even']:.1f}%" if a else DASH,
             "Edge": f"{100 * a['edge']:+.1f}" if a else DASH,
             "EV / $100": f"{a['ev_per_100']:+.2f}" if a else DASH,
             "Stake": (f"${a['stake']:.2f}" if a and a.get("stake") else
                       ("\u2014" if not a or not bankroll else "$0 (no value)")),
-            "Value": "\u2705" if a and a["value"] else "",
+            "Trust": TRUST_STYLE.get(trusts[-1], TRUST_STYLE[None])[0],
         })
     df = pd.DataFrame(rows)
     st.data_editor(
-        df, key=ed_key, hide_index=True, width="stretch",
+        # The editable Price column ignores Styler formatting, and an empty
+        # editable number cell shows Streamlit's grey "None" placeholder —
+        # never a filled-in price (no posted price is never assumed -110).
+        # The caption below says what that placeholder means.
+        _tier_styler(df, tiers, trusts),
+        key=ed_key, hide_index=True, width="stretch",
         disabled=[c for c in df.columns if c != "Price"],
         column_config={"Price": st.column_config.NumberColumn(
             "Price", help="American odds at YOUR book. Posted line pre-filled where ESPN has one.",
             step=1, format="%d")})
-    st.caption("\u2705 = positive expected value at that price. Edit Price to check your book.")
+    st.caption("Row colour = your edge at that price (STRONG / VALUE / THIN; no tint = no value). "
+               "Trust = how that market tested. Tap Price to enter your book's number \u2014 a "
+               "grey \u201cNone\u201d there means ESPN posted no price for that side.")
 
 
 def render_prop_value_tool(rows, markets, key, staking, name_key="_name"):
@@ -337,10 +356,177 @@ def render_prop_value_tool(rows, markets, key, staking, name_key="_name"):
     if not a:
         st.caption("Enter an American price of -100 or lower, or +100 or higher.")
         return
-    verdict = "VALUE" if a["value"] else "no value"
+    _tl, _tfg, _tbg = TIER_STYLE[edge_tier(a["edge"], a["value"])]
+    verdict = (f'<span style="color:{_tfg}; font-weight:800;">{_tl}</span>'
+               if a["value"] else "no value")
     stake_txt = (f" \u00b7 stake ${a['stake']:.2f}" if a["value"] and a.get("stake")
                  else "")
     st.markdown(f"{who} \u00b7 {labels[mkt]}: model **{100 * p:.1f}%** vs break-even "
                 f"{100 * a['break_even']:.1f}% at {mm.fmt_american(int(price))} \u2192 "
                 f"**{verdict}** (edge {100 * a['edge']:+.1f} pts, EV {a['ev_per_100']:+.2f} "
-                f"per $100){stake_txt}")
+                f"per $100){stake_txt}", unsafe_allow_html=True)
+
+
+# ----------------------------------------------------------------------
+# Colour: what to DO (edge tier) and how far to TRUST it (verdict)
+# ----------------------------------------------------------------------
+# Edge tiers share their cut points with the Results scorecard
+# (model_picks.EDGE_BUCKETS) so a row's colour names the bucket its
+# record is graded in. Colours are kc_theme tokens; every colour also
+# carries a text label, so nothing rests on colour alone.
+TIER_STYLE = {
+    "strong": ("STRONG", COLOR["stat_high"], COLOR["stat_high_dim"]),
+    "value": ("VALUE", COLOR["gold"], COLOR["warn_dim"]),
+    # Grey, not a third blue: on the first screenshot steel-blue THIN read
+    # as a paler STRONG — a weak edge must not look like a strong one.
+    "thin": ("THIN", COLOR["text_muted"], "rgba(152, 163, 173, 0.12)"),
+    "none": ("\u2014", COLOR["text_faint"], None),
+}
+TRUST_STYLE = {
+    "beats": ("BEATS BASELINE", COLOR["accent"], COLOR["accent_dim"], COLOR["accent_border"]),
+    "thin": ("THIN EDGE", COLOR["warn"], COLOR["warn_dim"], COLOR["warn_border"]),
+    "fails": ("NOT PROVEN", COLOR["error"], COLOR["error_dim"], COLOR["error_border"]),
+    None: ("UNTESTED", COLOR["text_muted"], "transparent", COLOR["border"]),
+}
+
+
+def edge_tier(edge, is_value):
+    if not is_value or edge is None:
+        return "none"
+    # On the 0.1-point grid the page prints. Raw 1.997 points showed as
+    # "+2.0" under a THIN label; the picks log stores edge to 4 decimals
+    # (0.0200), which Results buckets as VALUE — so the label follows the
+    # number the reader sees, and agrees with the record.
+    edge = round(edge, 3)
+    names = ("thin", "value", "strong")          # in EDGE_BUCKETS order
+    for name, (lo, hi, _label) in zip(names, mpk.EDGE_BUCKETS):
+        if lo <= edge < hi:
+            return name
+    return "strong"
+
+
+def market_trust(validation, market):
+    """'beats' / 'thin' / 'fails' / None for one game-model market.
+
+    Reads the paired-significance verdict the nightly writes; a model
+    file from before verdicts existed falls back to the plain beat/fail
+    booleans (never 'thin' — that needs the significance test)."""
+    v = validation or {}
+    key = {"moneyline": "ml_verdict", "total": "total_verdict",
+           "spread": "spread_verdict"}.get(market)
+    verdict = ((v.get(key) or {}).get("verdict")) if key else None
+    if verdict:
+        return verdict
+    if not v.get("n"):
+        return None
+    if market == "moneyline":
+        return "beats" if (v.get("beats_coin") and v.get("beats_home_rate")) else "fails"
+    if market == "total":
+        return "beats" if v.get("total_beats_league_avg") else "fails"
+    if market == "spread":
+        b = v.get("margin_beats_home_edge")
+        return None if b is None else ("beats" if b else "fails")
+    return None
+
+
+def prop_trust(prop_validation, key):
+    x = (prop_validation or {}).get(key) or {}
+    verdict = (x.get("verdict") or {}).get("verdict")
+    if verdict:
+        return verdict
+    if "beats_baseline" in x:
+        return "beats" if x["beats_baseline"] else "fails"
+    return None
+
+
+def trust_pill(verdict, prefix=""):
+    label, fg, bg, border = TRUST_STYLE.get(verdict, TRUST_STYLE[None])
+    return (f'<span style="display:inline-block; padding:1px 8px; border-radius:999px; '
+            f'border:1px solid {border}; background:{bg}; color:{fg}; '
+            f'font-size:var(--lc-text-tiny); font-weight:700; letter-spacing:0.04em; '
+            f'white-space:nowrap;">{prefix}{label}</span>')
+
+
+def render_trust_row(items):
+    """items: [(label, verdict)] — one line of pills."""
+    parts = [f'<span style="color:{COLOR["text_muted"]}; font-size:var(--lc-text-small);">'
+             f'{lab}</span> {trust_pill(v)}' for lab, v in items]
+    st.markdown('<div style="display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; '
+                'margin:2px 0 6px;">' + "".join(f"<span>{p}</span>" for p in parts) + "</div>",
+                unsafe_allow_html=True)
+
+
+def render_model_legend():
+    sw = []
+    for key in ("strong", "value", "thin"):
+        label, fg, bg = TIER_STYLE[key]
+        lo, hi, rng = mpk.EDGE_BUCKETS[{"thin": 0, "value": 1, "strong": 2}[key]]
+        sw.append(f'<span style="display:inline-flex; align-items:center; gap:5px;">'
+                  f'<span style="width:12px; height:12px; border-radius:3px; background:{bg}; '
+                  f'border:1px solid {fg};"></span><span style="color:{fg}; font-weight:700; '
+                  f'font-size:var(--lc-text-tiny);">{label}</span><span style="color:'
+                  f'{COLOR["text_muted"]}; font-size:var(--lc-text-tiny);">{rng} edge</span></span>')
+    pills = " ".join(trust_pill(v) for v in ("beats", "thin", "fails"))
+    st.markdown(
+        '<div style="display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center;">'
+        + "".join(sw) + "</div>"
+        f'<div style="margin-top:6px; display:flex; flex-wrap:wrap; gap:6px; align-items:center;">'
+        f'{pills}</div>'
+        f'<div style="color:{COLOR["text_faint"]}; font-size:var(--lc-text-tiny); margin-top:4px; '
+        f'line-height:1.6;">Row colour = your edge at the price (the same buckets Results grades). '
+        f'Badge = how that market tested on games it had not seen: beats its baseline by more than '
+        f'noise ({mm.SIGNIFICANCE_Z:g} standard errors), better but within noise, or not better.'
+        f'</div>', unsafe_allow_html=True)
+
+
+def _tier_styler(df, tiers, trusts=None):
+    """Row background by tier, Tier/Trust cells in their colours."""
+    def row_style(row):
+        t = tiers[row.name]
+        _l, fg, bg = TIER_STYLE[t]
+        base = [f"background-color: {bg}" if bg else ""] * len(row)
+        for i, col in enumerate(row.index):
+            if col == "Tier":
+                base[i] += f"; color: {fg}; font-weight: 700"
+            if col == "Trust" and trusts is not None:
+                tl, tfg, _b, _br = TRUST_STYLE.get(trusts[row.name], TRUST_STYLE[None])
+                base[i] += f"; color: {tfg}; font-weight: 700"
+        return base
+    return df.style.apply(row_style, axis=1)
+
+
+def render_best_value(entries, validation, staking, key, prop_note=None):
+    """'Best value tonight': every side with a POSTED price and positive
+    EV across the slate, strongest edge first, coloured like the rows.
+    entries: [{"label","away","home","proj","odds"}]."""
+    bankroll, frac, cap = staking
+    rows = []
+    for e in entries:
+        for b in mpk.candidate_bets(e.get("proj"), e.get("odds")):
+            if b["price"] is None:
+                continue
+            a = vl.assess(b["p"], b["price"], bankroll or None, frac, cap)
+            if not a or not a["value"]:
+                continue
+            rows.append((a["edge"], {
+                "Game": e["label"], "Bet": _bet_label(b, e["away"], e["home"]),
+                "Model": f"{100 * b['p']:.1f}%", "Price": mm.fmt_american(b["price"]),
+                "Edge": f"{100 * a['edge']:+.1f}", "EV / $100": f"{a['ev_per_100']:+.2f}",
+                "Stake": f"${a['stake']:.2f}" if a.get("stake") else "\u2014",
+                "Tier": TIER_STYLE[edge_tier(a["edge"], True)][0],
+                "Trust": TRUST_STYLE.get(market_trust(validation, b["market"]),
+                                         TRUST_STYLE[None])[0],
+            }, edge_tier(a["edge"], True), market_trust(validation, b["market"])))
+    rows.sort(key=lambda r: -r[0])
+    with st.container(border=True):
+        st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">'
+                    f'Best value tonight</div>', unsafe_allow_html=True)
+        if not rows:
+            st.caption("No side has value at the POSTED prices right now. Lines move \u2014 "
+                       "check your own book's price on each game below.")
+            return
+        df = pd.DataFrame([r[1] for r in rows])
+        sty = _tier_styler(df, [r[2] for r in rows], [r[3] for r in rows])
+        st.dataframe(sty, hide_index=True, width="stretch", key=f"best_{key}")
+        st.caption("Posted prices only (ESPN). Your book may differ \u2014 the table on each game "
+                   "recomputes at the price you type." + (f" {prop_note}" if prop_note else ""))

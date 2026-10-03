@@ -208,7 +208,9 @@ def validate_props(skaters, goal_finals, shot_finals, days=VALIDATION_DAYS,
     out = {"from": cut, "to": all_dates[-1], "days": days}
     for k, *_ in MARKETS:
         m, b = mm.score_predictions(preds[k]), mm.score_predictions(base[k])
-        out[k] = {"n": m["n"], "model_brier": m["brier"], "baseline_brier": b["brier"],
+        out[k] = {"verdict": mm.paired_verdict([(p_ - y) ** 2 for p_, y in preds[k]],
+                                               [(q - y) ** 2 for q, y in base[k]]),
+                  "n": m["n"], "model_brier": m["brier"], "baseline_brier": b["brier"],
                   "beats_baseline": bool(m["brier"] is not None and b["brier"] is not None
                                          and m["brier"] < b["brier"]),
                   "calibration": mm.calibration_bins(preds[k])}

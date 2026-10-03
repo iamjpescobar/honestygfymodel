@@ -59,11 +59,22 @@ mv.render_validation(
 
 _stk = mv.staking_controls("nhl")
 pv = model.get("props_validation") or {}
-verdicts = {k: bool((pv.get(k) or {}).get("beats_baseline")) for k, *_ in nm.MARKETS}
+verdicts = {k: mv.prop_trust(pv, k) for k, *_ in nm.MARKETS}
 _cols = tuple((k, label) for k, label, *_ in nm.MARKETS)
+_val = model.get("validation")
 
 if not games:
     st.info("No NHL games on the current slate.")
+else:
+    mv.render_trust_row([("Moneyline", mv.market_trust(_val, "moneyline")),
+                         ("Total", mv.market_trust(_val, "total"))])
+    mv.render_best_value(
+        [{"label": f"{g.get('away_abbr') or g.get('away')} @ {g.get('home_abbr') or g.get('home')}",
+          "away": g.get("away_abbr") or g.get("away"), "home": g.get("home_abbr") or g.get("home"),
+          "proj": g.get("model"), "odds": g.get("odds")}
+         for g in games if g.get("game_type") != "preseason"], _val, _stk, key="nhl")
+    with st.expander("Colour key", expanded=False):
+        mv.render_model_legend()
 
 for i, g in enumerate(games or []):
     if g.get("game_type") == "preseason":
@@ -76,7 +87,7 @@ for i, g in enumerate(games or []):
             f'{g.get("venue") or ""}</div>', unsafe_allow_html=True)
         mv.render_game_projection(g.get("model"), a, h, key=f"nhlm_{i}")
         mv.render_value_panel(g.get("model"), g.get("odds"), a, h, key=f"nhlm_{i}",
-                              staking=_stk)
+                              staking=_stk, validation=_val)
         with st.expander("Skater props", expanded=False):
             for side, lab in (("away", a), ("home", h)):
                 env = g.get(f"{side}_env") or {}
