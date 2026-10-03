@@ -43,7 +43,7 @@ back. A control that stays green proves nothing, and several have —
 because the fixture could not tell the two behaviours apart, or because
 the edit never applied at all.
 
-**The suite is 119 files and stays green.** Five fail in a bare
+**The suite is 121 files and stays green.** Five fail in a bare
 container for want of streamlit and pass in Codespaces:
 test_data_paths, test_home, test_pen_roster_drift,
 test_wnba_grading_honesty, test_wnba_injury_gate. Run it with:
@@ -136,6 +136,84 @@ DOWNSTREAM CAN CATCH.** The board capped per TEAM while its caption said
 **10. DO NOT TUNE AFTER A BAD NIGHT.** At a 12% base rate a bad week and
 a broken model are indistinguishable, and every change resets the
 measurement clock.
+
+---
+
+## PICK UP HERE — the first model nightly died on a file a TEST wrote. 2026-10-03 (6)
+
+**Suite 121, FAILING: none.** One negative control red by exit code.
+
+### WHAT THE FIRST REAL RUN SAID (before it died)
+
+    MLB  2,430 finals, 2,428 with both starters, 376/376 start logs.
+         walk-forward 2,415 games: log loss 0.6847 vs coin 0.6931 vs
+         home-rate 0.6924. Starters USED (team-only 0.6876).
+         Totals MAE 3.555 vs league-average 3.567 — barely better.
+    NHL  fit on 2025-26: 1,292-game walk-forward 0.6874 vs 0.6931/0.6939.
+         All SIX skater markets beat the skater's own rate (17,343 each).
+         Goals came back Poisson (dispersion None), as hockey should.
+    NFL  2025 fetched (272). Walk-forward 0.6441 vs 0.6931/0.6988;
+         margin MAE 10.66 vs 11.44 home-edge; total MAE 10.96 vs 10.97 —
+         the TOTAL is a tie with the league average. Say so; don't tune.
+
+The MLB prop model did NOT run: it lives in precompute.py, which comes
+after the step that failed. Its verdicts arrive with the next nightly.
+
+### THE FAILURE
+
+tests/test_calibration_picks sandboxed RECORD_PATH but not
+MLB_SLATE_PATH. In CI the schedule fetch works, so each of its six
+cp.main() calls rewrote the REAL data/mlb/games.json — silently, for
+weeks. Harmless until "Commit MLB game model" (new today) did `git pull
+--rebase --autostash` while upstream had a fresh games.json: the stash
+pop conflicted, that step still pushed, and "Commit NFL projection log"
+died on `U data/mlb/games.json` (exit 128) — after every model was built,
+before the archive was published or Render redeployed.
+
+Fixed twice: the test stubs the slate writer and sandboxes its path; and
+nightly-data.yml now has "Restore any tracked files the tests touched"
+between the tests and the first commit — a future leak is a ::warning::
+with the file list, then restored. tests/test_ci_hygiene.py pins the
+step's existence and position. (Offline, test_calibration_picks never
+reached the network, so the leak was invisible locally — rule 5 again.)
+
+### FILES, 2026-10-03 (6)
+
+    tests/test_calibration_picks.py   slate writer stubbed + sandboxed
+    .github/workflows/nightly-data.yml restore step after Run tests
+    tests/test_ci_hygiene.py          NEW
+
+---
+
+## PICK UP HERE — a day with no WNBA games took the late refresh red. 2026-10-03 (5)
+
+**Suite 120, FAILING: none.** Two negative controls red by exit code.
+
+The 10-03 `intl-late-refresh` run failed at the WNBA step with "every
+ESPN scoreboard source failed". It had not: site.api answered a REAL
+scoreboard with events=[] — there were no games — while cdn.espn gave
+nothing parseable and the header gave no scoreboard. require_events=True
+counted the honest empty answer as a failure, and the step's red took
+the whole job red although NPB and KBO had succeeded.
+
+`espn_wnba.fetch_today()` runs the require_events=True pass first (so on
+a game day a host answering [] cannot shadow one with the slate), and
+only if nobody has games accepts an empty answer — and only from a host
+that returned a real scoreboard. All hosts broken still raises, naming
+each. wnba_precompute.main uses it; the downstream "zero box scores ->
+refuse to publish" guard is untouched and still catches real outages.
+
+Fixture lesson (rule 5): the source NAMED "site.api" is served from
+site.web.api.espn.com, so a fake that routes by hostname hands every
+source the wrong answer. Route by URL path. And a bare {"id"} event is
+correctly dropped by _normalize_header_events — game-day fixtures need
+a full competitions block.
+
+### FILES, 2026-10-03 (5)
+
+    app/engines/espn_wnba.py   fetch_today()
+    wnba_precompute.py         tonight via fetch_today
+    tests/test_wnba_off_day.py NEW — replays the logged responses
 
 ---
 

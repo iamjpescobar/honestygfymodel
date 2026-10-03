@@ -290,6 +290,37 @@ def fetch_scoreboard(yyyymmdd, require_events=True):
                        + " | ".join(errors))
 
 
+def fetch_today(yyyymmdd):
+    """Tonight's slate: (payload, source, off_day).
+
+    THE 10-03 FAILURE. The late refresh asked for a day with no WNBA
+    games and every host said so in its own way — site.api answered a
+    real scoreboard with events=[], cdn.espn answered nothing parseable,
+    site.web.api answered no scoreboard at all. require_events=True
+    counted the honest empty answer as a failure, so the job raised
+    "every ESPN scoreboard source failed", went red, and took the whole
+    refresh job (NPB and KBO had succeeded) red with it.
+
+    The require_events=True pass still runs FIRST: on a game day it is
+    what stops a host that answers [] from shadowing one that has the
+    slate. Only when no host has events is the empty answer accepted —
+    and only if some host returned a REAL scoreboard (_is_scoreboard).
+    If none did, that is an outage and it still raises, with every
+    host's reason.
+    """
+    try:
+        data, name = fetch_scoreboard(yyyymmdd, require_events=True)
+        return data, name, False
+    except RuntimeError as busy:
+        try:
+            data, name = fetch_scoreboard(yyyymmdd, require_events=False)
+        except RuntimeError:
+            raise busy
+        print(f"WNBA: no games on {yyyymmdd} \u2014 {name} answered an empty "
+              f"scoreboard (an off day, not an outage)")
+        return data, name, True
+
+
 def live_scores(yyyymmdd=None):
     """{(away_name, home_name): {status, detail, scoreline}} for one day.
 

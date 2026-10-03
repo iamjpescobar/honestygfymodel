@@ -21,6 +21,16 @@ TODAY = datetime.now(cp.EASTERN).strftime("%Y-%m-%d")
 
 tmp = Path(tempfile.mkdtemp())
 cp.RECORD_PATH = tmp / "calibration.json"
+# THE SLATE TOO. main() writes the MLB slate before any board, and this
+# test only sandboxed the picks record — so in CI, where the schedule
+# fetch succeeds, every cp.main() below rewrote the REAL
+# data/mlb/games.json (six times a run). 2026-10-03 that dirty file met a
+# fresh upstream copy in the nightly's `git pull --autostash`, the stash
+# pop conflicted, and the next commit step died on an unmerged file
+# (exit 128). This test is about picks: the slate writer is stubbed AND
+# its path sandboxed, so no network and no repo file either way.
+cp.MLB_SLATE_PATH = tmp / "games.json"
+cp._write_mlb_slate = lambda date_str: 0
 
 # --- 1. Happy path: both boards logged ---
 cp.BUILDERS = {

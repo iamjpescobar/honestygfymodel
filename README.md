@@ -23,7 +23,7 @@ and WNBA pages read their own slate files and still work.
 
 ## Tests
 
-119 files in `tests/`, all **plain scripts, not pytest**. Each one exits
+121 files in `tests/`, all **plain scripts, not pytest**. Each one exits
 non-zero on failure and CI checks exit codes. There is no pytest
 anywhere in this repo — don't add `assert`-collecting fixtures and
 expect them to run.

@@ -42,7 +42,7 @@ SEASON_START = date(2026, 4, 3)
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "app"))
 from engines.espn_wnba import (  # noqa: E402
-    BASE, SCOREBOARD_SOURCES, STATUS_MAP, fetch_scoreboard, get_json,
+    BASE, SCOREBOARD_SOURCES, STATUS_MAP, fetch_scoreboard, fetch_today, get_json,
     _is_scoreboard, _normalize_header_events,
 )
 
@@ -761,7 +761,9 @@ def main():
     now_et = datetime.now(EASTERN)
     today = now_et.strftime("%Y-%m-%d")
 
-    sb, _sb_source = fetch_scoreboard(today.replace("-", ""))
+    # fetch_today, not fetch_scoreboard: an empty game day is an answer,
+    # not an outage (the 10-03 late-refresh failure — see its docstring).
+    sb, _sb_source, _off_day = fetch_today(today.replace("-", ""))
     # Keep the event id ON the game. parse_scoreboard_events yields it
     # separately, so it was being discarded here — and without it there's
     # no way to ask ESPN for tonight's injury report and lineups for this

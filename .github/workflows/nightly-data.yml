@@ -98,6 +98,24 @@ jobs:
       # of thing that must go red instead of quietly skipping days.
       # build_data/ is never wiped, so the record written here is still
       # present for precompute.py to pack into the archive below.
+      # NO TEST MAY LEAVE A TRACKED FILE CHANGED. 2026-10-03 a test that
+      # rewrote data/mlb/games.json made a later `git pull --autostash`
+      # conflict, and the next commit step died on an unmerged file —
+      # after the models were built and before anything was published.
+      # The leak is fixed at the test; this step makes any future one
+      # VISIBLE (warning + the list) and harmless (restored) before the
+      # first commit step. Only tests have run at this point, so nothing
+      # here is real work to keep. tests/test_ci_hygiene.py pins it.
+      - name: Restore any tracked files the tests touched
+        run: |
+          changed="$(git status --porcelain --untracked-files=no)"
+          if [ -n "$changed" ]; then
+            echo "::warning::Tests modified tracked files - restoring them before any commit:"
+            echo "$changed"
+            git checkout -- .
+          else
+            echo "Tests left the working tree clean."
+          fi
       - name: Grade calibration picks
         run: python calibration_pipeline.py
 
