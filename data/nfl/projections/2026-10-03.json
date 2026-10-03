@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-03 15:04",
+  "generated_at_et": "2026-10-03 16:14",
   "week": 4,
   "league": {
     "team_games": 98,
@@ -16,7 +16,57 @@
     "prior_a": 3.7955,
     "prior_b": 84.5172,
     "players_fitted": 412,
-    "touches_fitted": 5654
+    "touches_fitted": 5654,
+    "prop_spreads": {
+      "Rushing yards": {
+        "kind": "yards",
+        "cv": 0.6574,
+        "players": 121,
+        "games": 327
+      },
+      "Carries": {
+        "kind": "count",
+        "size": 945.339,
+        "players": 123,
+        "games": 332
+      },
+      "Receiving yards": {
+        "kind": "yards",
+        "cv": 0.8635,
+        "players": 254,
+        "games": 694
+      },
+      "Receptions": {
+        "kind": "count",
+        "size": null,
+        "players": 255,
+        "games": 696
+      },
+      "Targets": {
+        "kind": "count",
+        "size": null,
+        "players": 257,
+        "games": 700
+      },
+      "Passing yards": {
+        "kind": "yards",
+        "cv": 0.2974,
+        "players": 36,
+        "games": 100
+      },
+      "Pass attempts": {
+        "kind": "count",
+        "size": 54.08,
+        "players": 36,
+        "games": 100
+      },
+      "Rush + rec yards": {
+        "kind": "yards",
+        "cv": 0.7408,
+        "players": 307,
+        "games": 847
+      }
+    }
   },
   "markets": {
     "Anytime TD": [
