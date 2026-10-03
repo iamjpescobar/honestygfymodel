@@ -1,0 +1,45 @@
+name: NHL prior season
+
+# Manual, run ONCE (and again only if the file is lost or the parser
+# changes). Builds data/nhl/prior_season.json — every 2025-26 regular-
+# season final and every skater's game line — and commits it. The NHL
+# model fits on this file while the current season is too young to fit
+# on (engines/nhl_model.py), and nhl_precompute reads it every night.
+#
+# Not a nightly step: last season does not change, and ~1,300 ESPN box
+# scores a night would be pure cost. Read the [verify] lines in the log:
+# the finals count should be ~1,300 and the SOG leader a real name.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-archive
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: pip install -c requirements.txt requests
+      - name: Collect the 2025-26 regular season from ESPN
+        run: python nhl_prior_season.py
+      - name: Commit the prior-season file
+        run: |
+          if [ -z "$(git status --porcelain -- data/nhl/prior_season.json)" ]; then
+            echo "No change to the prior-season file."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/nhl/prior_season.json
+          git commit -m "chore: NHL 2025-26 prior season for the model [skip ci]"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

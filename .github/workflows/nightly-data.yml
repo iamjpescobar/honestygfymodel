@@ -157,16 +157,38 @@ jobs:
       # is what a future grader reads to score what the board actually
       # claimed, and it is worthless unless it is committed the day it
       # is written.
+      # MLB game model: fitted on the season's real finals + starter game
+      # logs, walk-forward validated, written to data/mlb/model.json and
+      # committed (like lineup_lock.json) so the slate builder in
+      # slate-picks.yml can read it too. A failure costs the model, never
+      # the rest of the nightly.
+      - name: Build MLB game model (real statsapi finals)
+        run: python mlb_model_precompute.py || echo "::warning::MLB model build failed - continuing without it"
+      - name: Commit MLB game model
+        run: |
+          if [ -z "$(git status --porcelain -- data/mlb/model.json)" ]; then
+            echo "No MLB model changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/mlb/model.json
+          git commit -m "chore: refit MLB game model [skip ci]"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
       - name: Commit NFL projection log
         run: |
           # --porcelain, not git diff: a brand-new dated file is
           # untracked, and git diff reports untracked as no change.
-          if [ -z "$(git status --porcelain -- data/nfl/projections)" ]; then
+          if [ -z "$(git status --porcelain -- data/nfl/projections data/nfl/prior_season.json)" ]; then
             echo "No new NFL projections to commit."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add data/nfl/projections
+            # The 2025 finals the game model fits on — written once, the
+            # first night it is missing (nfl_prior_season.py).
+            if [ -f data/nfl/prior_season.json ]; then git add data/nfl/prior_season.json; fi
             git commit -m "chore: log NFL projections [skip ci]"
             git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
             git push origin "HEAD:${GITHUB_REF_NAME}"

@@ -140,6 +140,12 @@ def fake_get(url, _attempts=3, summaries=None):
     raise RuntimeError(url)
 
 
+# The model step reads last season's committed file. This test is about
+# the pipeline's parsing, so it runs against NO prior file — the model
+# has its own test (test_nhl_model.py) with a season-sized fixture.
+hpc.PRIOR_PATH = Path(tempfile.gettempdir()) / "no_such_prior_season.json"
+
+
 def run(get, today):
     saved = (ef.get_json, hpc.time.sleep)
     ef.get_json, hpc.time.sleep = get, (lambda *_a: None)

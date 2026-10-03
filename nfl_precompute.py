@@ -56,6 +56,8 @@ OUT = Path("build_data") / "data" / "nfl"
 # file would say so. The suite polluting production data is the bug;
 # the repo path is correct and stays.
 PROJECTION_LOG = ROOT / "data" / "nfl" / "projections"
+# 2025 finals for the game model — fetched once, committed with the log.
+PRIOR_PATH = ROOT / "data" / "nfl" / "prior_season.json"
 
 # ----------------------------------------------------------------------
 # Box-score column maps. keys first, labels second — see
@@ -867,6 +869,8 @@ def main(today=None):
             finals[g["event_id"]] = ({"date": d.isoformat(), "week": gw,
                            "event_id": g["event_id"],
                            "away": g["away"], "home": g["home"],
+                           # ids for the game model; names are display only
+                           "away_id": g.get("away_id"), "home_id": g.get("home_id"),
                            "away_score": g["away_score"], "home_score": g["home_score"],
                            "away_box": box.get(g["away"]),
                            "home_box": box.get(g["home"])})
@@ -943,6 +947,38 @@ def main(today=None):
 
     week_events.sort(key=lambda g: g.get("kickoff_et") or "")
 
+    # THE GAME MODEL (engines/nfl_game_model): the site's own projected
+    # score, win %, fair spread and total, beside the market's. Fitted on
+    # 2025 while 2026 is young; 2025 is fetched once and committed. A
+    # model failure costs the model block, never the week.
+    model_block = None
+    try:
+        from engines import nfl_game_model as ngm
+        import nfl_prior_season as nps
+        prior_finals = nps.load_or_fetch(
+            lambda dd: ef.fetch_scoreboard(LEAGUE, dd.strftime("%Y%m%d"))[0], slate_game,
+            path=PRIOR_PATH)
+        model_block = ngm.build(finals, prior_finals)
+        if model_block:
+            for g in week_events:
+                pj = ngm.project(model_block, g.get("home_id"), g.get("away_id"), g.get("odds"),
+                                 g.get("home_abbr", ""), g.get("away_abbr", ""))
+                if pj:
+                    g["model"] = pj
+            v, pr = model_block["validation"], model_block["params"]
+            print(f"  [verify] NFL model fit on {pr['fit_on']} season: k={pr['shrink_k']} "
+                  f"carryover={pr.get('carryover')} sd_margin={pr['sd_margin']} "
+                  f"sd_total={pr['sd_total']} home_mult={model_block['league'].get('home_mult')}")
+            if v.get("n"):
+                print(f"  [verify] walk-forward {v['n']} games: log loss {v['model']['log_loss']} "
+                      f"vs coin {v['coin_flip']['log_loss']} vs home-rate {v['home_rate']['log_loss']}; "
+                      f"margin MAE {v['margin_mae_model']} vs home-edge {v['margin_mae_home_edge']}; "
+                      f"total MAE {v['total_mae_model']} vs league avg {v['total_mae_league_avg']}")
+            print(f"  [verify] week games with a projection: "
+                  f"{sum(1 for g in week_events if g.get('model'))} of {len(week_events)}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::NFL game model failed: {type(exc).__name__}: {exc}")
+
     # ------------------------------------------------------------------
     # THE PROJECTION LOG — written to the REPO, not the archive.
     #
@@ -995,6 +1031,7 @@ def main(today=None):
         "week_end_et": w_end.isoformat(),
         "finals_parsed": parsed,
         "league": league,
+        "model": model_block,
         "games": week_events,
         "teams": teams,
     }, ensure_ascii=False, indent=2))

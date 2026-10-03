@@ -23,7 +23,7 @@ and WNBA pages read their own slate files and still work.
 
 ## Tests
 
-115 files in `tests/`, all **plain scripts, not pytest**. Each one exits
+119 files in `tests/`, all **plain scripts, not pytest**. Each one exits
 non-zero on failure and CI checks exit codes. There is no pytest
 anywhere in this repo — don't add `assert`-collecting fixtures and
 expect them to run.
@@ -79,6 +79,25 @@ stamps its own timezone key — a KBO slate for Aug 5 KST is correct while
 it's still Aug 4 in Newark.
 
 ---
+
+## The game models
+
+MLB, NHL and NFL each have a **Model** page: projected score, win %,
+fair line, and props (MLB hits/TB/HR/K, NHL shots/points/goals/assists;
+NFL props stay on Projections). One shared core —
+`engines/model_math.py` (distributions, odds, fitters) and
+`engines/game_model.py` (team pairing, walk-forward fit and validation).
+Every parameter is fitted or measured nightly, never chosen, and every
+page shows the model's walk-forward record beside its numbers.
+
+- **MLB** — `mlb_model_precompute.py` (statsapi finals + starter logs →
+  `data/mlb/model.json`, committed) and `mlb_prop_precompute.py` (called
+  by precompute.py → `prop_model.json` in the archive).
+- **NHL** — fitted on last season while this one is young. Run the
+  manual **NHL prior season** workflow once to build
+  `data/nhl/prior_season.json`.
+- **NFL** — same, on 2025; the nightly fetches and commits
+  `data/nfl/prior_season.json` itself the first time.
 
 ## Things that will bite you
 

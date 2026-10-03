@@ -82,6 +82,10 @@ ENGINE_COLS = [
     "hit_distance_sc",
 ]
 ID_COLS = ["batter", "pitcher"]
+# Season-frame-only columns for mlb_prop_precompute. NOT engine columns:
+# they never reach a per-player parquet, so ENGINE_COLS and
+# statcast_engine._KEEP_COLS stay identical (tests/test_trim_fast_path).
+MODEL_COLS = ["inning_topbot"]
 CATEGORY_COLS = ["type", "events", "description", "bb_type", "stand"]
 
 OUT_ROOT = Path("build_data")
@@ -144,7 +148,10 @@ def fetch_season() -> pd.DataFrame:
         if _expected_cols.issubset(df.columns):
             _saw_expected = True
 
-        keep = [c for c in ENGINE_COLS + ID_COLS if c in df.columns]
+        # MODEL_COLS ride along in the SEASON frame only (the prop model
+        # needs each PA's batting side) and are dropped before the
+        # per-player files are written — see save_player_files.
+        keep = [c for c in ENGINE_COLS + ID_COLS + MODEL_COLS if c in df.columns]
         df = df[keep].copy()
         for c in df.select_dtypes(include="float64").columns:
             df[c] = df[c].astype("float32")
@@ -209,6 +216,7 @@ def save_player_files(season_df: pd.DataFrame) -> dict:
             if pd.isna(pid):
                 continue
             drop_cols = [c for c in ID_COLS if c in group.columns and c != keep_opp]
+            drop_cols += [c for c in MODEL_COLS if c in group.columns]
             g = group.drop(columns=drop_cols).copy()
             for c in CATEGORY_COLS:
                 if c in g.columns:
@@ -1757,6 +1765,18 @@ def main():
     print("Measuring plate appearances per team-game...")
     pa_per_game = build_pa_per_game(season_df)
 
+    # The MLB prop model (hits / TB / HR / K). Its failure must not cost
+    # the Statcast archive every other page depends on, so it is caught —
+    # but LOUDLY, as a workflow warning annotation, not a print nobody
+    # reads (the old calibration-in-precompute lesson).
+    print("Building the MLB prop model (walk-forward validated)...")
+    try:
+        from mlb_prop_precompute import build_prop_model
+        prop_ok = build_prop_model(season_df, DATA_DIR) is not None
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::MLB prop model build failed: {type(exc).__name__}: {exc}")
+        prop_ok = False
+
     print("Building HR park factors by handedness...")
     park_ok = build_park_hr_factors(season_df)
 
@@ -1780,6 +1800,7 @@ def main():
         "pitch_type_hr_included": pt_ok,
         "bullpen_profiles_included": pen_ok,
         "savant_percentiles_included": savant_ok,
+        "prop_model_included": prop_ok,
         # Measured, not assumed — see build_pa_per_game.
         "pa_per_team_game": pa_per_game,
     }

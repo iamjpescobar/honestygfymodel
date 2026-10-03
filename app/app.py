@@ -228,6 +228,9 @@ def build_mlb_pages(include_admin: bool):
         # above the sport switcher, not one of baseball's pages. See the
         # lc_view block near the top of this file.
         ("Game Card", "views/GameCard.py"),
+        # The game model + props, slate-wide. Fitted nightly and shown
+        # beside its walk-forward record (mlb_model_precompute.py).
+        ("Model", "views/MLB_Model.py"),
         # Slate-wide HR Edge. The Game Card shows one game's version of
         # the same number; this ranks every bat on the slate, and it is
         # the exact list the calibration logger records.
@@ -298,6 +301,7 @@ SPORT_SUBPAGES = {
         ("Mismatch Finder", "views/NFL_Mismatch.py"),
         ("Prop Lab", "views/NFL_Props.py"),
         ("Projections", "views/NFL_Projections.py"),
+        ("Model", "views/NFL_Model.py"),
     ],
     # Hockey is a nightly slate through slate_guard("nhl"). The Crease
     # Report and Shots Lab read regular-season box scores only.
@@ -305,6 +309,7 @@ SPORT_SUBPAGES = {
         ("Tonight's Ice", "views/NHL.py"),
         ("Crease Report", "views/NHL_Crease.py"),
         ("Shots Lab", "views/NHL_Shots.py"),
+        ("Model", "views/NHL_Model.py"),
     ],
 }
 

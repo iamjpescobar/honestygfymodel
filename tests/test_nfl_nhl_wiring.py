@@ -33,10 +33,18 @@ for node in tree.body:
 check("SPORT_SUBPAGES is a literal", isinstance(subpages, dict))
 subpages = subpages or {}
 for lg, want in (("NFL", {"views/NFL.py", "views/NFL_Mismatch.py",
-                          "views/NFL_Props.py", "views/NFL_Projections.py"}),
-                 ("NHL", {"views/NHL.py", "views/NHL_Crease.py", "views/NHL_Shots.py"})):
+                          "views/NFL_Props.py", "views/NFL_Projections.py",
+                          "views/NFL_Model.py"}),
+                 ("NHL", {"views/NHL.py", "views/NHL_Crease.py", "views/NHL_Shots.py",
+                          "views/NHL_Model.py"})):
     paths = {p for _t, p in subpages.get(lg, [])}
-    check(f"{lg} has its three pages in the nav", paths == want)
+    # A FLOOR, not set equality: this asserted `paths == want` and went
+    # red the day a Model page was ADDED (2026-10-03) — the same
+    # froze-the-menu shape as the 08-17 window test. Losing a page is a
+    # regression; adding one is not. Every listed page must also exist.
+    check(f"{lg} keeps every one of its pages in the nav", want <= paths)
+    check(f"{lg}: every page in the nav exists on disk",
+          all((ROOT / "app" / p).exists() for p in paths))
     for p in paths:
         check(f"{p} exists", (ROOT / "app" / p).exists())
 

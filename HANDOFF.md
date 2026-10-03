@@ -43,7 +43,7 @@ back. A control that stays green proves nothing, and several have —
 because the fixture could not tell the two behaviours apart, or because
 the edit never applied at all.
 
-**The suite is 115 files and stays green.** Five fail in a bare
+**The suite is 119 files and stays green.** Five fail in a bare
 container for want of streamlit and pass in Codespaces:
 test_data_paths, test_home, test_pen_roster_drift,
 test_wnba_grading_honesty, test_wnba_injury_gate. Run it with:
@@ -136,6 +136,174 @@ DOWNSTREAM CAN CATCH.** The board capped per TEAM while its caption said
 **10. DO NOT TUNE AFTER A BAD NIGHT.** At a 12% base rate a bad week and
 a broken model are indistinguishable, and every change resets the
 measurement clock.
+
+---
+
+## PICK UP HERE — NFL game model: the site's own line beside the market's. 2026-10-03 (4)
+
+**Suite 119, FAILING: none.** Three negative controls red by exit code.
+**No extra workflow:** the first nightly after this lands fetches the
+2025 season (~125 scoreboard calls) into data/nfl/prior_season.json and
+the existing "Commit NFL projection log" step commits it; later nights
+read it.
+
+### WHY
+
+nfl_projection anchors TDs to the MARKET's implied points — right for a
+prop, but a board anchored to the line can never disagree with it.
+`engines/nfl_game_model.py` is the independent opinion: points per side
+from game_model's pairing on ESPN team ids, margin and total treated as
+NORMAL with SDs measured as walk-forward residuals (the one assumption,
+named on the page). Gives win %, fair spread, P(cover) on the posted
+spread (read only through implied_totals' favourite check — a line that
+contradicts itself gets no cover probability and says why), P(over),
+and the no-vig moneyline gap.
+
+Fitted on 2025 while 2026 has four weeks (same carryover machinery as
+NHL); validation reports log loss vs coin and home-rate, margin MAE vs
+"home team by the league's usual edge", total MAE vs league average.
+
+### FOR THE FIRST LOG
+
+    [verify] NFL 2025 prior season: 272 regular-season finals
+    [verify] NFL model fit on prior season: k=.. carryover=.. sd_margin=~13-14
+    [verify] week games with a projection: 16 of 16 (or 14 on a bye week)
+
+Under 250 prior finals is REFUSED and not written (a partial season
+written once would be read forever); the model then fits on 2026 alone
+that night and the log says so.
+
+### FILES, 2026-10-03 (4)
+
+    app/engines/nfl_game_model.py, app/views/NFL_Model.py, nfl_prior_season.py  NEW
+    tests/test_nfl_game_model.py                                                NEW
+    nfl_precompute.py         ids on finals, PRIOR_PATH, model block + per-game model
+    .github/workflows/nightly-data.yml   commit step also adds prior_season.json
+    app/app.py                NFL -> Model subpage
+    tests/test_nfl_pipeline.py (PRIOR_PATH sandboxed), tests/test_nfl_nhl_wiring.py
+
+---
+
+## PICK UP HERE — NHL game model + skater props, standing on last season. 2026-10-03 (3)
+
+**Suite 118, FAILING: none.** Four negative controls red by exit code.
+**Run the `NHL prior season` workflow ONCE** (manual; commits
+data/nhl/prior_season.json, ~1,300 box scores), then the nightly. Until
+the prior file exists the model fits on this season alone and says so.
+
+### WHY LAST SEASON
+
+The season opened 09-29. A few dozen finals cannot fit anything and a
+three-game team rating is noise, so `engines/nhl_model.py` fits on
+2025-26 and starts each team from its 2025-26 rating REGRESSED by a
+measured carryover (split-half slope inside the prior season — the
+weaker stand-in for a year-to-year fit, stated on the page). This
+season's games then move each team through the fitted shrinkage. League
+constants (home edge, OT home-win rate) come from the SAME season as
+the fit — measured on this week's handful they were noise; asserted.
+
+### THE TRAP THE FIXTURE CAUGHT
+
+The site.web.api HEADER shape — the one production actually gets —
+DROPS ESPN's season block (`_normalize_header_events` rebuilds events
+without it). The collector required season.type == 2, so against the
+real feed it would have kept **0 of 900** finals. It now falls back to
+the 2025-26 regular-season date window when the type is absent; the
+control proves the 0-of-900.
+
+### WHAT IT IS
+
+Goals: game_model on ESPN team ids, market moneylines and total parsed
+by `espn_feed.odds_of` (both published shapes, EVEN = +100). Shots: the
+same pairing fitted on squared error (`game_model.fit_volume`) — volume
+is the output, not a winner. Skaters: SOG/G/A per game, gamma-Poisson
+shrunk toward F or D, scaled by tonight's team shot and goal ratios;
+SOG negative binomial with measured size. Props validated walk-forward
+on the last 60 days of 2025-26 against each skater's own hit rate.
+
+### ALSO
+
+`tests/test_nfl_nhl_wiring` asserted the NHL nav EQUALS three pages and
+went red when Model was added — rewritten as a floor plus an exists-on-
+disk check (rule from 08-17: adding is not a regression; losing is).
+`nhl_precompute.PRIOR_PATH` is module-level so test_nhl_pipeline runs
+against no prior file and stays a parser test.
+
+### FILES, 2026-10-03 (3)
+
+    app/engines/nhl_model.py, app/views/NHL_Model.py, nhl_prior_season.py   NEW
+    .github/workflows/nhl-prior-season.yml                                  NEW
+    tests/test_nhl_model.py                                                 NEW
+    nhl_precompute.py         ids on finals, model block in games.json
+    app/engines/game_model.py score_only walk-forward, fit_volume, constants
+    app/engines/espn_feed.py  moneylines in odds_of
+    app/app.py                NHL -> Model subpage
+    tests/test_nhl_pipeline.py, tests/test_nfl_nhl_wiring.py
+
+---
+
+## PICK UP HERE — MLB game model + props, every number fitted or measured. 2026-10-03 (2)
+
+**Suite 117, FAILING: none.** Six negative controls red by exit code.
+Built and tested against simulated seasons in statsapi's / Statcast's
+real shapes — the audit box cannot reach either. **First real run is
+the nightly: dispatch Nightly Statcast Data once, read the [verify]
+lines, then open MLB -> Model.**
+
+### WHAT IT IS
+
+`engines/game_model.py` (shared with NHL): offense x opponent defense /
+league x home multiplier per side -> negative-binomial runs -> win %,
+fair line, total. `engines/model_math.py` holds the distributions, odds
+and fitters, once, for every sport. MLB adds a STARTER LAYER
+(`engines/mlb_game_model.py`): his share of the game (outs/start) and
+his RA9, each shrunk by a gamma-Poisson prior fitted over every starter.
+
+Nothing chosen by eye: shrink_k is fitted by walk-forward log loss,
+dispersion by method of moments on the residuals, home/road and the
+extra-inning home win rate are measured. **The starter layer is only
+used if the walk-forward says it beats team-only** (`use_starters`).
+
+Props (`engines/mlb_props.py`, builder `mlb_prop_precompute.py`, called
+from precompute.main on the season frame it already holds): per-PA
+outcomes by odds-ratio (batter x pitcher / league), beta-binomial priors
+fitted per outcome, PA count from slot + the measured team-PA histogram,
+starter exposure from his real batters-faced. Each market is scored
+walk-forward over the last 30 days against the player's OWN hit rate;
+markets that do not beat it are starred on the page.
+
+### WHAT TO CHECK IN THE FIRST NIGHTLY LOG
+
+    [verify] N finals ... with both starters      -> ~2,400, nearly all
+    starters used: True/False (team-only X, with starters Y)
+    [verify] Hits O0.5 ... BEATS / does not beat baseline   (x5 markets)
+
+A market that does not beat baseline is a FINDING, not a bug — rule 10.
+
+### THE BUG THE FIRST DRAFT HAD
+
+`clean_finals` rebuilt each row from five fields and dropped the starter
+ids, so "with starters" scored identical to team-only to four decimals.
+Rows now carry every key; asserted, control red.
+
+### KNOWN LIMITS, STATED ON THE PAGE
+
+Props leave out park, weather, platoon and the specific bullpen. Starter
+priors are fitted on full-season totals (two numbers of look-ahead).
+`inning_topbot` rides in the season frame only (MODEL_COLS) and never
+reaches a per-player parquet, so ENGINE_COLS == _KEEP_COLS still holds.
+Not yet done: calibration_picks does not write the model into
+games.json, so Home's best-games card does not use it.
+
+### FILES, 2026-10-03 (2)
+
+    app/engines/{model_math,game_model,mlb_game_model,mlb_props,model_view}.py  NEW
+    app/views/MLB_Model.py              NEW page, listed after Game Card
+    mlb_model_precompute.py, mlb_prop_precompute.py                  NEW
+    app/views/GameCard.py               Game Model card + prop expander
+    app/views/Home.py                   Explore card for Model (test_home)
+    app/app.py, precompute.py, .github/workflows/nightly-data.yml
+    tests/test_game_model.py, tests/test_mlb_props.py                NEW
 
 ---
 
@@ -1026,297 +1194,5 @@ standing rule 10. Worth knowing while you wait: HR Edge has gone 2-for-19
 across 08-12 through 08-15, which is exactly the stretch rule 10 was
 written for. At a 12% base rate that is indistinguishable from noise,
 and changing anything now resets the clock.
-
----
-
-## PICK UP HERE — arsenal freshness, cross-board tokens, morning wind. 2026-08-16
-
-**Suite 105, FAILING: none.** Everything below shipped with negative
-controls confirmed red.
-
-### 1. THE ARSENAL WAS STALE, AND IN THREE PLACES AT ONCE
-
-`get_weak_spots` read usage and damage off the SAME window, which forces
-a bad trade either way:
-
-  season only -> damage well-sampled, USAGE STALE. A pitcher who
-                 scrapped his curve in June still showed 16% curveballs.
-  recent only -> usage current, DAMAGE COLLAPSES. The floor is 150
-                 pitches / 35 batted balls per pitch type and thirty
-                 days does not clear it for anything but a fastball.
-
-**Fixed by giving them different windows: rank by 30-day usage, rate on
-season damage.** Usage is a proportion and settles in ~450 pitches;
-damage is a rate over batted balls and needs the year. Both are
-published per pitch (`usage`, `usage_recent`, `usage_drift`) because THE
-GAP IS THE SIGNAL — 7% on the season and 18% over the last month is a
-pitcher who changed something, shown as `+11 pts` on the chart.
-
-**Top 3 are marked, never truncated.** A fourth pitch thrown 9% still
-leaves the yard, and a pitch a pitcher has just ADDED appears at the
-bottom of that list before it appears anywhere else on the site.
-
-**THE PART I GOT WRONG FIRST.** I fixed the weak-spot quadrant and
-called it done. There are THREE arsenal displays on the Game Card — the
-quadrant, "Both Starters — Arsenal Comparison", and the usage pills —
-and the other two still read season usage, so one card could say 13%
-sweeper in one panel and 17% in another. Now `Pitch Arsenal` in
-statcast_engine is the single 30-day source all three read, with
-`Pitch Arsenal Season` kept alongside for the drift number.
-`ARSENAL_USAGE_DAYS` and `USAGE_DAYS` are both 30 and a test fails if
-they drift apart.
-
-Guarded by `tests/test_arsenal_freshness`.
-
-Layout fixes in the same batch: labels no longer collide (they flip
-below the bubble when the slot above is taken), the caption wraps to two
-lines instead of running off the viewBox, and edge labels anchor inward.
-
-### 2. CROSS-BOARD TOKENS — and the outage they caused
-
-New `Boards` column on the lineup table: `HR13 · H4` means 13th on HR
-Edge, 4th on Daily 13. Blank when a bat is on no board, which is most of
-them — blank rather than a dash, because a column of dashes reads as
-missing data instead of a clean no.
-
-**THIS TOOK THE GAME CARD DOWN ON ITS FIRST DEPLOY.** The first version
-called `get_hr_edge_board()` and `get_daily_13()` directly, on my claim
-that both were "already built and cached for the slate". That is only
-true if the reader visited those pages first. Landing on a Game Card
-cold, it rebuilt the entire HR Edge board — ~270 rated bats — and
-scanned the league for Daily 13 before a single row could draw. Both
-boards cache with `show_spinner=False`, so the page just sat blank: no
-error, no spinner, nothing.
-
-**`board_ranks(allow_build=False)` is now the default** and reads today's
-published picks out of `calibration.json` — one file read, ~27ms, and
-the SAME list the site published so a token can never disagree with the
-board it names. Live building is behind `allow_build=True`.
-
-Cost of the cheap path: ranks 1-5 per board rather than up to 25. If
-deeper ranks are wanted, the honest fix is having the nightly write a
-fuller index — NOT rebuilding during a render.
-
-Guarded by `tests/test_board_ranks` — it asserts the default cannot
-build, that every build sits behind the guard, and that "today" resolves
-in Eastern (without that, after 8pm ET it reads tomorrow's empty entry
-and every token silently vanishes).
-
-**Generalise this:** a convenience column must never be able to build
-anything. Anything decorating a page has to read, not compute.
-
-### 3. WIND ARROWS NOW WORK IN THE MORNING
-
-MLB does not publish `gameData.weather` until close to first pitch, so a
-card opened at 8am had only an NWS compass forecast. Two failures:
-
-- **The grade ignored it.** `_hr_weather` was handed `g["weather_wind"]`
-  — MLB only — while `_wind_raw` (computed four lines above WITH the
-  forecast fallback) went unused. Temperature fell back correctly, wind
-  did not, so a morning card showed a real temperature beside "wind
-  pending official".
-- **The arrow pointed at real-world north.** A compass forecast drew a
-  rose at its true bearing: correct, and useless for knowing whether a
-  ball carries.
-
-Both were already solvable. `wind_engine` carries the home-plate-to-
-centre-field bearing for 29 parks and **was already resolving these same
-forecasts to score them elsewhere on the site** — the Weather Board
-called a wind "pending" while HR Edge had scored it. New
-`wind_engine.field_angle()` returns the resolved field direction so the
-arrow points the way the grade is reasoning.
-
-    SW 12 mph -> Wrigley    0 deg   straight out
-    SW 12 mph -> Comerica -112 deg  crosswind
-    NE 12 mph -> Wrigley  +180 deg  straight in
-
-Guarded by `tests/test_wind_forecast_arrow`.
-
-**AND THE SAME MISS HAPPENED AGAIN, ONE FILE OVER.** The Weather Board
-was fixed and the Game Card was not — its conditions strip has its own
-`wind_arrow` call and was not passing the park, so the identical
-forecast resolved on one page and drew a neutral swirl on the other.
-That is the SECOND time in two days a fix reached one consumer and
-silently missed another (the arsenal window was fixed in one of three
-panels the same way).
-
-So the guard is not "check the two places I know about":
-`tests/test_wind_forecast_arrow` now walks every `.py` under `app/` and
-fails on any `wind_arrow()` call without `home_team`. A call without it
-cannot work in the morning, which is when the wind read matters most.
-
-**When a fix has multiple call sites, grep for all of them before
-declaring it done, and write the test against the glob rather than the
-known callers.**
-
-Resolved forecasts still render DASHED — the direction is right now, the
-fact that it is a forecast has not changed. An official field-relative
-string still wins when it arrives: measured beats modelled, and a test
-pins that order.
-
-### 4. CACHE SIZING — a caller count doubled and nobody resized
-
-`get_batter_iso_vs_hand` sat at `max_entries=64`, correct when
-pen_context was its only caller. The platoon term (2026-08-13) calls it
-TWICE per batter, once per hand, so a full slate is ~600 lookups against
-64 slots. Near-total thrash, and **every miss reads that batter's whole
-parquet from disk.** Raised to 1024, same for
-`get_batter_profile_windowed` (season + l15 per batter is ~600 entries
-against a 384 cap).
-
-A cache smaller than the working set does not fail — it evicts silently
-and the page gets slower the longer you use it. `tests/test_cache_sizing`
-now checks each per-batter cache against one slate.
-
-**RULE: when a function gains a caller, re-size its cache.**
-
-### 5. MEASURED, THEN NOT BUILT
-
-Asked for a tiered cap — 2nd/3rd bat on a team must be within X of the
-team leader. Measured it first:
-
-    gap <=  5 behind leader:  9.4%   |  gap >  5:  7.8%
-    gap <= 20:                7.5%   |  gap > 20: 12.5%
-
-**No signal, and the direction flips with the threshold.** Building it
-would have meant picking a number that looked principled and was not.
-Not built. (8 homers across 96 teammate bats — nowhere near enough
-either way.)
-
-### 6. BENCHMARK — the Results page baseline is too easy
-
-`benchmark_probe.py` (new, reads the research log, no nightly step).
-
-HR Edge is 19/89 = 21.3% against the published 11.9% baseline, p=0.003.
-**But 11.9% is every league starter including slap hitters**, and the
-board picks sluggers — any power-sorted list clears that bar with no
-model in it. The probe runs the honest comparison: model top five vs
-naive top fives (ISO, HR/FB, SLG, Brl/PA, HH%) from the same pool on the
-same nights.
-
-Currently 2/10 vs 2/10. That is ten picks and means nothing. **Re-run in
-2-3 weeks** — at five a night a month is ~150 an arm.
-
-### FILES TOUCHED, 2026-08-15 to 08-16
-
-    app/engines/statcast_engine.py   arsenal source + cache sizing
-    app/engines/pitcher_weakspots.py usage window split
-    app/engines/weakspot_view.py     labels, caption, recent-usage plot
-    app/engines/board_ranks.py       NEW - cross-board tokens
-    app/engines/wind_engine.py       NEW field_angle()
-    app/engines/weather_icons.py     forecast arrows
-    app/views/GameCard.py            Boards column
-    app/views/Weather_Board.py       forecast wind to grade AND arrow
-    benchmark_probe.py               NEW - model vs naive lists
-    tests/test_cache_sizing.py             NEW
-    tests/test_arsenal_freshness.py        NEW
-    tests/test_board_ranks.py              NEW
-    tests/test_wind_forecast_arrow.py      NEW
-
-Suite went 102 -> 105.
-
-**NOT in the repo:** `SITE_CAPABILITIES.md` was written this session as a
-briefing doc for a separate assistant working on the YouTube side. It
-describes what the site offers and its honest limits, with no strategy in
-it. Commit it if that hand-off is worth keeping; it goes stale the moment
-the model changes materially.
-
-### WHERE THE RECORD STANDS
-
-    HR Edge   19/89  = 21.3%  vs 11.9% published baseline  (p=0.003)
-    Daily 13  133/200 = 66.5% vs 62% baseline
-
-Both are ahead. Neither is settled — and see section 6 above for why the
-HR Edge baseline is the easy opponent.
-
-### NEXT — AND THE ANSWER IS MOSTLY "NOT YET"
-
-**Nothing is queued, and that is deliberate.** The research log records
-~270 rated bats a night with season AND l15/l5 windows plus the graded
-outcome. It needs another 2-3 weeks before anything is tuned. Until
-then:
-
-- `benchmark_probe.py` is the thing to run — model vs naive lists.
-- Do NOT refit weights, move floors, or change the cap. At a 12% base
-  rate a bad week and a broken model look identical, and every change
-  resets the clock. This is standing rule 10 and it is the one most
-  likely to get ignored.
-
-**Open items, none urgent:**
-
-- **Bullpen weak spots.** `get_weak_spots(pitcher_id)` already works on
-  relievers — nothing in it is starter-specific, and the sample floors
-  drop the TTO/slot sections on their own because a reliever never
-  clears 60 BBE facing the order once. Needs a view that aggregates the
-  pen as ONE arm, weighted by innings and split by hand.
-- **Custom floor sets.** `hr_floors` already computes 9 floors and
-  `evaluate()` takes any subset, so a "highlight bats meeting MY floors"
-  feature is small. The trap: a self-chosen floor set is unfalsifiable —
-  you pick floors that light up bats you already like. The honest
-  version logs each saved set alongside the boards so it gets a hit rate
-  against the baseline and can be WRONG.
-- **Research page part 2.** Part 1 shipped (`build_player_game_logs`
-  writes one row per player per game so a threshold moves live instead
-  of being baked in). Part 2 is the view. Open decision: where saved
-  filter presets live — `streamlit_authenticator` gives a username to
-  key on, so it is a storage question, not a feasibility one.
-
----
-
-## PICK UP HERE — column order derived from the model's weights. 2026-08-14 (3)
-
-**2 files (1 new test). Suite 100, FAILING: none.** Four controls red.
-
-### THE ORDER WAS AN ACCIDENT
-
-Lineup columns rendered in whatever order `_stat_row` happened to
-insert. The six volume and distance columns went in right after Form and
-pushed **Brl/PA — 28% of HR Score on its own — out past ten others**, so
-a reader scanning left to right met batted-ball distance before the
-thing the score is mostly made of.
-
-### THE ANSWER IS NOT TASTE
-
-`engines/top_plays` multiplies out to a real ranking:
-
-    Brl/PA     28%   POWER    .40 x .70
-    FB95%      18%   CONVERGE .30 x .60
-    EV90       12%   POWER    .40 x .30
-    Clears%    12%   CONVERGE .30 x .40
-    HRWindow%  11%   LAUNCH   .22 x .50
-    PullAir%   11%   LAUNCH   .22 x .50
-
-`_COL_ORDER` in GameCard puts the model's verdicts first, then the
-scored inputs HEAVIEST FIRST, then outcomes, then contact quality, then
-volume/distance, then the raw form deltas. Left to right is the score's
-own reasoning in its own order.
-
-**AND IT MOVES WITH THE WEIGHTS.** When the research log has enough
-graded outcomes to refit them, this order follows — which is the entire
-reason it is derived rather than typed. `tests/test_column_order` reads
-`_W_POWER` etc. out of top_plays and asserts the on-screen order matches
-what they multiply out to, so a refit that forgets the table fails a
-test instead of shipping a stale layout.
-
-Two smaller rules pinned there:
-
-- **HR and NearHR stay adjacent.** The PAIR is the read — 3 homers
-  against 12 near misses is a different hitter from 12 against 3, and
-  splitting them destroys the comparison NearHR exists for.
-- **A column absent from `_COL_ORDER` still renders**, at the end.
-  Dropping one silently is how a stat vanishes and nobody notices for a
-  month.
-
-### CONTROL LESSON, AGAIN
-
-C1 (reverse the scored inputs) reported GREEN on its first run because
-the shell heredoc turned `\n` into a literal backslash-n and the edit
-never applied — "no match" scrolled past above a green line. **A control
-that did not modify anything is not a passing control.** Re-fired with a
-real newline: red.
-
-### NEXT
-Nothing. The research log needs weeks. Re-run mlb_form_probe /
-mlb_platoon_probe / mlb_weakspot_probe every few weeks.
 
 ---

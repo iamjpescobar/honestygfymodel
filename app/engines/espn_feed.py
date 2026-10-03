@@ -194,6 +194,25 @@ def odds_of(comp):
             out["spread"] = float(raw["spread"])
         except (TypeError, ValueError):
             pass
+    # MONEYLINES, for the game models' market comparison. Two shapes have
+    # been published by ESPN's odds providers: per-team objects
+    # (homeTeamOdds.moneyLine) and a nested moneyline block whose prices
+    # are STRINGS ("-150"). Both read defensively; a price that is not a
+    # number is left out rather than guessed.
+    for side in ("home", "away"):
+        v = (raw.get(f"{side}TeamOdds") or {}).get("moneyLine")
+        if v in (None, ""):
+            ml = (raw.get("moneyline") or {}).get(side) or {}
+            v = ((ml.get("close") or {}).get("odds")
+                 or (ml.get("open") or {}).get("odds"))
+        if str(v).strip().upper() == "EVEN":
+            v = 100
+        try:
+            f = float(str(v).replace("+", ""))
+            if f <= -100 or f >= 100:
+                out[f"{side}_ml"] = int(f)
+        except (TypeError, ValueError):
+            pass
     return out
 
 

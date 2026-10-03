@@ -53,6 +53,8 @@ from engines import form as form_engine
 from engines.team_abbreviations import team_abbr
 from engines.matchup_grades import grade_matchup
 from engines.matchup_grades_intl import render_matchup_grades_card
+from engines import mlb_game_model as _mlb_game_model
+from engines import model_view as _model_view
 
 # page_icon repeated on purpose: set_page_config RE-APPLIES on every
 # call, and omitting it here dropped the favicon app.py set, so the
@@ -1862,6 +1864,33 @@ with content_col:
     )
 
     # -----------------------------------------------------
+    # THE GAME MODEL — projected score, win %, fair line.
+    # Fitted nightly (mlb_model_precompute.py) and walk-forward tested;
+    # this only reads data/mlb/model.json and does arithmetic, no
+    # network. Sits under the grades on purpose: the grades are a
+    # checklist and say so; this is the calibrated number.
+    # -----------------------------------------------------
+    _mlb_model = _mlb_game_model.load_model()
+    if _mlb_model:
+        with card("gc_game_model"):
+            st.markdown(
+                f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Game Model</div>'
+                f'<div class="pf-card-subtitle">Projected runs, win probability and the fair '
+                f'line \u2014 fitted on this season\'s finals, tested on games it had not seen.</div>',
+                unsafe_allow_html=True)
+            _gm_proj = _mlb_game_model.project_game(
+                game["home"], game["away"], game.get("home_pitcher_id"),
+                game.get("away_pitcher_id"), model=_mlb_model)
+            _gm_note = None
+            if _gm_proj and _mlb_model.get("use_starters") and not _gm_proj.get("starters_used"):
+                _gm_note = "Starters not both on record \u2014 team rates only for this game."
+            _model_view.render_game_projection(
+                _gm_proj, team_abbr(game["away"]), team_abbr(game["home"]),
+                key="gc_model", note=_gm_note)
+            _model_view.render_validation(_mlb_model.get("validation"), key="gc_model",
+                                          total_unit="runs")
+
+    # -----------------------------------------------------
     # BOTH STARTERS + BULLPEN — full-staff arsenal browser
     # -----------------------------------------------------
     def _arsenal_bars(p_data):
@@ -1896,6 +1925,17 @@ with content_col:
 
     batters = _resolve_lineup_batters(confirmed_lineup, lineup_confirmed, opposing_team,
                                      vs_hand=get_pitcher_hand(pitcher_id) if pitcher_id else None)
+
+    # PLAYER PROPS from the same model family — this lineup against the
+    # starter selected above. Collapsed by default: the lineup table below
+    # is the page's main event, and this reads the same cached parquet
+    # frames the profiles load anyway.
+    with st.expander(f"Prop model \u2014 {team_abbr(opposing_team)} lineup vs {selected_pitcher_name}",
+                     expanded=False):
+        _p_rows, _p_verdicts, _p_note = _model_view.mlb_lineup_props(batters, pitcher_id)
+        _model_view.render_prop_table(_p_rows, _model_view.MLB_PROP_COLUMNS, _p_verdicts,
+                                      key="gc_props", favor_note=_p_note)
+        st.caption(_model_view.MLB_PROP_FOOTNOTE)
 
     # HR Score / Hit Score / K Score come from a SEPARATE, real, live
     # source: MLB's own Statcast percentile rankings, matched by player

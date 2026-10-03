@@ -36,6 +36,9 @@ EASTERN = ZoneInfo("America/New_York")
 LEAGUE = "nhl"
 OUT = Path("build_data") / "data" / "nhl"
 LOOKAHEAD_DAYS = 21
+# Last season, committed by the manual nhl-prior-season workflow
+# (nhl_prior_season.py). Module-level so tests can point it elsewhere.
+PRIOR_PATH = ROOT / "data" / "nhl" / "prior_season.json"
 
 SKATER = {
     "g": (("goals",), ("G",)),
@@ -377,6 +380,7 @@ def main(today=None):
 
     # 2) Backfill finals from the first exhibition to yesterday/today.
     finals, skaters, goalies = [], {}, {}
+    id_of = {}
     regular_ids, team_games = set(), {}
     seen = parsed = pre_parsed = 0
     first = True
@@ -417,7 +421,11 @@ def main(today=None):
             finals.append({"date": d.isoformat(), "away": g["away"], "home": g["home"],
                            "away_score": g["away_score"], "home_score": g["home_score"],
                            "extra": went_to_extra(summ, g.get("detail") or ""),
-                           "away_box": tb.get(g["away"]), "home_box": tb.get(g["home"])})
+                           "away_box": tb.get(g["away"]), "home_box": tb.get(g["home"]),
+                           # ids for the model — names change between
+                           # seasons (Utah), ids do not.
+                           "away_id": g.get("away_id"), "home_id": g.get("home_id")})
+            id_of[g["away"]], id_of[g["home"]] = g.get("away_id"), g.get("home_id")
             time.sleep(0.1)
         time.sleep(0.1)
         d += timedelta(days=1)
@@ -465,7 +473,49 @@ def main(today=None):
                 (x for x in gk.values() if x["team"] == g[side]),
                 key=lambda x: -(x.get("starts") or 0))
 
+    # THE MODEL (engines/nhl_model): game projection + skater props,
+    # fitted on last season's committed file while this one is young.
+    # A model failure costs the model block, never the slate.
+    model_block = None
+    try:
+        from engines import nhl_model
+        for g in slate:
+            id_of[g["away"]], id_of[g["home"]] = g.get("away_id"), g.get("home_id")
+        prior_path = PRIOR_PATH
+        prior = json.loads(prior_path.read_text()) if prior_path.exists() else {}
+        if not prior:
+            print("::warning::NHL model: data/nhl/prior_season.json missing - run the "
+                  "'NHL prior season' workflow once. Fitting on this season alone.")
+        rows = [{"date": f["date"], "home": f["home_id"], "away": f["away_id"],
+                 "hs": f["home_score"], "as": f["away_score"], "extra": f.get("extra"),
+                 "home_sog": (f.get("home_box") or {}).get("sog"),
+                 "away_sog": (f.get("away_box") or {}).get("sog")}
+                for f in finals if f.get("home_id") and f.get("away_id")]
+        model_block = nhl_model.build(rows, prior, skaters, id_of,
+                                      [g for g in slate if g.get("game_type") != "preseason"])
+        if model_block:
+            v = model_block["validation"]
+            print(f"  [verify] NHL model fit on {model_block['params'].get('fit_on')} season: "
+                  f"k={model_block['params']['shrink_k']} carryover={model_block['params'].get('carryover')} "
+                  f"dispersion={model_block['params'].get('dispersion')} "
+                  f"home_mult={model_block['league'].get('home_mult')} "
+                  f"OT home win={model_block['league'].get('tie_home_win')}")
+            if v.get("n"):
+                print(f"  [verify] walk-forward {v['n']} games: log loss {v['model']['log_loss']} "
+                      f"vs coin {v['coin_flip']['log_loss']} vs home-rate {v['home_rate']['log_loss']}")
+            pv = model_block.get("props_validation") or {}
+            for k, label, *_ in nhl_model.MARKETS:
+                x = pv.get(k) or {}
+                print(f"  [verify] {label:9s} n={x.get('n')} model {x.get('model_brier')} vs "
+                      f"his-own-rate {x.get('baseline_brier')} -> "
+                      f"{'BEATS' if x.get('beats_baseline') else 'does not beat'} baseline")
+            print(f"  [verify] slate games with a projection: "
+                  f"{sum(1 for g in slate if g.get('model'))} of {len(slate)}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::NHL model failed: {type(exc).__name__}: {exc}")
+
     (OUT / "games.json").write_text(json.dumps({
+        "model": model_block,
         "generated_at_et": now_et.strftime("%Y-%m-%d %H:%M"),
         "source": "ESPN public NHL API (scoreboard + game summaries + rosters)",
         "slate_date_et": slate_date.isoformat(),
