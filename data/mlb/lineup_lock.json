@@ -4,8 +4,8 @@
   "measured_on": "2026-08-19",
   "naive_baseline_pct": 81.7,
   "window_accuracy_pct": 82.2,
-  "generated_at_et": "2026-10-02T21:00:16-04:00",
-  "slate_date_et": "2026-10-02",
+  "generated_at_et": "2026-10-03T08:53:02-04:00",
+  "slate_date_et": "2026-10-03",
   "teams": {
     "Athletics": {
       "games": 7,
@@ -649,23 +649,6 @@
             }
           }
         },
-        "664034": {
-          "starts": 7,
-          "games": 7,
-          "rate": 1.0,
-          "vs": {
-            "L": {
-              "starts": 1,
-              "games": 1,
-              "rate": 1.0
-            },
-            "R": {
-              "starts": 6,
-              "games": 6,
-              "rate": 1.0
-            }
-          }
-        },
         "665487": {
           "starts": 6,
           "games": 7,
@@ -680,6 +663,23 @@
               "starts": 5,
               "games": 6,
               "rate": 0.833
+            }
+          }
+        },
+        "664034": {
+          "starts": 7,
+          "games": 7,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 1,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
             }
           }
         },
@@ -858,23 +858,6 @@
             }
           }
         },
-        "668227": {
-          "starts": 7,
-          "games": 7,
-          "rate": 1.0,
-          "vs": {
-            "L": {
-              "starts": 3,
-              "games": 3,
-              "rate": 1.0
-            },
-            "R": {
-              "starts": 4,
-              "games": 4,
-              "rate": 1.0
-            }
-          }
-        },
         "641487": {
           "starts": 6,
           "games": 7,
@@ -884,6 +867,23 @@
               "starts": 2,
               "games": 3,
               "rate": 0.667
+            },
+            "R": {
+              "starts": 4,
+              "games": 4,
+              "rate": 1.0
+            }
+          }
+        },
+        "668227": {
+          "starts": 7,
+          "games": 7,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
             },
             "R": {
               "starts": 4,
@@ -3045,23 +3045,6 @@
             }
           }
         },
-        "805367": {
-          "starts": 5,
-          "games": 7,
-          "rate": 0.714,
-          "vs": {
-            "L": {
-              "starts": 1,
-              "games": 2,
-              "rate": 0.5
-            },
-            "R": {
-              "starts": 4,
-              "games": 5,
-              "rate": 0.8
-            }
-          }
-        },
         "691019": {
           "starts": 6,
           "games": 7,
@@ -3076,6 +3059,23 @@
               "starts": 5,
               "games": 5,
               "rate": 1.0
+            }
+          }
+        },
+        "805367": {
+          "starts": 5,
+          "games": 7,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 2,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
             }
           }
         },
@@ -3983,7 +3983,7 @@
             }
           }
         },
-        "695681": {
+        "687263": {
           "starts": 7,
           "games": 7,
           "rate": 1.0,
@@ -4000,7 +4000,7 @@
             }
           }
         },
-        "687263": {
+        "695681": {
           "starts": 7,
           "games": 7,
           "rate": 1.0,
@@ -4831,7 +4831,7 @@
             }
           }
         },
-        "680776": {
+        "686765": {
           "starts": 7,
           "games": 7,
           "rate": 1.0,
@@ -4848,7 +4848,7 @@
             }
           }
         },
-        "686765": {
+        "680776": {
           "starts": 7,
           "games": 7,
           "rate": 1.0,
@@ -4972,23 +4972,6 @@
     "Chicago Cubs": {
       "games": 7,
       "players": {
-        "624424": {
-          "starts": 6,
-          "games": 7,
-          "rate": 0.857,
-          "vs": {
-            "L": {
-              "starts": 0,
-              "games": 1,
-              "rate": 0.0
-            },
-            "R": {
-              "starts": 6,
-              "games": 6,
-              "rate": 1.0
-            }
-          }
-        },
         "621438": {
           "starts": 3,
           "games": 7,
@@ -5003,6 +4986,23 @@
               "starts": 2,
               "games": 6,
               "rate": 0.333
+            }
+          }
+        },
+        "624424": {
+          "starts": 6,
+          "games": 7,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 0,
+              "games": 1,
+              "rate": 0.0
+            },
+            "R": {
+              "starts": 6,
+              "games": 6,
+              "rate": 1.0
             }
           }
         },
@@ -5249,23 +5249,6 @@
             }
           }
         },
-        "665828": {
-          "starts": 4,
-          "games": 7,
-          "rate": 0.571,
-          "vs": {
-            "L": {
-              "starts": 2,
-              "games": 2,
-              "rate": 1.0
-            },
-            "R": {
-              "starts": 2,
-              "games": 5,
-              "rate": 0.4
-            }
-          }
-        },
         "680574": {
           "starts": 6,
           "games": 7,
@@ -5280,6 +5263,23 @@
               "starts": 4,
               "games": 5,
               "rate": 0.8
+            }
+          }
+        },
+        "665828": {
+          "starts": 4,
+          "games": 7,
+          "rate": 0.571,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
             }
           }
         },
@@ -5385,23 +5385,6 @@
             }
           }
         },
-        "663886": {
-          "starts": 5,
-          "games": 7,
-          "rate": 0.714,
-          "vs": {
-            "L": {
-              "starts": 2,
-              "games": 2,
-              "rate": 1.0
-            },
-            "R": {
-              "starts": 3,
-              "games": 5,
-              "rate": 0.6
-            }
-          }
-        },
         "553993": {
           "starts": 5,
           "games": 7,
@@ -5416,6 +5399,23 @@
               "starts": 4,
               "games": 5,
               "rate": 0.8
+            }
+          }
+        },
+        "663886": {
+          "starts": 5,
+          "games": 7,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 3,
+              "games": 5,
+              "rate": 0.6
             }
           }
         },
@@ -7120,23 +7120,6 @@
             }
           }
         },
-        "691002": {
-          "starts": 5,
-          "games": 7,
-          "rate": 0.714,
-          "vs": {
-            "L": {
-              "starts": 2,
-              "games": 4,
-              "rate": 0.5
-            },
-            "R": {
-              "starts": 3,
-              "games": 3,
-              "rate": 1.0
-            }
-          }
-        },
         "694673": {
           "starts": 4,
           "games": 7,
@@ -7151,6 +7134,23 @@
               "starts": 2,
               "games": 3,
               "rate": 0.667
+            }
+          }
+        },
+        "691002": {
+          "starts": 5,
+          "games": 7,
+          "rate": 0.714,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 4,
+              "rate": 0.5
+            },
+            "R": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
             }
           }
         },
