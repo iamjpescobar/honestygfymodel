@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-03 14:47",
+  "generated_at_et": "2026-10-03 15:42",
   "slate_date_et": "2026-10-03",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -16,6 +16,8 @@
       "weather_wind": "9 mph, R To L",
       "park_factor": 98,
       "park_verified": true,
+      "away_pitcher_id": 696146,
+      "home_pitcher_id": 800048,
       "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
@@ -37,7 +39,52 @@
         "Starters' avg HR/9 0.61 (low)",
         "Starters' avg SLG against 0.268 (low)"
       ],
-      "proj_total": 8.6
+      "proj_total": 8.6,
+      "odds": {
+        "details": "CLE -149",
+        "total": 6.5,
+        "spread": -1.5,
+        "home_ml": -149,
+        "away_ml": 124,
+        "over_price": -122,
+        "under_price": 102,
+        "home_spread_price": 149,
+        "away_spread_price": -181
+      },
+      "model": {
+        "home_score": 4.19,
+        "away_score": 3.55,
+        "total": 7.74,
+        "p_home": 0.5585,
+        "p_away": 0.4415,
+        "fair_home": -126,
+        "fair_away": 126,
+        "tie_rule_measured": true,
+        "market_home": 0.5727,
+        "market_away": 0.4273,
+        "edge_home": -0.0142,
+        "market_total": 6.5,
+        "p_over": 0.5728,
+        "fair_over": -134,
+        "fair_under": 134,
+        "starters_used": true,
+        "home_starter": {
+          "name": "Parker Messick",
+          "gs": 32,
+          "ra9_raw": 2.75,
+          "ip_per_start": 5.8,
+          "share": 0.646,
+          "ra9_model": 2.99
+        },
+        "away_starter": {
+          "name": "Hagen Smith",
+          "gs": 1,
+          "ra9_raw": 0.0,
+          "ip_per_start": 2.0,
+          "share": 0.297,
+          "ra9_model": 4.23
+        }
+      }
     },
     {
       "game_pk": 849828,
@@ -52,6 +99,8 @@
       "weather_wind": "2 mph, Varies",
       "park_factor": 101,
       "park_verified": true,
+      "away_pitcher_id": 689266,
+      "home_pitcher_id": 669373,
       "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
@@ -69,7 +118,45 @@
         "Starters' avg WHIP 1 (low)",
         "Starters' avg SLG against 0.348 (low)"
       ],
-      "proj_total": 8.1
+      "proj_total": 8.1,
+      "odds": {
+        "details": "LAD -212",
+        "total": 8.5,
+        "spread": -1.5,
+        "home_ml": -212,
+        "away_ml": 173,
+        "over_price": -105,
+        "under_price": -115,
+        "home_spread_price": -101,
+        "away_spread_price": -119
+      },
+      "model": {
+        "home_score": 4.37,
+        "away_score": 3.95,
+        "total": 8.32,
+        "p_home": 0.5368,
+        "p_away": 0.4632,
+        "fair_home": -116,
+        "fair_away": 116,
+        "tie_rule_measured": true,
+        "market_home": 0.6497,
+        "market_away": 0.3503,
+        "edge_home": -0.1129,
+        "market_total": 8.5,
+        "p_over": 0.4306,
+        "fair_over": 132,
+        "fair_under": -132,
+        "starters_used": false,
+        "home_starter": {
+          "name": "Tarik Skubal",
+          "gs": 26,
+          "ra9_raw": 2.95,
+          "ip_per_start": 6.1,
+          "share": 0.677,
+          "ra9_model": 3.19
+        },
+        "away_starter": null
+      }
     },
     {
       "game_pk": 849835,
@@ -79,12 +166,14 @@
       "home_pitcher": "Drew Rasmussen",
       "venue": "Tropicana Field",
       "game_time": "2026-10-03T22:30:00Z",
-      "weather_condition": null,
-      "weather_temp": null,
-      "weather_wind": null,
+      "weather_condition": "Dome",
+      "weather_temp": "70",
+      "weather_wind": "0 mph, None",
       "park_factor": 97,
       "park_verified": false,
-      "weather_source": null,
+      "away_pitcher_id": 543037,
+      "home_pitcher_id": 656876,
+      "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
       "edge_net": 2,
@@ -101,7 +190,52 @@
         "Starters' avg HR/9 1.25 (high)",
         "Starters' avg SLG against 0.373 (low)"
       ],
-      "proj_total": 7.9
+      "proj_total": 7.9,
+      "odds": {
+        "details": "TB -135",
+        "total": 7.0,
+        "spread": -1.5,
+        "home_ml": -135,
+        "away_ml": 112,
+        "over_price": -105,
+        "under_price": -114,
+        "home_spread_price": 163,
+        "away_spread_price": -199
+      },
+      "model": {
+        "home_score": 3.91,
+        "away_score": 3.45,
+        "total": 7.36,
+        "p_home": 0.5436,
+        "p_away": 0.4564,
+        "fair_home": -119,
+        "fair_away": 119,
+        "tie_rule_measured": true,
+        "market_home": 0.5491,
+        "market_away": 0.4509,
+        "edge_home": -0.0056,
+        "market_total": 7.0,
+        "p_over": 0.4823,
+        "fair_over": 107,
+        "fair_under": -107,
+        "starters_used": true,
+        "home_starter": {
+          "name": "Drew Rasmussen",
+          "gs": 30,
+          "ra9_raw": 2.77,
+          "ip_per_start": 5.7,
+          "share": 0.636,
+          "ra9_model": 3.02
+        },
+        "away_starter": {
+          "name": "Gerrit Cole",
+          "gs": 22,
+          "ra9_raw": 3.69,
+          "ip_per_start": 5.8,
+          "share": 0.64,
+          "ra9_model": 3.84
+        }
+      }
     },
     {
       "game_pk": 849830,
@@ -116,6 +250,8 @@
       "weather_wind": null,
       "park_factor": 97,
       "park_verified": true,
+      "away_pitcher_id": 592662,
+      "home_pitcher_id": 694819,
       "weather_source": null,
       "wind_adj": 0,
       "wind_note": null,
@@ -135,7 +271,52 @@
         "Starters' avg WHIP 1.13 (low)",
         "Starters' avg SLG against 0.312 (low)"
       ],
-      "proj_total": 8.6
+      "proj_total": 8.6,
+      "odds": {
+        "details": "MIL -209",
+        "total": 7.0,
+        "spread": -1.5,
+        "home_ml": -209,
+        "away_ml": 171,
+        "over_price": -105,
+        "under_price": -115,
+        "home_spread_price": 104,
+        "away_spread_price": -125
+      },
+      "model": {
+        "home_score": 4.7,
+        "away_score": 3.01,
+        "total": 7.71,
+        "p_home": 0.6556,
+        "p_away": 0.3444,
+        "fair_home": -190,
+        "fair_away": 190,
+        "tie_rule_measured": true,
+        "market_home": 0.647,
+        "market_away": 0.353,
+        "edge_home": 0.0086,
+        "market_total": 7.0,
+        "p_over": 0.5181,
+        "fair_over": -108,
+        "fair_under": 108,
+        "starters_used": true,
+        "home_starter": {
+          "name": "Jacob Misiorowski",
+          "gs": 30,
+          "ra9_raw": 2.22,
+          "ip_per_start": 5.8,
+          "share": 0.646,
+          "ra9_model": 2.54
+        },
+        "away_starter": {
+          "name": "Robbie Ray",
+          "gs": 30,
+          "ra9_raw": 4.18,
+          "ip_per_start": 5.3,
+          "share": 0.59,
+          "ra9_model": 4.23
+        }
+      }
     }
   ]
 }

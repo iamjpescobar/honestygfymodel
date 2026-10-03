@@ -1,0 +1,52 @@
+{
+ "picks": [
+  {
+   "away": "Atlanta Braves",
+   "date": "2026-10-03",
+   "edge": 0.0969,
+   "ev_per_100": 26.45,
+   "game_id": "849828",
+   "home": "Los Angeles Dodgers",
+   "line": null,
+   "logged_at": "2026-10-03T19:42:59+00:00",
+   "market": "moneyline",
+   "p": 0.4632,
+   "price": 173,
+   "result": null,
+   "side": "away",
+   "start": "2026-10-03T20:00:00Z"
+  },
+  {
+   "away": "Atlanta Braves",
+   "date": "2026-10-03",
+   "edge": 0.0345,
+   "ev_per_100": 6.45,
+   "game_id": "849828",
+   "home": "Los Angeles Dodgers",
+   "line": 8.5,
+   "logged_at": "2026-10-03T19:42:59+00:00",
+   "market": "total",
+   "p": 0.5694,
+   "price": -115,
+   "result": null,
+   "side": "under",
+   "start": "2026-10-03T20:00:00Z"
+  },
+  {
+   "away": "San Diego Padres",
+   "date": "2026-10-03",
+   "edge": 0.0059,
+   "ev_per_100": 1.15,
+   "game_id": "849830",
+   "home": "Milwaukee Brewers",
+   "line": 7.0,
+   "logged_at": "2026-10-03T19:42:59+00:00",
+   "market": "total",
+   "p": 0.5181,
+   "price": -105,
+   "result": null,
+   "side": "over",
+   "start": "2026-10-04T00:30:00Z"
+  }
+ ]
+}
