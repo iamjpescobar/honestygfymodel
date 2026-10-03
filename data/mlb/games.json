@@ -1,34 +1,141 @@
 {
-  "generated_at_et": "2026-10-01 22:02",
-  "slate_date_et": "2026-10-01",
+  "generated_at_et": "2026-10-03 14:08",
+  "slate_date_et": "2026-10-03",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
     {
-      "game_pk": 849844,
-      "away": "Philadelphia Phillies",
-      "home": "Atlanta Braves",
-      "away_pitcher": "Aaron Nola",
-      "home_pitcher": "Ray Kerr",
-      "venue": "Truist Park",
-      "game_time": "2026-10-02T00:00:00Z",
+      "game_pk": 849829,
+      "away": "Chicago White Sox",
+      "home": "Cleveland Guardians",
+      "away_pitcher": "Hagen Smith",
+      "home_pitcher": "Parker Messick",
+      "venue": "Progressive Field",
+      "game_time": "2026-10-03T17:00:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": "84",
-      "weather_wind": "5 mph, L To R",
-      "park_factor": 99,
+      "weather_temp": "63",
+      "weather_wind": "9 mph, R To L",
+      "park_factor": 98,
+      "park_verified": true,
+      "weather_source": "mlb_posted",
+      "wind_adj": 0,
+      "wind_note": null,
+      "edge_net": 4,
+      "edge_lean": "Chicago White Sox",
+      "edge_grade": "A",
+      "edge_signals": [
+        "WHIP: edge Chicago White Sox (0.92 vs 1.11)",
+        "K%: edge Chicago White Sox (36.7 vs 25.6)",
+        "HR/9: edge Chicago White Sox (0.28 vs 0.94)",
+        "SLG against: edge Chicago White Sox (0.173 vs 0.363)"
+      ],
+      "ou_lean": "Under",
+      "ou_grade": "A",
+      "ou_signals": [
+        "Park factor 98 (pitcher-friendly)",
+        "Temp 63F (cold suppresses)",
+        "Starters' avg WHIP 1.02 (low)",
+        "Starters' avg HR/9 0.61 (low)",
+        "Starters' avg SLG against 0.268 (low)"
+      ],
+      "proj_total": 8.6
+    },
+    {
+      "game_pk": 849828,
+      "away": "Atlanta Braves",
+      "home": "Los Angeles Dodgers",
+      "away_pitcher": "Dylan Dodd",
+      "home_pitcher": "Tarik Skubal",
+      "venue": "UNIQLO Field at Dodger Stadium",
+      "game_time": "2026-10-03T20:00:00Z",
+      "weather_condition": "Sunny",
+      "weather_temp": "94",
+      "weather_wind": "2 mph, Varies",
+      "park_factor": 101,
       "park_verified": true,
       "weather_source": "mlb_posted",
       "wind_adj": 0,
       "wind_note": null,
       "edge_net": 2,
-      "edge_lean": "Atlanta Braves",
+      "edge_lean": "Los Angeles Dodgers",
       "edge_grade": "C",
       "edge_signals": [
-        "WHIP: edge Atlanta Braves (1.42 vs 0.74)",
-        "K%: edge Philadelphia Phillies (23.7 vs 16.7)",
-        "HR/9: edge Atlanta Braves (1.98 vs 1.02)",
-        "SLG against: edge Atlanta Braves (0.483 vs 0.267)"
+        "K%: edge Los Angeles Dodgers (26.7 vs 29.8)",
+        "HR/9: edge Los Angeles Dodgers (1.25 vs 0.8)"
       ],
-      "proj_total": 8.2
+      "ou_lean": "Under",
+      "ou_grade": "C-",
+      "ou_signals": [
+        "Temp 94F (carry weather)",
+        "Starters' avg WHIP 1 (low)",
+        "Starters' avg SLG against 0.348 (low)"
+      ],
+      "proj_total": 8.1
+    },
+    {
+      "game_pk": 849835,
+      "away": "New York Yankees",
+      "home": "Tampa Bay Rays",
+      "away_pitcher": "Gerrit Cole",
+      "home_pitcher": "Drew Rasmussen",
+      "venue": "Tropicana Field",
+      "game_time": "2026-10-03T22:30:00Z",
+      "weather_condition": null,
+      "weather_temp": null,
+      "weather_wind": null,
+      "park_factor": 97,
+      "park_verified": false,
+      "weather_source": null,
+      "wind_adj": 0,
+      "wind_note": null,
+      "edge_net": 2,
+      "edge_lean": "Tampa Bay Rays",
+      "edge_grade": "C",
+      "edge_signals": [
+        "HR/9: edge Tampa Bay Rays (1.63 vs 0.88)",
+        "SLG against: edge Tampa Bay Rays (0.426 vs 0.321)"
+      ],
+      "ou_lean": "Under",
+      "ou_grade": "C-",
+      "ou_signals": [
+        "Starters' avg WHIP 1.08 (low)",
+        "Starters' avg HR/9 1.25 (high)",
+        "Starters' avg SLG against 0.373 (low)"
+      ],
+      "proj_total": 7.9
+    },
+    {
+      "game_pk": 849830,
+      "away": "San Diego Padres",
+      "home": "Milwaukee Brewers",
+      "away_pitcher": "Robbie Ray",
+      "home_pitcher": "Jacob Misiorowski",
+      "venue": "American Family Field",
+      "game_time": "2026-10-04T00:30:00Z",
+      "weather_condition": null,
+      "weather_temp": null,
+      "weather_wind": null,
+      "park_factor": 97,
+      "park_verified": true,
+      "weather_source": null,
+      "wind_adj": 0,
+      "wind_note": null,
+      "edge_net": 4,
+      "edge_lean": "Milwaukee Brewers",
+      "edge_grade": "A",
+      "edge_signals": [
+        "WHIP: edge Milwaukee Brewers (1.37 vs 0.89)",
+        "K%: edge Milwaukee Brewers (20.8 vs 37.2)",
+        "HR/9: edge Milwaukee Brewers (1.23 vs 0.72)",
+        "SLG against: edge Milwaukee Brewers (0.374 vs 0.25)"
+      ],
+      "ou_lean": "Under",
+      "ou_grade": "B",
+      "ou_signals": [
+        "Park factor 97 (pitcher-friendly)",
+        "Starters' avg WHIP 1.13 (low)",
+        "Starters' avg SLG against 0.312 (low)"
+      ],
+      "proj_total": 8.6
     }
   ]
 }

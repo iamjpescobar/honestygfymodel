@@ -7259,6 +7259,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-10-03": {
+      "picks": [
+        {
+          "id": "668930",
+          "name": "Brice Turang",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "805367",
+          "name": "Chase Meidroth",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "545341",
+          "name": "Randal Grichuk",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701538",
+          "name": "Jackson Merrill",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "694192",
+          "name": "Jackson Chourio",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "676356",
+          "name": "Jonny DeLuca",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666176",
+          "name": "Jo Adell",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "643289",
+          "name": "Mauricio Dub\u00f3n",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686668",
+          "name": "Brenton Doyle",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682987",
+          "name": "Spencer Jones",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "669257",
+          "name": "Will Smith",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683748",
+          "name": "Victor Mesa Jr.",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641343",
+          "name": "Jake Bauers",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -8184,6 +8294,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-03": {
+      "picks": [
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "Tampa Bay Rays",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -11168,6 +11292,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-03": {
+      "picks": [
+        {
+          "id": "660271",
+          "name": "Shohei Ohtani",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "545341",
+          "name": "Randal Grichuk",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "571970",
+          "name": "Max Muncy",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "606192",
+          "name": "Teoscar Hern\u00e1ndez",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "808959",
+          "name": "Munetaka Murakami",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -35449,6 +35619,52 @@
           "team": "ATL",
           "stat": "strikeOuts",
           "line": 1.2,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    },
+    "2026-10-03": {
+      "picks": [
+        {
+          "id": 694819,
+          "name": "Jacob Misiorowski (RHP)",
+          "team": "MIL",
+          "stat": "strikeOuts",
+          "line": 8.0,
+          "result": null
+        },
+        {
+          "id": 669373,
+          "name": "Tarik Skubal (LHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 6.9,
+          "result": null
+        },
+        {
+          "id": 800048,
+          "name": "Parker Messick (LHP)",
+          "team": "CLE",
+          "stat": "strikeOuts",
+          "line": 6.5,
+          "result": null
+        },
+        {
+          "id": 656876,
+          "name": "Drew Rasmussen (RHP)",
+          "team": "TB",
+          "stat": "strikeOuts",
+          "line": 6.4,
+          "result": null
+        },
+        {
+          "id": 543037,
+          "name": "Gerrit Cole (RHP)",
+          "team": "NYY",
+          "stat": "strikeOuts",
+          "line": 4.7,
           "result": null
         }
       ],
