@@ -10,6 +10,141 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — two caches were smaller than a slate. 2026-08-17
+
+**Suite 106, FAILING: none.** Six negative controls, all confirmed red
+by EXIT CODE. No behaviour changed — this batch is entirely about the
+site not re-doing work it has already done.
+
+### 1. THE SAME CACHE BUG AS 08-16, ONE FILE OVER
+
+`weak_spots_json` sat at `max_entries=16`. That was right when the only
+consumer was the weak-spots expander on the card in front of you. It is
+not right now, because the function gained callers and nobody resized
+it:
+
+  1. the weak-spots quadrant       (_render_pitcher_detail)
+  2. the per-slot leak panel       (GameCard, sorted by leak)
+  3. edge.py's zone-fit component, via `zone_band_xslg` — which runs
+     PER BATTER, so every rated bat asks for its pitcher again
+
+Measured on a 30-starter slate: browsing the slate and then going back
+to the first eight starters cost **291 ms of pure recomputation, against
+1.6 ms warm**, because all eight had been evicted. Raised to 256. The
+payload is a 2.4 KB JSON string, so that is ~0.6 MB — free next to the
+frame caches.
+
+**This is the second time in two days a fix reached one consumer and
+missed another,** and the 08-16 entry says so in its own words about
+the arsenal window and the wind arrow. The pattern is not "I forgot a
+file". It is that the guard was written against the callers I knew
+about.
+
+### 2. SO THE CACHE TEST NOW WALKS THE GLOB
+
+`tests/test_cache_sizing` checked four batter caches BY NAME. It was
+green through all 291 ms of the above, because `weak_spots_json` was
+not one of the four.
+
+Rewritten to parse every `@st.cache_data` under `app/engines` out of the
+AST and apply the rule: **a cache keyed on a player id must hold the
+players one slate can put through it** — 300 bats, 150 arms. A new
+engine is covered the day it is written.
+
+It found one on its first run that I had not: `get_first_pitch_swing`
+at 256, just under a slate, and keyed on window and side as well as
+batter. Raised to 512.
+
+Two more per-player caches raised, both network-backed, where a miss is
+a statsapi round-trip rather than a disk read:
+
+    batter_trends._game_log_json    32 -> 512
+    pitcher_trends._game_log_json   32 -> 256
+
+`pitcher_trends._game_log_json` also took its parameter as `batter_id`,
+copied from batter_trends, on a function that only ever receives a
+pitcher. Renamed — standing rule 9, a right value under a wrong label.
+
+**The one exemption carries its own kill switch.** `_k_vs_team_json`
+stays at 64 because only its own module calls it and only about
+tonight's probables (~30 arms). The test asserts that condition: the
+day anything outside `k_projection.py` calls it, the exemption is void
+and the full floor applies. An exemption without a condition is how
+these numbers rot in the first place.
+
+### 3. THE TRIM RAN ON FILES THE NIGHTLY HAD ALREADY TRIMMED
+
+`_read_local_parquet` carried a comment claiming the trim "costs
+nothing when the file is already trimmed". Measured, it does:
+`df[keep].copy()` copies the whole frame whether or not anything needs
+changing.
+
+    pd.read_parquet on a nightly file    3.4 ms
+    _trim_and_downcast on that frame     0.8 ms   <- pure waste
+    the new _conforms check              0.1 ms
+
+New `_conforms()` short-circuits when the frame is already exactly what
+the slow path would return. **16% off every precomputed read, ~0.24 s
+per cold board pass over 300 batters.** Small. Free. Not the headline.
+
+Two things about it worth keeping:
+
+- **The fast path returns the input frame, uncopied,** and that is only
+  safe because both call sites hand it a frame they just constructed,
+  and both consumers are `st.cache_data` (which serialises, so callers
+  get their own object regardless). Verified empirically — mutating a
+  returned frame does not leak into a later cache read. A third call
+  site passing a shared frame must copy first; the docstring says so.
+- **`_conforms` compares column ORDER,** so it depends on
+  `precompute.ENGINE_COLS` and `statcast_engine._KEEP_COLS` staying in
+  step. If they diverge the check fails on every real file, the fast
+  path silently stops firing, and nothing breaks — the site just goes
+  back to the old cost with no symptom. `tests/test_trim_fast_path`
+  compares the two modules' own literals so that cannot happen quietly.
+
+### 4. WHAT I MEASURED AND DID NOT BUILD
+
+**Threaded parquet reads.** The obvious next idea, and it is wrong here:
+4 and 8 workers over 200 batter files came back at 0.78x and 0.96x —
+SLOWER than serial. The read is CPU-bound (decompress plus downcast)
+and Render free tier is one core. Do not revisit without a bigger box.
+
+**`_get_batter_df` memory.** Not a bug, but the number to know if OOM
+ever comes back: the payload is ~230 KB per batter, so 450 entries is
+**~100 MB**, and `_get_pitcher_df` at 180 is another ~50 MB. The frame
+caches ARE the memory profile; every small cache raised in this batch
+is a rounding error against them. If the 512 MB ceiling gets tight
+again, that is the line item — not the JSON caches.
+
+### FILES TOUCHED, 2026-08-17
+
+    app/engines/statcast_engine.py    _conforms + fast path, first_pitch_swing 512
+    app/engines/pitcher_weakspots.py  weak_spots_json 16 -> 256
+    app/engines/batter_trends.py      _game_log_json 32 -> 512
+    app/engines/pitcher_trends.py     _game_log_json 32 -> 256, param renamed
+    tests/test_cache_sizing.py        REWRITTEN - AST glob over every cache
+    tests/test_trim_fast_path.py      NEW
+
+Suite 105 -> 106.
+
+**ROTATED IN THIS BATCH.** Adding this entry took the file to 1,408
+lines and `tests/test_handoff_size` failed, as designed. The two oldest
+entries (2026-08-12 "last" and "night") moved to `HANDOFF_ARCHIVE.md`:
+back to 12 entries, 1,305 lines. Rules untouched.
+
+### STILL TRUE FROM 08-16
+
+Nothing is queued and that is deliberate. `benchmark_probe.py` is the
+thing to run. **Do NOT refit weights, move floors, or change the cap** —
+standing rule 10. Worth knowing while you wait: HR Edge has gone 2-for-19
+across 08-12 through 08-15, which is exactly the stretch rule 10 was
+written for. At a 12% base rate that is indistinguishable from noise,
+and changing anything now resets the clock.
+
+---
+
+---
+
 ## PICK UP HERE — arsenal freshness, cross-board tokens, morning wind. 2026-08-16
 
 **Suite 105, FAILING: none.** Everything below shipped with negative

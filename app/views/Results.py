@@ -45,6 +45,7 @@ import streamlit as st
 from styles.kc_theme import page_header, card, footer, data_timestamp, COLOR
 from engines.calibration import summary, BOARDS, _load
 from engines.calibration_trend import render_calibration_trend
+from engines import model_picks as _mpk
 
 # Theme injection lives in app.py, which renders once per script run
 # before this view is exec'd. It used to be called in each view as
@@ -292,6 +293,65 @@ def _render_board(board, cfg, s, days):
             _render_markets(days, stats)
 
 
+_SPORT_NAMES = {"mlb": "MLB", "nhl": "NHL", "nfl": "NFL"}
+_MARKET_NAMES = {"moneyline": "Moneyline", "total": "Total", "spread": "Spread"}
+
+
+def _render_model_picks():
+    """The game models' value picks — every bet the model saw value in at
+    the POSTED price, logged before the game, graded on the final. This
+    is the evidence for staking them, so it reports units and ROI at the
+    logged price and splits by edge size: if the model is right about
+    its own confidence, bigger edges should do better."""
+    st.markdown(_section_tag("Model picks \u2014 value bets, graded"), unsafe_allow_html=True)
+    st.caption("Every moneyline, total and spread where the game model's chance beat the "
+               "posted price, logged before the game at that price (first price wins), one "
+               "unit each. Postponed games are void and count nowhere. A sport needs a few "
+               "hundred graded picks before its ROI means much \u2014 read this over weeks.")
+    any_rows = False
+    for sport in _mpk.SPORTS:
+        picks = _mpk.load(sport)["picks"]
+        if not picks:
+            continue
+        any_rows = True
+        sm = _mpk.summary(picks)
+        a = sm["all"]
+        with card(f"model_picks_{sport}"):
+            roi = "\u2014" if a["roi"] is None else f"{a['roi']:+.1f}%"
+            st.markdown(
+                f'<div class="pf-card-title" style="color:{COLOR["gold"]};">'
+                f'{_SPORT_NAMES[sport]} model</div>'
+                f'<div class="pf-card-subtitle">{a["w"]}-{a["l"]}-{a["p"]} \u00b7 '
+                f'{a["units"]:+.2f} units \u00b7 ROI {roi} \u00b7 '
+                f'{sm["pending"]} pending</div>', unsafe_allow_html=True)
+            rows = []
+            for b in sm["by_edge"]:
+                if b["n"]:
+                    rows.append({"Split": f"Edge {b['bucket']}", "Picks": b["n"],
+                                 "W-L-P": f"{b['w']}-{b['l']}-{b['p']}",
+                                 "Win %": b["win_pct"], "Units": b["units"], "ROI %": b["roi"]})
+            for m, b in sm["by_market"].items():
+                rows.append({"Split": _MARKET_NAMES.get(m, m), "Picks": b["n"],
+                             "W-L-P": f"{b['w']}-{b['l']}-{b['p']}",
+                             "Win %": b["win_pct"], "Units": b["units"], "ROI %": b["roi"]})
+            if rows:
+                st.dataframe(rows, hide_index=True, width="stretch", key=f"mp_split_{sport}")
+            recent = sorted(picks, key=lambda p: (p["date"], p["logged_at"]), reverse=True)[:15]
+            st.dataframe([{
+                "Date": p["date"], "Game": f"{p['away']} @ {p['home']}",
+                "Bet": (f"{p['home'] if p['side'] == 'home' else p['away']} ML"
+                        if p["market"] == "moneyline" else
+                        f"{p['side'].title()} {p['line']:g}" if p["market"] == "total" else
+                        f"{p['home'] if p['side'] == 'home' else p['away']} {p['line']:+g}"),
+                "Price": p["price"], "Model %": round(100 * p["p"], 1),
+                "Edge": round(100 * p["edge"], 1), "Result": p.get("result") or "pending",
+                "Units": p.get("units")} for p in recent],
+                hide_index=True, width="stretch", key=f"mp_recent_{sport}")
+    if not any_rows:
+        st.info("No model picks logged yet \u2014 they start with the next slate that has "
+                "posted prices, and grade the morning after.")
+
+
 def render():
     page_header(
         "Results",
@@ -311,6 +371,7 @@ def render():
             "pitch and graded once the slate is final, so this fills in "
             "from tomorrow."
         )
+        _render_model_picks()
         footer()
         return
 
@@ -368,6 +429,7 @@ def render():
             _render_board(board, BOARDS[board],
                           sums.get(board, {}), data.get(board, {}))
 
+    _render_model_picks()
     footer()
 
 

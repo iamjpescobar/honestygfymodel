@@ -19,6 +19,8 @@ import pandas as pd
 import streamlit as st
 
 from engines import model_math as mm
+from engines import model_picks as mpk
+from engines import value as vl
 from styles.kc_theme import COLOR
 
 DASH = "—"
@@ -123,11 +125,13 @@ def render_validation(validation, key, extra=None, total_unit="runs"):
 def render_prop_table(rows, columns, verdicts, key, favor_note=None):
     """rows: list of dicts already holding display strings. columns:
     [(market_key, header)] — a header gets a trailing ' *' when that
-    market did NOT beat its baseline in the walk-forward."""
+    market did NOT beat its baseline in the walk-forward. Keys starting
+    with '_' (raw probabilities for the value tool) are not drawn."""
     if not rows:
         st.caption("No prop projections for this side yet.")
         return
-    df = pd.DataFrame(rows)
+    df = pd.DataFrame([{k: v for k, v in r.items() if not str(k).startswith("_")}
+                       for r in rows])
     rename = {}
     for k, header in columns:
         if k in df.columns:
@@ -199,7 +203,8 @@ def mlb_lineup_props(batters, opp_pitcher_id):
         proj = mp.project_batter(slot, b_counts, p_counts, pm, bf_dist)
         if not proj:
             continue
-        row = {"#": slot, "Batter": b.get("name"), "PA": proj["pa"], "Exp PA": proj["exp_pa"]}
+        row = {"#": slot, "Batter": b.get("name"), "PA": proj["pa"], "Exp PA": proj["exp_pa"],
+               "_name": b.get("name"), "_probs": proj["probs"]}
         for k, *_ in mp.MARKETS:
             row[k] = prob_cell(proj["probs"][k])
         rows.append(row)
@@ -226,3 +231,116 @@ def prob_cell(p):
     if p is None:
         return DASH
     return f"{100.0 * p:.0f}% ({mm.fmt_american(mm.fair_american(p))})"
+
+
+# ----------------------------------------------------------------------
+# Value and staking
+# ----------------------------------------------------------------------
+_FRACTIONS = {"1/8 Kelly": 0.125, "1/4 Kelly": 0.25, "1/2 Kelly": 0.5}
+_CAPS = {"1%": 0.01, "2%": 0.02, "3%": 0.03, "5%": 0.05}
+
+
+def staking_controls(key):
+    """Bankroll, Kelly fraction and per-bet cap — shared across every
+    model page through session state, so it is set once per visit."""
+    ss = st.session_state
+    ss.setdefault("lc_bankroll", 0.0)
+    ss.setdefault("lc_kelly", "1/4 Kelly")
+    ss.setdefault("lc_cap", "2%")
+    with st.expander("Your bankroll & staking", expanded=not ss["lc_bankroll"]):
+        c1, c2, c3 = st.columns(3)
+        c1.number_input("Bankroll ($)", min_value=0.0, step=50.0, key="lc_bankroll",
+                        help="Leave at 0 to see value without stake sizes.")
+        c2.selectbox("Stake size", list(_FRACTIONS), key="lc_kelly",
+                     help="A fraction of the Kelly stake. Kelly assumes the model's "
+                          "probability is exact; it never is, so bet a fraction.")
+        c3.selectbox("Max per bet", list(_CAPS), key="lc_cap",
+                     help="Hard ceiling as a share of bankroll, whatever Kelly says.")
+        st.caption("A bet has VALUE only when the model's chance beats the price's break-even. "
+                   "Stakes = your Kelly fraction of the model's edge, capped. The model's edge "
+                   "over a coin flip is small and still being graded (Results \u2192 Model "
+                   "picks) \u2014 size accordingly.")
+    return ss["lc_bankroll"], _FRACTIONS[ss["lc_kelly"]], _CAPS[ss["lc_cap"]]
+
+
+def current_staking():
+    """The staking settings WITHOUT drawing the controls — for a second
+    consumer on a page that already drew them (two staking_controls()
+    calls on one page would be a duplicate-widget-key crash)."""
+    ss = st.session_state
+    return (ss.get("lc_bankroll") or 0.0, _FRACTIONS[ss.get("lc_kelly", "1/4 Kelly")],
+            _CAPS[ss.get("lc_cap", "2%")])
+
+
+def _bet_label(b, away, home):
+    if b["market"] == "moneyline":
+        return f"{home if b['side'] == 'home' else away} ML"
+    if b["market"] == "total":
+        return f"{'Over' if b['side'] == 'over' else 'Under'} {b['line']:g}"
+    team = home if b["side"] == "home" else away
+    return f"{team} {b['line']:+g}"
+
+
+def render_value_panel(proj, odds, away, home, key, staking):
+    """Model % vs price for every side the model prices. Prices default
+    to the posted line where there is one; type your own book's price in
+    the Price column and the row recomputes."""
+    bets = mpk.candidate_bets(proj, odds)
+    if not bets:
+        return
+    bankroll, frac, cap = staking
+    ed_key = f"val_{key}"
+    edits = (st.session_state.get(ed_key) or {}).get("edited_rows") or {}
+    rows = []
+    for i, b in enumerate(bets):
+        price = (edits.get(i) or {}).get("Price", b["price"])
+        a = vl.assess(b["p"], price, bankroll or None, frac, cap) if price not in (None, "") else None
+        rows.append({
+            "Bet": _bet_label(b, away, home),
+            "Model": f"{100 * b['p']:.1f}%",
+            "Fair": mm.fmt_american(mm.fair_american(b["p"])),
+            "Price": price,
+            "Break-even": f"{100 * a['break_even']:.1f}%" if a else DASH,
+            "Edge": f"{100 * a['edge']:+.1f}" if a else DASH,
+            "EV / $100": f"{a['ev_per_100']:+.2f}" if a else DASH,
+            "Stake": (f"${a['stake']:.2f}" if a and a.get("stake") else
+                      ("\u2014" if not a or not bankroll else "$0 (no value)")),
+            "Value": "\u2705" if a and a["value"] else "",
+        })
+    df = pd.DataFrame(rows)
+    st.data_editor(
+        df, key=ed_key, hide_index=True, width="stretch",
+        disabled=[c for c in df.columns if c != "Price"],
+        column_config={"Price": st.column_config.NumberColumn(
+            "Price", help="American odds at YOUR book. Posted line pre-filled where ESPN has one.",
+            step=1, format="%d")})
+    st.caption("\u2705 = positive expected value at that price. Edit Price to check your book.")
+
+
+def render_prop_value_tool(rows, markets, key, staking, name_key="_name"):
+    """Pick a player and a market, enter your book's price, get the
+    verdict and stake. rows carry '_probs' {market_key: p}."""
+    rows = [r for r in rows if r.get("_probs")]
+    if not rows:
+        return
+    bankroll, frac, cap = staking
+    st.markdown("**Check a prop at your price**")
+    c1, c2, c3 = st.columns([2, 2, 1])
+    names = [r[name_key] for r in rows]
+    who = c1.selectbox("Player", names, key=f"pv_who_{key}")
+    labels = {k: lab for k, lab in markets}
+    mkt = c2.selectbox("Market", list(labels), format_func=lambda k: labels[k],
+                       key=f"pv_mkt_{key}")
+    price = c3.number_input("Price", value=-110, step=5, key=f"pv_px_{key}")
+    p = next(r for r in rows if r[name_key] == who)["_probs"].get(mkt)
+    a = vl.assess(p, price, bankroll or None, frac, cap) if p is not None else None
+    if not a:
+        st.caption("Enter an American price of -100 or lower, or +100 or higher.")
+        return
+    verdict = "VALUE" if a["value"] else "no value"
+    stake_txt = (f" \u00b7 stake ${a['stake']:.2f}" if a["value"] and a.get("stake")
+                 else "")
+    st.markdown(f"{who} \u00b7 {labels[mkt]}: model **{100 * p:.1f}%** vs break-even "
+                f"{100 * a['break_even']:.1f}% at {mm.fmt_american(int(price))} \u2192 "
+                f"**{verdict}** (edge {100 * a['edge']:+.1f} pts, EV {a['ev_per_100']:+.2f} "
+                f"per $100){stake_txt}")

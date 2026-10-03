@@ -144,6 +144,8 @@ def fake_get(url, _attempts=3, summaries=None):
 # the pipeline's parsing, so it runs against NO prior file — the model
 # has its own test (test_nhl_model.py) with a season-sized fixture.
 hpc.PRIOR_PATH = Path(tempfile.gettempdir()) / "no_such_prior_season.json"
+# ...and its value picks go to a sandbox, never the repo's graded record.
+hpc.PICKS_ROOT = Path(tempfile.mkdtemp()) / "model_picks"
 
 
 def run(get, today):

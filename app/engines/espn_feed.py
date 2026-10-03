@@ -35,6 +35,9 @@ EASTERN = ZoneInfo("America/New_York")
 LEAGUES = {
     "nfl": ("football", "nfl"),
     "nhl": ("hockey", "nhl"),
+    # MLB is here ONLY for the posted line (moneyline/total) the game
+    # model is compared against. Every MLB stat still comes from statsapi.
+    "mlb": ("baseball", "mlb"),
 }
 
 # Same vocabulary espn_wnba writes, plus the two statuses football and
@@ -213,6 +216,41 @@ def odds_of(comp):
                 out[f"{side}_ml"] = int(f)
         except (TypeError, ValueError):
             pass
+    # THE PRICES ON THE TOTAL AND THE SPREAD, when the provider gives
+    # them. A graded record that assumes -110 on every total would report
+    # a profit the bettor never saw, so these are read or left absent —
+    # never filled in.
+    def _price(v):
+        if v in (None, ""):
+            return None
+        if str(v).strip().upper() == "EVEN":
+            return 100
+        try:
+            f = float(str(v).replace("+", ""))
+        except (TypeError, ValueError):
+            return None
+        return int(f) if (f <= -100 or f >= 100) else None
+    for ours, val in (
+            ("over_price", raw.get("overOdds")),
+            ("under_price", raw.get("underOdds")),
+            ("home_spread_price", (raw.get("homeTeamOdds") or {}).get("spreadOdds")),
+            ("away_spread_price", (raw.get("awayTeamOdds") or {}).get("spreadOdds"))):
+        pr = _price(val)
+        if pr is not None:
+            out[ours] = pr
+    tot = raw.get("total") if isinstance(raw.get("total"), dict) else {}
+    for side, key in (("over", "over_price"), ("under", "under_price")):
+        if key not in out:
+            pr = _price(((tot.get(side) or {}).get("close") or {}).get("odds"))
+            if pr is not None:
+                out[key] = pr
+    ps = raw.get("pointSpread") if isinstance(raw.get("pointSpread"), dict) else {}
+    for side in ("home", "away"):
+        key = f"{side}_spread_price"
+        if key not in out:
+            pr = _price(((ps.get(side) or {}).get("close") or {}).get("odds"))
+            if pr is not None:
+                out[key] = pr
     return out
 
 

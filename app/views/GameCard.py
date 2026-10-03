@@ -1878,15 +1878,20 @@ with content_col:
                 f'<div class="pf-card-subtitle">Projected runs, win probability and the fair '
                 f'line \u2014 fitted on this season\'s finals, tested on games it had not seen.</div>',
                 unsafe_allow_html=True)
+            _gm_odds = _mlb_game_model.posted_lines().get(game.get("game_pk"))
             _gm_proj = _mlb_game_model.project_game(
                 game["home"], game["away"], game.get("home_pitcher_id"),
-                game.get("away_pitcher_id"), model=_mlb_model)
+                game.get("away_pitcher_id"), model=_mlb_model, market=_gm_odds)
             _gm_note = None
             if _gm_proj and _mlb_model.get("use_starters") and not _gm_proj.get("starters_used"):
                 _gm_note = "Starters not both on record \u2014 team rates only for this game."
             _model_view.render_game_projection(
                 _gm_proj, team_abbr(game["away"]), team_abbr(game["home"]),
                 key="gc_model", note=_gm_note)
+            _gc_stk = _model_view.staking_controls("gc")
+            _model_view.render_value_panel(_gm_proj, _gm_odds, team_abbr(game["away"]),
+                                           team_abbr(game["home"]), key="gc_model",
+                                           staking=_gc_stk)
             _model_view.render_validation(_mlb_model.get("validation"), key="gc_model",
                                           total_unit="runs")
 
@@ -1935,6 +1940,9 @@ with content_col:
         _p_rows, _p_verdicts, _p_note = _model_view.mlb_lineup_props(batters, pitcher_id)
         _model_view.render_prop_table(_p_rows, _model_view.MLB_PROP_COLUMNS, _p_verdicts,
                                       key="gc_props", favor_note=_p_note)
+        _model_view.render_prop_value_tool(_p_rows, _model_view.MLB_PROP_COLUMNS,
+                                           key="gc_props",
+                                           staking=_model_view.current_staking())
         st.caption(_model_view.MLB_PROP_FOOTNOTE)
 
     # HR Score / Hit Score / K Score come from a SEPARATE, real, live

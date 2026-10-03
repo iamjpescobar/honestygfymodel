@@ -221,6 +221,7 @@ def run(get, today):
     # Same for the game model's 2025 file: written once when missing, so
     # a pipeline under test must write it to its sandbox, never the repo.
     npc.PRIOR_PATH = Path(tmp) / "prior_season.json"
+    npc.PICKS_ROOT = Path(tmp) / "model_picks"
     os.chdir(tmp)
     try:
         npc.main(today=today)

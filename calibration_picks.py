@@ -382,6 +382,9 @@ def _write_mlb_slate(date_str: str) -> int:
             "weather_wind": g.get("weather_wind"),
             "park_factor": park.get("park_factor"),
             "park_verified": bool(park.get("verified")),
+            # Starter ids ride along for the game model's starter layer.
+            "away_pitcher_id": g.get("away_pitcher_id"),
+            "home_pitcher_id": g.get("home_pitcher_id"),
         }
 
         _roof = is_roofed(g.get("venue") or "")
@@ -569,6 +572,14 @@ def _write_mlb_slate(date_str: str) -> int:
 
         rows.append(row)
 
+    # THE GAME MODEL AND THE POSTED LINE, then the value picks.
+    # Its own try: a model or odds failure must never cost the slate
+    # (Home reads this file) or the boards. See _attach_model_and_odds.
+    try:
+        _attach_model_and_odds(rows, date_str)
+    except Exception as exc:  # noqa: BLE001
+        print(f"mlb model/odds: skipped ({type(exc).__name__}: {exc})", flush=True)
+
     MLB_SLATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     MLB_SLATE_PATH.write_text(json.dumps({
         # Keys chosen to match slate_guard._LEAGUES["mlb"] exactly. A
@@ -585,6 +596,69 @@ def _write_mlb_slate(date_str: str) -> int:
           f"{totals} with a projected total) to "
           f"{MLB_SLATE_PATH}.", flush=True)
     return len(rows)
+
+
+def _espn_mlb_odds(date_str):
+    """{(away_abbr, home_abbr): odds} from ESPN's MLB scoreboard, or {}.
+
+    ESPN is used ONLY for the posted line; every baseball number on the
+    site still comes from statsapi. Teams are matched through
+    mlb_run_rates.canonical — the same derived alias index the run
+    rates use — because the two feeds name clubs differently.
+    """
+    from engines import espn_feed as ef
+    from engines.mlb_run_rates import canonical
+    try:
+        sb, _src = ef.fetch_scoreboard("mlb", date_str.replace("-", ""))
+    except Exception as exc:  # noqa: BLE001
+        print(f"mlb odds: ESPN scoreboard unavailable ({exc})", flush=True)
+        return {}
+    out = {}
+    for ev in (sb or {}).get("events") or []:
+        comp, away, home = ef.event_sides(ev)
+        if comp is None:
+            continue
+        a = canonical((away.get("team") or {}).get("displayName"))
+        h = canonical((home.get("team") or {}).get("displayName"))
+        o = ef.odds_of(comp)
+        if a and h and o:
+            out[(a, h)] = o
+    return out
+
+
+def _attach_model_and_odds(rows, date_str):
+    """Writes row["odds"] and row["model"] in place and logs value picks
+    to data/model_picks/mlb.json (engines/model_picks — pre-game only,
+    first writer wins)."""
+    from engines import mlb_game_model as mgm
+    from engines import model_picks as mpk
+    from engines.mlb_run_rates import canonical
+
+    model = mgm.load_model()
+    odds = _espn_mlb_odds(date_str)
+    priced = projected = 0
+    to_log = []
+    for row in rows:
+        key = (canonical(row.get("away")), canonical(row.get("home")))
+        o = odds.get(key)
+        if o:
+            row["odds"] = o
+            priced += 1
+        if not model:
+            continue
+        pj = mgm.project_game(row.get("home"), row.get("away"), row.get("home_pitcher_id"),
+                              row.get("away_pitcher_id"), model=model, market=o)
+        if not pj:
+            continue
+        row["model"] = pj
+        projected += 1
+        if row.get("game_time"):
+            to_log.append({"id": row.get("game_pk"), "date": date_str, "start": row["game_time"],
+                           "home": row.get("home"), "away": row.get("away"),
+                           "proj": pj, "odds": o})
+    new = mpk.log_picks("mlb", to_log) if to_log else 0
+    print(f"mlb model: {projected}/{len(rows)} games projected, {priced} with an ESPN line, "
+          f"{new} new value pick(s) logged", flush=True)
 
 
 def main() -> int:

@@ -23,7 +23,7 @@ and WNBA pages read their own slate files and still work.
 
 ## Tests
 
-121 files in `tests/`, all **plain scripts, not pytest**. Each one exits
+122 files in `tests/`, all **plain scripts, not pytest**. Each one exits
 non-zero on failure and CI checks exit codes. There is no pytest
 anywhere in this repo — don't add `assert`-collecting fixtures and
 expect them to run.
@@ -89,6 +89,12 @@ NFL props stay on Projections). One shared core —
 `engines/game_model.py` (team pairing, walk-forward fit and validation).
 Every parameter is fitted or measured nightly, never chosen, and every
 page shows the model's walk-forward record beside its numbers.
+
+Every card also has a **value table** (model % vs the posted or your own
+price, EV, fractional-Kelly stake — `engines/value.py`), and every value
+pick at a posted price is logged pre-game and graded nightly
+(`engines/model_picks.py`, `model_picks_grade.py`) into Results →
+Model picks.
 
 - **MLB** — `mlb_model_precompute.py` (statsapi finals + starter logs →
   `data/mlb/model.json`, committed) and `mlb_prop_precompute.py` (called

@@ -43,7 +43,7 @@ back. A control that stays green proves nothing, and several have —
 because the fixture could not tell the two behaviours apart, or because
 the edit never applied at all.
 
-**The suite is 121 files and stays green.** Five fail in a bare
+**The suite is 122 files and stays green.** Five fail in a bare
 container for want of streamlit and pass in Codespaces:
 test_data_paths, test_home, test_pen_roster_drift,
 test_wnba_grading_honesty, test_wnba_injury_gate. Run it with:
@@ -136,6 +136,66 @@ DOWNSTREAM CAN CATCH.** The board capped per TEAM while its caption said
 **10. DO NOT TUNE AFTER A BAD NIGHT.** At a 12% base rate a bad week and
 a broken model are indistinguishable, and every change resets the
 measurement clock.
+
+---
+
+## PICK UP HERE — value, stakes and a graded record for every model pick. 2026-10-03 (7)
+
+**Suite 122, FAILING: none.** Three negative controls red by exit code.
+
+Izzy wants to stake model picks. Nothing showed they beat the BOOK —
+only that they beat a coin flip — so this batch makes every pick
+checkable at the real price and grades every value pick in public.
+
+### WHAT SHIPPED
+
+`engines/value.py` — break-even, edge, EV per $100, fractional Kelly
+with a per-bet cap. Bankroll / fraction / cap are the BETTOR's risk
+settings (rule 1 is about numbers that describe the world), defaults
+1/4 Kelly and 2%, shown wherever a stake prints.
+
+Every model card (MLB Model, Game Card, NHL Model, NFL Model) has a
+value table: model %, fair price, the posted price pre-filled where ESPN
+has one, EDITABLE so the reader types his own book's price; edge, EV,
+stake, ✅. MLB/NHL prop tables get a "check a prop at your price" tool;
+NFL Projections gets one with real over/under chances
+(`engines/nfl_prop_odds.py`: game-to-game scatter MEASURED per market —
+NB size for counts, pooled cv for yards — not yet graded, page says so).
+
+`engines/model_picks.py` + `model_picks_grade.py` — every side with
+positive EV at the POSTED price is logged pre-game, first writer wins
+per (game, market), to data/model_picks/{mlb,nhl,nfl}.json; graded
+nightly from statsapi / ESPN finals by game id; void after 3 days not
+final. Results → "Model picks": W-L-P, units, ROI, split by edge bucket
+and market. **If bigger edges do not do better, the model's confidence
+is not real — that table is the check.** MLB lines come from ESPN
+(`espn_feed` gained "mlb", odds only) via calibration_picks at slate
+time; odds_of now reads over/under and spread PRICES when published and
+never fills in -110.
+
+### RULES THIS BATCH ADDS
+
+A side with no posted price is never logged (an assumed -110 reports a
+profit nobody saw). A pick after first pitch is not a pick. Two
+staking_controls() on one page is a duplicate-widget crash — the second
+consumer uses current_staking().
+
+### FOR THE FIRST LOGS
+
+    mlb model: N/N games projected, N with an ESPN line, N new value pick(s)
+    [verify] ... with a posted moneyline: N, total price: N
+    [verify] NHL/NFL value picks logged this run: N
+    model picks <sport>: graded N, voided N | record W-L-P ...
+
+### FILES, 2026-10-03 (7)
+
+    app/engines/{value,model_picks,nfl_prop_odds}.py, model_picks_grade.py   NEW
+    tests/test_value_picks.py                                                NEW
+    app/engines/{model_view,mlb_game_model,espn_feed}.py
+    app/views/{MLB_Model,GameCard,NHL_Model,NFL_Model,NFL_Projections,Results}.py
+    calibration_picks.py, nhl_precompute.py, nfl_precompute.py
+    .github/workflows/{nightly-data,slate-picks}.yml
+    tests/test_nhl_pipeline.py, tests/test_nfl_pipeline.py, tests/test_nhl_model.py
 
 ---
 
@@ -1139,138 +1199,5 @@ Suite 106 -> 107.
    is complexity that has to earn its place.
 3. Still standing from 08-16: **do not touch HR Edge.** Rule 10.
    `benchmark_probe.py` in 2-3 weeks.
-
----
-
-## PICK UP HERE — two caches were smaller than a slate. 2026-08-17
-
-**Suite 106, FAILING: none.** Six negative controls, all confirmed red
-by EXIT CODE. No behaviour changed — this batch is entirely about the
-site not re-doing work it has already done.
-
-### 1. THE SAME CACHE BUG AS 08-16, ONE FILE OVER
-
-`weak_spots_json` sat at `max_entries=16`. That was right when the only
-consumer was the weak-spots expander on the card in front of you. It is
-not right now, because the function gained callers and nobody resized
-it:
-
-  1. the weak-spots quadrant       (_render_pitcher_detail)
-  2. the per-slot leak panel       (GameCard, sorted by leak)
-  3. edge.py's zone-fit component, via `zone_band_xslg` — which runs
-     PER BATTER, so every rated bat asks for its pitcher again
-
-Measured on a 30-starter slate: browsing the slate and then going back
-to the first eight starters cost **291 ms of pure recomputation, against
-1.6 ms warm**, because all eight had been evicted. Raised to 256. The
-payload is a 2.4 KB JSON string, so that is ~0.6 MB — free next to the
-frame caches.
-
-**This is the second time in two days a fix reached one consumer and
-missed another,** and the 08-16 entry says so in its own words about
-the arsenal window and the wind arrow. The pattern is not "I forgot a
-file". It is that the guard was written against the callers I knew
-about.
-
-### 2. SO THE CACHE TEST NOW WALKS THE GLOB
-
-`tests/test_cache_sizing` checked four batter caches BY NAME. It was
-green through all 291 ms of the above, because `weak_spots_json` was
-not one of the four.
-
-Rewritten to parse every `@st.cache_data` under `app/engines` out of the
-AST and apply the rule: **a cache keyed on a player id must hold the
-players one slate can put through it** — 300 bats, 150 arms. A new
-engine is covered the day it is written.
-
-It found one on its first run that I had not: `get_first_pitch_swing`
-at 256, just under a slate, and keyed on window and side as well as
-batter. Raised to 512.
-
-Two more per-player caches raised, both network-backed, where a miss is
-a statsapi round-trip rather than a disk read:
-
-    batter_trends._game_log_json    32 -> 512
-    pitcher_trends._game_log_json   32 -> 256
-
-`pitcher_trends._game_log_json` also took its parameter as `batter_id`,
-copied from batter_trends, on a function that only ever receives a
-pitcher. Renamed — standing rule 9, a right value under a wrong label.
-
-**The one exemption carries its own kill switch.** `_k_vs_team_json`
-stays at 64 because only its own module calls it and only about
-tonight's probables (~30 arms). The test asserts that condition: the
-day anything outside `k_projection.py` calls it, the exemption is void
-and the full floor applies. An exemption without a condition is how
-these numbers rot in the first place.
-
-### 3. THE TRIM RAN ON FILES THE NIGHTLY HAD ALREADY TRIMMED
-
-`_read_local_parquet` carried a comment claiming the trim "costs
-nothing when the file is already trimmed". Measured, it does:
-`df[keep].copy()` copies the whole frame whether or not anything needs
-changing.
-
-    pd.read_parquet on a nightly file    3.4 ms
-    _trim_and_downcast on that frame     0.8 ms   <- pure waste
-    the new _conforms check              0.1 ms
-
-New `_conforms()` short-circuits when the frame is already exactly what
-the slow path would return. **16% off every precomputed read, ~0.24 s
-per cold board pass over 300 batters.** Small. Free. Not the headline.
-
-Two things about it worth keeping:
-
-- **The fast path returns the input frame, uncopied,** and that is only
-  safe because both call sites hand it a frame they just constructed,
-  and both consumers are `st.cache_data` (which serialises, so callers
-  get their own object regardless). Verified empirically — mutating a
-  returned frame does not leak into a later cache read. A third call
-  site passing a shared frame must copy first; the docstring says so.
-- **`_conforms` compares column ORDER,** so it depends on
-  `precompute.ENGINE_COLS` and `statcast_engine._KEEP_COLS` staying in
-  step. If they diverge the check fails on every real file, the fast
-  path silently stops firing, and nothing breaks — the site just goes
-  back to the old cost with no symptom. `tests/test_trim_fast_path`
-  compares the two modules' own literals so that cannot happen quietly.
-
-### 4. WHAT I MEASURED AND DID NOT BUILD
-
-**Threaded parquet reads.** The obvious next idea, and it is wrong here:
-4 and 8 workers over 200 batter files came back at 0.78x and 0.96x —
-SLOWER than serial. The read is CPU-bound (decompress plus downcast)
-and Render free tier is one core. Do not revisit without a bigger box.
-
-**`_get_batter_df` memory.** Not a bug, but the number to know if OOM
-ever comes back: the payload is ~230 KB per batter, so 450 entries is
-**~100 MB**, and `_get_pitcher_df` at 180 is another ~50 MB. The frame
-caches ARE the memory profile; every small cache raised in this batch
-is a rounding error against them. If the 512 MB ceiling gets tight
-again, that is the line item — not the JSON caches.
-
-### FILES TOUCHED, 2026-08-17
-
-    app/engines/statcast_engine.py    _conforms + fast path, first_pitch_swing 512
-    app/engines/pitcher_weakspots.py  weak_spots_json 16 -> 256
-    app/engines/batter_trends.py      _game_log_json 32 -> 512
-    app/engines/pitcher_trends.py     _game_log_json 32 -> 256, param renamed
-    tests/test_cache_sizing.py        REWRITTEN - AST glob over every cache
-    tests/test_trim_fast_path.py      NEW
-
-Suite 105 -> 106.
-
-**ROTATED IN THIS BATCH.** Adding this entry took the file to 1,408
-lines and `tests/test_handoff_size` failed, as designed. The two oldest
-entries (2026-08-12 "last" and "night") moved to `HANDOFF_ARCHIVE.md`:
-back to 12 entries, 1,305 lines. Rules untouched.
-
-### STILL TRUE FROM 08-16
-
-Nothing is queued and that is deliberate. `benchmark_probe.py` is the
-thing to run. **Do NOT refit weights, move floors, or change the cap** —
-standing rule 10. Worth knowing while you wait: HR Edge has gone 2-for-19
-across 08-12 through 08-15, which is exactly the stretch rule 10 was
-written for. At a 12% base rate that is indistinguishable from noise,
-and changing anything now resets the clock.
 
 ---

@@ -35,6 +35,9 @@ if not model:
     footer()
     st.stop()
 
+_stk = mv.staking_controls("mlb")
+_lines = mgm.posted_lines()
+
 _today = datetime.now(EASTERN).strftime("%Y-%m-%d")
 games, err = get_todays_games_with_weather(_today)
 if err:
@@ -64,8 +67,9 @@ mv.render_validation(
 
 for i, g in enumerate(games or []):
     away, home = g.get("away"), g.get("home")
+    _odds = _lines.get(g.get("game_pk"))
     proj = mgm.project_game(home, away, g.get("home_pitcher_id"), g.get("away_pitcher_id"),
-                            model=model)
+                            model=model, market=_odds)
     with card(f"mlbm_{i}"):
         st.markdown(
             f'<div class="pf-card-title" style="color:{COLOR["gold"]};">'
@@ -78,6 +82,8 @@ for i, g in enumerate(games or []):
             note = "Starters not both on record — team rates only for this game."
         mv.render_game_projection(proj, team_abbr(away), team_abbr(home),
                                   key=f"mlbm_{i}", note=note)
+        mv.render_value_panel(proj, _odds, team_abbr(away), team_abbr(home),
+                              key=f"mlbm_{i}", staking=_stk)
         with st.expander("Player props", expanded=False):
             for side, team, opp_sp in (("away", away, g.get("home_pitcher_id")),
                                        ("home", home, g.get("away_pitcher_id"))):
@@ -92,6 +98,8 @@ for i, g in enumerate(games or []):
                 rows, verdicts, pnote = mv.mlb_lineup_props(batters, opp_sp)
                 mv.render_prop_table(rows, mv.MLB_PROP_COLUMNS, verdicts,
                                      key=f"mlbm_{i}_{side}", favor_note=pnote)
+                mv.render_prop_value_tool(rows, mv.MLB_PROP_COLUMNS,
+                                          key=f"mlbm_{i}_{side}", staking=_stk)
             st.caption(mv.MLB_PROP_FOOTNOTE)
 
 footer()

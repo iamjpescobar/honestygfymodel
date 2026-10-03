@@ -61,6 +61,7 @@ mv.render_validation(
            f"evidence. Home teams score {(lg.get('home_mult', 1) - 1) * 100:+.1f}% vs league. "
            f"The test above is on the season the fit came from."])
 
+_stk = mv.staking_controls("nfl")
 if not games:
     st.info("No games in this week's file yet.")
 
@@ -77,6 +78,7 @@ for i, g in enumerate(games):
             st.caption("No projection — a team here has no finals on record.")
             continue
         mv.render_game_projection(pj, a, h, key=f"nflm_{i}")
+        mv.render_value_panel(pj, g.get("odds"), a, h, key=f"nflm_{i}", staking=_stk)
         bits = [f"Model line: {h} {pj['fair_spread_home']:+.1f}"]
         if pj.get("market_spread_home") is not None:
             bits.append(f"posted {h} {pj['market_spread_home']:+g} → {h} covers "

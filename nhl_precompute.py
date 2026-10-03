@@ -39,6 +39,9 @@ LOOKAHEAD_DAYS = 21
 # Last season, committed by the manual nhl-prior-season workflow
 # (nhl_prior_season.py). Module-level so tests can point it elsewhere.
 PRIOR_PATH = ROOT / "data" / "nhl" / "prior_season.json"
+# The graded model-picks record (engines/model_picks). Module-level so a
+# pipeline under test writes to its sandbox, never the repo's record.
+PICKS_ROOT = ROOT / "data" / "model_picks"
 
 SKATER = {
     "g": (("goals",), ("G",)),
@@ -510,7 +513,15 @@ def main(today=None):
                       f"his-own-rate {x.get('baseline_brier')} -> "
                       f"{'BEATS' if x.get('beats_baseline') else 'does not beat'} baseline")
             print(f"  [verify] slate games with a projection: "
-                  f"{sum(1 for g in slate if g.get('model'))} of {len(slate)}")
+                  f"{sum(1 for g in slate if g.get('model'))} of {len(slate)}; "
+                  f"with a posted moneyline: {sum(1 for g in slate if (g.get('odds') or {}).get('home_ml'))}, "
+                  f"total price: {sum(1 for g in slate if (g.get('odds') or {}).get('over_price'))}")
+            from engines import model_picks as mpk
+            _new = mpk.log_picks("nhl", [
+                {"id": g["event_id"], "date": slate_date.isoformat(), "start": g.get("start_et"),
+                 "home": g["home"], "away": g["away"], "proj": g.get("model"), "odds": g.get("odds")}
+                for g in slate if g.get("model") and g.get("start_et")], root=PICKS_ROOT)
+            print(f"  [verify] NHL value picks logged this run: {_new}")
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NHL model failed: {type(exc).__name__}: {exc}")
 

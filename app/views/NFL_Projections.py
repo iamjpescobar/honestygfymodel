@@ -20,6 +20,10 @@ from styles.table_style import style_stat_table
 from engines.live_sync import sync_latest_button
 from engines.nfl_week import EASTERN, load_week, staleness_note
 from engines.nfl_projection import MARKETS, projection_rows, why
+from engines.nfl_prop_odds import p_over
+from engines import model_math as _mm
+from engines import model_view as _mv
+from engines import value as _vl
 
 _ACCENT = SPORT_ACCENTS.get("NFL") or COLOR["stat_high"]
 
@@ -180,6 +184,58 @@ else:
             st.dataframe(sty, hide_index=True, width="stretch")
             st.caption("Brighter = more. Sorted by the projection for the market "
                        "selected above. Research, not a pick.")
+
+            # ---- CHECK A PROP AT YOUR PRICE ---------------------------
+            # The projection is a mean; a bet is a line and a price. The
+            # chance of clearing the line uses the game-to-game scatter
+            # MEASURED for this market (engines/nfl_prop_odds).
+            with card("nfl_prop_check"):
+                st.markdown(f'<div class="pf-card-title" style="color:{_ACCENT};">'
+                            f'Check a prop at your price</div>', unsafe_allow_html=True)
+                _stk = _mv.staking_controls("nfl_props")
+                _names = [f'{r["Player"]} ({r["Team"]})' for r in rows]
+                _pick = st.selectbox("Player", range(len(rows)),
+                                     format_func=lambda i: _names[i], key="nfl_pc_player")
+                _r = rows[_pick]
+                _spreads = league.get("prop_spreads") or {}
+                if market == "Anytime TD":
+                    _p_yes = (_r.get("Anytime %") or 0) / 100.0 if _r.get("Anytime %") is not None else None
+                    _px = st.number_input("Price (yes)", value=150, step=5, key="nfl_pc_yes")
+                    _sides = [("Scores (yes)", _p_yes, _px)]
+                else:
+                    c1, c2, c3 = st.columns(3)
+                    _default = max(0.5, round(float(_r["Proj"]) - 0.5) + 0.5)
+                    _line = c1.number_input("Line", value=_default, step=0.5, key="nfl_pc_line")
+                    _po_px = c2.number_input("Over price", value=-110, step=5, key="nfl_pc_over")
+                    _pu_px = c3.number_input("Under price", value=-110, step=5, key="nfl_pc_under")
+                    _po = p_over(market, _r["Proj"], _line, _spreads)
+                    _sides = [(f"Over {_line:g}", _po, _po_px),
+                              (f"Under {_line:g}", None if _po is None else 1 - _po, _pu_px)]
+                _out = []
+                for _lab, _p, _price in _sides:
+                    _a = _vl.assess(_p, _price, _stk[0] or None, _stk[1], _stk[2]) if _p is not None else None
+                    _out.append({
+                        "Bet": _lab,
+                        "Model": "\u2014" if _p is None else f"{100 * _p:.1f}%",
+                        "Fair": _mm.fmt_american(_mm.fair_american(_p)) if _p is not None else "\u2014",
+                        "Price": _mm.fmt_american(int(_price)),
+                        "Edge": f"{100 * _a['edge']:+.1f}" if _a else "\u2014",
+                        "EV / $100": f"{_a['ev_per_100']:+.2f}" if _a else "\u2014",
+                        "Stake": (f"${_a['stake']:.2f}" if _a and _a.get("stake") else "\u2014"),
+                        "Value": "\u2705" if _a and _a["value"] else "",
+                    })
+                st.dataframe(_out, hide_index=True, width="stretch", key="nfl_pc_table")
+                _sp = _spreads.get(market)
+                if market != "Anytime TD":
+                    st.caption(
+                        (f"Projection {_r['Proj']:g}. Game-to-game scatter for {market.lower()} "
+                         + (f"measured at {100 * _sp['cv']:.0f}% of the mean" if _sp and _sp["kind"] == "yards"
+                            else f"measured as a negative binomial (size {_sp.get('size')})" if _sp
+                            else "NOT measured yet \u2014 no chance shown")
+                         + (f" over {_sp['games']} player-games." if _sp else ".")
+                         + " These chances are not yet graded against outcomes, and the "
+                           "yardage projections test within noise of a season average \u2014 "
+                           "price them accordingly."))
 
         st.caption(
             f'League baselines measured from {league.get("team_games", 0)} team-games '

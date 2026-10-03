@@ -57,6 +57,7 @@ mv.render_validation(
            f"{'an unmeasured share' if _tie is None else f'{_tie * 100:.0f}%'} of games that "
            f"reach OT/shootout. The test above is on the season the fit came from."])
 
+_stk = mv.staking_controls("nhl")
 pv = model.get("props_validation") or {}
 verdicts = {k: bool((pv.get(k) or {}).get("beats_baseline")) for k, *_ in nm.MARKETS}
 _cols = tuple((k, label) for k, label, *_ in nm.MARKETS)
@@ -74,6 +75,8 @@ for i, g in enumerate(games or []):
             f'<div class="pf-card-subtitle">{g.get("time_et") or ""} · '
             f'{g.get("venue") or ""}</div>', unsafe_allow_html=True)
         mv.render_game_projection(g.get("model"), a, h, key=f"nhlm_{i}")
+        mv.render_value_panel(g.get("model"), g.get("odds"), a, h, key=f"nhlm_{i}",
+                              staking=_stk)
         with st.expander("Skater props", expanded=False):
             for side, lab in (("away", a), ("home", h)):
                 env = g.get(f"{side}_env") or {}
@@ -83,11 +86,13 @@ for i, g in enumerate(games or []):
                 rows = []
                 for p in g.get(f"{side}_props") or []:
                     row = {"Skater": p.get("name"), "Pos": p.get("pos"), "GP": p.get("gp"),
-                           "Exp SOG": p.get("exp_sog"), "Exp Pts": p.get("exp_pts")}
+                           "Exp SOG": p.get("exp_sog"), "Exp Pts": p.get("exp_pts"),
+                           "_name": p.get("name"), "_probs": p.get("probs") or {}}
                     for k, *_ in nm.MARKETS:
                         row[k] = mv.prob_cell((p.get("probs") or {}).get(k))
                     rows.append(row)
                 mv.render_prop_table(rows, _cols, verdicts, key=f"nhlm_{i}_{side}")
+                mv.render_prop_value_tool(rows, _cols, key=f"nhlm_{i}_{side}", staking=_stk)
             st.caption(
                 "Each cell: chance he clears the line, and the fair price at that chance. "
                 "His shots, goals and assists per game (last season + this one, shrunk toward "

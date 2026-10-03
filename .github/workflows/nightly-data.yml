@@ -138,6 +138,22 @@ jobs:
           git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
+      # The game models' value picks, graded against real finals, before
+      # any fetch (same reasoning as the calibration grader above).
+      - name: Grade model picks
+        run: python model_picks_grade.py || echo "::warning::model picks grading failed - left pending for tomorrow"
+      - name: Commit graded model picks
+        run: |
+          if [ -z "$(git status --porcelain -- data/model_picks)" ]; then
+            echo "No model-pick changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/model_picks
+          git commit -m "chore: grade model picks [skip ci]"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
       - name: Fetch NPB slate (real npb.jp data)
         run: python npb_precompute.py || echo "NPB fetch failed - continuing without it"
 
@@ -198,7 +214,7 @@ jobs:
         run: |
           # --porcelain, not git diff: a brand-new dated file is
           # untracked, and git diff reports untracked as no change.
-          if [ -z "$(git status --porcelain -- data/nfl/projections data/nfl/prior_season.json)" ]; then
+          if [ -z "$(git status --porcelain -- data/nfl/projections data/nfl/prior_season.json data/model_picks)" ]; then
             echo "No new NFL projections to commit."
           else
             git config user.name "github-actions[bot]"
@@ -207,6 +223,8 @@ jobs:
             # The 2025 finals the game model fits on — written once, the
             # first night it is missing (nfl_prior_season.py).
             if [ -f data/nfl/prior_season.json ]; then git add data/nfl/prior_season.json; fi
+            # NHL and NFL value picks are logged during their fetch steps.
+            if [ -d data/model_picks ]; then git add data/model_picks; fi
             git commit -m "chore: log NFL projections [skip ci]"
             git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
             git push origin "HEAD:${GITHUB_REF_NAME}"

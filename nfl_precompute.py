@@ -58,6 +58,8 @@ OUT = Path("build_data") / "data" / "nfl"
 PROJECTION_LOG = ROOT / "data" / "nfl" / "projections"
 # 2025 finals for the game model — fetched once, committed with the log.
 PRIOR_PATH = ROOT / "data" / "nfl" / "prior_season.json"
+# Graded model-picks record; module-level so tests sandbox it.
+PICKS_ROOT = ROOT / "data" / "model_picks"
 
 # ----------------------------------------------------------------------
 # Box-score column maps. keys first, labels second — see
@@ -891,6 +893,16 @@ def main(today=None):
     usage = team_game_usage(logs)
     league = league_constants(finals, usage)
     league.update(td_opportunity_prior(logs))
+    # How widely each prop stat scatters game to game, MEASURED — what
+    # turns a projection into an over/under chance (nfl_prop_odds).
+    try:
+        from engines.nfl_prop_odds import measure_spreads
+        league["prop_spreads"] = measure_spreads(logs)
+        print("  [verify] prop spreads: " + ", ".join(
+            f"{m} {('cv ' + str(v['cv'])) if v['kind'] == 'yards' else ('size ' + str(v['size']))}"
+            for m, v in league["prop_spreads"].items()))
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::NFL prop spreads not measured: {exc}")
     teams = attach_ranks(team_research(finals, usage))
     players = player_summaries(logs, usage)
     print(f"NFL: week {wk} ({w_start}..{w_end}) — {len(week_events)} games; "
@@ -975,7 +987,15 @@ def main(today=None):
                       f"margin MAE {v['margin_mae_model']} vs home-edge {v['margin_mae_home_edge']}; "
                       f"total MAE {v['total_mae_model']} vs league avg {v['total_mae_league_avg']}")
             print(f"  [verify] week games with a projection: "
-                  f"{sum(1 for g in week_events if g.get('model'))} of {len(week_events)}")
+                  f"{sum(1 for g in week_events if g.get('model'))} of {len(week_events)}; "
+                  f"with a posted moneyline: {sum(1 for g in week_events if (g.get('odds') or {}).get('home_ml'))}, "
+                  f"spread price: {sum(1 for g in week_events if (g.get('odds') or {}).get('home_spread_price'))}")
+            from engines import model_picks as mpk
+            _new = mpk.log_picks("nfl", [
+                {"id": g["event_id"], "date": g.get("kick_date_et"), "start": g.get("kickoff_et"),
+                 "home": g["home"], "away": g["away"], "proj": g.get("model"), "odds": g.get("odds")}
+                for g in week_events if g.get("model") and g.get("kickoff_et")], root=PICKS_ROOT)
+            print(f"  [verify] NFL value picks logged this run: {_new}")
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NFL game model failed: {type(exc).__name__}: {exc}")
 

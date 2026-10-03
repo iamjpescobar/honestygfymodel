@@ -213,6 +213,7 @@ try:
     tmp_prior = Path(tempfile.mkdtemp()) / "prior.json"
     tmp_prior.write_text(json.dumps(prior))
     hpc.PRIOR_PATH = tmp_prior
+    hpc.PICKS_ROOT = tmp_prior.parent / "model_picks"
     cwd, tmp = os.getcwd(), tempfile.mkdtemp()
     os.chdir(tmp)
     try:

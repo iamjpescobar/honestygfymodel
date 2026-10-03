@@ -132,3 +132,15 @@ def project_game(home, away, home_sp=None, away_sp=None, model=None, market=None
     out["home_starter"] = starter_summary(model, home_sp)
     out["away_starter"] = starter_summary(model, away_sp)
     return out
+
+
+def posted_lines():
+    """{game_pk: odds} from the slate file slate-picks writes (ESPN's
+    posted MLB line, refreshed at 1, 5 and 7 PM ET). Read through
+    slate_guard so a past day's lines can never price tonight's game."""
+    try:
+        from engines.slate_guard import load_slate
+        games, _d, _cur = load_slate("mlb")
+    except Exception:
+        return {}
+    return {g.get("game_pk"): g["odds"] for g in games or [] if g.get("odds")}
