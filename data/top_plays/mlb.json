@@ -19,6 +19,7 @@
    "team": "Atlanta Braves"
   },
   {
+   "actual": 4,
    "at_least": 4,
    "date": "2026-10-04",
    "fair": -296,
@@ -31,12 +32,13 @@
    "p_cal": 0.7477,
    "player": "Logan Henderson",
    "player_id": "701656",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-04T20:00:00Z",
    "stat": "p_k",
    "team": "Milwaukee Brewers"
   },
   {
+   "actual": 2,
    "at_least": 1,
    "date": "2026-10-04",
    "fair": -292,
@@ -49,7 +51,7 @@
    "p_cal": 0.7449,
    "player": "Garrett Mitchell",
    "player_id": "669003",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-04T20:00:00Z",
    "stat": "k",
    "team": "Milwaukee Brewers"
@@ -91,6 +93,7 @@
    "team": "Atlanta Braves"
   },
   {
+   "actual": 6,
    "at_least": 4,
    "date": "2026-10-04",
    "fair": -260,
@@ -103,7 +106,7 @@
    "p_cal": 0.7221,
    "player": "Michael King",
    "player_id": "650633",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-04T20:00:00Z",
    "stat": "p_k",
    "team": "San Diego Padres"
@@ -145,6 +148,7 @@
    "team": "Atlanta Braves"
   },
   {
+   "actual": 2,
    "at_least": 1,
    "date": "2026-10-04",
    "fair": -239,
@@ -157,12 +161,13 @@
    "p_cal": 0.7053,
    "player": "Jake Bauers",
    "player_id": "641343",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-04T20:00:00Z",
    "stat": "k",
    "team": "Milwaukee Brewers"
   },
   {
+   "actual": 1,
    "at_least": 1,
    "date": "2026-10-04",
    "fair": -239,
@@ -175,7 +180,7 @@
    "p_cal": 0.7051,
    "player": "Jackson Merrill",
    "player_id": "701538",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-04T20:00:00Z",
    "stat": "k",
    "team": "San Diego Padres"
