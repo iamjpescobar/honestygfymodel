@@ -89,6 +89,17 @@ def render_game_projection(proj, away_label, home_label, key, note=None):
         bits.append(f"Market (no-vig) {away_label} {_pct(proj['market_away'])} / "
                     f"{home_label} {_pct(proj['market_home'])} · model gap "
                     f"{_sign(abs(edge))} pts toward {who}")
+        if proj.get("p_home_final") is not None:
+            w = (proj.get("model_weight") or {}).get("moneyline") or 0.0
+            if w:
+                why_txt = f"model weight {100 * w:.0f}%"
+            elif proj.get("blend_state") == "untested":
+                why_txt = ("the market's own number — the model is not yet measured "
+                           "against recorded lines")
+            else:
+                why_txt = "the market's own number — the model has not beaten it"
+            bits.append(f"Final {away_label} {_pct(1 - proj['p_home_final'])} / {home_label} "
+                        f"{_pct(proj['p_home_final'])} ({why_txt})")
     if proj.get("market_total") is not None:
         bits.append(f"Total {proj['market_total']:g}: over {_pct(proj.get('p_over'))} "
                     f"(fair {mm.fmt_american(proj.get('fair_over'))}) / under "
@@ -175,7 +186,9 @@ def mlb_lineup_props(batters, opp_pitcher_id):
             p_counts = mp.outcome_counts(p_df)
         except Exception:
             p_counts = None
-        bf_dist = mp.starter_bf_dist((pm.get("starter_bf") or {}).get(str(opp_pitcher_id)), pm)
+        p_counts = mp.player_counts(pm, opp_pitcher_id, p_counts, "pitcher")
+        bf_dist = mp.starter_bf_dist((pm.get("starter_bf") or {}).get(str(opp_pitcher_id)), pm,
+                                     (pm.get("prior_bf") or {}).get(str(opp_pitcher_id)))
     # One bat per slot. The projected lineup is last game's boxscore, and
     # a substitute carries his starter's slot (battingOrder 201 -> 2), so
     # without this a slot can appear twice (the 08-17 duplicate-ORD
@@ -194,13 +207,13 @@ def mlb_lineup_props(batters, opp_pitcher_id):
             b_df, _err = _get_batter_df(int(b["id"]))
         except Exception:
             b_df = None
-        b_counts = mp.outcome_counts(b_df)
+        b_counts = mp.player_counts(pm, b.get("id"), mp.outcome_counts(b_df), "batter")
         if not b_counts.get("PA"):
             # MISSING IS NOT ZERO (rule 6). With no PAs on record the
             # shrinkage would hand him exactly the league average, and a
             # league-average line under his name reads as a measurement of
             # him. Listed, priced as nothing.
-            row = {"#": slot, "Batter": b.get("name"), "PA": 0, "Exp PA": DASH}
+            row = {"#": slot, "Batter": b.get("name"), "PA": "0", "Exp PA": DASH}
             for k, *_ in mp.MARKETS:
                 row[k] = DASH
             rows.append(row)
@@ -208,8 +221,9 @@ def mlb_lineup_props(batters, opp_pitcher_id):
         proj = mp.project_batter(slot, b_counts, p_counts, pm, bf_dist)
         if not proj:
             continue
-        row = {"#": slot, "Batter": b.get("name"), "PA": proj["pa"], "Exp PA": proj["exp_pa"],
-               "_name": b.get("name"), "_probs": proj["probs"]}
+        row = {"#": slot, "Batter": b.get("name"),
+               "PA": _pa_label(b_counts), "Exp PA": proj["exp_pa"],
+               "_name": b.get("name"), "_probs": proj["probs"], "_pmfs": proj.get("pmfs") or {}}
         for k, *_ in mp.MARKETS:
             row[k] = prob_cell(proj["probs"][k])
         rows.append(row)
@@ -224,10 +238,236 @@ def mlb_lineup_props(batters, opp_pitcher_id):
 MLB_PROP_COLUMNS = (("h1", "Hits O0.5"), ("h2", "Hits O1.5"), ("tb2", "TB O1.5"),
                     ("hr1", "HR O0.5"), ("k1", "K O0.5"))
 
+
+def _pa_label(counts):
+    """'612 + 580 last yr' when last season is folded in, else this season's PAs."""
+    c = counts or {}
+    if "PA_last_season" in c:
+        return f"{int(c.get('PA_this_season') or 0)} + {int(c['PA_last_season'])} last yr"
+    return str(int(c.get("PA") or 0))
+
+
+def mlb_starter_props(batters, pitcher_id, pitcher_name=None):
+    """(row, verdicts, note) for tonight's starter against the lineup he
+    faces — strikeouts, hits, walks and homers allowed — or (None, {}, why).
+
+    Same per-PA model as the batter props, seen from the mound: each slot
+    of THIS lineup against him, for as long as he usually lasts."""
+    from engines import mlb_props as mp
+    from engines.statcast_engine import _get_batter_df, _get_pitcher_df
+    from engines.lineup_slot import _slot_from_batting_order
+
+    pm = mp.load_prop_model()
+    if not pm:
+        return None, {}, "The prop model appears after the next nightly."
+    if not pitcher_id:
+        return None, {}, "Starter not announced \u2014 no pitcher props yet."
+    try:
+        p_df, _err = _get_pitcher_df(int(pitcher_id))
+        p_counts = mp.outcome_counts(p_df)
+    except Exception:
+        p_counts = None
+    p_counts = mp.player_counts(pm, pitcher_id, p_counts, "pitcher")
+    if not (p_counts and p_counts.get("PA")):
+        return None, {}, ("No record for this starter this season or last \u2014 his props "
+                          "would be the league average under his name, so none are shown.")
+    bf_dist = mp.starter_bf_dist((pm.get("starter_bf") or {}).get(str(pitcher_id)), pm,
+                                 (pm.get("prior_bf") or {}).get(str(pitcher_id)))
+    order = [None] * 9
+    known = 0
+    for i, b in enumerate(batters or []):
+        slot = _slot_from_batting_order(b.get("battingOrder")) or (i + 1)
+        if not (1 <= slot <= 9) or order[slot - 1] is not None:
+            continue
+        try:
+            b_df, _e = _get_batter_df(int(b["id"]))
+            c = mp.outcome_counts(b_df)
+        except Exception:
+            c = None
+        c = mp.player_counts(pm, b.get("id"), c, "batter")
+        if c and c.get("PA"):
+            order[slot - 1] = c
+            known += 1
+    proj = mp.project_pitcher(order, p_counts, pm, bf_dist)
+    if not proj:
+        return None, {}, "Not enough on record to price this starter."
+    starts = len((pm.get("starter_bf") or {}).get(str(pitcher_id)) or [])
+    starts_ly = len((pm.get("prior_bf") or {}).get(str(pitcher_id)) or [])
+    row = {"Pitcher": pitcher_name or "Starter",
+           "Starts": f"{starts} + {starts_ly} last yr" if starts_ly else str(starts),
+           "Exp BF": proj["exp_bf"], "Exp K": proj["exp"].get("k"),
+           "_name": pitcher_name or "Starter", "_pmfs": proj["pmfs"], "_probs": proj["probs"]}
+    note = None
+    if known < 9:
+        note = (f"{9 - known} lineup spot(s) have no Statcast record and are priced as a "
+                f"league-average bat.")
+    return row, mp.market_verdicts(pm, pitcher=True), note
+
+
+MLB_PITCHER_FOOTNOTE = (
+    "Each cell: chance he clears the line, and the fair price at that chance. Every batter he "
+    "is expected to face, in order, against his allowed rates, for as long as he usually lasts "
+    "(his own batters-faced, shrunk toward the league's). NOT in the number: park, weather, "
+    "pitch count limits announced today, an early hook when he is getting hit.")
+
+
+# ----------------------------------------------------------------------
+# The prop board: pick a stat, see every standard line; check ANY line
+# ----------------------------------------------------------------------
+def _pmf_mean(pmf):
+    return sum(i * p for i, p in enumerate(pmf or []))
+
+
+def _line_verdict(markets, verdicts, stat, line):
+    """Verdict of the tested market at this exact line, or None."""
+    for k, _label, s, n in markets:
+        if s == stat and abs((n - 0.5) - line) < 1e-9:
+            return verdicts.get(k)
+    return None
+
+
+def _tested_lines(markets, stat):
+    return [n - 0.5 for _k, _l, s, n in markets if s == stat]
+
+
+def render_prop_board(rows, stats, markets, verdicts, key, staking, info_cols,
+                      favor_note=None, footnote=None, unit_note=None):
+    """rows: [{"_name", "_pmfs": {stat: [P(0), P(1), ...]}, <info_cols>...}].
+    stats: [(stat, label, lines shown)]. markets: the TESTED (key, label,
+    stat, at_least) list — a line's header is starred when its test did
+    not beat the player's own rate, and lines with no test say so."""
+    rows = [r for r in rows if r.get("_pmfs")]
+    if not rows:
+        st.caption("No prop projections for this side yet.")
+        if favor_note:
+            st.caption(favor_note)
+        return
+    labels = {s: lab for s, lab, _ in stats}
+    avail = [s for s, _lab, _ in stats if any(s in (r.get("_pmfs") or {}) for r in rows)]
+    stat = st.selectbox("Stat", avail, format_func=lambda s: labels[s], key=f"pb_stat_{key}")
+    lines = next(ln for s, _l, ln in stats if s == stat)
+    render_trust_row([(f"O{ln:g}", _line_verdict(markets, verdicts, stat, ln)) for ln in lines])
+    table = []
+    for r in rows:
+        pmf = (r.get("_pmfs") or {}).get(stat)
+        row = {c: r.get(c) for c in info_cols}
+        row["Avg"] = DASH if pmf is None else round(_pmf_mean(pmf), 2)
+        for ln in lines:
+            v = _line_verdict(markets, verdicts, stat, ln)
+            head = f"O{ln:g}" + ("" if v == "beats" else " *")
+            row[head] = DASH if pmf is None else prob_cell(mm.over_prob_pmf(pmf, ln))
+        table.append(row)
+    st.dataframe(pd.DataFrame(table), hide_index=True, width="stretch", key=f"pb_tab_{key}_{stat}")
+    st.caption("Avg = expected count. * = that line did not beat the player's own hit rate on "
+               "games it had not seen (or has no test yet) \u2014 shown, but don't lean on it.")
+    if unit_note and stat == "rbi":
+        st.caption(unit_note)
+    if favor_note:
+        st.caption(favor_note)
+    _any_line_tool(rows, stats, markets, verdicts, key, staking, stat)
+    if footnote:
+        st.caption(footnote)
+
+
+def _price_default(p):
+    """The fair price for p, clamped to what a book prints — the neutral
+    starting value for a price box (no edge until the reader types one)."""
+    f = mm.fair_american(p) if p is not None else None
+    if f is None:
+        return -110
+    return int(max(-2000, min(2000, f)))
+
+
+def balanced_line(pmf, fn=None, lo=0.5, hi=None):
+    """The x.5 line whose over chance is nearest 50% — a sensible default
+    for a line the reader has not typed yet. pmf, or fn(line) -> P(over)."""
+    if pmf is None and fn is None:
+        return lo
+    hi = hi if hi is not None else (len(pmf) if pmf is not None else 60)
+    best, best_d = lo, 9.0
+    x = lo
+    while x <= hi:
+        p = mm.over_prob_pmf(pmf, x) if pmf is not None else fn(x)
+        if p is not None and abs(p - 0.5) < best_d:
+            best, best_d = x, abs(p - 0.5)
+        x += 1.0
+    return best
+
+
+def _any_line_tool(rows, stats, markets, verdicts, key, staking, default_stat):
+    bankroll, frac, cap = staking
+    labels = {s: lab for s, lab, _ in stats}
+    st.markdown("**Check any line at your price**")
+    c1, c2, c3 = st.columns([2, 2, 1])
+    who = c1.selectbox("Player", [r["_name"] for r in rows], key=f"al_who_{key}")
+    avail = [s for s, _l, _ in stats if s in (next(r for r in rows if r["_name"] == who)
+                                              .get("_pmfs") or {})]
+    stat = c2.selectbox("Stat", avail, index=avail.index(default_stat) if default_stat in avail else 0,
+                        format_func=lambda s: labels[s], key=f"al_stat_{key}")
+    _pmf0 = (next(r for r in rows if r["_name"] == who).get("_pmfs") or {}).get(stat)
+    # Default to the line nearest a coin flip for HIM, so the first thing
+    # the tool shows is never "STRONG" at a line nobody would post.
+    line = c3.number_input("Line", min_value=0.0, value=float(balanced_line(_pmf0)), step=0.5,
+                           key=f"al_line_{key}_{stat}_{who}")
+    c4, c5, c6 = st.columns([1, 1, 1])
+    side = c4.radio("Side", ["Over", "Under"], horizontal=True, key=f"al_side_{key}")
+    _pmf_now = (next(r for r in rows if r["_name"] == who).get("_pmfs") or {}).get(stat)
+    _po_now = mm.over_prob_pmf(_pmf_now, line)
+    # The price box starts at the MODEL's own fair price, so nothing shows
+    # as value until the reader types the number his book actually posts.
+    _p_now = None if _po_now is None else (_po_now if side == "Over" else 1 - _po_now)
+    price = c5.number_input("Your book's price", value=_price_default(_p_now), step=5,
+                            key=f"al_px_{key}_{who}_{stat}_{line}_{side}")
+    other = c6.number_input("Other side's price (optional)", value=0, step=5,
+                            key=f"al_ox_{key}",
+                            help="Enter the opposite side's price too and the book's own no-vig "
+                                 "chance is shown beside the model's.")
+    pmf = (next(r for r in rows if r["_name"] == who).get("_pmfs") or {}).get(stat)
+    po = mm.over_prob_pmf(pmf, line)
+    if po is None:
+        st.caption("No distribution for that player and stat.")
+        return
+    p = po if side == "Over" else 1 - po
+    a = vl.assess(p, price, bankroll or None, frac, cap)
+    if not a:
+        st.caption("Enter an American price of -100 or lower, or +100 or higher.")
+        return
+    tested = _tested_lines(markets, stat)
+    v = _line_verdict(markets, verdicts, stat, line)
+    if v is not None:
+        trust_txt = f"this exact line tested: {trust_label(v)}"
+    elif tested:
+        near = min(tested, key=lambda t: abs(t - line))
+        trust_txt = (f"this line has no test of its own \u2014 nearest tested line O{near:g}: "
+                     f"{trust_label(_line_verdict(markets, verdicts, stat, near))}")
+    else:
+        trust_txt = "untested"
+    mkt_txt = ""
+    if other and (other <= -100 or other >= 100):
+        pair = mm.no_vig_pair(price, other)
+        if pair[0] is not None:
+            mkt_txt = (f" \u00b7 the book's own no-vig chance {100 * pair[0]:.1f}% "
+                       f"(model {'above' if p > pair[0] else 'below'} it by "
+                       f"{100 * abs(p - pair[0]):.1f} pts)")
+    _tl, _tfg, _tbg = TIER_STYLE[edge_tier(a["edge"], a["value"])]
+    verdict = (f'<span style="color:{_tfg}; font-weight:800;">{_tl}</span>'
+               if edge_tier(a["edge"], a["value"]) != "none" else "no value")
+    stake_txt = (f" \u00b7 stake ${a['stake']:.2f}" if a["value"] and a.get("stake") else "")
+    st.markdown(f"{who} \u00b7 {labels[stat]} {side} {line:g}: model **{100 * p:.1f}%** "
+                f"(fair {mm.fmt_american(mm.fair_american(p))}) vs break-even "
+                f"{100 * a['break_even']:.1f}% at {mm.fmt_american(int(price))} \u2192 "
+                f"**{verdict}** (edge {100 * a['edge']:+.1f} pts, EV {a['ev_per_100']:+.2f} per "
+                f"$100){stake_txt}{mkt_txt}", unsafe_allow_html=True)
+    st.caption(f"Props are the model alone \u2014 {trust_txt}. Prop prices are not yet "
+               f"recorded, so unlike the game lines these are NOT measured against the books; "
+               f"a big gap to the book's no-vig chance is more often the book knowing something "
+               f"(a lineup spot, a pitch count, an injury) than a gift.")
+
 MLB_PROP_FOOTNOTE = (
     "Each cell: chance he clears the line, and the fair price at that chance. "
-    "Built plate appearance by plate appearance — his rates against tonight's "
-    "starter for as long as that starter usually lasts, then a league-average bullpen. "
+    "Built plate appearance by plate appearance — his rates (this season, plus last season "
+    "at the weight the nightly measured it is worth) against tonight's starter for as long "
+    "as that starter usually lasts, then a league-average bullpen. "
     "NOT in the number: park, weather, platoon split, the specific relievers.")
 
 
@@ -243,6 +483,11 @@ def prob_cell(p):
 # ----------------------------------------------------------------------
 _FRACTIONS = {"1/8 Kelly": 0.125, "1/4 Kelly": 0.25, "1/2 Kelly": 0.5}
 _CAPS = {"1%": 0.01, "2%": 0.02, "3%": 0.03, "5%": 0.05}
+# Ceiling on the WHOLE slate's stakes as a share of bankroll. A risk
+# preference like the two above, not a number about the world (rule 1
+# is about those): Kelly sizes each bet as if it were the only one, and
+# a Sunday with a dozen value rows would otherwise stake a dozen caps.
+_SLATE_CAPS = {"5%": 0.05, "10%": 0.10, "15%": 0.15, "25%": 0.25}
 
 
 def staking_controls(key):
@@ -252,8 +497,9 @@ def staking_controls(key):
     ss.setdefault("lc_bankroll", 0.0)
     ss.setdefault("lc_kelly", "1/4 Kelly")
     ss.setdefault("lc_cap", "2%")
+    ss.setdefault("lc_slate_cap", "10%")
     with st.expander("Your bankroll & staking", expanded=not ss["lc_bankroll"]):
-        c1, c2, c3 = st.columns(3)
+        c1, c2, c3, c4 = st.columns(4)
         c1.number_input("Bankroll ($)", min_value=0.0, step=50.0, key="lc_bankroll",
                         help="Leave at 0 to see value without stake sizes.")
         c2.selectbox("Stake size", list(_FRACTIONS), key="lc_kelly",
@@ -261,11 +507,32 @@ def staking_controls(key):
                           "probability is exact; it never is, so bet a fraction.")
         c3.selectbox("Max per bet", list(_CAPS), key="lc_cap",
                      help="Hard ceiling as a share of bankroll, whatever Kelly says.")
-        st.caption("A bet has VALUE only when the model's chance beats the price's break-even. "
-                   "Stakes = your Kelly fraction of the model's edge, capped. The model's edge "
-                   "over a coin flip is small and still being graded (Results \u2192 Model "
-                   "picks) \u2014 size accordingly.")
+        c4.selectbox("Max per slate", list(_SLATE_CAPS), key="lc_slate_cap",
+                     help="Ceiling on everything staked across the slate. When the value "
+                          "rows add up to more, every stake is scaled down together.")
+        st.caption("Every chance a bet is priced on is the MARKET's, moved toward the model only "
+                   "as far as the model has beaten the market on past games (Final %). A bet has "
+                   "VALUE when that beats the price's break-even \u2014 usually because your "
+                   "book's price is better than the posted one, or the model has earned a say. "
+                   "Stakes = your Kelly fraction, capped per bet and per slate. One bet per game "
+                   "side: a moneyline and a spread on the same team are the same opinion.")
     return ss["lc_bankroll"], _FRACTIONS[ss["lc_kelly"]], _CAPS[ss["lc_cap"]]
+
+
+def slate_cap():
+    """The per-slate ceiling as a share of bankroll."""
+    return _SLATE_CAPS.get(st.session_state.get("lc_slate_cap", "10%"), 0.10)
+
+
+def scale_to_slate(stakes, bankroll, cap_share):
+    """Scale a list of dollar stakes down together so they sum to at most
+    cap_share x bankroll. Returns (scaled, factor)."""
+    tot = sum(x for x in stakes if x)
+    lim = (bankroll or 0) * (cap_share or 0)
+    if not tot or not lim or tot <= lim:
+        return list(stakes), 1.0
+    f = lim / tot
+    return [round(x * f, 2) if x else x for x in stakes], f
 
 
 def current_staking():
@@ -286,10 +553,15 @@ def _bet_label(b, away, home):
     return f"{team} {b['line']:+g}"
 
 
-def render_value_panel(proj, odds, away, home, key, staking, validation=None):
-    """Model % vs price for every side the model prices. Prices default
-    to the posted line where there is one; type your own book's price in
-    the Price column and the row recomputes."""
+def _final_pct(b):
+    return DASH if b.get("p") is None else f"{100 * b['p']:.1f}%"
+
+
+def render_value_panel(proj, odds, away, home, key, staking, validation=None, blend=None):
+    """Every side the model prices: the model's chance, the market's
+    (no-vig), and the FINAL chance the bet is priced on (engines/
+    market_blend). Prices default to the posted line where there is one;
+    type your own book's price in the Price column and the row recomputes."""
     bets = mpk.candidate_bets(proj, odds)
     if not bets:
         return
@@ -301,14 +573,17 @@ def render_value_panel(proj, odds, away, home, key, staking, validation=None):
         price = (edits.get(i) or {}).get("Price", b["price"])
         if isinstance(price, float) and price != price:      # NaN = empty cell
             price = None
-        a = vl.assess(b["p"], price, bankroll or None, frac, cap) if price not in (None, "") else None
+        a = (vl.assess(b["p"], price, bankroll or None, frac, cap)
+             if price not in (None, "") and b["p"] is not None else None)
         tiers.append(edge_tier(a["edge"] if a else None, bool(a and a["value"])))
-        trusts.append(market_trust(validation, b["market"]))
+        trusts.append(market_trust(blend, b["market"]))
         rows.append({
             "Tier": TIER_STYLE[tiers[-1]][0],
             "Bet": _bet_label(b, away, home),
-            "Model": f"{100 * b['p']:.1f}%",
-            "Fair": mm.fmt_american(mm.fair_american(b["p"])),
+            "Model": f"{100 * b['p_model']:.1f}%" if b.get("p_model") is not None else DASH,
+            "Market": f"{100 * b['p_market']:.1f}%" if b.get("p_market") is not None else DASH,
+            "Final": _final_pct(b),
+            "Fair": mm.fmt_american(mm.fair_american(b["p"])) if b["p"] is not None else DASH,
             # An EMPTY cell, not the word "None", where no price was
             # posted — the reader types his book's price there.
             "Price": float("nan") if price in (None, "") else price,
@@ -317,7 +592,7 @@ def render_value_panel(proj, odds, away, home, key, staking, validation=None):
             "EV / $100": f"{a['ev_per_100']:+.2f}" if a else DASH,
             "Stake": (f"${a['stake']:.2f}" if a and a.get("stake") else
                       ("\u2014" if not a or not bankroll else "$0 (no value)")),
-            "Trust": TRUST_STYLE.get(trusts[-1], TRUST_STYLE[None])[0],
+            "Trust": trust_label(trusts[-1], market=True),
         })
     df = pd.DataFrame(rows)
     st.data_editor(
@@ -325,15 +600,41 @@ def render_value_panel(proj, odds, away, home, key, staking, validation=None):
         # editable number cell shows Streamlit's grey "None" placeholder —
         # never a filled-in price (no posted price is never assumed -110).
         # The caption below says what that placeholder means.
-        _tier_styler(df, tiers, trusts),
+        _tier_styler(df, tiers, trusts, market=True),
         key=ed_key, hide_index=True, width="stretch",
         disabled=[c for c in df.columns if c != "Price"],
         column_config={"Price": st.column_config.NumberColumn(
             "Price", help="American odds at YOUR book. Posted line pre-filled where ESPN has one.",
             step=1, format="%d")})
-    st.caption("Row colour = your edge at that price (STRONG / VALUE / THIN; no tint = no value). "
-               "Trust = how that market tested. Tap Price to enter your book's number \u2014 a "
-               "grey \u201cNone\u201d there means ESPN posted no price for that side.")
+    st.caption(weight_line(proj, blend))
+    st.caption("Model = the model alone · Market = the posted line with the margin removed · "
+               "Final = what the bet is priced on. Row colour = your edge at that price "
+               "(STRONG / VALUE / THIN; no tint = no value). Tap Price to enter your book's "
+               "number \u2014 a grey \u201cNone\u201d there means ESPN posted no price for that side.")
+
+
+def weight_line(proj, blend):
+    """One sentence: how much say the model has, per market, and why."""
+    names = {"moneyline": "moneyline", "total": "total", "spread": "spread"}
+    if not any(((blend or {}).get(m) or {}).get("n") for m in names):
+        return ("Final = the market's own chance: the model has not yet been measured against "
+                "recorded market lines (run the Market history workflow once). Value here can "
+                "only come from a better price at your book than the posted one.")
+    bits = []
+    for m, lab in names.items():
+        x = (blend or {}).get(m) or {}
+        if not x.get("n"):
+            continue
+        v = (x.get("verdict") or {}).get("verdict")
+        w = x.get("w_used") or 0.0
+        if w:
+            bits.append(f"{lab} {100 * w:.0f}% model / {100 * (1 - w):.0f}% market")
+        elif v == "thin":
+            bits.append(f"{lab} 100% market (model ahead on {x['n']:,} past games, but "
+                        f"inside the noise \u2014 not proven yet)")
+        else:
+            bits.append(f"{lab} 100% market (model did not beat it on {x['n']:,} past games)")
+    return "How Final is weighted, measured on past games with recorded lines: " + "; ".join(bits) + "."
 
 
 def render_prop_value_tool(rows, markets, key, staking, name_key="_name"):
@@ -358,7 +659,7 @@ def render_prop_value_tool(rows, markets, key, staking, name_key="_name"):
         return
     _tl, _tfg, _tbg = TIER_STYLE[edge_tier(a["edge"], a["value"])]
     verdict = (f'<span style="color:{_tfg}; font-weight:800;">{_tl}</span>'
-               if a["value"] else "no value")
+               if edge_tier(a["edge"], a["value"]) != "none" else "no value")
     stake_txt = (f" \u00b7 stake ${a['stake']:.2f}" if a["value"] and a.get("stake")
                  else "")
     st.markdown(f"{who} \u00b7 {labels[mkt]}: model **{100 * p:.1f}%** vs break-even "
@@ -398,6 +699,10 @@ def edge_tier(edge, is_value):
     # (0.0200), which Results buckets as VALUE — so the label follows the
     # number the reader sees, and agrees with the record.
     edge = round(edge, 3)
+    if edge <= 0:
+        # +0.0 on the printed grid is break-even, not value — a price box
+        # that starts at the fair price must not read THIN.
+        return "none"
     names = ("thin", "value", "strong")          # in EDGE_BUCKETS order
     for name, (lo, hi, _label) in zip(names, mpk.EDGE_BUCKETS):
         if lo <= edge < hi:
@@ -405,28 +710,28 @@ def edge_tier(edge, is_value):
     return "strong"
 
 
-def market_trust(validation, market):
-    """'beats' / 'thin' / 'fails' / None for one game-model market.
+# Game markets are tested against the MARKET (engines/market_blend), so
+# their badges say so; props are tested against the player's own rate.
+MARKET_TRUST_LABEL = {"beats": "BEATS MARKET", "thin": "NOT PROVEN YET",
+                      "fails": "MARKET WINS", None: "UNTESTED"}
 
-    Reads the paired-significance verdict the nightly writes; a model
-    file from before verdicts existed falls back to the plain beat/fail
-    booleans (never 'thin' — that needs the significance test)."""
-    v = validation or {}
-    key = {"moneyline": "ml_verdict", "total": "total_verdict",
-           "spread": "spread_verdict"}.get(market)
-    verdict = ((v.get(key) or {}).get("verdict")) if key else None
-    if verdict:
-        return verdict
-    if not v.get("n"):
+
+def market_trust(blend, market):
+    """'beats' / 'thin' / 'fails' / None for one game-model market: the
+    cross-fitted model-plus-market against the market alone, from the
+    blend block the nightly writes (model["blend"]). Anything else (an
+    old validation dict, None) is UNTESTED — beating a coin flip is not
+    beating the book, and the badge must not suggest it is."""
+    m = (blend or {}).get(market) if isinstance(blend, dict) else None
+    if not isinstance(m, dict) or not m.get("n"):
         return None
-    if market == "moneyline":
-        return "beats" if (v.get("beats_coin") and v.get("beats_home_rate")) else "fails"
-    if market == "total":
-        return "beats" if v.get("total_beats_league_avg") else "fails"
-    if market == "spread":
-        b = v.get("margin_beats_home_edge")
-        return None if b is None else ("beats" if b else "fails")
-    return None
+    return (m.get("verdict") or {}).get("verdict")
+
+
+def trust_label(verdict, market=False):
+    if market:
+        return MARKET_TRUST_LABEL.get(verdict, MARKET_TRUST_LABEL[None])
+    return TRUST_STYLE.get(verdict, TRUST_STYLE[None])[0]
 
 
 def prop_trust(prop_validation, key):
@@ -439,18 +744,21 @@ def prop_trust(prop_validation, key):
     return None
 
 
-def trust_pill(verdict, prefix=""):
+def trust_pill(verdict, prefix="", market=False):
     label, fg, bg, border = TRUST_STYLE.get(verdict, TRUST_STYLE[None])
+    if market:
+        label = trust_label(verdict, market=True)
     return (f'<span style="display:inline-block; padding:1px 8px; border-radius:999px; '
             f'border:1px solid {border}; background:{bg}; color:{fg}; '
             f'font-size:var(--lc-text-tiny); font-weight:700; letter-spacing:0.04em; '
             f'white-space:nowrap;">{prefix}{label}</span>')
 
 
-def render_trust_row(items):
-    """items: [(label, verdict)] — one line of pills."""
+def render_trust_row(items, market=False):
+    """items: [(label, verdict)] — one line of pills. market=True labels
+    them against the market (game markets) rather than a baseline."""
     parts = [f'<span style="color:{COLOR["text_muted"]}; font-size:var(--lc-text-small);">'
-             f'{lab}</span> {trust_pill(v)}' for lab, v in items]
+             f'{lab}</span> {trust_pill(v, market=market)}' for lab, v in items]
     st.markdown('<div style="display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; '
                 'margin:2px 0 6px;">' + "".join(f"<span>{p}</span>" for p in parts) + "</div>",
                 unsafe_allow_html=True)
@@ -466,7 +774,7 @@ def render_model_legend():
                   f'border:1px solid {fg};"></span><span style="color:{fg}; font-weight:700; '
                   f'font-size:var(--lc-text-tiny);">{label}</span><span style="color:'
                   f'{COLOR["text_muted"]}; font-size:var(--lc-text-tiny);">{rng} edge</span></span>')
-    pills = " ".join(trust_pill(v) for v in ("beats", "thin", "fails"))
+    pills = " ".join(trust_pill(v, market=True) for v in ("beats", "thin", "fails"))
     st.markdown(
         '<div style="display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center;">'
         + "".join(sw) + "</div>"
@@ -474,12 +782,15 @@ def render_model_legend():
         f'{pills}</div>'
         f'<div style="color:{COLOR["text_faint"]}; font-size:var(--lc-text-tiny); margin-top:4px; '
         f'line-height:1.6;">Row colour = your edge at the price (the same buckets Results grades). '
-        f'Badge = how that market tested on games it had not seen: beats its baseline by more than '
-        f'noise ({mm.SIGNIFICANCE_Z:g} standard errors), better but within noise, or not better.'
+        f'Badge = whether adding the model to the market predicted past games better than the '
+        f'market alone, scored on games the weight never saw: better by more than noise '
+        f'({mm.SIGNIFICANCE_Z:g} standard errors) \u2014 the only case the model gets a say '
+        f'\u2014, better but within noise, or not better. In the last two, Final is the '
+        f'market\u2019s own chance.'
         f'</div>', unsafe_allow_html=True)
 
 
-def _tier_styler(df, tiers, trusts=None):
+def _tier_styler(df, tiers, trusts=None, market=False):
     """Row background by tier, Tier/Trust cells in their colours."""
     def row_style(row):
         t = tiers[row.name]
@@ -495,38 +806,267 @@ def _tier_styler(df, tiers, trusts=None):
     return df.style.apply(row_style, axis=1)
 
 
-def render_best_value(entries, validation, staking, key, prop_note=None):
-    """'Best value tonight': every side with a POSTED price and positive
-    EV across the slate, strongest edge first, coloured like the rows.
+def render_best_value(entries, blend, staking, key, prop_note=None):
+    """'Best value tonight': per game the best side bet and the best total
+    with a POSTED price and positive EV on the FINAL probability,
+    strongest edge first, coloured like the rows, stakes scaled together
+    to the reader's per-slate ceiling.
     entries: [{"label","away","home","proj","odds"}]."""
     bankroll, frac, cap = staking
     rows = []
     for e in entries:
-        for b in mpk.candidate_bets(e.get("proj"), e.get("odds")):
-            if b["price"] is None:
-                continue
+        for b in mpk.value_bets(e.get("proj"), e.get("odds")):
             a = vl.assess(b["p"], b["price"], bankroll or None, frac, cap)
             if not a or not a["value"]:
                 continue
-            rows.append((a["edge"], {
+            tr = market_trust(blend, b["market"])
+            rows.append([a["edge"], {
                 "Game": e["label"], "Bet": _bet_label(b, e["away"], e["home"]),
-                "Model": f"{100 * b['p']:.1f}%", "Price": mm.fmt_american(b["price"]),
+                "Model": f"{100 * b['p_model']:.1f}%" if b.get("p_model") is not None else DASH,
+                "Market": f"{100 * b['p_market']:.1f}%" if b.get("p_market") is not None else DASH,
+                "Final": f"{100 * b['p']:.1f}%", "Price": mm.fmt_american(b["price"]),
                 "Edge": f"{100 * a['edge']:+.1f}", "EV / $100": f"{a['ev_per_100']:+.2f}",
-                "Stake": f"${a['stake']:.2f}" if a.get("stake") else "\u2014",
+                "Stake": a.get("stake") or 0.0,
                 "Tier": TIER_STYLE[edge_tier(a["edge"], True)][0],
-                "Trust": TRUST_STYLE.get(market_trust(validation, b["market"]),
-                                         TRUST_STYLE[None])[0],
-            }, edge_tier(a["edge"], True), market_trust(validation, b["market"])))
+                "Trust": trust_label(tr, market=True),
+            }, edge_tier(a["edge"], True), tr])
     rows.sort(key=lambda r: -r[0])
+    scaled, factor = scale_to_slate([r[1]["Stake"] for r in rows], bankroll, slate_cap())
+    for r, x in zip(rows, scaled):
+        r[1]["Stake"] = f"${x:.2f}" if (bankroll and x) else "\u2014"
     with st.container(border=True):
         st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">'
                     f'Best value tonight</div>', unsafe_allow_html=True)
         if not rows:
-            st.caption("No side has value at the POSTED prices right now. Lines move \u2014 "
-                       "check your own book's price on each game below.")
+            st.caption("No side has value at the POSTED prices right now \u2014 the Final chance "
+                       "(market, moved by the model only where it has earned it) does not beat "
+                       "any posted price. Check your own book's price on each game below; a "
+                       "better number than the posted one is where value comes from.")
             return
         df = pd.DataFrame([r[1] for r in rows])
-        sty = _tier_styler(df, [r[2] for r in rows], [r[3] for r in rows])
+        sty = _tier_styler(df, [r[2] for r in rows], [r[3] for r in rows], market=True)
         st.dataframe(sty, hide_index=True, width="stretch", key=f"best_{key}")
-        st.caption("Posted prices only (ESPN). Your book may differ \u2014 the table on each game "
-                   "recomputes at the price you type." + (f" {prop_note}" if prop_note else ""))
+        note = ""
+        if factor < 1.0:
+            note = (f" Stakes scaled to {100 * factor:.0f}% so the slate stays inside your "
+                    f"{100 * slate_cap():.0f}% per-slate ceiling.")
+        st.caption("Posted prices only (ESPN). One bet per game side (moneyline or spread, "
+                   "whichever is worth more) plus the total. Your book may differ \u2014 the "
+                   "table on each game recomputes at the price you type." + note
+                   + (f" {prop_note}" if prop_note else ""))
+
+
+# ----------------------------------------------------------------------
+# Team totals, alt spreads, alt totals — and any line at your price
+# ----------------------------------------------------------------------
+def render_alt_lines(proj, away, home, key, sport, staking=None):
+    """An expander with every team total / alt spread / alt total the
+    game's own score distributions price (engines/alt_lines), plus a
+    checker for any line at the reader's price. Model only: no posted
+    price exists to anchor these, and the page says so."""
+    from engines import alt_lines as al
+    t = al.tables(proj, sport)
+    if not t:
+        return
+    bankroll, frac, cap = staking or current_staking()
+    unit = {"mlb": "runs", "nhl": "goals", "nfl": "points"}.get(sport, "")
+    with st.expander("Team totals & alt lines — any line", expanded=False):
+        c1, c2 = st.columns(2)
+        tt = {}
+        for side, ln, p in t["team_totals"]:
+            tt.setdefault(ln, {})[side] = p
+        c1.markdown(f"**Team totals** ({unit})")
+        c1.dataframe(pd.DataFrame([{"Line": f"O{ln:g}", away: prob_cell(v.get("away")),
+                                    home: prob_cell(v.get("home"))} for ln, v in tt.items()]),
+                     hide_index=True, width="stretch", key=f"alt_tt_{key}")
+        c2.markdown("**Alt spreads**")
+        c2.dataframe(pd.DataFrame([{"Spread": f"{home} {s:+g}", "Covers": prob_cell(p),
+                                    "Other side": f"{away} {-s:+g}",
+                                    "Covers ": prob_cell(None if p is None else 1 - p)}
+                                   for s, p in t["spreads"]]),
+                     hide_index=True, width="stretch", key=f"alt_sp_{key}")
+        st.markdown("**Alt totals**")
+        st.dataframe(pd.DataFrame([{"Total": f"{ln:g}", "Over": prob_cell(p),
+                                    "Under": prob_cell(None if p is None else 1 - p)}
+                                   for ln, p in t["totals"]]),
+                     hide_index=True, width="stretch", key=f"alt_to_{key}")
+        st.markdown("**Check any line at your price**")
+        k1, k2, k3, k4 = st.columns([2, 1, 1, 1])
+        kinds = {"tt_away": f"{away} team total", "tt_home": f"{home} team total",
+                 "spread": f"{home} spread", "total": "Game total"}
+        kind = k1.selectbox("Market", list(kinds), format_func=lambda x: kinds[x],
+                            key=f"alt_kind_{key}")
+        hi = 60.0 if sport == "nfl" else 15.0
+        default = {
+            "tt_away": balanced_line(None, lambda x: al.team_total_over(proj, "away", x, sport), 0.5, hi),
+            "tt_home": balanced_line(None, lambda x: al.team_total_over(proj, "home", x, sport), 0.5, hi),
+            "spread": proj.get("market_spread_home") if proj.get("market_spread_home") is not None
+            else (-1.5 if sport != "nfl" else round(proj.get("fair_spread_home", -3.0) * 2) / 2),
+            "total": proj.get("market_total") or balanced_line(
+                None, lambda x: al.total_over(proj, x, sport), 0.5, 2 * hi)}[kind]
+        line = k2.number_input("Line", value=float(default), step=0.5, key=f"alt_line_{key}_{kind}")
+        side_opts = ["Over", "Under"] if kind != "spread" else [f"{home}", f"{away}"]
+        side = k3.radio("Side", side_opts, horizontal=True, key=f"alt_side_{key}_{kind}")
+        if kind == "spread":
+            _pc0 = al.home_cover(proj, line, sport)
+            _p0 = _pc0 if side == home else (None if _pc0 is None else 1 - _pc0)
+        else:
+            _po0 = (al.total_over(proj, line, sport) if kind == "total"
+                    else al.team_total_over(proj, kind[3:], line, sport))
+            _p0 = _po0 if side == "Over" else (None if _po0 is None else 1 - _po0)
+        price = k4.number_input("Your book's price", value=_price_default(_p0), step=5,
+                                key=f"alt_px_{key}_{kind}_{line}_{side}")
+        if kind == "spread":
+            pc = al.home_cover(proj, line, sport)
+            p = pc if side == home else (None if pc is None else 1 - pc)
+            what = f"{home} {line:+g}" if side == home else f"{away} {-line:+g}"
+        else:
+            po = (al.total_over(proj, line, sport) if kind == "total"
+                  else al.team_total_over(proj, kind[3:], line, sport))
+            p = po if side == "Over" else (None if po is None else 1 - po)
+            what = f"{kinds[kind]} {side} {line:g}"
+        a = vl.assess(p, price, bankroll or None, frac, cap) if p is not None else None
+        if not a:
+            st.caption("Enter an American price of -100 or lower, or +100 or higher.")
+        else:
+            _tl, _tfg, _tbg = TIER_STYLE[edge_tier(a["edge"], a["value"])]
+            verdict = (f'<span style="color:{_tfg}; font-weight:800;">{_tl}</span>'
+                       if edge_tier(a["edge"], a["value"]) != "none" else "no value")
+            st.markdown(f"{what}: model **{100 * p:.1f}%** (fair {mm.fmt_american(mm.fair_american(p))}) "
+                        f"vs break-even {100 * a['break_even']:.1f}% at {mm.fmt_american(int(price))} "
+                        f"→ **{verdict}** (edge {100 * a['edge']:+.1f} pts)",
+                        unsafe_allow_html=True)
+        note = ("Model only — no posted price exists for these lines, so they are NOT "
+                "anchored to the market the way the main moneyline / total / spread are; treat "
+                "an edge here as the model's opinion, and remember the main markets show how "
+                "often the market has been right instead.")
+        if sport == "nfl":
+            note += (f" Team totals use a one-side spread DERIVED from the measured margin and "
+                     f"total spreads (±{al.team_sd(proj) or 0:.1f} pts).")
+        st.caption(note)
+
+
+# ----------------------------------------------------------------------
+# NFL player props on the Model page (10-04)
+# ----------------------------------------------------------------------
+# stat -> (label, projection key, how its spread is measured, roles)
+NFL_STATS = (
+    ("pass_yds", "Passing yards", "pass_yds", "Passing yards", ("QB",)),
+    ("pass_cmp", "Completions", "pass_cmp", "Completions", ("QB",)),
+    ("pass_att", "Pass attempts", "pass_att", "Pass attempts", ("QB",)),
+    ("pass_td", "Passing TDs", "pass_td", "Passing TDs", ("QB",)),
+    ("pass_int", "Interceptions", "pass_int", "Interceptions", ("QB",)),
+    ("rush_yds", "Rushing yards", "rush_yds", "Rushing yards", ("RB", "QB")),
+    ("carries", "Carries", "carries", "Carries", ("RB",)),
+    ("rec_yds", "Receiving yards", "rec_yds", "Receiving yards", ("REC", "RB")),
+    ("rec", "Receptions", "rec", "Receptions", ("REC", "RB")),
+    ("targets", "Targets", "targets", "Targets", ("REC", "RB")),
+    ("scrim_yds", "Rush + rec yards", "scrim_yds", "Rush + rec yards", ("RB", "REC")),
+    ("td", "Touchdowns (rush + rec)", "td_exp", None, ("RB", "REC")),
+)
+
+
+def nfl_stat_pmf(stat_market, mean, spreads):
+    """A projection as a distribution, with the game-to-game scatter
+    MEASURED per market (engines/nfl_prop_odds): counts negative
+    binomial, yards normal at a measured cv, discretised to whole yards
+    (a yard line of 64.5 is then P(65 or more), the same number p_over
+    gives). Touchdowns: the anytime Poisson. None if unmeasured."""
+    if mean is None or mean <= 0:
+        return None
+    if stat_market is None:                      # touchdowns
+        return mm.poisson_pmf(mean, 8)
+    sp = (spreads or {}).get(stat_market)
+    if not sp:
+        return None
+    if sp["kind"] == "count":
+        return mm.nb_pmf(mean, sp.get("size"), max(40, int(mean * 4)))
+    sd = sp["cv"] * mean
+    hi = int(mean + 5 * sd) + 2
+    out = []
+    for k in range(0, hi + 1):
+        lo_c = mm.normal_cdf(k - 0.5, mean, sd) if k > 0 else 0.0
+        out.append(mm.normal_cdf(k + 0.5, mean, sd) - lo_c)
+    tail = 1.0 - sum(out)
+    out[-1] += max(0.0, tail)
+    return out
+
+
+def nfl_game_prop_rows(g, league):
+    """[{"_name", "_pmfs", "Player", ...}] for both sides of one game."""
+    from engines.nfl_projection import implied_totals, project_player, attach_td_shares
+    attach_td_shares([g], league)
+    spreads = (league or {}).get("prop_spreads") or {}
+    a_pts, h_pts, _note = implied_totals(g.get("odds") or {}, g.get("away_abbr"), g.get("home_abbr"))
+    rows = []
+    for side, other in (("away", "home"), ("home", "away")):
+        team, opp = g.get(f"{side}_profile"), g.get(f"{other}_profile")
+        implied = a_pts if side == "away" else h_pts
+        for p in g.get(f"{side}_players") or []:
+            proj = project_player(p, team, opp, league, implied)
+            pmfs, means = {}, {}
+            for stat, _lab, key, market, roles in NFL_STATS:
+                if p.get("role") not in roles:
+                    continue
+                pm = nfl_stat_pmf(market, proj.get(key), spreads)
+                if pm:
+                    pmfs[stat] = pm
+                    means[stat] = proj.get(key)
+            if not pmfs:
+                continue
+            gp = p.get("gp")
+            ly = p.get("gp_last_season")
+            rows.append({"Player": p.get("name"), "Pos": p.get("pos") or p.get("role"),
+                         "Team": g.get(f"{side}_abbr") or g.get(side),
+                         "Status": p.get("status") or "",
+                         "GP": f"{gp} + {ly} last yr" if ly else str(gp),
+                         "_name": f"{p.get('name')} ({g.get(f'{side}_abbr') or side})",
+                         "_pmfs": pmfs, "_means": means,
+                         "_moved": p.get("last_season_team")})
+    return rows
+
+
+def _ladder(mean):
+    """Three lines around a projection: below, at, above (x.5)."""
+    if mean is None:
+        return ()
+    if mean < 3:
+        return (0.5, 1.5, 2.5)
+    step = max(1.0, round(mean * 0.15))
+    mid = float(int(mean)) + 0.5
+    return (max(0.5, mid - step), mid, mid + step)
+
+
+def render_nfl_props(g, league, key, staking):
+    """Pick a stat: every player's projection and a three-line ladder of
+    chances; then any line at your price. Status from the team's injury
+    report is printed on the row (Out players are left off)."""
+    rows = [r for r in nfl_game_prop_rows(g, league) if str(r["Status"]).lower() != "out"]
+    if not rows:
+        st.caption("No player projections for this game yet.")
+        return
+    labels = {s: lab for s, lab, *_ in NFL_STATS}
+    avail = [s for s, *_ in NFL_STATS if any(s in r["_pmfs"] for r in rows)]
+    stat = st.selectbox("Stat", avail, format_func=lambda s: labels[s], key=f"nflp_stat_{key}")
+    table = []
+    for r in rows:
+        pm = r["_pmfs"].get(stat)
+        if not pm:
+            continue
+        mean = r["_means"][stat]
+        row = {c: r.get(c) for c in ("Player", "Pos", "Team", "Status", "GP")}
+        row["Proj"] = round(mean, 2 if stat == "td" else 1)
+        for i, ln in enumerate(_ladder(mean)):
+            row[("Low", "Mid", "High")[i]] = f"O{ln:g}: {prob_cell(mm.over_prob_pmf(pm, ln))}"
+        if r.get("_moved"):
+            row["Status"] = (row["Status"] + " · " if row["Status"] else "") + f"new team (was {r['_moved']})"
+        table.append(row)
+    table.sort(key=lambda x: -(x["Proj"] or 0))
+    render_trust_row([("NFL player props", None)])
+    st.dataframe(pd.DataFrame(table), hide_index=True, width="stretch", key=f"nflp_tab_{key}_{stat}")
+    st.caption("Proj = projected line (this season, plus last season at the weight the nightly "
+               "measured it is worth). Low / Mid / High = chance he goes OVER that line, with its "
+               "fair price. UNTESTED: NFL prop chances are not graded against outcomes yet, so "
+               "they never reach Top Plays — research, not a recommendation.")
+    stats = tuple((s, lab, (0.5,)) for s, lab, *_ in NFL_STATS)
+    _any_line_tool([r for r in rows if r["_pmfs"]], stats, (), {}, f"nfl_{key}", staking, stat)

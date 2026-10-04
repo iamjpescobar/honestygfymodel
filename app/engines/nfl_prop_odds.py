@@ -36,6 +36,9 @@ MARKET_STAT = {
     "Passing yards": ("passing", "yds", "yards"),
     "Pass attempts": ("passing", "att", "count"),
     "Rush + rec yards": (None, "scrim", "yards"),
+    "Completions": ("passing", "cmp", "count"),
+    "Passing TDs": ("passing", "td", "count"),
+    "Interceptions": ("passing", "int", "count"),
 }
 # Games a player needs in a market to contribute a scatter measurement:
 # a variance needs two observations. Not a tuning knob.

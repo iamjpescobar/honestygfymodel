@@ -148,6 +148,70 @@ def total_over_prob(mu_home, mu_away, line, dispersion=None):
     return over / (over + under) if (over + under) > 0 else None
 
 
+def over_prob_pmf(pmf, line):
+    """P(X > line) among DECIDED outcomes for one count distribution — a
+    team total, a skater's shots, a pitcher's strikeouts. A whole-number
+    line pushes, and the push mass is excluded from both sides, exactly
+    as total_over_prob does for a game total."""
+    if pmf is None or line is None:
+        return None
+    over = sum(p for k, p in enumerate(pmf) if k > line)
+    push = pmf[int(line)] if float(line).is_integer() and 0 <= int(line) < len(pmf) else 0.0
+    under = max(0.0, 1.0 - over - push)
+    return over / (over + under) if (over + under) > 0 else None
+
+
+def margin_cover_prob(mu_home, mu_away, home_spread, dispersion=None, home_wins_tie=0.5):
+    """P(home covers `home_spread`) for a count sport (run line, puck line,
+    alt spreads), among decided outcomes.
+
+    The home side covers when (home - away) + home_spread > 0. A game
+    level after regulation goes to extras (MLB) or OT/shootout (NHL),
+    which in both sports ends with a ONE-goal/run winner as far as the
+    margin is concerned: sudden-death OT and the shootout's single
+    awarded goal are exact; a multi-run top of the 10th under the
+    automatic runner is the one case this treats as a one-run game, and
+    the run-line calibration in the nightly's market check is what holds
+    that to account. The level mass is split at the MEASURED rate the
+    home side wins those games (tie_home_win), never assumed 50/50 when
+    measured.
+    """
+    ph = score_pmf(mu_home, dispersion)
+    pa = score_pmf(mu_away, dispersion)
+    if ph is None or pa is None or home_spread is None:
+        return None
+    # normalised over the mass actually summed, exactly as outcome_probs
+    # does, so -0.5 reproduces win_prob to the last digit
+    sh, sa = sum(ph), sum(pa)
+    ph = [x / sh for x in ph]
+    pa = [x / sa for x in pa]
+    cover = push = 0.0
+    for h, p_h in enumerate(ph):
+        if p_h == 0.0:
+            continue
+        for a, p_a in enumerate(pa):
+            p = p_h * p_a
+            if p == 0.0:
+                continue
+            m = h - a
+            if m == 0:
+                # resolved in extras: home by one, or away by one
+                for mm_, w in ((1, home_wins_tie), (-1, 1.0 - home_wins_tie)):
+                    v = mm_ + home_spread
+                    if v > 0:
+                        cover += p * w
+                    elif v == 0:
+                        push += p * w
+                continue
+            v = m + home_spread
+            if v > 0:
+                cover += p
+            elif v == 0:
+                push += p
+    decided = 1.0 - push
+    return cover / decided if decided > 0 else None
+
+
 def convolve(a, b):
     out = [0.0] * (len(a) + len(b) - 1)
     for i, x in enumerate(a):
@@ -386,3 +450,61 @@ def paired_verdict(model_losses, base_losses):
     verdict = "beats" if z >= SIGNIFICANCE_Z else ("thin" if mean > 0 else "fails")
     return {"n": n, "diff": round(mean, 5), "se": round(se, 5),
             "z": round(z, 2) if z != float("inf") else 99.0, "verdict": verdict}
+
+
+# ----------------------------------------------------------------------
+# Last season as evidence — how much it is worth, MEASURED (10-04)
+# ----------------------------------------------------------------------
+def prior_season_rate(x_prior, n_prior, x_cur, n_cur, mean, strength, weight):
+    """A rate from this season's evidence plus last season's at `weight`
+    per unit, pulled toward the league `mean` by `strength` units:
+
+        rate = (x_cur + w * x_prior + mean * s) / (n_cur + w * n_prior + s)
+
+    weight 0 is "last season tells us nothing", 1 is "a PA last year is
+    worth a PA this year". It is FITTED (fit_prior_weight), never chosen."""
+    num = (x_cur or 0) + weight * (x_prior or 0) + mean * strength
+    den = (n_cur or 0) + weight * (n_prior or 0) + strength
+    return num / den if den > 0 else mean
+
+
+def fit_prior_weight(groups, kind="binomial"):
+    """The weight of last season's evidence, by maximum likelihood of
+    THIS season's outcomes predicted from LAST season's alone (plus the
+    league prior).
+
+    groups: [(pairs, mean, strength)], pairs [((x_prior, n_prior),
+    (x_cur, n_cur))] — e.g. one group per plate-appearance outcome, all
+    sharing one weight. kind: "binomial" (x of n trials) or "poisson"
+    (x events over n exposure).
+
+    Returns {"weight", "n_players", "loglik_gain"} — the gain is this
+    season's log likelihood at the fitted weight minus at weight 0 (league
+    prior only), so a weight that buys nothing says so. None if no pairs.
+    """
+    usable = [(p, m, s) for p, m, s in groups if p and m is not None and s is not None]
+    if not usable:
+        return None
+
+    def ll(w):
+        tot = 0.0
+        for pairs, mean, s in usable:
+            for (x0, n0), (x1, n1) in pairs:
+                if not n1:
+                    continue
+                r = prior_season_rate(x0, n0, 0, 0, mean, s, w)
+                r = min(max(r, 1e-9), 1 - 1e-9) if kind == "binomial" else max(r, 1e-9)
+                if kind == "binomial":
+                    tot += x1 * log(r) + (n1 - x1) * log(1 - r)
+                else:
+                    tot += x1 * log(r * n1) - r * n1
+        return tot
+
+    w = golden_max(ll, 0.0, 1.0, iters=40)
+    if w < 1e-3:
+        w = 0.0
+    elif w > 1 - 1e-3:
+        w = 1.0
+    n_players = len({id(pr) for pairs, _m, _s in usable for pr in pairs})
+    return {"weight": round(w, 4), "n_players": n_players,
+            "loglik_gain": round(ll(w) - ll(0.0), 2)}

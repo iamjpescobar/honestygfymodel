@@ -63,8 +63,17 @@ def plate_appearances(season_df):
     if not need.issubset(season_df.columns):
         missing = sorted(need - set(season_df.columns))
         raise ValueError(f"season frame is missing {missing}")
-    df = season_df[season_df["events"].notna()][list(need)].copy()
+    # bat_score / post_bat_score ride along when the frame has them (they
+    # are ENGINE_COLS): their difference on the PA-ending pitch is the
+    # runs that scored on the play — the RBI markets. Absent -> no RBI
+    # column, and those markets are left out, never zero-filled.
+    extra = [c for c in ("bat_score", "post_bat_score") if c in season_df.columns]
+    df = season_df[season_df["events"].notna()][list(need) + extra].copy()
     df = df.drop_duplicates(subset=["game_pk", "at_bat_number"])
+    if len(extra) == 2:
+        d = pd.to_numeric(df["post_bat_score"], errors="coerce") - pd.to_numeric(
+            df["bat_score"], errors="coerce")
+        df["rbi"] = d.where((d >= 0) & (d <= 4))
     df["outcome"] = [mp.classify(e) for e in df["events"].astype(str)]
     df = df[df["outcome"].notna()]
     df["side"] = df["inning_topbot"].astype(str).str.lower().map(
@@ -124,18 +133,104 @@ def lineups(pa):
     return out
 
 
-def _game_lines(pa):
-    """{(batter, game_pk): {"h","tb","hr","k"}}"""
-    out = {}
-    for (b, gpk), g in pa.groupby(["batter", "game_pk"], sort=False):
-        oc = Counter(g["outcome"])
-        out[(int(b), int(gpk))] = {
-            "h": sum(oc[o] for o in mp.TB), "tb": sum(mp.TB[o] * oc[o] for o in mp.TB),
-            "hr": oc["HR"], "k": oc["K"], "date": g["game_date"].iloc[0]}
+def _line_of(g):
+    oc = Counter(g["outcome"])
+    out = {"h": sum(oc[o] for o in mp.TB), "tb": sum(mp.TB[o] * oc[o] for o in mp.TB),
+           "hr": oc["HR"], "k": oc["K"], "bb": oc["BB"], "s": oc["1B"], "d": oc["2B"],
+           "date": g["game_date"].iloc[0]}
+    if "rbi" in g.columns:
+        r = g["rbi"]
+        # MISSING IS NOT ZERO: a game with an unmeasured PA has no RBI line
+        out["rbi"] = int(r.sum()) if r.notna().all() else None
     return out
 
 
-def build_prop_model(season_df, out_dir, validation_days=VALIDATION_DAYS):
+def _game_lines(pa):
+    """{(batter, game_pk): {"h","tb","hr","k","bb","s","d","rbi"?}}"""
+    return {(int(b), int(gpk)): _line_of(g)
+            for (b, gpk), g in pa.groupby(["batter", "game_pk"], sort=False)}
+
+
+def measure_rbi_given(pa, lus=None):
+    """{slot: {outcome: [P(0 RBI) .. P(4)]}} plus "all", measured over the
+    season: how often each kind of plate appearance drives in 0, 1, 2...
+    runs from each lineup slot (a cleanup hitter's single comes with more
+    runners on than a nine-hole hitter's). None if the frame carries no
+    RBI column."""
+    if "rbi" not in pa.columns:
+        return None
+    lus = lus if lus is not None else lineups(pa)
+    slot_of = {}
+    for (gpk, side), order in lus.items():
+        for i, b in enumerate(order, start=1):
+            slot_of[(gpk, side, b)] = i
+    counts = {}
+    for gpk, side, b, o, r in zip(pa["game_pk"], pa["side"], pa["batter"], pa["outcome"], pa["rbi"]):
+        if r != r:                       # NaN: unmeasured, not zero
+            continue
+        r = int(r)
+        for key in (str(slot_of.get((int(gpk), side, int(b)), "")), "all"):
+            if not key:
+                continue
+            c = counts.setdefault(key, {}).setdefault(o, [0] * (mp.MAX_RBI + 1))
+            c[min(r, mp.MAX_RBI)] += 1
+    out = {}
+    for key, by_o in counts.items():
+        out[key] = {o: [round(x / sum(c), 6) for x in c] for o, c in by_o.items() if sum(c)}
+    return out
+
+
+PRIOR_PATH = Path(__file__).resolve().parent / "data" / "mlb" / "prior_season.json"
+
+
+def load_prior(path=None):
+    """Last season's per-player outcome counts and starters' batters-faced
+    (mlb_model_precompute writes the file once), or {}."""
+    p = Path(path or PRIOR_PATH)
+    if not p.exists():
+        return {}
+    try:
+        return json.loads(p.read_text()) or {}
+    except Exception:
+        return {}
+
+
+def fit_prior_weights(btab, ptab, bpri, ppri, starter_bf, prior, league_bf_mean, bf_s):
+    """How much last season counts, FITTED on everyone in both seasons:
+    this season's outcome counts predicted from last season's alone
+    (model_math.fit_prior_weight). One weight for batters, one for
+    pitchers (outcomes allowed), one for a starter's depth."""
+    out = {"batter": 0.0, "pitcher": 0.0, "bf": 0.0}
+    rep = {}
+    for kind, tab, pri, prev in (("batter", btab, bpri, prior.get("batters") or {}),
+                                 ("pitcher", ptab, ppri, prior.get("pitchers") or {})):
+        groups = []
+        for o in mp.OUTCOMES:
+            pairs = []
+            for pid, row in tab.iterrows():
+                p0 = prev.get(str(int(pid)))
+                if not p0 or not p0.get("PA"):
+                    continue
+                pairs.append(((p0.get(o, 0), p0["PA"]), (int(row[o]), int(row["PA"]))))
+            groups.append((pairs, pri[o][0], pri[o][1]))
+        r = mm.fit_prior_weight(groups, kind="binomial")
+        if r:
+            out[kind] = r["weight"]
+            rep[kind] = r
+    bf_pairs = []
+    for pid, lst in (starter_bf or {}).items():
+        p0 = ((prior.get("starters") or {}).get(str(pid)) or {}).get("bf")
+        if p0 and lst:
+            bf_pairs.append(((sum(p0), len(p0)), (sum(lst), len(lst))))
+    if bf_pairs and league_bf_mean and bf_s:
+        r = mm.fit_prior_weight([(bf_pairs, league_bf_mean, bf_s)], kind="poisson")
+        if r:
+            out["bf"] = r["weight"]
+            rep["bf"] = r
+    return out, rep
+
+
+def build_prop_model(season_df, out_dir, validation_days=VALIDATION_DAYS, prior=None):
     """Write prop_model.json; returns the dict (or None, printing why)."""
     pa = plate_appearances(season_df)
     if len(pa) < 5000:
@@ -160,7 +255,9 @@ def build_prop_model(season_df, out_dir, validation_days=VALIDATION_DAYS):
         starter_bf[str(sp)].append(bf)
     _mu, bf_s = mm.fit_gamma_prior([(sum(v), len(v)) for v in starter_bf.values()])
 
+    rbi_given = measure_rbi_given(pa)
     model = {
+        "rbi_given": rbi_given,
         "league_rates": league,
         "batter_priors": bpri, "pitcher_priors": ppri,
         "team_pa_hist": team_hist, "league_bf_hist": bf_hist,
@@ -169,7 +266,27 @@ def build_prop_model(season_df, out_dir, validation_days=VALIDATION_DAYS):
         "n_pa": n, "n_games": int(pa["game_pk"].nunique()),
         "through": pa["game_date"].max(),
     }
+    # LAST SEASON as evidence, at weights FITTED on the players in both.
+    prior = load_prior() if prior is None else prior
+    if prior.get("batters") or prior.get("pitchers"):
+        _bft = sum(int(k) * v for k, v in bf_hist.items())
+        _bfn = sum(bf_hist.values())
+        pw, prep = fit_prior_weights(btab, ptab, bpri, ppri, starter_bf, prior,
+                                     _bft / _bfn if _bfn else None, bf_s)
+        model["prior_season"] = prior.get("season")
+        model["prior_weight"] = pw
+        model["prior_weight_report"] = prep
+        model["prior_batters"] = prior.get("batters") or {}
+        model["prior_pitchers"] = prior.get("pitchers") or {}
+        model["prior_bf"] = {pid: r.get("bf") for pid, r in (prior.get("starters") or {}).items()
+                             if r.get("bf")}
+        print(f"  [verify] last-season weights {pw} (players in both seasons: "
+              f"{ {k: v.get('n_players') for k, v in prep.items()} }; "
+              f"log-lik gain {({k: v.get('loglik_gain') for k, v in prep.items()})})")
+    else:
+        print("  [verify] no last-season file — props run on this season alone")
     model["validation"] = validate(pa, model, validation_days)
+    model["pitcher_validation"] = validate_pitchers(pa, model, validation_days)
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -177,11 +294,15 @@ def build_prop_model(season_df, out_dir, validation_days=VALIDATION_DAYS):
     print(f"  prop model: {n:,} PA, league HR/PA {league['HR']:.4f}, K/PA {league['K']:.3f}; "
           f"batter HR prior strength {bpri['HR'][1]:.0f} PA, pitcher {ppri['HR'][1]:.0f} PA; "
           f"BF strength {model['bf_strength_starts']} starts")
-    for k, label, *_ in mp.MARKETS:
-        v = model["validation"].get(k) or {}
-        print(f"  [verify] {label:10s} n={v.get('n')} model Brier {v.get('model_brier')} "
-              f"vs his-own-rate {v.get('baseline_brier')} -> "
-              f"{'BEATS' if v.get('beats_baseline') else 'does not beat'} baseline")
+    for vk, markets in (("validation", mp.MARKETS), ("pitcher_validation", mp.PITCHER_MARKETS)):
+        for k, label, *_ in markets:
+            v = model[vk].get(k) or {}
+            print(f"  [verify] {label:18s} n={v.get('n')} model Brier {v.get('model_brier')} "
+                  f"vs his-own-rate {v.get('baseline_brier')} -> "
+                  f"{(v.get('verdict') or {}).get('verdict')}")
+    print(f"  [verify] RBI table measured: {'yes' if rbi_given else 'NO (no score columns)'}"
+          + (f"; slot 4 HR drives in 1/2/3/4: {rbi_given.get('4', {}).get('HR', [])[1:]}"
+             if rbi_given else ""))
     return model
 
 
@@ -230,8 +351,9 @@ def validate(pa, model, validation_days):
             p_counts["PA"] = int(prow["PA"])
         except KeyError:
             p_counts = None
+        p_counts = mp.player_counts(model, sp, p_counts, "pitcher")
         bf_before = [bf for dd, bf in sp_starts[sp] if dd < d]
-        bf_dist = mp.starter_bf_dist(bf_before, model)
+        bf_dist = mp.starter_bf_dist(bf_before, model, (model.get("prior_bf") or {}).get(str(sp)))
         for slot, b in enumerate(order, start=1):
             try:
                 brow = bcum.loc[(b, d)]
@@ -243,16 +365,25 @@ def validate(pa, model, validation_days):
             actual = lines.get((b, gpk))
             if not prior_games or not actual or not b_counts["PA"]:
                 continue
+            b_counts = mp.player_counts(model, b, b_counts, "batter")
             proj = mp.project_batter(slot, b_counts, p_counts, model, bf_dist)
             if not proj:
                 continue
             for k, _label, stat, at_least in mp.MARKETS:
+                if k not in proj["probs"] or actual.get(stat) is None:
+                    continue
+                hist = [g[stat] for g in prior_games if g.get(stat) is not None]
+                if not hist:
+                    continue
                 y = 1 if actual[stat] >= at_least else 0
                 preds[k].append((proj["probs"][k], y))
-                freq = sum(1 for g in prior_games if g[stat] >= at_least) / len(prior_games)
-                base[k].append((freq, y))
-    out = {"from": cut, "to": dates[-1], "days": validation_days}
-    for k, *_ in mp.MARKETS:
+                base[k].append((sum(1 for x in hist if x >= at_least) / len(hist), y))
+    return _score(preds, base, mp.MARKETS, cut, dates[-1], validation_days)
+
+
+def _score(preds, base, markets, cut, last, validation_days):
+    out = {"from": cut, "to": last, "days": validation_days}
+    for k, *_ in markets:
         m, b = mm.score_predictions(preds[k]), mm.score_predictions(base[k])
         out[k] = {"verdict": mm.paired_verdict([(p_ - y) ** 2 for p_, y in preds[k]],
                                                [(q - y) ** 2 for q, y in base[k]]),
@@ -262,3 +393,74 @@ def validate(pa, model, validation_days):
                                          and m["brier"] < b["brier"]),
                   "calibration": mm.calibration_bins(preds[k])}
     return out
+
+
+def _cum_before(pa, key):
+    daily = pa.groupby([key, "game_date", "outcome"]).size().unstack(fill_value=0)
+    for o in mp.OUTCOMES:
+        if o not in daily.columns:
+            daily[o] = 0
+    daily = daily[list(mp.OUTCOMES)]
+    cum = daily.groupby(level=0).cumsum() - daily
+    cum["PA"] = cum.sum(axis=1)
+    return cum
+
+
+def _counts_at(cum, key, d):
+    try:
+        row = cum.loc[(key, d)]
+    except KeyError:
+        return None
+    c = {o: int(row[o]) for o in mp.OUTCOMES}
+    c["PA"] = int(row["PA"])
+    return c
+
+
+def validate_pitchers(pa, model, validation_days):
+    """Walk-forward for the starter props: every start in the last
+    `validation_days`, projected from the starter's and the nine
+    batters' plate appearances BEFORE that date and his earlier batters-
+    faced, scored against what he actually allowed (his own PAs only).
+    Baseline: the share of his earlier starts that cleared the line."""
+    dates = sorted(pa["game_date"].unique())
+    if len(dates) < validation_days + 14:
+        return {"note": "season too short to validate"}
+    cut = dates[-validation_days]
+    bcum, pcum = _cum_before(pa, "batter"), _cum_before(pa, "pitcher")
+    lus = lineups(pa)
+    starts = starts_table(pa)
+    # his actual line per start, from his own PAs in that game
+    by_start = {}
+    for (gpk, side, p), g in pa.groupby(["game_pk", "side", "pitcher"], sort=False):
+        oc = Counter(g["outcome"])
+        by_start[(int(gpk), side, int(p))] = {
+            "k": oc["K"], "h": sum(oc[o] for o in mp.TB), "bb": oc["BB"], "hr": oc["HR"]}
+    history = defaultdict(list)
+    for gpk, side, sp, d, bf in sorted(starts, key=lambda s: s[3]):
+        history[sp].append((d, bf, by_start.get((gpk, side, sp))))
+    preds = {k: [] for k, *_ in mp.PITCHER_MARKETS}
+    base = {k: [] for k, *_ in mp.PITCHER_MARKETS}
+    for gpk, side, sp, d, _bf in starts:
+        if d < cut:
+            continue
+        order = lus.get((gpk, side))
+        actual = by_start.get((gpk, side, sp))
+        before = [x for x in history[sp] if x[0] < d]
+        if not order or not actual or not before:
+            continue
+        p_counts = _counts_at(pcum, sp, d)
+        if not p_counts or not p_counts["PA"]:
+            continue
+        p_counts = mp.player_counts(model, sp, p_counts, "pitcher")
+        bf_dist = mp.starter_bf_dist([bf for _d, bf, _a in before], model,
+                                     (model.get("prior_bf") or {}).get(str(sp)))
+        oc = [mp.player_counts(model, b, _counts_at(bcum, b, d), "batter") for b in order]
+        proj = mp.project_pitcher(oc, p_counts, model, bf_dist)
+        if not proj:
+            continue
+        past = [a for _d, _bf, a in before if a]
+        for k, _l, stat, n in mp.PITCHER_MARKETS:
+            y = 1 if actual[stat] >= n else 0
+            preds[k].append((proj["probs"][k], y))
+            base[k].append((sum(1 for a in past if a[stat] >= n) / len(past), y))
+    return _score(preds, base, mp.PITCHER_MARKETS, cut, dates[-1], validation_days)

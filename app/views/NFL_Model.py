@@ -62,17 +62,18 @@ mv.render_validation(
            f"The test above is on the season the fit came from."])
 
 _stk = mv.staking_controls("nfl")
+_blend = model.get("blend")
 if not games:
     st.info("No games in this week's file yet.")
 else:
-    mv.render_trust_row([("Moneyline", mv.market_trust(v, "moneyline")),
-                         ("Spread", mv.market_trust(v, "spread")),
-                         ("Total", mv.market_trust(v, "total"))])
+    mv.render_trust_row([("Moneyline", mv.market_trust(_blend, "moneyline")),
+                         ("Spread", mv.market_trust(_blend, "spread")),
+                         ("Total", mv.market_trust(_blend, "total"))], market=True)
     mv.render_best_value(
         [{"label": f"{g.get('away_abbr') or g.get('away')} @ {g.get('home_abbr') or g.get('home')}",
           "away": g.get("away_abbr") or g.get("away"), "home": g.get("home_abbr") or g.get("home"),
           "proj": g.get("model"), "odds": g.get("odds")}
-         for g in games if g.get("status") != "final"], v, _stk, key="nfl")
+         for g in games if g.get("status") != "final"], _blend, _stk, key="nfl")
     with st.expander("Colour key", expanded=False):
         mv.render_model_legend()
 
@@ -90,7 +91,12 @@ for i, g in enumerate(games):
             continue
         mv.render_game_projection(pj, a, h, key=f"nflm_{i}")
         mv.render_value_panel(pj, g.get("odds"), a, h, key=f"nflm_{i}", staking=_stk,
-                              validation=v)
+                              validation=v, blend=_blend)
+        mv.render_alt_lines(pj, a, h, key=f"nflm_{i}", sport="nfl")
+        if g.get("status") != "final":
+            with st.expander("Player props \u2014 any line", expanded=False):
+                mv.render_nfl_props(g, (payload or {}).get("league") or {}, key=f"nflm_{i}",
+                                    staking=_stk)
         bits = [f"Model line: {h} {pj['fair_spread_home']:+.1f}"]
         if pj.get("market_spread_home") is not None:
             bits.append(f"posted {h} {pj['market_spread_home']:+g} → {h} covers "
@@ -103,7 +109,6 @@ for i, g in enumerate(games):
             bits.append(pj["market_note"])
         st.caption(" · ".join(bits))
 
-st.caption("Player props for these games are on the **Projections** tab — they anchor "
-           "touchdowns to the market's implied points shown above, so where the model's score "
-           "and the market's differ, lean on that gap before the prop.")
+st.caption("Player props are under each game. The **Projections** tab ranks every player on "
+           "the slate by one market and explains each number.")
 footer()

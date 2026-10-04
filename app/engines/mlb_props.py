@@ -65,13 +65,63 @@ _EVENT_MAP = {
 # Not a plate appearance with an outcome — dropped, not counted as an out.
 _IGNORE = {"truncated_pa", ""}
 
-# The markets on the page: (key, label, stat, at_least).
+# The markets on the page: (key, label, stat, at_least). Every one is
+# scored walk-forward by the nightly against the batter's own hit rate;
+# any OTHER line is priced off the same distribution by the any-line tool
+# (and inherits its stat's test, which the tool says).
 MARKETS = (
     ("h1", "Hits O0.5", "h", 1),
     ("h2", "Hits O1.5", "h", 2),
+    ("h3", "Hits O2.5", "h", 3),
+    ("tb1", "TB O0.5", "tb", 1),
     ("tb2", "TB O1.5", "tb", 2),
+    ("tb3", "TB O2.5", "tb", 3),
+    ("tb4", "TB O3.5", "tb", 4),
     ("hr1", "HR O0.5", "hr", 1),
     ("k1", "K O0.5", "k", 1),
+    ("k2", "K O1.5", "k", 2),
+    ("bb1", "Walks+HBP O0.5", "bb", 1),
+    ("s1", "Singles O0.5", "s", 1),
+    ("d1", "Doubles O0.5", "d", 1),
+    ("rbi1", "RBI O0.5", "rbi", 1),
+    ("rbi2", "RBI O1.5", "rbi", 2),
+)
+# Stat groups for the page: (stat, label, lines shown in the table).
+STATS = (
+    ("h", "Hits", (0.5, 1.5, 2.5)),
+    ("tb", "Total bases", (0.5, 1.5, 2.5, 3.5)),
+    ("hr", "Home runs", (0.5,)),
+    ("k", "Strikeouts", (0.5, 1.5)),
+    ("bb", "Walks (incl. hit-by-pitch)", (0.5,)),
+    ("s", "Singles", (0.5,)),
+    ("d", "Doubles", (0.5,)),
+    ("rbi", "RBI", (0.5, 1.5)),
+)
+# RBI is measured as the runs that scored on his plate appearance
+# (Statcast's post_bat_score - bat_score on the PA-ending pitch). Official
+# RBI leaves out runs that score on an error or a double play, so this
+# reads slightly HIGH — said under the table (rule 9).
+RBI_NOTE = ("RBI = runs that scored on his plate appearance; the official stat leaves out "
+            "runs on errors and double plays, so this reads a touch high.")
+MAX_RBI = 4
+
+# Pitcher props for tonight's starter against the lineup he faces:
+# (key, label, stat, at_least).
+PITCHER_MARKETS = (
+    ("pk4", "K O3.5", "k", 4),
+    ("pk5", "K O4.5", "k", 5),
+    ("pk6", "K O5.5", "k", 6),
+    ("pk7", "K O6.5", "k", 7),
+    ("ph5", "Hits allowed O4.5", "h", 5),
+    ("ph6", "Hits allowed O5.5", "h", 6),
+    ("pbb2", "Walks+HBP allowed O1.5", "bb", 2),
+    ("phr1", "HR allowed O0.5", "hr", 1),
+)
+PITCHER_STATS = (
+    ("k", "Strikeouts", (3.5, 4.5, 5.5, 6.5)),
+    ("h", "Hits allowed", (4.5, 5.5)),
+    ("bb", "Walks allowed (incl. HBP)", (1.5,)),
+    ("hr", "HR allowed", (0.5,)),
 )
 
 
@@ -103,6 +153,26 @@ def outcome_counts(df):
     d = {o: int(out.get(o, 0)) for o in OUTCOMES}
     d["PA"] = sum(d.values())
     return d
+
+
+def with_prior(counts, prior_counts, weight):
+    """This season's outcome counts plus LAST season's at the fitted
+    weight (prop_model.json "prior_weight"; model_math.fit_prior_weight).
+    Either may be missing; neither is ever invented."""
+    if not prior_counts or not weight:
+        return counts
+    out = {o: (counts or {}).get(o, 0) + weight * prior_counts.get(o, 0) for o in OUTCOMES}
+    out["PA"] = sum(out[o] for o in OUTCOMES)
+    out["PA_this_season"] = (counts or {}).get("PA", 0)
+    out["PA_last_season"] = prior_counts.get("PA", 0)
+    return out
+
+
+def player_counts(model, pid, counts, kind="batter"):
+    """counts with last season folded in, for a batter or a pitcher."""
+    pw = (model or {}).get("prior_weight") or {}
+    pri = ((model or {}).get(f"prior_{kind}s") or {}).get(str(pid))
+    return with_prior(counts, pri, pw.get(kind) or 0.0)
 
 
 def shrunk_rates(counts, priors):
@@ -177,33 +247,76 @@ def scenario_mass(slot, team_pa_hist, bf_dist):
     return dict(out)
 
 
-def _count_pmfs(p_sp, p_pen, n_sp, n_pen):
-    """Exact pmfs of hits, TB, HR, K over n_sp + n_pen PAs."""
-    h = [1.0]
-    tb = [1.0]
-    hr = [1.0]
-    k = [1.0]
+def _steps(probs, rbi_given=None):
+    """One plate appearance's distribution for every stat the page prices.
+
+    rbi_given: {outcome: [P(0 RBI), P(1), ...]} for this lineup slot,
+    MEASURED by the nightly (league-wide, by slot and outcome). None ->
+    no RBI distribution (an older prop file), and the RBI markets are
+    left out rather than guessed."""
+    ph = sum(probs[o] for o in TB)
+    tb = [0.0] * 5
+    for o, p in probs.items():
+        tb[TB.get(o, 0)] += p
+    st = {"h": [1 - ph, ph], "tb": tb, "hr": [1 - probs["HR"], probs["HR"]],
+          "k": [1 - probs["K"], probs["K"]], "bb": [1 - probs["BB"], probs["BB"]],
+          "s": [1 - probs["1B"], probs["1B"]], "d": [1 - probs["2B"], probs["2B"]]}
+    if rbi_given:
+        r = [0.0] * (MAX_RBI + 1)
+        for o, p in probs.items():
+            dist = rbi_given.get(o)
+            if not dist:
+                r[0] += p
+                continue
+            for k, q in enumerate(dist[:MAX_RBI + 1]):
+                r[k] += p * q
+        st["rbi"] = r
+    return st
+
+
+def _count_pmfs(p_sp, p_pen, n_sp, n_pen, rbi_given=None):
+    """Exact pmfs of every stat over n_sp + n_pen PAs."""
+    out = None
     for probs, n in ((p_sp, n_sp), (p_pen, n_pen)):
         if n <= 0:
             continue
-        ph = sum(probs[o] for o in TB)
-        step_h = [1 - ph, ph]
-        step_tb = [0.0] * 5
-        for o, p in probs.items():
-            step_tb[TB.get(o, 0)] += p
-        step_hr = [1 - probs["HR"], probs["HR"]]
-        step_k = [1 - probs["K"], probs["K"]]
+        steps = _steps(probs, rbi_given)
+        if out is None:
+            out = {k: [1.0] for k in steps}
         for _ in range(n):
-            h = mm.convolve(h, step_h)
-            tb = mm.convolve(tb, step_tb)
-            hr = mm.convolve(hr, step_hr)
-            k = mm.convolve(k, step_k)
-    return {"h": h, "tb": tb, "hr": hr, "k": k}
+            for k, step in steps.items():
+                out[k] = mm.convolve(out[k], step)
+    if out is None:
+        keys = ("h", "tb", "hr", "k", "bb", "s", "d") + (("rbi",) if rbi_given else ())
+        out = {k: [1.0] for k in keys}
+    return out
+
+
+def _mix(acc, pmfs, w):
+    for k, pmf in pmfs.items():
+        cur = acc.setdefault(k, [])
+        if len(cur) < len(pmf):
+            cur.extend([0.0] * (len(pmf) - len(cur)))
+        for i, p in enumerate(pmf):
+            cur[i] += w * p
+
+
+def _trim(pmf, eps=1e-7):
+    out = list(pmf)
+    while len(out) > 1 and out[-1] < eps:
+        out.pop()
+    return [round(x, 7) for x in out]
+
+
+def rbi_table(model, slot):
+    """{outcome: [P(r RBI)]} for a lineup slot, or None."""
+    t = (model or {}).get("rbi_given") or {}
+    return t.get(str(slot)) or t.get("all")
 
 
 def project_batter(slot, b_counts, p_counts, model, bf_dist=None):
     """{"exp_pa", "probs": {market: p}, "fair": {market: american},
-        "pa": batter PA on record} or None.
+        "pmfs": {stat: [P(0), P(1), ...]}, "pa": batter PA on record} or None.
 
     model: the nightly's prop_model.json dict (league rates, priors,
     team PA histogram). p_counts None means the starter is unknown or
@@ -220,33 +333,100 @@ def project_batter(slot, b_counts, p_counts, model, bf_dist=None):
         return None
     p_sp = combine(b, p, league)
     p_pen = dict(b)
+    rbi_given = rbi_table(model, int(slot))
     scen = scenario_mass(int(slot), hist, bf_dist if p else None)
-    totals = {m[0]: 0.0 for m in MARKETS}
+    mix = {}
     exp_pa = 0.0
+    tot_w = 0.0
     for (n, n_sp), w in scen.items():
         exp_pa += n * w
-        pm = _count_pmfs(p_sp, p_pen, n_sp, n - n_sp)
-        for key, _label, stat, at_least in MARKETS:
-            totals[key] += w * (mm.prob_at_least(pm[stat], at_least) or 0.0)
-    probs = {k: round(v, 4) for k, v in totals.items()}
+        tot_w += w
+        _mix(mix, _count_pmfs(p_sp, p_pen, n_sp, n - n_sp, rbi_given), w)
+    if tot_w:
+        mix = {k: [x / tot_w for x in v] for k, v in mix.items()}
+    probs = {}
+    for key, _label, stat, at_least in MARKETS:
+        if stat in mix:
+            probs[key] = round(mm.prob_at_least(mix[stat], at_least) or 0.0, 4)
     return {
         "exp_pa": round(exp_pa, 2),
         "probs": probs,
         "fair": {k: mm.fair_american(v) for k, v in probs.items()},
+        "pmfs": {k: _trim(v) for k, v in mix.items()},
         "pa": int((b_counts or {}).get("PA", 0)),
         "vs_starter": p is not None,
     }
 
 
-def starter_bf_dist(bf_list, model):
-    """{bf: prob} for a starter — his own starts mixed with the league's
-    by the fitted strength (in starts). No starts -> the league's."""
+def project_pitcher(order_counts, p_counts, model, bf_dist):
+    """Tonight's starter against the lineup he faces.
+
+    order_counts: nine entries in batting order, each a batter's outcome
+    counts (None = no record -> that slot is the league prior, and the
+    caller says how many). bf_dist: his batters-faced distribution
+    (starter_bf_dist). Plate appearance j goes to slot ((j - 1) mod 9) + 1
+    and ends in an outcome from the odds-ratio combination of that
+    batter and this pitcher — the same per-PA model as the batter props,
+    seen from the mound.
+
+    Returns {"exp_bf", "probs": {market: p}, "pmfs": {stat: pmf}} or None.
+
+    How long he lasts is his own BF distribution, taken as independent of
+    how the game goes. In reality a starter getting hit is pulled
+    earlier, so hits allowed run slightly wider than this; the nightly's
+    walk-forward against his own rate is the check.
+    """
+    if not model or not bf_dist or not order_counts:
+        return None
+    league = model.get("league_rates")
+    pri_b, pri_p = model.get("batter_priors"), model.get("pitcher_priors")
+    pr = shrunk_rates(p_counts, pri_p) if p_counts and p_counts.get("PA") else None
+    if not league or not pr:
+        return None
+    per_slot = []
+    for i in range(9):
+        bc = order_counts[i] if i < len(order_counts) else None
+        b = shrunk_rates(bc or {"PA": 0}, pri_b)
+        if not b:
+            return None
+        per_slot.append(_steps(combine(b, pr, league)))
+    max_bf = max(int(k) for k in bf_dist)
+    cur = {k: [1.0] for k in per_slot[0]}
+    mix = {}
+    exp_bf = 0.0
+    tot_w = 0.0
+    for j in range(1, max_bf + 1):
+        steps = per_slot[(j - 1) % 9]
+        cur = {k: mm.convolve(cur[k], steps[k]) for k in cur}
+        w = bf_dist.get(j, 0.0) or bf_dist.get(str(j), 0.0)
+        if w:
+            _mix(mix, cur, w)
+            exp_bf += j * w
+            tot_w += w
+    if not tot_w:
+        return None
+    mix = {k: [x / tot_w for x in v] for k, v in mix.items()}
+    probs = {key: round(mm.prob_at_least(mix[stat], n) or 0.0, 4)
+             for key, _l, stat, n in PITCHER_MARKETS}
+    return {"exp_bf": round(exp_bf / tot_w, 1), "probs": probs,
+            "pmfs": {k: _trim(v) for k, v in mix.items()},
+            "exp": {k: round(sum(i * p for i, p in enumerate(v)), 2) for k, v in mix.items()}}
+
+
+def starter_bf_dist(bf_list, model, prior_bf=None):
+    """{bf: prob} for a starter — his own starts (last season's counted at
+    the FITTED prior_weight["bf"]) mixed with the league's by the fitted
+    strength (in starts). No starts -> the league's."""
     league = {int(k): v for k, v in (model.get("league_bf_hist") or {}).items()}
     s = model.get("bf_strength_starts")
     ltot = sum(league.values())
     if not league or not ltot:
         return None
     own = Counter(int(b) for b in (bf_list or []))
+    w_bf = ((model.get("prior_weight") or {}).get("bf") or 0.0)
+    if prior_bf and w_bf:
+        for b in prior_bf:
+            own[int(b)] += w_bf
     n = sum(own.values())
     w_own = n / (n + s) if (s and n) else 0.0
     out = Counter()
@@ -280,13 +460,13 @@ def load_prop_model():
     return None
 
 
-def market_verdicts(model):
+def market_verdicts(model, pitcher=False):
     """{market_key: 'beats' | 'thin' | 'fails' | None} — the paired
-    significance verdict vs the batter's own frequency; a prop model from
+    significance verdict vs the player's own frequency; a prop model from
     before verdicts existed falls back to the plain beat/fail boolean."""
-    v = (model or {}).get("validation") or {}
+    v = (model or {}).get("pitcher_validation" if pitcher else "validation") or {}
     out = {}
-    for k, *_ in MARKETS:
+    for k, *_ in (PITCHER_MARKETS if pitcher else MARKETS):
         x = v.get(k) or {}
         verdict = (x.get("verdict") or {}).get("verdict")
         if verdict is None and "beats_baseline" in x:

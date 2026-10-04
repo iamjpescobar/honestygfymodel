@@ -141,7 +141,21 @@ def validate(finals, params, prior_totals=None, prior_league=None):
     }
 
 
-def build(current_finals, prior_finals=None):
+def current_lines(finals):
+    """{line_key: {"odds","home_abbr","away_abbr"}} from this season's
+    finals rows that carry the line recorded for them (nfl_precompute
+    reads it off the scoreboard, else the summary's pickcenter)."""
+    from engines import market_blend as mb
+    out = {}
+    for f in finals or []:
+        if f.get("odds") and f.get("home_id") and f.get("away_id") and f.get("date"):
+            out[mb.line_key(f["date"], str(f["home_id"]), str(f["away_id"]))] = {
+                "odds": f["odds"], "home_abbr": f.get("home_abbr") or "",
+                "away_abbr": f.get("away_abbr") or ""}
+    return out
+
+
+def build(current_finals, prior_finals=None, prior_lines=None):
     cur = gm.clean_finals(rows(current_finals))
     prior = gm.clean_finals(rows(prior_finals)) if prior_finals else []
     prior_totals = prior_league = None
@@ -168,7 +182,15 @@ def build(current_finals, prior_finals=None):
     targets = gm.prior_targets(prior_totals, prior_league, lg, carry)
     rates = gm.team_rates(gm.team_totals(cur), lg, params["shrink_k"], targets)
     report = validate(*report_args[:1], params, *report_args[1:])
+    lines = dict(prior_lines or {})
+    lines.update(current_lines(current_finals))
+    try:
+        blend = fit_blend(current_finals, prior_finals, params, lines, prior_totals, prior_league)
+    except Exception as exc:  # noqa: BLE001 — costs the blend, never the model
+        print(f"::warning::NFL market blend failed: {type(exc).__name__}: {exc}")
+        blend = {}
     return {
+        "blend": blend,
         "params": params, "league": consts,
         "rates": {t: {"off": round(o, 3), "def": round(d, 3),
                       "gp": (gm.team_totals(cur).get(t) or {}).get("gp", 0)}
@@ -198,16 +220,12 @@ def project(model, home_id, away_id, odds=None, home_abbr="", away_abbr=""):
     o = odds or {}
     # The posted spread is only read through the same favourite check
     # nfl_projection applies — a backwards sign would invert the cover
-    # probability and look like a confident edge.
+    # probability and look like a confident edge. market_blend.home_spread
+    # repeats that check (and adds the moneyline's) before pricing it.
     from engines.nfl_projection import implied_totals
     a_imp, h_imp, why = implied_totals(o, away_abbr, home_abbr)
     if o.get("spread") is not None and h_imp is not None and not why:
-        s = float(o["spread"])
-        pc = mm.normal_cdf(margin + s, 0, sd_m)
-        out.update({"market_spread_home": s, "p_home_cover": round(pc, 4),
-                    "fair_cover_home": mm.fair_american(pc),
-                    "fair_cover_away": mm.fair_american(1 - pc),
-                    "market_home_pts": h_imp, "market_away_pts": a_imp})
+        out.update({"market_home_pts": h_imp, "market_away_pts": a_imp})
     elif why:
         out["market_note"] = why
     if o.get("total") is not None:
@@ -218,4 +236,43 @@ def project(model, home_id, away_id, odds=None, home_abbr="", away_abbr=""):
     if mh is not None:
         out.update({"market_home": round(mh, 4), "market_away": round(ma, 4),
                     "edge_home": round(ph - mh, 4)})
+    out.update({"mu_home": mu_h, "mu_away": mu_a, "sd_margin": sd_m, "sd_total": sd_t})
+    # Every probability a bet is priced with is anchored to the market by
+    # the model's FITTED weight (engines/market_blend, the 10-04 formula).
+    from engines import market_blend as mb
+    mb.apply(out, model.get("blend"), o, home_abbr, away_abbr,
+             p_cover_fn=lambda s: mm.normal_cdf(margin + s, 0, sd_m))
     return out
+
+
+def blend_fns(sd_margin, sd_total):
+    """(p_over_fn, p_cover_fn) for market_blend over walk-forward preds —
+    the same normal margin/total the page prices with."""
+    def p_over(pred, line):
+        return 1 - mm.normal_cdf(line, pred["mu_h"] + pred["mu_a"], sd_total)
+
+    def p_cover(pred, s):
+        return mm.normal_cdf(pred["mu_h"] - pred["mu_a"] + s, 0, sd_margin)
+    return p_over, p_cover
+
+
+def fit_blend(cur_finals, prior_finals, params, lines, prior_totals=None, prior_league=None):
+    """The model's weight against the market, per market, from every
+    game with a walk-forward prediction AND a recorded line: last season
+    (its own walk-forward) and this season (carried over from last).
+
+    lines: {line_key(date, home_id, away_id): {"odds","home_abbr","away_abbr"}}.
+    """
+    from engines import market_blend as mb
+    preds = []
+    if prior_finals:
+        preds += _wf(gm.clean_finals(rows(prior_finals)), params["shrink_k"])
+    cur = gm.clean_finals(rows(cur_finals))
+    if cur:
+        preds += _wf(cur, params["shrink_k"], params.get("carryover"),
+                     prior_totals, prior_league)
+    sd_m, sd_t = params["sd_margin"], params["sd_total"]
+    for p in preds:
+        p["p_home"] = mm.normal_cdf(p["mu_h"] - p["mu_a"], 0, sd_m)
+    p_over, p_cover = blend_fns(sd_m, sd_t)
+    return mb.fit_all(preds, lines, p_over, p_cover)

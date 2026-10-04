@@ -286,6 +286,181 @@ def team_game_usage(logs):
     return out
 
 
+# ----------------------------------------------------------------------
+# LAST SEASON for every player (10-04)
+# ----------------------------------------------------------------------
+PRIOR_PLAYERS_PATH = ROOT / "data" / "nfl" / "prior_players.json"
+# Families of numbers, each with its OWN fitted weight for last season:
+# (name, kind, [(x key, n key)], how the league prior is fitted)
+PRIOR_FAMILIES = (
+    ("share", "binomial", [("car", "tc"), ("tgt", "tt")]),
+    ("catch", "binomial", [("rec", "tgt")]),
+    ("ypc", "poisson", [("ry", "car")]),
+    ("ypt", "poisson", [("cy", "tgt")]),
+    ("td", "binomial", [("td", "opps")]),
+    ("qb_rate", "binomial", [("pa_cmp", "pa_att"), ("pa_td", "pa_att"), ("pa_int", "pa_att")]),
+    ("ypa", "poisson", [("pa_yds", "pa_att")]),
+)
+
+
+def prior_weights(players, prior_players):
+    """{family: weight} — how much a unit of LAST season's evidence is
+    worth next to this season's, FITTED per family on every player in
+    both (model_math.fit_prior_weight: this season's totals predicted
+    from last season's alone plus a league prior fitted on this season).
+    Yardage rates use the Poisson likelihood as a quasi-likelihood — the
+    weight is a rate's weight, which is what it estimates. 0 when nobody
+    is in both seasons."""
+    from engines import model_math as mm
+    out, report = {}, {}
+    for fam, kind, keys in PRIOR_FAMILIES:
+        groups = []
+        for xk, nk in keys:
+            pairs, obs = [], []
+            for pid, p in (players or {}).items():
+                t1 = p.get("tot") or {}
+                if t1.get(nk):
+                    obs.append((t1.get(xk) or 0, t1[nk]))
+                t0 = ((prior_players or {}).get(pid) or {}).get("tot") or {}
+                if t0.get(nk) and t1.get(nk):
+                    pairs.append(((t0.get(xk) or 0, t0[nk]), (t1.get(xk) or 0, t1[nk])))
+            if not pairs:
+                continue
+            if kind == "binomial":
+                mean, strength = mm.fit_beta_prior(obs)
+            else:
+                mean, strength = mm.fit_gamma_prior(obs)
+            if mean is not None:
+                groups.append((pairs, mean, strength))
+        r = mm.fit_prior_weight(groups, kind=kind) if groups else None
+        out[fam] = (r or {}).get("weight", 0.0)
+        report[fam] = r
+    return out, report
+
+
+def merge_prior(p, prev, weights):
+    """This season's player summary with LAST season's evidence folded in
+    at the fitted weights. Returns a new dict; p itself is untouched.
+
+    Every rate the projection reads is recomputed from weighted SUMS:
+        carry_share = (car + w car_ly) / (team car + w team car_ly)
+    and so on. Flags `last_season_team` when he played for someone else,
+    so the board can say a share was earned on another team."""
+    if not prev or not weights or not (prev.get("tot")):
+        return p
+    t, t0 = p.get("tot") or {}, prev["tot"]
+    q = dict(p)
+
+    def comb(fam, xk, nk):
+        w = weights.get(fam) or 0.0
+        n = (t.get(nk) or 0) + w * (t0.get(nk) or 0)
+        return ((t.get(xk) or 0) + w * (t0.get(xk) or 0)) / n if n else None
+
+    for key, fam, xk, nk, nd in (("carry_share", "share", "car", "tc", 3),
+                                 ("target_share", "share", "tgt", "tt", 3),
+                                 ("ypc", "ypc", "ry", "car", 2),
+                                 ("yards_per_target", "ypt", "cy", "tgt", 2),
+                                 ("catch_rate", "catch", "rec", "tgt", 3)):
+        v = comb(fam, xk, nk)
+        if v is not None:
+            q[key] = round(v, nd)
+    # Quarterback: per-game averages from weighted sums over weighted games.
+    wq, wy = weights.get("qb_rate") or 0.0, weights.get("ypa") or 0.0
+    g_cur, g_ly = t.get("pa_games") or 0, t0.get("pa_games") or 0
+    if g_cur or (g_ly and (wq or wy)):
+        att = (t.get("pa_att") or 0) + wq * (t0.get("pa_att") or 0)
+        gw = g_cur + wq * g_ly
+        if gw:
+            q["pass_gp"] = round(gw, 2)
+            q["pass_att"] = round(att / gw, 1)
+            q["pass_cmp"] = round(((t.get("pa_cmp") or 0) + wq * (t0.get("pa_cmp") or 0)) / gw, 2)
+            q["pass_td"] = round(((t.get("pa_td") or 0) + wq * (t0.get("pa_td") or 0)) / gw, 3)
+            q["pass_int"] = round(((t.get("pa_int") or 0) + wq * (t0.get("pa_int") or 0)) / gw, 3)
+            ypa = comb("ypa", "pa_yds", "pa_att")
+            if ypa is not None:
+                q["pass_yds"] = round(ypa * q["pass_att"], 1)
+    # Touchdowns: the opportunity-based estimator reads opps x td_games
+    # as touches and td_total as scores — both become weighted sums.
+    w = weights.get("td") or 0.0
+    tg = (t.get("td_games") or 0) + w * (t0.get("td_games") or 0)
+    if tg:
+        q["td_games"] = round(tg, 2)
+        q["td_total"] = round((t.get("td") or 0) + w * (t0.get("td") or 0), 2)
+        q["opps"] = round(((t.get("opps") or 0) + w * (t0.get("opps") or 0)) / tg, 2)
+    q["gp_last_season"] = t0.get("games") or 0
+    if prev.get("team") and p.get("team") and prev["team"] != p["team"]:
+        q["last_season_team"] = prev["team"]
+    q["prior_merged"] = True
+    return q
+
+
+def load_or_fetch_prior_players(prior_finals, summary_fn, path=None, sleep=0.05):
+    """{pid: compact 2025 summary} — every 2025 regular-season box score,
+    parsed by the SAME parser this season uses, fetched once and committed
+    (the nightly's NFL commit step). {} if nothing parsed."""
+    path = Path(path or PRIOR_PLAYERS_PATH)
+    if path.exists():
+        try:
+            return json.loads(path.read_text()).get("players") or {}
+        except Exception as exc:          # noqa: BLE001
+            print(f"  prior players file unreadable ({exc}) — refetching")
+    if not prior_finals:
+        return {}
+    logs = {}
+    parsed = 0
+    for f in prior_finals:
+        eid = f.get("event_id")
+        if not eid:
+            continue
+        try:
+            _lines, n = parse_summary_final(summary_fn(eid), eid, f["date"], None, logs)
+            parsed += 1 if n else 0
+        except Exception as exc:          # noqa: BLE001
+            print(f"  prior summary {eid} failed: {exc}")
+        time.sleep(sleep)
+    print(f"  [verify] NFL prior players: {parsed}/{len(prior_finals)} box scores parsed, "
+          f"{len(logs)} players")
+    if parsed < 0.9 * len(prior_finals):
+        print("::warning::NFL prior box scores short — not saved; players run on this season alone.")
+        return {}
+    summ = player_summaries(logs, team_game_usage(logs))
+    out = {pid: {"name": s.get("name"), "team": s.get("team"), "pos": s.get("pos"),
+                 "tot": s.get("tot")} for pid, s in summ.items() if s.get("tot")}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"season": 2025, "players": out}, separators=(",", ":")))
+    return out
+
+
+def qb_rate_priors(logs):
+    """{"qb_priors": {"cmp"|"td"|"int": [mean, strength]}} — per-attempt
+    completion, touchdown and interception rates, each a beta-binomial
+    FITTED over every passer's season (model_math.fit_beta_prior), so how
+    hard a three-game sample is pulled toward the league is whatever the
+    season's own spread supports. {} when nothing to fit."""
+    from engines import model_math as mm
+    obs = {"cmp": [], "td": [], "int": []}
+    for rec in (logs or {}).values():
+        att = cmp_ = td = ints = 0
+        for g in (rec.get("games") or {}).values():
+            pa = g.get("passing") or {}
+            if not pa.get("att"):
+                continue
+            att += pa["att"]
+            cmp_ += pa.get("cmp") or 0
+            td += pa.get("td") or 0
+            ints += pa.get("int") or 0
+        if att >= 1:
+            obs["cmp"].append((cmp_, att))
+            obs["td"].append((td, att))
+            obs["int"].append((ints, att))
+    out = {}
+    for k, o in obs.items():
+        mean, s = mm.fit_beta_prior(o)
+        if mean is not None:
+            out[k] = [round(mean, 5), round(s, 2)]
+    return {"qb_priors": out} if out else {}
+
+
 def td_opportunity_prior(logs):
     """How often a touch becomes a touchdown, and how much to trust one
     player's own rate over the league's. BOTH MEASURED.
@@ -647,6 +822,22 @@ def player_summaries(logs, usage=None):
             s["opps"] = round(sum(per_game_opps) / len(per_game_opps), 1)
             s["opps_l3"] = round(sum(per_game_opps[-3:]) / len(per_game_opps[-3:]), 1)
 
+        # RAW TOTALS (10-04): what last season is merged with, and what the
+        # weight of last season is fitted on (merge_prior, prior_weights).
+        # Sums, never averages — a weight applies to evidence, not to a mean.
+        pa_games = [g.get("passing") or {} for g in games if g.get("passing")]
+        s["tot"] = {
+            "games": len(games), "car": own_car, "tc": tc, "tgt": own_tgt, "tt": tt,
+            "rec": own_rec, "ry": own_ry, "cy": own_cy,
+            "td": sum(per_game_td), "td_games": len(per_game_td), "opps": sum(per_game_opps),
+            "pa_games": len(pa_games),
+            "pa_att": sum(x.get("att") or 0 for x in pa_games),
+            "pa_cmp": sum(x.get("cmp") or 0 for x in pa_games),
+            "pa_yds": sum(x.get("yds") or 0 for x in pa_games),
+            "pa_td": sum(x.get("td") or 0 for x in pa_games),
+            "pa_int": sum(x.get("int") or 0 for x in pa_games),
+        }
+
         s["log"] = [
             {"week": g.get("week"), "opp": g.get("opp"),
              "pass_yds": (g.get("passing") or {}).get("yds"),
@@ -873,6 +1064,10 @@ def main(today=None):
                            "away": g["away"], "home": g["home"],
                            # ids for the game model; names are display only
                            "away_id": g.get("away_id"), "home_id": g.get("home_id"),
+                           "away_abbr": g.get("away_abbr"), "home_abbr": g.get("home_abbr"),
+                           # the line recorded for this final, for the
+                           # model's weight against the market
+                           "odds": ef.recorded_line(g.get("odds"), summ) or None,
                            "away_score": g["away_score"], "home_score": g["home_score"],
                            "away_box": box.get(g["away"]),
                            "home_box": box.get(g["home"])})
@@ -893,6 +1088,7 @@ def main(today=None):
     usage = team_game_usage(logs)
     league = league_constants(finals, usage)
     league.update(td_opportunity_prior(logs))
+    league.update(qb_rate_priors(logs))
     # How widely each prop stat scatters game to game, MEASURED — what
     # turns a projection into an over/under chance (nfl_prop_odds).
     try:
@@ -905,6 +1101,27 @@ def main(today=None):
         print(f"::warning::NFL prop spreads not measured: {exc}")
     teams = attach_ranks(team_research(finals, usage))
     players = player_summaries(logs, usage)
+    # LAST SEASON (10-04): every player's 2025 evidence at fitted weights.
+    # The 2025 finals are loaded ONCE here and reused by the game model.
+    _pf = None
+    try:
+        import nfl_prior_season as _nps
+        _pf = _nps.load_or_fetch(
+            lambda dd: ef.fetch_scoreboard(LEAGUE, dd.strftime("%Y%m%d"))[0], slate_game,
+            path=PRIOR_PATH)
+        prior_players = load_or_fetch_prior_players(
+            _pf, lambda eid: ef.fetch_summary(LEAGUE, eid), path=PRIOR_PLAYERS_PATH)
+        if prior_players:
+            pw, prep = prior_weights(players, prior_players)
+            league["prior_weights"] = pw
+            league["prior_weight_report"] = {k: v for k, v in prep.items() if v}
+            n_both = sum(1 for pid in players if pid in prior_players)
+            players = {pid: merge_prior(p, prior_players.get(pid), pw)
+                       for pid, p in players.items()}
+            print(f"  [verify] NFL last-season weights {pw} — {n_both} of {len(players)} "
+                  f"players have a 2025 line")
+    except Exception as exc:  # noqa: BLE001 — costs last season, never the week
+        print(f"::warning::NFL last-season merge skipped: {type(exc).__name__}: {exc}")
     print(f"NFL: week {wk} ({w_start}..{w_end}) — {len(week_events)} games; "
           f"{parsed}/{finals_seen} finals parsed -> {len(teams)} teams, "
           f"{len(players)} players")
@@ -967,10 +1184,15 @@ def main(today=None):
     try:
         from engines import nfl_game_model as ngm
         import nfl_prior_season as nps
-        prior_finals = nps.load_or_fetch(
+        prior_finals = _pf if _pf is not None else nps.load_or_fetch(
             lambda dd: ef.fetch_scoreboard(LEAGUE, dd.strftime("%Y%m%d"))[0], slate_game,
             path=PRIOR_PATH)
-        model_block = ngm.build(finals, prior_finals)
+        from engines import market_blend as mb
+        model_block = ngm.build(finals, prior_finals, prior_lines=mb.load_lines("nfl_2025"))
+        if model_block:
+            for _m in mb.MARKETS:
+                print(f"  [verify] NFL {mb.describe(model_block.get('blend'), _m)}")
+            print(f"  [verify] NFL market coverage {(model_block.get('blend') or {}).get('coverage')}")
         if model_block:
             for g in week_events:
                 pj = ngm.project(model_block, g.get("home_id"), g.get("away_id"), g.get("odds"),

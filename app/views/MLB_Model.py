@@ -18,6 +18,7 @@ from engines.weather_engine import get_todays_games_with_weather
 from engines.team_abbreviations import team_abbr
 from engines import mlb_game_model as mgm
 from engines import model_view as mv
+from engines import mlb_props as mp
 from engines.roster import get_confirmed_lineup, get_last_starting_lineup
 from engines.live_sync import sync_latest_button
 
@@ -73,12 +74,14 @@ for g in games or []:
     _o = _lines.get(g.get("game_pk"))
     _slate.append((g, _o, mgm.project_game(g.get("home"), g.get("away"), g.get("home_pitcher_id"),
                                            g.get("away_pitcher_id"), model=model, market=_o)))
-mv.render_trust_row([("Moneyline", mv.market_trust(_val, "moneyline")),
-                     ("Total", mv.market_trust(_val, "total"))])
+_blend = model.get("blend")
+mv.render_trust_row([("Moneyline", mv.market_trust(_blend, "moneyline")),
+                     ("Run line", mv.market_trust(_blend, "spread")),
+                     ("Total", mv.market_trust(_blend, "total"))], market=True)
 mv.render_best_value(
     [{"label": f"{team_abbr(g.get('away'))} @ {team_abbr(g.get('home'))}",
       "away": team_abbr(g.get("away")), "home": team_abbr(g.get("home")), "proj": pj, "odds": o}
-     for g, o, pj in _slate], _val, _stk, key="mlb")
+     for g, o, pj in _slate], _blend, _stk, key="mlb")
 with st.expander("Colour key", expanded=False):
     mv.render_model_legend()
 
@@ -97,10 +100,13 @@ for i, (g, _odds, proj) in enumerate(_slate):
         mv.render_game_projection(proj, team_abbr(away), team_abbr(home),
                                   key=f"mlbm_{i}", note=note)
         mv.render_value_panel(proj, _odds, team_abbr(away), team_abbr(home),
-                              key=f"mlbm_{i}", staking=_stk, validation=_val)
-        with st.expander("Player props", expanded=False):
-            for side, team, opp_sp in (("away", away, g.get("home_pitcher_id")),
-                                       ("home", home, g.get("away_pitcher_id"))):
+                              key=f"mlbm_{i}", staking=_stk, validation=_val, blend=_blend)
+        mv.render_alt_lines(proj, team_abbr(away), team_abbr(home), key=f"mlbm_{i}",
+                            sport="mlb")
+        with st.expander("Player props \u2014 batters & starters, any line", expanded=False):
+            for side, team, opp_sp, opp_name in (
+                    ("away", away, g.get("home_pitcher_id"), g.get("home_pitcher")),
+                    ("home", home, g.get("away_pitcher_id"), g.get("away_pitcher"))):
                 lineup, confirmed = get_confirmed_lineup(g.get("game_pk"), side)
                 batters = [p for p in (lineup or []) if not p.get("is_pitcher")]
                 src = "confirmed lineup"
@@ -108,12 +114,22 @@ for i, (g, _odds, proj) in enumerate(_slate):
                     last, last_date, ok = get_last_starting_lineup(team)
                     batters = [p for p in (last or []) if not p.get("is_pitcher")] if ok else []
                     src = f"projected — last game's lineup ({last_date})" if ok else "no lineup"
-                st.markdown(f"**{team_abbr(team)}** · {src}")
+                st.markdown(f"**{team_abbr(team)} bats** · {src}")
                 rows, verdicts, pnote = mv.mlb_lineup_props(batters, opp_sp)
-                mv.render_prop_table(rows, mv.MLB_PROP_COLUMNS, verdicts,
-                                     key=f"mlbm_{i}_{side}", favor_note=pnote)
-                mv.render_prop_value_tool(rows, mv.MLB_PROP_COLUMNS,
-                                          key=f"mlbm_{i}_{side}", staking=_stk)
+                mv.render_prop_board(rows, mp.STATS, mp.MARKETS, verdicts,
+                                     key=f"mlbm_{i}_{side}", staking=_stk,
+                                     info_cols=("#", "Batter", "PA", "Exp PA"),
+                                     favor_note=pnote, unit_note=mp.RBI_NOTE)
+                st.markdown(f"**{opp_name or 'Starter TBD'}** \u2014 pitching to "
+                            f"{team_abbr(team)}")
+                prow, pverd, pnote2 = mv.mlb_starter_props(batters, opp_sp, opp_name)
+                if prow:
+                    mv.render_prop_board([prow], mp.PITCHER_STATS, mp.PITCHER_MARKETS, pverd,
+                                         key=f"mlbm_{i}_{side}_sp", staking=_stk,
+                                         info_cols=("Pitcher", "Starts", "Exp BF", "Exp K"),
+                                         favor_note=pnote2, footnote=mv.MLB_PITCHER_FOOTNOTE)
+                else:
+                    st.caption(pnote2)
             st.caption(mv.MLB_PROP_FOOTNOTE)
 
 footer()

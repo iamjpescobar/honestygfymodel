@@ -122,6 +122,8 @@ def actuals(logs, week):
                                      if (r or c) else None),
                 "Anytime TD": (1 if ((r.get("td") or 0) + (c.get("td") or 0)) >= 1 else 0
                                if (r or c) else None),
+                "Completions": pa.get("cmp"), "Passing TDs": pa.get("td"),
+                "Interceptions": pa.get("int"),
             }
             for m, v in vals.items():
                 if v is not None:
@@ -208,6 +210,8 @@ def main(through=None):
                 a = real.get((pid, market))
                 if a is None:
                     continue
+                if market == "2+ TDs":
+                    continue          # graded with Anytime's TD totals, not here
                 if market == "Anytime TD":
                     b = min(int((r["Proj"] or 0) // 10) * 10, 90)
                     pois[b][0] += a
@@ -218,7 +222,8 @@ def main(through=None):
                 base_key = {"Rushing yards": "rush_yds", "Carries": "rush_att",
                             "Receiving yards": "rece_yds", "Receptions": "rece_rec",
                             "Targets": "rece_tgt", "Passing yards": "pass_yds",
-                            "Pass attempts": "pass_att"}.get(market)
+                            "Pass attempts": "pass_att", "Completions": "pass_cmp",
+                            "Passing TDs": "pass_td", "Interceptions": "pass_int"}.get(market)
                 if base_key and p.get(base_key) is not None:
                     err[(market, "season avg")].append(abs(p[base_key] - a))
                 # Baseline 2: what he did in his most recent game.
@@ -233,7 +238,7 @@ def main(through=None):
     print("MEAN ABSOLUTE ERROR — lower is better. n = player-games scored.")
     print("=" * 68)
     for market in proj.MARKETS:
-        if market == "Anytime TD":
+        if market in ("Anytime TD", "2+ TDs"):
             continue
         line = []
         for method in ("projection", "season avg", "last game"):

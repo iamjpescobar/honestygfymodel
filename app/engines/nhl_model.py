@@ -49,10 +49,30 @@ MARKETS = (
     ("sog2", "SOG O1.5", "sog", 2),
     ("sog3", "SOG O2.5", "sog", 3),
     ("sog4", "SOG O3.5", "sog", 4),
+    ("sog5", "SOG O4.5", "sog", 5),
     ("pt1", "Pts O0.5", "pts", 1),
+    ("pt2", "Pts O1.5", "pts", 2),
     ("g1", "Goal O0.5", "g", 1),
     ("a1", "Ast O0.5", "a", 1),
 )
+# Stat groups on the page: (stat, label, lines shown); any other line is
+# priced by the any-line checker off the same distribution.
+STATS = (
+    ("sog", "Shots on goal", (1.5, 2.5, 3.5, 4.5)),
+    ("pts", "Points", (0.5, 1.5)),
+    ("g", "Goals", (0.5,)),
+    ("a", "Assists", (0.5,)),
+)
+# Goalie saves: (key, label, stat, at_least). Tested at TEAM level on the
+# prior season (validate_saves) — the goalie's own save rate is the only
+# thing the team test does not exercise, and the page says so.
+SAVE_MARKETS = (
+    ("sv23", "Saves O22.5", "sv", 23),
+    ("sv25", "Saves O24.5", "sv", 25),
+    ("sv27", "Saves O26.5", "sv", 27),
+    ("sv29", "Saves O28.5", "sv", 29),
+)
+SAVE_STATS = (("sv", "Saves", (22.5, 24.5, 26.5, 28.5)),)
 # Not a model parameter: how much of the end of a season the props
 # report covers. Printed beside the result.
 VALIDATION_DAYS = 60
@@ -150,6 +170,129 @@ def probs(r, shot_ratio=1.0, goal_ratio=1.0, sog_disp=None):
     out = {k: round(mm.prob_at_least(pm[stat], n), 4) for k, _l, stat, n in MARKETS}
     out["_exp_sog"] = round(sog_mu, 2)
     out["_exp_pts"] = round(g_mu + a_mu, 2)
+    out["_mu"] = {"sog": round(sog_mu, 4), "g": round(g_mu, 4), "a": round(a_mu, 4)}
+    return out
+
+
+def skater_pmfs(mu, sog_disp=None):
+    """{stat: pmf} for a skater's stored tonight-means — what the page's
+    prop board and any-line checker price from. Same distributions as
+    probs(): shots negative binomial at the measured size, goals and
+    assists Poisson, points their (independent) sum."""
+    if not mu:
+        return {}
+    g, a = mu.get("g") or 0.0, mu.get("a") or 0.0
+    return {"sog": mm.nb_pmf(mu.get("sog") or 0.0, sog_disp, 20),
+            "pts": mm.poisson_pmf(g + a, 10), "g": mm.poisson_pmf(g, 10),
+            "a": mm.poisson_pmf(a, 10)}
+
+
+# ----------------------------------------------------------------------
+# Goalie saves
+# ----------------------------------------------------------------------
+def saves_pmf(mu_shots, shot_disp, sv_pct, max_saves=80):
+    """P(saves = k): shots against negative binomial around the shots
+    model's expectation for the OPPONENT (size measured on its residuals),
+    each shot saved with his shrunk save rate (binomial thinning)."""
+    if not mu_shots or sv_pct is None:
+        return None
+    shots = mm.nb_pmf(mu_shots, shot_disp, max_saves)
+    tot = sum(shots)
+    shots = [x / tot for x in shots] if tot else shots      # mass past the cap folded back
+    out = [0.0] * (max_saves + 1)
+    for n, ps in enumerate(shots):
+        if ps < 1e-12:
+            continue
+        # binomial(n, sv) pmf by recurrence
+        q = 1.0 - sv_pct
+        b = q ** n
+        for k in range(n + 1):
+            out[k] += ps * b
+            if k < n:
+                b = b * (n - k) / (k + 1) * (sv_pct / q if q > 0 else 0.0)
+    return out
+
+
+def fit_save_prior(goalies):
+    """(mean, strength in shots) — beta-binomial over every goalie's
+    season saves / shots against, FITTED."""
+    obs = [(int(g.get("sv") or 0), int(g.get("sa") or 0)) for g in (goalies or {}).values()
+           if g.get("sa")]
+    return mm.fit_beta_prior(obs)
+
+
+def goalie_sv(prior_g, cur_g, prior_mean, strength):
+    """His save rate: last season's and this season's saves and shots,
+    pulled toward the league by the fitted strength."""
+    sv = int((prior_g or {}).get("sv") or 0) + int((cur_g or {}).get("sv") or 0)
+    sa = int((prior_g or {}).get("sa") or 0) + int((cur_g or {}).get("sa") or 0)
+    if prior_mean is None or strength is None:
+        return None
+    return (sv + prior_mean * strength) / (sa + strength), sa
+
+
+def shot_dispersion(shot_finals, k):
+    """NB size of team shots on the shots model's walk-forward residuals."""
+    preds = gm.walk_forward(gm.clean_finals(shot_finals), k, score_only=True)
+    pairs = [(p["mu_h"], p["hs"]) for p in preds] + [(p["mu_a"], p["as"]) for p in preds]
+    return mm.nb_dispersion(pairs) if pairs else None
+
+
+def validate_saves(prior_finals, shot_k, days=VALIDATION_DAYS):
+    """Walk-forward, TEAM level, over the last `days` of last season:
+    saves = opponent shots on goal - opponent goals; the model is the
+    shots model's expectation for the opponent with the team's save rate
+    to date (shrunk to the league by a beta prior fitted on teams),
+    against the baseline of the team's own earlier frequency at the line.
+    Tests the machinery a goalie line uses — except his personal rate."""
+    rows = [f for f in prior_finals or [] if f.get("home_sog") is not None
+            and f.get("away_sog") is not None]
+    if len(rows) < 200:
+        return {"note": "not enough finals with shots"}
+    shots = shot_rows(rows)
+    disp = shot_dispersion(shots, shot_k)
+    preds = gm.walk_forward(gm.clean_finals(shots), shot_k, score_only=True)
+    by_game = {(p["date"], p["home"], p["away"]): p for p in preds}
+    dates = sorted({f["date"] for f in rows})
+    cut = dates[-days] if len(dates) > days else dates[0]
+    team = {}
+    team_obs = {}
+    for f in sorted(rows, key=lambda r: r["date"]):
+        for side, opp_sog, opp_g in (("home", f["away_sog"], f["as"]), ("away", f["home_sog"], f["hs"])):
+            t = f[side]
+            team_obs.setdefault(t, []).append((f["date"], opp_sog - opp_g, opp_sog))
+    mean, strength = mm.fit_beta_prior([(sum(x[1] for x in v), sum(x[2] for x in v))
+                                        for v in team_obs.values()])
+    preds_out = {k: [] for k, *_ in SAVE_MARKETS}
+    base = {k: [] for k, *_ in SAVE_MARKETS}
+    for f in rows:
+        if f["date"] < cut:
+            continue
+        p = by_game.get((f["date"], f["home"], f["away"]))
+        if not p:
+            continue
+        for side, mu_opp, opp_sog, opp_g in (("home", p["mu_a"], f["away_sog"], f["as"]),
+                                             ("away", p["mu_h"], f["home_sog"], f["hs"])):
+            before = [x for x in team_obs[f[side]] if x[0] < f["date"]]
+            if not before:
+                continue
+            sv = (sum(x[1] for x in before) + mean * strength) / (sum(x[2] for x in before) + strength)
+            pmf = saves_pmf(mu_opp, disp, sv)
+            actual = opp_sog - opp_g
+            for k, _l, _s, n in SAVE_MARKETS:
+                y = 1 if actual >= n else 0
+                preds_out[k].append((mm.prob_at_least(pmf, n), y))
+                base[k].append((sum(1 for x in before if x[1] >= n) / len(before), y))
+    out = {"from": cut, "to": dates[-1], "days": days, "shot_dispersion": disp,
+           "level": "team"}
+    for k, *_ in SAVE_MARKETS:
+        m, b = mm.score_predictions(preds_out[k]), mm.score_predictions(base[k])
+        out[k] = {"verdict": mm.paired_verdict([(p_ - y) ** 2 for p_, y in preds_out[k]],
+                                               [(q - y) ** 2 for q, y in base[k]]),
+                  "n": m["n"], "model_brier": m["brier"], "baseline_brier": b["brier"],
+                  "beats_baseline": bool(m["brier"] is not None and b["brier"] is not None
+                                         and m["brier"] < b["brier"]),
+                  "calibration": mm.calibration_bins(preds_out[k])}
     return out
 
 
@@ -242,8 +385,42 @@ def pool_skaters(prior_skaters, current_skaters, current_id_of):
     return pool
 
 
+def current_lines(finals):
+    """{line_key: {...}} from this season's finals rows that carry the
+    line recorded for them (nhl_precompute: scoreboard, else pickcenter)."""
+    from engines import market_blend as mb
+    out = {}
+    for f in finals or []:
+        if f.get("odds") and f.get("home") and f.get("away") and f.get("date"):
+            out[mb.line_key(f["date"], str(f["home"]), str(f["away"]))] = {
+                "odds": f["odds"], "home_abbr": f.get("home_abbr") or "",
+                "away_abbr": f.get("away_abbr") or ""}
+    return out
+
+
+def fit_blend(goal, current_finals, prior_finals, lines):
+    """The model's weight against the market, from last season's own
+    walk-forward and this season's carried-over one, joined to recorded
+    lines (market_lines/nhl_2025-26.json + this season's finals)."""
+    from engines import market_blend as mb
+    p = goal["params"]
+    disp = p.get("dispersion")
+    preds = []
+    pf = gm.clean_finals(goal_rows(prior_finals or []))
+    if pf:
+        preds += gm.walk_forward(pf, p["shrink_k"], disp)
+    cur = gm.clean_finals(goal_rows(current_finals or []))
+    if cur:
+        pt = gm.team_totals(pf) if pf else None
+        pl = gm.league_constants(pf)["league_rate"] if pf else None
+        preds += gm.walk_forward(cur, p["shrink_k"], disp, prior_totals=pt,
+                                 prior_league=pl, carryover=p.get("carryover"))
+    p_over, p_cover = gm.blend_fns(disp)
+    return mb.fit_all(preds, lines, p_over, p_cover)
+
+
 def build(current_finals, prior, current_skaters=None, current_id_of=None, slate=None,
-          regular_ids=None):
+          regular_ids=None, prior_lines=None):
     """Fit everything, attach projections to `slate` in place, return the
     model block for games.json."""
     prior = prior or {}
@@ -263,12 +440,32 @@ def build(current_finals, prior, current_skaters=None, current_id_of=None, slate
         goal_k=goal["params"]["shrink_k"],
         shot_k=(shots or {}).get("params", {}).get("shrink_k")) if pf else {"note": "no prior season file"}
 
+    if prior_lines is None:
+        from engines import market_blend as mb
+        prior_lines = mb.load_lines("nhl_2025-26")
+    lines = dict(prior_lines or {})
+    lines.update(current_lines(current_finals))
+    try:
+        goal["blend"] = fit_blend(goal, current_finals, pf, lines)
+    except Exception as exc:  # noqa: BLE001 — costs the blend, never the model
+        print(f"::warning::NHL market blend failed: {type(exc).__name__}: {exc}")
+        goal["blend"] = {}
+
+    save_prior = fit_save_prior(prior.get("goalies")) if prior.get("goalies") else (None, None)
+    shot_k = (shots or {}).get("params", {}).get("shrink_k")
+    shot_disp = shot_dispersion(shot_rows(pf) if pf else shot_rows(current_finals),
+                                shot_k) if shots and shot_k else None
+    try:
+        sval = validate_saves(pf, shot_k) if pf and shot_k else {"note": "no prior season file"}
+    except Exception as exc:  # noqa: BLE001 — costs the saves test, never the model
+        print(f"::warning::NHL saves validation failed: {type(exc).__name__}: {exc}")
+        sval = {"note": f"validation failed: {type(exc).__name__}"}
+
     for g in slate or []:
         hid, aid = g.get("home_id"), g.get("away_id")
         o = g.get("odds") or {}
-        proj = gm.project(goal, hid, aid, market={"home_ml": o.get("home_ml"),
-                                                  "away_ml": o.get("away_ml"),
-                                                  "total": o.get("total")})
+        proj = gm.project(goal, hid, aid, market=o,
+                          home_abbr=g.get("home_abbr") or "", away_abbr=g.get("away_abbr") or "")
         if proj:
             g["model"] = proj
         if not priors or not proj:
@@ -295,15 +492,35 @@ def build(current_finals, prior, current_skaters=None, current_id_of=None, slate
                 rows.append({"pid": sk.get("pid"), "name": sk.get("name") or p.get("name"),
                              "pos": sk.get("pos") or p.get("pos"), "gp": r["gp"],
                              "toi": sk.get("toi"), "exp_sog": pr["_exp_sog"],
-                             "exp_pts": pr["_exp_pts"],
+                             "exp_pts": pr["_exp_pts"], "mu": pr["_mu"],
                              "probs": {k: pr[k] for k, *_ in MARKETS}})
             g[f"{side}_props"] = rows
             g[f"{side}_env"] = {"goal_ratio": round(gr, 3), "shot_ratio": round(sr, 3)}
+            # GOALIES of this side face the OTHER side's shots.
+            mu_against = s_a if side == "home" else s_h
+            if mu_against and save_prior[0] is not None:
+                grows = []
+                for gk in (g.get(f"{side}_goalies") or [])[:2]:
+                    gid = str(gk.get("pid"))
+                    res = goalie_sv((prior.get("goalies") or {}).get(gid), gk,
+                                    save_prior[0], save_prior[1])
+                    if not res:
+                        continue
+                    sv, sa_seen = res
+                    grows.append({"pid": gid, "name": gk.get("name"),
+                                  "starts": gk.get("starts"), "crease": gk.get("crease_share"),
+                                  "shots_seen": sa_seen, "sv_pct": round(sv, 4),
+                                  "exp_sa": round(mu_against, 2),
+                                  "exp_saves": round(mu_against * sv, 2)})
+                g[f"{side}_goalie_props"] = grows
 
     return {
+        "blend": goal["blend"],
         "params": goal["params"], "league": goal["league"], "validation": goal["validation"],
         "shots": {"params": (shots or {}).get("params"),
-                  "league": (shots or {}).get("league")},
+                  "league": (shots or {}).get("league"), "dispersion": shot_disp},
+        "save_prior": {"mean": save_prior[0], "strength_shots": save_prior[1]},
+        "saves_validation": sval,
         "skater_priors": priors,
         "props_validation": pval,
         "prior_season": prior.get("season"),

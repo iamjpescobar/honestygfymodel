@@ -1,0 +1,56 @@
+name: Market history
+
+# Manual, run ONCE (and again only if a file is lost or the parser
+# changes). Records ESPN's line for every final the game models are
+# fitted on — NFL 2025, NHL 2025-26, MLB 2026 regular season — into
+# data/market_lines/, and commits it. The nightly reads these files to
+# measure how much say each model has earned against the market
+# (engines/market_blend). Until this has run, every Final % on the model
+# pages IS the market's own chance and the pages say so.
+#
+# The ONLY writer of data/market_lines/ (one owner per file). This
+# season's NFL and NHL lines ride on the nightly's own finals and are
+# never written here.
+#
+# Read the [verify] lines: finals walked, how many carried a line, how
+# many of those came from the summary fallback, and how many totals and
+# spreads had real prices.
+on:
+  workflow_dispatch:
+    inputs:
+      sports:
+        description: "Which sports (space separated): nfl nhl mlb"
+        required: false
+        default: "nfl nhl mlb"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-archive
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: pip install -c requirements.txt requests
+      - name: Record the market's line for every past final
+        run: python market_history.py ${{ github.event.inputs.sports }}
+      - name: Commit the market-line files
+        run: |
+          if [ -z "$(git status --porcelain -- data/market_lines)" ]; then
+            echo "No change to data/market_lines."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/market_lines
+          git commit -m "chore: recorded market lines for the model blend [skip ci]"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

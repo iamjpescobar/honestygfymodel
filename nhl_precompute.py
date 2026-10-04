@@ -39,6 +39,8 @@ LOOKAHEAD_DAYS = 21
 # Last season, committed by the manual nhl-prior-season workflow
 # (nhl_prior_season.py). Module-level so tests can point it elsewhere.
 PRIOR_PATH = ROOT / "data" / "nhl" / "prior_season.json"
+# Top plays record (engines/top_plays_board); module-level so tests sandbox it.
+TOP_PLAYS_ROOT = ROOT / "data" / "top_plays"
 # The graded model-picks record (engines/model_picks). Module-level so a
 # pipeline under test writes to its sandbox, never the repo's record.
 PICKS_ROOT = ROOT / "data" / "model_picks"
@@ -288,6 +290,8 @@ def goalie_summaries(goalies, regular_ids, team_games):
         mine = sum(1 for eid in recent if (rec["games"].get(eid) or {}).get("started"))
         s = {"pid": pid, "name": rec["name"], "team": rec.get("team"),
              "abbr": rec.get("abbr"), "gp": len(gs), "starts": len(starts),
+             # raw counts, for the saves model's shrunk save rate
+             "sa": sa, "sv": sv,
              "sv_pct": round(sv / sa, 3) if sa else None,
              "gaa": round(ga * 60.0 / toi, 2) if toi else None,
              "sa_per60": round(sa * 60.0 / toi, 1) if toi else None,
@@ -427,7 +431,12 @@ def main(today=None):
                            "away_box": tb.get(g["away"]), "home_box": tb.get(g["home"]),
                            # ids for the model — names change between
                            # seasons (Utah), ids do not.
-                           "away_id": g.get("away_id"), "home_id": g.get("home_id")})
+                           "away_id": g.get("away_id"), "home_id": g.get("home_id"),
+                           "away_abbr": g.get("away_abbr"), "home_abbr": g.get("home_abbr"),
+                           # the line recorded for this final — what the
+                           # model's weight against the market is fitted
+                           # on (engines/market_blend)
+                           "odds": ef.recorded_line(g.get("odds"), summ) or None})
             id_of[g["away"]], id_of[g["home"]] = g.get("away_id"), g.get("home_id")
             time.sleep(0.1)
         time.sleep(0.1)
@@ -492,7 +501,9 @@ def main(today=None):
         rows = [{"date": f["date"], "home": f["home_id"], "away": f["away_id"],
                  "hs": f["home_score"], "as": f["away_score"], "extra": f.get("extra"),
                  "home_sog": (f.get("home_box") or {}).get("sog"),
-                 "away_sog": (f.get("away_box") or {}).get("sog")}
+                 "away_sog": (f.get("away_box") or {}).get("sog"),
+                 "odds": f.get("odds"), "home_abbr": f.get("home_abbr"),
+                 "away_abbr": f.get("away_abbr")}
                 for f in finals if f.get("home_id") and f.get("away_id")]
         model_block = nhl_model.build(rows, prior, skaters, id_of,
                                       [g for g in slate if g.get("game_type") != "preseason"])
@@ -506,6 +517,17 @@ def main(today=None):
             if v.get("n"):
                 print(f"  [verify] walk-forward {v['n']} games: log loss {v['model']['log_loss']} "
                       f"vs coin {v['coin_flip']['log_loss']} vs home-rate {v['home_rate']['log_loss']}")
+            from engines import market_blend as mb
+            for _m in ("moneyline", "total", "spread"):
+                print(f"  [verify] NHL {mb.describe(model_block.get('blend'), _m)}")
+            print(f"  [verify] NHL market coverage {(model_block.get('blend') or {}).get('coverage')}")
+            _sv = model_block.get("saves_validation") or {}
+            for _k, _label, *_r in nhl_model.SAVE_MARKETS:
+                _x = _sv.get(_k) or {}
+                print(f"  [verify] {_label} (team level) n={_x.get('n')} model {_x.get('model_brier')} "
+                      f"vs own-rate {_x.get('baseline_brier')} -> {(_x.get('verdict') or {}).get('verdict')}")
+            print(f"  [verify] save prior {model_block.get('save_prior')}; shot NB size "
+                  f"{(model_block.get('shots') or {}).get('dispersion')}")
             pv = model_block.get("props_validation") or {}
             for k, label, *_ in nhl_model.MARKETS:
                 x = pv.get(k) or {}
@@ -522,6 +544,21 @@ def main(today=None):
                  "home": g["home"], "away": g["away"], "proj": g.get("model"), "odds": g.get("odds")}
                 for g in slate if g.get("model") and g.get("start_et")], root=PICKS_ROOT)
             print(f"  [verify] NHL value picks logged this run: {_new}")
+            # TOP PLAYS: grade from the finals parsed above, then log
+            # tonight's (engines/top_plays_board). Own try: a failure costs
+            # the plays, never the model or the slate.
+            try:
+                import top_plays_log as tpl
+                from engines import top_plays_board as tpb
+                _box = tpl.nhl_box_by_event(skaters)
+                _g, _v = tpb.grade("nhl", lambda eid: _box.get(str(eid)), root=TOP_PLAYS_ROOT)
+                _plays = tpb.select(tpl.nhl_candidates(slate, slate_date.isoformat()),
+                                    model_block.get("props_validation") or {})
+                _n = tpb.log_plays("nhl", _plays, root=TOP_PLAYS_ROOT)
+                print(f"  [verify] NHL top plays: graded {_g}, voided {_v}; {len(_plays)} "
+                      f"selected, {_n} new logged")
+            except Exception as exc:  # noqa: BLE001
+                print(f"::warning::NHL top plays failed: {type(exc).__name__}: {exc}")
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NHL model failed: {type(exc).__name__}: {exc}")
 

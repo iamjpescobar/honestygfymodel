@@ -231,6 +231,9 @@ def build_mlb_pages(include_admin: bool):
         # The game model + props, slate-wide. Fitted nightly and shown
         # beside its walk-forward record (mlb_model_precompute.py).
         ("Model", "views/MLB_Model.py"),
+        # The most likely proven plays across every sport, with their
+        # graded record (engines/top_plays_board).
+        ("Top Plays", "views/Top_Plays.py"),
         # Slate-wide HR Edge. The Game Card shows one game's version of
         # the same number; this ranks every bat on the slate, and it is
         # the exact list the calibration logger records.
@@ -302,6 +305,7 @@ SPORT_SUBPAGES = {
         ("Prop Lab", "views/NFL_Props.py"),
         ("Projections", "views/NFL_Projections.py"),
         ("Model", "views/NFL_Model.py"),
+        ("Top Plays", "views/Top_Plays.py"),
     ],
     # Hockey is a nightly slate through slate_guard("nhl"). The Crease
     # Report and Shots Lab read regular-season box scores only.
@@ -310,6 +314,7 @@ SPORT_SUBPAGES = {
         ("Crease Report", "views/NHL_Crease.py"),
         ("Shots Lab", "views/NHL_Shots.py"),
         ("Model", "views/NHL_Model.py"),
+        ("Top Plays", "views/Top_Plays.py"),
     ],
 }
 

@@ -207,7 +207,8 @@ def fake_get(url, _attempts=3, summaries=None):
 
 
 def run(get, today):
-    saved = (ef.get_json, npc.time.sleep, npc.PROJECTION_LOG, npc.PRIOR_PATH)
+    saved = (ef.get_json, npc.time.sleep, npc.PROJECTION_LOG, npc.PRIOR_PATH,
+             npc.PRIOR_PLAYERS_PATH)
     ef.get_json = get
     npc.time.sleep = lambda *_a: None
     ef._PREFERRED.clear()
@@ -221,6 +222,7 @@ def run(get, today):
     # Same for the game model's 2025 file: written once when missing, so
     # a pipeline under test must write it to its sandbox, never the repo.
     npc.PRIOR_PATH = Path(tmp) / "prior_season.json"
+    npc.PRIOR_PLAYERS_PATH = Path(tmp) / "prior_players.json"
     npc.PICKS_ROOT = Path(tmp) / "model_picks"
     os.chdir(tmp)
     try:
@@ -228,7 +230,8 @@ def run(get, today):
         return json.loads((Path(tmp) / "build_data/data/nfl/games.json").read_text())
     finally:
         os.chdir(cwd)
-        ef.get_json, npc.time.sleep, npc.PROJECTION_LOG, npc.PRIOR_PATH = saved
+        (ef.get_json, npc.time.sleep, npc.PROJECTION_LOG, npc.PRIOR_PATH,
+         npc.PRIOR_PLAYERS_PATH) = saved
 
 
 # ---------------------------------------------------------------- 2

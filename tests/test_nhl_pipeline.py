@@ -146,6 +146,7 @@ def fake_get(url, _attempts=3, summaries=None):
 hpc.PRIOR_PATH = Path(tempfile.gettempdir()) / "no_such_prior_season.json"
 # ...and its value picks go to a sandbox, never the repo's graded record.
 hpc.PICKS_ROOT = Path(tempfile.mkdtemp()) / "model_picks"
+hpc.TOP_PLAYS_ROOT = Path(tempfile.mkdtemp()) / "top_plays"
 
 
 def run(get, today):

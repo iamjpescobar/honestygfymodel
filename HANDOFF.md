@@ -137,6 +137,253 @@ DOWNSTREAM CAN CATCH.** The board capped per TEAM while its caption said
 a broken model are indistinguishable, and every change resets the
 measurement clock.
 
+**11. A MODEL'S PROBABILITY IS NOT A BET'S PROBABILITY.** The market is
+the prior; a model moves it only by the weight it earned on games it had
+not seen (engines/market_blend). Pricing the model as the truth flagged
+44 NFL bets in 16 games on 10-03.
+
+**12. "BETTER ON AVERAGE, INSIDE THE NOISE" IS NOT PROOF.** A thin
+verdict gets no weight and no stake.
+
+**13. A DEFAULT IN AN INPUT IS A CLAIM.** A price box that starts at -110
+printed "STRONG +23" on a line nobody posts. Start at the neutral value.
+
+**14. LAST SEASON IS EVIDENCE AT A FITTED WEIGHT.** Never 0 by habit,
+never 1 by hope: fit it on the players/teams in both seasons, and check a
+shuffled last season earns nothing.
+
+---
+
+## PICK UP HERE — last season in every model, NFL props on the Model page, Top Plays with a record. 2026-10-04 (2)
+
+**Suite 127, FAILING: none.** Twelve negative controls red by exit code;
+the whole suite green on Python 3.11 too. NFL Model and Top Plays looked
+at in a real browser from fixtures.
+
+### WHY
+
+Izzy: four weeks of NFL and one season of MLB is too little to judge a
+player on — use last season; the NFL Model page had no player props; and
+he wants a page he can hand his friends where everything shown is as
+reliable as it can honestly be. Profit first, most likely outcomes up
+front.
+
+### LAST SEASON, AT A FITTED WEIGHT (model_math.fit_prior_weight)
+
+    rate = (this season + w x last season + league x s) / (n + w x n_ly + s)
+
+w is fitted by maximum likelihood of THIS season's totals predicted from
+LAST season's alone, on everyone in both seasons. A last season shuffled
+across players earns ~0 (asserted, live control in the test); a skill
+that persists earns most of 1.
+
+- **MLB game model**: 2025 finals via statsapi -> game_model.build's
+  walk-forward-fitted team carryover (it existed; MLB never passed a
+  prior). Starters: 2025 runs/outs at weights fitted on starters in both
+  (mlb_model_precompute.fit_starter_prior_weight); a starter with only a
+  2025 line now gets a layer. Validation, blend and page all use it.
+- **MLB props**: 2025 per-player outcome counts from statsapi SEASON
+  stats (one call each for hitting and pitching — not a second Statcast
+  pull) + each 2025 starter's batters-faced. Weights per batter /
+  pitcher / depth fitted in mlb_prop_precompute.fit_prior_weights; the
+  walk-forward folds them in so the verdicts test the model the page uses.
+  A line missing doubles/triples is left out, not split by a guess;
+  traded players keep their largest line.
+- **NFL player props**: every 2025 box score (272 summaries, the SAME
+  parser) -> data/nfl/prior_players.json, raw totals per player
+  (player_summaries now emits `tot`). Seven families with their own
+  weights (shares, catch rate, ypc, ypt, TD per touch, QB rates, ypa —
+  yardage via a quasi-Poisson likelihood). merge_prior recomputes every
+  rate from weighted SUMS and flags a player who changed teams.
+- **NHL** already did this (skaters pooled, team carryover) — unchanged.
+
+Files written ONCE, the first night missing, committed by the nightly:
+data/mlb/prior_season.json (Commit MLB game model), data/nfl/
+prior_players.json (Commit NFL projection log). Under a near-complete
+season they are refused, never saved partial.
+
+### NFL PLAYER PROPS ON THE MODEL PAGE (model_view.render_nfl_props)
+
+Under each game: pick a stat (passing yds/att/completions/TDs/INTs,
+rushing yds, carries, receiving yds, receptions, targets, rush+rec,
+TDs) -> every player's projection and a Low/Mid/High ladder of over
+chances, then any line at your price. Yards are the measured-cv normal
+discretised to whole yards (64.5 = P(65+), same as p_over). Out players
+are left off; Questionable/Doubtful printed. UNTESTED badge — NFL prop
+chances are not graded yet, so they never reach Top Plays.
+
+### TOP PLAYS (views/Top_Plays.py, engines/top_plays_board.py, top_plays_log.py)
+
+- **Props**: only lines whose market BEAT the player's own rate out of
+  sample; probability CALIBRATED through that market's own walk-forward
+  curve (PAV-monotone, linear between bins, flat past the ends) — the
+  page shows what calls like it DELIVERED, not what the model claimed.
+  One play per player; TB O0.5 never beside Hits O0.5. SHOW_N = 10 is a
+  presentation choice. "Worth it at X or better" = fair price at the
+  calibrated chance.
+- **Logged before, graded after**: data/top_plays/mlb.json (slate-picks:
+  grade then log, statsapi boxscore; batter lines from batting, starter
+  plays from the STARTER's pitching line only, walks incl. HBP as the
+  model counts them) and nhl.json (nhl_precompute, graded from the finals
+  it already parsed). DNP -> void. The page leads with PROMISED vs
+  DELIVERED overall and by band.
+- **Game bets**: value at the posted price on the Final chance, ONLY in
+  markets whose blend verdict is "beats" — empty until Market history has
+  run and a market proves itself, and the page says why.
+
+### ALSO
+
+MLB walks markets relabelled "Walks+HBP" (rule 9: the model's walk
+outcome includes HBP; books' walk props do not). edge_tier: +0.0 on the
+printed grid is "none" — a price box at the fair price read THIN.
+
+### FIRST RUNS
+
+Nightly (writes both prior files) -> the next slate-picks run logs MLB
+plays; the nightly logs NHL plays. Read:
+
+    [verify] MLB 2025 prior season: ~2430 finals; N starters, N batters / N pitchers
+    [verify] team carryover from 2025: ..   [verify] starter last-season weight: {..}
+    [verify] last-season weights {'batter': .., 'pitcher': .., 'bf': ..}
+    [verify] NFL prior players: 272/272 box scores ..; NFL last-season weights {..}
+    [verify] top plays mlb: N candidate props, N selected, N new logged
+    [verify] NHL top plays: graded N, voided N; N selected, N new logged
+
+### FILES, 2026-10-04 (2)
+
+    app/engines/top_plays_board.py, app/views/Top_Plays.py, top_plays_log.py   NEW
+    tests/test_prior_season.py, tests/test_top_plays.py                         NEW
+    app/engines/{model_math,mlb_game_model,mlb_props,model_view}.py
+    app/views/{NFL_Model}.py, app/app.py (Top Plays in MLB/NFL/NHL navs)
+    mlb_model_precompute.py, mlb_prop_precompute.py, nfl_precompute.py, nhl_precompute.py
+    .github/workflows/{nightly-data,slate-picks}.yml
+    tests/{test_game_model,test_mlb_props,test_nfl_pipeline,test_nhl_model,test_nhl_pipeline}.py
+    HANDOFF.md, HANDOFF_ARCHIVE.md (09-27 projections entry rotated out)
+
+---
+
+## PICK UP HERE — every bet is priced on the market first, and there are far more props. 2026-10-04
+
+**Suite 124, FAILING: none.** Fourteen negative controls red by exit code.
+Python 3.11 venv (Render's runtime) runs the whole suite green too.
+Pages looked at in a real browser against the site theme (NHL Model and
+NFL Model from fixtures, the MLB prop board from the simulated season).
+
+### WHY: THE FORMULA WAS PRICING THE MODEL AS IF IT WERE THE TRUTH
+
+The first weekend of logged picks said so. NFL: **44 "value" bets out of
+16 games**, edges up to 22 points — Colts-Commanders Over 46.5 at 75% on
+a model whose total TIES the league average (MAE 10.96 vs 10.97). NHL
+10-03: nine moneyline picks, mostly +170 to +230 dogs, 3-6. Every edge
+was model % minus break-even, so whenever the model (team rates, plus
+the MLB starter) disagreed with a market that also knows QBs, goalies,
+injuries and weather, the page called the model right. Staking made it
+worse: nearly every one of those 44 hit the 2% cap — about 88% of the
+bankroll on one Sunday — and many were the same bet twice (ML + spread).
+
+### THE FORMULA (engines/market_blend.py)
+
+    logit(Final) = w * logit(model) + (1 - w) * logit(market no-vig)
+
+w is the MODEL'S WEIGHT, fitted by maximum likelihood on past games that
+have both a walk-forward model prediction and a recorded line, one per
+market (moneyline / total / spread-run line-puck line). It is scored
+CROSS-FITTED (fit on one half, score the other) against the market alone
+with paired_verdict, and the model gets its say ONLY on "beats". "thin"
+is NOT proof — on a simulated season where the market knew every true
+strength, a noisy model still came out thin with w = 0.31 — so thin and
+fails both price at the market. Badges: BEATS MARKET / NOT PROVEN YET /
+MARKET WINS / UNTESTED. Every edge, tier, stake, logged pick and the
+best-value strip use Final. No market line -> no Final -> no edge
+claimed (the model is still shown).
+
+A total with no over/under prices reads as 50% at its own line (that is
+what a total line means); `priced` is recorded and the nightly prints
+the share. The spread's sign is checked against BOTH `details` and the
+moneyline (market_blend.home_spread) — either disagreeing means no
+spread is priced.
+
+**Until the Market history workflow runs, Final IS the market** — the
+pages say so, and value can only come from a better price at the
+reader's book than the posted one.
+
+### THE HISTORY IT IS FITTED ON (market_history.py, NEW manual workflow)
+
+`Market history` (Actions -> Run workflow) walks ESPN for NFL 2025, NHL
+2025-26 and MLB 2026 regular season and writes data/market_lines/
+{nfl_2025, nhl_2025-26, mlb_2026}.json — the scoreboard event's odds,
+else the summary's pickcenter. ONLY writer of data/market_lines/.
+Doubleheaders under one key are dropped, never guessed. The file says
+"recorded line", not "closing line" — ESPN promises nothing more.
+This season's NFL/NHL lines ride on the nightly's own finals rows
+(`odds` via espn_feed.recorded_line), never a second fetch.
+
+### STAKING
+
+One bet per game SIDE: moneyline and spread on the same team are one
+opinion (model_picks.GROUP) — value_bets keeps the higher-EV one, the
+log's first-writer-wins key is (game, group). New "Max per slate"
+setting (default 10%, a bettor preference like the per-bet cap): the
+best-value strip scales every stake down together past it.
+Results splits the record: "Market-anchored (from 10-04)" vs "Model only
+(before 10-04)" — the new formula is judged on its own picks.
+
+### MORE RESEARCH (all from distributions the models already had)
+
+- **MLB batters** — 15 tested lines: hits 0.5/1.5/2.5, TB 0.5-3.5, HR,
+  K 0.5/1.5, walks, singles, doubles, RBI 0.5/1.5. RBI = runs scoring on
+  his PA (post_bat_score - bat_score), from a league table P(RBI | outcome,
+  lineup slot) the nightly MEASURES — reads a touch high vs official RBI
+  (errors, DPs); said under the table. No score columns -> no RBI market.
+- **MLB starters** (mlb_props.project_pitcher) — K 3.5-6.5, hits allowed
+  4.5/5.5, walks 1.5, HR 0.5: each slot of tonight's lineup against him,
+  PA by PA, for his own (shrunk) batters-faced. Walk-forward vs his own
+  rate (mlb_prop_precompute.validate_pitchers). BF is taken as
+  independent of how the game goes (an early hook is not modelled) —
+  stated on the page.
+- **NHL** — skaters any line (SOG to 4.5, points 1.5 added) from stored
+  means (nhl_model.skater_pmfs); **goalie saves** (shots NB at a measured
+  size x his save rate shrunk by a fitted beta prior, last season + this),
+  tested at TEAM level on last season (validate_saves). Both of a team's
+  goalies are priced — who starts is not known until morning skate.
+- **Team totals, alt spreads, alt totals** for all three sports
+  (engines/alt_lines.py) — NFL one-side SD DERIVED from the measured
+  margin/total SDs. Model only: no posted price exists to anchor them.
+- **NFL QB** — completions, passing TDs, interceptions (his per-attempt
+  rate shrunk by a FITTED beta prior, nfl_precompute.qb_rate_priors) and
+  2+ TDs (the anytime Poisson read at two).
+- **Prop board** (model_view.render_prop_board): pick a stat, every
+  tested line in the table, and "check any line at your price" — line
+  defaults to the one nearest 50% for that player, price defaults to the
+  model's fair price so nothing reads as value until a real price is
+  typed. Optional other-side price shows the book's own no-vig chance.
+
+### RULES THIS BATCH ADDS
+
+11, 12 and 13 in STANDING RULES above.
+
+### FOR THE FIRST LOGS
+
+    [verify] MLB moneyline: n=.. market LL .. vs blend (cross-fitted) .. -> beats|thin|fails
+    [verify] NHL/NFL market coverage {... with_line ..}
+    [verify] Hits O0.5 .. RBI O0.5 ..   [verify] K O4.5 .. (starters)
+    [verify] Saves O24.5 (team level) ..   [verify] save prior ..
+    [verify] RBI table measured: yes; slot 4 HR drives in 1/2/3/4: [..]
+
+### FILES, 2026-10-04
+
+    app/engines/market_blend.py, app/engines/alt_lines.py, market_history.py   NEW
+    .github/workflows/market-history.yml                                         NEW
+    tests/test_market_blend.py, tests/test_more_props.py                         NEW
+    app/engines/{model_math,game_model,mlb_game_model,nfl_game_model,nhl_model,
+                 model_picks,model_view,mlb_props,espn_feed,nfl_projection,
+                 nfl_prop_odds}.py
+    app/views/{MLB_Model,NHL_Model,NFL_Model,GameCard,Results,NFL_Projections}.py
+    mlb_model_precompute.py, mlb_prop_precompute.py, nhl_precompute.py,
+    nfl_precompute.py, nfl_projection_probe.py
+    tests/test_value_picks.py, tests/test_mlb_props.py
+    HANDOFF.md, HANDOFF_ARCHIVE.md (09-15 entry rotated out)
+
 ---
 
 ## PICK UP HERE — colour that says what to do, badges that say what to trust. 2026-10-03 (9)
@@ -755,291 +1002,3 @@ the test was wrong.
 
 ---
 
-## PICK UP HERE — projections for every NFL market, with no fitted weights in them. 2026-09-27
-
-**Suite 114, FAILING: none.** 15 negative controls red by EXIT CODE —
-**three came back green first** (section 5). Every page rendered in
-AppTest against current-week data with zero exceptions; all files
-compile under a real 3.11.
-
-### 0. FIRST: THE 09-18 BATCH NEVER LANDED
-
-The repo had three NFL tabs and no `live_days`, so that whole batch —
-the week-wide live overlay, the final result line, the how-to-read
-panels — was rebuilt here from scratch. **Check `git log` against the
-handoff before assuming a batch shipped.** What reached production was
-the 09-16 build, which is why Thursday's final still sat on the card as
-"scheduled" days later.
-
-### 1. WHAT THE PROJECTION IS
-
-`app/engines/nfl_projection.py`. A projection is a volume times a rate:
-
-    expected volume    = his share of his team's carries or targets
-                         x his team's carries or targets a game
-    matchup multiplier = what the defence allows per attempt
-                         / the league average per attempt
-    projected yards    = volume x his own rate x that multiplier
-
-Touchdowns anchor to the MARKET rather than to our own guess at scoring:
-
-    implied points = (total -/+ spread) / 2          EXACT arithmetic
-    team TDs       = implied points x td_per_point   MEASURED nightly
-    lambda         = team TDs x his share of them
-    P(anytime)     = 1 - exp(-lambda)                THE ONE ASSUMPTION
-
-Nine markets: anytime TD, rushing and receiving yards, receptions,
-targets, carries, passing yards, attempts, scrimmage yards.
-
-### 2. NO FREE PARAMETERS, DELIBERATELY
-
-Rule 1 is the whole design constraint. There is no blend weight, no
-shrinkage factor, no fitted coefficient anywhere in the engine. Every
-constant it divides by — `td_per_point`, league ypc, yards per target,
-catch rate — is recomputed by `league_constants()` from the season's
-real finals on every nightly, shipped in games.json, and printed in the
-run log and on the page. Every multiplier is a ratio of two measured
-numbers.
-
-That is a v1 restriction, NOT a claim of optimality, and the page says
-so. Three questions stay open and `nfl_projection_probe.py` measures
-them walk-forward (profiles from weeks before W, projections for W,
-scored against W's real box scores):
-
-  1. does the full-strength matchup multiplier help, or overshoot?
-  2. does a share measured over a few games predict the next one?
-  3. is the Poisson anytime step calibrated?
-
-It prints mean absolute error against two baselines — his season
-average and his last game — and says outright when the projection
-**does not beat the season average**, because a model that cannot is
-not earning its complexity. **Run it (`NFL projection probe`, manual)
-before trusting any of this, and again every few weeks.**
-
-### 3. THE SAMPLE TRAVELS WITH THE NUMBER
-
-A TD share of 2-of-2 and one of 9-of-18 both read as "high" and are not
-the same claim. There is no shrinkage applied to the first — that would
-be a number chosen by eye — so the raw fraction is a COLUMN ("3 of 4")
-and appears in the why-line. In the fixture a 1-of-1 player outranks a
-3-of-4 player, which is the honest output and exactly why the counts
-are on the row.
-
-Every row also carries the arithmetic that produced it, as a sentence:
-share → volume, own rate → adjusted rate, implied points → team TDs →
-lambda. A projection nobody can take apart is indistinguishable from
-one that was made up.
-
-### 4. THE LINE IS CHECKED AGAINST ITSELF
-
-ESPN states `spread` relative to the HOME team. That convention is the
-one thing that could silently invert every projection on a card, so
-`implied_totals` does not trust it: `details` names the favourite by
-abbreviation, and when the name contradicts the sign it returns **no
-implied totals at all** plus the reason, which the page prints. A
-backwards implied total would not look wrong — it would look like a
-confident projection of the wrong team.
-
-### 5. THREE CONTROLS CAME BACK GREEN
-
-- **"defensive rates read from own offence"** — the fixture hand-wrote
-  `ypc_allowed` into the team profiles, so `team_research`'s defensive
-  computation was never executed. Rule 2, exactly: a fixture cannot test
-  a constant it replaces. Now run on real finals and asked directly.
-- Then that new check ALSO could not fail: the fixture's MIA rushed 2
-  for 10, so their own ypc and the 130/26 they allowed were both 5.00.
-  Two different behaviours, one number. Changed to 2 for 4.
-- **"live overlay today-only"** and **"Projections dropped from nav"** —
-  no tests existed for either; both were lost with the 09-18 batch.
-
-### 6. THE LOG, AND WHAT IS STILL MISSING
-
-The nightly writes each slate's projections to
-`data/nfl/projections/<date>.json` **in the repo**, committed by its own
-workflow step — build_data/ is rebuilt every run, so a record written
-there cannot accumulate. Only games that have NOT kicked off are logged:
-a projection made after the whistle is not a projection.
-
-**NOT BUILT: the grader.** Nothing yet scores those logged files
-against box scores or puts NFL on the Results page. The log exists so
-that when the grader is written there is a real record to grade rather
-than a standing start. That is the next job, with the probe.
-
-Also absent, and stated on the page: no sportsbook prop lines. The
-public feed carries game odds only, so the board projects and the
-reader compares against his own book. Do not invent lines to fill that
-column.
-
-### 7. THE SUITE WAS WRITING INTO THE REAL PROJECTION LOG
-
-Caught only because an uncommitted-changes check flagged a `data/nfl/`
-that had been deleted minutes earlier. `main()` writes the log to a REPO
-path on purpose — that is the only way it accumulates — so every run of
-`tests/test_nfl_pipeline.py`, which calls `main()` four times against
-synthetic games, filed fixture projections under today's date. Nothing
-in the file would have said so, and a grader reading it later would
-have scored claims the site never made, for players who were never on
-the slate.
-
-The path is now the module constant `nfl_precompute.PROJECTION_LOG`,
-the test redirects it to a temp dir, and a check asserts the repo log is
-empty after the suite runs. Both controls red. **Any future test that
-calls main() must redirect it too.**
-
-### FILES, 2026-09-27
-
-    app/engines/nfl_projection.py     NEW  the engine
-    nfl_projection_probe.py           NEW  walk-forward measurement
-    app/views/NFL_Projections.py      NEW  the board
-    nfl_precompute.py                 team_game_usage, league_constants, per-attempt
-                                      allowed rates, shares, TD counts, projection log
-    app/engines/nfl_week.py           live_days()
-    app/styles/kc_theme.py            how_to_read()
-    app/views/NFL.py                  week-wide overlay, final result line, panel
-    app/views/NFL_Mismatch.py         panel
-    app/views/NFL_Props.py            panel
-    app/views/NHL_Crease.py           panel
-    app/views/NHL_Shots.py            panel
-    app/app.py                        "Projections" in the NFL nav
-    .github/workflows/nightly-data.yml      commit the projection log
-    .github/workflows/nfl-projection-probe.yml  NEW  manual
-    tests/test_nfl_projection.py      NEW
-    tests/test_nfl_pipeline.py        live_days checks
-    tests/test_nfl_nhl_wiring.py      Projections page, panels, log committed
-
-Suite 113 -> 114.
-
----
-
-## PICK UP HERE — NFL and NHL are live tabs, each built its own way. 2026-09-15
-
-**Suite 113, FAILING: none.** 18 negative controls, all red by EXIT
-CODE, and **one came back green on the first attempt** (section 5).
-Every new page rendered with zero exceptions in Streamlit's AppTest
-harness in all four data states: full, stale, preseason, nothing on disk.
-All files compile under Python 3.11 (Render's version), checked with a
-real 3.11 interpreter rather than the 3.12 container.
-
-Repo audit first, before any change: 110/110 green, pyflakes zero
-undefined names, the pipeline alive (MLB slate for 09-15 on disk, HR
-research log grading into September).
-
-### 1. WHY EACH LEAGUE LOOKS DIFFERENT
-
-**NFL is a WEEK, not a night.** Football is researched days ahead and a
-week runs Tuesday to Monday, so `data/nfl/games.json` is stamped
-`week`, `week_start_et`, `week_end_et`. Three pages:
-
-- **The Week** — every game grouped by TV window (TNF, Sunday
-  Early/Late/Night, MNF), line, weather or roof, network, injuries, key
-  players, and a ranked tale of the tape.
-- **Mismatch Finder** — every offense-vs-defense pairing on the slate,
-  sorted by `edge = defender rank - attacker rank`. Tiers are the gap as
-  a share of the league (60/35/15%) and are labelled as DISTANCE, not
-  probability. Nothing fitted.
-- **Prop Lab** — QBs / backs / pass-catchers, season / L3 / last game,
-  beside what the opposing defense allows in that phase.
-
-**NHL is the crease and the shot clock.** Nightly Eastern slate.
-
-- **Tonight's Ice** — goalie duel, top shooters, tale of the tape
-  (W-L-OTL, points %, shot share, PP/PK), and a countdown banner.
-- **Crease Report** — every goalie: starts, crease share of the last 10,
-  pooled SV%/GAA, L5 SV% over STARTS, SA/60.
-- **Shots Lab** — per-game SOG/P/G/A/TOI/HIT/BLK for season, L10, L5,
-  plus hit-rate COUNTS (2+ SOG, 3+ SOG, 1+ PT).
-
-Neither logs calibration picks, which is why Home still lists no board
-for either (test_wnba_routing_and_home_scope still passes as written).
-
-### 2. DATES — VERIFIED, NOT ASSUMED
-
-NFL 2026 kicked off **Wed Sep 9**; week 1 is Tue Sep 8 – Mon Sep 14, so
-`week_of` counts from `WEEK1_TUESDAY`. NHL preseason is **Sep 19–26**,
-opening night **Tue Sep 29** (84 games). Both checked against the
-leagues' own announcements on 09-15. Next season these constants move —
-`nfl_week.SEASON_START/WEEK1_TUESDAY`, `nhl_rink.PRESEASON_START/
-REGULAR_SEASON_START`.
-
-### 3. WHY NFL IS NOT IN slate_guard
-
-slate_guard compares ONE date. A week is a range, and stamping a fake
-single date on it is a right number under a wrong label (rule 9). So
-`nfl_week.load_week` applies the same contract to the range: a week that
-ended before today returns `games=[]` and the state "stale". NHL IS in
-slate_guard (`slate_date_et`, Eastern) and uses the existing
-future-slate branch for its lookahead.
-
-`slate_guard.payload_field(league, key)` is new: side tables beside the
-games (the goalie sheet) are read through the guard's own file choice
-instead of a second hand-rolled read.
-
-### 4. PRESEASON IS PARSED AND COUNTED NOWHERE
-
-Exhibition box scores are the wrong sample (split squads, prospects),
-but they are REAL hockey box scores two weeks before opening night. So
-`nhl_precompute` parses them, reports `exhibition_finals_parsed`, and
-excludes them from every number. That makes Sep 19–26 a free parser
-check. **Read the nightly log on Sep 20 for the `[verify]` line.**
-
-An OT loss is an OTL only when the summary says so (`period > 3`, or
-"OT"/"SO" in the detail). A loss whose length cannot be known is counted
-as regulation AND flagged on the profile (`otl_unverified`) and on the
-card — never silently guessed.
-
-### 5. THE CONTROL THAT STAYED GREEN
-
-"Credit every goalie in the game with a start" passed the first NHL
-fixture, because every fixture game had exactly one goalie per team — so
-correct and broken were indistinguishable (rule 4, again). Fixed by
-adding a RELIEF appearance (Kochetkov pulled, Andersen finishes); now
-the control is red and the test also proves a relief outing is a GP, not
-a start, and that L5 SV% reads starts only.
-
-### 6. WHAT IS NOT MEASURED — SAY IT OUT LOUD
-
-**ESPN's NFL and NHL feeds have not been measured from Actions.** They
-are the same hosts the WNBA probe measured with a different sport
-segment, and `espn_feed` reuses espn_wnba's `get_json` and
-`_normalize_header_events` rather than copying them. Box-score column
-names are matched two ways (machine `keys`, then display `labels`), and
-both fetchers refuse to publish when finals exist but nothing parsed.
-
-**Run the `NFL + NHL feed probe` workflow once** (manual, touches
-nothing). It prints each host's status and shape, every player group's
-keys/labels, and what the real parsers read. If a column is missing,
-add its name to the alias tuple at the top of the fetcher — do not
-default it to zero.
-
-Also not built: NFL playoffs (the page says so after week 18), NHL
-playoffs, confirmed NHL starting goalies (crease share is labelled as
-NOT a confirmation), and caching of past NHL summaries — by March the
-NHL backfill is ~1,000 summary calls a night. Measure its runtime in
-the nightly before optimising.
-
-### FILES, 2026-09-15
-
-    app/engines/espn_feed.py          NEW  league-parameterised ESPN access
-    app/engines/nfl_week.py           NEW  week math, week guard, mismatches, prop rows
-    app/engines/nhl_rink.py           NEW  phase/countdown, crease + shots rows, tape
-    app/engines/slate_guard.py        nhl registered; payload_field()
-    app/views/NFL.py                  REWRITTEN (was coming-soon)
-    app/views/NFL_Mismatch.py         NEW
-    app/views/NFL_Props.py            NEW
-    app/views/NHL.py                  REWRITTEN (was coming-soon)
-    app/views/NHL_Crease.py           NEW
-    app/views/NHL_Shots.py            NEW
-    app/app.py                        NFL + NHL subpage navs
-    app/styles/kc_theme.py            caption: "...NFL · NHL live — NBA soon"
-    nfl_precompute.py                 NEW  (repo root)
-    nhl_precompute.py                 NEW  (repo root)
-    nfl_nhl_probe.py                  NEW  (repo root)
-    .github/workflows/nightly-data.yml   NFL + NHL steps, verifier entries
-    .github/workflows/nfl-nhl-probe.yml  NEW  manual
-    tests/test_nfl_pipeline.py        NEW
-    tests/test_nhl_pipeline.py        NEW
-    tests/test_nfl_nhl_wiring.py      NEW
-
-Suite 110 -> 113.
-
----

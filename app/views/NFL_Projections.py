@@ -50,6 +50,10 @@ _EXTRA = {
     "Passing yards": ["Implied pts", "Matchup"],
     "Pass attempts": ["Pass yds", "Implied pts"],
     "Rush + rec yards": ["Rush yds", "Rec yds", "Carries", "Targets"],
+    "Completions": ["Pass att", "Comp %", "Pass yds"],
+    "Passing TDs": ["Pass att", "TD/att %", "Implied pts"],
+    "Interceptions": ["Pass att", "INT/att %"],
+    "2+ TDs": ["TD exp", "Anytime %", "TD sample", "Implied pts"],
 }
 
 _today = datetime.now(EASTERN).date()
@@ -142,7 +146,7 @@ else:
             # oddly. A board bug should never be able to do that.
             for _i, r in enumerate(rows[:5]):
                 with card(f'nfl_proj_{_i}'):
-                    unit = "%" if market == "Anytime TD" else ""
+                    unit = "%" if MARKETS[market][1] == "%" else ""
                     st.markdown(
                         f'<div style="display:flex; justify-content:space-between; '
                         f'align-items:baseline; gap:10px; flex-wrap:wrap;">'
@@ -177,8 +181,10 @@ else:
                     "Rush yds": "{:.1f}", "Rec yds": "{:.1f}", "Rec": "{:.1f}",
                     "Pass yds": "{:.1f}", "TD exp": "{:.2f}", "Matchup": "{:.2f}x",
                     "Implied pts": "{:g}", "GP": "{:.0f}"}
-            if market == "Anytime TD":
-                _fmt["Proj"] = "{:.0f}%"
+            _fmt.update({"Pass att": "{:.1f}", "Comp %": "{:.1f}%", "TD/att %": "{:.2f}%",
+                         "INT/att %": "{:.2f}%", "Anytime %": "{:.0f}%"})
+            if MARKETS[market][1] == "%":
+                _fmt["Proj"] = "{:.0f}%" if market == "Anytime TD" else "{:.1f}%"
             sty = sty.format({k: v for k, v in _fmt.items() if k in df.columns},
                              na_rep="—")
             st.dataframe(sty, hide_index=True, width="stretch")
@@ -198,8 +204,8 @@ else:
                                      format_func=lambda i: _names[i], key="nfl_pc_player")
                 _r = rows[_pick]
                 _spreads = league.get("prop_spreads") or {}
-                if market == "Anytime TD":
-                    _p_yes = (_r.get("Anytime %") or 0) / 100.0 if _r.get("Anytime %") is not None else None
+                if MARKETS[market][1] == "%":
+                    _p_yes = (_r["Proj"] / 100.0) if _r.get("Proj") is not None else None
                     _px = st.number_input("Price (yes)", value=150, step=5, key="nfl_pc_yes")
                     _sides = [("Scores (yes)", _p_yes, _px)]
                 else:
@@ -233,7 +239,7 @@ else:
                 st.dataframe(_mv._tier_styler(pd.DataFrame(_out), _tiers), hide_index=True,
                              width="stretch", key="nfl_pc_table")
                 _sp = _spreads.get(market)
-                if market != "Anytime TD":
+                if MARKETS[market][1] != "%":
                     st.caption(
                         (f"Projection {_r['Proj']:g}. Game-to-game scatter for {market.lower()} "
                          + (f"measured at {100 * _sp['cv']:.0f}% of the mean" if _sp and _sp["kind"] == "yards"

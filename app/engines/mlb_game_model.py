@@ -63,22 +63,32 @@ def load_model():
         return None
 
 
-def starter_layer(rec, priors, league_rate):
+def starter_layer(rec, priors, league_rate, prior_rec=None, weights=None):
     """(share, rate) for a starter's season record, or None.
 
-    rec: {"r": runs, "outs": outs, "gs": starts}. A pitcher with no
-    starts on record returns None (team rate stands) rather than the
+    rec: {"r": runs, "outs": outs, "gs": starts} this season.
+    prior_rec: the same for LAST season, counted at the FITTED weights
+    {"ra": w, "outs": w} (model_math.fit_prior_weight) — how much a run
+    allowed last year is worth next to one this year, measured on the
+    starters who pitched both seasons. A pitcher with no starts on record
+    in either season returns None (team rate stands) rather than the
     league prior dressed up as his.
     """
-    if not rec or not priors or not league_rate or not rec.get("gs"):
+    rec = rec or {"r": 0, "outs": 0, "gs": 0}
+    pr = prior_rec or {}
+    w = weights or {}
+    wo, wr = (w.get("outs") or 0.0), (w.get("ra") or 0.0)
+    if not priors or not league_rate or not (rec.get("gs") or (pr.get("gs") and (wo or wr))):
         return None
     try:
         so, mo = priors["outs_strength_starts"], priors["outs_mean"]
         sr, mr = priors["ra9_strength_games"], priors["ra9_mean"]
     except KeyError:
         return None
-    outs_ps = (rec["outs"] + mo * so) / (rec["gs"] + so)
-    ra9 = (rec["r"] + mr * sr) / (rec["outs"] / 27.0 + sr)
+    outs_ps = ((rec["outs"] + wo * (pr.get("outs") or 0) + mo * so)
+               / (rec["gs"] + wo * (pr.get("gs") or 0) + so))
+    ra9 = ((rec["r"] + wr * (pr.get("r") or 0) + mr * sr)
+           / (rec["outs"] / 27.0 + wr * (pr.get("outs") or 0) / 27.0 + sr))
     share = max(0.0, min(1.0, outs_ps / 27.0))
     return share, league_rate * ra9 / mr
 
@@ -87,17 +97,21 @@ def starter_summary(model, pid):
     """What the card prints about a starter: his line and the shrunk
     numbers the model actually used."""
     rec = ((model or {}).get("starters") or {}).get(str(pid)) if pid else None
-    if not rec:
+    prior = ((model or {}).get("starters_prior") or {}).get(str(pid)) if pid else None
+    if not rec and not prior:
         return None
     lg = ((model or {}).get("league") or {}).get("league_rate")
-    lay = starter_layer(rec, (model or {}).get("starter_priors"), lg)
+    lay = starter_layer(rec, (model or {}).get("starter_priors"), lg, prior,
+                        (model or {}).get("starter_prior_weight"))
     if not lay:
         return None
+    rec = rec or {"r": 0, "outs": 0, "gs": 0, "name": (prior or {}).get("name")}
     ip = rec["outs"] / 3.0
     return {
-        "name": rec.get("name"), "gs": rec["gs"],
+        "name": rec.get("name") or (prior or {}).get("name"), "gs": rec["gs"],
+        "gs_last_season": (prior or {}).get("gs", 0),
         "ra9_raw": round(rec["r"] * 27.0 / rec["outs"], 2) if rec["outs"] else None,
-        "ip_per_start": round(ip / rec["gs"], 1),
+        "ip_per_start": round(ip / rec["gs"], 1) if rec["gs"] else None,
         "share": round(lay[0], 3),
         "ra9_model": round(lay[1] * model["starter_priors"]["ra9_mean"] / lg, 2),
     }
@@ -118,14 +132,24 @@ def project_game(home, away, home_sp=None, away_sp=None, model=None, market=None
     if model.get("use_starters"):
         pri = model.get("starter_priors")
         sts = model.get("starters") or {}
-        s_h = starter_layer(sts.get(str(home_sp)) if home_sp else None, pri, lg)
-        s_a = starter_layer(sts.get(str(away_sp)) if away_sp else None, pri, lg)
+        stp = model.get("starters_prior") or {}
+        wts = model.get("starter_prior_weight")
+        s_h = starter_layer(sts.get(str(home_sp)) if home_sp else None, pri, lg,
+                            stp.get(str(home_sp)) if home_sp else None, wts) if home_sp else None
+        s_a = starter_layer(sts.get(str(away_sp)) if away_sp else None, pri, lg,
+                            stp.get(str(away_sp)) if away_sp else None, wts) if away_sp else None
         used = bool(s_h and s_a)
         if not used:
             # One starter known and one not would tilt the game toward
             # whichever side happened to have a record. Both or neither.
             s_h = s_a = None
-    out = gm.project(model, home, away, market=market, s_home=s_h, s_away=s_a)
+    try:
+        from engines.mlb_run_rates import canonical
+        h_ab, a_ab = canonical(home) or "", canonical(away) or ""
+    except Exception:
+        h_ab = a_ab = ""
+    out = gm.project(model, home, away, market=market, s_home=s_h, s_away=s_a,
+                     home_abbr=h_ab, away_abbr=a_ab)
     if out is None:
         return None
     out["starters_used"] = used

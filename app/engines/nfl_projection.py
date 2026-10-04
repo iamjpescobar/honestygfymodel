@@ -64,6 +64,14 @@ MARKETS = {
     "Passing yards": ("pass_yds", ""),
     "Pass attempts": ("pass_att", ""),
     "Rush + rec yards": ("scrim_yds", ""),
+    # Added 10-04. Quarterback rate markets: his rate per attempt (shrunk
+    # toward the league's quarterbacks by a beta-binomial prior FITTED in
+    # nfl_precompute.qb_rate_priors) x the projected attempts. "2+ TDs" is
+    # the same touchdown lambda as Anytime, read at two.
+    "Completions": ("pass_cmp", ""),
+    "Passing TDs": ("pass_td", ""),
+    "Interceptions": ("pass_int", ""),
+    "2+ TDs": ("two_td_pct", "%"),
 }
 
 # Which role each market belongs to, so the board never ranks a guard's
@@ -78,6 +86,10 @@ MARKET_ROLES = {
     "Passing yards": ("QB",),
     "Pass attempts": ("QB",),
     "Rush + rec yards": ("RB", "REC"),
+    "Completions": ("QB",),
+    "Passing TDs": ("QB",),
+    "Interceptions": ("QB",),
+    "2+ TDs": ("RB", "REC"),
 }
 
 
@@ -194,6 +206,20 @@ def project_player(p, team, opp, league, implied_pts):
         if ypa:
             out["ypa_adj"] = round(ypa * rec_mult, 2)
             out["pass_yds"] = round(out["pass_att"] * out["ypa_adj"], 1)
+        # Completions, passing TDs, interceptions: his per-attempt rate,
+        # pulled toward the league's quarterbacks by the FITTED prior
+        # (a 3-game sample of 2 picks is not a 2-pick quarterback).
+        pri = (league or {}).get("qb_priors") or {}
+        att_tot = (p.get("pass_att") or 0) * (p.get("pass_gp") or 0)
+        for stat, key in (("cmp", "pass_cmp"), ("td", "pass_td"), ("int", "pass_int")):
+            mean_s = pri.get(stat)
+            if not mean_s:
+                continue
+            mean, s = mean_s
+            x = (p.get(key) or 0) * (p.get("pass_gp") or 0)
+            rate = (x + mean * s) / (att_tot + s)
+            out[f"{stat}_rate"] = round(rate, 4)
+            out[key] = round(out["pass_att"] * rate, 2)
 
     # ---- touchdowns --------------------------------------------------
     # Anchored to the MARKET's view of how many points this team scores,
@@ -211,6 +237,8 @@ def project_player(p, team, opp, league, implied_pts):
             # board: scores arrive as a Poisson process, so the chance of
             # at least one is 1 - exp(-lambda).
             out["anytime_pct"] = round(100.0 * (1.0 - math.exp(-lam)))
+            # the same Poisson, read at two
+            out["two_td_pct"] = round(100.0 * (1.0 - math.exp(-lam) * (1.0 + lam)), 1)
     return out
 
 
@@ -294,6 +322,12 @@ def projection_rows(games, league, market):
                     "Rush yds": proj.get("rush_yds"), "Rec yds": proj.get("rec_yds"),
                     "Rec": proj.get("rec"), "Pass yds": proj.get("pass_yds"),
                     "TD exp": proj.get("td_exp"), "Anytime %": proj.get("anytime_pct"),
+                    "Pass att": proj.get("pass_att"), "Comp %": (
+                        round(100 * proj["cmp_rate"], 1) if proj.get("cmp_rate") is not None else None),
+                    "TD/att %": (round(100 * proj["td_rate"], 2)
+                                 if proj.get("td_rate") is not None else None),
+                    "INT/att %": (round(100 * proj["int_rate"], 2)
+                                  if proj.get("int_rate") is not None else None),
                     # THE SAMPLE, ON THE ROW. A share of 2-of-2 and a
                     # share of 9-of-18 are both "100%" and "50%" and are
                     # not remotely the same claim. There is no shrinkage
@@ -350,7 +384,12 @@ def why(row, market):
     if market in ("Passing yards", "Pass attempts") and proj.get("pass_att"):
         bits.append(f'{proj["pass_att"]:.0f} attempts at {proj.get("ypa_adj", 0):.2f} '
                     f'yards each after the {row["Opp"]} adjustment')
-    if market == "Anytime TD":
+    if market in ("Completions", "Passing TDs", "Interceptions") and proj.get("pass_att"):
+        stat = {"Completions": "cmp", "Passing TDs": "td", "Interceptions": "int"}[market]
+        if proj.get(f"{stat}_rate") is not None:
+            bits.append(f'{proj["pass_att"]:.0f} attempts x {100 * proj[f"{stat}_rate"]:.2f}% '
+                        f'(his rate shrunk toward the league\u2019s quarterbacks)')
+    if market in ("Anytime TD", "2+ TDs"):
         if row.get("Implied pts") is not None:
             bits.append(f'market implies {row["Team"]} score {row["Implied pts"]:g} '
                         f'→ {proj.get("team_td_exp", 0):.2f} offensive TDs')
@@ -364,5 +403,5 @@ def why(row, market):
                         f'scores in {p.get("td_games", 0)} games')
         if proj.get("td_exp") is not None:
             bits.append(f'{proj["td_exp"]:.2f} expected → {row["Proj"]:.0f}% '
-                        f'chance of at least one')
+                        f'chance of at least {"one" if market == "Anytime TD" else "two"}')
     return " · ".join(bits)

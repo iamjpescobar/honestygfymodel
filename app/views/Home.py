@@ -122,8 +122,12 @@ EXPLORE = [
      "face, park and weather, and a graded read on the moneyline and total."),
     ("Model", "MLB",
      "Projected score, win probability and the fair line for every game, "
-     "plus hit / TB / HR / K props for both lineups \u2014 shown beside its "
-     "record on games it had not seen."),
+     "team totals and alt lines, and batter and starter props at any line "
+     "\u2014 shown beside its record on games it had not seen."),
+    ("Top Plays", "MLB",
+     "The most likely outcomes tonight that have proven themselves, each at "
+     "the chance it has actually delivered — with the graded record of "
+     "every play the page has ever shown."),
     ("Bullpen Board", "MLB",
      "What happens after the starter leaves \u2014 roughly a third of a "
      "hitter's plate appearances, and the part most models ignore."),

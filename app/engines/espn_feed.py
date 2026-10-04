@@ -254,6 +254,25 @@ def odds_of(comp):
     return out
 
 
+def line_from_summary(summary):
+    """The line a game summary's `pickcenter` carries, read through
+    odds_of (every published shape), or {}. Used when a scoreboard event
+    carries no odds of its own — the same block nfl_precompute reads
+    pre-game, and what market_history records for past finals."""
+    pc = (summary or {}).get("pickcenter") or []
+    if isinstance(pc, list) and pc and isinstance(pc[0], dict):
+        return odds_of({"odds": pc})
+    return {}
+
+
+def recorded_line(event_odds, summary=None):
+    """The scoreboard's line when it has one, else the summary's."""
+    o = event_odds or {}
+    if o.get("home_ml") is not None or o.get("total") is not None or o.get("spread") is not None:
+        return o
+    return line_from_summary(summary) or {}
+
+
 def live_scores(league, yyyymmdd=None, _fetch=None):
     """{(away, home): {status, detail, scoreline?}} — {} on ANY failure.
 

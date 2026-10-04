@@ -168,6 +168,8 @@ check("a game's own result cannot leak into its prediction",
 # ----------------------------------------------- 4. the full MLB builder
 out_path = Path(__file__).resolve().parent / "_tmp_model.json"
 mpc.OUT = out_path
+# A fixture never reads (or writes) the repo's real last-season file.
+mpc.PRIOR_PATH = Path(__file__).resolve().parent / "_no_such_mlb_prior.json"
 try:
     rc = mpc.main(today=date(2026, 10, 3), _get_json=get)
     import json

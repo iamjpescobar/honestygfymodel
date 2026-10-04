@@ -304,10 +304,13 @@ def _render_model_picks():
     logged price and splits by edge size: if the model is right about
     its own confidence, bigger edges should do better."""
     st.markdown(_section_tag("Model picks \u2014 value bets, graded"), unsafe_allow_html=True)
-    st.caption("Every moneyline, total and spread where the game model's chance beat the "
-               "posted price, logged before the game at that price (first price wins), one "
-               "unit each. Postponed games are void and count nowhere. A sport needs a few "
-               "hundred graded picks before its ROI means much \u2014 read this over weeks.")
+    st.caption("Every moneyline, total and spread whose FINAL chance (the market, moved "
+               "toward the model only as far as the model has beaten it) beat the posted "
+               "price, logged before the game at that price (first price wins), one bet per "
+               "game side, one unit each. Picks before 10-04 were priced on the model alone "
+               "and are shown on their own row. Postponed games are void and count nowhere. "
+               "A sport needs a few hundred graded picks before its ROI means much \u2014 "
+               "read this over weeks.")
     any_rows = False
     for sport in _mpk.SPORTS:
         picks = _mpk.load(sport)["picks"]
@@ -330,6 +333,11 @@ def _render_model_picks():
                     rows.append({"Split": f"Edge {b['bucket']}", "Picks": b["n"],
                                  "W-L-P": f"{b['w']}-{b['l']}-{b['p']}",
                                  "Win %": b["win_pct"], "Units": b["units"], "ROI %": b["roi"]})
+            for f, b in (sm.get("by_formula") or {}).items():
+                rows.append({"Split": ("Market-anchored (from 10-04)" if f == "market-anchored"
+                                       else "Model only (before 10-04)"),
+                             "Picks": b["n"], "W-L-P": f"{b['w']}-{b['l']}-{b['p']}",
+                             "Win %": b["win_pct"], "Units": b["units"], "ROI %": b["roi"]})
             for m, b in sm["by_market"].items():
                 rows.append({"Split": _MARKET_NAMES.get(m, m), "Picks": b["n"],
                              "W-L-P": f"{b['w']}-{b['l']}-{b['p']}",
@@ -343,7 +351,8 @@ def _render_model_picks():
                         if p["market"] == "moneyline" else
                         f"{p['side'].title()} {p['line']:g}" if p["market"] == "total" else
                         f"{p['home'] if p['side'] == 'home' else p['away']} {p['line']:+g}"),
-                "Price": p["price"], "Model %": round(100 * p["p"], 1),
+                "Price": p["price"], "Final %": round(100 * p["p"], 1),
+                "Formula": "market" if p.get("formula") else "model only",
                 "Edge": round(100 * p["edge"], 1), "Result": p.get("result") or "pending",
                 "Units": p.get("units")} for p in recent],
                 hide_index=True, width="stretch", key=f"mp_recent_{sport}")

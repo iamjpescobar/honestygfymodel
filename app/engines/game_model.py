@@ -240,7 +240,7 @@ def walk_forward(finals, k, dispersion=None, prior_totals=None,
                             "y": 1 if f["hs"] > f["as"] else 0, "extra": f.get("extra"),
                             "total": f["hs"] + f["as"], "hs": f["hs"], "as": f["as"],
                             "base_home": consts["home_win_rate"],
-                            "base_total": consts["avg_total"]})
+                            "base_total": consts["avg_total"], "thw": thw})
         for f in by_date[d]:
             seen.append(f)
             for side, gf, ga in (("home", f["hs"], f["as"]), ("away", f["as"], f["hs"])):
@@ -248,6 +248,21 @@ def walk_forward(finals, k, dispersion=None, prior_totals=None,
                 totals[f[side]]["ga"] += ga
                 totals[f[side]]["gp"] += 1
     return out
+
+
+def blend_fns(dispersion):
+    """(p_over_fn, p_cover_fn) for market_blend.fit_all over this
+    module's walk-forward predictions — the model's chance at the
+    MARKET's line, from the same score distributions the page uses, with
+    the tie-break rate measured from games before that date."""
+    def p_over(pred, line):
+        return mm.total_over_prob(pred["mu_h"], pred["mu_a"], line, dispersion)
+
+    def p_cover(pred, s):
+        thw = pred.get("thw")
+        return mm.margin_cover_prob(pred["mu_h"], pred["mu_a"], s, dispersion,
+                                    0.5 if thw is None else thw)
+    return p_over, p_cover
 
 
 def _wf_logloss(finals, k, dispersion, **kw):
@@ -422,7 +437,8 @@ def _split_half_carryover(finals):
 # ----------------------------------------------------------------------
 # Projection — what a page calls
 # ----------------------------------------------------------------------
-def project(model, home, away, market=None, s_home=None, s_away=None):
+def project(model, home, away, market=None, s_home=None, s_away=None,
+            home_abbr="", away_abbr=""):
     """The card for one game, from a built model dict.
 
     market: optional {"home_ml","away_ml","total"} from a book feed.
@@ -468,6 +484,16 @@ def project(model, home, away, market=None, s_home=None, s_away=None):
             out["p_over"] = round(po, 4)
             out["fair_over"] = mm.fair_american(po)
             out["fair_under"] = mm.fair_american(1 - po)
+    # Run line / puck line: the model's cover chance at the POSTED home
+    # spread (sign checked in market_blend.home_spread), then every
+    # probability a bet is priced with is anchored to the market by the
+    # model's FITTED weight (engines/market_blend — the 10-04 formula).
+    thw_used = thw if thw_measured else 0.5
+    out["mu_home"], out["mu_away"], out["dispersion"] = mu_h, mu_a, disp
+    out["tie_home_win_used"] = thw_used
+    from engines import market_blend as mb
+    mb.apply(out, model.get("blend"), market, home_abbr, away_abbr,
+             p_cover_fn=lambda s: mm.margin_cover_prob(mu_h, mu_a, s, disp, thw_used))
     return out
 
 

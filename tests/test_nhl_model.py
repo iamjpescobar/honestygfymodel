@@ -214,6 +214,7 @@ try:
     tmp_prior.write_text(json.dumps(prior))
     hpc.PRIOR_PATH = tmp_prior
     hpc.PICKS_ROOT = tmp_prior.parent / "model_picks"
+    hpc.TOP_PLAYS_ROOT = tmp_prior.parent / "top_plays"
     cwd, tmp = os.getcwd(), tempfile.mkdtemp()
     os.chdir(tmp)
     try:

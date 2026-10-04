@@ -10,6 +10,296 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — projections for every NFL market, with no fitted weights in them. 2026-09-27
+
+**Suite 114, FAILING: none.** 15 negative controls red by EXIT CODE —
+**three came back green first** (section 5). Every page rendered in
+AppTest against current-week data with zero exceptions; all files
+compile under a real 3.11.
+
+### 0. FIRST: THE 09-18 BATCH NEVER LANDED
+
+The repo had three NFL tabs and no `live_days`, so that whole batch —
+the week-wide live overlay, the final result line, the how-to-read
+panels — was rebuilt here from scratch. **Check `git log` against the
+handoff before assuming a batch shipped.** What reached production was
+the 09-16 build, which is why Thursday's final still sat on the card as
+"scheduled" days later.
+
+### 1. WHAT THE PROJECTION IS
+
+`app/engines/nfl_projection.py`. A projection is a volume times a rate:
+
+    expected volume    = his share of his team's carries or targets
+                         x his team's carries or targets a game
+    matchup multiplier = what the defence allows per attempt
+                         / the league average per attempt
+    projected yards    = volume x his own rate x that multiplier
+
+Touchdowns anchor to the MARKET rather than to our own guess at scoring:
+
+    implied points = (total -/+ spread) / 2          EXACT arithmetic
+    team TDs       = implied points x td_per_point   MEASURED nightly
+    lambda         = team TDs x his share of them
+    P(anytime)     = 1 - exp(-lambda)                THE ONE ASSUMPTION
+
+Nine markets: anytime TD, rushing and receiving yards, receptions,
+targets, carries, passing yards, attempts, scrimmage yards.
+
+### 2. NO FREE PARAMETERS, DELIBERATELY
+
+Rule 1 is the whole design constraint. There is no blend weight, no
+shrinkage factor, no fitted coefficient anywhere in the engine. Every
+constant it divides by — `td_per_point`, league ypc, yards per target,
+catch rate — is recomputed by `league_constants()` from the season's
+real finals on every nightly, shipped in games.json, and printed in the
+run log and on the page. Every multiplier is a ratio of two measured
+numbers.
+
+That is a v1 restriction, NOT a claim of optimality, and the page says
+so. Three questions stay open and `nfl_projection_probe.py` measures
+them walk-forward (profiles from weeks before W, projections for W,
+scored against W's real box scores):
+
+  1. does the full-strength matchup multiplier help, or overshoot?
+  2. does a share measured over a few games predict the next one?
+  3. is the Poisson anytime step calibrated?
+
+It prints mean absolute error against two baselines — his season
+average and his last game — and says outright when the projection
+**does not beat the season average**, because a model that cannot is
+not earning its complexity. **Run it (`NFL projection probe`, manual)
+before trusting any of this, and again every few weeks.**
+
+### 3. THE SAMPLE TRAVELS WITH THE NUMBER
+
+A TD share of 2-of-2 and one of 9-of-18 both read as "high" and are not
+the same claim. There is no shrinkage applied to the first — that would
+be a number chosen by eye — so the raw fraction is a COLUMN ("3 of 4")
+and appears in the why-line. In the fixture a 1-of-1 player outranks a
+3-of-4 player, which is the honest output and exactly why the counts
+are on the row.
+
+Every row also carries the arithmetic that produced it, as a sentence:
+share → volume, own rate → adjusted rate, implied points → team TDs →
+lambda. A projection nobody can take apart is indistinguishable from
+one that was made up.
+
+### 4. THE LINE IS CHECKED AGAINST ITSELF
+
+ESPN states `spread` relative to the HOME team. That convention is the
+one thing that could silently invert every projection on a card, so
+`implied_totals` does not trust it: `details` names the favourite by
+abbreviation, and when the name contradicts the sign it returns **no
+implied totals at all** plus the reason, which the page prints. A
+backwards implied total would not look wrong — it would look like a
+confident projection of the wrong team.
+
+### 5. THREE CONTROLS CAME BACK GREEN
+
+- **"defensive rates read from own offence"** — the fixture hand-wrote
+  `ypc_allowed` into the team profiles, so `team_research`'s defensive
+  computation was never executed. Rule 2, exactly: a fixture cannot test
+  a constant it replaces. Now run on real finals and asked directly.
+- Then that new check ALSO could not fail: the fixture's MIA rushed 2
+  for 10, so their own ypc and the 130/26 they allowed were both 5.00.
+  Two different behaviours, one number. Changed to 2 for 4.
+- **"live overlay today-only"** and **"Projections dropped from nav"** —
+  no tests existed for either; both were lost with the 09-18 batch.
+
+### 6. THE LOG, AND WHAT IS STILL MISSING
+
+The nightly writes each slate's projections to
+`data/nfl/projections/<date>.json` **in the repo**, committed by its own
+workflow step — build_data/ is rebuilt every run, so a record written
+there cannot accumulate. Only games that have NOT kicked off are logged:
+a projection made after the whistle is not a projection.
+
+**NOT BUILT: the grader.** Nothing yet scores those logged files
+against box scores or puts NFL on the Results page. The log exists so
+that when the grader is written there is a real record to grade rather
+than a standing start. That is the next job, with the probe.
+
+Also absent, and stated on the page: no sportsbook prop lines. The
+public feed carries game odds only, so the board projects and the
+reader compares against his own book. Do not invent lines to fill that
+column.
+
+### 7. THE SUITE WAS WRITING INTO THE REAL PROJECTION LOG
+
+Caught only because an uncommitted-changes check flagged a `data/nfl/`
+that had been deleted minutes earlier. `main()` writes the log to a REPO
+path on purpose — that is the only way it accumulates — so every run of
+`tests/test_nfl_pipeline.py`, which calls `main()` four times against
+synthetic games, filed fixture projections under today's date. Nothing
+in the file would have said so, and a grader reading it later would
+have scored claims the site never made, for players who were never on
+the slate.
+
+The path is now the module constant `nfl_precompute.PROJECTION_LOG`,
+the test redirects it to a temp dir, and a check asserts the repo log is
+empty after the suite runs. Both controls red. **Any future test that
+calls main() must redirect it too.**
+
+### FILES, 2026-09-27
+
+    app/engines/nfl_projection.py     NEW  the engine
+    nfl_projection_probe.py           NEW  walk-forward measurement
+    app/views/NFL_Projections.py      NEW  the board
+    nfl_precompute.py                 team_game_usage, league_constants, per-attempt
+                                      allowed rates, shares, TD counts, projection log
+    app/engines/nfl_week.py           live_days()
+    app/styles/kc_theme.py            how_to_read()
+    app/views/NFL.py                  week-wide overlay, final result line, panel
+    app/views/NFL_Mismatch.py         panel
+    app/views/NFL_Props.py            panel
+    app/views/NHL_Crease.py           panel
+    app/views/NHL_Shots.py            panel
+    app/app.py                        "Projections" in the NFL nav
+    .github/workflows/nightly-data.yml      commit the projection log
+    .github/workflows/nfl-projection-probe.yml  NEW  manual
+    tests/test_nfl_projection.py      NEW
+    tests/test_nfl_pipeline.py        live_days checks
+    tests/test_nfl_nhl_wiring.py      Projections page, panels, log committed
+
+Suite 113 -> 114.
+
+---
+
+## PICK UP HERE — NFL and NHL are live tabs, each built its own way. 2026-09-15
+
+**Suite 113, FAILING: none.** 18 negative controls, all red by EXIT
+CODE, and **one came back green on the first attempt** (section 5).
+Every new page rendered with zero exceptions in Streamlit's AppTest
+harness in all four data states: full, stale, preseason, nothing on disk.
+All files compile under Python 3.11 (Render's version), checked with a
+real 3.11 interpreter rather than the 3.12 container.
+
+Repo audit first, before any change: 110/110 green, pyflakes zero
+undefined names, the pipeline alive (MLB slate for 09-15 on disk, HR
+research log grading into September).
+
+### 1. WHY EACH LEAGUE LOOKS DIFFERENT
+
+**NFL is a WEEK, not a night.** Football is researched days ahead and a
+week runs Tuesday to Monday, so `data/nfl/games.json` is stamped
+`week`, `week_start_et`, `week_end_et`. Three pages:
+
+- **The Week** — every game grouped by TV window (TNF, Sunday
+  Early/Late/Night, MNF), line, weather or roof, network, injuries, key
+  players, and a ranked tale of the tape.
+- **Mismatch Finder** — every offense-vs-defense pairing on the slate,
+  sorted by `edge = defender rank - attacker rank`. Tiers are the gap as
+  a share of the league (60/35/15%) and are labelled as DISTANCE, not
+  probability. Nothing fitted.
+- **Prop Lab** — QBs / backs / pass-catchers, season / L3 / last game,
+  beside what the opposing defense allows in that phase.
+
+**NHL is the crease and the shot clock.** Nightly Eastern slate.
+
+- **Tonight's Ice** — goalie duel, top shooters, tale of the tape
+  (W-L-OTL, points %, shot share, PP/PK), and a countdown banner.
+- **Crease Report** — every goalie: starts, crease share of the last 10,
+  pooled SV%/GAA, L5 SV% over STARTS, SA/60.
+- **Shots Lab** — per-game SOG/P/G/A/TOI/HIT/BLK for season, L10, L5,
+  plus hit-rate COUNTS (2+ SOG, 3+ SOG, 1+ PT).
+
+Neither logs calibration picks, which is why Home still lists no board
+for either (test_wnba_routing_and_home_scope still passes as written).
+
+### 2. DATES — VERIFIED, NOT ASSUMED
+
+NFL 2026 kicked off **Wed Sep 9**; week 1 is Tue Sep 8 – Mon Sep 14, so
+`week_of` counts from `WEEK1_TUESDAY`. NHL preseason is **Sep 19–26**,
+opening night **Tue Sep 29** (84 games). Both checked against the
+leagues' own announcements on 09-15. Next season these constants move —
+`nfl_week.SEASON_START/WEEK1_TUESDAY`, `nhl_rink.PRESEASON_START/
+REGULAR_SEASON_START`.
+
+### 3. WHY NFL IS NOT IN slate_guard
+
+slate_guard compares ONE date. A week is a range, and stamping a fake
+single date on it is a right number under a wrong label (rule 9). So
+`nfl_week.load_week` applies the same contract to the range: a week that
+ended before today returns `games=[]` and the state "stale". NHL IS in
+slate_guard (`slate_date_et`, Eastern) and uses the existing
+future-slate branch for its lookahead.
+
+`slate_guard.payload_field(league, key)` is new: side tables beside the
+games (the goalie sheet) are read through the guard's own file choice
+instead of a second hand-rolled read.
+
+### 4. PRESEASON IS PARSED AND COUNTED NOWHERE
+
+Exhibition box scores are the wrong sample (split squads, prospects),
+but they are REAL hockey box scores two weeks before opening night. So
+`nhl_precompute` parses them, reports `exhibition_finals_parsed`, and
+excludes them from every number. That makes Sep 19–26 a free parser
+check. **Read the nightly log on Sep 20 for the `[verify]` line.**
+
+An OT loss is an OTL only when the summary says so (`period > 3`, or
+"OT"/"SO" in the detail). A loss whose length cannot be known is counted
+as regulation AND flagged on the profile (`otl_unverified`) and on the
+card — never silently guessed.
+
+### 5. THE CONTROL THAT STAYED GREEN
+
+"Credit every goalie in the game with a start" passed the first NHL
+fixture, because every fixture game had exactly one goalie per team — so
+correct and broken were indistinguishable (rule 4, again). Fixed by
+adding a RELIEF appearance (Kochetkov pulled, Andersen finishes); now
+the control is red and the test also proves a relief outing is a GP, not
+a start, and that L5 SV% reads starts only.
+
+### 6. WHAT IS NOT MEASURED — SAY IT OUT LOUD
+
+**ESPN's NFL and NHL feeds have not been measured from Actions.** They
+are the same hosts the WNBA probe measured with a different sport
+segment, and `espn_feed` reuses espn_wnba's `get_json` and
+`_normalize_header_events` rather than copying them. Box-score column
+names are matched two ways (machine `keys`, then display `labels`), and
+both fetchers refuse to publish when finals exist but nothing parsed.
+
+**Run the `NFL + NHL feed probe` workflow once** (manual, touches
+nothing). It prints each host's status and shape, every player group's
+keys/labels, and what the real parsers read. If a column is missing,
+add its name to the alias tuple at the top of the fetcher — do not
+default it to zero.
+
+Also not built: NFL playoffs (the page says so after week 18), NHL
+playoffs, confirmed NHL starting goalies (crease share is labelled as
+NOT a confirmation), and caching of past NHL summaries — by March the
+NHL backfill is ~1,000 summary calls a night. Measure its runtime in
+the nightly before optimising.
+
+### FILES, 2026-09-15
+
+    app/engines/espn_feed.py          NEW  league-parameterised ESPN access
+    app/engines/nfl_week.py           NEW  week math, week guard, mismatches, prop rows
+    app/engines/nhl_rink.py           NEW  phase/countdown, crease + shots rows, tape
+    app/engines/slate_guard.py        nhl registered; payload_field()
+    app/views/NFL.py                  REWRITTEN (was coming-soon)
+    app/views/NFL_Mismatch.py         NEW
+    app/views/NFL_Props.py            NEW
+    app/views/NHL.py                  REWRITTEN (was coming-soon)
+    app/views/NHL_Crease.py           NEW
+    app/views/NHL_Shots.py            NEW
+    app/app.py                        NFL + NHL subpage navs
+    app/styles/kc_theme.py            caption: "...NFL · NHL live — NBA soon"
+    nfl_precompute.py                 NEW  (repo root)
+    nhl_precompute.py                 NEW  (repo root)
+    nfl_nhl_probe.py                  NEW  (repo root)
+    .github/workflows/nightly-data.yml   NFL + NHL steps, verifier entries
+    .github/workflows/nfl-nhl-probe.yml  NEW  manual
+    tests/test_nfl_pipeline.py        NEW
+    tests/test_nhl_pipeline.py        NEW
+    tests/test_nfl_nhl_wiring.py      NEW
+
+Suite 110 -> 113.
+
+---
+
+
 ## PICK UP HERE — the longest window on the card was under the stabilisation point. 2026-08-17 (3)
 
 **Suite 108, FAILING: none.** Seven negative controls red by exit code.

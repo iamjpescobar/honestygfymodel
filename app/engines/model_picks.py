@@ -45,45 +45,71 @@ SPORTS = ("mlb", "nhl", "nfl")
 EDGE_BUCKETS = ((0.0, 0.02, "0-2 pts"), (0.02, 0.05, "2-5 pts"), (0.05, 1.0, "5+ pts"))
 
 
+# Which bets are really ONE bet. A moneyline and a spread on the same
+# team win and lose together far more often than not, so a card that
+# stakes both has staked the same opinion twice. Per game, at most one
+# bet per GROUP is logged or staked — the one with the higher EV.
+GROUP = {"moneyline": "side", "spread": "side", "total": "total"}
+
+
 def candidate_bets(proj, odds):
     """Every side the model prices, with the posted price when there is
-    one. [{"market","side","line","p","price"}]."""
+    one. [{"market","side","line","p","p_model","p_market","price"}].
+
+    `p` is the FINAL probability (engines/market_blend): the market's
+    no-vig chance moved toward the model by the model's fitted weight.
+    It is None when no market line exists to anchor to — the model alone
+    is shown (p_model) but no edge is claimed from it."""
     if not proj:
         return []
     o = odds or {}
     out = []
+
+    def add(market, side, line, p_model, p_mkt, p_final, price):
+        out.append({"market": market, "side": side, "line": line, "p": p_final,
+                    "p_model": p_model, "p_market": p_mkt, "price": price})
+
+    def inv(x):
+        return None if x is None else 1 - x
+
     ph = proj.get("p_home")
     if ph is not None:
-        out.append({"market": "moneyline", "side": "home", "line": None,
-                    "p": ph, "price": o.get("home_ml")})
-        out.append({"market": "moneyline", "side": "away", "line": None,
-                    "p": 1 - ph, "price": o.get("away_ml")})
+        pm, pf = proj.get("p_home_mkt"), proj.get("p_home_final")
+        add("moneyline", "home", None, ph, pm, pf, o.get("home_ml"))
+        add("moneyline", "away", None, 1 - ph, inv(pm), inv(pf), o.get("away_ml"))
     po = proj.get("p_over")
     if po is not None and proj.get("market_total") is not None:
         line = proj["market_total"]
-        out.append({"market": "total", "side": "over", "line": line,
-                    "p": po, "price": o.get("over_price")})
-        out.append({"market": "total", "side": "under", "line": line,
-                    "p": 1 - po, "price": o.get("under_price")})
+        pm, pf = proj.get("p_over_mkt"), proj.get("p_over_final")
+        add("total", "over", line, po, pm, pf, o.get("over_price"))
+        add("total", "under", line, 1 - po, inv(pm), inv(pf), o.get("under_price"))
     pc = proj.get("p_home_cover")
     if pc is not None and proj.get("market_spread_home") is not None:
         s = proj["market_spread_home"]
-        out.append({"market": "spread", "side": "home", "line": s,
-                    "p": pc, "price": o.get("home_spread_price")})
-        out.append({"market": "spread", "side": "away", "line": -s,
-                    "p": 1 - pc, "price": o.get("away_spread_price")})
+        pm, pf = proj.get("p_cover_mkt"), proj.get("p_cover_final")
+        add("spread", "home", s, pc, pm, pf, o.get("home_spread_price"))
+        add("spread", "away", -s, 1 - pc, inv(pm), inv(pf), o.get("away_spread_price"))
     return out
 
 
-def value_bets(proj, odds):
-    """Candidate bets with a posted price and positive EV at it."""
+def value_bets(proj, odds, one_per_group=True):
+    """Candidate bets with a posted price and positive EV at it, priced
+    on the FINAL probability. With one_per_group, a game yields at most
+    one side bet (moneyline OR spread) and one total — the higher-EV one."""
     out = []
     for b in candidate_bets(proj, odds):
-        if b["price"] is None:
+        if b["price"] is None or b["p"] is None:
             continue
         a = vl.assess(b["p"], b["price"])
         if a and a["value"]:
             out.append(dict(b, edge=round(a["edge"], 4), ev_per_100=a["ev_per_100"]))
+    if one_per_group:
+        best = {}
+        for b in out:
+            g = GROUP.get(b["market"], b["market"])
+            if g not in best or b["ev_per_100"] > best[g]["ev_per_100"]:
+                best[g] = b
+        out = [b for b in out if best.get(GROUP.get(b["market"], b["market"])) is b]
     return out
 
 
@@ -116,7 +142,10 @@ def log_picks(sport, games, now=None, root=None):
     Returns the number of NEW picks written."""
     now = now or datetime.now(timezone.utc)
     rec = load(sport, root)
-    have = {(p["game_id"], p["market"]) for p in rec["picks"]}
+    # First writer wins per (game, GROUP): a moneyline logged this
+    # afternoon blocks a spread on the same game tonight — they are one
+    # opinion, and the record must not count it twice.
+    have = {(p["game_id"], GROUP.get(p["market"], p["market"])) for p in rec["picks"]}
     new = 0
     for g in games:
         try:
@@ -126,7 +155,7 @@ def log_picks(sport, games, now=None, root=None):
         if start.tzinfo is None or start <= now:
             continue                    # not a pick once it has started
         for b in value_bets(g.get("proj"), g.get("odds")):
-            key = (str(g["id"]), b["market"])
+            key = (str(g["id"]), GROUP.get(b["market"], b["market"]))
             if key in have:
                 continue                # first writer wins
             have.add(key)
@@ -135,6 +164,9 @@ def log_picks(sport, games, now=None, root=None):
                 "home": g["home"], "away": g["away"], "market": b["market"],
                 "side": b["side"], "line": b["line"], "price": b["price"],
                 "p": round(b["p"], 4), "edge": b["edge"], "ev_per_100": b["ev_per_100"],
+                "p_model": None if b.get("p_model") is None else round(b["p_model"], 4),
+                "p_market": None if b.get("p_market") is None else round(b["p_market"], 4),
+                "formula": "market-anchored",
                 "logged_at": now.isoformat(timespec="seconds"), "result": None,
             })
             new += 1
@@ -186,4 +218,17 @@ def summary(picks):
         rows = [r for r in graded if r["market"] == m]
         if rows:
             out["by_market"][m] = agg(rows)
+    # The formula changed on 10-04 (engines/market_blend). Picks logged
+    # before it were priced on the model alone and are kept — the record
+    # is the record — but reported apart, so the new formula is judged
+    # on its own picks and not on the ones it was built to stop.
+    out["by_formula"] = {}
+    for f in ("market-anchored", "model-only"):
+        rows = [r for r in graded if formula_of(r) == f]
+        if rows:
+            out["by_formula"][f] = agg(rows)
     return out
+
+
+def formula_of(pick):
+    return pick.get("formula") or "model-only"

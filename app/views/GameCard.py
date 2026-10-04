@@ -1890,12 +1890,18 @@ with content_col:
                 key="gc_model", note=_gm_note)
             _gc_stk = _model_view.staking_controls("gc")
             _model_view.render_trust_row(
-                [("Moneyline", _model_view.market_trust(_mlb_model.get("validation"), "moneyline")),
-                 ("Total", _model_view.market_trust(_mlb_model.get("validation"), "total"))])
+                [("Moneyline", _model_view.market_trust(_mlb_model.get("blend"), "moneyline")),
+                 ("Run line", _model_view.market_trust(_mlb_model.get("blend"), "spread")),
+                 ("Total", _model_view.market_trust(_mlb_model.get("blend"), "total"))],
+                market=True)
             _model_view.render_value_panel(_gm_proj, _gm_odds, team_abbr(game["away"]),
                                            team_abbr(game["home"]), key="gc_model",
                                            staking=_gc_stk,
-                                           validation=_mlb_model.get("validation"))
+                                           validation=_mlb_model.get("validation"),
+                                           blend=_mlb_model.get("blend"))
+            _model_view.render_alt_lines(_gm_proj, team_abbr(game["away"]),
+                                         team_abbr(game["home"]), key="gc_model", sport="mlb",
+                                         staking=_gc_stk)
             _model_view.render_validation(_mlb_model.get("validation"), key="gc_model",
                                           total_unit="runs")
 
@@ -1939,15 +1945,28 @@ with content_col:
     # starter selected above. Collapsed by default: the lineup table below
     # is the page's main event, and this reads the same cached parquet
     # frames the profiles load anyway.
-    with st.expander(f"Prop model \u2014 {team_abbr(opposing_team)} lineup vs {selected_pitcher_name}",
+    with st.expander(f"Prop model \u2014 {team_abbr(opposing_team)} lineup vs {selected_pitcher_name}"
+                     f" \u00b7 batter & pitcher props, any line",
                      expanded=False):
+        from engines import mlb_props as _mlb_props
         _p_rows, _p_verdicts, _p_note = _model_view.mlb_lineup_props(batters, pitcher_id)
-        _model_view.render_prop_table(_p_rows, _model_view.MLB_PROP_COLUMNS, _p_verdicts,
-                                      key="gc_props", favor_note=_p_note)
-        _model_view.render_prop_value_tool(_p_rows, _model_view.MLB_PROP_COLUMNS,
-                                           key="gc_props",
-                                           staking=_model_view.current_staking())
+        _model_view.render_prop_board(_p_rows, _mlb_props.STATS, _mlb_props.MARKETS, _p_verdicts,
+                                      key="gc_props", staking=_model_view.current_staking(),
+                                      info_cols=("#", "Batter", "PA", "Exp PA"),
+                                      favor_note=_p_note, unit_note=_mlb_props.RBI_NOTE)
         st.caption(_model_view.MLB_PROP_FOOTNOTE)
+        st.markdown(f"**{selected_pitcher_name}** \u2014 pitching to {team_abbr(opposing_team)}")
+        _sp_row, _sp_verd, _sp_note = _model_view.mlb_starter_props(batters, pitcher_id,
+                                                                    selected_pitcher_name)
+        if _sp_row:
+            _model_view.render_prop_board([_sp_row], _mlb_props.PITCHER_STATS,
+                                          _mlb_props.PITCHER_MARKETS, _sp_verd,
+                                          key="gc_sp_props", staking=_model_view.current_staking(),
+                                          info_cols=("Pitcher", "Starts", "Exp BF", "Exp K"),
+                                          favor_note=_sp_note,
+                                          footnote=_model_view.MLB_PITCHER_FOOTNOTE)
+        else:
+            st.caption(_sp_note)
 
     # HR Score / Hit Score / K Score come from a SEPARATE, real, live
     # source: MLB's own Statcast percentile rankings, matched by player

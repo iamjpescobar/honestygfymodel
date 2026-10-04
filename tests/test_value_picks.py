@@ -47,17 +47,39 @@ check("no edge -> zero stake, not negative", vl.stake(0.40, 100, 1000) == 0.0)
 check("an impossible price (+50) is refused", vl.assess(0.5, 50) is None)
 
 # -------------------------------------------- 2. candidate / value bets
-proj = {"p_home": 0.60, "p_over": 0.45, "market_total": 8.5,
-        "p_home_cover": 0.53, "market_spread_home": -3.5}
+# Since 10-04 a bet is priced on the FINAL probability (engines/
+# market_blend: market moved toward the model by its fitted weight).
+proj = {"p_home": 0.66, "p_home_mkt": 0.55, "p_home_final": 0.60,
+        "p_over": 0.45, "p_over_mkt": 0.50, "p_over_final": 0.47, "market_total": 8.5,
+        "p_home_cover": 0.53, "p_cover_mkt": 0.50, "p_cover_final": 0.515,
+        "market_spread_home": -3.5}
 odds = {"home_ml": -130, "away_ml": 110, "over_price": -110}   # no under, no spread prices
 cands = mpk.candidate_bets(proj, odds)
-check("six candidate sides priced by the model", len(cands) == 6)
+check("six candidate sides, each carrying model, market and final",
+      len(cands) == 6 and all("p_model" in c and "p_market" in c for c in cands))
+check("a candidate's p IS the final probability, not the model's",
+      next(c for c in cands if c["market"] == "moneyline" and c["side"] == "home")["p"] == 0.60)
 vb = mpk.value_bets(proj, odds)
-check("home ML at -130 (break-even 56.5%) is value at 60%",
+check("home ML at -130 (break-even 56.5%) is value at a FINAL 60%",
       any(b["market"] == "moneyline" and b["side"] == "home" for b in vb))
-check("over at 45% vs -110 is not value", not any(b["side"] == "over" for b in vb))
+check("over at a final 47% vs -110 is not value", not any(b["side"] == "over" for b in vb))
 check("a side with NO posted price is never logged (under, spreads)",
       not any(b["side"] == "under" or b["market"] == "spread" for b in vb))
+# The 10-03 failure: a model-only probability with no market to anchor
+# it must never produce a pick, however far it is from the price.
+bare = {"p_home": 0.80, "p_over": 0.75, "market_total": 46.5}
+check("no market anchor -> no value bet, even at a model 80% vs +170",
+      mpk.value_bets(bare, {"home_ml": 170, "away_ml": -200, "over_price": -110}) == [])
+# A moneyline and a spread on the same team are one opinion.
+both = {"p_home": 0.6, "p_home_mkt": 0.5, "p_home_final": 0.58,
+        "p_home_cover": 0.6, "p_cover_mkt": 0.5, "p_cover_final": 0.58, "market_spread_home": -1.5}
+bo = {"home_ml": 100, "away_ml": -120, "home_spread_price": 150, "away_spread_price": -180}
+vb2 = mpk.value_bets(both, bo)
+check("ML and spread on the same side: only ONE is a value bet (the higher EV)",
+      len([b for b in vb2 if b["market"] in ("moneyline", "spread")]) == 1
+      and vb2[0]["market"] == "spread")
+check("...and all of them are reachable with one_per_group off",
+      len(mpk.value_bets(both, bo, one_per_group=False)) == 2)
 
 # ---------------------------------------------------------- 3. the log
 def _real_digest():
@@ -170,13 +192,24 @@ check("1.997 pts (prints +2.0) is VALUE, matching how the log stores and buckets
                         "market": "moneyline"}])["by_edge"][1]["n"] == 1)
 check("bucket edges land in the higher tier (2.0 pts is VALUE, 5.0 is STRONG)",
       mv.edge_tier(0.02, True) == "value" and mv.edge_tier(0.05, True) == "strong")
+# Game-market trust is AGAINST THE MARKET since 10-04: the blend block.
+blend = {"moneyline": {"n": 400, "verdict": {"verdict": "beats"}},
+         "total": {"n": 400, "verdict": {"verdict": "thin"}},
+         "spread": {"n": 0}}
+check("trust reads the blend verdict (total THIN, moneyline BEATS)",
+      mv.market_trust(blend, "total") == "thin" and mv.market_trust(blend, "moneyline") == "beats")
+check("a market with no line history is UNTESTED", mv.market_trust(blend, "spread") is None)
 val = {"n": 100, "beats_coin": True, "beats_home_rate": True, "total_beats_league_avg": True,
-       "total_verdict": {"verdict": "thin"}}
-check("the significance verdict wins over the plain boolean (total THIN)",
-      mv.market_trust(val, "total") == "thin")
-check("an older model file falls back to the boolean (moneyline BEATS)",
-      mv.market_trust(val, "moneyline") == "beats")
+       "total_verdict": {"verdict": "beats"}, "ml_verdict": {"verdict": "beats"}}
+check("beating a coin flip is NOT beating the market: an old validation dict is UNTESTED",
+      mv.market_trust(val, "moneyline") is None and mv.market_trust(val, "total") is None)
 check("an untested model is UNTESTED, not a pass", mv.market_trust({}, "moneyline") is None)
+check("market badges say MARKET", mv.trust_label("beats", market=True) == "BEATS MARKET"
+      and mv.trust_label("fails", market=True) == "MARKET WINS")
+sc, f = mv.scale_to_slate([20.0, 20.0, 20.0, 0.0], 1000, 0.03)
+check("slate ceiling: three $20 stakes on $1,000 at 3% scale to $10 each",
+      sc == [10.0, 10.0, 10.0, 0.0] and abs(f - 0.5) < 1e-9)
+check("under the ceiling nothing moves", mv.scale_to_slate([5.0, 5.0], 1000, 0.10) == ([5.0, 5.0], 1.0))
 check("THIN and STRONG are visibly different colours",
       mv.TIER_STYLE["thin"][1] != mv.TIER_STYLE["strong"][1]
       and mv.TIER_STYLE["thin"][2] != mv.TIER_STYLE["strong"][2])

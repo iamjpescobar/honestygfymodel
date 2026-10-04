@@ -33,6 +33,11 @@ sys.path.insert(0, str(ROOT))
 from engines import mlb_props as mp       # noqa: E402
 import mlb_prop_precompute as mpp          # noqa: E402
 
+# Never read the repo's real last-season file from a fixture test (rule 5:
+# the fixture's players are not real players). test_prior_season.py
+# tests the prior path with its own fixture.
+mpp.PRIOR_PATH = Path(__file__).resolve().parent / "_no_such_prior.json"
+
 failures = []
 
 
@@ -73,6 +78,8 @@ def season(seed=5, days=75, teams=16):
     pen = {t: [60000 + t * 10 + i for i in range(4)] for t in range(teams)}
     ps = {p: skill(.22) for t in rot for p in rot[t] + pen[t]}
     rows, gpk, nxt = [], 0, {t: 0 for t in range(teams)}
+    from collections import defaultdict as _dd
+    score = _dd(int)
     for d in range(days):
         day = (date(2026, 4, 1) + timedelta(d)).isoformat()
         ts = list(range(teams))
@@ -104,9 +111,18 @@ def season(seed=5, days=75, teams=16):
                                 break
                         outs += o in ("K", "OUT")
                         ab += 1
+                        # runs on the play, from a KNOWN conditional the
+                        # RBI table must recover (HR always drives one in)
+                        u = g.random()
+                        rbi = {"HR": 1 + (u < .40) + (u < .15) + (u < .03),
+                               "1B": int(u < .15), "2B": int(u < .30), "3B": int(u < .50),
+                               "BB": int(u < .02), "OUT": int(u < .04), "K": 0}[o]
+                        before = score[(gpk, bside)]
+                        score[(gpk, bside)] = before + rbi
                         rows.append({"game_date": day, "game_pk": gpk, "at_bat_number": ab,
                                      "pitch_number": 1, "events": EV[o], "batter": b,
-                                     "pitcher": p, "inning_topbot": half})
+                                     "pitcher": p, "inning_topbot": half,
+                                     "bat_score": before, "post_bat_score": before + rbi})
     return pd.DataFrame(rows), bs, ps
 
 
@@ -166,7 +182,82 @@ check("hits markets beat the player's own frequency (the fixture has real skill)
       v["h1"]["beats_baseline"] and v["h2"]["beats_baseline"])
 check("beats_baseline is exactly the Brier comparison",
       all(v[k]["beats_baseline"] == (v[k]["model_brier"] < v[k]["baseline_brier"])
-          for k, *_ in mp.MARKETS))
+          for k, *_ in mp.MARKETS if v[k]["n"]))
+rg = model["rbi_given"]
+check("RBI table recovered: a home run always drives one in, ~40% drive in 2+",
+      rg and rg["all"]["HR"][0] == 0.0 and abs(sum(rg["all"]["HR"][2:]) - 0.40) < 0.04)
+check("...a single drives one in ~15% of the time, a strikeout never",
+      abs(rg["all"]["1B"][1] - 0.15) < 0.02 and rg["all"]["K"][0] == 1.0)
+avg_c = {o: int(1000 * LG[o]) for o in LG}
+avg_c["PA"] = sum(avg_c.values())
+bfd0 = mp.starter_bf_dist([22] * 10, model)
+pj = mp.project_batter(4, avg_c, avg_c, model, bfd0)
+check("every stat's pmf sums to 1", all(abs(sum(v) - 1) < 1e-4 for v in pj["pmfs"].values()))
+check("any-line agrees with the table: P(TB >= 2) from the pmf IS the TB O1.5 cell",
+      abs(mp.mm.prob_at_least(pj["pmfs"]["tb"], 2) - pj["probs"]["tb2"]) < 1e-4)
+check("RBI priced only because the season measured it (the table exists)", "rbi1" in pj["probs"])
+no_rbi = dict(model, rbi_given=None)
+check("no RBI table -> no RBI market (left out, never zero)",
+      "rbi1" not in mp.project_batter(4, avg_c, avg_c, no_rbi, bfd0)["probs"])
+pv = model["pitcher_validation"]
+check("every starter market was scored on the same few hundred starts",
+      len({pv[k]["n"] for k, *_ in mp.PITCHER_MARKETS}) == 1 and pv["pk5"]["n"] > 300)
+# Calibration bands on ~480 starts are too noisy to hold to a few points
+# (the TRUE probabilities miss by 11 in one band on this fixture), so the
+# check is against the truth itself: start by start, the model's expected
+# strikeouts must track what the fixture's real skills imply.
+_pa = mpp.plate_appearances(df)
+_bcum, _pcum = mpp._cum_before(_pa, "batter"), mpp._cum_before(_pa, "pitcher")
+_lus = mpp.lineups(_pa)
+_hist = {}
+for _g, _s, _sp, _d, _bf in sorted(mpp.starts_table(_pa), key=lambda x: x[3]):
+    _hist.setdefault(_sp, []).append((_d, _bf))
+_cut = sorted(_pa["game_date"].unique())[-30]
+_m, _t = [], []
+for _g, _s, _sp, _d, _bf in mpp.starts_table(_pa):
+    _order = _lus.get((_g, _s))
+    _before = [b for dd, b in _hist[_sp] if dd < _d]
+    _pc = mpp._counts_at(_pcum, _sp, _d)
+    if _d < _cut or not _order or not _before or not _pc:
+        continue
+    _bfd = mp.starter_bf_dist(_before, model)
+    _pr = mp.project_pitcher([mpp._counts_at(_bcum, b, _d) for b in _order], _pc, model, _bfd)
+    _true = 0.0
+    for _bfv, _w in _bfd.items():
+        for j in range(int(_bfv)):
+            _b = _order[j % 9]
+            _raw = {o: bs[_b][o] * ps[_sp][o] / LG[o] for o in LG}
+            _true += _w * _raw["K"] / sum(_raw.values())
+    _m.append(_pr["exp"]["k"])
+    _t.append(_true)
+_mm, _mt = sum(_m) / len(_m), sum(_t) / len(_t)
+_cov = sum((a - _mm) * (b - _mt) for a, b in zip(_m, _t))
+_corr = _cov / ((sum((a - _mm) ** 2 for a in _m) * sum((b - _mt) ** 2 for b in _t)) ** 0.5)
+check(f"starter K: no bias against the truth (model {_mm:.2f} vs true {_mt:.2f} per start)",
+      abs(_mm - _mt) < 0.15)
+check(f"starter K: tracks the true expectation start by start (r = {_corr:.2f})", _corr > 0.8)
+check("starter K props beat his own strikeout frequency (the fixture has real skill)",
+      pv["pk5"]["model_brier"] < pv["pk5"]["baseline_brier"])
+ace = {o: int(1000 * v) for o, v in {"1B": .12, "2B": .04, "3B": .003, "HR": .02, "BB": .06,
+                                      "K": .32, "OUT": .437}.items()}
+ace["PA"] = sum(ace.values())
+p_avg = mp.project_pitcher([avg_c] * 9, avg_c, model, bfd0)
+p_ace = mp.project_pitcher([avg_c] * 9, ace, model, bfd0)
+check("an ace's strikeout line is higher and his hits-allowed line lower",
+      p_ace["exp"]["k"] > p_avg["exp"]["k"] and p_ace["exp"]["h"] < p_avg["exp"]["h"])
+check("a starter who goes deeper faces more batters and strikes out more",
+      mp.project_pitcher([avg_c] * 9, avg_c, model, mp.starter_bf_dist([27] * 30, model))["exp"]["k"]
+      > mp.project_pitcher([avg_c] * 9, avg_c, model, mp.starter_bf_dist([18] * 30, model))["exp"]["k"])
+# This fixture gives every starter the same 18-28 BF window, so the
+# fitted strength is huge (his own record says nothing) — correct. With a
+# small strength his own history must move the number.
+_own = dict(model, bf_strength_starts=1.0)
+check("expected batters faced follows his own history when the fit says it should",
+      abs(mp.project_pitcher([avg_c] * 9, avg_c, _own,
+                             mp.starter_bf_dist([22] * 30, _own))["exp_bf"] - 22) < 0.6)
+check("...and the league's when the fit says his own record carries nothing",
+      abs(p_avg["exp_bf"] - 23) < 0.6)
+
 # A baseline that peeks at the game it predicts would score impossibly
 # well; with honest (earlier-games-only) frequencies the baseline Brier
 # on 1+ hit must stay near the irreducible ~0.22, not collapse toward 0.
