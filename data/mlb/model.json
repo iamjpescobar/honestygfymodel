@@ -1,5 +1,41 @@
 {
- "generated_at_et": "2026-10-04 11:10",
+ "blend": {
+  "coverage": {
+   "preds": 2429,
+   "spread_contradicts": 0,
+   "spread_priced": 0,
+   "total_priced": 0,
+   "with_line": 0
+  },
+  "moneyline": {
+   "n": 0,
+   "verdict": {
+    "n": 0,
+    "verdict": null
+   },
+   "w": null,
+   "w_used": 0.0
+  },
+  "spread": {
+   "n": 0,
+   "verdict": {
+    "n": 0,
+    "verdict": null
+   },
+   "w": null,
+   "w_used": 0.0
+  },
+  "total": {
+   "n": 0,
+   "verdict": {
+    "n": 0,
+    "verdict": null
+   },
+   "w": null,
+   "w_used": 0.0
+  }
+ },
+ "generated_at_et": "2026-10-04 12:39",
  "league": {
   "avg_total": 8.962,
   "away_mult": 0.9945,
@@ -13,166 +49,174 @@
  },
  "look_ahead_note": "Starter priors (two numbers: the league's spread in starter run prevention and depth) are fitted on full-season totals; every team and starter rate in the walk-forward uses only earlier games.",
  "params": {
-  "carryover": null,
-  "dispersion": 3.492,
+  "carryover": 0.372,
+  "dispersion": 3.498,
   "fit_on": "current",
-  "shrink_k": 61.036
+  "shrink_k": 136.886
  },
+ "prior_season": 2025,
  "rates": {
   "Arizona Diamondbacks": {
-   "def": 4.4993,
+   "def": 4.5623,
    "gp": 162,
-   "off": 4.5397
+   "off": 4.5977
   },
   "Athletics": {
-   "def": 5.4274,
+   "def": 5.2897,
    "gp": 162,
-   "off": 4.3603
+   "off": 4.4044
   },
   "Atlanta Braves": {
-   "def": 4.0463,
+   "def": 4.168,
    "gp": 163,
-   "off": 4.5417
+   "off": 4.5298
   },
   "Baltimore Orioles": {
-   "def": 4.5601,
+   "def": 4.6119,
    "gp": 161,
-   "off": 4.4655
+   "off": 4.4234
   },
   "Boston Red Sox": {
-   "def": 3.9658,
+   "def": 4.0483,
    "gp": 162,
-   "off": 4.3155
+   "off": 4.4272
   },
   "Chicago Cubs": {
-   "def": 4.3783,
+   "def": 4.3287,
    "gp": 162,
-   "off": 5.0373
+   "off": 4.9732
   },
   "Chicago White Sox": {
-   "def": 4.4545,
+   "def": 4.4842,
    "gp": 162,
-   "off": 4.7056
+   "off": 4.5709
   },
   "Cincinnati Reds": {
-   "def": 4.9297,
+   "def": 4.7735,
    "gp": 162,
-   "off": 4.2124
+   "off": 4.2715
   },
   "Cleveland Guardians": {
-   "def": 4.2168,
+   "def": 4.2104,
    "gp": 162,
-   "off": 4.2662
+   "off": 4.2398
   },
   "Colorado Rockies": {
-   "def": 5.4588,
+   "def": 5.5293,
    "gp": 162,
-   "off": 4.598
+   "off": 4.4376
   },
   "Detroit Tigers": {
-   "def": 4.1496,
+   "def": 4.2026,
    "gp": 162,
-   "off": 4.4679
+   "off": 4.5112
   },
   "Houston Astros": {
-   "def": 4.6607,
+   "def": 4.5565,
    "gp": 162,
-   "off": 4.5172
+   "off": 4.4717
   },
   "Kansas City Royals": {
-   "def": 4.858,
+   "def": 4.674,
    "gp": 162,
-   "off": 4.32
+   "off": 4.2874
   },
   "Los Angeles Angels": {
-   "def": 4.598,
+   "def": 4.6919,
    "gp": 162,
-   "off": 4.163
+   "off": 4.1936
   },
   "Los Angeles Dodgers": {
-   "def": 3.9164,
+   "def": 4.0202,
    "gp": 162,
-   "off": 4.8176
+   "off": 4.8432
   },
   "Miami Marlins": {
-   "def": 4.4186,
+   "def": 4.5168,
    "gp": 162,
-   "off": 4.4321
+   "off": 4.4325
   },
   "Milwaukee Brewers": {
-   "def": 3.9972,
+   "def": 4.0284,
    "gp": 162,
-   "off": 4.9566
+   "off": 4.9267
   },
   "Minnesota Twins": {
-   "def": 4.7997,
+   "def": 4.7749,
    "gp": 162,
-   "off": 4.5397
+   "off": 4.4818
   },
   "New York Mets": {
-   "def": 4.5038,
+   "def": 4.4924,
    "gp": 162,
-   "off": 4.3603
+   "off": 4.4394
   },
   "New York Yankees": {
-   "def": 3.9386,
+   "def": 4.0391,
    "gp": 161,
-   "off": 4.5601
+   "off": 4.6768
   },
   "Philadelphia Phillies": {
-   "def": 4.3558,
+   "def": 4.3109,
    "gp": 162,
-   "off": 4.4231
+   "off": 4.4989
   },
   "Pittsburgh Pirates": {
-   "def": 4.5397,
+   "def": 4.4449,
    "gp": 162,
-   "off": 4.6652
+   "off": 4.4729
   },
   "San Diego Padres": {
-   "def": 4.2796,
+   "def": 4.2255,
    "gp": 162,
-   "off": 4.4634
+   "off": 4.4485
   },
   "San Francisco Giants": {
-   "def": 4.6221,
+   "def": 4.548,
    "gp": 163,
-   "off": 4.2382
+   "off": 4.2834
   },
   "Seattle Mariners": {
-   "def": 4.4634,
+   "def": 4.44,
    "gp": 162,
-   "off": 4.2034
+   "off": 4.3223
   },
   "St. Louis Cardinals": {
-   "def": 4.5845,
+   "def": 4.5939,
    "gp": 162,
-   "off": 4.4545
+   "off": 4.428
   },
   "Tampa Bay Rays": {
-   "def": 4.1406,
+   "def": 4.1874,
    "gp": 162,
-   "off": 4.5262
+   "off": 4.508
   },
   "Texas Rangers": {
-   "def": 4.45,
+   "def": 4.3356,
    "gp": 162,
-   "off": 4.2437
+   "off": 4.2655
   },
   "Toronto Blue Jays": {
-   "def": 4.3379,
+   "def": 4.3749,
    "gp": 162,
-   "off": 4.1317
+   "off": 4.3026
   },
   "Washington Nationals": {
-   "def": 4.8804,
+   "def": 4.9684,
    "gp": 162,
-   "off": 4.9073
+   "off": 4.7638
   }
  },
  "season": 2026,
  "source": "statsapi.mlb.com schedule + pitcher game logs (regular season)",
  "sport": "mlb",
+ "starter_prior_weight": {
+  "n_both_seasons": 241,
+  "outs": 0.1908,
+  "outs_loglik_gain": 252.26,
+  "ra": 0.0954,
+  "ra_loglik_gain": 24.79
+ },
  "starter_priors": {
   "outs_mean": 15.141,
   "outs_strength_starts": 0.284,
@@ -2437,83 +2481,2287 @@
    "r": 38
   }
  },
+ "starters_prior": {
+  "434378": {
+   "gs": 29,
+   "name": "Justin Verlander",
+   "outs": 456,
+   "r": 74
+  },
+  "448179": {
+   "gs": 2,
+   "name": "Rich Hill",
+   "outs": 27,
+   "r": 7
+  },
+  "450203": {
+   "gs": 27,
+   "name": "Charlie Morton",
+   "outs": 377,
+   "r": 86
+  },
+  "453286": {
+   "gs": 17,
+   "name": "Max Scherzer",
+   "outs": 255,
+   "r": 49
+  },
+  "471911": {
+   "gs": 9,
+   "name": "Carlos Carrasco",
+   "outs": 122,
+   "r": 31
+  },
+  "477132": {
+   "gs": 22,
+   "name": "Clayton Kershaw",
+   "outs": 335,
+   "r": 46
+  },
+  "489119": {
+   "gs": 2,
+   "name": "Wade Miley",
+   "outs": 30,
+   "r": 5
+  },
+  "500779": {
+   "gs": 24,
+   "name": "Jose Quintana",
+   "outs": 395,
+   "r": 65
+  },
+  "502043": {
+   "gs": 4,
+   "name": "Kyle Gibson",
+   "outs": 37,
+   "r": 23
+  },
+  "506433": {
+   "gs": 15,
+   "name": "Yu Darvish",
+   "outs": 216,
+   "r": 44
+  },
+  "518489": {
+   "gs": 1,
+   "name": "Ryan Brasier",
+   "outs": 3,
+   "r": 0
+  },
+  "518876": {
+   "gs": 32,
+   "name": "Merrill Kelly",
+   "outs": 552,
+   "r": 79
+  },
+  "519141": {
+   "gs": 4,
+   "name": "Drew Pomeranz",
+   "outs": 10,
+   "r": 2
+  },
+  "519242": {
+   "gs": 20,
+   "name": "Chris Sale",
+   "outs": 360,
+   "r": 37
+  },
+  "527048": {
+   "gs": 10,
+   "name": "Mart\u00edn P\u00e9rez",
+   "outs": 158,
+   "r": 22
+  },
+  "542881": {
+   "gs": 26,
+   "name": "Tyler Anderson",
+   "outs": 409,
+   "r": 73
+  },
+  "542888": {
+   "gs": 2,
+   "name": "Shawn Armstrong",
+   "outs": 12,
+   "r": 2
+  },
+  "543056": {
+   "gs": 1,
+   "name": "Danny Coulombe",
+   "outs": 3,
+   "r": 1
+  },
+  "543101": {
+   "gs": 4,
+   "name": "Anthony DeSclafani",
+   "outs": 41,
+   "r": 10
+  },
+  "543135": {
+   "gs": 22,
+   "name": "Nathan Eovaldi",
+   "outs": 390,
+   "r": 28
+  },
+  "543243": {
+   "gs": 32,
+   "name": "Sonny Gray",
+   "outs": 542,
+   "r": 93
+  },
+  "543294": {
+   "gs": 31,
+   "name": "Kyle Hendricks",
+   "outs": 494,
+   "r": 92
+  },
+  "544150": {
+   "gs": 1,
+   "name": "Albert Su\u00e1rez",
+   "outs": 9,
+   "r": 1
+  },
+  "547179": {
+   "gs": 26,
+   "name": "Michael Lorenzen",
+   "outs": 422,
+   "r": 76
+  },
+  "554430": {
+   "gs": 24,
+   "name": "Zack Wheeler",
+   "outs": 449,
+   "r": 48
+  },
+  "570632": {
+   "gs": 6,
+   "name": "Jos\u00e9 Ure\u00f1a",
+   "outs": 67,
+   "r": 13
+  },
+  "571510": {
+   "gs": 31,
+   "name": "Matthew Boyd",
+   "outs": 539,
+   "r": 69
+  },
+  "571578": {
+   "gs": 30,
+   "name": "Patrick Corbin",
+   "outs": 463,
+   "r": 76
+  },
+  "571760": {
+   "gs": 23,
+   "name": "Andrew Heaney",
+   "outs": 351,
+   "r": 65
+  },
+  "571927": {
+   "gs": 2,
+   "name": "Steven Matz",
+   "outs": 27,
+   "r": 1
+  },
+  "571945": {
+   "gs": 31,
+   "name": "Miles Mikolas",
+   "outs": 469,
+   "r": 87
+  },
+  "573186": {
+   "gs": 9,
+   "name": "Marcus Stroman",
+   "outs": 117,
+   "r": 27
+  },
+  "579328": {
+   "gs": 33,
+   "name": "Yusei Kikuchi",
+   "outs": 535,
+   "r": 87
+  },
+  "592254": {
+   "gs": 1,
+   "name": "Jos\u00e9 De Le\u00f3n",
+   "outs": 20,
+   "r": 3
+  },
+  "592332": {
+   "gs": 32,
+   "name": "Kevin Gausman",
+   "outs": 579,
+   "r": 79
+  },
+  "592662": {
+   "gs": 32,
+   "name": "Robbie Ray",
+   "outs": 547,
+   "r": 81
+  },
+  "592791": {
+   "gs": 23,
+   "name": "Jameson Taillon",
+   "outs": 389,
+   "r": 54
+  },
+  "592836": {
+   "gs": 21,
+   "name": "Taijuan Walker",
+   "outs": 311,
+   "r": 54
+  },
+  "592866": {
+   "gs": 17,
+   "name": "Trevor Williams",
+   "outs": 248,
+   "r": 59
+  },
+  "593423": {
+   "gs": 7,
+   "name": "Frankie Montas",
+   "outs": 101,
+   "r": 25
+  },
+  "593958": {
+   "gs": 29,
+   "name": "Eduardo Rodriguez",
+   "outs": 463,
+   "r": 94
+  },
+  "593974": {
+   "gs": 1,
+   "name": "Wandy Peralta",
+   "outs": 4,
+   "r": 0
+  },
+  "594798": {
+   "gs": 30,
+   "name": "Jacob deGrom",
+   "outs": 518,
+   "r": 57
+  },
+  "594902": {
+   "gs": 9,
+   "name": "Ben Lively",
+   "outs": 134,
+   "r": 16
+  },
+  "595345": {
+   "gs": 1,
+   "name": "Steven Okert",
+   "outs": 5,
+   "r": 1
+  },
+  "596295": {
+   "gs": 12,
+   "name": "Austin Gomber",
+   "outs": 173,
+   "r": 51
+  },
+  "601713": {
+   "gs": 31,
+   "name": "Nick Pivetta",
+   "outs": 545,
+   "r": 63
+  },
+  "605130": {
+   "gs": 1,
+   "name": "Scott Barlow",
+   "outs": 3,
+   "r": 4
+  },
+  "605135": {
+   "gs": 31,
+   "name": "Chris Bassitt",
+   "outs": 508,
+   "r": 80
+  },
+  "605280": {
+   "gs": 31,
+   "name": "Clay Holmes",
+   "outs": 483,
+   "r": 73
+  },
+  "605288": {
+   "gs": 21,
+   "name": "Adrian Houser",
+   "outs": 375,
+   "r": 49
+  },
+  "605400": {
+   "gs": 17,
+   "name": "Aaron Nola",
+   "outs": 283,
+   "r": 65
+  },
+  "605452": {
+   "gs": 1,
+   "name": "Joe Ross",
+   "outs": 6,
+   "r": 1
+  },
+  "605483": {
+   "gs": 11,
+   "name": "Blake Snell",
+   "outs": 184,
+   "r": 21
+  },
+  "605488": {
+   "gs": 30,
+   "name": "Jeffrey Springs",
+   "outs": 475,
+   "r": 82
+  },
+  "605513": {
+   "gs": 1,
+   "name": "Spencer Turnbull",
+   "outs": 6,
+   "r": 4
+  },
+  "605540": {
+   "gs": 12,
+   "name": "Brandon Woodruff",
+   "outs": 194,
+   "r": 26
+  },
+  "606965": {
+   "gs": 1,
+   "name": "Chris Devenski",
+   "outs": 6,
+   "r": 0
+  },
+  "606996": {
+   "gs": 6,
+   "name": "Kyle Hart",
+   "outs": 77,
+   "r": 19
+  },
+  "607067": {
+   "gs": 27,
+   "name": "Colin Rea",
+   "outs": 430,
+   "r": 72
+  },
+  "607074": {
+   "gs": 33,
+   "name": "Carlos Rod\u00f3n",
+   "outs": 586,
+   "r": 74
+  },
+  "607192": {
+   "gs": 18,
+   "name": "Tyler Glasnow",
+   "outs": 271,
+   "r": 33
+  },
+  "607200": {
+   "gs": 24,
+   "name": "Erick Fedde",
+   "outs": 362,
+   "r": 77
+  },
+  "607259": {
+   "gs": 26,
+   "name": "Nick Martinez",
+   "outs": 435,
+   "r": 78
+  },
+  "607455": {
+   "gs": 1,
+   "name": "Anthony Banda",
+   "outs": 1,
+   "r": 1
+  },
+  "607481": {
+   "gs": 2,
+   "name": "Aaron Bummer",
+   "outs": 13,
+   "r": 6
+  },
+  "607536": {
+   "gs": 31,
+   "name": "Kyle Freeland",
+   "outs": 488,
+   "r": 105
+  },
+  "607625": {
+   "gs": 26,
+   "name": "Seth Lugo",
+   "outs": 436,
+   "r": 70
+  },
+  "608331": {
+   "gs": 32,
+   "name": "Max Fried",
+   "outs": 586,
+   "r": 73
+  },
+  "608337": {
+   "gs": 26,
+   "name": "Lucas Giolito",
+   "outs": 435,
+   "r": 62
+  },
+  "608372": {
+   "gs": 30,
+   "name": "Tomoyuki Sugano",
+   "outs": 471,
+   "r": 85
+  },
+  "608379": {
+   "gs": 31,
+   "name": "Michael Wacha",
+   "outs": 518,
+   "r": 74
+  },
+  "608566": {
+   "gs": 26,
+   "name": "Germ\u00e1n M\u00e1rquez",
+   "outs": 379,
+   "r": 106
+  },
+  "608650": {
+   "gs": 3,
+   "name": "Dietrich Enns",
+   "outs": 35,
+   "r": 9
+  },
+  "608718": {
+   "gs": 3,
+   "name": "Brent Suter",
+   "outs": 24,
+   "r": 3
+  },
+  "615698": {
+   "gs": 26,
+   "name": "Cal Quantrill",
+   "outs": 353,
+   "r": 81
+  },
+  "621107": {
+   "gs": 14,
+   "name": "Zach Eflin",
+   "outs": 214,
+   "r": 48
+  },
+  "621111": {
+   "gs": 24,
+   "name": "Walker Buehler",
+   "outs": 360,
+   "r": 71
+  },
+  "621112": {
+   "gs": 4,
+   "name": "Paul Blackburn",
+   "outs": 43,
+   "r": 10
+  },
+  "621121": {
+   "gs": 13,
+   "name": "Lance McCullers Jr.",
+   "outs": 154,
+   "r": 40
+  },
+  "621244": {
+   "gs": 30,
+   "name": "Jos\u00e9 Berr\u00edos",
+   "outs": 492,
+   "r": 83
+  },
+  "622379": {
+   "gs": 2,
+   "name": "Luis F. Castillo",
+   "outs": 21,
+   "r": 7
+  },
+  "622491": {
+   "gs": 32,
+   "name": "Luis Castillo",
+   "outs": 542,
+   "r": 76
+  },
+  "622503": {
+   "gs": 5,
+   "name": "Nabil Crismatt",
+   "outs": 78,
+   "r": 13
+  },
+  "622608": {
+   "gs": 23,
+   "name": "Antonio Senzatela",
+   "outs": 324,
+   "r": 96
+  },
+  "622663": {
+   "gs": 29,
+   "name": "Luis Severino",
+   "outs": 488,
+   "r": 93
+  },
+  "623167": {
+   "gs": 1,
+   "name": "Chris Flexen",
+   "outs": 12,
+   "r": 3
+  },
+  "623211": {
+   "gs": 3,
+   "name": "Huascar Brazob\u00e1n",
+   "outs": 12,
+   "r": 0
+  },
+  "623437": {
+   "gs": 1,
+   "name": "Justin Topa",
+   "outs": 3,
+   "r": 1
+  },
+  "624133": {
+   "gs": 26,
+   "name": "Ranger Suarez",
+   "outs": 472,
+   "r": 57
+  },
+  "625643": {
+   "gs": 1,
+   "name": "Reynaldo L\u00f3pez",
+   "outs": 15,
+   "r": 3
+  },
+  "640455": {
+   "gs": 12,
+   "name": "Sean Manaea",
+   "outs": 154,
+   "r": 34
+  },
+  "641154": {
+   "gs": 14,
+   "name": "Pablo L\u00f3pez",
+   "outs": 227,
+   "r": 28
+  },
+  "641302": {
+   "gs": 5,
+   "name": "Tyler Alexander",
+   "outs": 52,
+   "r": 14
+  },
+  "641482": {
+   "gs": 8,
+   "name": "Nestor Cortes",
+   "outs": 103,
+   "r": 24
+  },
+  "641656": {
+   "gs": 1,
+   "name": "Ian Hamilton",
+   "outs": 3,
+   "r": 3
+  },
+  "641672": {
+   "gs": 1,
+   "name": "Thomas Hatch",
+   "outs": 15,
+   "r": 1
+  },
+  "641745": {
+   "gs": 1,
+   "name": "Brad Keller",
+   "outs": 3,
+   "r": 0
+  },
+  "641778": {
+   "gs": 15,
+   "name": "Eric Lauer",
+   "outs": 222,
+   "r": 33
+  },
+  "641793": {
+   "gs": 32,
+   "name": "Zack Littell",
+   "outs": 560,
+   "r": 81
+  },
+  "641816": {
+   "gs": 16,
+   "name": "Tyler Mahle",
+   "outs": 260,
+   "r": 21
+  },
+  "641927": {
+   "gs": 27,
+   "name": "Bailey Ober",
+   "outs": 439,
+   "r": 84
+  },
+  "642152": {
+   "gs": 2,
+   "name": "Lou Trivino III",
+   "outs": 6,
+   "r": 1
+  },
+  "642216": {
+   "gs": 1,
+   "name": "Allan Winans",
+   "outs": 13,
+   "r": 4
+  },
+  "642232": {
+   "gs": 8,
+   "name": "Ryan Yarbrough",
+   "outs": 120,
+   "r": 17
+  },
+  "642239": {
+   "gs": 1,
+   "name": "Rob Zastryzny",
+   "outs": 3,
+   "r": 0
+  },
+  "642547": {
+   "gs": 33,
+   "name": "Freddy Peralta",
+   "outs": 530,
+   "r": 54
+  },
+  "643377": {
+   "gs": 2,
+   "name": "Griffin Jax",
+   "outs": 6,
+   "r": 0
+  },
+  "645261": {
+   "gs": 31,
+   "name": "Sandy Alcantara",
+   "outs": 524,
+   "r": 107
+  },
+  "647336": {
+   "gs": 17,
+   "name": "Michael Soroka",
+   "outs": 250,
+   "r": 45
+  },
+  "650633": {
+   "gs": 15,
+   "name": "Michael King",
+   "outs": 220,
+   "r": 31
+  },
+  "650644": {
+   "gs": 18,
+   "name": "Aaron Civale",
+   "outs": 267,
+   "r": 56
+  },
+  "650911": {
+   "gs": 32,
+   "name": "Cristopher S\u00e1nchez",
+   "outs": 606,
+   "r": 58
+  },
+  "656222": {
+   "gs": 2,
+   "name": "Jalen Beeks",
+   "outs": 6,
+   "r": 1
+  },
+  "656240": {
+   "gs": 2,
+   "name": "Scott Blewett",
+   "outs": 17,
+   "r": 4
+  },
+  "656271": {
+   "gs": 1,
+   "name": "Brock Burke",
+   "outs": 3,
+   "r": 1
+  },
+  "656288": {
+   "gs": 16,
+   "name": "Griffin Canning",
+   "outs": 229,
+   "r": 35
+  },
+  "656302": {
+   "gs": 32,
+   "name": "Dylan Cease",
+   "outs": 504,
+   "r": 91
+  },
+  "656427": {
+   "gs": 31,
+   "name": "Jack Flaherty",
+   "outs": 483,
+   "r": 85
+  },
+  "656457": {
+   "gs": 5,
+   "name": "Tyler Gilbert",
+   "outs": 20,
+   "r": 1
+  },
+  "656550": {
+   "gs": 21,
+   "name": "Grant Holmes",
+   "outs": 342,
+   "r": 52
+  },
+  "656557": {
+   "gs": 9,
+   "name": "Tanner Houck",
+   "outs": 131,
+   "r": 41
+  },
+  "656605": {
+   "gs": 32,
+   "name": "Mitch Keller",
+   "outs": 529,
+   "r": 91
+  },
+  "656641": {
+   "gs": 8,
+   "name": "Jacob Latz",
+   "outs": 119,
+   "r": 12
+  },
+  "656731": {
+   "gs": 14,
+   "name": "Tylor Megill",
+   "outs": 205,
+   "r": 37
+  },
+  "656794": {
+   "gs": 5,
+   "name": "Sean Newcomb",
+   "outs": 67,
+   "r": 15
+  },
+  "656849": {
+   "gs": 30,
+   "name": "David Peterson",
+   "outs": 506,
+   "r": 84
+  },
+  "656876": {
+   "gs": 31,
+   "name": "Drew Rasmussen",
+   "outs": 450,
+   "r": 47
+  },
+  "657006": {
+   "gs": 4,
+   "name": "Justin Steele",
+   "outs": 68,
+   "r": 12
+  },
+  "657277": {
+   "gs": 34,
+   "name": "Logan Webb",
+   "outs": 621,
+   "r": 82
+  },
+  "657376": {
+   "gs": 14,
+   "name": "Clarke Schmidt",
+   "outs": 236,
+   "r": 29
+  },
+  "657424": {
+   "gs": 2,
+   "name": "Matt Gage",
+   "outs": 6,
+   "r": 0
+  },
+  "657514": {
+   "gs": 3,
+   "name": "Brennan Bernardino",
+   "outs": 10,
+   "r": 1
+  },
+  "657585": {
+   "gs": 1,
+   "name": "Reed Garrett",
+   "outs": 3,
+   "r": 0
+  },
+  "657746": {
+   "gs": 30,
+   "name": "Joe Ryan",
+   "outs": 498,
+   "r": 66
+  },
+  "660271": {
+   "gs": 14,
+   "name": "Shohei Ohtani",
+   "outs": 141,
+   "r": 15
+  },
+  "660730": {
+   "gs": 2,
+   "name": "Elvin Rodr\u00edguez",
+   "outs": 27,
+   "r": 11
+  },
+  "660761": {
+   "gs": 1,
+   "name": "Jos\u00e9 Suarez",
+   "outs": 21,
+   "r": 2
+  },
+  "661563": {
+   "gs": 11,
+   "name": "Luis Gil",
+   "outs": 171,
+   "r": 23
+  },
+  "663362": {
+   "gs": 1,
+   "name": "Matt Waldron",
+   "outs": 14,
+   "r": 4
+  },
+  "663372": {
+   "gs": 6,
+   "name": "Ryan Feltner",
+   "outs": 91,
+   "r": 17
+  },
+  "663399": {
+   "gs": 1,
+   "name": "Brandon Waddell",
+   "outs": 9,
+   "r": 3
+  },
+  "663436": {
+   "gs": 25,
+   "name": "Davis Martin",
+   "outs": 410,
+   "r": 74
+  },
+  "663460": {
+   "gs": 20,
+   "name": "Kris Bubic",
+   "outs": 349,
+   "r": 38
+  },
+  "663465": {
+   "gs": 2,
+   "name": "Kolby Allard",
+   "outs": 22,
+   "r": 2
+  },
+  "663485": {
+   "gs": 3,
+   "name": "Cole Sands",
+   "outs": 15,
+   "r": 1
+  },
+  "663546": {
+   "gs": 1,
+   "name": "Sean Hjelle",
+   "outs": 11,
+   "r": 2
+  },
+  "663554": {
+   "gs": 28,
+   "name": "Casey Mize",
+   "outs": 447,
+   "r": 68
+  },
+  "663559": {
+   "gs": 24,
+   "name": "Bailey Falter",
+   "outs": 364,
+   "r": 62
+  },
+  "663568": {
+   "gs": 19,
+   "name": "Stephen Kolek",
+   "outs": 338,
+   "r": 49
+  },
+  "663623": {
+   "gs": 33,
+   "name": "Jake Irvin",
+   "outs": 540,
+   "r": 120
+  },
+  "663738": {
+   "gs": 2,
+   "name": "Daniel Lynch IV",
+   "outs": 13,
+   "r": 1
+  },
+  "663795": {
+   "gs": 1,
+   "name": "Justin Hagenman",
+   "outs": 13,
+   "r": 4
+  },
+  "663855": {
+   "gs": 9,
+   "name": "Jordan Hicks",
+   "outs": 136,
+   "r": 34
+  },
+  "663903": {
+   "gs": 32,
+   "name": "Brady Singer",
+   "outs": 509,
+   "r": 80
+  },
+  "663941": {
+   "gs": 1,
+   "name": "Tristan Beck",
+   "outs": 9,
+   "r": 3
+  },
+  "663947": {
+   "gs": 6,
+   "name": "Tyler Holton",
+   "outs": 25,
+   "r": 7
+  },
+  "663969": {
+   "gs": 1,
+   "name": "Tyler Phillips",
+   "outs": 8,
+   "r": 1
+  },
+  "663978": {
+   "gs": 28,
+   "name": "Chris Paddack",
+   "outs": 436,
+   "r": 87
+  },
+  "664062": {
+   "gs": 7,
+   "name": "Tony Gonsolin",
+   "outs": 108,
+   "r": 21
+  },
+  "664141": {
+   "gs": 1,
+   "name": "JT Brubaker",
+   "outs": 12,
+   "r": 2
+  },
+  "664285": {
+   "gs": 31,
+   "name": "Framber Valdez",
+   "outs": 576,
+   "r": 82
+  },
+  "664299": {
+   "gs": 8,
+   "name": "Cristian Javier",
+   "outs": 111,
+   "r": 22
+  },
+  "665152": {
+   "gs": 29,
+   "name": "Dean Kremer",
+   "outs": 490,
+   "r": 79
+  },
+  "665625": {
+   "gs": 1,
+   "name": "Elvis Peguero",
+   "outs": 5,
+   "r": 1
+  },
+  "665795": {
+   "gs": 26,
+   "name": "Edward Cabrera",
+   "outs": 413,
+   "r": 60
+  },
+  "665871": {
+   "gs": 7,
+   "name": "Javier Assad",
+   "outs": 104,
+   "r": 15
+  },
+  "666142": {
+   "gs": 13,
+   "name": "Cole Ragans",
+   "outs": 185,
+   "r": 33
+  },
+  "666157": {
+   "gs": 28,
+   "name": "Nick Lodolo",
+   "outs": 467,
+   "r": 59
+  },
+  "666171": {
+   "gs": 1,
+   "name": "Ryan Zeferjahn",
+   "outs": 3,
+   "r": 1
+  },
+  "666200": {
+   "gs": 32,
+   "name": "Jes\u00fas Luzardo",
+   "outs": 551,
+   "r": 85
+  },
+  "666214": {
+   "gs": 13,
+   "name": "Joey Wentz",
+   "outs": 183,
+   "r": 38
+  },
+  "667755": {
+   "gs": 31,
+   "name": "Jos\u00e9 Soriano",
+   "outs": 507,
+   "r": 89
+  },
+  "668678": {
+   "gs": 33,
+   "name": "Zac Gallen",
+   "outs": 576,
+   "r": 109
+  },
+  "668881": {
+   "gs": 19,
+   "name": "Hunter Greene",
+   "outs": 323,
+   "r": 35
+  },
+  "668909": {
+   "gs": 31,
+   "name": "Gavin Williams",
+   "outs": 503,
+   "r": 62
+  },
+  "668964": {
+   "gs": 6,
+   "name": "Tobias Myers",
+   "outs": 67,
+   "r": 14
+  },
+  "668984": {
+   "gs": 1,
+   "name": "Casey Legumina",
+   "outs": 3,
+   "r": 0
+  },
+  "669020": {
+   "gs": 1,
+   "name": "Ryan Rolison",
+   "outs": 3,
+   "r": 0
+  },
+  "669022": {
+   "gs": 30,
+   "name": "MacKenzie Gore",
+   "outs": 479,
+   "r": 75
+  },
+  "669060": {
+   "gs": 5,
+   "name": "Bryse Wilson",
+   "outs": 65,
+   "r": 17
+  },
+  "669084": {
+   "gs": 3,
+   "name": "DL Hall",
+   "outs": 27,
+   "r": 1
+  },
+  "669145": {
+   "gs": 1,
+   "name": "Bruce Zimmermann",
+   "outs": 18,
+   "r": 6
+  },
+  "669160": {
+   "gs": 23,
+   "name": "Dustin May",
+   "outs": 374,
+   "r": 77
+  },
+  "669194": {
+   "gs": 23,
+   "name": "Ryne Nelson",
+   "outs": 384,
+   "r": 49
+  },
+  "669199": {
+   "gs": 1,
+   "name": "Lake Bachar",
+   "outs": 6,
+   "r": 2
+  },
+  "669203": {
+   "gs": 11,
+   "name": "Corbin Burnes",
+   "outs": 193,
+   "r": 23
+  },
+  "669211": {
+   "gs": 3,
+   "name": "Keegan Akin",
+   "outs": 11,
+   "r": 0
+  },
+  "669302": {
+   "gs": 25,
+   "name": "Logan Gilbert",
+   "outs": 393,
+   "r": 53
+  },
+  "669308": {
+   "gs": 1,
+   "name": "Sean Reynolds",
+   "outs": 8,
+   "r": 3
+  },
+  "669330": {
+   "gs": 4,
+   "name": "Tyler Wells",
+   "outs": 65,
+   "r": 7
+  },
+  "669358": {
+   "gs": 31,
+   "name": "Shane Baz",
+   "outs": 499,
+   "r": 91
+  },
+  "669372": {
+   "gs": 16,
+   "name": "J.T. Ginn",
+   "outs": 225,
+   "r": 45
+  },
+  "669373": {
+   "gs": 31,
+   "name": "Tarik Skubal",
+   "outs": 586,
+   "r": 55
+  },
+  "669387": {
+   "gs": 12,
+   "name": "Carmen Mlodzinski",
+   "outs": 146,
+   "r": 28
+  },
+  "669422": {
+   "gs": 1,
+   "name": "Matt Sauer",
+   "outs": 12,
+   "r": 2
+  },
+  "669432": {
+   "gs": 18,
+   "name": "Trevor Rogers",
+   "outs": 329,
+   "r": 23
+  },
+  "669456": {
+   "gs": 7,
+   "name": "Shane Bieber",
+   "outs": 121,
+   "r": 16
+  },
+  "669461": {
+   "gs": 29,
+   "name": "Matthew Liberatore",
+   "outs": 455,
+   "r": 79
+  },
+  "669467": {
+   "gs": 31,
+   "name": "Andre Pallante",
+   "outs": 488,
+   "r": 109
+  },
+  "669620": {
+   "gs": 1,
+   "name": "Brady Basso",
+   "outs": 4,
+   "r": 1
+  },
+  "669713": {
+   "gs": 6,
+   "name": "Hayden Wesneski",
+   "outs": 96,
+   "r": 16
+  },
+  "669721": {
+   "gs": 2,
+   "name": "Davis Daniel",
+   "outs": 27,
+   "r": 6
+  },
+  "669854": {
+   "gs": 9,
+   "name": "Ronel Blanco",
+   "outs": 145,
+   "r": 22
+  },
+  "669920": {
+   "gs": 13,
+   "name": "Jason Alexander",
+   "outs": 205,
+   "r": 32
+  },
+  "669923": {
+   "gs": 23,
+   "name": "George Kirby",
+   "outs": 378,
+   "r": 60
+  },
+  "670102": {
+   "gs": 14,
+   "name": "Bowden Francis",
+   "outs": 192,
+   "r": 46
+  },
+  "670329": {
+   "gs": 1,
+   "name": "Rico Garcia",
+   "outs": 3,
+   "r": 0
+  },
+  "670912": {
+   "gs": 9,
+   "name": "Johan Oviedo",
+   "outs": 121,
+   "r": 17
+  },
+  "671096": {
+   "gs": 29,
+   "name": "Andrew Abbott",
+   "outs": 499,
+   "r": 60
+  },
+  "671106": {
+   "gs": 29,
+   "name": "Logan Allen",
+   "outs": 467,
+   "r": 84
+  },
+  "671212": {
+   "gs": 9,
+   "name": "Joe Boyle",
+   "outs": 114,
+   "r": 29
+  },
+  "671737": {
+   "gs": 27,
+   "name": "Taj Bradley",
+   "outs": 428,
+   "r": 88
+  },
+  "672456": {
+   "gs": 12,
+   "name": "Keider Montero",
+   "outs": 174,
+   "r": 26
+  },
+  "672582": {
+   "gs": 2,
+   "name": "Angel Zerpa",
+   "outs": 6,
+   "r": 0
+  },
+  "672782": {
+   "gs": 9,
+   "name": "Yoendrys G\u00f3mez",
+   "outs": 135,
+   "r": 26
+  },
+  "673540": {
+   "gs": 22,
+   "name": "Kodai Senga",
+   "outs": 340,
+   "r": 44
+  },
+  "673929": {
+   "gs": 1,
+   "name": "Jordan Leasure",
+   "outs": 3,
+   "r": 1
+  },
+  "674370": {
+   "gs": 10,
+   "name": "Osvaldo Bido",
+   "outs": 139,
+   "r": 34
+  },
+  "674841": {
+   "gs": 5,
+   "name": "Andrew Alvarez",
+   "outs": 70,
+   "r": 8
+  },
+  "674944": {
+   "gs": 1,
+   "name": "Sean Guenther",
+   "outs": 1,
+   "r": 1
+  },
+  "675512": {
+   "gs": 4,
+   "name": "Troy Melton",
+   "outs": 62,
+   "r": 7
+  },
+  "675911": {
+   "gs": 23,
+   "name": "Spencer Strider",
+   "outs": 376,
+   "r": 63
+  },
+  "676083": {
+   "gs": 16,
+   "name": "Janson Junk",
+   "outs": 262,
+   "r": 47
+  },
+  "676106": {
+   "gs": 16,
+   "name": "Emerson Hancock",
+   "outs": 244,
+   "r": 47
+  },
+  "676263": {
+   "gs": 5,
+   "name": "Jack Dreyer",
+   "outs": 25,
+   "r": 6
+  },
+  "676272": {
+   "gs": 1,
+   "name": "Bobby Miller",
+   "outs": 9,
+   "r": 6
+  },
+  "676282": {
+   "gs": 13,
+   "name": "Joey Cantillo",
+   "outs": 201,
+   "r": 22
+  },
+  "676428": {
+   "gs": 4,
+   "name": "Brant Hurter",
+   "outs": 21,
+   "r": 5
+  },
+  "676440": {
+   "gs": 31,
+   "name": "Tanner Bibee",
+   "outs": 547,
+   "r": 93
+  },
+  "676467": {
+   "gs": 14,
+   "name": "Colton Gordon",
+   "outs": 210,
+   "r": 44
+  },
+  "676508": {
+   "gs": 3,
+   "name": "Ben Casparius",
+   "outs": 29,
+   "r": 7
+  },
+  "676664": {
+   "gs": 27,
+   "name": "JP Sears",
+   "outs": 407,
+   "r": 79
+  },
+  "676879": {
+   "gs": 1,
+   "name": "Aaron Ashby",
+   "outs": 6,
+   "r": 0
+  },
+  "676917": {
+   "gs": 10,
+   "name": "Cade Cavalli",
+   "outs": 146,
+   "r": 28
+  },
+  "676961": {
+   "gs": 1,
+   "name": "Caleb Boushley",
+   "outs": 9,
+   "r": 3
+  },
+  "676962": {
+   "gs": 15,
+   "name": "Ben Brown",
+   "outs": 227,
+   "r": 53
+  },
+  "676974": {
+   "gs": 12,
+   "name": "Max Meyer",
+   "outs": 194,
+   "r": 39
+  },
+  "676979": {
+   "gs": 32,
+   "name": "Garrett Crochet",
+   "outs": 616,
+   "r": 62
+  },
+  "677651": {
+   "gs": 2,
+   "name": "Luis Garcia",
+   "outs": 23,
+   "r": 3
+  },
+  "677944": {
+   "gs": 23,
+   "name": "Slade Cecconi",
+   "outs": 396,
+   "r": 66
+  },
+  "677952": {
+   "gs": 8,
+   "name": "Braxton Ashcraft",
+   "outs": 100,
+   "r": 8
+  },
+  "677958": {
+   "gs": 14,
+   "name": "Kumar Rocker",
+   "outs": 193,
+   "r": 42
+  },
+  "677960": {
+   "gs": 8,
+   "name": "Ryan Weathers",
+   "outs": 115,
+   "r": 20
+  },
+  "678022": {
+   "gs": 4,
+   "name": "Jack Perkins",
+   "outs": 57,
+   "r": 12
+  },
+  "678024": {
+   "gs": 3,
+   "name": "Mike Vasil",
+   "outs": 33,
+   "r": 8
+  },
+  "678368": {
+   "gs": 6,
+   "name": "Valente Bellozo",
+   "outs": 75,
+   "r": 11
+  },
+  "678394": {
+   "gs": 28,
+   "name": "Brayan Bello",
+   "outs": 485,
+   "r": 69
+  },
+  "678906": {
+   "gs": 7,
+   "name": "Kai-Wei Teng",
+   "outs": 74,
+   "r": 24
+  },
+  "680573": {
+   "gs": 22,
+   "name": "Simeon Woods Richardson",
+   "outs": 321,
+   "r": 50
+  },
+  "680684": {
+   "gs": 6,
+   "name": "Gunnar Hoglund",
+   "outs": 97,
+   "r": 23
+  },
+  "680694": {
+   "gs": 6,
+   "name": "Kyle Bradish",
+   "outs": 96,
+   "r": 9
+  },
+  "680730": {
+   "gs": 30,
+   "name": "Mitchell Parker",
+   "outs": 475,
+   "r": 115
+  },
+  "680732": {
+   "gs": 22,
+   "name": "Sean Burke",
+   "outs": 312,
+   "r": 64
+  },
+  "680735": {
+   "gs": 1,
+   "name": "Austin Cox",
+   "outs": 1,
+   "r": 1
+  },
+  "680736": {
+   "gs": 2,
+   "name": "Justin Wrobleski",
+   "outs": 33,
+   "r": 12
+  },
+  "680742": {
+   "gs": 1,
+   "name": "Jonathan Bowlan",
+   "outs": 6,
+   "r": 2
+  },
+  "680755": {
+   "gs": 1,
+   "name": "Braydon Fisher",
+   "outs": 4,
+   "r": 5
+  },
+  "680880": {
+   "gs": 2,
+   "name": "Grant Holman",
+   "outs": 7,
+   "r": 0
+  },
+  "680885": {
+   "gs": 17,
+   "name": "Spencer Schwellenbach",
+   "outs": 332,
+   "r": 44
+  },
+  "680951": {
+   "gs": 1,
+   "name": "Doug Nikhazy",
+   "outs": 9,
+   "r": 6
+  },
+  "681151": {
+   "gs": 1,
+   "name": "Jayden Murray",
+   "outs": 9,
+   "r": 0
+  },
+  "681190": {
+   "gs": 26,
+   "name": "Randy V\u00e1squez",
+   "outs": 387,
+   "r": 55
+  },
+  "681293": {
+   "gs": 7,
+   "name": "Spencer Arrighetti",
+   "outs": 106,
+   "r": 21
+  },
+  "681343": {
+   "gs": 29,
+   "name": "Shane Smith",
+   "outs": 439,
+   "r": 70
+  },
+  "681347": {
+   "gs": 19,
+   "name": "Mike Burrows",
+   "outs": 260,
+   "r": 41
+  },
+  "681517": {
+   "gs": 1,
+   "name": "Kyle Leahy",
+   "outs": 9,
+   "r": 0
+  },
+  "681857": {
+   "gs": 13,
+   "name": "Reese Olson",
+   "outs": 206,
+   "r": 24
+  },
+  "681867": {
+   "gs": 1,
+   "name": "Cooper Criswell",
+   "outs": 21,
+   "r": 1
+  },
+  "682052": {
+   "gs": 17,
+   "name": "Jacob Lopez",
+   "outs": 252,
+   "r": 40
+  },
+  "682243": {
+   "gs": 18,
+   "name": "Bryce Miller",
+   "outs": 271,
+   "r": 57
+  },
+  "682847": {
+   "gs": 16,
+   "name": "Luis Ortiz",
+   "outs": 266,
+   "r": 44
+  },
+  "682989": {
+   "gs": 3,
+   "name": "Victor Mederos",
+   "outs": 39,
+   "r": 12
+  },
+  "682990": {
+   "gs": 24,
+   "name": "Quinn Priester",
+   "outs": 392,
+   "r": 47
+  },
+  "683004": {
+   "gs": 29,
+   "name": "Jack Leiter",
+   "outs": 455,
+   "r": 69
+  },
+  "683155": {
+   "gs": 2,
+   "name": "Joey Estes",
+   "outs": 21,
+   "r": 12
+  },
+  "683627": {
+   "gs": 1,
+   "name": "Anthony Molina",
+   "outs": 15,
+   "r": 7
+  },
+  "684007": {
+   "gs": 25,
+   "name": "Shota Imanaga",
+   "outs": 434,
+   "r": 62
+  },
+  "684320": {
+   "gs": 1,
+   "name": "Yariel Rodr\u00edguez",
+   "outs": 3,
+   "r": 2
+  },
+  "685107": {
+   "gs": 1,
+   "name": "Anthony Veneziano",
+   "outs": 6,
+   "r": 0
+  },
+  "685126": {
+   "gs": 3,
+   "name": "Brandon Eisert",
+   "outs": 9,
+   "r": 2
+  },
+  "685299": {
+   "gs": 15,
+   "name": "Tanner Gordon",
+   "outs": 226,
+   "r": 60
+  },
+  "685326": {
+   "gs": 7,
+   "name": "McCade Brown",
+   "outs": 77,
+   "r": 21
+  },
+  "686218": {
+   "gs": 12,
+   "name": "Emmet Sheehan",
+   "outs": 179,
+   "r": 24
+  },
+  "686563": {
+   "gs": 17,
+   "name": "Jonathan Cannon",
+   "outs": 247,
+   "r": 56
+  },
+  "686613": {
+   "gs": 31,
+   "name": "Hunter Brown",
+   "outs": 556,
+   "r": 55
+  },
+  "686642": {
+   "gs": 3,
+   "name": "Fraser Ellard",
+   "outs": 11,
+   "r": 1
+  },
+  "686701": {
+   "gs": 15,
+   "name": "Ryan Bergert",
+   "outs": 217,
+   "r": 32
+  },
+  "686730": {
+   "gs": 2,
+   "name": "Carson Spiers",
+   "outs": 28,
+   "r": 5
+  },
+  "686752": {
+   "gs": 31,
+   "name": "Ryan Pepiot",
+   "outs": 503,
+   "r": 77
+  },
+  "686790": {
+   "gs": 2,
+   "name": "Trevor McDonald",
+   "outs": 39,
+   "r": 4
+  },
+  "686799": {
+   "gs": 23,
+   "name": "Jack Kochanowicz",
+   "outs": 333,
+   "r": 89
+  },
+  "686930": {
+   "gs": 5,
+   "name": "Mason Barnett",
+   "outs": 67,
+   "r": 18
+  },
+  "686973": {
+   "gs": 1,
+   "name": "Louis Varland",
+   "outs": 6,
+   "r": 0
+  },
+  "687064": {
+   "gs": 12,
+   "name": "Brandon Young",
+   "outs": 173,
+   "r": 42
+  },
+  "687075": {
+   "gs": 4,
+   "name": "Brandon Sproat",
+   "outs": 62,
+   "r": 11
+  },
+  "687134": {
+   "gs": 12,
+   "name": "Bradley Blalock",
+   "outs": 167,
+   "r": 59
+  },
+  "687223": {
+   "gs": 7,
+   "name": "Carson Palmquist",
+   "outs": 92,
+   "r": 27
+  },
+  "687362": {
+   "gs": 6,
+   "name": "Connor Gillispie",
+   "outs": 78,
+   "r": 26
+  },
+  "687473": {
+   "gs": 17,
+   "name": "Ryan Gusto",
+   "outs": 245,
+   "r": 57
+  },
+  "687606": {
+   "gs": 2,
+   "name": "Paxton Schultz",
+   "outs": 14,
+   "r": 3
+  },
+  "687765": {
+   "gs": 8,
+   "name": "Mitch Spence",
+   "outs": 117,
+   "r": 28
+  },
+  "687830": {
+   "gs": 3,
+   "name": "Sawyer Gipson-Long",
+   "outs": 39,
+   "r": 12
+  },
+  "687888": {
+   "gs": 9,
+   "name": "Brandon Walter",
+   "outs": 161,
+   "r": 20
+  },
+  "687922": {
+   "gs": 5,
+   "name": "Easton Lucas",
+   "outs": 59,
+   "r": 18
+  },
+  "687931": {
+   "gs": 5,
+   "name": "Carson Whisenhunt",
+   "outs": 70,
+   "r": 14
+  },
+  "688107": {
+   "gs": 2,
+   "name": "Robert Gasser",
+   "outs": 17,
+   "r": 6
+  },
+  "688138": {
+   "gs": 15,
+   "name": "Logan Evans",
+   "outs": 235,
+   "r": 44
+  },
+  "688158": {
+   "gs": 2,
+   "name": "David Morgan",
+   "outs": 10,
+   "r": 1
+  },
+  "689017": {
+   "gs": 7,
+   "name": "Landon Knack",
+   "outs": 95,
+   "r": 20
+  },
+  "689225": {
+   "gs": 1,
+   "name": "Beau Brieske",
+   "outs": 4,
+   "r": 0
+  },
+  "690916": {
+   "gs": 10,
+   "name": "Richard Fitts",
+   "outs": 123,
+   "r": 24
+  },
+  "690928": {
+   "gs": 11,
+   "name": "Hunter Dobbins",
+   "outs": 159,
+   "r": 27
+  },
+  "690953": {
+   "gs": 8,
+   "name": "Mick Abel",
+   "outs": 102,
+   "r": 20
+  },
+  "690986": {
+   "gs": 6,
+   "name": "Kyle Harrison",
+   "outs": 82,
+   "r": 14
+  },
+  "690990": {
+   "gs": 22,
+   "name": "Cade Horton",
+   "outs": 342,
+   "r": 37
+  },
+  "690997": {
+   "gs": 8,
+   "name": "Nolan McLean",
+   "outs": 144,
+   "r": 13
+  },
+  "691587": {
+   "gs": 20,
+   "name": "Eury P\u00e9rez",
+   "outs": 286,
+   "r": 47
+  },
+  "691799": {
+   "gs": 2,
+   "name": "Grant Taylor",
+   "outs": 6,
+   "r": 2
+  },
+  "691951": {
+   "gs": 2,
+   "name": "Sam Aldegheri",
+   "outs": 28,
+   "r": 7
+  },
+  "693313": {
+   "gs": 3,
+   "name": "Carson Seymour",
+   "outs": 28,
+   "r": 9
+  },
+  "693433": {
+   "gs": 30,
+   "name": "Bryan Woo",
+   "outs": 560,
+   "r": 64
+  },
+  "693645": {
+   "gs": 14,
+   "name": "Cam Schlittler",
+   "outs": 219,
+   "r": 24
+  },
+  "693821": {
+   "gs": 28,
+   "name": "Bryce Elder",
+   "outs": 469,
+   "r": 95
+  },
+  "693855": {
+   "gs": 5,
+   "name": "Ian Seymour",
+   "outs": 77,
+   "r": 14
+  },
+  "694297": {
+   "gs": 33,
+   "name": "Brandon Pfaadt",
+   "outs": 530,
+   "r": 107
+  },
+  "694363": {
+   "gs": 2,
+   "name": "Jared Shuster",
+   "outs": 6,
+   "r": 4
+  },
+  "694462": {
+   "gs": 9,
+   "name": "Hurston Waldrep",
+   "outs": 152,
+   "r": 17
+  },
+  "694477": {
+   "gs": 23,
+   "name": "Chad Patrick",
+   "outs": 347,
+   "r": 47
+  },
+  "694646": {
+   "gs": 1,
+   "name": "Chayce McDermott",
+   "outs": 9,
+   "r": 4
+  },
+  "694738": {
+   "gs": 22,
+   "name": "Landen Roupp",
+   "outs": 320,
+   "r": 55
+  },
+  "694819": {
+   "gs": 14,
+   "name": "Jacob Misiorowski",
+   "outs": 191,
+   "r": 32
+  },
+  "694918": {
+   "gs": 2,
+   "name": "Blade Tidwell",
+   "outs": 22,
+   "r": 8
+  },
+  "694973": {
+   "gs": 32,
+   "name": "Paul Skenes",
+   "outs": 563,
+   "r": 45
+  },
+  "695418": {
+   "gs": 19,
+   "name": "Brad Lord",
+   "outs": 276,
+   "r": 52
+  },
+  "695505": {
+   "gs": 8,
+   "name": "Chase Burns",
+   "outs": 103,
+   "r": 23
+  },
+  "695534": {
+   "gs": 2,
+   "name": "Chase Petty",
+   "outs": 16,
+   "r": 13
+  },
+  "695549": {
+   "gs": 10,
+   "name": "Jackson Jobe",
+   "outs": 147,
+   "r": 24
+  },
+  "696149": {
+   "gs": 4,
+   "name": "Bubba Chandler",
+   "outs": 58,
+   "r": 11
+  },
+  "700241": {
+   "gs": 16,
+   "name": "Michael McGreevy",
+   "outs": 270,
+   "r": 50
+  },
+  "700249": {
+   "gs": 20,
+   "name": "Cade Povich",
+   "outs": 311,
+   "r": 67
+  },
+  "700363": {
+   "gs": 9,
+   "name": "AJ Smith-Shawver",
+   "outs": 133,
+   "r": 20
+  },
+  "701487": {
+   "gs": 3,
+   "name": "Pierson Ohl",
+   "outs": 24,
+   "r": 15
+  },
+  "701519": {
+   "gs": 2,
+   "name": "Travis Adams",
+   "outs": 22,
+   "r": 6
+  },
+  "701542": {
+   "gs": 33,
+   "name": "Will Warren",
+   "outs": 487,
+   "r": 90
+  },
+  "701581": {
+   "gs": 10,
+   "name": "David Festa",
+   "outs": 146,
+   "r": 27
+  },
+  "701656": {
+   "gs": 5,
+   "name": "Logan Henderson",
+   "outs": 76,
+   "r": 5
+  },
+  "702056": {
+   "gs": 3,
+   "name": "Trey Yesavage",
+   "outs": 42,
+   "r": 5
+  },
+  "702070": {
+   "gs": 24,
+   "name": "Noah Cameron",
+   "outs": 415,
+   "r": 46
+  },
+  "702674": {
+   "gs": 5,
+   "name": "Caden Dana",
+   "outs": 79,
+   "r": 19
+  },
+  "800048": {
+   "gs": 7,
+   "name": "Parker Messick",
+   "outs": 119,
+   "r": 12
+  },
+  "800049": {
+   "gs": 6,
+   "name": "Adam Mazur",
+   "outs": 90,
+   "r": 21
+  },
+  "800311": {
+   "gs": 4,
+   "name": "Didier Fuentes",
+   "outs": 39,
+   "r": 20
+  },
+  "801139": {
+   "gs": 3,
+   "name": "Payton Tolle",
+   "outs": 31,
+   "r": 9
+  },
+  "801403": {
+   "gs": 21,
+   "name": "Chase Dollander",
+   "outs": 294,
+   "r": 76
+  },
+  "802419": {
+   "gs": 1,
+   "name": "Thomas Harrington",
+   "outs": 12,
+   "r": 6
+  },
+  "804636": {
+   "gs": 5,
+   "name": "Jonah Tong",
+   "outs": 56,
+   "r": 20
+  },
+  "805123": {
+   "gs": 3,
+   "name": "AJ Blubaugh",
+   "outs": 33,
+   "r": 7
+  },
+  "805673": {
+   "gs": 16,
+   "name": "Zebby Matthews",
+   "outs": 238,
+   "r": 50
+  },
+  "806185": {
+   "gs": 10,
+   "name": "Hayden Birdsong",
+   "outs": 127,
+   "r": 32
+  },
+  "806188": {
+   "gs": 1,
+   "name": "Cade Gibson",
+   "outs": 3,
+   "r": 1
+  },
+  "806960": {
+   "gs": 9,
+   "name": "Luis Morales",
+   "outs": 140,
+   "r": 17
+  },
+  "808963": {
+   "gs": 8,
+   "name": "Roki Sasaki",
+   "outs": 103,
+   "r": 18
+  },
+  "808967": {
+   "gs": 30,
+   "name": "Yoshinobu Yamamoto",
+   "outs": 521,
+   "r": 53
+  },
+  "813349": {
+   "gs": 4,
+   "name": "Connelly Early",
+   "outs": 58,
+   "r": 6
+  },
+  "815083": {
+   "gs": 5,
+   "name": "Mitch Farris",
+   "outs": 73,
+   "r": 19
+  },
+  "829272": {
+   "gs": 2,
+   "name": "Shinnosuke Ogasawara",
+   "outs": 20,
+   "r": 7
+  }
+ },
  "use_starters": true,
  "validation": {
   "beats_coin": true,
   "beats_home_rate": true,
   "calibration": [
    {
-    "actual": 0.0,
+    "actual": 0.556,
     "band": "20-29%",
-    "n": 3,
-    "predicted": 0.283
+    "n": 9,
+    "predicted": 0.262
    },
    {
-    "actual": 0.394,
+    "actual": 0.366,
     "band": "30-39%",
-    "n": 175,
-    "predicted": 0.371
+    "n": 161,
+    "predicted": 0.369
    },
    {
-    "actual": 0.496,
+    "actual": 0.489,
     "band": "40-49%",
-    "n": 956,
-    "predicted": 0.46
+    "n": 940,
+    "predicted": 0.459
    },
    {
-    "actual": 0.563,
+    "actual": 0.564,
     "band": "50-59%",
-    "n": 1075,
-    "predicted": 0.545
+    "n": 1118,
+    "predicted": 0.543
    },
    {
-    "actual": 0.613,
+    "actual": 0.641,
     "band": "60-69%",
-    "n": 199,
-    "predicted": 0.631
+    "n": 195,
+    "predicted": 0.629
    },
    {
-    "actual": 0.714,
+    "actual": 0.833,
     "band": "70-79%",
-    "n": 7,
-    "predicted": 0.716
+    "n": 6,
+    "predicted": 0.721
    }
   ],
   "coin_flip": {
    "brier": 0.25,
    "log_loss": 0.6931,
-   "n": 2415
+   "n": 2429
   },
-  "favourite_won_pct": 54.8,
-  "from": "2026-03-27",
+  "favourite_won_pct": 55.4,
+  "from": "2026-03-26",
   "home_rate": {
-   "brier": 0.2496,
-   "log_loss": 0.6924,
-   "n": 2415
+   "brier": 0.251,
+   "log_loss": 0.7234,
+   "n": 2429
   },
   "ml_verdict": {
-   "diff": 0.00771,
-   "n": 2415,
-   "se": 0.00307,
+   "diff": 0.04017,
+   "n": 2429,
+   "se": 0.01293,
    "verdict": "beats",
-   "z": 2.51
+   "z": 3.11
   },
   "model": {
-   "brier": 0.2458,
-   "log_loss": 0.6847,
-   "n": 2415
+   "brier": 0.2451,
+   "log_loss": 0.6832,
+   "n": 2429
   },
-  "n": 2415,
+  "n": 2429,
   "to": "2026-09-27",
   "total_beats_league_avg": true,
-  "total_mae_league_avg": 3.567,
-  "total_mae_model": 3.555,
+  "total_mae_league_avg": 3.577,
+  "total_mae_model": 3.553,
   "total_verdict": {
-   "diff": 0.01274,
-   "n": 2415,
-   "se": 0.01661,
+   "diff": 0.02385,
+   "n": 2429,
+   "se": 0.01543,
    "verdict": "thin",
-   "z": 0.77
+   "z": 1.55
   }
  },
  "validation_team_only": {
@@ -2521,65 +4769,71 @@
   "beats_home_rate": true,
   "calibration": [
    {
-    "actual": 0.25,
-    "band": "30-39%",
-    "n": 32,
-    "predicted": 0.388
+    "actual": 0.6,
+    "band": "20-29%",
+    "n": 10,
+    "predicted": 0.263
    },
    {
-    "actual": 0.49,
+    "actual": 0.348,
+    "band": "30-39%",
+    "n": 23,
+    "predicted": 0.38
+   },
+   {
+    "actual": 0.48,
     "band": "40-49%",
-    "n": 1036,
+    "n": 1041,
     "predicted": 0.467
    },
    {
-    "actual": 0.559,
+    "actual": 0.564,
     "band": "50-59%",
-    "n": 1273,
-    "predicted": 0.534
+    "n": 1304,
+    "predicted": 0.535
    },
    {
-    "actual": 0.649,
+    "actual": 0.667,
     "band": "60-69%",
-    "n": 74,
-    "predicted": 0.613
+    "n": 51,
+    "predicted": 0.621
    }
   ],
   "coin_flip": {
    "brier": 0.25,
    "log_loss": 0.6931,
-   "n": 2415
+   "n": 2429
   },
-  "favourite_won_pct": 54.3,
-  "from": "2026-03-27",
+  "favourite_won_pct": 54.8,
+  "from": "2026-03-26",
   "home_rate": {
-   "brier": 0.2496,
-   "log_loss": 0.6924,
-   "n": 2415
+   "brier": 0.251,
+   "log_loss": 0.7234,
+   "n": 2429
   },
   "ml_verdict": {
-   "diff": 0.00483,
-   "n": 2415,
-   "se": 0.00218,
+   "diff": 0.03721,
+   "n": 2429,
+   "se": 0.01275,
    "verdict": "beats",
-   "z": 2.22
+   "z": 2.92
   },
   "model": {
-   "brier": 0.2472,
-   "log_loss": 0.6876,
-   "n": 2415
+   "brier": 0.2465,
+   "log_loss": 0.6862,
+   "n": 2429
   },
-  "n": 2415,
+  "n": 2429,
   "to": "2026-09-27",
-  "total_beats_league_avg": false,
-  "total_mae_league_avg": 3.567,
-  "total_mae_model": 3.568,
+  "total_beats_league_avg": true,
+  "total_mae_league_avg": 3.577,
+  "total_mae_model": 3.571,
   "total_verdict": {
-   "diff": -0.00072,
-   "n": 2415,
-   "se": 0.01009,
-   "verdict": "fails",
-   "z": -0.07
+   "diff": 0.00614,
+   "n": 2429,
+   "se": 0.00954,
+   "verdict": "thin",
+   "z": 0.64
   }
  },
  "validation_with_starters": {
@@ -2587,77 +4841,77 @@
   "beats_home_rate": true,
   "calibration": [
    {
-    "actual": 0.0,
+    "actual": 0.556,
     "band": "20-29%",
-    "n": 3,
-    "predicted": 0.283
+    "n": 9,
+    "predicted": 0.262
    },
    {
-    "actual": 0.394,
+    "actual": 0.366,
     "band": "30-39%",
-    "n": 175,
-    "predicted": 0.371
+    "n": 161,
+    "predicted": 0.369
    },
    {
-    "actual": 0.496,
+    "actual": 0.489,
     "band": "40-49%",
-    "n": 956,
-    "predicted": 0.46
+    "n": 940,
+    "predicted": 0.459
    },
    {
-    "actual": 0.563,
+    "actual": 0.564,
     "band": "50-59%",
-    "n": 1075,
-    "predicted": 0.545
+    "n": 1118,
+    "predicted": 0.543
    },
    {
-    "actual": 0.613,
+    "actual": 0.641,
     "band": "60-69%",
-    "n": 199,
-    "predicted": 0.631
+    "n": 195,
+    "predicted": 0.629
    },
    {
-    "actual": 0.714,
+    "actual": 0.833,
     "band": "70-79%",
-    "n": 7,
-    "predicted": 0.716
+    "n": 6,
+    "predicted": 0.721
    }
   ],
   "coin_flip": {
    "brier": 0.25,
    "log_loss": 0.6931,
-   "n": 2415
+   "n": 2429
   },
-  "favourite_won_pct": 54.8,
-  "from": "2026-03-27",
+  "favourite_won_pct": 55.4,
+  "from": "2026-03-26",
   "home_rate": {
-   "brier": 0.2496,
-   "log_loss": 0.6924,
-   "n": 2415
+   "brier": 0.251,
+   "log_loss": 0.7234,
+   "n": 2429
   },
   "ml_verdict": {
-   "diff": 0.00771,
-   "n": 2415,
-   "se": 0.00307,
+   "diff": 0.04017,
+   "n": 2429,
+   "se": 0.01293,
    "verdict": "beats",
-   "z": 2.51
+   "z": 3.11
   },
   "model": {
-   "brier": 0.2458,
-   "log_loss": 0.6847,
-   "n": 2415
+   "brier": 0.2451,
+   "log_loss": 0.6832,
+   "n": 2429
   },
-  "n": 2415,
+  "n": 2429,
   "to": "2026-09-27",
   "total_beats_league_avg": true,
-  "total_mae_league_avg": 3.567,
-  "total_mae_model": 3.555,
+  "total_mae_league_avg": 3.577,
+  "total_mae_model": 3.553,
   "total_verdict": {
-   "diff": 0.01274,
-   "n": 2415,
-   "se": 0.01661,
+   "diff": 0.02385,
+   "n": 2429,
+   "se": 0.01543,
    "verdict": "thin",
-   "z": 0.77
+   "z": 1.55
   }
  }
 }
