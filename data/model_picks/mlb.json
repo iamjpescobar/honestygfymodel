@@ -5,48 +5,57 @@
    "date": "2026-10-03",
    "edge": 0.0969,
    "ev_per_100": 26.45,
+   "final": "3-5",
    "game_id": "849828",
+   "graded_at": "2026-10-04T18:20:13+00:00",
    "home": "Los Angeles Dodgers",
    "line": null,
    "logged_at": "2026-10-03T19:42:59+00:00",
    "market": "moneyline",
    "p": 0.4632,
    "price": 173,
-   "result": null,
+   "result": "loss",
    "side": "away",
-   "start": "2026-10-03T20:00:00Z"
+   "start": "2026-10-03T20:00:00Z",
+   "units": -1.0
   },
   {
    "away": "Atlanta Braves",
    "date": "2026-10-03",
    "edge": 0.0345,
    "ev_per_100": 6.45,
+   "final": "3-5",
    "game_id": "849828",
+   "graded_at": "2026-10-04T18:20:13+00:00",
    "home": "Los Angeles Dodgers",
    "line": 8.5,
    "logged_at": "2026-10-03T19:42:59+00:00",
    "market": "total",
    "p": 0.5694,
    "price": -115,
-   "result": null,
+   "result": "win",
    "side": "under",
-   "start": "2026-10-03T20:00:00Z"
+   "start": "2026-10-03T20:00:00Z",
+   "units": 0.8696
   },
   {
    "away": "San Diego Padres",
    "date": "2026-10-03",
    "edge": 0.0059,
    "ev_per_100": 1.15,
+   "final": "2-3",
    "game_id": "849830",
+   "graded_at": "2026-10-04T18:20:13+00:00",
    "home": "Milwaukee Brewers",
    "line": 7.0,
    "logged_at": "2026-10-03T19:42:59+00:00",
    "market": "total",
    "p": 0.5181,
    "price": -105,
-   "result": null,
+   "result": "loss",
    "side": "over",
-   "start": "2026-10-04T00:30:00Z"
+   "start": "2026-10-04T00:30:00Z",
+   "units": -1.0
   }
  ]
 }
