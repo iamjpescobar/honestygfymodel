@@ -1,6 +1,7 @@
 {
  "plays": [
   {
+   "actual": 1,
    "at_least": 1,
    "date": "2026-10-04",
    "fair": -297,
@@ -13,7 +14,7 @@
    "p_cal": 0.7484,
    "player": "Austin Riley",
    "player_id": "663586",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-05T00:00:00Z",
    "stat": "k",
    "team": "Atlanta Braves"
@@ -57,6 +58,7 @@
    "team": "Milwaukee Brewers"
   },
   {
+   "actual": 1,
    "at_least": 1,
    "date": "2026-10-04",
    "fair": -277,
@@ -69,12 +71,13 @@
    "p_cal": 0.7344,
    "player": "Sean Murphy",
    "player_id": "669221",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-05T00:00:00Z",
    "stat": "k",
    "team": "Atlanta Braves"
   },
   {
+   "actual": 2,
    "at_least": 1,
    "date": "2026-10-04",
    "fair": -262,
@@ -87,7 +90,7 @@
    "p_cal": 0.7238,
    "player": "Matt Olson",
    "player_id": "621566",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-05T00:00:00Z",
    "stat": "k",
    "team": "Atlanta Braves"
@@ -112,6 +115,7 @@
    "team": "San Diego Padres"
   },
   {
+   "actual": 5,
    "at_least": 4,
    "date": "2026-10-04",
    "fair": -253,
@@ -124,12 +128,13 @@
    "p_cal": 0.7167,
    "player": "Blake Snell",
    "player_id": "605483",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-05T00:00:00Z",
    "stat": "p_k",
    "team": "Los Angeles Dodgers"
   },
   {
+   "actual": 1,
    "at_least": 1,
    "date": "2026-10-04",
    "fair": -250,
@@ -142,7 +147,7 @@
    "p_cal": 0.7145,
    "player": "Ronald Acu\u00f1a Jr.",
    "player_id": "660670",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-05T00:00:00Z",
    "stat": "k",
    "team": "Atlanta Braves"
@@ -184,6 +189,114 @@
    "start": "2026-10-04T20:00:00Z",
    "stat": "k",
    "team": "San Diego Padres"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-05",
+   "fair": -451,
+   "game": "New York Yankees @ Tampa Bay Rays",
+   "game_id": "849839",
+   "label": "K O0.5",
+   "logged_at": "2026-10-05T21:37:30+00:00",
+   "market": "k1",
+   "p": 0.8442,
+   "p_cal": 0.8184,
+   "player": "Spencer Jones",
+   "player_id": "682987",
+   "result": null,
+   "start": "2026-10-06T00:00:00Z",
+   "stat": "k",
+   "team": "New York Yankees"
+  },
+  {
+   "at_least": 4,
+   "date": "2026-10-05",
+   "fair": -441,
+   "game": "New York Yankees @ Tampa Bay Rays",
+   "game_id": "849839",
+   "label": "K O3.5",
+   "logged_at": "2026-10-05T21:37:30+00:00",
+   "market": "pk4",
+   "p": 0.8594,
+   "p_cal": 0.8151,
+   "player": "Freddy Peralta",
+   "player_id": "642547",
+   "result": null,
+   "start": "2026-10-06T00:00:00Z",
+   "stat": "p_k",
+   "team": "Tampa Bay Rays"
+  },
+  {
+   "at_least": 4,
+   "date": "2026-10-05",
+   "fair": -301,
+   "game": "New York Yankees @ Tampa Bay Rays",
+   "game_id": "849839",
+   "label": "K O3.5",
+   "logged_at": "2026-10-05T21:37:30+00:00",
+   "market": "pk4",
+   "p": 0.805,
+   "p_cal": 0.7508,
+   "player": "Cam Schlittler",
+   "player_id": "693645",
+   "result": null,
+   "start": "2026-10-06T00:00:00Z",
+   "stat": "p_k",
+   "team": "New York Yankees"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-05",
+   "fair": -295,
+   "game": "New York Yankees @ Tampa Bay Rays",
+   "game_id": "849839",
+   "label": "K O0.5",
+   "logged_at": "2026-10-05T21:37:30+00:00",
+   "market": "k1",
+   "p": 0.7938,
+   "p_cal": 0.7468,
+   "player": "Jonathan Aranda",
+   "player_id": "666018",
+   "result": null,
+   "start": "2026-10-06T00:00:00Z",
+   "stat": "k",
+   "team": "Tampa Bay Rays"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-05",
+   "fair": -260,
+   "game": "New York Yankees @ Tampa Bay Rays",
+   "game_id": "849839",
+   "label": "K O0.5",
+   "logged_at": "2026-10-05T21:37:30+00:00",
+   "market": "k1",
+   "p": 0.7529,
+   "p_cal": 0.722,
+   "player": "Jazz Chisholm Jr.",
+   "player_id": "665862",
+   "result": null,
+   "start": "2026-10-06T00:00:00Z",
+   "stat": "k",
+   "team": "New York Yankees"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-05",
+   "fair": -254,
+   "game": "New York Yankees @ Tampa Bay Rays",
+   "game_id": "849839",
+   "label": "K O0.5",
+   "logged_at": "2026-10-05T21:37:30+00:00",
+   "market": "k1",
+   "p": 0.7456,
+   "p_cal": 0.7176,
+   "player": "Ryan McMahon",
+   "player_id": "641857",
+   "result": null,
+   "start": "2026-10-06T00:00:00Z",
+   "stat": "k",
+   "team": "New York Yankees"
   }
  ]
 }

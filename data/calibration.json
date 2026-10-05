@@ -7479,6 +7479,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-10-05": {
+      "picks": [
+        {
+          "id": "666176",
+          "name": "Jo Adell",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "680757",
+          "name": "Steven Kwan",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "700250",
+          "name": "Ben Rice",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682987",
+          "name": "Spencer Jones",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "800050",
+          "name": "Chase DeLauter",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "677587",
+          "name": "Brayan Rocchio",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "806146",
+          "name": "George Lombard Jr.",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "608070",
+          "name": "Jos\u00e9 Ram\u00edrez",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641355",
+          "name": "Cody Bellinger",
+          "team": "NYY",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683953",
+          "name": "Travis Bazzana",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682657",
+          "name": "Angel Mart\u00ednez",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663993",
+          "name": "Nathaniel Lowe",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "803011",
+          "name": "Sam Antonacci",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -8432,6 +8542,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-05": {
+      "picks": [
+        {
+          "id": "700250",
+          "name": "Ben Rice",
+          "team": "New York Yankees",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -11508,6 +11632,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-05": {
+      "picks": [
+        {
+          "id": "678246",
+          "name": "Miguel Vargas",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "682987",
+          "name": "Spencer Jones",
+          "team": "New York Yankees",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "808959",
+          "name": "Munetaka Murakami",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "Tampa Bay Rays",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "643217",
+          "name": "Andrew Benintendi",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -36420,6 +36590,44 @@
           "team": "ATL",
           "stat": "strikeOuts",
           "line": 1.2,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    },
+    "2026-10-05": {
+      "picks": [
+        {
+          "id": 668909,
+          "name": "Gavin Williams (RHP)",
+          "team": "CLE",
+          "stat": "strikeOuts",
+          "line": 8.3,
+          "result": null
+        },
+        {
+          "id": 693645,
+          "name": "Cam Schlittler (RHP)",
+          "team": "NYY",
+          "stat": "strikeOuts",
+          "line": 6.1,
+          "result": null
+        },
+        {
+          "id": 642547,
+          "name": "Freddy Peralta (RHP)",
+          "team": "TB",
+          "stat": "strikeOuts",
+          "line": 5.4,
+          "result": null
+        },
+        {
+          "id": 641743,
+          "name": "Anthony Kay (LHP)",
+          "team": "CWS",
+          "stat": "strikeOuts",
+          "line": 3.5,
           "result": null
         }
       ],
