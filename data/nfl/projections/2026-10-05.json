@@ -1,0 +1,1347 @@
+{
+  "generated_at_et": "2026-10-05 17:08",
+  "week": 4,
+  "league": {
+    "team_games": 126,
+    "td_per_point": 0.1076,
+    "points_pg": 22.9,
+    "td_pg": 2.47,
+    "ypc": 4.17,
+    "yards_per_target": 7.48,
+    "catch_rate": 0.676,
+    "carries_pg": 26.7,
+    "targets_pg": 31.3,
+    "td_per_opportunity": 0.04257,
+    "prior_strength": 134.3,
+    "prior_a": 5.7148,
+    "prior_b": 128.5371,
+    "players_fitted": 432,
+    "touches_fitted": 7306,
+    "qb_priors": {
+      "cmp": [
+        0.64248,
+        491.89
+      ],
+      "td": [
+        0.04797,
+        8103.08
+      ],
+      "int": [
+        0.02194,
+        388.56
+      ]
+    },
+    "prop_spreads": {
+      "Rushing yards": {
+        "kind": "yards",
+        "cv": 0.7236,
+        "players": 132,
+        "games": 427
+      },
+      "Carries": {
+        "kind": "count",
+        "size": 94.906,
+        "players": 136,
+        "games": 438
+      },
+      "Receiving yards": {
+        "kind": "yards",
+        "cv": 0.8448,
+        "players": 289,
+        "games": 935
+      },
+      "Receptions": {
+        "kind": "count",
+        "size": null,
+        "players": 291,
+        "games": 939
+      },
+      "Targets": {
+        "kind": "count",
+        "size": null,
+        "players": 295,
+        "games": 947
+      },
+      "Passing yards": {
+        "kind": "yards",
+        "cv": 0.3439,
+        "players": 38,
+        "games": 130
+      },
+      "Pass attempts": {
+        "kind": "count",
+        "size": 33.686,
+        "players": 38,
+        "games": 130
+      },
+      "Rush + rec yards": {
+        "kind": "yards",
+        "cv": 0.7437,
+        "players": 344,
+        "games": 1130
+      },
+      "Completions": {
+        "kind": "count",
+        "size": 50.941,
+        "players": 38,
+        "games": 130
+      },
+      "Passing TDs": {
+        "kind": "count",
+        "size": null,
+        "players": 37,
+        "games": 128
+      },
+      "Interceptions": {
+        "kind": "count",
+        "size": null,
+        "players": 30,
+        "games": 107
+      }
+    },
+    "prior_weights": {
+      "share": 0.9061,
+      "catch": 0.9227,
+      "ypc": 0.0216,
+      "ypt": 0.0077,
+      "td": 1.0,
+      "qb_rate": 0.1234,
+      "ypa": 0.0064
+    },
+    "prior_weight_report": {
+      "share": {
+        "weight": 0.9061,
+        "n_players": 708,
+        "loglik_gain": 4787.66
+      },
+      "catch": {
+        "weight": 0.9227,
+        "n_players": 296,
+        "loglik_gain": 19.34
+      },
+      "ypc": {
+        "weight": 0.0216,
+        "n_players": 150,
+        "loglik_gain": 36.38
+      },
+      "ypt": {
+        "weight": 0.0077,
+        "n_players": 296,
+        "loglik_gain": 194.14
+      },
+      "td": {
+        "weight": 1.0,
+        "n_players": 352,
+        "loglik_gain": 11.54
+      },
+      "qb_rate": {
+        "weight": 0.1234,
+        "n_players": 126,
+        "loglik_gain": 0.12
+      },
+      "ypa": {
+        "weight": 0.0064,
+        "n_players": 42,
+        "loglik_gain": 29.74
+      }
+    }
+  },
+  "markets": {
+    "Anytime TD": [
+      {
+        "player": "Bijan Robinson",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 55,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Travis Etienne Jr.",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 46,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drake London",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 36,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chris Olave",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 36,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Pitts Sr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 24,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Alvin Kamara",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 24,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kendre Miller",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 23,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Juwan Johnson",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 22,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brian Robinson Jr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 21,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Devaughn Vele",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 19,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Noah Fant",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 18,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Olamide Zaccheaus",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 16,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chris Blair",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 12,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Austin Hooper",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 11,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jahan Dotson",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 10,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Bryce Lance",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "CJ Donaldson",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 7,
+        "window": "Monday Night"
+      }
+    ],
+    "Rushing yards": [
+      {
+        "player": "Bijan Robinson",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 125.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Travis Etienne Jr.",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 38.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brian Robinson Jr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 36.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Alvin Kamara",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 23.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kendre Miller",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 15.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Cooper Rush",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 14.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tyler Shough",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 13.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Michael Penix Jr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "QB",
+        "gp": 1,
+        "proj": -0.6,
+        "window": "Monday Night"
+      }
+    ],
+    "Carries": [
+      {
+        "player": "Bijan Robinson",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 21.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Travis Etienne Jr.",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 13.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Alvin Kamara",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 11.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brian Robinson Jr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 7.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kendre Miller",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 6.8,
+        "window": "Monday Night"
+      }
+    ],
+    "Receiving yards": [
+      {
+        "player": "Chris Olave",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 114.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drake London",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 92.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Juwan Johnson",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 59.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Devaughn Vele",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 42.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Bijan Robinson",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 34.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Noah Fant",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 19.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Pitts Sr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 19.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Bryce Lance",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 15.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Travis Etienne Jr.",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 14.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Olamide Zaccheaus",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 9.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Austin Hooper",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 9.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jahan Dotson",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 8.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Alvin Kamara",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 7.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chris Blair",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 4.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brian Robinson Jr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 4.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kendre Miller",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 1.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "CJ Donaldson",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 3,
+        "proj": -0.6,
+        "window": "Monday Night"
+      }
+    ],
+    "Receptions": [
+      {
+        "player": "Chris Olave",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 7.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Juwan Johnson",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 5.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drake London",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 4.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Bijan Robinson",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 4.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Pitts Sr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 3.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Devaughn Vele",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 3.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Alvin Kamara",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 3.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Noah Fant",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 2.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Travis Etienne Jr.",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 2.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Olamide Zaccheaus",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 2.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Austin Hooper",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 1.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jahan Dotson",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 1.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Bryce Lance",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 1.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chris Blair",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 0.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kendre Miller",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 0.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brian Robinson Jr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 0.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "CJ Donaldson",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 0.3,
+        "window": "Monday Night"
+      }
+    ],
+    "Targets": [
+      {
+        "player": "Chris Olave",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 12.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drake London",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 7.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Juwan Johnson",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 7.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Devaughn Vele",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 5.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Pitts Sr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 5.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Bijan Robinson",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 5.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Alvin Kamara",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 4.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Travis Etienne Jr.",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 4.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Noah Fant",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 3.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Olamide Zaccheaus",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 3.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Bryce Lance",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 2.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jahan Dotson",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 2.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chris Blair",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 2.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Austin Hooper",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 1.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kendre Miller",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 1.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "CJ Donaldson",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 0.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brian Robinson Jr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 0.6,
+        "window": "Monday Night"
+      }
+    ],
+    "Passing yards": [
+      {
+        "player": "Tyler Shough",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 262.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Michael Penix Jr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 233.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Cooper Rush",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 136.5,
+        "window": "Monday Night"
+      }
+    ],
+    "Pass attempts": [
+      {
+        "player": "Tyler Shough",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 41.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Michael Penix Jr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 25.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Cooper Rush",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 25.0,
+        "window": "Monday Night"
+      }
+    ],
+    "Rush + rec yards": [
+      {
+        "player": "Bijan Robinson",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 160.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chris Olave",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 113.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drake London",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 93.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Juwan Johnson",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 59.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Travis Etienne Jr.",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 52.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Devaughn Vele",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 42.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brian Robinson Jr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 41.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Alvin Kamara",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 30.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Noah Fant",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 19.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Pitts Sr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 19.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kendre Miller",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 17.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Bryce Lance",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 15.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Olamide Zaccheaus",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 11.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Austin Hooper",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 9.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jahan Dotson",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 8.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chris Blair",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 4.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "CJ Donaldson",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 1.8,
+        "window": "Monday Night"
+      }
+    ],
+    "Completions": [
+      {
+        "player": "Tyler Shough",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 26.99,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Michael Penix Jr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 16.09,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Cooper Rush",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 15.92,
+        "window": "Monday Night"
+      }
+    ],
+    "Passing TDs": [
+      {
+        "player": "Tyler Shough",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 1.99,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Michael Penix Jr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 1.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Cooper Rush",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 1.2,
+        "window": "Monday Night"
+      }
+    ],
+    "Interceptions": [
+      {
+        "player": "Tyler Shough",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 0.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Cooper Rush",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 0.75,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Michael Penix Jr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 0.55,
+        "window": "Monday Night"
+      }
+    ],
+    "2+ TDs": [
+      {
+        "player": "Bijan Robinson",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 19.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Travis Etienne Jr.",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 12.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drake London",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 7.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chris Olave",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 7.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Alvin Kamara",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 3.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Pitts Sr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 3.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kendre Miller",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 2.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Juwan Johnson",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 2.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brian Robinson Jr.",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 2.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Devaughn Vele",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 1.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Noah Fant",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 1.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Olamide Zaccheaus",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 1.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chris Blair",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 0.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Austin Hooper",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 0.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jahan Dotson",
+        "team": "ATL",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 0.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Bryce Lance",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 0.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "CJ Donaldson",
+        "team": "NO",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 0.3,
+        "window": "Monday Night"
+      }
+    ]
+  }
+}
