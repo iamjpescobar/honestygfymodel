@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-04 19:56",
+  "generated_at_et": "2026-10-04 21:40",
   "slate_date_et": "2026-10-04",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -116,7 +116,7 @@
       "venue": "UNIQLO Field at Dodger Stadium",
       "game_time": "2026-10-05T00:00:00Z",
       "weather_condition": "Partly Cloudy",
-      "weather_temp": "88",
+      "weather_temp": "95",
       "weather_wind": "4 mph, Varies",
       "park_factor": 101,
       "park_verified": true,
@@ -136,7 +136,7 @@
       "ou_lean": "Under",
       "ou_grade": "C",
       "ou_signals": [
-        "Temp 88F (carry weather)",
+        "Temp 95F (carry weather)",
         "Starters' avg WHIP 0.93 (low)",
         "Starters' avg HR/9 0.43 (low)",
         "Starters' avg SLG against 0.243 (low)"
