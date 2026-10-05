@@ -246,9 +246,20 @@ def run_mlb(get):
     return json.loads((d / "model.json").read_text()), d
 
 
+# The nightly commits the REAL data/mlb/prior_season.json, so "it doesn't exist"
+# is the wrong guard - it broke every run once the real file landed. What the
+# test must prove is that it never TOUCHED the real file: same bytes before/after.
+REAL_PRIOR = ROOT / "data" / "mlb" / "prior_season.json"
+
+
+def _fingerprint(p):
+    return p.read_bytes() if p.exists() else None
+
+
+real_before = _fingerprint(REAL_PRIOR)
 model, d = run_mlb(two_seasons())
 check("last season's file is written once (and the test's own sandbox, not the repo)",
-      (d / "prior.json").exists() and not (ROOT / "data" / "mlb" / "prior_season.json").exists())
+      (d / "prior.json").exists() and _fingerprint(REAL_PRIOR) == real_before)
 check(f"MLB teams that keep their strength: carryover fitted well above 0 "
       f"({model['params'].get('carryover')})", (model["params"].get("carryover") or 0) > 0.3)
 spw = model.get("starter_prior_weight") or {}
