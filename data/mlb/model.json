@@ -2,40 +2,76 @@
  "blend": {
   "coverage": {
    "preds": 2429,
-   "spread_contradicts": 0,
-   "spread_priced": 0,
-   "total_priced": 0,
-   "with_line": 0
+   "spread_contradicts": 368,
+   "spread_priced": 2011,
+   "total_priced": 2271,
+   "with_line": 2379
   },
   "moneyline": {
-   "n": 0,
+   "blend_log_loss_cv": 0.67944,
+   "from": "2026-03-26",
+   "market_log_loss": 0.67883,
+   "model_log_loss": 0.68297,
+   "n": 2379,
+   "to": "2026-09-27",
    "verdict": {
-    "n": 0,
-    "verdict": null
+    "diff": -0.00061,
+    "n": 2379,
+    "se": 0.00079,
+    "verdict": "fails",
+    "z": -0.77
    },
-   "w": null,
+   "w": 0.24,
+   "w_halves": [
+    0.447,
+    0.0229
+   ],
    "w_used": 0.0
   },
   "spread": {
-   "n": 0,
+   "blend_log_loss_cv": 0.68216,
+   "from": "2026-03-26",
+   "market_log_loss": 0.68218,
+   "model_log_loss": 0.68648,
+   "n": 2011,
+   "to": "2026-09-27",
    "verdict": {
-    "n": 0,
-    "verdict": null
+    "diff": 3e-05,
+    "n": 2011,
+    "se": 0.00059,
+    "verdict": "thin",
+    "z": 0.05
    },
-   "w": null,
+   "w": 0.205,
+   "w_halves": [
+    0.3062,
+    0.0803
+   ],
    "w_used": 0.0
   },
   "total": {
-   "n": 0,
+   "blend_log_loss_cv": 0.69257,
+   "from": "2026-03-26",
+   "market_log_loss": 0.69261,
+   "model_log_loss": 0.70672,
+   "n": 2271,
+   "to": "2026-09-27",
    "verdict": {
-    "n": 0,
-    "verdict": null
+    "diff": 4e-05,
+    "n": 2271,
+    "se": 0.0002,
+    "verdict": "thin",
+    "z": 0.22
    },
-   "w": null,
+   "w": 0.0521,
+   "w_halves": [
+    0.0527,
+    0.0514
+   ],
    "w_used": 0.0
   }
  },
- "generated_at_et": "2026-10-04 12:39",
+ "generated_at_et": "2026-10-05 17:11",
  "league": {
   "avg_total": 8.962,
   "away_mult": 0.9945,
