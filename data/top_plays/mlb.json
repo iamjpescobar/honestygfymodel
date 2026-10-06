@@ -513,6 +513,27 @@
    "stat": "k",
    "team": "Milwaukee Brewers",
    "why": "4.5 expected PA from slot 2 vs Nick Pivetta, then a league-average pen"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-06",
+   "fair": -256,
+   "game": "Los Angeles Dodgers @ Atlanta Braves",
+   "game_id": "849819",
+   "label": "K O0.5",
+   "logged_at": "2026-10-06T20:30:46+00:00",
+   "market": "k1",
+   "matchup": "Soft matchup \u2014 Chris Sale allows the 8th-most of 418 strikeouts to batters (0.303 per plate appearance vs 0.222 league, +36%; ranked on this season + last, blended).",
+   "matchup_tier": "soft",
+   "p": 0.7489,
+   "p_cal": 0.7194,
+   "player": "Enrique Hern\u00e1ndez",
+   "player_id": "571771",
+   "result": null,
+   "start": "2026-10-06T22:00:00Z",
+   "stat": "k",
+   "team": "Los Angeles Dodgers",
+   "why": "3.8 expected PA from slot 9 vs Chris Sale, then a league-average pen"
   }
  ]
 }
