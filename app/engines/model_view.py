@@ -494,6 +494,28 @@ def matchup_css(tier_name):
     return (f"color: {fg}; font-weight: 700;" + (f" background-color: {bg};" if bg else ""))
 
 
+# COLUMN ORDER (10-06): the columns a bet is decided on come FIRST, so a
+# table read on an iPad shows them without a sideways swipe. Everything
+# else follows in its old order. One rule for every model table.
+NAME_COLUMNS = ("Skater", "Batter", "Pitcher", "Goalie", "Player")
+
+
+def lead_columns(columns, first):
+    """`first` (those present, in that order), then every other column in
+    its original order. Nothing is dropped, nothing duplicated."""
+    cols = list(columns)
+    head = [c for c in first if c in cols]
+    return head + [c for c in cols if c not in head]
+
+
+def prop_board_order(columns, line_heads):
+    """Name, Pos, the line chances, Avg/Proj, the matchup — then the rest
+    (GP, minutes, sample sizes, team, status)."""
+    name = [c for c in NAME_COLUMNS if c in columns][:1]
+    return lead_columns(columns, name + ["Pos"] + list(line_heads)
+                        + ["Avg", "Proj", "Defense vs pos"])
+
+
 def painted(df, painter):
     """The site's base table styling (dark cells, 2-dp floor, em-dash for
     missing — table_style._base_styler) with a cell painter on top."""
@@ -575,6 +597,7 @@ def render_prop_board(rows, stats, markets, verdicts, key, staking, info_cols,
         chances.append(cmap)
         tiers.append((c or {}).get("tier"))
     df = pd.DataFrame(table)
+    df = df[prop_board_order(df.columns, list(chances[0]) if chances else [])]
 
     def _paint(frame):
         out = pd.DataFrame("", index=frame.index, columns=frame.columns)
@@ -825,6 +848,11 @@ def _final_pct(b):
     return DASH if b.get("p") is None else f"{100 * b['p']:.1f}%"
 
 
+# The bet, the chance it is priced on, YOUR price, what it is worth, the
+# verdict — then the working (model vs market, break-even, EV, stake).
+VALUE_TABLE_FIRST = ("Bet", "Final", "Price", "Fair", "Edge", "Tier", "Stake", "Trust")
+
+
 def render_value_panel(proj, odds, away, home, key, staking, validation=None, blend=None):
     """Every side the model prices: the model's chance, the market's
     (no-vig), and the FINAL chance the bet is priced on (engines/
@@ -863,6 +891,7 @@ def render_value_panel(proj, odds, away, home, key, staking, validation=None, bl
             "Trust": trust_label(trusts[-1], market=True),
         })
     df = pd.DataFrame(rows)
+    df = df[lead_columns(df.columns, VALUE_TABLE_FIRST)]
     st.data_editor(
         # The editable Price column ignores Styler formatting, and an empty
         # editable number cell shows Streamlit's grey "None" placeholder —
@@ -1112,6 +1141,7 @@ def render_best_value(entries, blend, staking, key, prop_note=None):
                        "better number than the posted one is where value comes from.")
             return
         df = pd.DataFrame([r[1] for r in rows])
+        df = df[lead_columns(df.columns, ("Bet",) + VALUE_TABLE_FIRST[1:] + ("Game",))]
         sty = _tier_styler(df, [r[2] for r in rows], [r[3] for r in rows], market=True)
         st.dataframe(sty, hide_index=True, width="stretch", key=f"best_{key}")
         note = ""
@@ -1380,6 +1410,7 @@ def render_nfl_props(g, league, key, staking, dvp=None):
     tiers = [tiers[i] for i in order]
     render_trust_row([(labels[stat], verd.get(stat))])
     df = pd.DataFrame(table)
+    df = df[prop_board_order(df.columns, ["Low", "Mid", "High"])]
 
     def _paint(frame):
         out = pd.DataFrame("", index=frame.index, columns=frame.columns)

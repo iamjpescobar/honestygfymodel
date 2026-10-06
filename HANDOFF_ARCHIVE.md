@@ -10,6 +10,95 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — the anytime board was twice as confident as reality, and is rebuilt. 2026-09-27 (3)
+
+**Suite 114, FAILING: none.** Seven negative controls red by exit code.
+Validated against the REAL week-3 slate pulled from the nightly release,
+not a fixture.
+
+### WHAT THE PROBE FOUND
+
+Walk-forward over weeks 1-3 (`nfl_projection_probe`, 09-27):
+
+    projected 0- 9%  ->  actually scored 16.2%   (n=185)
+    projected 50-59% ->  actually scored 33.3%   (n=9)
+    projected 90-99% ->  actually scored 50.0%   (n=6)
+
+Every band above 30% came in around half its claim, and there was no
+middle at all: 185 of 243 player-games sat in 0-9% and the rest jumped
+past 30%. Measured on the real slate, **65% of skill players had a flat
+0%** against a **23.0% real base rate**, while a tight end with ONE score
+in ONE game rendered at 88%.
+
+Cause: splitting a team's expected touchdowns by the player's share of
+its ACTUAL scores. On three games that is noise — zero for most, and
+enormous for whoever happened to score.
+
+### THE REBUILD
+
+Share now comes from OPPORTUNITY (carries + targets, which repeats) x
+his own conversion rate, shrunk toward the league by a beta-binomial
+prior, then normalised so a team's players divide its expected TDs.
+
+**The shrinkage is fitted, not chosen.** `td_opportunity_prior()` fits
+the prior by maximum likelihood over every skill player in the league,
+by golden-section search on log(strength). Method of moments was tried
+first and rejected: it needs a minimum-touches cutoff to keep its
+variance estimate sane, and that cutoff would be a number chosen by eye
+(rule 1).
+
+Result on the real slate:
+
+    live before   mean 18.1%   zeros 65%   median  0.0%   max 90.8%
+    rebuilt       mean 21.7%   zeros  0%   median 18.0%   max 76.0%
+    reality       23.0%
+
+**The fitted strength came out at 164 touches, and the likelihood is
+nearly flat above it** (-590.4 at the fit vs -590.7 at 1000). That is a
+real finding, not a fitting artefact: after three weeks the data cannot
+yet tell one converter from another, so the honest model is "scores
+follow the ball". As real differences emerge the fitted strength falls
+on its own and good red-zone players come through. **Nothing to retune
+by hand — do not add one.**
+
+The board now leads with Henry, Walker, Gibbs, Taylor, which is how
+anytime markets actually behave.
+
+### THE YARDAGE MARKETS DO NOT BEAT A SEASON AVERAGE
+
+Also from the probe, and left alone deliberately:
+
+    rushing yards   projection 25.01  vs season average 25.09
+    receiving yards            25.53                    25.90
+    receptions                  1.86                     1.83  (loses)
+
+Within noise on every market. The matchup multiplier is NOT earning its
+complexity — but it was not removed, because three weeks is too thin to
+kill a feature on (rule 10), and it is the mechanism that expresses the
+matchup the page exists to show. **It is now stated on the page** that
+these test within noise of a season average. Re-measure in a few weeks;
+if it still does not separate, drop it.
+
+### WHAT IS STILL OPEN
+
+- Re-run the probe now the estimator has changed. The calibration curve
+  is the check, and it has NOT yet been run against the rebuild.
+- No grader still. The dated projection log accumulates; nothing scores
+  it.
+- The tests above this batch pass NO prior, so they exercise the
+  fallback path. The new path has its own section; keep both.
+
+### FILES, 2026-09-27 (3)
+
+    nfl_precompute.py               td_opportunity_prior() + fitted into league
+    app/engines/nfl_projection.py   attach_td_shares rebuilt; TD/touch, touches on the row
+    app/views/NFL_Projections.py    TD/touch column, rewritten explanation, measured-honesty note
+    tests/test_nfl_projection.py    section 8 — the new estimator, 7 controls
+
+---
+
+---
+
 ## PICK UP HERE — a test of mine took the whole nightly down. 2026-09-27 (2)
 
 **Suite 114, FAILING: none.** Four negative controls red by exit code,

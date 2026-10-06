@@ -105,6 +105,10 @@ with card("tp_props"):
             "Matchup": (mv.MATCHUP_STYLE.get(p.get("matchup_tier")) or ("\u2014",))[0],
             "Status": p.get("result") or "pending",
         } for p in tonight])
+        # The decision first (who, what, how likely, what to pay, matchup,
+        # result); sport and the long game name last — iPad width (10-06).
+        df = df[mv.lead_columns(df.columns, ("Player", "Bet", "Chance", "Worth it at",
+                                             "Matchup", "Status"))]
         _status_css = {"hit": f"color:{COLOR['bg']}; background-color:{COLOR['accent']}; font-weight:700;",
                        "miss": f"color:{COLOR['bg']}; background-color:{COLOR['error']}; font-weight:700;",
                        "void": f"color:{COLOR['text_faint']};"}
@@ -206,7 +210,9 @@ with card("tp_games"):
     st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">'
                 f'Game bets with a proven edge</div>', unsafe_allow_html=True)
     if rows:
-        st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch", key="tp_gb")
+        _gb = pd.DataFrame(rows)
+        st.dataframe(_gb[mv.lead_columns(_gb.columns, ("Bet", "Final", "Price", "Edge", "Stake"))],
+                     hide_index=True, width="stretch", key="tp_gb")
         if factor < 1.0:
             st.caption(f"Stakes scaled to {100 * factor:.0f}% to stay inside your per-slate ceiling.")
     else:
