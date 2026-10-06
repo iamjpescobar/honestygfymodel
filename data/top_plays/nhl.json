@@ -245,6 +245,7 @@
    "team": "Winnipeg Jets"
   },
   {
+   "actual": 8.0,
    "at_least": 2,
    "date": "2026-10-05",
    "fair": -422,
@@ -257,12 +258,13 @@
    "p_cal": 0.8085,
    "player": "Brandon Hagel",
    "player_id": "4065019",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-05T19:00:00-04:00",
    "stat": "sog",
    "team": "Tampa Bay Lightning"
   },
   {
+   "actual": 1.0,
    "at_least": 2,
    "date": "2026-10-05",
    "fair": -403,
@@ -275,7 +277,7 @@
    "p_cal": 0.8012,
    "player": "Nikita Kucherov",
    "player_id": "2563060",
-   "result": null,
+   "result": "miss",
    "start": "2026-10-05T19:00:00-04:00",
    "stat": "sog",
    "team": "Tampa Bay Lightning"
@@ -299,6 +301,7 @@
    "team": "Boston Bruins"
   },
   {
+   "actual": 5.0,
    "at_least": 2,
    "date": "2026-10-05",
    "fair": -305,
@@ -311,7 +314,7 @@
    "p_cal": 0.7533,
    "player": "Jake Guentzel",
    "player_id": "3042083",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-05T19:00:00-04:00",
    "stat": "sog",
    "team": "Tampa Bay Lightning"
