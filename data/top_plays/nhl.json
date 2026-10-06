@@ -558,6 +558,27 @@
    "start": "2026-10-06T19:00:00-04:00",
    "stat": "sog",
    "team": "Detroit Red Wings"
+  },
+  {
+   "at_least": 2,
+   "date": "2026-10-06",
+   "fair": -406,
+   "game": "Nashville Predators @ Toronto Maple Leafs",
+   "game_id": "401892449",
+   "label": "SOG O1.5",
+   "logged_at": "2026-10-06T19:11:58+00:00",
+   "market": "sog2",
+   "matchup": "Soft matchup \u2014 NSH allows the 5th-most of 32 shots on goal to wingers (11.1 a game vs 10.5 league, +6%; this season 11th of 32 over 2 games, last season 4th of 32; ranked on this season + last, blended). That ranking is a stable trait (split-half 0.70).",
+   "matchup_tier": "soft",
+   "p": 0.8016,
+   "p_cal": 0.8025,
+   "player": "Kirill Marchenko",
+   "player_id": "4587996",
+   "result": null,
+   "start": "2026-10-06T19:00:00-04:00",
+   "stat": "sog",
+   "team": "Toronto Maple Leafs",
+   "why": "2.83 shots and 0.83 points a game over 79 games (this season + last, pulled toward the forward average) \u00b7 ice time 19.9 min over his last 5 vs 19.0 on his rate \u2192 shots x1.02 \u00b7 NSH matchup sets tonight's shot volume x1.08 and scoring x1.03 \u00b7 NSH allows the 5th-most of 32 shots to wingers (11.1 a game vs 10.5) \u00b7 \u2192 3.13 expected shots, 0.89 expected points"
   }
  ]
 }
