@@ -10,6 +10,64 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — 49 entries for 16 games, and two dead pages. 2026-09-27 (4)
+
+**Suite 114, FAILING: none.** Eight negative controls red by exit code.
+Verified by rendering every page against the ACTUAL broken live file.
+
+### THE FEED ANSWERS A DATE WITH A WEEK
+
+`nfl_precompute` walks every day from the opener to the end of the
+week. **ESPN's NFL scoreboard answers any date inside the current week
+with the WHOLE week's fixtures**, so each of those days handed back the
+same sixteen games and every one was appended again.
+
+The 09-27 file held **49 entries for 16 real games**, each player three
+or four times on every board, and both the Projections page and The
+Week died outright on `StreamlitDuplicateElementKey`.
+
+**The numbers were never wrong.** Each duplicate carried the same
+correctly-normalised projection; `logs` was already keyed by event id so
+league constants and team profiles were untouched (team_games 66 was
+right all along). Only the ROWS multiplied.
+
+`week_events` and `finals` are dicts keyed by event id now, not lists.
+A later fetch of the same event overwrites the earlier one, which is
+what we want: the last read carries the freshest status and score.
+
+### AND NO VIEW SHOULD HAVE DIED OF IT
+
+A duplicate Streamlit key raises, and that takes the WHOLE page down —
+not one card. Three keys were data alone: the projection cards on the
+player's NAME (not unique; the league has had two Michael Thomases), and
+both game cards on the event id. All three now carry a positional slot,
+so a future duplicate draws an odd card instead of a blank page.
+
+Both hardenings are asserted in `test_nfl_nhl_wiring`, with controls.
+
+### THE FIXTURE COULD NOT HAVE CAUGHT THIS
+
+`test_nfl_pipeline`'s fixture gave each day its own games — the one
+shape the live feed never has. There is now a second fetcher in that
+file returning the same week-2 fixtures for all seven days of the week,
+which is what ESPN actually does, and it asserts each game and each
+player appears ONCE. Rule 5, again: a fixture that does not reproduce
+production's shape is not a test of production.
+
+### FILES, 2026-09-27 (4)
+
+    nfl_precompute.py               week_events/finals keyed by event id
+    app/views/NFL.py                game card takes a positional slot
+    app/views/NHL.py                same
+    app/views/NFL_Projections.py    projection cards keyed by position
+    tests/test_nfl_pipeline.py      section 8 — the week-wide feed replayed
+    tests/test_nfl_projection.py    section 9 — dedupe + key shape
+    tests/test_nfl_nhl_wiring.py    no view keys a card on data alone
+
+---
+
+---
+
 ## PICK UP HERE — the anytime board was twice as confident as reality, and is rebuilt. 2026-09-27 (3)
 
 **Suite 114, FAILING: none.** Seven negative controls red by exit code.

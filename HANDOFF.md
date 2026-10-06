@@ -154,6 +154,49 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Goal Edge + Goalies to Target (NHL), TD Edge + Defenses to Target (NFL). 2026-10-06 (3)
+
+**Suite 131 (+ test_edge_boards), FAILING: none.** Four negative controls
+red by exit code (one first came back GREEN — the goalie fixture's game
+goals agreed with the save-rate ranking, so it could not tell the two
+apart; the fixture now makes them disagree). All four pages opened in a
+real browser against the 10-06 nightly archive: no exceptions.
+
+WHY: Izzy wanted hockey and football versions of HR Edge and Pitchers to
+Target: one page that ranks the scoring chance, one that names who to
+attack.
+
+ENGINE: app/engines/edge_boards.py (NEW, pure). NOTHING NEW IS
+ESTIMATED; it gathers what the nightly already fits and tests.
+- nhl_goal_rows: every skater's Goal O0.5 from nhl_model through the g1
+  calibration curve (the delivered chance, same as Top Plays), with exp
+  G / SOG, ice time, goal environment, the goalie he SHOOTS AT and the
+  DvP cards. No 0-100 composite: the ranked number has a graded record.
+- likely_starter: most recent starts from the crease string; a TIE
+  returns None (a split crease shows both names and their averaged save
+  rate, never a guess).
+- nhl_goalie_rows: ranked by HIS expected goals against = exp shots
+  against x (1 - his shrunk save rate); the game model's team goals ride
+  beside it as the cross-check. Saves are tested at TEAM level only, and
+  the page says so.
+- nfl_td_rows: projection_rows("Anytime TD") through the nightly NFL
+  prop test's td calibration (nfl_prop_check), DvP td card, opponent TD
+  and red-zone ranks.
+- nfl_defense_rows: per position, the stat the defense allows MOST (of
+  2-3), its rank and % vs league; sorted by SOFT count, then summed size.
+  The page warns that max-of-three makes any defense look a bit softer.
+
+PAGES (NEW): views/NHL_Goal_Edge.py, NHL_Goalies_To_Target.py,
+NFL_TD_Edge.py, NFL_Defenses_To_Target.py: money columns first, chance
+colours, price checker with the verdict box + matchup notices. Added to
+SPORT_SUBPAGES in app.py (NHL: Goal Edge, Goalies to Target; NFL: TD
+Edge, Defenses to Target).
+
+FILES: app/engines/edge_boards.py, the four views, tests/test_edge_boards.py
+(all NEW), app/app.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — money columns first on every model table (iPad width). 2026-10-06 (2)
 
 **Suite 130 (+ test_money_columns_first), FAILING: none.** Three negative
@@ -958,61 +1001,5 @@ comment never counts, and self-checks its own detector first.
     app/engines/{bvp,trend_chart,calibration_trend}.py
     tests/test_no_deprecated_width.py   NEW
     README.md, HANDOFF.md, .gitignore   dedupe-fix.zip DELETED
-
----
-
-## PICK UP HERE — 49 entries for 16 games, and two dead pages. 2026-09-27 (4)
-
-**Suite 114, FAILING: none.** Eight negative controls red by exit code.
-Verified by rendering every page against the ACTUAL broken live file.
-
-### THE FEED ANSWERS A DATE WITH A WEEK
-
-`nfl_precompute` walks every day from the opener to the end of the
-week. **ESPN's NFL scoreboard answers any date inside the current week
-with the WHOLE week's fixtures**, so each of those days handed back the
-same sixteen games and every one was appended again.
-
-The 09-27 file held **49 entries for 16 real games**, each player three
-or four times on every board, and both the Projections page and The
-Week died outright on `StreamlitDuplicateElementKey`.
-
-**The numbers were never wrong.** Each duplicate carried the same
-correctly-normalised projection; `logs` was already keyed by event id so
-league constants and team profiles were untouched (team_games 66 was
-right all along). Only the ROWS multiplied.
-
-`week_events` and `finals` are dicts keyed by event id now, not lists.
-A later fetch of the same event overwrites the earlier one, which is
-what we want: the last read carries the freshest status and score.
-
-### AND NO VIEW SHOULD HAVE DIED OF IT
-
-A duplicate Streamlit key raises, and that takes the WHOLE page down —
-not one card. Three keys were data alone: the projection cards on the
-player's NAME (not unique; the league has had two Michael Thomases), and
-both game cards on the event id. All three now carry a positional slot,
-so a future duplicate draws an odd card instead of a blank page.
-
-Both hardenings are asserted in `test_nfl_nhl_wiring`, with controls.
-
-### THE FIXTURE COULD NOT HAVE CAUGHT THIS
-
-`test_nfl_pipeline`'s fixture gave each day its own games — the one
-shape the live feed never has. There is now a second fetcher in that
-file returning the same week-2 fixtures for all seven days of the week,
-which is what ESPN actually does, and it asserts each game and each
-player appears ONCE. Rule 5, again: a fixture that does not reproduce
-production's shape is not a test of production.
-
-### FILES, 2026-09-27 (4)
-
-    nfl_precompute.py               week_events/finals keyed by event id
-    app/views/NFL.py                game card takes a positional slot
-    app/views/NHL.py                same
-    app/views/NFL_Projections.py    projection cards keyed by position
-    tests/test_nfl_pipeline.py      section 8 — the week-wide feed replayed
-    tests/test_nfl_projection.py    section 9 — dedupe + key shape
-    tests/test_nfl_nhl_wiring.py    no view keys a card on data alone
 
 ---

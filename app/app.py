@@ -306,6 +306,11 @@ SPORT_SUBPAGES = {
         ("Projections", "views/NFL_Projections.py"),
         ("Model", "views/NFL_Model.py"),
         ("Top Plays", "views/Top_Plays.py"),
+        # Football's HR Edge and Pitchers to Target (10-06,
+        # engines/edge_boards): touchdown chances, and where each
+        # defense bleeds by position.
+        ("TD Edge", "views/NFL_TD_Edge.py"),
+        ("Defenses to Target", "views/NFL_Defenses_To_Target.py"),
     ],
     # Hockey is a nightly slate through slate_guard("nhl"). The Crease
     # Report and Shots Lab read regular-season box scores only.
@@ -315,6 +320,9 @@ SPORT_SUBPAGES = {
         ("Shots Lab", "views/NHL_Shots.py"),
         ("Model", "views/NHL_Model.py"),
         ("Top Plays", "views/Top_Plays.py"),
+        # Hockey's HR Edge and Pitchers to Target (10-06).
+        ("Goal Edge", "views/NHL_Goal_Edge.py"),
+        ("Goalies to Target", "views/NHL_Goalies_To_Target.py"),
     ],
 }
 
