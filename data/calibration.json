@@ -7589,6 +7589,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-10-06": {
+      "picks": [
+        {
+          "id": "661388",
+          "name": "William Contreras",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "664034",
+          "name": "Ty France",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "701538",
+          "name": "Jackson Merrill",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "592885",
+          "name": "Christian Yelich",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "669134",
+          "name": "Luis Campusano",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "643289",
+          "name": "Mauricio Dub\u00f3n",
+          "team": "ATL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "593428",
+          "name": "Xander Bogaerts",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "694192",
+          "name": "Jackson Chourio",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "687957",
+          "name": "Dustin Harris",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "665487",
+          "name": "Fernando Tatis Jr.",
+          "team": "SD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "606192",
+          "name": "Teoscar Hern\u00e1ndez",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641343",
+          "name": "Jake Bauers",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "806198",
+          "name": "Cooper Pratt",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -8556,6 +8666,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-06": {
+      "picks": [
+        {
+          "id": "665487",
+          "name": "Fernando Tatis Jr.",
+          "team": "San Diego Padres",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -11678,6 +11802,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-06": {
+      "picks": [
+        {
+          "id": "660271",
+          "name": "Shohei Ohtani",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "621566",
+          "name": "Matt Olson",
+          "team": "Atlanta Braves",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663586",
+          "name": "Austin Riley",
+          "team": "Atlanta Braves",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686948",
+          "name": "Drake Baldwin",
+          "team": "Atlanta Braves",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "606192",
+          "name": "Teoscar Hern\u00e1ndez",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -36628,6 +36798,44 @@
           "team": "CWS",
           "stat": "strikeOuts",
           "line": 3.5,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    },
+    "2026-10-06": {
+      "picks": [
+        {
+          "id": 519242,
+          "name": "Chris Sale (LHP)",
+          "team": "ATL",
+          "stat": "strikeOuts",
+          "line": 6.5,
+          "result": null
+        },
+        {
+          "id": 808967,
+          "name": "Yoshinobu Yamamoto (RHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 6.4,
+          "result": null
+        },
+        {
+          "id": 601713,
+          "name": "Nick Pivetta (RHP)",
+          "team": "SD",
+          "stat": "strikeOuts",
+          "line": 4.9,
+          "result": null
+        },
+        {
+          "id": 669160,
+          "name": "Dustin May (RHP)",
+          "team": "MIL",
+          "stat": "strikeOuts",
+          "line": 4.5,
           "result": null
         }
       ],
