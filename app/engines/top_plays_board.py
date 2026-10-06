@@ -10,7 +10,8 @@ player's own hit rate on games it had not seen (the nightly's walk-
 forward verdict, "beats"). Its probability is then CALIBRATED: mapped
 through that market's own walk-forward calibration curve — when the
 model said 80-89% on Hits O0.5, how often did it actually happen — made
-monotone by pooling adjacent violators (no knobs), so the number shown
+monotone by pooling adjacent violators (no knobs), the measured gap
+carried past its ends, so the number shown
 is what that kind of call has DELIVERED, not what the model claimed.
 
 One play per player (Hits O0.5 and TB O0.5 are the same event; a
@@ -75,13 +76,28 @@ def _pav(points):
 def calibrate(p, bins):
     """The probability a call of `p` has DELIVERED, from a market's
     walk-forward calibration bins ([{band, n, predicted, actual}]):
-    monotone (PAV), then linear between bin centres, flat past the ends.
+    monotone (PAV), then linear between bin centres.
+
+    PAST THE MEASURED RANGE (above the highest bin's average call, below
+    the lowest's) the gap measured at that end is carried forward instead
+    of holding flat. Until 10-06 it held flat, which made every call above
+    the top bin identical — four NHL players at raw 84-89% all printed
+    84.4%, so the top of Top Plays was a tie. Measured on last season's
+    NHL props (calibrate on the first half of the test window, score the
+    second half, ends only): carrying the gap beat flat on 6 of 8 markets
+    (z 2.1-8.4), one thin, one worse within noise. Clipped to (0, 1).
     No bins -> None (an uncalibrated number is not shown as calibrated)."""
     if p is None or not bins:
         return None
-    pts = _pav(sorted((b["predicted"], b["actual"], b["n"]) for b in bins if b.get("n")))
+    raw = sorted((b["predicted"], b["actual"], b["n"]) for b in bins if b.get("n"))
+    pts = _pav(raw)
     if not pts:
         return None
+    lo_x, hi_x = raw[0][0], raw[-1][0]
+    if p > hi_x:
+        return min(max(p + (pts[-1][1] - pts[-1][0]), 0.0005), 0.9995)
+    if p < lo_x:
+        return min(max(p + (pts[0][1] - pts[0][0]), 0.0005), 0.9995)
     if p <= pts[0][0]:
         return pts[0][1]
     if p >= pts[-1][0]:
@@ -175,6 +191,10 @@ def log_plays(sport, plays, now=None, root=None):
             "player": p.get("player"), "team": p.get("team"), "market": p["market"],
             "label": p.get("label"), "stat": p.get("stat"), "at_least": p.get("at_least"),
             "p": round(p["p"], 4), "p_cal": p["p_cal"], "fair": p.get("fair"),
+            # WHY and the MATCHUP as they stood when the play was logged
+            # (10-06) — the page shows them; nothing grades on them.
+            "why": p.get("why"), "matchup": p.get("matchup"),
+            "matchup_tier": p.get("matchup_tier"),
             "logged_at": now.isoformat(timespec="seconds"), "result": None})
         new += 1
     if new:

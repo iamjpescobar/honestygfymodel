@@ -230,7 +230,7 @@ jobs:
         run: |
           # --porcelain, not git diff: a brand-new dated file is
           # untracked, and git diff reports untracked as no change.
-          if [ -z "$(git status --porcelain -- data/nfl/projections data/nfl/prior_season.json data/nfl/prior_players.json data/model_picks/nhl.json data/model_picks/nfl.json data/top_plays/nhl.json)" ]; then
+          if [ -z "$(git status --porcelain -- data/nfl/projections data/nfl/prior_season.json data/nfl/prior_players.json data/nfl/prior_dvp.json data/model_picks/nhl.json data/model_picks/nfl.json data/top_plays/nhl.json)" ]; then
             echo "No new NFL projections to commit."
           else
             git config user.name "github-actions[bot]"
@@ -241,6 +241,9 @@ jobs:
             if [ -f data/nfl/prior_season.json ]; then git add data/nfl/prior_season.json; fi
             # Every 2025 player's box-score totals — also written once.
             if [ -f data/nfl/prior_players.json ]; then git add data/nfl/prior_players.json; fi
+            # Every 2025 player-game line the defense-vs-position table reads
+            # (nfl_prop_check) — also written once.
+            if [ -f data/nfl/prior_dvp.json ]; then git add data/nfl/prior_dvp.json; fi
             # NHL and NFL value picks are logged during their fetch steps.
             # (NHL/NFL only — data/model_picks/mlb.json belongs to slate-picks.)
             # NHL top plays: logged and graded by nhl_precompute (this job

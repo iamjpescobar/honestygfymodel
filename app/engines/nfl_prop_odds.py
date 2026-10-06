@@ -102,3 +102,54 @@ def p_over(market, projection, line, spreads):
         return over
     sd = sp["cv"] * projection
     return 1.0 - mm.normal_cdf(line, projection, sd)
+
+
+# ----------------------------------------------------------------------
+# The board's stats and their distributions (moved here from model_view
+# on 10-06 so the nightly can test what the page prices)
+# ----------------------------------------------------------------------
+# stat -> (label, projection key, how its spread is measured, roles)
+STATS = (
+    ("pass_yds", "Passing yards", "pass_yds", "Passing yards", ("QB",)),
+    ("pass_cmp", "Completions", "pass_cmp", "Completions", ("QB",)),
+    ("pass_att", "Pass attempts", "pass_att", "Pass attempts", ("QB",)),
+    ("pass_td", "Passing TDs", "pass_td", "Passing TDs", ("QB",)),
+    ("pass_int", "Interceptions", "pass_int", "Interceptions", ("QB",)),
+    ("rush_yds", "Rushing yards", "rush_yds", "Rushing yards", ("RB", "QB")),
+    ("carries", "Carries", "carries", "Carries", ("RB",)),
+    ("rec_yds", "Receiving yards", "rec_yds", "Receiving yards", ("REC", "RB")),
+    ("rec", "Receptions", "rec", "Receptions", ("REC", "RB")),
+    ("targets", "Targets", "targets", "Targets", ("REC", "RB")),
+    ("scrim_yds", "Rush + rec yards", "scrim_yds", "Rush + rec yards", ("RB", "REC")),
+    ("td", "Touchdowns (rush + rec)", "td_exp", None, ("RB", "REC")),
+)
+
+
+def stat_pmf(stat_market, mean, spreads):
+    """A projection as a distribution, with the game-to-game scatter
+    MEASURED per market (engines/nfl_prop_odds): counts negative
+    binomial, yards normal at a measured cv, discretised to whole yards
+    (a yard line of 64.5 is then P(65 or more), the same number p_over
+    gives). Touchdowns: the anytime Poisson. None if unmeasured."""
+    if mean is None or mean <= 0:
+        return None
+    if stat_market is None:                      # touchdowns
+        return mm.poisson_pmf(mean, 8)
+    sp = (spreads or {}).get(stat_market)
+    if not sp:
+        return None
+    if sp["kind"] == "count":
+        return mm.nb_pmf(mean, sp.get("size"), max(40, int(mean * 4)))
+    sd = (sp.get("cv") or 0) * mean
+    if sd <= 0:
+        # An unmeasured (or zero) scatter is not a certainty — no
+        # distribution, so no chance, rather than a crash or a 100%.
+        return None
+    hi = int(mean + 5 * sd) + 2
+    out = []
+    for k in range(0, hi + 1):
+        lo_c = mm.normal_cdf(k - 0.5, mean, sd) if k > 0 else 0.0
+        out.append(mm.normal_cdf(k + 0.5, mean, sd) - lo_c)
+    tail = 1.0 - sum(out)
+    out[-1] += max(0.0, tail)
+    return out

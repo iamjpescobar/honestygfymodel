@@ -68,13 +68,23 @@ def mlb_candidates(games, pm, batter_counts, pitcher_counts, lineup_for, date_st
                 pj = mp.project_batter(slot, c, p_counts, pm, bf)
                 if not pj:
                     continue
+                from engines import defense_matchup as dm
+                sp_name = g.get("home_pitcher") if side == "away" else g.get("away_pitcher")
                 for key, lab, stat, n in mp.MARKETS:
                     if key in pj["probs"]:
+                        card = dm.mlb_starter_card(pm.get("starter_allowed"), opp_pid, stat) \
+                            if opp_pid else None
                         out.append({"sport": "mlb", "game_id": pk, "game": label, "start": start,
                                     "date": date_str, "player_id": b.get("id"),
                                     "player": b.get("name"), "team": team, "market": key,
                                     "label": lab, "stat": stat, "at_least": n,
-                                    "p": pj["probs"][key]})
+                                    "p": pj["probs"][key],
+                                    "why": f"{pj['exp_pa']:.1f} expected PA from slot {slot} vs "
+                                           f"{sp_name or 'the starter'}, then a league-average pen",
+                                    "matchup": dm.notice(card, dm.MLB_STAT_LABELS.get(stat, stat),
+                                                         "batters", sp_name or "Tonight's starter")
+                                    if card else None,
+                                    "matchup_tier": (card or {}).get("tier")})
             # the starter facing this lineup
             if opp_pid and p_counts and p_counts.get("PA") and bf:
                 pp = mp.project_pitcher(order, p_counts, pm, bf)
@@ -152,6 +162,7 @@ def mlb_lines_for(game_pk, _get_json=_get):
 # NHL (called from nhl_precompute)
 # ----------------------------------------------------------------------
 def nhl_candidates(slate, date_str):
+    from engines import defense_matchup as dm
     from engines import nhl_model as nm
     out = []
     for g in slate or []:
@@ -164,11 +175,18 @@ def nhl_candidates(slate, date_str):
                     p = (r.get("probs") or {}).get(key)
                     if p is None:
                         continue
+                    card = (r.get("dvp") or {}).get(stat)
+                    opp = g.get("home_abbr" if side == "away" else "away_abbr") or ""
                     out.append({"sport": "nhl", "game_id": g["event_id"], "game": label,
                                 "start": g["start_et"], "date": date_str,
                                 "player_id": r.get("pid"), "player": r.get("name"),
                                 "team": g.get(side), "market": key, "label": lab,
-                                "stat": stat, "at_least": n, "p": p})
+                                "stat": stat, "at_least": n, "p": p,
+                                "why": r.get("why"),
+                                "matchup": dm.notice(card, nm.DVP_STAT_LABELS.get(stat, stat),
+                                                     nm.DVP_GROUP_LABELS.get((card or {}).get("group"), "skaters"),
+                                                     opp) if card else None,
+                                "matchup_tier": (card or {}).get("tier")})
     return out
 
 

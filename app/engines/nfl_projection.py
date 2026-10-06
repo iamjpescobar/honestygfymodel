@@ -181,6 +181,18 @@ def project_player(p, team, opp, league, implied_pts):
     rec_mult, out["rec_matchup"] = _ratio(opp.get("ypt_allowed"),
                                           league.get("yards_per_target"))
     catch_mult, _ = _ratio(opp.get("catch_rate_allowed"), league.get("catch_rate"))
+    # WHICH MULTIPLIERS ARE IN THE NUMBER (10-06): nfl_prop_check tests
+    # each family (rushing / receiving / passing) against the same
+    # projection without it, on weeks it had not seen; only a "beats"
+    # stays in. The ratio itself is still returned for the page to show.
+    # Absent flags (an older games.json) keep the old behaviour: all on.
+    use = (league or {}).get("matchup_in_number") or {}
+    pass_mult = rec_mult if use.get("pass", True) else 1.0
+    if not use.get("rush", True):
+        rush_mult = 1.0
+    if not use.get("rec", True):
+        rec_mult = catch_mult = 1.0
+    out["matchup_in_number"] = {k: bool(use.get(k, True)) for k in ("rush", "rec", "pass")}
 
     if out.get("carries") is not None and p.get("ypc") is not None:
         out["ypc_adj"] = round(p["ypc"] * rush_mult, 2)
@@ -204,7 +216,7 @@ def project_player(p, team, opp, league, implied_pts):
         ypa = ((p.get("pass_yds") / p.get("pass_att"))
                if p.get("pass_att") else None)
         if ypa:
-            out["ypa_adj"] = round(ypa * rec_mult, 2)
+            out["ypa_adj"] = round(ypa * pass_mult, 2)
             out["pass_yds"] = round(out["pass_att"] * out["ypa_adj"], 1)
         # Completions, passing TDs, interceptions: his per-attempt rate,
         # pulled toward the league's quarterbacks by the FITTED prior

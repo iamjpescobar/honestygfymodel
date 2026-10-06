@@ -506,7 +506,8 @@ def main(today=None):
                  "away_abbr": f.get("away_abbr")}
                 for f in finals if f.get("home_id") and f.get("away_id")]
         model_block = nhl_model.build(rows, prior, skaters, id_of,
-                                      [g for g in slate if g.get("game_type") != "preseason"])
+                                      [g for g in slate if g.get("game_type") != "preseason"],
+                                      regular_ids=regular_ids)
         if model_block:
             v = model_block["validation"]
             print(f"  [verify] NHL model fit on {model_block['params'].get('fit_on')} season: "
@@ -534,6 +535,23 @@ def main(today=None):
                 print(f"  [verify] {label:9s} n={x.get('n')} model {x.get('model_brier')} vs "
                       f"his-own-rate {x.get('baseline_brier')} -> "
                       f"{'BEATS' if x.get('beats_baseline') else 'does not beat'} baseline")
+            _toi = model_block.get("toi") or {}
+            for _fam in nhl_model.TOI_FAMILIES:
+                _x = _toi.get(_fam) or {}
+                print(f"  [verify] NHL ice time ({_fam}): window {_x.get('window')} fitted alpha "
+                      f"{_x.get('fitted_alpha')} -> {'IN THE NUMBER' if _x.get('adopted') else 'context only'} "
+                      f"({(_x.get('verdict') or {}).get('verdict')}, z={(_x.get('verdict') or {}).get('z')}, "
+                      f"n={_x.get('n')})")
+            _dv = model_block.get("dvp_validation") or {}
+            for _fam in ("sog", "pts"):
+                _x = _dv.get(_fam) or {}
+                print(f"  [verify] NHL defense-vs-position ({_fam}): "
+                      f"{(_x.get('verdict') or {}).get('verdict')} z={(_x.get('verdict') or {}).get('z')} "
+                      f"n={_x.get('n')} -> {'IN THE NUMBER' if _x.get('in_number') else 'context only'}")
+            _t = ((model_block.get("dvp") or {}).get("stats") or {}).get("sog") or {}
+            print(f"  [verify] NHL DvP table: {(model_block.get('dvp') or {}).get('of')} defenses; "
+                  f"SOG to C league {(_t.get('C') or {}).get('league')} weight "
+                  f"{(_t.get('C') or {}).get('weight')} reliability {(_t.get('C') or {}).get('reliability')}")
             print(f"  [verify] slate games with a projection: "
                   f"{sum(1 for g in slate if g.get('model'))} of {len(slate)}; "
                   f"with a posted moneyline: {sum(1 for g in slate if (g.get('odds') or {}).get('home_ml'))}, "

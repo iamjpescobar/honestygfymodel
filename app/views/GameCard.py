@@ -1949,11 +1949,13 @@ with content_col:
                      f" \u00b7 batter & pitcher props, any line",
                      expanded=False):
         from engines import mlb_props as _mlb_props
-        _p_rows, _p_verdicts, _p_note = _model_view.mlb_lineup_props(batters, pitcher_id)
+        _p_rows, _p_verdicts, _p_note = _model_view.mlb_lineup_props(batters, pitcher_id,
+                                                                     selected_pitcher_name)
         _model_view.render_prop_board(_p_rows, _mlb_props.STATS, _mlb_props.MARKETS, _p_verdicts,
                                       key="gc_props", staking=_model_view.current_staking(),
                                       info_cols=("#", "Batter", "PA", "Exp PA"),
-                                      favor_note=_p_note, unit_note=_mlb_props.RBI_NOTE)
+                                      favor_note=_p_note, unit_note=_mlb_props.RBI_NOTE,
+                                      calibration=_model_view.mlb_calibration())
         st.caption(_model_view.MLB_PROP_FOOTNOTE)
         st.markdown(f"**{selected_pitcher_name}** \u2014 pitching to {team_abbr(opposing_team)}")
         _sp_row, _sp_verd, _sp_note = _model_view.mlb_starter_props(batters, pitcher_id,
@@ -1964,7 +1966,8 @@ with content_col:
                                           key="gc_sp_props", staking=_model_view.current_staking(),
                                           info_cols=("Pitcher", "Starts", "Exp BF", "Exp K"),
                                           favor_note=_sp_note,
-                                          footnote=_model_view.MLB_PITCHER_FOOTNOTE)
+                                          footnote=_model_view.MLB_PITCHER_FOOTNOTE,
+                                          calibration=_model_view.mlb_calibration(pitcher=True))
         else:
             st.caption(_sp_note)
 

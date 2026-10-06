@@ -154,6 +154,128 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — defense vs position on every sport, ice time in the NHL number, the NFL props graded, every chance DELIVERED, colour. 2026-10-06
+
+**Suite 128 (+ test_defense_matchup), FAILING: none.** Nine negative
+controls red by exit code (listed in the new test's docstring + the
+calibration-ends control in test_top_plays). NHL Model, NFL Model, MLB
+Model and Top Plays opened in a real browser from the 10-06 nightly
+archive with the new NHL model block: no exceptions.
+
+### WHY
+
+Izzy: the boards "work" but give him the same obvious bet every night;
+he wants to know WHY a play is suggested and whether the defense is
+actually allowing it (this season AND last), a notice when a player
+faces a soft/tough defense and the defense's rank vs his position, on
+EVERY sport. No money for an odds feed — he checks his own book, so the
+"your price" checker must be as accurate as it can be (no "STRONG" on a
+-200 that is really a -350). And colour: plain black tables are hard to
+read.
+
+### MEASURED BEFORE BUILT (rule 1) — last season's NHL, walk-forward
+
+| change | result on unseen games | in the number? |
+|---|---|---|
+| ice time (recent TOI / TOI the rate is built on)^alpha, shots | z 7.7, alpha 0.48, window 5 | YES |
+| same, goals/assists/points | z 6.8, alpha 0.74, window 5 | YES |
+| defense-vs-POSITION share on top of team shots/goals allowed | sog thin z 0.6, pts fails | NO — context |
+| calibration past the curve's ends: carry the gap vs hold flat | better on 6/8 markets (z 2.1-8.4) | YES (all sports) |
+
+The DvP result is the honest headline: a team's TOTAL shots allowed is
+a stable trait (split-half 0.92) and the shots model already has it;
+WHICH position gets them adds nothing measurable. It is still shown
+(rank, tier, notice) because Izzy asked whether the defense allows it —
+and the page says it is context.
+
+### ENGINES
+
+- **engines/defense_matchup.py (NEW, pure, all sports).** Rows (season,
+  defense, game, group, stats) -> per defense x group x stat: this
+  season / last / blended per game, ranks (1 = allows the MOST), quartile
+  tier (soft/neutral/tough — a presentation cut, said so), split-half
+  reliability ("is this matchup real?"), cards, one-sentence notices,
+  badges ("SOFT · 3rd-most", "TOUGH · 2nd-fewest"). Season weight: the
+  direct last->this fit is unidentified on two games a team (measured
+  10-06: C 0.0, W 1.0 the same night), so a REFERENCE weight fitted on
+  last season's first half -> second half is used until this season's
+  likelihood prefers the direct fit by an LR test (1.92, scaled by the
+  measured quasi-Poisson dispersion — yards are not counts). No
+  games-played cutoff anywhere. MLB: mlb_starter_table / cards (the
+  "defense" is the starter, per PA, at the props' fitted pitcher weight)
+  and mlb_lineup_card (tonight's nine vs this season's team lineups).
+- **nhl_model.** fit_toi (fit on the 60 days before the props window,
+  tested on it; alpha 0 unless "beats"); validate_props now uses the
+  adopted ice time so badges/calibration test the page's model;
+  validate_dvp; DvP table; rows carry rate, ice, dvp cards, why.
+  BUG FIXED: pool_skaters took EXHIBITION lines into every rate (the
+  live dict holds preseason games parsed as a parser check) — now
+  regular_ids only. ~2 min added to the nightly (fit_toi).
+- **nfl_prop_check.py (NEW).** DvP from box scores with ROSTER
+  positions (all 32 rosters read; box scores carry none; unknown -> ALL
+  only). Last season's player-game lines parsed once ->
+  data/nfl/prior_dvp.json (committed by the NFL step; written beside
+  PRIOR_PLAYERS_PATH so tests stay sandboxed). THE NFL PROPS ARE NO
+  LONGER UNTESTED: week-by-week walk-forward, line = floor(his average to
+  date)+0.5, vs his own hit rate -> verdict + calibration per stat. Each
+  defense multiplier family (rush/rec/pass) tested on vs off; only
+  "beats" stays in (league["matchup_in_number"], read by
+  nfl_projection.project_player; absent = all on, old files unchanged).
+- **mlb_prop_precompute.** starter_allowed + team_batting in
+  prop_model.json (batting team of the away side read from its batters'
+  home games — never guessed). home_team rides into plate_appearances.
+- **nfl_prop_odds** now owns STATS + stat_pmf (moved from model_view so
+  the nightly prices exactly what the page prices); a zero/unmeasured
+  yards cv returns no distribution instead of crashing.
+- **top_plays_board.calibrate**: gap carried past the ends (the old flat
+  top made Matthews 89% and Eichel 84.5% the same 84.4%).
+
+### PAGES
+
+- **Every prop board (model_view.render_prop_board, NFL board, Top
+  Plays):** cells coloured by an ABSOLUTE chance band (80+ cyan, 65-79
+  gold, 50-64 teal, 35-49 violet, under 35 faint — legend printed under
+  each board, colour only), "Defense vs pos" column coloured by tier.
+  Cells show the DELIVERED chance where a curve exists.
+- **The checker** judges your price on the delivered chance
+  (delivered_over: exact line's curve, else nearest tested line, else
+  NFL "@stat" curve, else raw — and says which), answers in a coloured
+  panel (STRONG / VALUE / THIN / NO VALUE), and under it prints the
+  matchup notice and the WHY line for that player.
+- NHL table adds TOI recent / TOI norm (window from the fit, rule 9).
+- Top Plays logs `why`, `matchup`, `matchup_tier` with each play;
+  Status green/red; the record's Delivered green at/above promised.
+
+### FIRST RUNS — read these lines
+
+    [verify] NHL ice time (sog): window 5 fitted alpha ~0.48 -> IN THE NUMBER (beats, z~7.7)
+    [verify] NHL defense-vs-position (sog): thin ... -> context only
+    [verify] NHL DvP table: 32 defenses; SOG to C league ~9.6 weight .. reliability ~0.63
+    [verify] NFL prior defense lines: 272/272 box scores parsed      (first night only)
+    [verify] NFL defense-vs-position: 32 defenses, N rostered positions, N 2025 lines
+    [verify] NFL defense multiplier (rush|rec|pass): .. -> IN THE NUMBER | context only
+    [verify] NFL prop rush_yds n=.. model .. vs his-own-rate .. -> beats|thin|fails
+    [verify] matchup tables: N starters ranked; 30 team batting lines   (MLB)
+
+### OPEN
+
+- NFL walk-forward uses this season's weeks only (2025 has no per-week
+  logs on disk); its sample grows weekly. Do not retune on a bad week
+  (rule 10).
+- MLB position split (platoon by batter hand) is still not in the
+  number; the starter card is vs all batters.
+
+### FILES, 2026-10-06
+
+    app/engines/defense_matchup.py, nfl_prop_check.py, tests/test_defense_matchup.py   NEW
+    app/engines/{nhl_model,model_view,nfl_projection,nfl_prop_odds,top_plays_board}.py
+    app/views/{NHL_Model,NFL_Model,MLB_Model,GameCard,Top_Plays}.py
+    nhl_precompute.py, nfl_precompute.py, mlb_prop_precompute.py, top_plays_log.py
+    .github/workflows/nightly-data.yml (commit data/nfl/prior_dvp.json)
+    tests/{test_top_plays,test_nfl_pipeline}.py
+
+---
+
 ## PICK UP HERE — last season in every model, NFL props on the Model page, Top Plays with a record. 2026-10-04 (2)
 
 **Suite 127, FAILING: none.** Twelve negative controls red by exit code;
@@ -952,53 +1074,3 @@ if it still does not separate, drop it.
     tests/test_nfl_projection.py    section 8 — the new estimator, 7 controls
 
 ---
-
-## PICK UP HERE — a test of mine took the whole nightly down. 2026-09-27 (2)
-
-**Suite 114, FAILING: none.** Four negative controls red by exit code,
-**two of which came back green first** (below).
-
-### THE OUTAGE
-
-The 09-27 nightly ran, built the projections, wrote
-`data/nfl/projections/2026-09-27.json` and committed it — correctly.
-The NEXT nightly then failed at the "Run tests" gate and refused to
-fetch anything, for every league, MLB included.
-
-The failing check was mine, from the batch hours earlier:
-
-    check("running the pipeline left no fixture projections in the repo",
-          not _repo_log.exists() or not any(_repo_log.glob("*.json")))
-
-It asserts that directory is EMPTY. But the whole point of that
-directory is to fill up: main() writes a file there every run and the
-workflow commits it. So the first successful night guaranteed every
-later night would fail. A self-blocking gate, shipped green, because
-locally the directory was empty and stayed empty.
-
-**The property I meant** is that running the pipeline UNDER TEST adds
-nothing to the real record — not that the record is empty. Now
-snapshotted before and compared after. Guard the thing you mean.
-
-### AND THE FIRST FIX COULDN'T FAIL EITHER
-
-Comparing the SET OF FILENAMES before and after passed both negative
-controls on any day the log already held a file: a leak writes to
-TODAY's filename, so the name set is unchanged while the real record has
-been silently overwritten with fixture data. The comparison is now over
-sha256 of the contents, and the controls are run in both repo states —
-clean, and with a committed file present.
-
-### WHAT THE NIGHTLY PROVED BEFORE IT BROKE
-
-The league constants came out of 66 real team-games at
-**td_per_point 0.1096, ypc 4.20, yards/target 7.61, catch rate 0.684** —
-every one where real football sits. The measurement path is sound; only
-the test was wrong.
-
-### FILES, 2026-09-27 (2)
-
-    tests/test_nfl_pipeline.py   emptiness check -> before/after content hash
-
----
-

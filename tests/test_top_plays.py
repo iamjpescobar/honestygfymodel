@@ -42,7 +42,13 @@ check("an overconfident model is shown at what it delivered (84% said -> 74% don
       abs(tpb.calibrate(0.84, over) - 0.74) < 1e-9)
 check("between bins: linear between what neighbouring calls delivered",
       abs(tpb.calibrate(0.795, over) - 0.70) < 1e-9)
-check("past the last bin: flat, never extrapolated upward", tpb.calibrate(0.97, over) == 0.74)
+check("past the last bin: the gap measured there is carried forward (0.97 -> 0.87), "
+      "not held flat — a flat top made four different calls one tie",
+      abs(tpb.calibrate(0.97, over) - 0.87) < 1e-9)
+check("past the ends a higher call still never shows lower",
+      tpb.calibrate(0.90, over) < tpb.calibrate(0.97, over) and tpb.calibrate(0.84, over) <= tpb.calibrate(0.90, over))
+check("below the first bin: that end's gap, clipped inside (0, 1)",
+      abs(tpb.calibrate(0.55, over) - 0.50) < 1e-9 and 0 < tpb.calibrate(0.01, over) < 1)
 bumpy = [{"band": "60-69%", "n": 100, "predicted": 0.65, "actual": 0.70},
          {"band": "70-79%", "n": 100, "predicted": 0.75, "actual": 0.62}]
 check("a non-monotone record is pooled (PAV): a higher call never shows lower",

@@ -35,6 +35,28 @@ are Poisson (points = goals + assists, treated as independent). Each
 market is scored walk-forward against the skater's OWN hit rate, exactly
 like MLB; a market that does not beat it is starred.
 
+ICE TIME (10-06)
+---------------
+A skater's rate is per GAME, but a game is minutes. When his recent ice
+time differs from what his rate was built on, the rate is scaled by
+
+    (his last W games' TOI / his TOI over the games the rate uses) ^ alpha
+
+alpha and W are FITTED per family (shots; goals/assists/points) on the
+window just before the props test, then the family is TESTED on the
+props window against the same model without it. A family whose pooled
+verdict is not "beats" gets alpha 0 — the factor is shown on the page
+as context and kept out of the number (rule 12). fit_toi.
+
+DEFENSE VS POSITION (10-06)
+---------------------------
+What each team allows to centres, wingers and defencemen (shots, points,
+goals, assists), this season and last, blended at a fitted weight and
+ranked — engines/defense_matchup. validate_dvp tests whether the
+POSITION split moves the chance once the team's total shots and goals
+allowed are already in it (the shots/goals model above). Unless it beats
+on games it had not seen, it is context on the page, not the number.
+
 NOT IN THE NUMBER, stated on the page: tonight's line deployment and
 power-play unit, injuries announced after the nightly, the goalie.
 
@@ -42,6 +64,7 @@ Pure — no streamlit, no requests.
 """
 from collections import defaultdict
 
+from engines import defense_matchup as dm
 from engines import game_model as gm
 from engines import model_math as mm
 
@@ -76,10 +99,27 @@ SAVE_STATS = (("sv", "Saves", (22.5, 24.5, 26.5, 28.5)),)
 # Not a model parameter: how much of the end of a season the props
 # report covers. Printed beside the result.
 VALIDATION_DAYS = 60
+# Ice-time windows SEARCHED by fit_toi (the fit picks one; these are the
+# candidates, not a choice). Stat families the factor is fitted per.
+TOI_WINDOWS = (5, 10, 20)
+TOI_FAMILIES = {"sog": ("sog",), "pts": ("g", "a", "pts")}
+# Defense-vs-position groups and the stats tabulated for them.
+DVP_GROUPS = ("C", "W", "D")
+DVP_STATS = ("sog", "pts", "g", "a")
+DVP_GROUP_LABELS = {"C": "centres", "W": "wingers", "D": "defencemen", "ALL": "skaters"}
+DVP_STAT_LABELS = {"sog": "shots on goal", "pts": "points", "g": "goals", "a": "assists"}
 
 
 def group(pos):
     return "D" if str(pos or "").upper().startswith("D") else "F"
+
+
+def dvp_group(pos):
+    """C / W / D — the defense-vs-position split (finer than group())."""
+    p = str(pos or "").upper()
+    if p.startswith("D"):
+        return "D"
+    return "C" if p.startswith("C") else "W"
 
 
 def goal_rows(finals):
@@ -159,12 +199,14 @@ def rates(player, priors, before=None):
     return out
 
 
-def probs(r, shot_ratio=1.0, goal_ratio=1.0, sog_disp=None):
-    """{market: p} for one skater tonight."""
+def probs(r, shot_ratio=1.0, goal_ratio=1.0, sog_disp=None, toi_sog=1.0, toi_pts=1.0):
+    """{market: p} for one skater tonight. toi_sog / toi_pts are the
+    fitted ice-time scales (1.0 when the factor did not earn its way in)."""
     if not r:
         return None
-    sog_mu = r["sog"] * (shot_ratio or 1.0)
-    g_mu, a_mu = r["g"] * (goal_ratio or 1.0), r["a"] * (goal_ratio or 1.0)
+    sog_mu = r["sog"] * (shot_ratio or 1.0) * (toi_sog or 1.0)
+    gs = (goal_ratio or 1.0) * (toi_pts or 1.0)
+    g_mu, a_mu = r["g"] * gs, r["a"] * gs
     pm = {"sog": mm.nb_pmf(sog_mu, sog_disp, 20), "g": mm.poisson_pmf(g_mu, 10),
           "a": mm.poisson_pmf(a_mu, 10), "pts": mm.poisson_pmf(g_mu + a_mu, 10)}
     out = {k: round(mm.prob_at_least(pm[stat], n), 4) for k, _l, stat, n in MARKETS}
@@ -297,6 +339,268 @@ def validate_saves(prior_finals, shot_k, days=VALIDATION_DAYS):
 
 
 # ----------------------------------------------------------------------
+# Ice time (10-06)
+# ----------------------------------------------------------------------
+def toi_ratio(games_before, window):
+    """(recent TOI, baseline TOI, ratio) from game tuples in date order —
+    baseline over every game the rate is built on, recent over the last
+    `window`. None when either is unmeasured (rule 6: a missing TOI is
+    not a 0-minute game)."""
+    prev = [x[5] for x in games_before if x[5]]
+    if not prev:
+        return None
+    base = sum(prev) / len(prev)
+    rec = prev[-window:]
+    recent = sum(rec) / len(rec)
+    if base <= 0:
+        return None
+    return recent, base, recent / base
+
+
+def toi_scales(games_before, toi):
+    """{"sog": scale, "pts": scale, "recent", "base", "window"} for the
+    adopted ice-time fit (alpha 0 -> 1.0)."""
+    out = {"sog": 1.0, "pts": 1.0}
+    if not toi:
+        return out
+    for fam in TOI_FAMILIES:
+        f = toi.get(fam) or {}
+        if not f.get("window"):
+            continue
+        tr = toi_ratio(games_before, f["window"])
+        if tr:
+            out[fam] = tr[2] ** f["alpha"]
+    w = max([(toi.get(f) or {}).get("window") or 0 for f in TOI_FAMILIES] or [0]) or TOI_WINDOWS[1]
+    tr = toi_ratio(games_before, w)
+    if tr:
+        out.update({"recent": round(tr[0], 1), "base": round(tr[1], 1), "window": w})
+    return out
+
+
+def _wf_rows(skaters, goal_finals, shot_finals, lo, hi, goal_k, shot_k, priors):
+    """Every skater-game in [lo, hi) as (rate, shot_ratio, goal_ratio,
+    {window: ice ratio}, actual) — the inputs both the ice-time fit and
+    its test reuse, so the expensive part runs once per window."""
+    g_env = _env_by_opp(gm.walk_forward(gm.clean_finals(goal_finals), goal_k or 30.0))
+    s_env = _env_by_opp(gm.walk_forward(gm.clean_finals(shot_finals), shot_k or 30.0,
+                                        score_only=True)) if shot_finals else {}
+    rows = []
+    for p in skaters.values():
+        games = sorted(p["games"], key=lambda x: x[0])
+        for i, (d, opp, s, g, a, _toi) in enumerate(games):
+            if d < lo or d >= hi or i == 0:
+                continue
+            r = rates(p, priors, before=d)
+            if not r:
+                continue
+            ge, se = g_env.get((d, opp)), s_env.get((d, opp))
+            gr = ge[0] / ge[1] if ge and ge[1] else 1.0
+            sr = se[0] / se[1] if se and se[1] else 1.0
+            ratios = {}
+            for w in TOI_WINDOWS:
+                tr = toi_ratio(games[:i], w)
+                ratios[w] = tr[2] if tr else 1.0
+            rows.append((r, sr, gr, ratios,
+                         {"sog": s, "g": g or 0, "a": a or 0, "pts": (g or 0) + (a or 0)},
+                         (d, opp, dvp_group(p.get("pos")))))
+    return rows
+
+
+def _family_losses(rows, fam, window, alpha, disp):
+    """[(p, y)] over the family's markets at one (window, alpha)."""
+    stats = TOI_FAMILIES[fam]
+    out = []
+    for r, sr, gr, ratios, actual, _key in rows:
+        sc = ratios.get(window, 1.0) ** alpha if window else 1.0
+        pr = probs(r, sr, gr, disp, toi_sog=sc if fam == "sog" else 1.0,
+                   toi_pts=sc if fam == "pts" else 1.0)
+        for k, _l, stat, n in MARKETS:
+            if stat not in stats or actual[stat] is None:
+                continue
+            out.append((pr[k], 1 if actual[stat] >= n else 0))
+    return out
+
+
+def fit_toi(skaters, goal_finals, shot_finals, days=VALIDATION_DAYS, goal_k=None, shot_k=None):
+    """Fit (window, alpha) per family on the `days` before the props
+    window, test on the props window against alpha 0. Returns
+    {fam: {"window", "alpha", "fitted_alpha", "train_n", "verdict", ...}};
+    alpha is the fitted one only when the test verdict is "beats"."""
+    all_dates = sorted({x[0] for p in skaters.values() for x in p["games"]})
+    if len(all_dates) < 2 * days + 30:
+        return {"note": "season too short to fit ice time"}
+    cut = all_dates[-days]
+    lo = all_dates[-2 * days]
+    priors = fit_priors(skaters)
+    if not priors:
+        return {"note": "prior fit failed"}
+    disp = priors.get("sog_dispersion")
+    train = _wf_rows(skaters, goal_finals, shot_finals, lo, cut, goal_k, shot_k, priors)
+    test = _wf_rows(skaters, goal_finals, shot_finals, cut, "9999", goal_k, shot_k, priors)
+    out = {"train": [lo, cut], "test": [cut, all_dates[-1]]}
+    for fam in TOI_FAMILIES:
+        best = None
+        for w in TOI_WINDOWS:
+            def ll(alpha, w=w):
+                pts = _family_losses(train, fam, w, alpha, disp)
+                return -sum(mm.log_loss(p, y) for p, y in pts) / max(len(pts), 1)
+            a = mm.golden_max(ll, 0.0, 2.0, iters=24)
+            v = ll(a)
+            if best is None or v > best[2]:
+                best = (w, a, v)
+        w, a, _v = best
+        with_ = _family_losses(test, fam, w, a, disp)
+        without = _family_losses(test, fam, w, 0.0, disp)
+        verdict = mm.paired_verdict([mm.log_loss(p, y) for p, y in with_],
+                                    [mm.log_loss(p, y) for p, y in without])
+        sb, sw = mm.score_predictions(without), mm.score_predictions(with_)
+        adopted = verdict.get("verdict") == "beats"
+        out[fam] = {"window": w, "fitted_alpha": round(a, 3),
+                    "alpha": round(a, 3) if adopted else 0.0,
+                    "adopted": adopted, "verdict": verdict,
+                    "n": sw["n"], "brier_with": sw["brier"], "brier_without": sb["brier"],
+                    "log_loss_with": sw["log_loss"], "log_loss_without": sb["log_loss"]}
+    return out
+
+
+# ----------------------------------------------------------------------
+# Defense vs position (10-06)
+# ----------------------------------------------------------------------
+def dvp_lines(skaters, season, id_of=None, regular_ids=None):
+    """engines/defense_matchup rows from skater game lines.
+
+    skaters: last season's {pid: {"pos", "games": [(date, opp_id, sog, g,
+    a, toi)]}} (season="prior"), or this season's live dict {pid: {"pos",
+    "games": {eid: {date, opp, sog, g, a}}}} (season="cur"; opp is a
+    display name mapped through id_of). The game key is the date: a team
+    plays once a day."""
+    out = []
+    for p in (skaters or {}).values():
+        grp = dvp_group(p.get("pos"))
+        if str(p.get("pos") or "").upper() == "G":
+            continue
+        games = p.get("games") or []
+        if isinstance(games, dict):
+            items = [(eid, ln) for eid, ln in games.items()
+                     if regular_ids is None or str(eid) in regular_ids]
+            rows = [(ln.get("date"), (id_of or {}).get(ln.get("opp")), ln.get("sog"),
+                     ln.get("g"), ln.get("a")) for _eid, ln in items]
+        else:
+            rows = [(x[0], x[1], x[2], x[3], x[4]) for x in games]
+        for d, opp, s, g, a in rows:
+            if not d or opp in (None, ""):
+                continue
+            stats = {"sog": s, "g": g, "a": a,
+                     "pts": (g or 0) + (a or 0) if (g is not None or a is not None) else None}
+            out.append({"season": season, "defense": str(opp), "game": d,
+                        "group": grp, "stats": stats})
+    return out
+
+
+def validate_dvp(skaters, goal_finals, shot_finals, days=VALIDATION_DAYS,
+                 goal_k=None, shot_k=None):
+    """Does the POSITION split move the chance once the team's total
+    shots/goals allowed are in? Walk-forward on last season's props
+    window: the model as-is vs the model x the defense's shrunk SHARE of
+    what it allows going to his position group (beta prior fitted over
+    defenses, recomputed from games before each date). Pooled per family."""
+    all_dates = sorted({x[0] for p in skaters.values() for x in p["games"]})
+    if len(all_dates) < days + 30:
+        return {"note": "season too short to validate"}
+    cut = all_dates[-days]
+    priors = fit_priors(skaters)
+    if not priors:
+        return {"note": "prior fit failed"}
+    disp = priors.get("sog_dispersion")
+    per_game = {}
+    for p in skaters.values():
+        grp = dvp_group(p.get("pos"))
+        for d, opp, s, g, a, _t in p["games"]:
+            if opp is None:
+                continue
+            c = per_game.setdefault((d, opp), {}).setdefault(grp, {"sog": 0.0, "pts": 0.0})
+            c["sog"] += s or 0
+            c["pts"] += (g or 0) + (a or 0)
+    dates = sorted({k[0] for k in per_game})
+    # Cumulative shares by date, built incrementally (one pass).
+    cum = {}
+    fac_by_date = {}
+    ordered = sorted(per_game.items(), key=lambda kv: kv[0][0])
+    j = 0
+    for d in dates:
+        if d >= cut:
+            fac = {}
+            for st in ("sog", "pts"):
+                for grp in DVP_GROUPS:
+                    obs = [(int(round(v[grp][st][0])), int(round(v[grp][st][1])))
+                           for v in cum.values() if v.get(grp) and v[grp][st][1]]
+                    mean, strength = mm.fit_beta_prior(obs)
+                    if not mean:
+                        continue
+                    for t, v in cum.items():
+                        x, n = (v.get(grp) or {}).get(st, (0, 0))
+                        fac[(t, grp, st)] = ((x + mean * strength) / (n + strength)) / mean
+            fac_by_date[d] = fac
+        while j < len(ordered) and ordered[j][0][0] == d:
+            (_dd, opp), byg = ordered[j]
+            tot = {st: sum(v[st] for v in byg.values()) for st in ("sog", "pts")}
+            for grp, v in byg.items():
+                slot = cum.setdefault(opp, {}).setdefault(
+                    grp, {"sog": [0.0, 0.0], "pts": [0.0, 0.0]})
+                for st in ("sog", "pts"):
+                    slot[st][0] += v[st]
+                    slot[st][1] += tot[st]
+            j += 1
+    rows = _wf_rows(skaters, goal_finals, shot_finals, cut, "9999", goal_k, shot_k, priors)
+    out = {"from": cut, "to": all_dates[-1], "level": "position share of team allowed"}
+    for fam, st in (("sog", "sog"), ("pts", "pts")):
+        base, alt = [], []
+        for r, sr, gr, _rat, actual, (d, opp, grp) in rows:
+            f = fac_by_date.get(d, {}).get((opp, grp, st), 1.0)
+            b = probs(r, sr, gr, disp)
+            x = probs(r, sr * (f if fam == "sog" else 1.0), gr * (f if fam == "pts" else 1.0), disp)
+            for k, _l, stat, n in MARKETS:
+                if stat not in TOI_FAMILIES[fam] or actual[stat] is None:
+                    continue
+                y = 1 if actual[stat] >= n else 0
+                base.append((b[k], y))
+                alt.append((x[k], y))
+        verdict = mm.paired_verdict([mm.log_loss(p, y) for p, y in alt],
+                                    [mm.log_loss(p, y) for p, y in base])
+        out[fam] = {"verdict": verdict, "n": len(base),
+                    "brier_with": mm.score_predictions(alt)["brier"],
+                    "brier_without": mm.score_predictions(base)["brier"],
+                    "in_number": verdict.get("verdict") == "beats"}
+    return out
+
+
+def why_line(name, pos, r, env, toi, opp_abbr, dvp_card_sog, exp_sog, exp_pts):
+    """The skater's numbers restated as one sentence, in the order the
+    model used them. Ice time and the position split are each marked as
+    IN the number or CONTEXT, from their own tests."""
+    bits = []
+    if r:
+        bits.append(f"{r['sog']:.2f} shots and {r['g'] + r['a']:.2f} points a game over "
+                    f"{r['gp']} games (this season + last, pulled toward the "
+                    f"{'defence' if group(pos) == 'D' else 'forward'} average)")
+    if toi and toi.get("recent") is not None:
+        sc = toi.get("sog") or 1.0
+        state = (f"→ shots x{sc:.2f}" if abs(sc - 1.0) > 1e-9
+                 else "→ context only (did not beat the model untested)")
+        bits.append(f"ice time {toi['recent']:.1f} min over his last {toi['window']} vs "
+                    f"{toi['base']:.1f} on his rate {state}")
+    if env:
+        bits.append(f"{opp_abbr} matchup sets tonight's shot volume x{env.get('shot_ratio', 1):.2f}"
+                    f" and scoring x{env.get('goal_ratio', 1):.2f}")
+    if dvp_card_sog and dvp_card_sog.get("rank"):
+        bits.append(f"{opp_abbr} allows the {dm.rank_text(dvp_card_sog)} shots to "
+                    f"{DVP_GROUP_LABELS[dvp_card_sog['group']]} "
+                    f"({dvp_card_sog['per_game']:.1f} a game vs {dvp_card_sog['league']:.1f})")
+    bits.append(f"→ {exp_sog:.2f} expected shots, {exp_pts:.2f} expected points")
+    return " · ".join(bits)
+
+
+# ----------------------------------------------------------------------
 # Validation
 # ----------------------------------------------------------------------
 def _env_by_opp(wf):
@@ -311,8 +615,10 @@ def _env_by_opp(wf):
 
 
 def validate_props(skaters, goal_finals, shot_finals, days=VALIDATION_DAYS,
-                   goal_k=None, shot_k=None):
-    """Walk-forward over the last `days` of a season's skater lines."""
+                   goal_k=None, shot_k=None, toi=None):
+    """Walk-forward over the last `days` of a season's skater lines —
+    with the ADOPTED ice-time factor (`toi`, from fit_toi), so the
+    verdicts and calibration test the model the page uses."""
     all_dates = sorted({x[0] for p in skaters.values() for x in p["games"]})
     if len(all_dates) < days + 30:
         return {"note": "season too short to validate"}
@@ -334,7 +640,9 @@ def validate_props(skaters, goal_finals, shot_finals, days=VALIDATION_DAYS,
             ge, se = g_env.get((d, opp)), s_env.get((d, opp))
             gr = ge[0] / ge[1] if ge and ge[1] else 1.0
             sr = se[0] / se[1] if se and se[1] else 1.0
-            pr = probs(r, sr, gr, priors.get("sog_dispersion"))
+            sc = toi_scales(games[:i], toi)
+            pr = probs(r, sr, gr, priors.get("sog_dispersion"),
+                       toi_sog=sc["sog"], toi_pts=sc["pts"])
             actual = {"sog": s, "g": g or 0, "a": a or 0, "pts": (g or 0) + (a or 0)}
             prior_games = games[:i]
             for k, _l, stat, n in MARKETS:
@@ -363,12 +671,16 @@ def validate_props(skaters, goal_finals, shot_finals, days=VALIDATION_DAYS,
 # ----------------------------------------------------------------------
 # Build — called by nhl_precompute with everything it already holds
 # ----------------------------------------------------------------------
-def pool_skaters(prior_skaters, current_skaters, current_id_of):
-    """Prior-season lines + this season's, per ESPN athlete id.
+def pool_skaters(prior_skaters, current_skaters, current_id_of, regular_ids=None):
+    """Prior-season lines + this season's, per ESPN athlete id, in date
+    order.
 
     current_skaters is nhl_precompute's live dict ({pid: {"games":
     {eid: line}}}); current_id_of maps a team display name to its id so
     the opponent on this season's lines is keyed like last season's.
+    regular_ids: when given, only those events count. The live dict ALSO
+    holds the exhibition games parsed as a parser check — preseason
+    lineups and minutes — and until 10-06 they leaked into every rate.
     """
     pool = {}
     for pid, p in (prior_skaters or {}).items():
@@ -379,9 +691,13 @@ def pool_skaters(prior_skaters, current_skaters, current_id_of):
                                          "team": None, "games": []})
         dst["name"] = rec.get("name") or dst["name"]
         dst["pos"] = rec.get("pos") or dst["pos"]
-        for line in (rec.get("games") or {}).values():
+        for eid, line in (rec.get("games") or {}).items():
+            if regular_ids is not None and str(eid) not in regular_ids:
+                continue
             dst["games"].append((line.get("date"), current_id_of.get(line.get("opp")),
                                  line.get("sog"), line.get("g"), line.get("a"), line.get("toi")))
+    for p in pool.values():
+        p["games"].sort(key=lambda x: x[0] or "")
     return pool
 
 
@@ -430,15 +746,40 @@ def build(current_finals, prior, current_skaters=None, current_id_of=None, slate
         return None
     shots = gm.fit_volume(shot_rows(current_finals), shot_rows(pf) if pf else None)
 
-    pool = pool_skaters(prior.get("skaters"), current_skaters, current_id_of or {})
+    rids = {str(x) for x in regular_ids} if regular_ids is not None else None
+    pool = pool_skaters(prior.get("skaters"), current_skaters, current_id_of or {}, rids)
     priors = fit_priors(pool) if pool else None
+    _gk = goal["params"]["shrink_k"]
+    _sk = (shots or {}).get("params", {}).get("shrink_k")
+    _psk = {k: v for k, v in ((prior.get("skaters") or {}).items())}
+    # ICE TIME: fitted on the window before the props test, tested on it;
+    # only an adopted family moves the number. Own try — costs the factor,
+    # never the model.
+    try:
+        toi = fit_toi(_psk, goal_rows(pf), shot_rows(pf), goal_k=_gk, shot_k=_sk) if pf else {
+            "note": "no prior season file"}
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::NHL ice-time fit failed: {type(exc).__name__}: {exc}")
+        toi = {"note": f"fit failed: {type(exc).__name__}"}
     # The props test runs on the season the parameters can be judged on:
     # last season, end to end (the current one is days old).
-    pval = validate_props(
-        {k: v for k, v in ((prior.get("skaters") or {}).items())},
-        goal_rows(pf), shot_rows(pf),
-        goal_k=goal["params"]["shrink_k"],
-        shot_k=(shots or {}).get("params", {}).get("shrink_k")) if pf else {"note": "no prior season file"}
+    pval = validate_props(_psk, goal_rows(pf), shot_rows(pf), goal_k=_gk, shot_k=_sk,
+                          toi=toi) if pf else {"note": "no prior season file"}
+    # DEFENSE VS POSITION: the table (this season + last) and its test.
+    try:
+        dvp = dm.build_table(
+            dvp_lines(prior.get("skaters"), dm.PRIOR)
+            + dvp_lines(current_skaters, dm.CUR, current_id_of or {}, rids),
+            DVP_STATS, DVP_GROUPS)
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::NHL defense-vs-position table failed: {type(exc).__name__}: {exc}")
+        dvp = None
+    try:
+        dvp_val = validate_dvp(_psk, goal_rows(pf), shot_rows(pf), goal_k=_gk,
+                               shot_k=_sk) if pf else {"note": "no prior season file"}
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::NHL defense-vs-position test failed: {type(exc).__name__}: {exc}")
+        dvp_val = {"note": f"test failed: {type(exc).__name__}"}
 
     if prior_lines is None:
         from engines import market_blend as mb
@@ -486,13 +827,29 @@ def build(current_finals, prior, current_skaters=None, current_id_of=None, slate
                 if not p or str(sk.get("pos") or "").upper() == "G":
                     continue
                 r = rates(p, priors)
-                pr = probs(r, sr, gr, priors.get("sog_dispersion"))
+                sc = toi_scales(p["games"], toi)
+                pr = probs(r, sr, gr, priors.get("sog_dispersion"),
+                           toi_sog=sc["sog"], toi_pts=sc["pts"])
                 if not pr:
                     continue
+                pos = sk.get("pos") or p.get("pos")
+                opp_id = aid if side == "home" else hid
+                opp_abbr = g.get("away_abbr" if side == "home" else "home_abbr") or ""
+                grp = dvp_group(pos)
+                cards = {st: dm.card(dvp, opp_id, grp, st) for st in DVP_STATS} if dvp else {}
+                env = {"goal_ratio": round(gr, 3), "shot_ratio": round(sr, 3)}
                 rows.append({"pid": sk.get("pid"), "name": sk.get("name") or p.get("name"),
-                             "pos": sk.get("pos") or p.get("pos"), "gp": r["gp"],
+                             "pos": pos, "gp": r["gp"],
                              "toi": sk.get("toi"), "exp_sog": pr["_exp_sog"],
                              "exp_pts": pr["_exp_pts"], "mu": pr["_mu"],
+                             "rate": {"sog": round(r["sog"], 3), "g": round(r["g"], 3),
+                                      "a": round(r["a"], 3)},
+                             "ice": {k: (round(v, 3) if isinstance(v, float) else v)
+                                     for k, v in sc.items()},
+                             "dvp": {st: c for st, c in cards.items() if c},
+                             "why": why_line(sk.get("name") or p.get("name"), pos, r, env, sc,
+                                             opp_abbr, cards.get("sog"),
+                                             pr["_exp_sog"], pr["_exp_pts"]),
                              "probs": {k: pr[k] for k, *_ in MARKETS}})
             g[f"{side}_props"] = rows
             g[f"{side}_env"] = {"goal_ratio": round(gr, 3), "shot_ratio": round(sr, 3)}
@@ -523,6 +880,9 @@ def build(current_finals, prior, current_skaters=None, current_id_of=None, slate
         "saves_validation": sval,
         "skater_priors": priors,
         "props_validation": pval,
+        "toi": toi,
+        "dvp": dvp,
+        "dvp_validation": dvp_val,
         "prior_season": prior.get("season"),
         "current_finals": len(current_finals),
     }

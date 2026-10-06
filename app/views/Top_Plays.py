@@ -62,7 +62,22 @@ with card("tp_record"):
             if ss["n"]:
                 rows.append({"Chance shown": f"{_NAMES[s]} only", "Plays": ss["n"],
                              "Promised": _pct(ss["promised"]), "Delivered": _pct(ss["hit_rate"])})
-        st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch", key="tp_bands")
+        _raw = [(b["promised"], b["hit_rate"]) for b in sm["by_band"]] + [
+            (tpb.summary(recs[s_])["all"]["promised"], tpb.summary(recs[s_])["all"]["hit_rate"])
+            for s_ in tpb.SPORTS if tpb.summary(recs[s_])["all"]["n"]]
+
+        def _paint_rec(frame):
+            # Delivered at or above what was promised reads green; below, red.
+            out = pd.DataFrame("", index=frame.index, columns=frame.columns)
+            for i in frame.index:
+                pr, hr = _raw[i]
+                if pr is not None and hr is not None:
+                    out.at[i, "Delivered"] = (f"color:{COLOR['accent']}; font-weight:700;" if hr >= pr
+                                              else f"color:{COLOR['error']}; font-weight:700;")
+            return out
+
+        st.dataframe(mv.painted(pd.DataFrame(rows), _paint_rec), hide_index=True,
+                     width="stretch", key="tp_bands")
     else:
         st.caption("No plays graded yet — the first ones are logged with the next slate "
                    "and graded the morning after. This box fills in from there, and it is the "
@@ -87,9 +102,25 @@ with card("tp_props"):
             "Game": p.get("game"), "Player": p.get("player"), "Bet": p.get("label"),
             "Chance": _pct(p.get("p_cal")),
             "Worth it at": f"{mm.fmt_american(p.get('fair'))} or better",
+            "Matchup": (mv.MATCHUP_STYLE.get(p.get("matchup_tier")) or ("\u2014",))[0],
             "Status": p.get("result") or "pending",
         } for p in tonight])
-        st.dataframe(df, hide_index=True, width="stretch", key="tp_tonight")
+        _status_css = {"hit": f"color:{COLOR['bg']}; background-color:{COLOR['accent']}; font-weight:700;",
+                       "miss": f"color:{COLOR['bg']}; background-color:{COLOR['error']}; font-weight:700;",
+                       "void": f"color:{COLOR['text_faint']};"}
+
+        def _paint(frame):
+            out = pd.DataFrame("", index=frame.index, columns=frame.columns)
+            for i in frame.index:
+                out.at[i, "Chance"] = mv.chance_css(tonight[i].get("p_cal"))
+                out.at[i, "Matchup"] = mv.matchup_css(tonight[i].get("matchup_tier"))
+                out.at[i, "Status"] = _status_css.get(tonight[i].get("result"),
+                                                      f"color:{COLOR['text_muted']};")
+            return out
+
+        st.dataframe(mv.painted(df, _paint), hide_index=True, width="stretch",
+                     key="tp_tonight")
+        mv.render_chance_legend("Status: green = hit, red = miss.")
         st.caption("Chance = what calls like this have DELIVERED on games the model had not "
                    "seen (the model's number run through that market's own track record). "
                    "Worth it at = the most you should pay: a price worse than that loses money "
@@ -104,14 +135,30 @@ with card("tp_props"):
                                 key=f"tp_px_{idx}")
         res = vl.assess(pl.get("p_cal"), price, _stk[0] or None, _stk[1], _stk[2])
         if res:
-            # "VALUE" only when the edge survives the 0.1-point grid it is
-            # printed on — the fair price itself is break-even, not value.
-            verdict = ("VALUE" if res["value"] and round(100 * res["edge"], 1) > 0
-                       else "no value (break-even or worse)")
-            st.markdown(f"{_pct(pl.get('p_cal'))} vs break-even {_pct(res['break_even'])} at "
-                        f"{mm.fmt_american(int(price))} → **{verdict}** (edge "
-                        f"{100 * res['edge']:+.1f} pts, EV {res['ev_per_100']:+.2f} per $100)"
-                        + (f" · stake ${res['stake']:.2f}" if res.get("stake") else ""))
+            # Same tiers and colours as every Model page's checker — the
+            # fair price itself is break-even, not value (edge_tier).
+            _tier = mv.edge_tier(res["edge"], res["value"])
+            _lab, _fg, _bg = mv.TIER_STYLE[_tier]
+            verdict = (f'<span style="color:{_fg}; font-weight:800;">{_lab}</span>'
+                       if _tier != "none" else
+                       f'<span style="color:{COLOR["error"]}; font-weight:800;">NO VALUE</span>')
+            mv.render_verdict_box(_tier, (
+                f"<b>{pl.get('player')}</b> \u00b7 {pl.get('label')} at "
+                f"<b>{mm.fmt_american(int(price))}</b> \u2192 <b>{verdict}</b><br>"
+                f"delivered chance <b>{_pct(pl.get('p_cal'))}</b> \u00b7 worth it at "
+                f"<b>{mm.fmt_american(pl.get('fair'))}</b> or better \u00b7 break-even at your price "
+                f"{_pct(res['break_even'])} \u00b7 edge <b>{100 * res['edge']:+.1f} pts</b> "
+                f"\u00b7 EV {res['ev_per_100']:+.2f} per $100"
+                + (f" \u00b7 stake ${res['stake']:.2f}" if res.get("stake") else "")))
+        _bits = []
+        if pl.get("matchup"):
+            _mfg = (mv.MATCHUP_STYLE.get(pl.get("matchup_tier")) or ("", COLOR["text_muted"]))[1]
+            _bits.append(f'<span style="color:{_mfg}; font-weight:700;">{pl["matchup"]}</span>')
+        if pl.get("why"):
+            _bits.append(f"<b>Why:</b> {pl['why']}")
+        if _bits:
+            st.markdown('<div style="font-size:var(--lc-text-small); line-height:1.6;">'
+                        + "<br>".join(_bits) + "</div>", unsafe_allow_html=True)
 
 # ------------------------------------------------------ tonight: game bets
 entries, blends = [], {}

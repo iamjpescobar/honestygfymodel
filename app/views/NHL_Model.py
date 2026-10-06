@@ -65,6 +65,54 @@ _sv_verdicts = {k: mv.prop_trust(model.get("saves_validation") or {}, k)
 _sog_disp = (model.get("skater_priors") or {}).get("sog_dispersion")
 _shot_disp = (model.get("shots") or {}).get("dispersion")
 _cols = tuple((k, label) for k, label, *_ in nm.MARKETS)
+# DELIVERED chances (10-06): every prop cell and the price checker read
+# the model's number through what calls like it did on unseen games.
+_cal = mv.calibration_map(pv, nm.MARKETS)
+_sv_cal = mv.calibration_map(model.get("saves_validation") or {}, nm.SAVE_MARKETS)
+_toi = model.get("toi") or {}
+_dvv = model.get("dvp_validation") or {}
+
+
+def _skater_notices(p, opp):
+    """{stat: one-sentence matchup notice} for a skater's row."""
+    from engines import defense_matchup as dm
+    out = {}
+    for stat, c in (p.get("dvp") or {}).items():
+        out[stat] = dm.notice(c, nm.DVP_STAT_LABELS.get(stat, stat),
+                              nm.DVP_GROUP_LABELS.get(c.get("group"), "skaters"), opp)
+    return out
+
+
+def _toi_window():
+    """The window the TOI columns use — the fitted one, never a typed 5."""
+    for g in games or []:
+        for side in ("away", "home"):
+            for p in g.get(f"{side}_props") or []:
+                w = (p.get("ice") or {}).get("window")
+                if w:
+                    return w
+    return "N"
+
+
+def _in_number_note():
+    """Which of tonight's extra inputs are IN the chance, from their tests."""
+    bits = []
+    for fam, lab in (("sog", "shots"), ("pts", "goals/assists/points")):
+        x = _toi.get(fam) or {}
+        if x:
+            bits.append(f"ice time on {lab}: " + (
+                f"IN the number (last {x.get('window')} games' minutes vs his norm, "
+                f"strength {x.get('alpha')}; beat the model without it on unseen games, "
+                f"z={(x.get('verdict') or {}).get('z')})" if x.get("adopted") else
+                "context only (did not beat the model without it)"))
+    for fam, lab in (("sog", "shots"), ("pts", "points")):
+        x = _dvv.get(fam) or {}
+        if x:
+            bits.append(f"defense-vs-position on {lab}: " + (
+                "IN the number" if x.get("in_number") else
+                "context only \u2014 once the team's total shots and goals allowed are in, "
+                "which position gets them did not predict better on unseen games"))
+    return "; ".join(bits)
 _val = model.get("validation")
 _blend = model.get("blend")
 
@@ -102,18 +150,24 @@ for i, g in enumerate(games or []):
                             f"{(env.get('shot_ratio') or 1) * 100 - 100:+.0f}% · goal environment "
                             f"{(env.get('goal_ratio') or 1) * 100 - 100:+.0f}% vs their norm")
                 rows = []
+                _opp = h if side == "away" else a
                 for p in g.get(f"{side}_props") or []:
+                    ice = p.get("ice") or {}
                     row = {"Skater": p.get("name"), "Pos": p.get("pos"), "GP": p.get("gp"),
+                           "TOI recent": ice.get("recent"), "TOI norm": ice.get("base"),
                            "Exp SOG": p.get("exp_sog"), "Exp Pts": p.get("exp_pts"),
                            "_name": p.get("name"), "_probs": p.get("probs") or {},
-                           "_pmfs": nm.skater_pmfs(p.get("mu"), _sog_disp)}
+                           "_pmfs": nm.skater_pmfs(p.get("mu"), _sog_disp),
+                           "_dvp": p.get("dvp") or {}, "_why": p.get("why"),
+                           "_notice": _skater_notices(p, _opp)}
                     for k, *_ in nm.MARKETS:
                         row[k] = mv.prob_cell((p.get("probs") or {}).get(k))
                     rows.append(row)
                 if any(r["_pmfs"] for r in rows):
                     mv.render_prop_board(rows, nm.STATS, nm.MARKETS, verdicts,
                                          key=f"nhlm_{i}_{side}", staking=_stk,
-                                         info_cols=("Skater", "Pos", "GP"))
+                                         info_cols=("Skater", "Pos", "GP", "TOI recent", "TOI norm"),
+                                         calibration=_cal)
                 else:
                     # a games.json from before the any-line build: the
                     # fixed lines it carries, until the next nightly
@@ -131,6 +185,7 @@ for i, g in enumerate(games or []):
                     st.markdown(f"**{lab} goalies** \u2014 saves")
                     mv.render_prop_board(grows, nm.SAVE_STATS, nm.SAVE_MARKETS, _sv_verdicts,
                                          key=f"nhlm_{i}_{side}_g", staking=_stk,
+                                         calibration=_sv_cal,
                                          info_cols=("Goalie", "Starts", "Last 10", "SV% (model)",
                                                     "Exp SA"),
                                          footnote="Who starts is not known until the morning "
@@ -145,7 +200,10 @@ for i, g in enumerate(games or []):
                 "Each cell: chance he clears the line, and the fair price at that chance. "
                 "His shots, goals and assists per game (last season + this one, shrunk toward "
                 "his position by a fitted prior), scaled by how many shots and goals the model "
-                "expects his team to get tonight. NOT in the number: tonight's lines and PP "
-                "units, late scratches, the opposing goalie. GP counts both seasons.")
+                "expects his team to get tonight. TOI recent / TOI norm = his average minutes over "
+                f"his last {_toi_window()} games vs over the games his rate is built on. "
+                + (_in_number_note() + ". " if _in_number_note() else "") +
+                "NOT in the number: tonight's lines and PP units, late scratches, the opposing "
+                "goalie. GP counts both seasons.")
 
 footer()

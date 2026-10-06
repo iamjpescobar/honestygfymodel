@@ -96,6 +96,7 @@ for i, g in enumerate(games):
         if g.get("status") != "final":
             with st.expander("Player props \u2014 any line", expanded=False):
                 mv.render_nfl_props(g, (payload or {}).get("league") or {}, key=f"nflm_{i}",
+                                    dvp=(payload or {}).get("dvp"),
                                     staking=_stk)
         bits = [f"Model line: {h} {pj['fair_spread_home']:+.1f}"]
         if pj.get("market_spread_home") is not None:

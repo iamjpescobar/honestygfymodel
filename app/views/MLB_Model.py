@@ -115,11 +115,12 @@ for i, (g, _odds, proj) in enumerate(_slate):
                     batters = [p for p in (last or []) if not p.get("is_pitcher")] if ok else []
                     src = f"projected — last game's lineup ({last_date})" if ok else "no lineup"
                 st.markdown(f"**{team_abbr(team)} bats** · {src}")
-                rows, verdicts, pnote = mv.mlb_lineup_props(batters, opp_sp)
+                rows, verdicts, pnote = mv.mlb_lineup_props(batters, opp_sp, opp_name)
                 mv.render_prop_board(rows, mp.STATS, mp.MARKETS, verdicts,
                                      key=f"mlbm_{i}_{side}", staking=_stk,
                                      info_cols=("#", "Batter", "PA", "Exp PA"),
-                                     favor_note=pnote, unit_note=mp.RBI_NOTE)
+                                     favor_note=pnote, unit_note=mp.RBI_NOTE,
+                                     calibration=mv.mlb_calibration())
                 st.markdown(f"**{opp_name or 'Starter TBD'}** \u2014 pitching to "
                             f"{team_abbr(team)}")
                 prow, pverd, pnote2 = mv.mlb_starter_props(batters, opp_sp, opp_name)
@@ -127,7 +128,8 @@ for i, (g, _odds, proj) in enumerate(_slate):
                     mv.render_prop_board([prow], mp.PITCHER_STATS, mp.PITCHER_MARKETS, pverd,
                                          key=f"mlbm_{i}_{side}_sp", staking=_stk,
                                          info_cols=("Pitcher", "Starts", "Exp BF", "Exp K"),
-                                         favor_note=pnote2, footnote=mv.MLB_PITCHER_FOOTNOTE)
+                                         favor_note=pnote2, footnote=mv.MLB_PITCHER_FOOTNOTE,
+                                         calibration=mv.mlb_calibration(pitcher=True))
                 else:
                     st.caption(pnote2)
             st.caption(mv.MLB_PROP_FOOTNOTE)

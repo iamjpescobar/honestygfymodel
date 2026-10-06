@@ -379,6 +379,34 @@ check("league constants still rest on the right sample",
 # below it record into `failures` after the only code that reads
 # `failures` has already run, which sends controls back green against
 # deliberately broken code.
+# ---------------------------------------------------------------- 9 (10-06)
+# Defense vs position and the NFL prop test, through main() itself.
+dvp = out.get("dvp") or {}
+_te = (((dvp.get("stats") or {}).get("rec_yds") or {}).get("TE") or {}).get("teams") or {}
+check("defense-vs-position: Kelce's 90 yards are what Denver allowed to TEs (roster position)",
+      (_te.get("Denver Broncos") or {}).get("cur") == 90.0)
+check("a defense that never faced a TE still played: 0 TE yards, not missing",
+      (_te.get("Buffalo Bills") or {}).get("cur") == 0.0)
+DAYS3 = {"20260913": DAYS["20260913"],
+         "20260920": [_event("201", "2026-09-20T17:00Z", "STATUS_FINAL", "1", "2", 27, 13),
+                      _event("202", "2026-09-20T20:25Z", "STATUS_FINAL", "3", "4", 23, 20)]}
+SUMM3 = dict(SUMMARIES, **{"201": SUMMARIES["101"], "202": SUMMARIES["102"]})
+
+
+def get3(url, _attempts=3):
+    if "scoreboard/header" in url:
+        return header(DAYS3.get(url.rsplit("dates=", 1)[1], []))
+    return fake_get(url, summaries=SUMM3)
+
+
+out3 = run(get3, date(2026, 9, 22))
+pv = (out3.get("league") or {}).get("prop_validation") or {}
+check("with two weeks of finals every NFL prop stat is graded on the week it had not seen",
+      (pv.get("carries") or {}).get("n", 0) > 0 and (pv.get("rec") or {}).get("calibration"))
+check("the defense multipliers are tested and the flags travel with the league",
+      set((pv.get("matchup") or {})) == {"rush", "rec", "pass"}
+      and set((out3.get("league") or {}).get("matchup_in_number") or {}) == {"rush", "rec", "pass"})
+
 if failures:
     print(f"\n{len(failures)} FAILED")
     sys.exit(1)

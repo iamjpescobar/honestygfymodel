@@ -10,6 +10,57 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — a test of mine took the whole nightly down. 2026-09-27 (2)
+
+**Suite 114, FAILING: none.** Four negative controls red by exit code,
+**two of which came back green first** (below).
+
+### THE OUTAGE
+
+The 09-27 nightly ran, built the projections, wrote
+`data/nfl/projections/2026-09-27.json` and committed it — correctly.
+The NEXT nightly then failed at the "Run tests" gate and refused to
+fetch anything, for every league, MLB included.
+
+The failing check was mine, from the batch hours earlier:
+
+    check("running the pipeline left no fixture projections in the repo",
+          not _repo_log.exists() or not any(_repo_log.glob("*.json")))
+
+It asserts that directory is EMPTY. But the whole point of that
+directory is to fill up: main() writes a file there every run and the
+workflow commits it. So the first successful night guaranteed every
+later night would fail. A self-blocking gate, shipped green, because
+locally the directory was empty and stayed empty.
+
+**The property I meant** is that running the pipeline UNDER TEST adds
+nothing to the real record — not that the record is empty. Now
+snapshotted before and compared after. Guard the thing you mean.
+
+### AND THE FIRST FIX COULDN'T FAIL EITHER
+
+Comparing the SET OF FILENAMES before and after passed both negative
+controls on any day the log already held a file: a leak writes to
+TODAY's filename, so the name set is unchanged while the real record has
+been silently overwritten with fixture data. The comparison is now over
+sha256 of the contents, and the controls are run in both repo states —
+clean, and with a committed file present.
+
+### WHAT THE NIGHTLY PROVED BEFORE IT BROKE
+
+The league constants came out of 66 real team-games at
+**td_per_point 0.1096, ypc 4.20, yards/target 7.61, catch rate 0.684** —
+every one where real football sits. The measurement path is sound; only
+the test was wrong.
+
+### FILES, 2026-09-27 (2)
+
+    tests/test_nfl_pipeline.py   emptiness check -> before/after content hash
+
+---
+
+---
+
 ## PICK UP HERE — projections for every NFL market, with no fitted weights in them. 2026-09-27
 
 **Suite 114, FAILING: none.** 15 negative controls red by EXIT CODE —

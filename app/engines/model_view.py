@@ -162,7 +162,50 @@ def render_prop_table(rows, columns, verdicts, key, favor_note=None):
         st.caption(favor_note)
 
 
-def mlb_lineup_props(batters, opp_pitcher_id):
+def mlb_calibration(pitcher=False):
+    """{market_key: bins} from the prop model's walk-forward, for the
+    delivered chances on the MLB boards."""
+    from engines import mlb_props as mp
+    pm = mp.load_prop_model() or {}
+    return calibration_map(pm.get("pitcher_validation" if pitcher else "validation"),
+                           mp.PITCHER_MARKETS if pitcher else mp.MARKETS)
+
+
+MLB_DVP_STATS = ("h", "tb", "hr", "k", "bb", "s", "d")
+
+
+def _mlb_batter_context(pm, b_counts, proj, opp_pitcher_id, opp_name):
+    """(_dvp, _notice, _why) for one batter row — the starter he faces,
+    on each stat, with his allowed rate ranked among this season's
+    starters (engines/defense_matchup.mlb_starter_card)."""
+    from engines import defense_matchup as dm
+    from engines import mlb_props as mp
+    table = (pm or {}).get("starter_allowed")
+    cards, notes = {}, {}
+    who = opp_name or "Tonight's starter"
+    for stat in MLB_DVP_STATS:
+        c = dm.mlb_starter_card(table, opp_pitcher_id, stat) if opp_pitcher_id else None
+        if c:
+            cards[stat] = c
+            notes[stat] = dm.notice(c, dm.MLB_STAT_LABELS[stat], "batters", who)
+    bits = []
+    shr = mp.shrunk_rates(b_counts, (pm or {}).get("batter_priors"))
+    if shr:
+        bits.append(f"his rates over {_pa_label(b_counts)} PA (last season at the fitted "
+                    f"weight, shrunk toward the league): {100 * (shr['1B'] + shr['2B'] + shr['3B'] + shr['HR']):.1f}% "
+                    f"hit, {100 * shr['HR']:.1f}% HR, {100 * shr['K']:.1f}% K per PA")
+    hc = cards.get("h")
+    if hc:
+        bits.append(f"{who} allows {hc['per_game']:.3f} hits per PA ({dm.rank_text(hc)} of "
+                    f"this season's starters; league {hc['league']:.3f})")
+    elif opp_pitcher_id:
+        bits.append(f"{who}: no allowed-rate ranking on file yet")
+    if proj:
+        bits.append(f"{proj['exp_pa']:.1f} expected PA from his slot, then a league-average bullpen")
+    return cards, notes, " · ".join(bits)
+
+
+def mlb_lineup_props(batters, opp_pitcher_id, opp_name=None):
     """(rows, verdicts, note) for a lineup against tonight's starter.
 
     batters: roster.py lineup entries ({"id","name","battingOrder",...}).
@@ -221,9 +264,11 @@ def mlb_lineup_props(batters, opp_pitcher_id):
         proj = mp.project_batter(slot, b_counts, p_counts, pm, bf_dist)
         if not proj:
             continue
+        _dvp, _notes, _why = _mlb_batter_context(pm, b_counts, proj, opp_pitcher_id, opp_name)
         row = {"#": slot, "Batter": b.get("name"),
                "PA": _pa_label(b_counts), "Exp PA": proj["exp_pa"],
-               "_name": b.get("name"), "_probs": proj["probs"], "_pmfs": proj.get("pmfs") or {}}
+               "_name": b.get("name"), "_probs": proj["probs"], "_pmfs": proj.get("pmfs") or {},
+               "_dvp": _dvp, "_notice": _notes, "_why": _why}
         for k, *_ in mp.MARKETS:
             row[k] = prob_cell(proj["probs"][k])
         rows.append(row)
@@ -275,6 +320,7 @@ def mlb_starter_props(batters, pitcher_id, pitcher_name=None):
                                  (pm.get("prior_bf") or {}).get(str(pitcher_id)))
     order = [None] * 9
     known = 0
+    names = [None] * 9
     for i, b in enumerate(batters or []):
         slot = _slot_from_batting_order(b.get("battingOrder")) or (i + 1)
         if not (1 <= slot <= 9) or order[slot - 1] is not None:
@@ -287,6 +333,7 @@ def mlb_starter_props(batters, pitcher_id, pitcher_name=None):
         c = mp.player_counts(pm, b.get("id"), c, "batter")
         if c and c.get("PA"):
             order[slot - 1] = c
+            names[slot - 1] = b.get("name")
             known += 1
     proj = mp.project_pitcher(order, p_counts, pm, bf_dist)
     if not proj:
@@ -297,6 +344,35 @@ def mlb_starter_props(batters, pitcher_id, pitcher_name=None):
            "Starts": f"{starts} + {starts_ly} last yr" if starts_ly else str(starts),
            "Exp BF": proj["exp_bf"], "Exp K": proj["exp"].get("k"),
            "_name": pitcher_name or "Starter", "_pmfs": proj["pmfs"], "_probs": proj["probs"]}
+    # MATCHUP (10-06): tonight's lineup, from the nine bats the model
+    # prices, placed among this season's team batting lines.
+    from engines import defense_matchup as dm
+    _bpri = pm.get("batter_priors")
+    _lu = [c for c in order if c]
+    _dvp, _notes = {}, {}
+    for stat in ("k", "h", "bb", "hr"):
+        vals = [dm.per_pa(c, _bpri, stat) for c in _lu]
+        vals = [v for v in vals if v is not None]
+        card_ = dm.mlb_lineup_card(pm.get("team_batting"), sum(vals) / len(vals) if vals else None,
+                                   stat)
+        if card_:
+            _dvp[stat] = card_
+            _lab = {"k": "strikeouts", "h": "hits", "bb": "walks", "hr": "home runs"}[stat]
+            _notes[stat] = (f"{dm.badge(card_)} \u2014 tonight's lineup gives up {_lab} at "
+                            f"{card_['per_game']:.3f} per PA (league {card_['league']:.3f}, "
+                            f"{card_['vs_league_pct']:+.0f}%); among this season's team lineups "
+                            f"that is the {dm.rank_text(card_)}.")
+    _shr = mp.shrunk_rates(p_counts, pm.get("pitcher_priors"))
+    _why = []
+    if _shr:
+        _why.append(f"his allowed rates (this season + last at the fitted weight, shrunk): "
+                    f"{100 * _shr['K']:.1f}% K, {100 * _shr['BB']:.1f}% BB, "
+                    f"{100 * _shr['HR']:.1f}% HR per batter")
+    _why.append(f"{proj['exp_bf']:.1f} batters faced expected (his own starts vs the league's)")
+    if _dvp.get("k"):
+        _why.append(f"lineup K rate {100 * _dvp['k']['per_game']:.1f}% vs league "
+                    f"{100 * _dvp['k']['league']:.1f}%")
+    row.update({"_dvp": _dvp, "_notice": _notes, "_why": " · ".join(_why)})
     note = None
     if known < 9:
         note = (f"{9 - known} lineup spot(s) have no Statcast record and are priced as a "
@@ -330,12 +406,142 @@ def _tested_lines(markets, stat):
     return [n - 0.5 for _k, _l, s, n in markets if s == stat]
 
 
+# ----------------------------------------------------------------------
+# Delivered chance, colour and matchup (10-06) — every sport
+# ----------------------------------------------------------------------
+def calibration_map(validation, markets):
+    """{market_key: calibration bins} from a validation block, for the
+    markets that have a curve."""
+    out = {}
+    for k, *_ in markets or ():
+        bins = ((validation or {}).get(k) or {}).get("calibration")
+        if bins:
+            out[k] = bins
+    return out
+
+
+def delivered_over(p_over, stat, line, markets, calibration):
+    """(chance, basis) for the OVER at `line`: the model's chance mapped
+    through what calls like it DELIVERED on games it had not seen
+    (top_plays_board.calibrate) — the exact line's curve when it was
+    tested, else the nearest tested line of the same stat. basis is
+    "exact", "nearest O<x>", or "raw" when there is no curve at all (the
+    model's own number, labelled as such — rule 9)."""
+    from engines import top_plays_board as tpb
+    if p_over is None:
+        return None, "raw"
+    cands = [(k, n - 0.5) for k, _l, s_, n in (markets or ()) if s_ == stat
+             and (calibration or {}).get(k)]
+    if not cands:
+        # A STAT-LEVEL curve ("@stat"): NFL props are tested at a line next
+        # to each player's own average, not at one fixed line, so their
+        # record is one curve per stat.
+        bins = (calibration or {}).get(f"@{stat}")
+        c = tpb.calibrate(p_over, bins) if bins else None
+        return (c, "this stat's record") if c is not None else (p_over, "raw")
+    k, ln = min(cands, key=lambda x: abs(x[1] - line))
+    c = tpb.calibrate(p_over, calibration[k])
+    if c is None:
+        return p_over, "raw"
+    return c, ("exact" if abs(ln - line) < 1e-9 else f"nearest O{ln:g}")
+
+
+# Chance bands for COLOUR ONLY — where the eye should land, on the
+# absolute scale a bettor reads (not ranked within the column, so the
+# same 72% is the same colour on every table). They change no number;
+# the legend under each board prints them.
+CHANCE_BANDS = (
+    (0.80, "elite", "80%+"), (0.65, "good", "65-79%"), (0.50, "average", "50-64%"),
+    (0.35, "below", "35-49%"), (0.0, "poor", "under 35%"),
+)
+_CHANCE_HEX = {"elite": COLOR["stat_high"], "good": "#E8B33C", "average": COLOR["stat_mid"],
+               "below": "#9B6BC7", "poor": COLOR["text_faint"]}
+MATCHUP_STYLE = {
+    "soft": ("SOFT", COLOR["accent"], COLOR["accent_dim"]),
+    "neutral": ("NEUTRAL", COLOR["text_muted"], None),
+    "tough": ("TOUGH", COLOR["error"], COLOR["error_dim"]),
+}
+
+
+def chance_band(p):
+    if p is None:
+        return None
+    for lo, name, _rng in CHANCE_BANDS:
+        if p >= lo:
+            return name
+    return "poor"
+
+
+def chance_css(p):
+    """Cell style for a chance: a filled band with readable text."""
+    band = chance_band(p)
+    if band is None:
+        return f"color: {COLOR['text_faint']};"
+    if band == "poor":
+        # A long shot is not a warning — the eye should skip it, not stop
+        # on it. No fill, faint text.
+        return f"color: {COLOR['text_faint']};"
+    hx = _CHANCE_HEX[band]
+    r, g, b = (int(hx.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4))
+    strong = band == "elite"
+    a = {"elite": 0.75, "good": 0.55, "average": 0.35, "below": 0.22}[band]
+    return (f"background-color: rgba({r},{g},{b},{a:.2f}); "
+            f"color: {COLOR['bg'] if strong else COLOR['text']}; font-weight: {700 if strong else 600};")
+
+
+def matchup_css(tier_name):
+    lab, fg, bg = MATCHUP_STYLE.get(tier_name, ("", COLOR["text_faint"], None))
+    return (f"color: {fg}; font-weight: 700;" + (f" background-color: {bg};" if bg else ""))
+
+
+def painted(df, painter):
+    """The site's base table styling (dark cells, 2-dp floor, em-dash for
+    missing — table_style._base_styler) with a cell painter on top."""
+    from styles.table_style import _base_styler
+    return _base_styler(df).apply(painter, axis=None)
+
+
+def render_chance_legend(extra=""):
+    sw = []
+    for _lo, name, rng in CHANCE_BANDS:
+        hx = _CHANCE_HEX[name]
+        sw.append(f'<span style="display:inline-flex; align-items:center; gap:4px;">'
+                  f'<span style="width:11px; height:11px; border-radius:3px; background:{hx};">'
+                  f'</span><span style="color:{COLOR["text_muted"]}; '
+                  f'font-size:var(--lc-text-tiny);">{rng}</span></span>')
+    for t in ("soft", "tough"):
+        lab, fg, _bg = MATCHUP_STYLE[t]
+        sw.append(f'<span style="color:{fg}; font-weight:700; font-size:var(--lc-text-tiny);">'
+                  f'{lab}</span>')
+    st.markdown('<div style="display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; '
+                'margin:2px 0 4px;">' + "".join(sw) + "</div>"
+                f'<div style="color:{COLOR["text_faint"]}; font-size:var(--lc-text-tiny);">'
+                f'Cell colour = chance band (colour only, no number changes). SOFT / TOUGH = the '
+                f'defense sits in the top / bottom quarter of the league for what it allows to '
+                f'this position on this stat.{(" " + extra) if extra else ""}</div>',
+                unsafe_allow_html=True)
+
+
+def render_verdict_box(tier_name, html_body):
+    """The checker's answer as a coloured panel — the tier's colour on the
+    border and a tint behind it, so the call reads before the numbers."""
+    _l, fg, bg = TIER_STYLE.get(tier_name, TIER_STYLE["none"])
+    st.markdown(f'<div style="border:1px solid {fg}; border-left:6px solid {fg}; '
+                f'background:{bg or "transparent"}; border-radius:var(--lc-radius-lg); '
+                f'padding:8px 12px; margin:6px 0; line-height:1.55;">{html_body}</div>',
+                unsafe_allow_html=True)
+
+
 def render_prop_board(rows, stats, markets, verdicts, key, staking, info_cols,
-                      favor_note=None, footnote=None, unit_note=None):
-    """rows: [{"_name", "_pmfs": {stat: [P(0), P(1), ...]}, <info_cols>...}].
+                      favor_note=None, footnote=None, unit_note=None, calibration=None):
+    """rows: [{"_name", "_pmfs": {stat: [P(0), P(1), ...]}, <info_cols>...,
+    optional "_dvp": {stat: matchup card}, "_why": str}].
     stats: [(stat, label, lines shown)]. markets: the TESTED (key, label,
     stat, at_least) list — a line's header is starred when its test did
-    not beat the player's own rate, and lines with no test say so."""
+    not beat the player's own rate, and lines with no test say so.
+    calibration: {market_key: bins} — when given, every chance shown is
+    the DELIVERED chance (delivered_over), the same number the checker
+    and Top Plays use."""
     rows = [r for r in rows if r.get("_pmfs")]
     if not rows:
         st.caption("No prop projections for this side yet.")
@@ -347,24 +553,52 @@ def render_prop_board(rows, stats, markets, verdicts, key, staking, info_cols,
     stat = st.selectbox("Stat", avail, format_func=lambda s: labels[s], key=f"pb_stat_{key}")
     lines = next(ln for s, _l, ln in stats if s == stat)
     render_trust_row([(f"O{ln:g}", _line_verdict(markets, verdicts, stat, ln)) for ln in lines])
-    table = []
+    has_dvp = any(((r.get("_dvp") or {}).get(stat)) for r in rows)
+    table, chances, tiers = [], [], []
+    from engines import defense_matchup as dm
     for r in rows:
         pmf = (r.get("_pmfs") or {}).get(stat)
         row = {c: r.get(c) for c in info_cols}
         row["Avg"] = DASH if pmf is None else round(_pmf_mean(pmf), 2)
+        cmap = {}
         for ln in lines:
             v = _line_verdict(markets, verdicts, stat, ln)
             head = f"O{ln:g}" + ("" if v == "beats" else " *")
-            row[head] = DASH if pmf is None else prob_cell(mm.over_prob_pmf(pmf, ln))
+            po = None if pmf is None else mm.over_prob_pmf(pmf, ln)
+            pc, _basis = delivered_over(po, stat, ln, markets, calibration)
+            row[head] = DASH if pc is None else prob_cell(pc)
+            cmap[head] = pc
+        c = (r.get("_dvp") or {}).get(stat)
+        if has_dvp:
+            row["Defense vs pos"] = dm.badge(c)
         table.append(row)
-    st.dataframe(pd.DataFrame(table), hide_index=True, width="stretch", key=f"pb_tab_{key}_{stat}")
+        chances.append(cmap)
+        tiers.append((c or {}).get("tier"))
+    df = pd.DataFrame(table)
+
+    def _paint(frame):
+        out = pd.DataFrame("", index=frame.index, columns=frame.columns)
+        for i in frame.index:
+            for col, pc in chances[i].items():
+                out.at[i, col] = chance_css(pc)
+            if "Defense vs pos" in frame.columns:
+                out.at[i, "Defense vs pos"] = matchup_css(tiers[i])
+        return out
+
+    st.dataframe(painted(df, _paint), hide_index=True, width="stretch",
+                 key=f"pb_tab_{key}_{stat}")
+    render_chance_legend()
+    cal_txt = (" Chances are what calls like these DELIVERED on games the model had not seen "
+               "(its own number mapped through that line's record)." if calibration else
+               " Chances are the model's own (no graded record for this market yet).")
     st.caption("Avg = expected count. * = that line did not beat the player's own hit rate on "
-               "games it had not seen (or has no test yet) \u2014 shown, but don't lean on it.")
+               "games it had not seen (or has no test yet) — shown, but don't lean on it."
+               + cal_txt)
     if unit_note and stat == "rbi":
         st.caption(unit_note)
     if favor_note:
         st.caption(favor_note)
-    _any_line_tool(rows, stats, markets, verdicts, key, staking, stat)
+    _any_line_tool(rows, stats, markets, verdicts, key, staking, stat, calibration=calibration)
     if footnote:
         st.caption(footnote)
 
@@ -394,7 +628,7 @@ def balanced_line(pmf, fn=None, lo=0.5, hi=None):
     return best
 
 
-def _any_line_tool(rows, stats, markets, verdicts, key, staking, default_stat):
+def _any_line_tool(rows, stats, markets, verdicts, key, staking, default_stat, calibration=None):
     bankroll, frac, cap = staking
     labels = {s: lab for s, lab, _ in stats}
     st.markdown("**Check any line at your price**")
@@ -412,7 +646,7 @@ def _any_line_tool(rows, stats, markets, verdicts, key, staking, default_stat):
     c4, c5, c6 = st.columns([1, 1, 1])
     side = c4.radio("Side", ["Over", "Under"], horizontal=True, key=f"al_side_{key}")
     _pmf_now = (next(r for r in rows if r["_name"] == who).get("_pmfs") or {}).get(stat)
-    _po_now = mm.over_prob_pmf(_pmf_now, line)
+    _po_now, _b = delivered_over(mm.over_prob_pmf(_pmf_now, line), stat, line, markets, calibration)
     # The price box starts at the MODEL's own fair price, so nothing shows
     # as value until the reader types the number his book actually posts.
     _p_now = None if _po_now is None else (_po_now if side == "Over" else 1 - _po_now)
@@ -422,12 +656,19 @@ def _any_line_tool(rows, stats, markets, verdicts, key, staking, default_stat):
                             key=f"al_ox_{key}",
                             help="Enter the opposite side's price too and the book's own no-vig "
                                  "chance is shown beside the model's.")
-    pmf = (next(r for r in rows if r["_name"] == who).get("_pmfs") or {}).get(stat)
-    po = mm.over_prob_pmf(pmf, line)
-    if po is None:
+    sel = next(r for r in rows if r["_name"] == who)
+    pmf = (sel.get("_pmfs") or {}).get(stat)
+    po_raw = mm.over_prob_pmf(pmf, line)
+    if po_raw is None:
         st.caption("No distribution for that player and stat.")
         return
+    # THE CHANCE A PRICE IS JUDGED ON is the delivered one (10-06): the
+    # model's number mapped through what calls like it actually did on
+    # games it had not seen. Judging a -200 against the raw number
+    # would call an overconfident 78% "STRONG" when calls like it hit 70%.
+    po, basis = delivered_over(po_raw, stat, line, markets, calibration)
     p = po if side == "Over" else 1 - po
+    p_raw = po_raw if side == "Over" else 1 - po_raw
     a = vl.assess(p, price, bankroll or None, frac, cap)
     if not a:
         st.caption("Enter an American price of -100 or lower, or +100 or higher.")
@@ -449,15 +690,42 @@ def _any_line_tool(rows, stats, markets, verdicts, key, staking, default_stat):
             mkt_txt = (f" \u00b7 the book's own no-vig chance {100 * pair[0]:.1f}% "
                        f"(model {'above' if p > pair[0] else 'below'} it by "
                        f"{100 * abs(p - pair[0]):.1f} pts)")
-    _tl, _tfg, _tbg = TIER_STYLE[edge_tier(a["edge"], a["value"])]
+    _tier = edge_tier(a["edge"], a["value"])
+    _tl, _tfg, _tbg = TIER_STYLE[_tier]
     verdict = (f'<span style="color:{_tfg}; font-weight:800;">{_tl}</span>'
-               if edge_tier(a["edge"], a["value"]) != "none" else "no value")
+               if _tier != "none" else
+               f'<span style="color:{COLOR["error"]}; font-weight:800;">NO VALUE</span>')
     stake_txt = (f" \u00b7 stake ${a['stake']:.2f}" if a["value"] and a.get("stake") else "")
-    st.markdown(f"{who} \u00b7 {labels[stat]} {side} {line:g}: model **{100 * p:.1f}%** "
-                f"(fair {mm.fmt_american(mm.fair_american(p))}) vs break-even "
-                f"{100 * a['break_even']:.1f}% at {mm.fmt_american(int(price))} \u2192 "
-                f"**{verdict}** (edge {100 * a['edge']:+.1f} pts, EV {a['ev_per_100']:+.2f} per "
-                f"$100){stake_txt}{mkt_txt}", unsafe_allow_html=True)
+    if basis == "raw":
+        chance_txt = (f"model <b>{100 * p:.1f}%</b> <span style='color:{COLOR['text_faint']};'>"
+                      f"(no graded record for this stat yet \u2014 the model's own number)</span>")
+    else:
+        chance_txt = (f"delivered chance <b>{100 * p:.1f}%</b> "
+                      f"<span style='color:{COLOR['text_faint']};'>(model said "
+                      f"{100 * p_raw:.1f}%; calls like it hit {100 * p:.1f}% on games it had "
+                      f"not seen \u2014 {'this line' if basis == 'exact' else basis + '’s record'})"
+                      f"</span>")
+    render_verdict_box(_tier, (
+        f"<b>{who}</b> \u00b7 {labels[stat]} {side} {line:g} at "
+        f"<b>{mm.fmt_american(int(price))}</b> \u2192 <b>{verdict}</b><br>"
+        f"{chance_txt} \u00b7 worth it at <b>{mm.fmt_american(mm.fair_american(p))}</b> or "
+        f"better \u00b7 break-even at your price {100 * a['break_even']:.1f}% \u00b7 edge "
+        f"<b>{100 * a['edge']:+.1f} pts</b> \u00b7 EV {a['ev_per_100']:+.2f} per $100"
+        f"{stake_txt}{mkt_txt}"))
+    _why = sel.get("_why")
+    _card = (sel.get("_dvp") or {}).get(stat)
+    _note = sel.get("_notice", {}).get(stat) if isinstance(sel.get("_notice"), dict) else None
+    if _why or _card or _note:
+        _mt = (_card or {}).get("tier")
+        _lab, _fg, _bg = MATCHUP_STYLE.get(_mt, ("", COLOR["text_muted"], None))
+        parts = []
+        if _note:
+            parts.append(f'<span style="color:{_fg}; font-weight:700;">{_note}</span>')
+        if _why:
+            parts.append(f'<span style="color:{COLOR["text"]};"><b>Why:</b> {_why}</span>')
+        st.markdown('<div style="font-size:var(--lc-text-small); line-height:1.6; '
+                    'margin:2px 0 6px;">' + "<br>".join(parts) + "</div>",
+                    unsafe_allow_html=True)
     st.caption(f"Props are the model alone \u2014 {trust_txt}. Prop prices are not yet "
                f"recorded, so unlike the game lines these are NOT measured against the books; "
                f"a big gap to the book's no-vig chance is more often the book knowing something "
@@ -949,51 +1217,44 @@ def render_alt_lines(proj, away, home, key, sport, staking=None):
 # ----------------------------------------------------------------------
 # NFL player props on the Model page (10-04)
 # ----------------------------------------------------------------------
-# stat -> (label, projection key, how its spread is measured, roles)
-NFL_STATS = (
-    ("pass_yds", "Passing yards", "pass_yds", "Passing yards", ("QB",)),
-    ("pass_cmp", "Completions", "pass_cmp", "Completions", ("QB",)),
-    ("pass_att", "Pass attempts", "pass_att", "Pass attempts", ("QB",)),
-    ("pass_td", "Passing TDs", "pass_td", "Passing TDs", ("QB",)),
-    ("pass_int", "Interceptions", "pass_int", "Interceptions", ("QB",)),
-    ("rush_yds", "Rushing yards", "rush_yds", "Rushing yards", ("RB", "QB")),
-    ("carries", "Carries", "carries", "Carries", ("RB",)),
-    ("rec_yds", "Receiving yards", "rec_yds", "Receiving yards", ("REC", "RB")),
-    ("rec", "Receptions", "rec", "Receptions", ("REC", "RB")),
-    ("targets", "Targets", "targets", "Targets", ("REC", "RB")),
-    ("scrim_yds", "Rush + rec yards", "scrim_yds", "Rush + rec yards", ("RB", "REC")),
-    ("td", "Touchdowns (rush + rec)", "td_exp", None, ("RB", "REC")),
-)
+# NFL_STATS and nfl_stat_pmf live in engines/nfl_prop_odds (pure) since
+# 10-06, so the nightly prop test prices EXACTLY what this page prices.
+from engines.nfl_prop_odds import STATS as NFL_STATS          # noqa: E402
+from engines.nfl_prop_odds import stat_pmf as nfl_stat_pmf    # noqa: E402
 
 
-def nfl_stat_pmf(stat_market, mean, spreads):
-    """A projection as a distribution, with the game-to-game scatter
-    MEASURED per market (engines/nfl_prop_odds): counts negative
-    binomial, yards normal at a measured cv, discretised to whole yards
-    (a yard line of 64.5 is then P(65 or more), the same number p_over
-    gives). Touchdowns: the anytime Poisson. None if unmeasured."""
-    if mean is None or mean <= 0:
-        return None
-    if stat_market is None:                      # touchdowns
-        return mm.poisson_pmf(mean, 8)
-    sp = (spreads or {}).get(stat_market)
-    if not sp:
-        return None
-    if sp["kind"] == "count":
-        return mm.nb_pmf(mean, sp.get("size"), max(40, int(mean * 4)))
-    sd = sp["cv"] * mean
-    hi = int(mean + 5 * sd) + 2
-    out = []
-    for k in range(0, hi + 1):
-        lo_c = mm.normal_cdf(k - 0.5, mean, sd) if k > 0 else 0.0
-        out.append(mm.normal_cdf(k + 0.5, mean, sd) - lo_c)
-    tail = 1.0 - sum(out)
-    out[-1] += max(0.0, tail)
-    return out
+NFL_DVP_OF = {"pass_yds": "pass_yds", "pass_cmp": "pass_cmp", "pass_att": "pass_att",
+              "pass_td": "pass_td", "pass_int": "pass_int", "rush_yds": "rush_yds",
+              "carries": "carries", "rec_yds": "rec_yds", "rec": "rec", "targets": "targets",
+              "scrim_yds": "scrim_yds", "td": "td"}
+NFL_DVP_GROUP = {"QB": "QB", "RB": "RB", "FB": "RB", "HB": "RB", "WR": "WR", "TE": "TE"}
+NFL_GROUP_LABELS = {"QB": "quarterbacks", "RB": "running backs", "WR": "wide receivers",
+                    "TE": "tight ends", "ALL": "all players"}
+NFL_STAT_LABELS = {"pass_yds": "passing yards", "pass_cmp": "completions",
+                   "pass_att": "pass attempts", "pass_td": "passing TDs",
+                   "pass_int": "interceptions", "rush_yds": "rushing yards",
+                   "carries": "carries", "rec_yds": "receiving yards", "rec": "receptions",
+                   "targets": "targets", "scrim_yds": "rush + rec yards", "td": "touchdowns"}
 
 
-def nfl_game_prop_rows(g, league):
-    """[{"_name", "_pmfs", "Player", ...}] for both sides of one game."""
+def nfl_calibration(league):
+    """{"@stat": bins} from the nightly's NFL prop test (nfl_prop_check)."""
+    pv = (league or {}).get("prop_validation") or {}
+    return {f"@{k}": v["calibration"] for k, v in pv.items()
+            if isinstance(v, dict) and v.get("calibration")}
+
+
+def nfl_verdicts(league):
+    pv = (league or {}).get("prop_validation") or {}
+    return {k: ((v.get("verdict") or {}).get("verdict")) for k, v in pv.items()
+            if isinstance(v, dict) and "verdict" in v}
+
+
+def nfl_game_prop_rows(g, league, dvp=None):
+    """[{"_name", "_pmfs", "Player", ...}] for both sides of one game.
+    With the defense table, each row carries its matchup cards, one
+    notice per stat, and a why line."""
+    from engines import defense_matchup as dm
     from engines.nfl_projection import implied_totals, project_player, attach_td_shares
     attach_td_shares([g], league)
     spreads = (league or {}).get("prop_spreads") or {}
@@ -1016,14 +1277,52 @@ def nfl_game_prop_rows(g, league):
                 continue
             gp = p.get("gp")
             ly = p.get("gp_last_season")
+            grp = NFL_DVP_GROUP.get(str(p.get("pos") or "").upper())
+            opp_name = g.get(other)
+            opp_lab = g.get(f"{other}_abbr") or opp_name
+            cards, notes = {}, {}
+            for stat in pmfs:
+                c = dm.card(dvp, opp_name, grp, NFL_DVP_OF[stat]) if (dvp and grp) else None
+                if c:
+                    cards[stat] = c
+                    notes[stat] = dm.notice(c, NFL_STAT_LABELS[stat], NFL_GROUP_LABELS[grp], opp_lab)
+            row_why = _nfl_why(p, proj, g.get(f"{side}_abbr") or side, opp_lab, implied)
             rows.append({"Player": p.get("name"), "Pos": p.get("pos") or p.get("role"),
                          "Team": g.get(f"{side}_abbr") or g.get(side),
                          "Status": p.get("status") or "",
                          "GP": f"{gp} + {ly} last yr" if ly else str(gp),
                          "_name": f"{p.get('name')} ({g.get(f'{side}_abbr') or side})",
                          "_pmfs": pmfs, "_means": means,
+                         "_dvp": cards, "_notice": notes, "_why": row_why,
                          "_moved": p.get("last_season_team")})
     return rows
+
+
+def _nfl_why(p, proj, team, opp, implied):
+    """One sentence per player: volume x rate x the defense, and whether
+    each defense multiplier is IN the number (from the nightly's test)."""
+    bits = []
+    use = proj.get("matchup_in_number") or {}
+    if proj.get("carries") is not None:
+        bits.append(f"{(p.get('carry_share') or 0) * 100:.0f}% of {team}'s carries "
+                    f"\u2192 {proj['carries']:.1f}")
+        if proj.get("rush_matchup"):
+            bits.append(f"{opp} allows {proj['rush_matchup']:.2f}x the league per carry "
+                        f"({'in the number' if use.get('rush', True) else 'context only'})")
+    if proj.get("targets") is not None:
+        bits.append(f"{(p.get('target_share') or 0) * 100:.0f}% of {team}'s targets "
+                    f"\u2192 {proj['targets']:.1f}")
+        if proj.get("rec_matchup"):
+            bits.append(f"{opp} allows {proj['rec_matchup']:.2f}x the league per target "
+                        f"({'in the number' if use.get('rec', True) else 'context only'})")
+    if proj.get("pass_att") is not None:
+        bits.append(f"{proj['pass_att']:.0f} attempts at {proj.get('ypa_adj') or 0:.2f} yds "
+                    f"({'defense in the number' if use.get('pass', True) else 'defense context only'})")
+    if implied is not None:
+        bits.append(f"market implies {team} {implied:g} pts")
+    if p.get("gp_last_season"):
+        bits.append(f"last season's {p['gp_last_season']} games folded in at the fitted weight")
+    return " \u00b7 ".join(bits)
 
 
 def _ladder(mean):
@@ -1037,18 +1336,24 @@ def _ladder(mean):
     return (max(0.5, mid - step), mid, mid + step)
 
 
-def render_nfl_props(g, league, key, staking):
+def render_nfl_props(g, league, key, staking, dvp=None):
     """Pick a stat: every player's projection and a three-line ladder of
-    chances; then any line at your price. Status from the team's injury
-    report is printed on the row (Out players are left off)."""
-    rows = [r for r in nfl_game_prop_rows(g, league) if str(r["Status"]).lower() != "out"]
+    chances (coloured by band, DELIVERED chances once the nightly's test
+    has a record), the defense-vs-position badge; then any line at your
+    price. Status from the team's injury report is printed on the row
+    (Out players are left off)."""
+    from engines import defense_matchup as dm
+    rows = [r for r in nfl_game_prop_rows(g, league, dvp)
+            if str(r["Status"]).lower() != "out"]
     if not rows:
         st.caption("No player projections for this game yet.")
         return
+    cal = nfl_calibration(league)
+    verd = nfl_verdicts(league)
     labels = {s: lab for s, lab, *_ in NFL_STATS}
     avail = [s for s, *_ in NFL_STATS if any(s in r["_pmfs"] for r in rows)]
     stat = st.selectbox("Stat", avail, format_func=lambda s: labels[s], key=f"nflp_stat_{key}")
-    table = []
+    table, chances, tiers = [], [], []
     for r in rows:
         pm = r["_pmfs"].get(stat)
         if not pm:
@@ -1056,17 +1361,47 @@ def render_nfl_props(g, league, key, staking):
         mean = r["_means"][stat]
         row = {c: r.get(c) for c in ("Player", "Pos", "Team", "Status", "GP")}
         row["Proj"] = round(mean, 2 if stat == "td" else 1)
+        cm = {}
         for i, ln in enumerate(_ladder(mean)):
-            row[("Low", "Mid", "High")[i]] = f"O{ln:g}: {prob_cell(mm.over_prob_pmf(pm, ln))}"
+            pc, _b = delivered_over(mm.over_prob_pmf(pm, ln), stat, ln, (), cal)
+            col = ("Low", "Mid", "High")[i]
+            row[col] = f"O{ln:g}: {prob_cell(pc)}"
+            cm[col] = pc
+        c = (r.get("_dvp") or {}).get(stat)
+        row["Defense vs pos"] = dm.badge(c)
         if r.get("_moved"):
             row["Status"] = (row["Status"] + " · " if row["Status"] else "") + f"new team (was {r['_moved']})"
         table.append(row)
-    table.sort(key=lambda x: -(x["Proj"] or 0))
-    render_trust_row([("NFL player props", None)])
-    st.dataframe(pd.DataFrame(table), hide_index=True, width="stretch", key=f"nflp_tab_{key}_{stat}")
+        chances.append(cm)
+        tiers.append((c or {}).get("tier"))
+    order = sorted(range(len(table)), key=lambda i: -(table[i]["Proj"] or 0))
+    table = [table[i] for i in order]
+    chances = [chances[i] for i in order]
+    tiers = [tiers[i] for i in order]
+    render_trust_row([(labels[stat], verd.get(stat))])
+    df = pd.DataFrame(table)
+
+    def _paint(frame):
+        out = pd.DataFrame("", index=frame.index, columns=frame.columns)
+        for i in frame.index:
+            for col, pc in chances[i].items():
+                out.at[i, col] = chance_css(pc)
+            out.at[i, "Defense vs pos"] = matchup_css(tiers[i])
+        return out
+
+    st.dataframe(painted(df, _paint), hide_index=True, width="stretch",
+                 key=f"nflp_tab_{key}_{stat}")
+    render_chance_legend()
+    tested = verd.get(stat) is not None
     st.caption("Proj = projected line (this season, plus last season at the weight the nightly "
                "measured it is worth). Low / Mid / High = chance he goes OVER that line, with its "
-               "fair price. UNTESTED: NFL prop chances are not graded against outcomes yet, so "
-               "they never reach Top Plays — research, not a recommendation.")
+               "fair price. " + (
+                   "TESTED: the nightly grades every NFL prop week by week on games the model "
+                   "had not seen; the badge above is this stat's verdict against the player's "
+                   "own hit rate, and the chances are what calls like these delivered."
+                   if tested else
+                   "UNTESTED until two weeks of finals exist \u2014 the model's own chances, "
+                   "research, not a recommendation."))
     stats = tuple((s, lab, (0.5,)) for s, lab, *_ in NFL_STATS)
-    _any_line_tool([r for r in rows if r["_pmfs"]], stats, (), {}, f"nfl_{key}", staking, stat)
+    _any_line_tool([r for r in rows if r["_pmfs"]], stats, (), {}, f"nfl_{key}", staking, stat,
+                   calibration=cal)

@@ -431,6 +431,18 @@ def load_or_fetch_prior_players(prior_finals, summary_fn, path=None, sleep=0.05)
     return out
 
 
+def load_or_fetch_prior_dvp_rows(prior_finals):
+    """Last season's player-game lines for the defense table (fetched once,
+    committed with the other NFL prior files)."""
+    import nfl_prop_check as npc
+    # Beside prior_players.json, wherever that points — a test that sends
+    # the prior files to a temp dir sends this one too (the 10-03 lesson:
+    # a test must never write the real record).
+    return npc.load_or_fetch_prior_dvp(prior_finals or [], lambda eid: ef.fetch_summary(LEAGUE, eid),
+                                       parse_summary_final,
+                                       path=Path(PRIOR_PLAYERS_PATH).parent / "prior_dvp.json")
+
+
 def qb_rate_priors(logs):
     """{"qb_priors": {"cmp"|"td"|"int": [mean, strength]}} — per-attempt
     completion, touchdown and interception rates, each a beta-binomial
@@ -1104,6 +1116,7 @@ def main(today=None):
     # LAST SEASON (10-04): every player's 2025 evidence at fitted weights.
     # The 2025 finals are loaded ONCE here and reused by the game model.
     _pf = None
+    prior_players, pw = {}, None
     try:
         import nfl_prior_season as _nps
         _pf = _nps.load_or_fetch(
@@ -1155,6 +1168,43 @@ def main(today=None):
             if tid and tid not in rosters:
                 rosters[tid] = fetch_roster(tid)
     print(f"NFL: {sum(1 for r in rosters.values() if r)}/{len(rosters)} rosters fetched")
+
+    # DEFENSE VS POSITION + THE PROP TEST (10-06, nfl_prop_check). Every
+    # team's roster is read for positions (box scores carry none), not
+    # just this week's. Own try: costs the table and the test, never the
+    # week.
+    dvp_table = None
+    try:
+        import nfl_prop_check as npc
+        for f in finals:
+            for side in ("away", "home"):
+                tid = f.get(f"{side}_id")
+                if tid and tid not in rosters:
+                    rosters[tid] = fetch_roster(tid)
+        pos_of = {pid: info.get("pos") for r in rosters.values() for pid, info in (r or {}).items()}
+        prior_rows = load_or_fetch_prior_dvp_rows(_pf)
+        dvp_table = npc.build_dvp(logs, prior_rows, pos_of)
+        _x = ((dvp_table.get("stats") or {}).get("rush_yds") or {}).get("RB") or {}
+        print(f"  [verify] NFL defense-vs-position: {dvp_table.get('of')} defenses, "
+              f"{len(pos_of)} rostered positions, {len(prior_rows)} 2025 player-game lines; "
+              f"rush yds to RBs league {_x.get('league')}/G weight {_x.get('weight')} "
+              f"reliability {_x.get('reliability')}")
+        res = npc.run(finals, logs, sys.modules[__name__], prior_players or None, pw,
+                      league.get("prop_spreads"))
+        league["prop_validation"] = res
+        if res.get("matchup_in_number"):
+            league["matchup_in_number"] = res["matchup_in_number"]
+        for _fam, _v in (res.get("matchup") or {}).items():
+            print(f"  [verify] NFL defense multiplier ({_fam}): "
+                  f"{(_v.get('verdict') or {}).get('verdict')} z={(_v.get('verdict') or {}).get('z')} "
+                  f"n={_v.get('n')} -> {'IN THE NUMBER' if _v.get('in_number') else 'context only'}")
+        for _stat in npc.DVP_STATS:
+            _v = res.get(_stat) or {}
+            if _v.get("n"):
+                print(f"  [verify] NFL prop {_stat:9s} n={_v['n']} model {_v['model_brier']} vs "
+                      f"his-own-rate {_v['baseline_brier']} -> {(_v.get('verdict') or {}).get('verdict')}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::NFL defense table / prop test failed: {type(exc).__name__}: {exc}")
 
     for g in week_events:
         if g["status"] != "final":
@@ -1276,6 +1326,7 @@ def main(today=None):
         "model": model_block,
         "games": week_events,
         "teams": teams,
+        "dvp": dvp_table,
     }, ensure_ascii=False, indent=2))
     print(f"NFL: wrote games.json (week {wk}, {len(week_events)} games)")
 

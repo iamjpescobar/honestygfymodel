@@ -67,10 +67,10 @@ def plate_appearances(season_df):
     # are ENGINE_COLS): their difference on the PA-ending pitch is the
     # runs that scored on the play — the RBI markets. Absent -> no RBI
     # column, and those markets are left out, never zero-filled.
-    extra = [c for c in ("bat_score", "post_bat_score") if c in season_df.columns]
+    extra = [c for c in ("bat_score", "post_bat_score", "home_team") if c in season_df.columns]
     df = season_df[season_df["events"].notna()][list(need) + extra].copy()
     df = df.drop_duplicates(subset=["game_pk", "at_bat_number"])
-    if len(extra) == 2:
+    if "bat_score" in extra and "post_bat_score" in extra:
         d = pd.to_numeric(df["post_bat_score"], errors="coerce") - pd.to_numeric(
             df["bat_score"], errors="coerce")
         df["rbi"] = d.where((d >= 0) & (d <= 4))
@@ -230,6 +230,56 @@ def fit_prior_weights(btab, ptab, bpri, ppri, starter_bf, prior, league_bf_mean,
     return out, rep
 
 
+def batting_teams(pa):
+    """{(game_pk, side): team abbreviation} for the batting side.
+
+    The home side is the game's home_team. The AWAY side is not in the
+    feed, so it is read from its batters: each batter's team is the
+    home_team of the latest game he batted in the bottom half, and the
+    away side is whatever team most of its batters belong to. A side none
+    of whose batters ever batted at home is left out, never guessed."""
+    if "home_team" not in pa.columns:
+        return {}
+    home = pa[pa["side"] == "home"]
+    bat_team = (home.sort_values("game_date").groupby("batter")["home_team"].last().to_dict())
+    out = {}
+    for (gpk, side), g in pa.groupby(["game_pk", "side"], sort=False):
+        if side == "home":
+            out[(int(gpk), side)] = str(g["home_team"].iloc[0])
+            continue
+        teams = Counter(bat_team.get(int(b)) for b in g["batter"].unique() if bat_team.get(int(b)))
+        if teams:
+            out[(int(gpk), side)] = teams.most_common(1)[0][0]
+    return out
+
+
+def matchup_tables(pa, ptab, model):
+    """{"starter_allowed": ..., "team_batting": ...} for the matchup cards."""
+    from engines import defense_matchup as dm
+    cur = {str(int(pid)): {o: int(r[o]) for o in list(mp.OUTCOMES) + ["PA"]}
+           for pid, r in ptab.iterrows()}
+    starters = list((model.get("starter_bf") or {}).keys())
+    weight = (model.get("prior_weight") or {}).get("pitcher") or 0.0
+    out = {"starter_allowed": dm.mlb_starter_table(
+        cur, model.get("prior_pitchers") or {}, weight, model.get("pitcher_priors"), starters)}
+    bt = batting_teams(pa)
+    if bt:
+        keyed = pa.assign(team=[bt.get((int(g), s)) for g, s in zip(pa["game_pk"], pa["side"])])
+        keyed = keyed[keyed["team"].notna()]
+        tab = _counts_by(keyed, "team")
+        lr = model["league_rates"]
+        league = {st: sum(m * lr[o] for o, m in w.items()) for st, w in dm.MLB_STAT_OUTCOMES.items()}
+        teams = {}
+        for team, r in tab.iterrows():
+            c = {o: int(r[o]) for o in list(mp.OUTCOMES) + ["PA"]}
+            teams[str(team)] = {"pa": c["PA"], **{
+                st: round(sum(m * c[o] for o, m in w.items()) / c["PA"], 4)
+                for st, w in dm.MLB_STAT_OUTCOMES.items()}} if c["PA"] else {"pa": 0}
+        out["team_batting"] = {"teams": teams,
+                               "league": {k: round(v, 4) for k, v in league.items()}}
+    return out
+
+
 def build_prop_model(season_df, out_dir, validation_days=VALIDATION_DAYS, prior=None):
     """Write prop_model.json; returns the dict (or None, printing why)."""
     pa = plate_appearances(season_df)
@@ -285,6 +335,17 @@ def build_prop_model(season_df, out_dir, validation_days=VALIDATION_DAYS, prior=
               f"log-lik gain {({k: v.get('loglik_gain') for k, v in prep.items()})})")
     else:
         print("  [verify] no last-season file — props run on this season alone")
+    # DEFENSE CONTEXT (10-06): every starter's allowed rates (this season,
+    # last, blended at the fitted pitcher weight) ranked among this
+    # season's starters, and each team's batting rates — what the matchup
+    # cards on the prop board read (engines/defense_matchup).
+    try:
+        model.update(matchup_tables(pa, ptab, model))
+        _sa = model.get("starter_allowed") or {}
+        print(f"  [verify] matchup tables: {_sa.get('of')} starters ranked; "
+              f"{len((model.get('team_batting') or {}).get('teams') or {})} team batting lines")
+    except Exception as exc:  # noqa: BLE001 — costs the cards, never the model
+        print(f"::warning::MLB matchup tables failed: {type(exc).__name__}: {exc}")
     model["validation"] = validate(pa, model, validation_days)
     model["pitcher_validation"] = validate_pitchers(pa, model, validation_days)
 
