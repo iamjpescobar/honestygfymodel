@@ -7598,7 +7598,7 @@
           "team": "SD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "661388",
@@ -7606,7 +7606,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "664034",
@@ -7614,7 +7614,7 @@
           "team": "SD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "694192",
@@ -7622,7 +7622,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "665487",
@@ -7630,7 +7630,7 @@
           "team": "SD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "687401",
@@ -7638,7 +7638,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "592885",
@@ -7646,7 +7646,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "593428",
@@ -7654,7 +7654,7 @@
           "team": "SD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "641343",
@@ -7662,7 +7662,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "643289",
@@ -7670,7 +7670,7 @@
           "team": "ATL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "592518",
@@ -7678,7 +7678,7 @@
           "team": "SD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "687957",
@@ -7686,7 +7686,7 @@
           "team": "SD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "668930",
@@ -7694,10 +7694,10 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -8676,10 +8676,10 @@
           "team": "Atlanta Braves",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -11812,7 +11812,7 @@
           "team": "Los Angeles Dodgers",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "621566",
@@ -11820,7 +11820,7 @@
           "team": "Atlanta Braves",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "663586",
@@ -11828,7 +11828,7 @@
           "team": "Atlanta Braves",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "641343",
@@ -11836,7 +11836,7 @@
           "team": "Milwaukee Brewers",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "686948",
@@ -11844,10 +11844,10 @@
           "team": "Atlanta Braves",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -36690,7 +36690,8 @@
           "team": "MIL",
           "stat": "strikeOuts",
           "line": 8.0,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": 669373,
@@ -36698,7 +36699,8 @@
           "team": "LAD",
           "stat": "strikeOuts",
           "line": 6.9,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": 800048,
@@ -36706,7 +36708,8 @@
           "team": "CLE",
           "stat": "strikeOuts",
           "line": 6.5,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": 656876,
@@ -36714,7 +36717,8 @@
           "team": "TB",
           "stat": "strikeOuts",
           "line": 6.4,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": 543037,
@@ -36722,10 +36726,11 @@
           "team": "NYY",
           "stat": "strikeOuts",
           "line": 4.7,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     },
     "2026-10-04": {
