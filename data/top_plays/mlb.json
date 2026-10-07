@@ -305,6 +305,7 @@
    "team": "New York Yankees"
   },
   {
+   "actual": 10,
    "at_least": 4,
    "date": "2026-10-06",
    "fair": -518,
@@ -319,13 +320,14 @@
    "p_cal": 0.8383,
    "player": "Yoshinobu Yamamoto",
    "player_id": "808967",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-06T22:00:00Z",
    "stat": "p_k",
    "team": "Los Angeles Dodgers",
    "why": null
   },
   {
+   "actual": 7,
    "at_least": 4,
    "date": "2026-10-06",
    "fair": -499,
@@ -340,7 +342,7 @@
    "p_cal": 0.833,
    "player": "Chris Sale",
    "player_id": "519242",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-06T22:00:00Z",
    "stat": "p_k",
    "team": "Atlanta Braves",
@@ -368,6 +370,7 @@
    "why": "4.2 expected PA from slot 5 vs Nick Pivetta, then a league-average pen"
   },
   {
+   "actual": 0,
    "at_least": 1,
    "date": "2026-10-06",
    "fair": -314,
@@ -382,13 +385,14 @@
    "p_cal": 0.7585,
    "player": "Teoscar Hern\u00e1ndez",
    "player_id": "606192",
-   "result": null,
+   "result": "miss",
    "start": "2026-10-06T22:00:00Z",
    "stat": "k",
    "team": "Los Angeles Dodgers",
    "why": "4.4 expected PA from slot 3 vs Chris Sale, then a league-average pen"
   },
   {
+   "actual": 1,
    "at_least": 1,
    "date": "2026-10-06",
    "fair": -287,
@@ -403,7 +407,7 @@
    "p_cal": 0.7413,
    "player": "Shohei Ohtani",
    "player_id": "660271",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-06T22:00:00Z",
    "stat": "k",
    "team": "Los Angeles Dodgers",
@@ -424,13 +428,14 @@
    "p_cal": 0.741,
    "player": "Sean Murphy",
    "player_id": "669221",
-   "result": null,
+   "result": "void",
    "start": "2026-10-06T22:00:00Z",
    "stat": "k",
    "team": "Atlanta Braves",
    "why": "4.0 expected PA from slot 7 vs Yoshinobu Yamamoto, then a league-average pen"
   },
   {
+   "actual": 2,
    "at_least": 1,
    "date": "2026-10-06",
    "fair": -284,
@@ -445,7 +450,7 @@
    "p_cal": 0.7393,
    "player": "Austin Riley",
    "player_id": "663586",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-06T22:00:00Z",
    "stat": "k",
    "team": "Atlanta Braves",
@@ -473,6 +478,7 @@
    "why": "4.4 expected PA from slot 3 vs Nick Pivetta, then a league-average pen"
   },
   {
+   "actual": 2,
    "at_least": 1,
    "date": "2026-10-06",
    "fair": -264,
@@ -487,7 +493,7 @@
    "p_cal": 0.7252,
    "player": "Matt Olson",
    "player_id": "621566",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-06T22:00:00Z",
    "stat": "k",
    "team": "Atlanta Braves",
@@ -515,6 +521,7 @@
    "why": "4.5 expected PA from slot 2 vs Nick Pivetta, then a league-average pen"
   },
   {
+   "actual": 2,
    "at_least": 1,
    "date": "2026-10-06",
    "fair": -256,
@@ -529,7 +536,7 @@
    "p_cal": 0.7194,
    "player": "Enrique Hern\u00e1ndez",
    "player_id": "571771",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-06T22:00:00Z",
    "stat": "k",
    "team": "Los Angeles Dodgers",
