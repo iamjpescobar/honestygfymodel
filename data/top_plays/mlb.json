@@ -534,6 +534,27 @@
    "stat": "k",
    "team": "Los Angeles Dodgers",
    "why": "3.8 expected PA from slot 9 vs Chris Sale, then a league-average pen"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-06",
+   "fair": -259,
+   "game": "Milwaukee Brewers @ San Diego Padres",
+   "game_id": "849826",
+   "label": "K O0.5",
+   "logged_at": "2026-10-07T00:37:40+00:00",
+   "market": "k1",
+   "matchup": "Soft matchup \u2014 Nick Pivetta allows the 49th-most of 418 strikeouts to batters (0.263 per plate appearance vs 0.222 league, +18%; ranked on this season + last, blended).",
+   "matchup_tier": "soft",
+   "p": 0.7521,
+   "p_cal": 0.7212,
+   "player": "Christian Yelich",
+   "player_id": "592885",
+   "result": null,
+   "start": "2026-10-07T01:30:00Z",
+   "stat": "k",
+   "team": "Milwaukee Brewers",
+   "why": "4.2 expected PA from slot 5 vs Nick Pivetta, then a league-average pen"
   }
  ]
 }
