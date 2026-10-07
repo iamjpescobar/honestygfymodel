@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-06 15:09",
+  "generated_at_et": "2026-10-06 21:18",
   "week": 5,
   "league": {
     "team_games": 128,
@@ -1050,7 +1050,16 @@
         "opp": "LAR",
         "pos": "RB",
         "gp": 4,
-        "proj": 55,
+        "proj": 54,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyren Williams",
+        "team": "LAR",
+        "opp": "BUF",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 54,
         "window": "Monday Night"
       },
       {
@@ -1059,17 +1068,8 @@
         "opp": "SEA",
         "pos": "RB",
         "gp": 4,
-        "proj": 53,
+        "proj": 52,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Kyren Williams",
-        "team": "LAR",
-        "opp": "BUF",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 53,
-        "window": "Monday Night"
       },
       {
         "player": "Chase Brown",
@@ -1113,7 +1113,7 @@
         "opp": "SF",
         "pos": "WR",
         "gp": 4,
-        "proj": 47,
+        "proj": 46,
         "window": "Sunday Late"
       },
       {
@@ -1153,13 +1153,13 @@
         "window": "Sunday Late"
       },
       {
-        "player": "David Montgomery",
-        "team": "HOU",
-        "opp": "TEN",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 42,
-        "window": "Sunday Early"
+        "player": "Puka Nacua",
+        "team": "LAR",
+        "opp": "BUF",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 43,
+        "window": "Monday Night"
       },
       {
         "player": "De'Von Achane",
@@ -1180,13 +1180,13 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Puka Nacua",
-        "team": "LAR",
-        "opp": "BUF",
-        "pos": "WR",
-        "gp": 2,
-        "proj": 42,
-        "window": "Monday Night"
+        "player": "David Montgomery",
+        "team": "HOU",
+        "opp": "TEN",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 41,
+        "window": "Sunday Early"
       },
       {
         "player": "Tee Higgins",
@@ -1223,15 +1223,6 @@
         "gp": 1,
         "proj": 40,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Nico Collins",
-        "team": "HOU",
-        "opp": "TEN",
-        "pos": "WR",
-        "gp": 2,
-        "proj": 39,
-        "window": "Sunday Early"
       },
       {
         "player": "Jordan Mason",
@@ -1275,6 +1266,15 @@
         "opp": "CHI",
         "pos": "WR",
         "gp": 4,
+        "proj": 38,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Nico Collins",
+        "team": "HOU",
+        "opp": "TEN",
+        "pos": "WR",
+        "gp": 2,
         "proj": 38,
         "window": "Sunday Early"
       },
@@ -5394,7 +5394,7 @@
         "opp": "LAR",
         "pos": "RB",
         "gp": 4,
-        "proj": 18.9,
+        "proj": 18.7,
         "window": "Monday Night"
       },
       {
@@ -5403,7 +5403,7 @@
         "opp": "BUF",
         "pos": "RB",
         "gp": 4,
-        "proj": 17.8,
+        "proj": 18.1,
         "window": "Monday Night"
       },
       {
@@ -5412,7 +5412,7 @@
         "opp": "SEA",
         "pos": "RB",
         "gp": 4,
-        "proj": 17.3,
+        "proj": 17.1,
         "window": "Sunday Late"
       },
       {
@@ -5443,15 +5443,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Jaxon Smith-Njigba",
-        "team": "SEA",
-        "opp": "SF",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 13.6,
-        "window": "Sunday Late"
-      },
-      {
         "player": "Ashton Jeanty",
         "team": "LV",
         "opp": "NE",
@@ -5459,6 +5450,15 @@
         "gp": 4,
         "proj": 13.1,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Jaxon Smith-Njigba",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 13.0,
+        "window": "Sunday Late"
       },
       {
         "player": "Omarion Hampton",
@@ -5475,7 +5475,7 @@
         "opp": "BUF",
         "pos": "WR",
         "gp": 4,
-        "proj": 12.1,
+        "proj": 12.3,
         "window": "Monday Night"
       },
       {
@@ -5502,7 +5502,7 @@
         "opp": "BUF",
         "pos": "WR",
         "gp": 2,
-        "proj": 10.7,
+        "proj": 10.9,
         "window": "Monday Night"
       },
       {
@@ -5512,15 +5512,6 @@
         "pos": "RB",
         "gp": 3,
         "proj": 10.4,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "David Montgomery",
-        "team": "HOU",
-        "opp": "TEN",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 10.2,
         "window": "Sunday Early"
       },
       {
@@ -5539,6 +5530,15 @@
         "pos": "RB",
         "gp": 4,
         "proj": 10.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "David Montgomery",
+        "team": "HOU",
+        "opp": "TEN",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 9.8,
         "window": "Sunday Early"
       },
       {
@@ -5578,15 +5578,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Nico Collins",
-        "team": "HOU",
-        "opp": "TEN",
-        "pos": "WR",
-        "gp": 2,
-        "proj": 8.8,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Jordan Mason",
         "team": "MIN",
         "opp": "NO",
@@ -5611,6 +5602,15 @@
         "pos": "RB",
         "gp": 2,
         "proj": 8.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Nico Collins",
+        "team": "HOU",
+        "opp": "TEN",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 8.5,
         "window": "Sunday Early"
       },
       {
