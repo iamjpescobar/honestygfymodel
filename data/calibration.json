@@ -7809,6 +7809,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-10-08": {
+      "picks": [
+        {
+          "id": "805367",
+          "name": "Chase Meidroth",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "545341",
+          "name": "Randal Grichuk",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666176",
+          "name": "Jo Adell",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686668",
+          "name": "Brenton Doyle",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "808959",
+          "name": "Munetaka Murakami",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "678246",
+          "name": "Miguel Vargas",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691019",
+          "name": "Kyle Teel",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "695731",
+          "name": "Braden Montgomery",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "800050",
+          "name": "Chase DeLauter",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "680757",
+          "name": "Steven Kwan",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "677587",
+          "name": "Brayan Rocchio",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "608070",
+          "name": "Jos\u00e9 Ram\u00edrez",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683953",
+          "name": "Travis Bazzana",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -8804,6 +8914,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-08": {
+      "picks": [
+        {
+          "id": "808959",
+          "name": "Munetaka Murakami",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -12018,6 +12142,36 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-08": {
+      "picks": [
+        {
+          "id": "545341",
+          "name": "Randal Grichuk",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "808959",
+          "name": "Munetaka Murakami",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "678246",
+          "name": "Miguel Vargas",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -37597,6 +37751,28 @@
           "team": "TB",
           "stat": "strikeOuts",
           "line": 3.7,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    },
+    "2026-10-08": {
+      "picks": [
+        {
+          "id": 800048,
+          "name": "Parker Messick (LHP)",
+          "team": "CLE",
+          "stat": "strikeOuts",
+          "line": 6.5,
+          "result": null
+        },
+        {
+          "id": 696146,
+          "name": "Hagen Smith (LHP)",
+          "team": "CWS",
+          "stat": "strikeOuts",
+          "line": 2.2,
           "result": null
         }
       ],
