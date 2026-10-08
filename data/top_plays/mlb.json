@@ -930,6 +930,27 @@
    "stat": "k",
    "team": "Cleveland Guardians",
    "why": "4.1 expected PA from slot 6 vs Hagen Smith, then a league-average pen"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-08",
+   "fair": -202,
+   "game": "Cleveland Guardians @ Chicago White Sox",
+   "game_id": "849832",
+   "label": "K O0.5",
+   "logged_at": "2026-10-08T20:46:30+00:00",
+   "market": "k1",
+   "matchup": "Soft matchup \u2014 Parker Messick allows the 71st-most of 418 strikeouts to batters (0.252 per plate appearance vs 0.222 league, +14%; ranked on this season + last, blended).",
+   "matchup_tier": "soft",
+   "p": 0.6802,
+   "p_cal": 0.6689,
+   "player": "Tommy Pham",
+   "player_id": "502054",
+   "result": null,
+   "start": "2026-10-09T00:00:00Z",
+   "stat": "k",
+   "team": "Chicago White Sox",
+   "why": "4.2 expected PA from slot 5 vs Parker Messick, then a league-average pen"
   }
  ]
 }
