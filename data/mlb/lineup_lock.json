@@ -4,7 +4,7 @@
   "measured_on": "2026-08-19",
   "naive_baseline_pct": 81.7,
   "window_accuracy_pct": 82.2,
-  "generated_at_et": "2026-10-08T06:39:49-04:00",
+  "generated_at_et": "2026-10-08T11:12:58-04:00",
   "slate_date_et": "2026-10-08",
   "teams": {
     "Athletics": {
@@ -2508,23 +2508,6 @@
             }
           }
         },
-        "650559": {
-          "starts": 6,
-          "games": 7,
-          "rate": 0.857,
-          "vs": {
-            "L": {
-              "starts": 3,
-              "games": 3,
-              "rate": 1.0
-            },
-            "R": {
-              "starts": 3,
-              "games": 4,
-              "rate": 0.75
-            }
-          }
-        },
         "702222": {
           "starts": 7,
           "games": 7,
@@ -2539,6 +2522,23 @@
               "starts": 4,
               "games": 4,
               "rate": 1.0
+            }
+          }
+        },
+        "650559": {
+          "starts": 6,
+          "games": 7,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 3,
+              "games": 3,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 3,
+              "games": 4,
+              "rate": 0.75
             }
           }
         },
