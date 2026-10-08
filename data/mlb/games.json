@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-07 20:56",
+  "generated_at_et": "2026-10-07 22:34",
   "slate_date_et": "2026-10-07",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -308,7 +308,7 @@
       "venue": "Petco Park",
       "game_time": "2026-10-08T02:00:00Z",
       "weather_condition": "Clear",
-      "weather_temp": "78",
+      "weather_temp": "81",
       "weather_wind": "6 mph, In From LF",
       "park_factor": 97,
       "park_verified": true,
@@ -325,23 +325,24 @@
         "SLG against: edge Milwaukee Brewers (0.394 vs 0.443)"
       ],
       "ou_lean": "Over",
-      "ou_grade": "C-",
+      "ou_grade": "C",
       "ou_signals": [
         "Park factor 97 (pitcher-friendly)",
+        "Temp 81F (carry weather)",
         "Starters' avg WHIP 1.4 (high)",
         "Starters' avg HR/9 1.36 (high)"
       ],
       "proj_total": 8.6,
       "odds": {
-        "details": "SD -112",
+        "details": "SD -110",
         "total": 7.5,
         "spread": 1.5,
-        "home_ml": -112,
-        "away_ml": -107,
-        "over_price": -114,
-        "under_price": -106,
-        "home_spread_price": -193,
-        "away_spread_price": 158
+        "home_ml": -110,
+        "away_ml": -110,
+        "over_price": 102,
+        "under_price": -123,
+        "home_spread_price": -194,
+        "away_spread_price": 160
       },
       "model": {
         "home_score": 4.12,
@@ -352,9 +353,9 @@
         "fair_home": 130,
         "fair_away": -130,
         "tie_rule_measured": true,
-        "market_home": 0.5055,
-        "market_away": 0.4945,
-        "edge_home": -0.0713,
+        "market_home": 0.5,
+        "market_away": 0.5,
+        "edge_home": -0.0658,
         "market_total": 7.5,
         "p_over": 0.585,
         "fair_over": -141,
@@ -369,10 +370,10 @@
           "total": 0.0,
           "spread": 0.0
         },
-        "p_home_mkt": 0.5055,
-        "p_home_final": 0.5055,
-        "p_over_mkt": 0.5087,
-        "p_over_final": 0.5087,
+        "p_home_mkt": 0.5,
+        "p_home_final": 0.5,
+        "p_over_mkt": 0.473,
+        "p_over_final": 0.473,
         "total_priced": true,
         "starters_used": true,
         "home_starter": {

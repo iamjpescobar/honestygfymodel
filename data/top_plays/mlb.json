@@ -568,6 +568,7 @@
    "why": "4.2 expected PA from slot 5 vs Nick Pivetta, then a league-average pen"
   },
   {
+   "actual": 5,
    "at_least": 4,
    "date": "2026-10-07",
    "fair": -407,
@@ -582,13 +583,14 @@
    "p_cal": 0.8029,
    "player": "Tyler Glasnow",
    "player_id": "607192",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-07T22:00:00Z",
    "stat": "p_k",
    "team": "Los Angeles Dodgers",
    "why": null
   },
   {
+   "actual": 1,
    "at_least": 1,
    "date": "2026-10-07",
    "fair": -304,
@@ -603,13 +605,14 @@
    "p_cal": 0.7524,
    "player": "Austin Riley",
    "player_id": "663586",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-07T22:00:00Z",
    "stat": "k",
    "team": "Atlanta Braves",
    "why": "3.9 expected PA from slot 8 vs Tyler Glasnow, then a league-average pen"
   },
   {
+   "actual": 1,
    "at_least": 1,
    "date": "2026-10-07",
    "fair": -292,
@@ -624,13 +627,14 @@
    "p_cal": 0.7451,
    "player": "Matt Olson",
    "player_id": "621566",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-07T22:00:00Z",
    "stat": "k",
    "team": "Atlanta Braves",
    "why": "4.4 expected PA from slot 3 vs Tyler Glasnow, then a league-average pen"
   },
   {
+   "actual": 0,
    "at_least": 1,
    "date": "2026-10-07",
    "fair": -286,
@@ -645,13 +649,14 @@
    "p_cal": 0.7411,
    "player": "Sean Murphy",
    "player_id": "669221",
-   "result": null,
+   "result": "miss",
    "start": "2026-10-07T22:00:00Z",
    "stat": "k",
    "team": "Atlanta Braves",
    "why": "3.8 expected PA from slot 9 vs Tyler Glasnow, then a league-average pen"
   },
   {
+   "actual": 2,
    "at_least": 1,
    "date": "2026-10-07",
    "fair": -273,
@@ -666,7 +671,7 @@
    "p_cal": 0.7323,
    "player": "Ronald Acu\u00f1a Jr.",
    "player_id": "660670",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-07T22:00:00Z",
    "stat": "k",
    "team": "Atlanta Braves",
