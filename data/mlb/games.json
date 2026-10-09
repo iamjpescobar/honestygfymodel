@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-08 17:59",
+  "generated_at_et": "2026-10-08 21:10",
   "slate_date_et": "2026-10-08",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -12,7 +12,7 @@
       "venue": "Rate Field",
       "game_time": "2026-10-09T00:00:00Z",
       "weather_condition": "Clear",
-      "weather_temp": "64",
+      "weather_temp": "65",
       "weather_wind": "3 mph, In From CF",
       "park_factor": 98,
       "park_verified": true,
@@ -33,7 +33,7 @@
       "ou_grade": "A",
       "ou_signals": [
         "Park factor 98 (pitcher-friendly)",
-        "Temp 64F (cold suppresses)",
+        "Temp 65F (cold suppresses)",
         "Starters' avg WHIP 1.06 (low)",
         "Starters' avg HR/9 0.605 (low)",
         "Starters' avg SLG against 0.273 (low)"
@@ -45,10 +45,10 @@
         "spread": 1.5,
         "home_ml": -102,
         "away_ml": -118,
-        "over_price": -112,
-        "under_price": -107,
-        "home_spread_price": -181,
-        "away_spread_price": 149
+        "over_price": -108,
+        "under_price": -112,
+        "home_spread_price": -184,
+        "away_spread_price": 151
       },
       "model": {
         "home_score": 3.48,
@@ -78,15 +78,15 @@
         },
         "p_home_mkt": 0.4826,
         "p_home_final": 0.4826,
-        "p_over_mkt": 0.5055,
-        "p_over_final": 0.5055,
+        "p_over_mkt": 0.4957,
+        "p_over_final": 0.4957,
         "total_priced": true,
         "market_spread_home": 1.5,
         "p_home_cover": 0.6056,
         "fair_cover_home": -154,
         "fair_cover_away": 154,
-        "p_cover_mkt": 0.616,
-        "p_cover_final": 0.616,
+        "p_cover_mkt": 0.6192,
+        "p_cover_final": 0.6192,
         "spread_priced": true,
         "starters_used": true,
         "home_starter": {
