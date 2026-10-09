@@ -230,7 +230,7 @@ jobs:
         run: |
           # --porcelain, not git diff: a brand-new dated file is
           # untracked, and git diff reports untracked as no change.
-          if [ -z "$(git status --porcelain -- data/nfl/projections data/nfl/prior_season.json data/nfl/prior_players.json data/nfl/prior_dvp.json data/model_picks/nhl.json data/model_picks/nfl.json data/top_plays/nhl.json)" ]; then
+          if [ -z "$(git status --porcelain -- data/nfl/projections data/nfl/prior_season.json data/nfl/prior_players.json data/nfl/prior_dvp.json data/model_picks/nhl.json data/model_picks/nfl.json data/top_plays/nhl.json data/top_plays/nhl_potd.json data/top_plays/nhl_multigoal.json data/top_plays/nhl_multigoal_ranks.json)" ]; then
             echo "No new NFL projections to commit."
           else
             git config user.name "github-actions[bot]"
@@ -248,7 +248,11 @@ jobs:
             # (NHL/NFL only — data/model_picks/mlb.json belongs to slate-picks.)
             # NHL top plays: logged and graded by nhl_precompute (this job
             # owns nhl.json; slate-picks owns mlb.json).
-            for f in data/model_picks/nhl.json data/model_picks/nfl.json data/top_plays/nhl.json; do
+            # NHL Player of the Day, the multi-goal watch and its pre-game
+            # rank snapshots (10-09) — same owner, same step.
+            for f in data/model_picks/nhl.json data/model_picks/nfl.json data/top_plays/nhl.json \
+                     data/top_plays/nhl_potd.json data/top_plays/nhl_multigoal.json \
+                     data/top_plays/nhl_multigoal_ranks.json; do
               if [ -f "$f" ]; then git add "$f"; fi
             done
             git commit -m "chore: log NFL projections [skip ci]"

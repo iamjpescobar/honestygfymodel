@@ -57,6 +57,16 @@ POSITION split moves the chance once the team's total shots and goals
 allowed are already in it (the shots/goals model above). Unless it beats
 on games it had not seen, it is context on the page, not the number.
 
+POWER PLAY (10-09)
+------------------
+Each skater's power-play minutes (season and last 5, from the box
+score's PP TOI column when the feed carries it) and a PP unit read off
+them: his team's top PP_UNIT_SIZE by recent PP minutes are "PP1", the
+next PP_UNIT_SIZE "PP2" (pp_units). CONTEXT ONLY: last season's file has
+no PP minutes, so there is nothing yet to test a PP factor on (rule 1,
+rule 12). Total ice time — which already rises with a PP1 promotion —
+is the part that is in the number.
+
 NOT IN THE NUMBER, stated on the page: tonight's line deployment and
 power-play unit, injuries announced after the nightly, the goalie.
 
@@ -76,6 +86,11 @@ MARKETS = (
     ("pt1", "Pts O0.5", "pts", 1),
     ("pt2", "Pts O1.5", "pts", 2),
     ("g1", "Goal O0.5", "g", 1),
+    # 2+ goals (10-09): same goal mean, same Poisson — tested walk-forward
+    # and calibrated like every other line, so the page can say what a
+    # "9%" multi-goal call has actually delivered. Rare by nature: most
+    # nights even the best candidate misses.
+    ("g2", "Goal O1.5", "g", 2),
     ("a1", "Ast O0.5", "a", 1),
 )
 # Stat groups on the page: (stat, label, lines shown); any other line is
@@ -83,7 +98,7 @@ MARKETS = (
 STATS = (
     ("sog", "Shots on goal", (1.5, 2.5, 3.5, 4.5)),
     ("pts", "Points", (0.5, 1.5)),
-    ("g", "Goals", (0.5,)),
+    ("g", "Goals", (0.5, 1.5)),
     ("a", "Assists", (0.5,)),
 )
 # Goalie saves: (key, label, stat, at_least). Tested at TEAM level on the
@@ -108,6 +123,34 @@ DVP_GROUPS = ("C", "W", "D")
 DVP_STATS = ("sog", "pts", "g", "a")
 DVP_GROUP_LABELS = {"C": "centres", "W": "wingers", "D": "defencemen", "ALL": "skaters"}
 DVP_STAT_LABELS = {"sog": "shots on goal", "pts": "points", "g": "goals", "a": "assists"}
+
+
+PP_UNIT_SIZE = 5
+PP_MIN_MINUTES = 1.0     # under a minute a game on the PP is not a unit
+
+
+def pp_units(rows):
+    """{pid: "PP1" | "PP2" | "-"} for one team's prop rows, by recent
+    (last-5) PP minutes, else season. {} when no row carries PP minutes —
+    unknown, not "nobody plays the power play" (rule 6)."""
+    have = [(r, (r.get("pp") or {}).get("l5")
+             if (r.get("pp") or {}).get("l5") is not None else (r.get("pp") or {}).get("season"))
+            for r in rows or []]
+    have = [(r, m) for r, m in have if m is not None]
+    if not have:
+        return {}
+    have.sort(key=lambda x: -x[1])
+    out = {}
+    for i, (r, m) in enumerate(have):
+        if m < PP_MIN_MINUTES:
+            out[str(r.get("pid"))] = "-"
+        elif i < PP_UNIT_SIZE:
+            out[str(r.get("pid"))] = "PP1"
+        elif i < 2 * PP_UNIT_SIZE:
+            out[str(r.get("pid"))] = "PP2"
+        else:
+            out[str(r.get("pid"))] = "-"
+    return out
 
 
 def group(pos):
@@ -668,6 +711,7 @@ def validate_props(skaters, goal_finals, shot_finals, days=VALIDATION_DAYS,
     return out
 
 
+
 # ----------------------------------------------------------------------
 # Build — called by nhl_precompute with everything it already holds
 # ----------------------------------------------------------------------
@@ -850,7 +894,23 @@ def build(current_finals, prior, current_skaters=None, current_id_of=None, slate
                              "why": why_line(sk.get("name") or p.get("name"), pos, r, env, sc,
                                              opp_abbr, cards.get("sog"),
                                              pr["_exp_sog"], pr["_exp_pts"]),
-                             "probs": {k: pr[k] for k, *_ in MARKETS}})
+                             "probs": {k: pr[k] for k, *_ in MARKETS},
+                             # PP minutes (context, see POWER PLAY above)
+                             "pp": {"season": sk.get("pptoi"), "l5": sk.get("l5_pptoi"),
+                                    "n": sk.get("pptoi_n")},
+                             # his last game vs his team's — the "did he
+                             # play last time out" gate (Player of the Day)
+                             "last_game": ((sk.get("log") or [{}])[-1] or {}).get("date")})
+            units = pp_units(rows)
+            team_last = max((r["last_game"] for r in rows if r.get("last_game")), default=None)
+            for r in rows:
+                r["pp"]["unit"] = units.get(str(r.get("pid")))
+                r["team_last_game"] = team_last
+                _m = r["pp"]["l5"] if r["pp"]["l5"] is not None else r["pp"]["season"]
+                if r["pp"]["unit"] in ("PP1", "PP2") and _m is not None and r.get("why"):
+                    r["why"] += (f" · {r['pp']['unit']} by minutes ({_m:.1f} PP min a game"
+                                 f"{' over his last 5' if r['pp']['l5'] is not None else ''};"
+                                 f" context, not in the number)")
             g[f"{side}_props"] = rows
             g[f"{side}_env"] = {"goal_ratio": round(gr, 3), "shot_ratio": round(sr, 3)}
             # GOALIES of this side face the OTHER side's shots.

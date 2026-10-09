@@ -79,6 +79,7 @@ def nhl_goal_rows(games, model):
     """Every skater on the slate with a goal chance, best first."""
     pv = (model or {}).get("props_validation") or {}
     bins = (pv.get("g1") or {}).get("calibration")
+    bins2 = (pv.get("g2") or {}).get("calibration")
     out = []
     for g in games or []:
         if g.get("game_type") == "preseason":
@@ -101,6 +102,9 @@ def nhl_goal_rows(games, model):
                 if raw is None:
                     continue
                 ch, basis = _delivered(raw, bins)
+                raw2 = (p.get("probs") or {}).get("g2")
+                ch2, _b2 = _delivered(raw2, bins2)
+                pp = p.get("pp") or {}
                 cards = p.get("dvp") or {}
                 ice = p.get("ice") or {}
                 out.append({
@@ -116,9 +120,24 @@ def nhl_goal_rows(games, model):
                     "goalie": (sg or {}).get("name"), "goalie_sv": (sg or {}).get("sv_pct"),
                     "card_g": cards.get("g"), "card_sog": cards.get("sog"),
                     "why": p.get("why"),
+                    # 2+ goals, delivered (10-09)
+                    "chance2": ch2, "raw2": raw2, "fair2": _fair(ch2),
+                    # power play, context (10-09)
+                    "pp_unit": pp.get("unit"), "pp_l5": pp.get("l5"),
+                    "pp_season": pp.get("season"),
+                    "pid": p.get("pid"), "game_id": g.get("event_id"),
+                    "start": g.get("start_et"),
                 })
     out.sort(key=lambda r: -(r["chance"] or 0))
     return out
+
+
+def multi_goal_watch(goal_rows, n=10):
+    """The n skaters most likely to score TWICE tonight, by delivered 2+
+    goal chance. Even the top of this list misses most nights; it is a
+    price list for long shots, not a prediction."""
+    rows = [r for r in goal_rows or [] if r.get("chance2") is not None]
+    return sorted(rows, key=lambda r: -r["chance2"])[:n]
 
 
 def nhl_goalie_rows(games, model, goal_rows=None):
@@ -263,3 +282,147 @@ def nfl_defense_rows(games, dvp, teams=None):
     # the league on those spots) — a +36% hole outranks a +4% one.
     out.sort(key=lambda r: (-r["soft"], -r.get("soft_size", 0.0), r["pa_rank"] or 99))
     return out
+
+
+# ----------------------------------------------------------------------
+# NHL Player of the Day (10-09) — MLB's structure on a tested number
+# ----------------------------------------------------------------------
+# MLB's Player of the Day is the site's best graded board (46% extra-base
+# hits vs a 27% league rate). What makes it work is not its formula; it
+# is one target, strict gates, matchup kept in proportion, and a nightly
+# grade. Hockey keeps all four, on a number that is already tested:
+#
+#   TARGET   1+ point (Pts O0.5) — the most frequent scoring outcome, and
+#            the one the skater model prices best end to end.
+#   GATES    his market's walk-forward verdict is "beats" (no pick off an
+#            untested number); POTD_MIN_GP games across both seasons (no
+#            small-sample crowning); he played his team's last game (a
+#            scratch or an injury shows up as a missed game first).
+#   RANK     the DELIVERED chance (the curve of what calls like it hit on
+#            unseen games). The matchup is already inside it, at the size
+#            it measured — the shot and goal environment, ice time — so
+#            nothing is nudged on top: MLB adds capped nudges because its
+#            score is a 0-100 skill index with no matchup in it. Adding
+#            them here would count the matchup twice.
+#   GRADE    logged before puck drop, graded off the box score nightly
+#            (data/top_plays/nhl_potd.json), judged on the Scorecard.
+POTD_MIN_GP = 20
+POTD_MARKET = "pt1"
+
+
+def nhl_player_of_the_day(games, model, n=5):
+    """(pick, top-n candidates, note). note says why there is no pick."""
+    pv = (model or {}).get("props_validation") or {}
+    v = pv.get(POTD_MARKET) or {}
+    if ((v.get("verdict") or {}).get("verdict")) != "beats":
+        return None, [], ("No pick: the 1+ point line has not beaten the skater's own "
+                          "hit rate on unseen games, and this pick is only made off a "
+                          "tested number.")
+    bins = v.get("calibration")
+    cands, gated = [], {"gp": 0, "missed": 0}
+    for g in games or []:
+        if g.get("game_type") == "preseason":
+            continue
+        for side, other in (("away", "home"), ("home", "away")):
+            for p in g.get(f"{side}_props") or []:
+                raw = (p.get("probs") or {}).get(POTD_MARKET)
+                if raw is None:
+                    continue
+                if (p.get("gp") or 0) < POTD_MIN_GP:
+                    gated["gp"] += 1
+                    continue
+                lg, tl = p.get("last_game"), p.get("team_last_game")
+                if lg and tl and lg < tl:
+                    gated["missed"] += 1
+                    continue
+                ch, basis = _delivered(raw, bins)
+                cards = p.get("dvp") or {}
+                cands.append({
+                    "player": p.get("name"), "pid": p.get("pid"), "pos": p.get("pos"),
+                    "team": g.get(f"{side}_abbr") or g.get(side),
+                    "opp": g.get(f"{other}_abbr") or g.get(other),
+                    "team_name": g.get(side),
+                    "game": f"{g.get('away_abbr')} @ {g.get('home_abbr')}",
+                    "game_label": f"{g.get('away')} @ {g.get('home')}",
+                    "game_id": g.get("event_id"), "start": g.get("start_et"),
+                    "time": g.get("time_et"), "gp": p.get("gp"),
+                    "chance": ch, "raw": raw, "basis": basis, "fair": _fair(ch),
+                    "exp_pts": p.get("exp_pts"), "exp_sog": p.get("exp_sog"),
+                    "ice": p.get("ice") or {}, "pp": p.get("pp") or {},
+                    "card_pts": cards.get("pts"), "why": p.get("why"),
+                    "goal_env": (g.get(f"{side}_env") or {}).get("goal_ratio"),
+                })
+    cands.sort(key=lambda r: (-(r["chance"] or 0), -(r["exp_pts"] or 0)))
+    note = None
+    if not cands:
+        note = (f"No eligible skater tonight ({gated['gp']} under {POTD_MIN_GP} games, "
+                f"{gated['missed']} missed their team's last game).")
+    return (cands[0] if cands else None), cands[:n], note
+
+
+def potd_play(pick, date_str):
+    """The pick in the shape top_plays_board.log_plays records and grades."""
+    if not pick or not pick.get("game_id") or not pick.get("start"):
+        return None
+    return {"sport": "nhl", "game_id": pick["game_id"], "game": pick.get("game_label"),
+            "start": pick["start"], "date": date_str, "player_id": pick["pid"],
+            "player": pick["player"], "team": pick.get("team_name"),
+            "market": POTD_MARKET, "label": "Pts O0.5", "stat": "pts", "at_least": 1,
+            "p": pick["raw"], "p_cal": round(pick["chance"], 4),
+            "fair": mm.fair_american(pick["chance"]), "why": pick.get("why")}
+
+
+# ----------------------------------------------------------------------
+# Multi-goal check (10-09): did the board see tonight's two-goal games?
+# ----------------------------------------------------------------------
+SNAP_TOP = 100
+
+
+def multi_goal_snapshot(goal_rows, top=SNAP_TOP):
+    """The pre-game 2+ goal ranking, kept small: the top `top` names with
+    rank and delivered chance, how many skaters were ranked, and which
+    games it covers (so grading knows when the night is complete)."""
+    rows = sorted((r for r in goal_rows or [] if r.get("chance2") is not None),
+                  key=lambda r: -r["chance2"])
+    return {"n": len(rows),
+            "games": sorted({str(r["game_id"]) for r in rows if r.get("game_id")}),
+            "ranks": {str(r["pid"]): [i + 1, round(r["chance2"], 4), r.get("player"),
+                                      r.get("team")]
+                      for i, r in enumerate(rows[:top]) if r.get("pid")},
+            "scorers": None}
+
+
+def grade_multi_snapshot(snap, box_by_event):
+    """Fill snap["scorers"] once EVERY game in it is final: each skater
+    with 2+ goals, where he ranked before the game (None = outside the
+    kept top). Returns True when it graded something."""
+    if snap.get("scorers") is not None or not snap.get("games"):
+        return False
+    boxes = [box_by_event.get(g) for g in snap["games"]]
+    if not all(b and b.get("final") for b in boxes):
+        return False
+    out = []
+    for b in boxes:
+        for pid, ln in (b.get("players") or {}).items():
+            if (ln.get("g") or 0) >= 2:
+                r = (snap.get("ranks") or {}).get(str(pid))
+                out.append({"pid": str(pid), "name": ln.get("name") or (r[2] if r else None),
+                            "g": ln.get("g"), "rank": r[0] if r else None,
+                            "chance2": r[1] if r else None})
+    snap["scorers"] = sorted(out, key=lambda x: (x["rank"] is None, x["rank"] or 0))
+    return True
+
+
+def multi_check_summary(snaps, top=25):
+    """Over graded nights: multi-goal scorers, how many sat in the board's
+    top `top`, and how many a RANDOM `top` names would have caught (the
+    honest comparison — a list that does no better than random sees
+    nothing)."""
+    nights = [(d, s) for d, s in sorted((snaps or {}).items()) if s.get("scorers") is not None]
+    total = sum(len(s["scorers"]) for _d, s in nights)
+    caught = sum(1 for _d, s in nights for x in s["scorers"]
+                 if x.get("rank") is not None and x["rank"] <= top)
+    random_ = sum(len(s["scorers"]) * min(top, s.get("n") or 0) / s["n"]
+                  for _d, s in nights if s.get("n"))
+    return {"nights": len(nights), "scorers": total, "caught": caught,
+            "random": round(random_, 1), "top": top}

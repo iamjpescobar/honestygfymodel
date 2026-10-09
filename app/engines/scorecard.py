@@ -180,12 +180,18 @@ def board_rows(summary):
 # ----------------------------------------------------------------------
 def top_play_rows(plays_by_sport):
     """{"MLB": [play, ...], "NHL": [...]} — each play carries p_cal (the
-    delivered chance printed on the page) and a result."""
+    delivered chance printed on the page) and a result. A value may also
+    be (sport, plays), with the key as the display name — the other
+    records kept in the same shape (NHL Player of the Day, multi-goal
+    watch)."""
     out = []
-    for sport, plays in (plays_by_sport or {}).items():
+    for key, val in (plays_by_sport or {}).items():
+        if isinstance(val, tuple):
+            (sport, plays), name = val, key
+        else:
+            sport, plays, name = key, val, f"{key} Top Plays"
         g = [p for p in plays or [] if p.get("result") in ("hit", "miss")
              and (p.get("p_cal") if p.get("p_cal") is not None else p.get("p")) is not None]
-        name = f"{sport} Top Plays"
         if not g:
             out.append(_row(name, sport, "no_picks", "promise", 0, 0, None, None,
                             {"n": 0, "hits": 0, "rate": None, "promised": None},

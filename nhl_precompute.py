@@ -21,7 +21,7 @@ before opening night instead of on it.
 import json
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -54,7 +54,17 @@ SKATER = {
     "hits": (("hits",), ("HT", "HIT")),
     "pim": (("penaltyMinutes",), ("PIM",)),
     "toi": (("timeOnIce",), ("TOI",)),
+    # POWER-PLAY minutes (10-09). Whether ESPN's NHL box carries this
+    # column was never confirmed, so it is matched on every spelling seen
+    # across feeds and is simply ABSENT when the feed lacks it (rule 6):
+    # the nightly prints which skater columns it saw and how many lines
+    # carried PP time, which is the probe.
+    "pptoi": (("powerPlayTimeOnIce", "timeOnIcePowerPlay", "powerPlayTOI", "ppTimeOnIce"),
+              ("PPTOI", "PP TOI", "PPTIME")),
 }
+CLOCK_STATS = ("toi", "pptoi")
+# Skater box columns seen this run (keys or labels) — printed once.
+SEEN_SKATER_COLUMNS = set()
 GOALIE = {
     "ga": (("goalsAgainst",), ("GA",)),
     "sa": (("shotsAgainst",), ("SA",)),
@@ -134,6 +144,9 @@ def parse_summary(summary, event_id, game_date, skaters, goalies):
             idx = ef.box_group_index(grp, GOALIE if is_g else SKATER)
             if not idx:
                 continue
+            if not is_g:
+                SEEN_SKATER_COLUMNS.update(str(k) for k in (grp.get("keys") or grp.get("labels")
+                                                            or []))
             for ent in grp.get("athletes") or []:
                 ath = ent.get("athlete") or {}
                 stats = ent.get("stats") or []
@@ -143,7 +156,7 @@ def parse_summary(summary, event_id, game_date, skaters, goalies):
                 for ours, j in idx.items():
                     if j >= len(stats):
                         continue
-                    line[ours] = (ef.clock_minutes(stats[j]) if ours == "toi"
+                    line[ours] = (ef.clock_minutes(stats[j]) if ours in CLOCK_STATS
                                   else ef.num(stats[j]))
                 if not line.get("toi"):
                     continue  # dressed, did not play — not a zero game
@@ -247,6 +260,77 @@ def _rate(vals, cut):
     return round(100.0 * sum(1 for v in vals if v >= cut) / len(vals), 0) if vals else None
 
 
+MULTI_SNAP_FILE = "nhl_multigoal_ranks.json"
+
+
+def nhl_extra_boards(slate, model_block, skaters, date_str, root=None, now=None):
+    """Grade, then log, the two nightly records beside Top Plays —
+    Player of the Day (data/top_plays/nhl_potd.json) and the multi-goal
+    watch (nhl_multigoal.json) — and keep the pre-game 2+ goal ranking
+    (nhl_multigoal_ranks.json) so each night's two-goal scorers can be
+    looked up where the board had them."""
+    import top_plays_log as tpl
+    from engines import edge_boards as eb
+    from engines import top_plays_board as tpb
+    root = Path(root or TOP_PLAYS_ROOT)
+    now = now or datetime.now(timezone.utc)
+    box = tpl.nhl_box_by_event(skaters)
+    # names ride along for the multi-goal check (a scorer outside the kept
+    # ranking still needs one); grading never reads them
+    for _b in box.values():
+        for _pid, _ln in (_b.get("players") or {}).items():
+            _ln["name"] = (skaters.get(_pid) or {}).get("name")
+    games = [g for g in slate or [] if g.get("game_type") != "preseason"]
+
+    _pg, _pv = tpb.grade("nhl_potd", lambda eid: box.get(str(eid)), root=root)
+    pick, _cands, note = eb.nhl_player_of_the_day(games, model_block)
+    play = eb.potd_play(pick, date_str)
+    _pn = tpb.log_plays("nhl_potd", [play] if play else [], now=now, root=root)
+    print(f"  [verify] NHL Player of the Day: graded {_pg}, voided {_pv}; pick "
+          f"{(pick or {}).get('player')} {round(100 * pick['chance'], 1) if pick else ''}% "
+          f"1+ point ({_pn} new logged){'' if pick else ' - ' + str(note)}")
+
+    rows = eb.nhl_goal_rows(games, model_block)
+    _mg, _mv = tpb.grade("nhl_multigoal", lambda eid: box.get(str(eid)), root=root)
+    watch = [{"sport": "nhl", "game_id": r["game_id"], "game": r["game"], "start": r["start"],
+              "date": date_str, "player_id": r["pid"], "player": r["player"],
+              "team": r["team"], "market": "g2", "label": "Goal O1.5", "stat": "g",
+              "at_least": 2, "p": r["raw2"], "p_cal": round(r["chance2"], 4),
+              "fair": mm_fair(r["chance2"]), "why": r.get("why")}
+             for r in eb.multi_goal_watch(rows, 10) if r.get("pid") and r.get("start")]
+    _mn = tpb.log_plays("nhl_multigoal", watch, now=now, root=root)
+
+    path = root / MULTI_SNAP_FILE
+    snaps = json.loads(path.read_text()) if path.exists() else {}
+    graded = sum(1 for s in snaps.values() if eb.grade_multi_snapshot(s, box))
+    upcoming = [r for r in rows if _not_started(r.get("start"), now)]
+    added = 0
+    if upcoming and date_str not in snaps:
+        snaps[date_str] = eb.multi_goal_snapshot(upcoming)
+        added = 1
+    if graded or added:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(snaps, indent=1, sort_keys=True))
+    sm = eb.multi_check_summary(snaps)
+    print(f"  [verify] NHL multi-goal watch: graded {_mg}, voided {_mv}, {_mn} new logged; "
+          f"check: {graded} night(s) graded, {added} snapshot added; so far "
+          f"{sm['caught']} of {sm['scorers']} two-goal scorers were in the top {sm['top']} "
+          f"(a random {sm['top']} would catch {sm['random']})")
+
+
+def mm_fair(p):
+    from engines import model_math as mm
+    return mm.fair_american(p) if p is not None and 0 < p < 1 else None
+
+
+def _not_started(start, now):
+    try:
+        t = datetime.fromisoformat(str(start).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return False
+    return t.tzinfo is not None and t > now
+
+
 def skater_summaries(skaters, regular_ids):
     out = {}
     for pid, rec in skaters.items():
@@ -256,7 +340,7 @@ def skater_summaries(skaters, regular_ids):
             continue
         s = {"pid": pid, "name": rec["name"], "pos": rec.get("pos") or "",
              "team": rec.get("team"), "abbr": rec.get("abbr"), "gp": len(gs)}
-        for k in ("sog", "pts", "g", "a", "toi", "hits", "blk"):
+        for k in ("sog", "pts", "g", "a", "toi", "pptoi", "hits", "blk"):
             nd = 1 if k == "toi" else 2
             s[k] = _avg([g.get(k) for g in gs], nd)
             s[f"l5_{k}"] = _avg([g.get(k) for g in gs[-5:]], nd)
@@ -264,6 +348,9 @@ def skater_summaries(skaters, regular_ids):
         s["sog2_rate"] = _rate([g.get("sog") for g in gs], 2)
         s["sog3_rate"] = _rate([g.get("sog") for g in gs], 3)
         s["pt1_rate"] = _rate([g.get("pts") for g in gs], 1)
+        # how many of his games carried a PP-time cell at all — so 0.0
+        # (no PP time) and "column missing" never read as the same thing
+        s["pptoi_n"] = sum(1 for g in gs if g.get("pptoi") is not None)
         s["log"] = [{"date": g["date"], "opp": g.get("opp"), "sog": g.get("sog"),
                      "pts": g.get("pts"), "toi": g.get("toi")} for g in gs[-10:]]
         out[pid] = s
@@ -456,6 +543,15 @@ def main(today=None):
         top = max(sk.values(), key=lambda p: p.get("sog") or 0)
         print(f"  [verify] SOG leader parsed: {top['name']} ({top['abbr']}) "
               f"{top['sog']} per game over {top['gp']} GP")
+    # THE PP PROBE (10-09): which columns ESPN's skater box carried, and
+    # how many parsed skater-games have power-play minutes.
+    print(f"  [verify] NHL skater box columns: {sorted(SEEN_SKATER_COLUMNS)}")
+    _pp_lines = [ln for rec in skaters.values() for eid, ln in rec["games"].items()
+                 if eid in regular_ids]
+    print(f"  [verify] NHL PP time: {sum(1 for ln in _pp_lines if ln.get('pptoi') is not None)} "
+          f"of {len(_pp_lines)} regular-season skater lines carry PP minutes"
+          + ("" if any(ln.get("pptoi") is not None for ln in _pp_lines) else
+             " -> NOT IN THE FEED; PP columns stay blank (the NHL's own API is the fallback)"))
     if gk:
         g0 = max(gk.values(), key=lambda p: p.get("starts") or 0)
         print(f"  [verify] most starts: {g0['name']} ({g0['abbr']}) "
@@ -577,6 +673,14 @@ def main(today=None):
                       f"selected, {_n} new logged")
             except Exception as exc:  # noqa: BLE001
                 print(f"::warning::NHL top plays failed: {type(exc).__name__}: {exc}")
+            # PLAYER OF THE DAY, MULTI-GOAL WATCH and the MULTI-GOAL CHECK
+            # (10-09, engines/edge_boards). Own try: costs these, never the
+            # model or the slate.
+            try:
+                nhl_extra_boards(slate, model_block, skaters, slate_date.isoformat())
+            except Exception as exc:  # noqa: BLE001
+                print(f"::warning::NHL POTD / multi-goal boards failed: "
+                      f"{type(exc).__name__}: {exc}")
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NHL model failed: {type(exc).__name__}: {exc}")
 

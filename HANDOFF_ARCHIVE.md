@@ -10,6 +10,71 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — MLB game model + props, every number fitted or measured. 2026-10-03 (2)
+
+**Suite 117, FAILING: none.** Six negative controls red by exit code.
+Built and tested against simulated seasons in statsapi's / Statcast's
+real shapes — the audit box cannot reach either. **First real run is
+the nightly: dispatch Nightly Statcast Data once, read the [verify]
+lines, then open MLB -> Model.**
+
+### WHAT IT IS
+
+`engines/game_model.py` (shared with NHL): offense x opponent defense /
+league x home multiplier per side -> negative-binomial runs -> win %,
+fair line, total. `engines/model_math.py` holds the distributions, odds
+and fitters, once, for every sport. MLB adds a STARTER LAYER
+(`engines/mlb_game_model.py`): his share of the game (outs/start) and
+his RA9, each shrunk by a gamma-Poisson prior fitted over every starter.
+
+Nothing chosen by eye: shrink_k is fitted by walk-forward log loss,
+dispersion by method of moments on the residuals, home/road and the
+extra-inning home win rate are measured. **The starter layer is only
+used if the walk-forward says it beats team-only** (`use_starters`).
+
+Props (`engines/mlb_props.py`, builder `mlb_prop_precompute.py`, called
+from precompute.main on the season frame it already holds): per-PA
+outcomes by odds-ratio (batter x pitcher / league), beta-binomial priors
+fitted per outcome, PA count from slot + the measured team-PA histogram,
+starter exposure from his real batters-faced. Each market is scored
+walk-forward over the last 30 days against the player's OWN hit rate;
+markets that do not beat it are starred on the page.
+
+### WHAT TO CHECK IN THE FIRST NIGHTLY LOG
+
+    [verify] N finals ... with both starters      -> ~2,400, nearly all
+    starters used: True/False (team-only X, with starters Y)
+    [verify] Hits O0.5 ... BEATS / does not beat baseline   (x5 markets)
+
+A market that does not beat baseline is a FINDING, not a bug — rule 10.
+
+### THE BUG THE FIRST DRAFT HAD
+
+`clean_finals` rebuilt each row from five fields and dropped the starter
+ids, so "with starters" scored identical to team-only to four decimals.
+Rows now carry every key; asserted, control red.
+
+### KNOWN LIMITS, STATED ON THE PAGE
+
+Props leave out park, weather, platoon and the specific bullpen. Starter
+priors are fitted on full-season totals (two numbers of look-ahead).
+`inning_topbot` rides in the season frame only (MODEL_COLS) and never
+reaches a per-player parquet, so ENGINE_COLS == _KEEP_COLS still holds.
+Not yet done: calibration_picks does not write the model into
+games.json, so Home's best-games card does not use it.
+
+### FILES, 2026-10-03 (2)
+
+    app/engines/{model_math,game_model,mlb_game_model,mlb_props,model_view}.py  NEW
+    app/views/MLB_Model.py              NEW page, listed after Game Card
+    mlb_model_precompute.py, mlb_prop_precompute.py                  NEW
+    app/views/GameCard.py               Game Model card + prop expander
+    app/views/Home.py                   Explore card for Model (test_home)
+    app/app.py, precompute.py, .github/workflows/nightly-data.yml
+    tests/test_game_model.py, tests/test_mlb_props.py                NEW
+
+---
+
 ## PICK UP HERE — audit before the model: clean, plus one time bomb defused. 2026-10-03
 
 **Suite 115, FAILING: none.** One negative control red by exit code.

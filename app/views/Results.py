@@ -301,6 +301,10 @@ def _render_scorecard(sums):
     from engines import scorecard as _sc
     from engines import top_plays_board as _tpb
     plays = {s.upper(): _tpb.load(s).get("plays") or [] for s in _tpb.SPORTS}
+    # the other records kept in Top Plays' shape (10-09)
+    for _file, _name in (("nhl_potd", "NHL Player of the Day"),
+                         ("nhl_multigoal", "NHL multi-goal watch")):
+        plays[_name] = ("NHL", _tpb.load(_file).get("plays") or [])
     picks = {s.upper(): _mpk.load(s).get("picks") or [] for s in _mpk.SPORTS}
     rows = _sc.all_rows(sums, plays, picks)
     h = _sc.headline(rows)

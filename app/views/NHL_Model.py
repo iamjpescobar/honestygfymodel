@@ -153,8 +153,14 @@ for i, g in enumerate(games or []):
                 _opp = h if side == "away" else a
                 for p in g.get(f"{side}_props") or []:
                     ice = p.get("ice") or {}
+                    _pp = p.get("pp") or {}
+                    _ppm = _pp.get("l5") if _pp.get("l5") is not None else _pp.get("season")
                     row = {"Skater": p.get("name"), "Pos": p.get("pos"), "GP": p.get("gp"),
                            "TOI recent": ice.get("recent"), "TOI norm": ice.get("base"),
+                           # PP unit by minutes · PP min a game (context, 10-09)
+                           "PP": ("—" if _ppm is None else
+                                  f"{_pp.get('unit')} · {_ppm:.1f}"
+                                  if _pp.get("unit") not in (None, "-") else f"{_ppm:.1f}"),
                            "Exp SOG": p.get("exp_sog"), "Exp Pts": p.get("exp_pts"),
                            "_name": p.get("name"), "_probs": p.get("probs") or {},
                            "_pmfs": nm.skater_pmfs(p.get("mu"), _sog_disp),
@@ -166,7 +172,8 @@ for i, g in enumerate(games or []):
                 if any(r["_pmfs"] for r in rows):
                     mv.render_prop_board(rows, nm.STATS, nm.MARKETS, verdicts,
                                          key=f"nhlm_{i}_{side}", staking=_stk,
-                                         info_cols=("Skater", "Pos", "GP", "TOI recent", "TOI norm"),
+                                         info_cols=("Skater", "Pos", "GP", "TOI recent", "TOI norm",
+                                                    "PP"),
                                          calibration=_cal)
                 else:
                     # a games.json from before the any-line build: the
@@ -203,6 +210,9 @@ for i, g in enumerate(games or []):
                 "expects his team to get tonight. TOI recent / TOI norm = his average minutes over "
                 f"his last {_toi_window()} games vs over the games his rate is built on. "
                 + (_in_number_note() + ". " if _in_number_note() else "") +
+                "PP = power-play unit by minutes (PP1 = his team's top 5 in PP time over the "
+                "last 5) and PP minutes a game — shown as context: there is no past season of "
+                "PP minutes to test it on yet. "
                 "NOT in the number: tonight's lines and PP units, late scratches, the opposing "
                 "goalie. GP counts both seasons.")
 

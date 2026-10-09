@@ -53,6 +53,12 @@ how_to_read([
                      "shooter. See Goalies to Target."),
     ("Def vs pos", "What tonight's opponent allows in GOALS to his position. Goal rankings "
                    "measured as mostly noise — a tiebreaker, not a reason."),
+    ("2+ Goals %", "His chance to score TWICE, delivered the same way. Last season the "
+                   "model's 10%+ two-goal calls landed about 6.5%, so the top of this column "
+                   "is pulled down to what such calls really did. A long shot by nature."),
+    ("PP", "Power-play unit by minutes (PP1 = his team's top 5 in PP time over the last 5 "
+           "games) and his PP minutes a game. Context: shown, not in the chance — there is "
+           "no past season of PP minutes to test it on yet."),
 ])
 
 if not rows:
@@ -60,6 +66,54 @@ if not rows:
     st.info(_n or "Goal Edge fills in after the nightly builds tonight's NHL model.")
     footer()
     st.stop()
+
+def _render_multi_check():
+    """Did the board see the two-goal games? Each graded night's 2+ goal
+    scorers, where the pre-game ranking had them, and the honest yardstick
+    — how many a random list of the same size would have caught."""
+    import json as _json
+    snaps = {}
+    try:
+        _p = eb.tpb.DIR / "nhl_multigoal_ranks.json"
+        snaps = _json.loads(_p.read_text()) if _p.exists() else {}
+    except Exception:  # noqa: BLE001
+        snaps = {}
+    sm = eb.multi_check_summary(snaps)
+    with st.expander("Did we see the two-goal games? (graded nightly)"):
+        if not sm["nights"]:
+            st.caption("Fills in after the first graded night: each night the board's "
+                       "pre-game 2+ goal ranking is kept, and the next morning every "
+                       "two-goal scorer is looked up in it.")
+            return
+        st.markdown(
+            f"**{sm['caught']} of {sm['scorers']}** two-goal scorers over {sm['nights']} "
+            f"night(s) were in our top {sm['top']}. A random {sm['top']} names would have "
+            f"caught about **{sm['random']}**. Above that = the ranking sees something; "
+            f"at it = it doesn't. Read over weeks.")
+        recent = []
+        for d, s_ in sorted(snaps.items(), reverse=True):
+            for x in (s_.get("scorers") or []):
+                recent.append({"Date": d, "Scorer": x.get("name") or "—", "Goals": x.get("g"),
+                               "Our rank": (f"{x['rank']} of {s_.get('n')}" if x.get("rank")
+                                            else f"outside top {eb.SNAP_TOP}"),
+                               "2+ Goals %": ("—" if x.get("chance2") is None
+                                              else f"{100 * x['chance2']:.1f}%")})
+            if len(recent) >= 40:
+                break
+        if recent:
+            st.dataframe(pd.DataFrame(recent), hide_index=True, width="stretch",
+                         key="ge_multi_check")
+
+
+def _pp(r):
+    """'PP1 · 3.1' (unit · PP minutes a game, last 5 else season), or a
+    dash when the feed carried no PP minutes for him (unknown, not zero)."""
+    m = r.get("pp_l5") if r.get("pp_l5") is not None else r.get("pp_season")
+    if m is None:
+        return "—"
+    u = r.get("pp_unit")
+    return f"{u} · {m:.1f}" if u and u != "-" else f"{m:.1f}"
+
 
 _stk = mv.staking_controls("nhl_goal_edge")
 c1, c2 = st.columns([2, 1])
@@ -84,10 +138,15 @@ with card("ge_board"):
     def _env(x):
         return "—" if x is None else f"{100 * (x - 1):+.0f}%"
 
+    def _pct1(x):
+        return "—" if x is None else f"{100 * x:.1f}%"
+
 
     df = pd.DataFrame([{
         "Player": r["player"], "Pos": r["pos"], "Goal %": _pct(r["chance"]),
         "Worth it at": r["fair"], "Def vs pos": dm.badge(r["card_g"]),
+        "2+ Goals %": _pct1(r.get("chance2")), "2+ worth it at": r.get("fair2") or "—",
+        "PP": _pp(r),
         "Exp G": r["exp_g"], "Exp SOG": r["exp_sog"], "Team": r["team"], "Opp": r["opp"],
         "Goalie": r["goalie"] or "—",
         "Goalie SV%": (f"{r['goalie_sv']:.3f}" if r["goalie_sv"] is not None else "—"),
@@ -101,6 +160,8 @@ with card("ge_board"):
         for i in frame.index:
             out.at[i, "Goal %"] = mv.chance_css(show[i]["chance"])
             out.at[i, "Def vs pos"] = mv.matchup_css((show[i]["card_g"] or {}).get("tier"))
+            if show[i].get("pp_unit") == "PP1":
+                out.at[i, "PP"] = f"color: {COLOR['accent']}; font-weight: 700;"
         return out
 
     st.dataframe(mv.painted(df, _paint), hide_index=True, width="stretch", key="ge_tab")
@@ -111,6 +172,30 @@ with card("ge_board"):
                f"{mv.trust_label(_v)}. Point % is the chance of 1+ point, from the same "
                f"model. NOT in the number: tonight's line combinations and power-play units, "
                f"late scratches, and which goalie actually starts.")
+
+with card("ge_multi"):
+    st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">'
+                f'Multi-goal watch — most likely to score twice</div>',
+                unsafe_allow_html=True)
+    _mw = eb.multi_goal_watch(rows, 10)
+    if not _mw:
+        st.caption("2+ goal chances appear after the next nightly build.")
+    else:
+        _mdf = pd.DataFrame([{
+            "Player": r["player"], "2+ Goals %": _pct1(r["chance2"]),
+            "Worth it at": r["fair2"], "Goal %": _pct(r["chance"]), "PP": _pp(r),
+            "Exp G": r["exp_g"], "Team": r["team"], "Opp": r["opp"],
+            "Goalie": r["goalie"] or "—"} for r in _mw])
+        st.dataframe(mv.painted(_mdf, lambda f: pd.DataFrame("", index=f.index,
+                                                            columns=f.columns)),
+                     hide_index=True, width="stretch", key="ge_multi_tab")
+        _t2 = ((model.get("props_validation") or {}).get("g2") or {})
+        st.caption(
+            "A night with 10+ games usually has several two-goal games, but even the top "
+            "name here misses about 9 nights in 10. The only edge is PRICE: bet one only when "
+            "your book pays MORE than “Worth it at”. Goal O1.5 tested on last season's "
+            f"unseen games: {mv.trust_label((_t2.get('verdict') or {}).get('verdict'))}.")
+        _render_multi_check()
 
 with card("ge_check"):
     st.markdown("**Check a goal at your book's price**")

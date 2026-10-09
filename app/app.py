@@ -323,6 +323,8 @@ SPORT_SUBPAGES = {
         # Hockey's HR Edge and Pitchers to Target (10-06).
         ("Goal Edge", "views/NHL_Goal_Edge.py"),
         ("Goalies to Target", "views/NHL_Goalies_To_Target.py"),
+        # MLB's Player of the Day structure on the tested 1+ point line (10-09).
+        ("Player of the Day", "views/NHL_Player_Of_The_Day.py"),
     ],
 }
 

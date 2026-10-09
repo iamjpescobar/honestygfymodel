@@ -154,6 +154,58 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — NHL: power-play minutes, 2+ goals, Player of the Day, the multi-goal check. 2026-10-09
+
+**Suite 131 (+ test_nhl_pp_potd), FAILING: none.** Three negative controls red
+by exit code (listed in the test). Goal Edge, NHL Player of the Day, NHL
+Model, Top Plays and Results rendered headless against the 10-06 archive
+both as-is (old games.json: no exceptions) and with the new fields added.
+
+WHY: Izzy asked whether PP minutes are in the NHL model (they were not),
+why nobody could see the night's multi-goal scorers coming, and for MLB's
+Player of the Day structure in hockey.
+
+POWER PLAY — CONTEXT ONLY. nhl_precompute.SKATER gains "pptoi" (ESPN's
+PP TOI column under every spelling seen; ABSENT when the feed lacks it,
+rule 6). The nightly prints the skater box columns it saw and how many
+lines carried PP minutes: THAT IS THE PROBE — read it on the first run.
+If ESPN has no PP column, the NHL's own API is the fallback (not built).
+nhl_model.pp_units: PP1 = team's top 5 by last-5 PP minutes, PP2 next 5,
+under 1.0 min none; {} when nobody has PP minutes (unknown, not zero).
+Not in the number: prior_season.json has no PP minutes, so nothing to
+test on yet. NEXT: once this season has ~60 days of PP lines, test a PP
+factor walk-forward the way fit_toi was (adopt only on "beats").
+
+2+ GOALS: ("g2", "Goal O1.5", "g", 2) added to MARKETS; Goals board
+offers 1.5. Last season walk-forward: BEATS his own rate (z 4.86,
+n 17,343). Calibration: calls of 10-19% (n 92) delivered 6.5% vs 11.5%
+called — the delivered chance pulls the top of the list down to that.
+Tried equal-count calibration bands for crowded markets (2+ goals has 98%
+of calls under 10%); cross-fitted vs the 10-point bands: g2 thin (z 1.8),
+pt2 thin, sog4 WORSE (z -2.4) -> not adopted, 10-point bands kept.
+
+PLAYER OF THE DAY (edge_boards.nhl_player_of_the_day, views/
+NHL_Player_Of_The_Day.py, NHL nav): 1+ point, gates = pt1 verdict beats,
+20+ games both seasons, played his team's last game (nhl_model rows now
+carry last_game / team_last_game). Ranked by DELIVERED chance; no matchup
+nudges on top (already inside the chance — MLB nudges because its score
+has none). Logged + graded nightly to data/top_plays/nhl_potd.json.
+
+MULTI-GOAL WATCH + CHECK: top 10 by delivered 2+ goal chance logged to
+nhl_multigoal.json (graded like Top Plays). nhl_multigoal_ranks.json keeps
+each night's top-100 pre-game ranking; once every game of the night is
+final, the two-goal scorers are recorded with their rank. Goal Edge shows
+"X of Y were in our top 25; a random 25 would catch Z" — the yardstick.
+Both new records are on the Results scorecard. nightly-data.yml commits
+all three files.
+
+FILES: nhl_precompute.py, app/engines/{nhl_model,edge_boards,scorecard}.py,
+app/views/{NHL_Goal_Edge,NHL_Model,Results}.py, app/app.py,
+app/views/NHL_Player_Of_The_Day.py + tests/test_nhl_pp_potd.py (NEW),
+.github/workflows/nightly-data.yml, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — the Model Scorecard, and the NFL totals were already fixed. 2026-10-08
 
 **Suite 130 (+ test_scorecard), FAILING: none.** Three negative controls red by
@@ -951,68 +1003,3 @@ against no prior file and stays a parser test.
     app/engines/espn_feed.py  moneylines in odds_of
     app/app.py                NHL -> Model subpage
     tests/test_nhl_pipeline.py, tests/test_nfl_nhl_wiring.py
-
----
-
-## PICK UP HERE — MLB game model + props, every number fitted or measured. 2026-10-03 (2)
-
-**Suite 117, FAILING: none.** Six negative controls red by exit code.
-Built and tested against simulated seasons in statsapi's / Statcast's
-real shapes — the audit box cannot reach either. **First real run is
-the nightly: dispatch Nightly Statcast Data once, read the [verify]
-lines, then open MLB -> Model.**
-
-### WHAT IT IS
-
-`engines/game_model.py` (shared with NHL): offense x opponent defense /
-league x home multiplier per side -> negative-binomial runs -> win %,
-fair line, total. `engines/model_math.py` holds the distributions, odds
-and fitters, once, for every sport. MLB adds a STARTER LAYER
-(`engines/mlb_game_model.py`): his share of the game (outs/start) and
-his RA9, each shrunk by a gamma-Poisson prior fitted over every starter.
-
-Nothing chosen by eye: shrink_k is fitted by walk-forward log loss,
-dispersion by method of moments on the residuals, home/road and the
-extra-inning home win rate are measured. **The starter layer is only
-used if the walk-forward says it beats team-only** (`use_starters`).
-
-Props (`engines/mlb_props.py`, builder `mlb_prop_precompute.py`, called
-from precompute.main on the season frame it already holds): per-PA
-outcomes by odds-ratio (batter x pitcher / league), beta-binomial priors
-fitted per outcome, PA count from slot + the measured team-PA histogram,
-starter exposure from his real batters-faced. Each market is scored
-walk-forward over the last 30 days against the player's OWN hit rate;
-markets that do not beat it are starred on the page.
-
-### WHAT TO CHECK IN THE FIRST NIGHTLY LOG
-
-    [verify] N finals ... with both starters      -> ~2,400, nearly all
-    starters used: True/False (team-only X, with starters Y)
-    [verify] Hits O0.5 ... BEATS / does not beat baseline   (x5 markets)
-
-A market that does not beat baseline is a FINDING, not a bug — rule 10.
-
-### THE BUG THE FIRST DRAFT HAD
-
-`clean_finals` rebuilt each row from five fields and dropped the starter
-ids, so "with starters" scored identical to team-only to four decimals.
-Rows now carry every key; asserted, control red.
-
-### KNOWN LIMITS, STATED ON THE PAGE
-
-Props leave out park, weather, platoon and the specific bullpen. Starter
-priors are fitted on full-season totals (two numbers of look-ahead).
-`inning_topbot` rides in the season frame only (MODEL_COLS) and never
-reaches a per-player parquet, so ENGINE_COLS == _KEEP_COLS still holds.
-Not yet done: calibration_picks does not write the model into
-games.json, so Home's best-games card does not use it.
-
-### FILES, 2026-10-03 (2)
-
-    app/engines/{model_math,game_model,mlb_game_model,mlb_props,model_view}.py  NEW
-    app/views/MLB_Model.py              NEW page, listed after Game Card
-    mlb_model_precompute.py, mlb_prop_precompute.py                  NEW
-    app/views/GameCard.py               Game Model card + prop expander
-    app/views/Home.py                   Explore card for Model (test_home)
-    app/app.py, precompute.py, .github/workflows/nightly-data.yml
-    tests/test_game_model.py, tests/test_mlb_props.py                NEW
