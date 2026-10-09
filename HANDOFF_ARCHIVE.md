@@ -10,6 +10,41 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — audit before the model: clean, plus one time bomb defused. 2026-10-03
+
+**Suite 115, FAILING: none.** One negative control red by exit code.
+Audited on a bare container: all 114 prior scripts green, compiles under
+a real 3.11, pyflakes zero undefined names, every view rendered in
+AppTest with zero exceptions (offline — live feeds are blocked from the
+audit box, so this proves no-crash paths, not live numbers).
+
+### THE ONE REAL FINDING
+
+Eight call sites still passed `use_container_width=`, which Streamlit
+marks "will be removed after 2025-12-31". 1.59.2 still accepts it, so
+nothing was broken — but app.py's nav uses it, so the first Streamlit
+bump that drops it takes down EVERY page at once. All eight now use
+`width="stretch"` / `width="content"` (Home keeps its compact switch).
+`tests/test_no_deprecated_width.py` is tokenize-based, so the word in a
+comment never counts, and self-checks its own detector first.
+
+### HOUSEKEEPING
+
+`dedupe-fix.zip` deleted from the repo root — byte-identical to the
+09-27 (4) batch already on main. `*.zip` was listed twice in
+.gitignore. README now names NFL/NHL and the real suite size.
+
+### FILES, 2026-10-03
+
+    app/app.py, app/views/{Home,HR_Edge_Board,GameCard}.py
+    app/engines/{bvp,trend_chart,calibration_trend}.py
+    tests/test_no_deprecated_width.py   NEW
+    README.md, HANDOFF.md, .gitignore   dedupe-fix.zip DELETED
+
+---
+
+---
+
 ## PICK UP HERE — 49 entries for 16 games, and two dead pages. 2026-09-27 (4)
 
 **Suite 114, FAILING: none.** Eight negative controls red by exit code.

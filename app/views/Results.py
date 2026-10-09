@@ -293,6 +293,81 @@ def _render_board(board, cfg, s, days):
             _render_markets(days, stats)
 
 
+def _render_scorecard(sums):
+    """Every graded model on one screen, one verdict each, problems first
+    (engines/scorecard). Cards rather than a table: each one wraps on a
+    phone or iPad instead of scrolling sideways, and the verdict chip is
+    the first thing in every card."""
+    from engines import scorecard as _sc
+    from engines import top_plays_board as _tpb
+    plays = {s.upper(): _tpb.load(s).get("plays") or [] for s in _tpb.SPORTS}
+    picks = {s.upper(): _mpk.load(s).get("picks") or [] for s in _mpk.SPORTS}
+    rows = _sc.all_rows(sums, plays, picks)
+    h = _sc.headline(rows)
+
+    st.markdown(_section_tag("Scorecard — every model at a glance"), unsafe_allow_html=True)
+    parts = [f'<b style="color:{COLOR["stat_high"]};">{h["beating"]} beating</b>',
+             f'<b style="color:{COLOR["accent"]};">{h["on_target"]} on target</b>']
+    if h["no_edge"]:
+        parts.append(f'<b style="color:{COLOR["warn"]};">{h["no_edge"]} no edge yet</b>')
+    parts.append(f'<b style="color:{COLOR["error"] if h["slipping"] else COLOR["text_muted"]};">'
+                 f'{h["slipping"]} slipping</b>')
+    if h["early"]:
+        parts.append(f'<span style="color:{COLOR["text_faint"]};">{h["early"]} too early</span>')
+    st.markdown(f'<div style="font-size:var(--lc-text-body); color:{COLOR["text"]}; '
+                f'margin-bottom:var(--lc-space-md);">' + " · ".join(parts) + "</div>",
+                unsafe_allow_html=True)
+    st.caption(
+        "BEATING = above the bar it has to beat by more than luck explains. ON TARGET = "
+        "lands what it promised, so its printed chance is safe to compare with your book. "
+        "NO EDGE YET = not separable from the league rate. SLIPPING = below its bar over the "
+        f"whole record or the last {_sc.RECENT_DAYS} days — lean on it less, don't retune "
+        f"it after one bad stretch. TOO EARLY = under {_sc.MIN_N} graded picks. Problems are "
+        "listed first.")
+
+    for r in rows:
+        col = COLOR[r["colour"]]
+        if r["rate"] is None:
+            main = (f'<span style="color:{COLOR["text_faint"]};">—</span>')
+        else:
+            tgt = ""
+            if r["target"] is not None:
+                word = "league" if r["kind"] == "baseline" else "promised"
+                gc = (COLOR["stat_high"] if (r["gap"] or 0) > 0
+                      else COLOR["error"] if (r["gap"] or 0) < 0 else COLOR["text_muted"])
+                tgt = (f'<span style="font-size:var(--lc-text-small); color:{gc};"> '
+                       f'{r["gap"]:+.1f} vs {r["target"]:.1f}% {word}</span>')
+            main = (f'<span style="font-size:var(--lc-text-stat); color:{COLOR["text"]};">'
+                    f'{r["rate"]:.1f}%</span>{tgt}')
+        bits = []
+        if r["record"]:
+            bits.append(r["record"])
+        elif r["n"]:
+            bits.append(f'{r["hits"]}/{r["n"]} graded')
+        rc = r.get("recent") or {}
+        if rc.get("rate") is not None and rc.get("n") and rc["n"] != r["n"]:
+            bits.append(f'last {_sc.RECENT_DAYS}d {rc["rate"]:.1f}% ({rc["n"]})')
+        if r["units"] is not None and (r["record"] or "") not in ("", "0-0-0"):
+            bits.append(f'{r["units"]:+.2f}u')
+        meta = " \u00b7 ".join(bits)
+        st.markdown(
+            f'<div style="background:{COLOR["surface"]}; border-left:3px solid {col}; '
+            f'border-radius:var(--lc-radius-lg); padding:var(--lc-space-md) var(--lc-space-lg); '
+            f'margin-bottom:var(--lc-space-md);">'
+            f'<div style="display:flex; flex-wrap:wrap; align-items:baseline; '
+            f'gap:var(--lc-space-sm) var(--lc-space-lg);">'
+            f'{_chip(r["label"], col)}'
+            f'<span style="font-size:var(--lc-text-subhead); font-weight:700; '
+            f'color:{COLOR["player_name"]};">{r["model"]}</span>'
+            f'<span style="font-family:\'JetBrains Mono\',monospace;">{main}</span>'
+            f'<span style="font-family:\'JetBrains Mono\',monospace; '
+            f'font-size:var(--lc-text-tiny); color:{COLOR["text_faint"]};">'
+            f'{meta}</span></div>'
+            f'<div style="font-size:var(--lc-text-caption); color:{COLOR["text_muted"]}; '
+            f'margin-top:var(--lc-space-xs); line-height:1.5;">{r["why"]}</div></div>',
+            unsafe_allow_html=True)
+
+
 _SPORT_NAMES = {"mlb": "MLB", "nhl": "NHL", "nfl": "NFL"}
 _MARKET_NAMES = {"moneyline": "Moneyline", "total": "Total", "spread": "Spread"}
 
@@ -372,6 +447,13 @@ def render():
 
     data = _load()
     sums = summary()
+    # The scorecard leads: one verdict per model before any detail, and
+    # it renders even on an empty record (game bets and Top Plays live in
+    # their own files, so a model can have a record when the boards don't).
+    try:
+        _render_scorecard(sums)
+    except Exception as exc:  # noqa: BLE001 — costs the scorecard, never the page
+        st.caption(f"Scorecard unavailable: {type(exc).__name__}")
 
     graded = sum(s.get("total", 0) for s in sums.values())
     if not graded:
