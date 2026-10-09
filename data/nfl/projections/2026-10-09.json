@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-09 10:52",
+  "generated_at_et": "2026-10-09 12:38",
   "week": 5,
   "league": {
     "team_games": 130,
@@ -1015,7 +1015,7 @@
         "opp": "PIT",
         "pos": "RB",
         "gp": 4,
-        "proj": 63,
+        "proj": 62,
         "window": "Sunday Early"
       },
       {
@@ -1190,15 +1190,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Jaylen Warren",
-        "team": "PIT",
-        "opp": "IND",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 41,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Tee Higgins",
         "team": "CIN",
         "opp": "MIA",
@@ -1217,11 +1208,11 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Rico Dowdle",
+        "player": "Jaylen Warren",
         "team": "PIT",
         "opp": "IND",
         "pos": "RB",
-        "gp": 2,
+        "gp": 4,
         "proj": 40,
         "window": "Sunday Early"
       },
@@ -1231,6 +1222,15 @@
         "opp": "NO",
         "pos": "RB",
         "gp": 1,
+        "proj": 39,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Rico Dowdle",
+        "team": "PIT",
+        "opp": "IND",
+        "pos": "RB",
+        "gp": 2,
         "proj": 39,
         "window": "Sunday Early"
       },
@@ -1307,15 +1307,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Cam Skattebo",
-        "team": "NYG",
-        "opp": "WSH",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 37,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Jacory Croskey-Merritt",
         "team": "WSH",
         "opp": "NYG",
@@ -1357,6 +1348,15 @@
         "opp": "NE",
         "pos": "TE",
         "gp": 2,
+        "proj": 36,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Garrett Wilson",
+        "team": "NYJ",
+        "opp": "CLE",
+        "pos": "WR",
+        "gp": 4,
         "proj": 36,
         "window": "Sunday Early"
       }
@@ -5224,7 +5224,7 @@
         "opp": "PIT",
         "pos": "RB",
         "gp": 4,
-        "proj": 26.4,
+        "proj": 25.5,
         "window": "Sunday Early"
       },
       {
@@ -5404,7 +5404,7 @@
         "opp": "IND",
         "pos": "RB",
         "gp": 4,
-        "proj": 9.7,
+        "proj": 9.4,
         "window": "Sunday Early"
       },
       {
@@ -5431,7 +5431,7 @@
         "opp": "IND",
         "pos": "RB",
         "gp": 2,
-        "proj": 9.1,
+        "proj": 8.8,
         "window": "Sunday Early"
       },
       {
@@ -5534,15 +5534,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Cam Skattebo",
-        "team": "NYG",
-        "opp": "WSH",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 7.7,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Woody Marks",
         "team": "HOU",
         "opp": "TEN",
@@ -5568,6 +5559,15 @@
         "gp": 4,
         "proj": 7.5,
         "window": "Sunday Morning"
+      },
+      {
+        "player": "Brock Bowers",
+        "team": "LV",
+        "opp": "NE",
+        "pos": "TE",
+        "gp": 2,
+        "proj": 7.4,
+        "window": "Sunday Early"
       }
     ]
   }
