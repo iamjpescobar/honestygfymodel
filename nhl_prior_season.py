@@ -38,6 +38,11 @@ SEASON = "2025-26"
 # are ASKED; ESPN's own season.type decides what counts (2 = regular).
 START, END = date(2025, 9, 25), date(2026, 4, 25)
 OUT = ROOT / "data" / "nhl" / "prior_season.json"
+# Power-play minutes per skater-game (10-09), kept BESIDE prior_season.json
+# rather than inside its game rows: every reader unpacks those rows as six
+# fields, and a seventh would break them all. {pid: {date: PP minutes}}.
+# nhl_precompute lays it over the skaters as "pp".
+PP_OUT = ROOT / "data" / "nhl" / "prior_pp.json"
 # 2025-26 regular season, opening night to the last scheduled game. Used
 # ONLY when an event carries no season type of its own.
 REGULAR = (date(2025, 10, 7), date(2026, 4, 16))
@@ -107,6 +112,8 @@ def collect(sb_fn, summary_fn, start=START, end=END, sleep=0.08):
                 s["team"] = team_id
                 s["games"].append([d.isoformat(), opp_id, line.get("sog"), line.get("g"),
                                    line.get("a"), line.get("toi")])
+                if line.get("pptoi") is not None:
+                    s.setdefault("pp", {})[d.isoformat()] = round(line["pptoi"], 2)
             for pid, rec in gk.items():
                 line = rec["games"].get(str(g["event_id"])) or {}
                 gg = goalies.setdefault(pid, {"name": rec.get("name"), "team": None,
@@ -121,10 +128,38 @@ def collect(sb_fn, summary_fn, start=START, end=END, sleep=0.08):
     return finals, skaters, goalies, names, seen, parsed
 
 
-def main():
+def pp_file(skaters):
+    """{pid: {date: PP minutes}} for every skater with any PP cell."""
+    return {pid: s["pp"] for pid, s in skaters.items() if s.get("pp")}
+
+
+def write_pp(skaters, path=None):
+    """Write prior_pp.json; refuses when no line carried PP minutes (an
+    empty file would read as 'nobody played the power play')."""
+    pp = pp_file(skaters)
+    n = sum(len(v) for v in pp.values())
+    lines = sum(len(s["games"]) for s in skaters.values())
+    print(f"  [verify] PP minutes on {n} of {lines} skater-games ({len(pp)} skaters)")
+    if not n:
+        print("Refusing to write prior_pp.json: no PP minutes in the feed.")
+        return False
+    path = Path(path or PP_OUT)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(pp, separators=(",", ":"), sort_keys=True))
+    print(f"  wrote {path} ({path.stat().st_size / 1024:.0f} KB)")
+    return True
+
+
+def main(argv=None):
+    """--pp-only: collect the season again but write ONLY prior_pp.json,
+    leaving prior_season.json (and every number fitted on it) untouched."""
+    argv = sys.argv[1:] if argv is None else argv
     finals, skaters, goalies, names, seen, parsed = collect(
         lambda d: ef.fetch_scoreboard(LEAGUE, d.strftime("%Y%m%d"))[0],
         lambda eid: ef.fetch_summary(LEAGUE, eid))
+    if "--pp-only" in argv:
+        print(f"  [verify] {SEASON}: {seen} finals seen, {parsed} box scores parsed (PP only)")
+        return 0 if parsed and write_pp(skaters) else 1
     print(f"  [verify] {SEASON}: {seen} regular-season finals seen, {parsed} box scores parsed, "
           f"{len(skaters)} skaters, {len(goalies)} goalies, "
           f"{sum(1 for f in finals if f['extra'])} OT/SO, "
@@ -136,6 +171,8 @@ def main():
         top = max(skaters.values(), key=lambda s: sum(x[2] or 0 for x in s["games"]))
         print(f"  [verify] SOG leader: {top['name']} — {sum(x[2] or 0 for x in top['games'])} "
               f"shots in {len(top['games'])} GP")
+    write_pp(skaters)
+    skaters = {pid: {k: v for k, v in s.items() if k != "pp"} for pid, s in skaters.items()}
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps({"season": SEASON, "finals": finals, "skaters": skaters,
                                "goalies": goalies, "team_names": names},

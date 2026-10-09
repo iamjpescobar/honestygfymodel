@@ -50,7 +50,8 @@ how_to_read([
     ("Worth it at", "The price that breaks even at that chance. Your book's 1+ point price "
                     "must be BETTER than this to be value; most nights a top pick is priced "
                     "near -200, so the edge is usually in shopping the price."),
-    ("PP", "Power-play unit by minutes and PP minutes a game (context, not in the chance)."),
+    ("PP", "Power-play unit by minutes and PP minutes a game. "
+           + nm.pp_note((model or {}).get("toi"))),
 ])
 
 if not pick:

@@ -33,13 +33,14 @@ jobs:
         run: python nhl_prior_season.py
       - name: Commit the prior-season file
         run: |
-          if [ -z "$(git status --porcelain -- data/nhl/prior_season.json)" ]; then
+          if [ -z "$(git status --porcelain -- data/nhl/prior_season.json data/nhl/prior_pp.json)" ]; then
             echo "No change to the prior-season file."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/nhl/prior_season.json
+          if [ -f data/nhl/prior_pp.json ]; then git add data/nhl/prior_pp.json; fi
           git commit -m "chore: NHL 2025-26 prior season for the model [skip ci]"
           git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"

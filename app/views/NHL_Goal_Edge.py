@@ -57,8 +57,7 @@ how_to_read([
                    "model's 10%+ two-goal calls landed about 6.5%, so the top of this column "
                    "is pulled down to what such calls really did. A long shot by nature."),
     ("PP", "Power-play unit by minutes (PP1 = his team's top 5 in PP time over the last 5 "
-           "games) and his PP minutes a game. Context: shown, not in the chance — there is "
-           "no past season of PP minutes to test it on yet."),
+           "games) and his PP minutes a game. " + nm.pp_note((model or {}).get("toi"))),
 ])
 
 if not rows:

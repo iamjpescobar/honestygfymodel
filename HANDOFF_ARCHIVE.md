@@ -10,6 +10,64 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — NHL game model + skater props, standing on last season. 2026-10-03 (3)
+
+**Suite 118, FAILING: none.** Four negative controls red by exit code.
+**Run the `NHL prior season` workflow ONCE** (manual; commits
+data/nhl/prior_season.json, ~1,300 box scores), then the nightly. Until
+the prior file exists the model fits on this season alone and says so.
+
+### WHY LAST SEASON
+
+The season opened 09-29. A few dozen finals cannot fit anything and a
+three-game team rating is noise, so `engines/nhl_model.py` fits on
+2025-26 and starts each team from its 2025-26 rating REGRESSED by a
+measured carryover (split-half slope inside the prior season — the
+weaker stand-in for a year-to-year fit, stated on the page). This
+season's games then move each team through the fitted shrinkage. League
+constants (home edge, OT home-win rate) come from the SAME season as
+the fit — measured on this week's handful they were noise; asserted.
+
+### THE TRAP THE FIXTURE CAUGHT
+
+The site.web.api HEADER shape — the one production actually gets —
+DROPS ESPN's season block (`_normalize_header_events` rebuilds events
+without it). The collector required season.type == 2, so against the
+real feed it would have kept **0 of 900** finals. It now falls back to
+the 2025-26 regular-season date window when the type is absent; the
+control proves the 0-of-900.
+
+### WHAT IT IS
+
+Goals: game_model on ESPN team ids, market moneylines and total parsed
+by `espn_feed.odds_of` (both published shapes, EVEN = +100). Shots: the
+same pairing fitted on squared error (`game_model.fit_volume`) — volume
+is the output, not a winner. Skaters: SOG/G/A per game, gamma-Poisson
+shrunk toward F or D, scaled by tonight's team shot and goal ratios;
+SOG negative binomial with measured size. Props validated walk-forward
+on the last 60 days of 2025-26 against each skater's own hit rate.
+
+### ALSO
+
+`tests/test_nfl_nhl_wiring` asserted the NHL nav EQUALS three pages and
+went red when Model was added — rewritten as a floor plus an exists-on-
+disk check (rule from 08-17: adding is not a regression; losing is).
+`nhl_precompute.PRIOR_PATH` is module-level so test_nhl_pipeline runs
+against no prior file and stays a parser test.
+
+### FILES, 2026-10-03 (3)
+
+    app/engines/nhl_model.py, app/views/NHL_Model.py, nhl_prior_season.py   NEW
+    .github/workflows/nhl-prior-season.yml                                  NEW
+    tests/test_nhl_model.py                                                 NEW
+    nhl_precompute.py         ids on finals, model block in games.json
+    app/engines/game_model.py score_only walk-forward, fit_volume, constants
+    app/engines/espn_feed.py  moneylines in odds_of
+    app/app.py                NHL -> Model subpage
+    tests/test_nhl_pipeline.py, tests/test_nfl_nhl_wiring.py
+
+---
+
 ## PICK UP HERE — MLB game model + props, every number fitted or measured. 2026-10-03 (2)
 
 **Suite 117, FAILING: none.** Six negative controls red by exit code.

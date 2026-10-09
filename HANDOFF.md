@@ -154,6 +154,52 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — PP-weighted ice time: fitted, tested against plain ice time. 2026-10-09 (2)
+
+**Suite 132 (+ test_nhl_pp_factor), FAILING: none.** Three negative controls red by
+exit code (listed in the test). NHL pages rendered headless on the 10-06
+archive: no exceptions.
+
+FIRST, THE PROBE ANSWERED (10-09 nightly): ESPN's NHL box DOES carry
+powerPlayTimeOnIce — 2,340 of 2,340 skater lines. Also evenStrength- and
+shortHandedTimeOnIce (not used yet). First NHL Player of the Day: Mark
+Scheifele 68.7%.
+
+LAST SEASON'S PP MINUTES: nhl_prior_season.py --pp-only re-reads the
+2025-26 box scores and writes ONLY data/nhl/prior_pp.json ({pid: {date:
+minutes}}) — prior_season.json and everything fitted on it untouched; its
+game rows stay six fields (every reader unpacks six). Manual workflow
+"NHL prior PP minutes" (nhl-prior-pp.yml), run ONCE. A full prior-season
+rebuild now writes both files. nhl_precompute.load_prior_pp lays the file
+over the prior skaters as "pp"; pool_skaters carries pp from both seasons.
+
+THE FACTOR (nhl_model.fit_pp, called inside fit_toi per family): weighted
+minutes = TOI + (w - 1) x PP minutes; w = 1 IS today's ice-time ratio, so
+the PP version nests it. w from PP_WEIGHTS and its strength fitted on the
+train window, tested on the props window AGAINST THE ADOPTED PLAIN FACTOR;
+in the chance only on "beats" (toi[fam]["pp"]["adopted"]). Needs
+PP_MIN_COVERAGE 50% of fit rows with PP minutes, else a note.
+MEASURED BEFORE SHIPPING: on the real 2025-26 file with RANDOM PP minutes
+attached, both families FAIL (sog z -2.16, pts z -0.78) and the plain
+alphas are unchanged (0.478 / 0.774) — the test does not invent an edge.
+On a simulated season where PP minutes drive scoring it is adopted
+(z >= 2). Cost: fit_toi went to ~3.5 min at full size.
+
+PAGES: nhl_model.pp_note(toi) — one sentence, IN the chance / tested and
+not / untested — on Goal Edge, NHL Model, Player of the Day; why lines
+say "PP minutes weighted into his ice time" only when used.
+
+AFTER THE WORKFLOW RUNS: read "[verify] NHL PP-weighted minutes (sog|pts)"
+in the next nightly. Adopted -> the props validation, Top Plays, Goal
+Edge, POTD all move with it automatically.
+
+FILES: nhl_prior_season.py, nhl_precompute.py, app/engines/nhl_model.py,
+app/views/{NHL_Goal_Edge,NHL_Model,NHL_Player_Of_The_Day}.py,
+.github/workflows/nhl-prior-pp.yml (NEW), .github/workflows/nhl-prior-season.yml,
+tests/test_nhl_pp_factor.py (NEW), HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NHL: power-play minutes, 2+ goals, Player of the Day, the multi-goal check. 2026-10-09
 
 **Suite 131 (+ test_nhl_pp_potd), FAILING: none.** Three negative controls red
@@ -945,61 +991,3 @@ that night and the log says so.
     .github/workflows/nightly-data.yml   commit step also adds prior_season.json
     app/app.py                NFL -> Model subpage
     tests/test_nfl_pipeline.py (PRIOR_PATH sandboxed), tests/test_nfl_nhl_wiring.py
-
----
-
-## PICK UP HERE — NHL game model + skater props, standing on last season. 2026-10-03 (3)
-
-**Suite 118, FAILING: none.** Four negative controls red by exit code.
-**Run the `NHL prior season` workflow ONCE** (manual; commits
-data/nhl/prior_season.json, ~1,300 box scores), then the nightly. Until
-the prior file exists the model fits on this season alone and says so.
-
-### WHY LAST SEASON
-
-The season opened 09-29. A few dozen finals cannot fit anything and a
-three-game team rating is noise, so `engines/nhl_model.py` fits on
-2025-26 and starts each team from its 2025-26 rating REGRESSED by a
-measured carryover (split-half slope inside the prior season — the
-weaker stand-in for a year-to-year fit, stated on the page). This
-season's games then move each team through the fitted shrinkage. League
-constants (home edge, OT home-win rate) come from the SAME season as
-the fit — measured on this week's handful they were noise; asserted.
-
-### THE TRAP THE FIXTURE CAUGHT
-
-The site.web.api HEADER shape — the one production actually gets —
-DROPS ESPN's season block (`_normalize_header_events` rebuilds events
-without it). The collector required season.type == 2, so against the
-real feed it would have kept **0 of 900** finals. It now falls back to
-the 2025-26 regular-season date window when the type is absent; the
-control proves the 0-of-900.
-
-### WHAT IT IS
-
-Goals: game_model on ESPN team ids, market moneylines and total parsed
-by `espn_feed.odds_of` (both published shapes, EVEN = +100). Shots: the
-same pairing fitted on squared error (`game_model.fit_volume`) — volume
-is the output, not a winner. Skaters: SOG/G/A per game, gamma-Poisson
-shrunk toward F or D, scaled by tonight's team shot and goal ratios;
-SOG negative binomial with measured size. Props validated walk-forward
-on the last 60 days of 2025-26 against each skater's own hit rate.
-
-### ALSO
-
-`tests/test_nfl_nhl_wiring` asserted the NHL nav EQUALS three pages and
-went red when Model was added — rewritten as a floor plus an exists-on-
-disk check (rule from 08-17: adding is not a regression; losing is).
-`nhl_precompute.PRIOR_PATH` is module-level so test_nhl_pipeline runs
-against no prior file and stays a parser test.
-
-### FILES, 2026-10-03 (3)
-
-    app/engines/nhl_model.py, app/views/NHL_Model.py, nhl_prior_season.py   NEW
-    .github/workflows/nhl-prior-season.yml                                  NEW
-    tests/test_nhl_model.py                                                 NEW
-    nhl_precompute.py         ids on finals, model block in games.json
-    app/engines/game_model.py score_only walk-forward, fit_volume, constants
-    app/engines/espn_feed.py  moneylines in odds_of
-    app/app.py                NHL -> Model subpage
-    tests/test_nhl_pipeline.py, tests/test_nfl_nhl_wiring.py

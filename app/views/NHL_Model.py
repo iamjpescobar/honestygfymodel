@@ -211,8 +211,7 @@ for i, g in enumerate(games or []):
                 f"his last {_toi_window()} games vs over the games his rate is built on. "
                 + (_in_number_note() + ". " if _in_number_note() else "") +
                 "PP = power-play unit by minutes (PP1 = his team's top 5 in PP time over the "
-                "last 5) and PP minutes a game — shown as context: there is no past season of "
-                "PP minutes to test it on yet. "
+                "last 5) and PP minutes a game. " + nm.pp_note(model.get("toi")) + " "
                 "NOT in the number: tonight's lines and PP units, late scratches, the opposing "
                 "goalie. GP counts both seasons.")
 

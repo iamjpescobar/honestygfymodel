@@ -400,9 +400,75 @@ def toi_ratio(games_before, window):
     return recent, base, recent / base
 
 
-def toi_scales(games_before, toi):
+# POWER-PLAY WEIGHTED MINUTES (10-09). A power-play minute produces far
+# more shots and points than an even-strength one, so a skater promoted to
+# PP1 gains more than his total minutes say. The ice-time ratio is re-read
+# on WEIGHTED minutes:
+#
+#     weighted = even-strength minutes + w x PP minutes
+#              = total TOI + (w - 1) x PP minutes
+#
+# w = 1 is exactly today's ice-time factor, so the PP version NESTS it and
+# is tested against it: w and its strength are FITTED on the window before
+# the props test, then the props window decides (fit_toi). Not adopted ->
+# the plain ice-time factor stands, unchanged.
+PP_WEIGHTS = (1.5, 2.0, 3.0, 4.0, 6.0)
+PP_MIN_COVERAGE = 0.5    # share of fit rows that must carry PP minutes
+
+
+def pp_window_stats(games_before, window, pp_map):
+    """(base TOI, base PP, base n, recent TOI, recent PP, recent n) over the
+    games that carry BOTH minutes, or None. pp_map: {date: PP minutes}."""
+    if not pp_map:
+        return None
+    both = [(x[5], pp_map.get(x[0])) for x in games_before
+            if x[5] and pp_map.get(x[0]) is not None]
+    if not both:
+        return None
+    rec = both[-window:]
+    return (sum(t for t, _ in both), sum(q for _, q in both), len(both),
+            sum(t for t, _ in rec), sum(q for _, q in rec), len(rec))
+
+
+def weighted_ratio(stats, w):
+    """Recent / baseline weighted minutes at PP weight w, or None."""
+    if not stats:
+        return None
+    bt, bp, bn, rt, rp, rn = stats
+    base, rec = (bt + (w - 1) * bp) / bn, (rt + (w - 1) * rp) / rn
+    return rec / base if base > 0 and rec >= 0 else None
+
+
+def pp_in_number(toi):
+    """Families ("sog", "pts") whose PP-weighted ice time was adopted."""
+    return [f for f in TOI_FAMILIES
+            if (((toi or {}).get(f) or {}).get("pp") or {}).get("adopted")]
+
+
+def pp_note(toi):
+    """One sentence for the pages: is PP time in the chance, and why."""
+    fams = pp_in_number(toi)
+    if fams:
+        bits = []
+        for f in fams:
+            x = toi[f]["pp"]
+            bits.append(f"{'shots' if f == 'sog' else 'points'} (a PP minute counts "
+                        f"{x['weight']:g}x an even-strength one; beat plain ice time on unseen "
+                        f"games, z={(x.get('verdict') or {}).get('z')})")
+        return "PP time IS in the chance for " + " and ".join(bits) + "."
+    tested = [((toi or {}).get(f) or {}).get("pp") or {} for f in TOI_FAMILIES]
+    if any(t.get("verdict") for t in tested):
+        return ("PP time is context only: weighting PP minutes did not beat plain ice time "
+                "on last season's unseen games.")
+    return ("PP time is context only until last season's PP minutes are loaded and the "
+            "factor is tested.")
+
+
+def toi_scales(games_before, toi, pp_map=None):
     """{"sog": scale, "pts": scale, "recent", "base", "window"} for the
-    adopted ice-time fit (alpha 0 -> 1.0)."""
+    adopted ice-time fit (alpha 0 -> 1.0). Where the PP-weighted version
+    was adopted for a family and this skater has PP minutes, it replaces
+    the plain ratio for that family ("pp_used")."""
     out = {"sog": 1.0, "pts": 1.0}
     if not toi:
         return out
@@ -413,10 +479,20 @@ def toi_scales(games_before, toi):
         tr = toi_ratio(games_before, f["window"])
         if tr:
             out[fam] = tr[2] ** f["alpha"]
+        ppf = f.get("pp") or {}
+        if ppf.get("adopted") and pp_map:
+            r = weighted_ratio(pp_window_stats(games_before, f["window"], pp_map),
+                               ppf["weight"])
+            if r:
+                out[fam] = r ** ppf["alpha"]
+                out.setdefault("pp_used", []).append(fam)
     w = max([(toi.get(f) or {}).get("window") or 0 for f in TOI_FAMILIES] or [0]) or TOI_WINDOWS[1]
     tr = toi_ratio(games_before, w)
     if tr:
         out.update({"recent": round(tr[0], 1), "base": round(tr[1], 1), "window": w})
+    st = pp_window_stats(games_before, w, pp_map)
+    if st:
+        out.update({"pp_recent": round(st[4] / st[5], 2), "pp_base": round(st[1] / st[2], 2)})
     return out
 
 
@@ -443,18 +519,26 @@ def _wf_rows(skaters, goal_finals, shot_finals, lo, hi, goal_k, shot_k, priors):
             for w in TOI_WINDOWS:
                 tr = toi_ratio(games[:i], w)
                 ratios[w] = tr[2] if tr else 1.0
+            if p.get("pp"):
+                ratios["pp"] = {w: pp_window_stats(games[:i], w, p["pp"]) for w in TOI_WINDOWS}
             rows.append((r, sr, gr, ratios,
                          {"sog": s, "g": g or 0, "a": a or 0, "pts": (g or 0) + (a or 0)},
                          (d, opp, dvp_group(p.get("pos")))))
     return rows
 
 
-def _family_losses(rows, fam, window, alpha, disp):
-    """[(p, y)] over the family's markets at one (window, alpha)."""
+def _family_losses(rows, fam, window, alpha, disp, pp_w=None, pp_alpha=None):
+    """[(p, y)] over the family's markets at one (window, alpha). With
+    pp_w, rows that carry PP minutes use the PP-weighted ratio at pp_alpha;
+    rows without them keep the plain ratio at alpha (what the page does)."""
     stats = TOI_FAMILIES[fam]
     out = []
     for r, sr, gr, ratios, actual, _key in rows:
         sc = ratios.get(window, 1.0) ** alpha if window else 1.0
+        if pp_w is not None and window:
+            wr = weighted_ratio((ratios.get("pp") or {}).get(window), pp_w)
+            if wr:
+                sc = wr ** pp_alpha
         pr = probs(r, sr, gr, disp, toi_sog=sc if fam == "sog" else 1.0,
                    toi_pts=sc if fam == "pts" else 1.0)
         for k, _l, stat, n in MARKETS:
@@ -503,7 +587,37 @@ def fit_toi(skaters, goal_finals, shot_finals, days=VALIDATION_DAYS, goal_k=None
                     "adopted": adopted, "verdict": verdict,
                     "n": sw["n"], "brier_with": sw["brier"], "brier_without": sb["brier"],
                     "log_loss_with": sw["log_loss"], "log_loss_without": sb["log_loss"]}
+        out[fam]["pp"] = fit_pp(train, test, fam, w, out[fam]["alpha"], disp)
     return out
+
+
+def fit_pp(train, test, fam, window, toi_alpha, disp):
+    """The PP-weighted ice-time factor for one family: (w, strength)
+    FITTED on `train`, then TESTED on `test` against the factor the page
+    uses today (plain minutes at toi_alpha). Adopted only on "beats"."""
+    cov = sum(1 for row in train if (row[3].get("pp") or {}).get(window)) / max(len(train), 1)
+    if cov < PP_MIN_COVERAGE:
+        return {"adopted": False, "coverage": round(cov, 3),
+                "note": "too few games carry PP minutes to fit on"}
+    best = None
+    for pw in PP_WEIGHTS:
+        def ll(alpha, pw=pw):
+            pts = _family_losses(train, fam, window, toi_alpha, disp, pp_w=pw, pp_alpha=alpha)
+            return -sum(mm.log_loss(p, y) for p, y in pts) / max(len(pts), 1)
+        al = mm.golden_max(ll, 0.0, 2.0, iters=24)
+        v = ll(al)
+        if best is None or v > best[2]:
+            best = (pw, al, v)
+    pw, al, _v = best
+    with_ = _family_losses(test, fam, window, toi_alpha, disp, pp_w=pw, pp_alpha=al)
+    without = _family_losses(test, fam, window, toi_alpha, disp)
+    verdict = mm.paired_verdict([mm.log_loss(p, y) for p, y in with_],
+                                [mm.log_loss(p, y) for p, y in without])
+    sw, sb = mm.score_predictions(with_), mm.score_predictions(without)
+    adopted = verdict.get("verdict") == "beats"
+    return {"weight": pw, "fitted_alpha": round(al, 3), "alpha": round(al, 3),
+            "adopted": adopted, "verdict": verdict, "coverage": round(cov, 3),
+            "n": sw["n"], "log_loss_with": sw["log_loss"], "log_loss_without": sb["log_loss"]}
 
 
 # ----------------------------------------------------------------------
@@ -683,7 +797,7 @@ def validate_props(skaters, goal_finals, shot_finals, days=VALIDATION_DAYS,
             ge, se = g_env.get((d, opp)), s_env.get((d, opp))
             gr = ge[0] / ge[1] if ge and ge[1] else 1.0
             sr = se[0] / se[1] if se and se[1] else 1.0
-            sc = toi_scales(games[:i], toi)
+            sc = toi_scales(games[:i], toi, p.get("pp"))
             pr = probs(r, sr, gr, priors.get("sog_dispersion"),
                        toi_sog=sc["sog"], toi_pts=sc["pts"])
             actual = {"sog": s, "g": g or 0, "a": a or 0, "pts": (g or 0) + (a or 0)}
@@ -729,10 +843,11 @@ def pool_skaters(prior_skaters, current_skaters, current_id_of, regular_ids=None
     pool = {}
     for pid, p in (prior_skaters or {}).items():
         pool[pid] = {"name": p.get("name"), "pos": p.get("pos"), "team": p.get("team"),
-                     "games": [tuple(x) for x in p.get("games") or []]}
+                     "games": [tuple(x) for x in p.get("games") or []],
+                     "pp": dict(p.get("pp") or {})}
     for pid, rec in (current_skaters or {}).items():
         dst = pool.setdefault(str(pid), {"name": rec.get("name"), "pos": rec.get("pos"),
-                                         "team": None, "games": []})
+                                         "team": None, "games": [], "pp": {}})
         dst["name"] = rec.get("name") or dst["name"]
         dst["pos"] = rec.get("pos") or dst["pos"]
         for eid, line in (rec.get("games") or {}).items():
@@ -740,6 +855,8 @@ def pool_skaters(prior_skaters, current_skaters, current_id_of, regular_ids=None
                 continue
             dst["games"].append((line.get("date"), current_id_of.get(line.get("opp")),
                                  line.get("sog"), line.get("g"), line.get("a"), line.get("toi")))
+            if line.get("pptoi") is not None and line.get("date"):
+                dst["pp"][line["date"]] = line["pptoi"]
     for p in pool.values():
         p["games"].sort(key=lambda x: x[0] or "")
     return pool
@@ -871,7 +988,7 @@ def build(current_finals, prior, current_skaters=None, current_id_of=None, slate
                 if not p or str(sk.get("pos") or "").upper() == "G":
                     continue
                 r = rates(p, priors)
-                sc = toi_scales(p["games"], toi)
+                sc = toi_scales(p["games"], toi, p.get("pp"))
                 pr = probs(r, sr, gr, priors.get("sog_dispersion"),
                            toi_sog=sc["sog"], toi_pts=sc["pts"])
                 if not pr:
@@ -908,9 +1025,12 @@ def build(current_finals, prior, current_skaters=None, current_id_of=None, slate
                 r["team_last_game"] = team_last
                 _m = r["pp"]["l5"] if r["pp"]["l5"] is not None else r["pp"]["season"]
                 if r["pp"]["unit"] in ("PP1", "PP2") and _m is not None and r.get("why"):
+                    _in = (r.get("ice") or {}).get("pp_used")
                     r["why"] += (f" · {r['pp']['unit']} by minutes ({_m:.1f} PP min a game"
                                  f"{' over his last 5' if r['pp']['l5'] is not None else ''};"
-                                 f" context, not in the number)")
+                                 + (f" PP minutes weighted into his ice time for "
+                                    f"{' and '.join('shots' if f == 'sog' else 'points' for f in _in)})"
+                                    if _in else " context, not in the number)"))
             g[f"{side}_props"] = rows
             g[f"{side}_env"] = {"goal_ratio": round(gr, 3), "shot_ratio": round(sr, 3)}
             # GOALIES of this side face the OTHER side's shots.

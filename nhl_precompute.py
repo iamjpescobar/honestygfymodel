@@ -39,6 +39,25 @@ LOOKAHEAD_DAYS = 21
 # Last season, committed by the manual nhl-prior-season workflow
 # (nhl_prior_season.py). Module-level so tests can point it elsewhere.
 PRIOR_PATH = ROOT / "data" / "nhl" / "prior_season.json"
+# Last season's PP minutes, {pid: {date: minutes}} (nhl_prior_season.py
+# --pp-only, the "NHL prior PP minutes" workflow). Read beside PRIOR_PATH
+# so a test that moves one moves both.
+PRIOR_PP_NAME = "prior_pp.json"
+
+
+def load_prior_pp(prior, prior_path=None):
+    """Lay last season's PP minutes over its skaters as "pp" (in place).
+    Returns how many skaters got them; 0 when the file is not there."""
+    path = Path(prior_path or PRIOR_PATH).parent / PRIOR_PP_NAME
+    if not path.exists() or not prior.get("skaters"):
+        return 0
+    pp = json.loads(path.read_text())
+    n = 0
+    for pid, s in prior["skaters"].items():
+        if pp.get(pid):
+            s["pp"] = pp[pid]
+            n += 1
+    return n
 # Top plays record (engines/top_plays_board); module-level so tests sandbox it.
 TOP_PLAYS_ROOT = ROOT / "data" / "top_plays"
 # The graded model-picks record (engines/model_picks). Module-level so a
@@ -591,6 +610,10 @@ def main(today=None):
             id_of[g["away"]], id_of[g["home"]] = g.get("away_id"), g.get("home_id")
         prior_path = PRIOR_PATH
         prior = json.loads(prior_path.read_text()) if prior_path.exists() else {}
+        _npp = load_prior_pp(prior, prior_path)
+        print(f"  [verify] NHL last-season PP minutes: {_npp} skaters"
+              + ("" if _npp else " -> none yet: run the 'NHL prior PP minutes' workflow once "
+                                 "so the PP factor can be tested"))
         if not prior:
             print("::warning::NHL model: data/nhl/prior_season.json missing - run the "
                   "'NHL prior season' workflow once. Fitting on this season alone.")
@@ -638,6 +661,15 @@ def main(today=None):
                       f"{_x.get('fitted_alpha')} -> {'IN THE NUMBER' if _x.get('adopted') else 'context only'} "
                       f"({(_x.get('verdict') or {}).get('verdict')}, z={(_x.get('verdict') or {}).get('z')}, "
                       f"n={_x.get('n')})")
+            for _fam in nhl_model.TOI_FAMILIES:
+                _x = ((_toi.get(_fam) or {}).get("pp")) or {}
+                if _x:
+                    print(f"  [verify] NHL PP-weighted minutes ({_fam}): weight {_x.get('weight')} "
+                          f"strength {_x.get('fitted_alpha')} coverage {_x.get('coverage')} -> "
+                          f"{'IN THE NUMBER' if _x.get('adopted') else 'context only'} "
+                          f"({(_x.get('verdict') or {}).get('verdict')}, "
+                          f"z={(_x.get('verdict') or {}).get('z')}, n={_x.get('n')})"
+                          f"{' - ' + _x['note'] if _x.get('note') else ''}")
             _dv = model_block.get("dvp_validation") or {}
             for _fam in ("sog", "pts"):
                 _x = _dv.get(_fam) or {}
