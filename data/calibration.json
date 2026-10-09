@@ -7818,7 +7818,7 @@
           "team": "CWS",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "666176",
@@ -7826,7 +7826,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "545341",
@@ -7834,7 +7834,7 @@
           "team": "CWS",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "686668",
@@ -7842,7 +7842,7 @@
           "team": "CWS",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "808959",
@@ -7850,7 +7850,7 @@
           "team": "CWS",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "678246",
@@ -7858,7 +7858,7 @@
           "team": "CWS",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "680757",
@@ -7866,7 +7866,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "691019",
@@ -7874,7 +7874,7 @@
           "team": "CWS",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "695731",
@@ -7882,7 +7882,7 @@
           "team": "CWS",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "800050",
@@ -7890,7 +7890,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "608070",
@@ -7898,7 +7898,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "677587",
@@ -7906,7 +7906,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "663993",
@@ -7914,10 +7914,10 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -8924,10 +8924,10 @@
           "team": "Chicago White Sox",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -12152,7 +12152,7 @@
           "team": "Chicago White Sox",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "808959",
@@ -12160,7 +12160,7 @@
           "team": "Chicago White Sox",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "678246",
@@ -12168,7 +12168,7 @@
           "team": "Chicago White Sox",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "666176",
@@ -12176,7 +12176,7 @@
           "team": "Cleveland Guardians",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "682657",
@@ -12184,10 +12184,10 @@
           "team": "Cleveland Guardians",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -37659,7 +37659,8 @@
           "team": "CLE",
           "stat": "strikeOuts",
           "line": 8.3,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": 693645,
@@ -37667,7 +37668,8 @@
           "team": "NYY",
           "stat": "strikeOuts",
           "line": 6.1,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": 642547,
@@ -37675,7 +37677,8 @@
           "team": "TB",
           "stat": "strikeOuts",
           "line": 5.4,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": 641743,
@@ -37683,10 +37686,11 @@
           "team": "CWS",
           "stat": "strikeOuts",
           "line": 3.5,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     },
     "2026-10-06": {
