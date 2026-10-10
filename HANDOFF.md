@@ -154,6 +154,49 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Bet Finder: type your book's prices, get BET or SKIP. 2026-10-09 (3)
+
+**Suite 133 (+ test_bet_finder), FAILING: none.** Three negative controls red by
+exit code (listed in the test). Bet Finder rendered headless on the NHL
+archive: prices typed -> STRONG / VALUE / SKIP rows, stakes, the card;
+NFL source renders; MLB source is network (lineups) and is wrapped so a
+failed feed costs MLB, never the page.
+
+FIRST, THE PP RESULT (10-09): prior_pp.json committed (47,229 of 47,229
+skater-games). Run locally on it: PP-weighted ice time does NOT beat plain
+ice time — sog thin z 1.16 (w 2.0), pts fails z -1.81 (w 1.5). Context
+only; nothing changed. (The nightly that printed "0 skaters" had been
+queued before the PP commit and checked out the older SHA.)
+
+ALSO MEASURED 10-09 (no code): our g1 model vs "hot streak" hit rates on
+2025-26 (16,955 games): beats last-5 (z 24.3), last-8 (z 18.2), last-20
+(z 11.6). Players at 50%+ over their last 8 scored 29.4% next game; the
+model said 30.3%.
+
+WHY: Izzy, reading the boards: colour means LIKELY, and he could not tell
+a good bet from a bad one. The rule is "book pays more than Worth it at";
+this page applies it to a whole list at once.
+
+ENGINE app/engines/bet_finder.py (pure, + model_view for delivered_over
+/ edge_tier): chance_at (the DELIVERED chance, same as every board),
+judge (BET iff edge > 0 on the printed grid, tiers THIN/VALUE/STRONG,
+stake via value.assess), price_list, results, game_line_items (FINAL
+chance at the posted line; no market -> left out), card_rows.
+
+PAGE app/views/Bet_Finder.py: sport (defaults to the switcher's sport),
+game, who (skaters/goalies, batters/starters, players), stat, line,
+side; a 3-column data_editor (Player / Line / Your price — Line editable
+for NFL, where lines differ by player); results table; game lines with
+price inputs; "Tonight's card" in session state across sports, scaled
+to the per-slate cap. In the MLB nav, NHL and NFL subpages, and a Home
+explore card (test_home requires a route).
+
+FILES: app/engines/bet_finder.py, app/views/Bet_Finder.py,
+tests/test_bet_finder.py (NEW), app/app.py, app/views/Home.py,
+HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — PP-weighted ice time: fitted, tested against plain ice time. 2026-10-09 (2)
 
 **Suite 132 (+ test_nhl_pp_factor), FAILING: none.** Three negative controls red by
@@ -946,48 +989,3 @@ a full competitions block.
     app/engines/espn_wnba.py   fetch_today()
     wnba_precompute.py         tonight via fetch_today
     tests/test_wnba_off_day.py NEW — replays the logged responses
-
----
-
-## PICK UP HERE — NFL game model: the site's own line beside the market's. 2026-10-03 (4)
-
-**Suite 119, FAILING: none.** Three negative controls red by exit code.
-**No extra workflow:** the first nightly after this lands fetches the
-2025 season (~125 scoreboard calls) into data/nfl/prior_season.json and
-the existing "Commit NFL projection log" step commits it; later nights
-read it.
-
-### WHY
-
-nfl_projection anchors TDs to the MARKET's implied points — right for a
-prop, but a board anchored to the line can never disagree with it.
-`engines/nfl_game_model.py` is the independent opinion: points per side
-from game_model's pairing on ESPN team ids, margin and total treated as
-NORMAL with SDs measured as walk-forward residuals (the one assumption,
-named on the page). Gives win %, fair spread, P(cover) on the posted
-spread (read only through implied_totals' favourite check — a line that
-contradicts itself gets no cover probability and says why), P(over),
-and the no-vig moneyline gap.
-
-Fitted on 2025 while 2026 has four weeks (same carryover machinery as
-NHL); validation reports log loss vs coin and home-rate, margin MAE vs
-"home team by the league's usual edge", total MAE vs league average.
-
-### FOR THE FIRST LOG
-
-    [verify] NFL 2025 prior season: 272 regular-season finals
-    [verify] NFL model fit on prior season: k=.. carryover=.. sd_margin=~13-14
-    [verify] week games with a projection: 16 of 16 (or 14 on a bye week)
-
-Under 250 prior finals is REFUSED and not written (a partial season
-written once would be read forever); the model then fits on 2026 alone
-that night and the log says so.
-
-### FILES, 2026-10-03 (4)
-
-    app/engines/nfl_game_model.py, app/views/NFL_Model.py, nfl_prior_season.py  NEW
-    tests/test_nfl_game_model.py                                                NEW
-    nfl_precompute.py         ids on finals, PRIOR_PATH, model block + per-game model
-    .github/workflows/nightly-data.yml   commit step also adds prior_season.json
-    app/app.py                NFL -> Model subpage
-    tests/test_nfl_pipeline.py (PRIOR_PATH sandboxed), tests/test_nfl_nhl_wiring.py

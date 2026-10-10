@@ -10,6 +10,51 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — NFL game model: the site's own line beside the market's. 2026-10-03 (4)
+
+**Suite 119, FAILING: none.** Three negative controls red by exit code.
+**No extra workflow:** the first nightly after this lands fetches the
+2025 season (~125 scoreboard calls) into data/nfl/prior_season.json and
+the existing "Commit NFL projection log" step commits it; later nights
+read it.
+
+### WHY
+
+nfl_projection anchors TDs to the MARKET's implied points — right for a
+prop, but a board anchored to the line can never disagree with it.
+`engines/nfl_game_model.py` is the independent opinion: points per side
+from game_model's pairing on ESPN team ids, margin and total treated as
+NORMAL with SDs measured as walk-forward residuals (the one assumption,
+named on the page). Gives win %, fair spread, P(cover) on the posted
+spread (read only through implied_totals' favourite check — a line that
+contradicts itself gets no cover probability and says why), P(over),
+and the no-vig moneyline gap.
+
+Fitted on 2025 while 2026 has four weeks (same carryover machinery as
+NHL); validation reports log loss vs coin and home-rate, margin MAE vs
+"home team by the league's usual edge", total MAE vs league average.
+
+### FOR THE FIRST LOG
+
+    [verify] NFL 2025 prior season: 272 regular-season finals
+    [verify] NFL model fit on prior season: k=.. carryover=.. sd_margin=~13-14
+    [verify] week games with a projection: 16 of 16 (or 14 on a bye week)
+
+Under 250 prior finals is REFUSED and not written (a partial season
+written once would be read forever); the model then fits on 2026 alone
+that night and the log says so.
+
+### FILES, 2026-10-03 (4)
+
+    app/engines/nfl_game_model.py, app/views/NFL_Model.py, nfl_prior_season.py  NEW
+    tests/test_nfl_game_model.py                                                NEW
+    nfl_precompute.py         ids on finals, PRIOR_PATH, model block + per-game model
+    .github/workflows/nightly-data.yml   commit step also adds prior_season.json
+    app/app.py                NFL -> Model subpage
+    tests/test_nfl_pipeline.py (PRIOR_PATH sandboxed), tests/test_nfl_nhl_wiring.py
+
+---
+
 ## PICK UP HERE — NHL game model + skater props, standing on last season. 2026-10-03 (3)
 
 **Suite 118, FAILING: none.** Four negative controls red by exit code.

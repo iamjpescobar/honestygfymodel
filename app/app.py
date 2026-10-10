@@ -234,6 +234,8 @@ def build_mlb_pages(include_admin: bool):
         # The most likely proven plays across every sport, with their
         # graded record (engines/top_plays_board).
         ("Top Plays", "views/Top_Plays.py"),
+        # Type your book's prices, get BET or SKIP — every sport (10-09).
+        ("Bet Finder", "views/Bet_Finder.py"),
         # Slate-wide HR Edge. The Game Card shows one game's version of
         # the same number; this ranks every bat on the slate, and it is
         # the exact list the calibration logger records.
@@ -311,6 +313,7 @@ SPORT_SUBPAGES = {
         # defense bleeds by position.
         ("TD Edge", "views/NFL_TD_Edge.py"),
         ("Defenses to Target", "views/NFL_Defenses_To_Target.py"),
+        ("Bet Finder", "views/Bet_Finder.py"),
     ],
     # Hockey is a nightly slate through slate_guard("nhl"). The Crease
     # Report and Shots Lab read regular-season box scores only.
@@ -325,6 +328,7 @@ SPORT_SUBPAGES = {
         ("Goalies to Target", "views/NHL_Goalies_To_Target.py"),
         # MLB's Player of the Day structure on the tested 1+ point line (10-09).
         ("Player of the Day", "views/NHL_Player_Of_The_Day.py"),
+        ("Bet Finder", "views/Bet_Finder.py"),
     ],
 }
 

@@ -124,6 +124,10 @@ EXPLORE = [
      "Projected score, win probability and the fair line for every game, "
      "team totals and alt lines, and batter and starter props at any line "
      "\u2014 shown beside its record on games it had not seen."),
+    ("Bet Finder", "MLB",
+     "Type your book's prices next to any game's players and get BET or "
+     "SKIP back, with the edge and the stake — every sport, every model, "
+     "no column-reading."),
     ("Top Plays", "MLB",
      "The most likely outcomes tonight that have proven themselves, each at "
      "the chance it has actually delivered — with the graded record of "
