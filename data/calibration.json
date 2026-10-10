@@ -7931,17 +7931,17 @@
           "result": null
         },
         {
-          "id": "805367",
-          "name": "Chase Meidroth",
-          "team": "CWS",
+          "id": "680757",
+          "name": "Steven Kwan",
+          "team": "CLE",
           "stat": null,
           "line": null,
           "result": null
         },
         {
-          "id": "680757",
-          "name": "Steven Kwan",
-          "team": "CLE",
+          "id": "805367",
+          "name": "Chase Meidroth",
+          "team": "CWS",
           "stat": null,
           "line": null,
           "result": null
@@ -7963,16 +7963,8 @@
           "result": null
         },
         {
-          "id": "677587",
-          "name": "Brayan Rocchio",
-          "team": "CLE",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "686668",
-          "name": "Brenton Doyle",
+          "id": "803011",
+          "name": "Sam Antonacci",
           "team": "CWS",
           "stat": null,
           "line": null,
@@ -7995,8 +7987,24 @@
           "result": null
         },
         {
-          "id": "695731",
-          "name": "Braden Montgomery",
+          "id": "691019",
+          "name": "Kyle Teel",
+          "team": "CWS",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "677587",
+          "name": "Brayan Rocchio",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686668",
+          "name": "Brenton Doyle",
           "team": "CWS",
           "stat": null,
           "line": null,
@@ -8011,17 +8019,9 @@
           "result": null
         },
         {
-          "id": "691019",
-          "name": "Kyle Teel",
+          "id": "671976",
+          "name": "Tristan Peters",
           "team": "CWS",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "595978",
-          "name": "Austin Hedges",
-          "team": "CLE",
           "stat": null,
           "line": null,
           "result": null
@@ -12312,6 +12312,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-10": {
+      "picks": [
+        {
+          "id": "678246",
+          "name": "Miguel Vargas",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "808959",
+          "name": "Munetaka Murakami",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "643217",
+          "name": "Andrew Benintendi",
+          "team": "Chicago White Sox",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672275",
+          "name": "Patrick Bailey",
+          "team": "Cleveland Guardians",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663993",
+          "name": "Nathaniel Lowe",
+          "team": "Cleveland Guardians",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
