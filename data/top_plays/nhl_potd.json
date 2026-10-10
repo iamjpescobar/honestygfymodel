@@ -1,6 +1,7 @@
 {
  "plays": [
   {
+   "actual": 1.0,
    "at_least": 1,
    "date": "2026-10-09",
    "fair": -219,
@@ -15,11 +16,32 @@
    "p_cal": 0.6866,
    "player": "Mark Scheifele",
    "player_id": "2562632",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-09T20:00:00-04:00",
    "stat": "pts",
    "team": "Winnipeg Jets",
    "why": "2.09 shots and 1.15 points a game over 86 games (this season + last, pulled toward the forward average) \u00b7 ice time 20.6 min over his last 5 vs 21.5 on his rate \u2192 shots x0.98 \u00b7 ANA matchup sets tonight's shot volume x1.03 and scoring x1.09 \u00b7 ANA allows the 16th-most of 32 shots to centres (9.6 a game vs 9.6) \u00b7 \u2192 2.11 expected shots, 1.21 expected points \u00b7 PP1 by minutes (2.6 PP min a game over his last 5; context, not in the number)"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-10",
+   "fair": -381,
+   "game": "Edmonton Oilers @ San Jose Sharks",
+   "game_id": "401892471",
+   "label": "Pts O0.5",
+   "logged_at": "2026-10-10T14:19:19+00:00",
+   "market": "pt1",
+   "matchup": null,
+   "matchup_tier": null,
+   "p": 0.8159,
+   "p_cal": 0.7923,
+   "player": "Connor McDavid",
+   "player_id": "3895074",
+   "result": null,
+   "start": "2026-10-10T16:00:00-04:00",
+   "stat": "pts",
+   "team": "Edmonton Oilers",
+   "why": "3.59 shots and 1.61 points a game over 86 games (this season + last, pulled toward the forward average) \u00b7 ice time 22.8 min over his last 5 vs 23.0 on his rate \u2192 shots x1.00 \u00b7 SJ matchup sets tonight's shot volume x1.02 and scoring x1.06 \u00b7 SJ allows the 6th-most of 32 shots to centres (10.1 a game vs 9.6) \u00b7 \u2192 3.66 expected shots, 1.69 expected points \u00b7 PP1 by minutes (4.7 PP min a game over his last 5; context, not in the number)"
   }
  ]
 }
