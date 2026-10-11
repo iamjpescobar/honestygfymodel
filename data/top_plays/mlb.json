@@ -1457,6 +1457,27 @@
    "stat": "k",
    "team": "Los Angeles Dodgers",
    "why": "4.1 expected PA from slot 6 vs Jacob Misiorowski, then a league-average pen"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-11",
+   "fair": -281,
+   "game": "Los Angeles Dodgers @ Milwaukee Brewers",
+   "game_id": "849809",
+   "label": "K O0.5",
+   "logged_at": "2026-10-11T20:54:41+00:00",
+   "market": "k1",
+   "matchup": "Soft matchup \u2014 Tarik Skubal allows the 7th-most of 418 strikeouts to batters (0.303 per plate appearance vs 0.222 league, +36%; ranked on this season + last, blended).",
+   "matchup_tier": "soft",
+   "p": 0.7683,
+   "p_cal": 0.7374,
+   "player": "Jackson Chourio",
+   "player_id": "694192",
+   "result": null,
+   "start": "2026-10-12T00:00:00Z",
+   "stat": "k",
+   "team": "Milwaukee Brewers",
+   "why": "4.6 expected PA from slot 1 vs Tarik Skubal, then a league-average pen"
   }
  ]
 }

@@ -8041,6 +8041,14 @@
           "result": null
         },
         {
+          "id": "694192",
+          "name": "Jackson Chourio",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
           "id": "663656",
           "name": "Kyle Tucker",
           "team": "LAD",
@@ -8049,8 +8057,8 @@
           "result": null
         },
         {
-          "id": "694192",
-          "name": "Jackson Chourio",
+          "id": "668930",
+          "name": "Brice Turang",
           "team": "MIL",
           "stat": null,
           "line": null,
@@ -8065,24 +8073,8 @@
           "result": null
         },
         {
-          "id": "592885",
-          "name": "Christian Yelich",
-          "team": "MIL",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
           "id": "806198",
           "name": "Cooper Pratt",
-          "team": "MIL",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "668930",
-          "name": "Brice Turang",
           "team": "MIL",
           "stat": null,
           "line": null,
@@ -8105,16 +8097,8 @@
           "result": null
         },
         {
-          "id": "686217",
-          "name": "Sal Frelick",
-          "team": "MIL",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "681624",
-          "name": "Andy Pages",
+          "id": "518692",
+          "name": "Freddie Freeman",
           "team": "LAD",
           "stat": null,
           "line": null,
@@ -8129,8 +8113,24 @@
           "result": null
         },
         {
-          "id": "571970",
-          "name": "Max Muncy",
+          "id": "669257",
+          "name": "Will Smith",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "800325",
+          "name": "Luis Lara",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "605141",
+          "name": "Mookie Betts",
           "team": "LAD",
           "stat": null,
           "line": null,
@@ -12482,6 +12482,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-11": {
+      "picks": [
+        {
+          "id": "660271",
+          "name": "Shohei Ohtani",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "571970",
+          "name": "Max Muncy",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "694192",
+          "name": "Jackson Chourio",
+          "team": "Milwaukee Brewers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641343",
+          "name": "Jake Bauers",
+          "team": "Milwaukee Brewers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "669257",
+          "name": "Will Smith",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
