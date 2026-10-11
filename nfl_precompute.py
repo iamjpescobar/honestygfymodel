@@ -28,7 +28,7 @@ the page prints an em-dash. Samples are shipped with their game counts.
 import json
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from math import exp, lgamma
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -428,6 +428,82 @@ def load_or_fetch_prior_players(prior_finals, summary_fn, path=None, sleep=0.05)
                  "tot": s.get("tot")} for pid, s in summ.items() if s.get("tot")}
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps({"season": 2025, "players": out}, separators=(",", ":")))
+    return out
+
+
+# LAST SEASON'S FULL BOX SCORES (10-11) — so the NFL prop test runs on a
+# season and a half, the way the NHL and MLB tests run on a full season.
+# Until today it ran on this season's weeks alone (92 QB games for passing
+# yards), too few to fit a defense strength or trust a calibration curve.
+PRIOR_LOGS_NAME = "prior_logs.json"
+PRIOR_WEEK1_TUESDAY = date(2025, 9, 2)        # 2025 opener: Thu Sep 4
+
+
+def prior_week_of(d):
+    """2025 regular-season week for a date (week 1 = Sep 2-8)."""
+    return (d - PRIOR_WEEK1_TUESDAY).days // 7 + 1
+
+
+def _abbrs(summary):
+    out = {}
+    for t in ((summary.get("boxscore") or {}).get("teams") or []):
+        tm = t.get("team") or {}
+        if tm.get("displayName"):
+            out[tm["displayName"]] = tm.get("abbreviation") or ""
+    return out
+
+
+def load_or_fetch_prior_logs(prior_finals, summary_fn, path=None, sleep=0.05):
+    """{"finals", "logs"} for 2025 in the SAME shape this season's are
+    built in (main), parsed by the same parser — fetched once, committed
+    beside prior_players.json. {} when it cannot be built (the test then
+    runs on this season alone, and says so)."""
+    path = Path(path or (Path(PRIOR_PLAYERS_PATH).parent / PRIOR_LOGS_NAME))
+    if path.exists():
+        try:
+            d = json.loads(path.read_text())
+            if d.get("finals") and d.get("logs"):
+                return d
+        except Exception as exc:          # noqa: BLE001
+            print(f"  prior logs file unreadable ({exc}) - refetching")
+    if not prior_finals:
+        return {}
+    # keyed by event id, like this season's finals: a game listed twice
+    # in the source must not become two rows
+    logs, finals, parsed = {}, {}, 0
+    for f in prior_finals:
+        eid = f.get("event_id")
+        if not eid or not f.get("date"):
+            continue
+        try:
+            d = date.fromisoformat(f["date"][:10])
+            wk = prior_week_of(d)
+            summ = summary_fn(eid)
+            lines, n = parse_summary_final(summ, eid, d.isoformat(), wk, logs)
+        except Exception as exc:          # noqa: BLE001
+            print(f"  prior summary {eid} failed: {exc}")
+            continue
+        parsed += 1 if n else 0
+        box = {ln["team"]: ln for ln in lines}
+        ab = _abbrs(summ)
+        finals[str(eid)] = ({"date": d.isoformat(), "week": wk, "event_id": str(eid),
+                       "away": f.get("away"), "home": f.get("home"),
+                       "away_id": f.get("away_id"), "home_id": f.get("home_id"),
+                       "away_abbr": ab.get(f.get("away"), ""), "home_abbr": ab.get(f.get("home"), ""),
+                       "odds": ef.recorded_line(None, summ) or None,
+                       "away_score": f.get("away_score"), "home_score": f.get("home_score"),
+                       "away_box": box.get(f.get("away")), "home_box": box.get(f.get("home"))})
+        time.sleep(sleep)
+    finals = list(finals.values())
+    print(f"  [verify] NFL prior box scores: {parsed}/{len(prior_finals)} parsed, "
+          f"{len(logs)} players, {sum(1 for x in finals if x.get('odds'))} with a recorded line")
+    if parsed < 0.9 * len(prior_finals):
+        print("::warning::NFL prior box scores short - not saved; the prop test runs on this "
+              "season alone.")
+        return {}
+    out = {"season": 2025, "finals": finals, "logs": logs}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(out, separators=(",", ":")))
     return out
 
 
@@ -1189,15 +1265,21 @@ def main(today=None):
               f"{len(pos_of)} rostered positions, {len(prior_rows)} 2025 player-game lines; "
               f"rush yds to RBs league {_x.get('league')}/G weight {_x.get('weight')} "
               f"reliability {_x.get('reliability')}")
+        _plogs = load_or_fetch_prior_logs(_pf, lambda eid: ef.fetch_summary(LEAGUE, eid))
         res = npc.run(finals, logs, sys.modules[__name__], prior_players or None, pw,
-                      league.get("prop_spreads"))
+                      league.get("prop_spreads"), prior=_plogs or None)
         league["prop_validation"] = res
         if res.get("matchup_in_number"):
             league["matchup_in_number"] = res["matchup_in_number"]
+        if res.get("matchup_strength"):
+            league["matchup_strength"] = res["matchup_strength"]
+        print(f"  [verify] NFL prop test rows: {res.get('seasons')} "
+              f"({'last season + this one' if _plogs else 'THIS SEASON ONLY - no 2025 box scores'})")
         for _fam, _v in (res.get("matchup") or {}).items():
-            print(f"  [verify] NFL defense multiplier ({_fam}): "
-                  f"{(_v.get('verdict') or {}).get('verdict')} z={(_v.get('verdict') or {}).get('z')} "
-                  f"n={_v.get('n')} -> {'IN THE NUMBER' if _v.get('in_number') else 'context only'}")
+            print(f"  [verify] NFL defense strength ({_fam}): fitted {_v.get('fitted')} on "
+                  f"{_v.get('n_train')} -> {(_v.get('verdict') or {}).get('verdict')} "
+                  f"z={(_v.get('verdict') or {}).get('z')} n={_v.get('n')} -> "
+                  f"{'IN THE NUMBER at ' + str(_v.get('strength')) if _v.get('in_number') else 'context only'}")
         for _stat in npc.DVP_STATS:
             _v = res.get(_stat) or {}
             if _v.get("n"):

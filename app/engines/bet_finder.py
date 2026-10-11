@@ -31,8 +31,9 @@ delivered_over / edge_tier (the page's own definitions).
 from engines import model_math as mm
 from engines import value as vl
 
-CALL_ORDER = {"strong": 0, "value": 1, "thin": 2, "none": 3}
-TIER_LABEL = {"strong": "STRONG", "value": "VALUE", "thin": "THIN", "none": "SKIP"}
+CALL_ORDER = {"strong": 0, "value": 1, "thin": 2, "check": 3, "none": 4}
+TIER_LABEL = {"strong": "STRONG", "value": "VALUE", "thin": "THIN", "check": "CHECK",
+              "none": "SKIP"}
 
 
 def valid_price(x):
@@ -65,9 +66,28 @@ def chance_at(row, stat, line, side, markets, calibration):
     return over, raw_over, basis
 
 
-def judge(chance, price, staking=None):
-    """{"call", "tier", "edge", "break_even", "ev_per_100", "stake"} for one
-    price, or None when the price is not a real one."""
+def support_at(row, stat, line, markets, calibration):
+    """How well-measured this call is (model_view.support_for) — what the
+    guard reads to decide whether the chance may carry STRONG."""
+    from engines import model_view as mv
+    pmf = (row.get("_pmfs") or {}).get(stat)
+    raw_over = mm.over_prob_pmf(pmf, line) if pmf else None
+    return mv.support_for(raw_over, stat, line, markets, calibration)
+
+
+MARKET_SUPPORT = {"measured": True, "in_range": True, "n": 10 ** 6, "untested": False}
+
+
+def judge(chance, price, staking=None, other=None, support=None):
+    """{"call", "tier", "edge", "break_even", "ev_per_100", "stake", "book",
+    "guard"} for one price, or None when the price is not a real one.
+
+    THE GUARD (model_view.guarded_tier, 10-11): a 10+ point gap to the
+    book's own chance is CHECK, not a bet; an untested chance is at most
+    THIN; a chance past the graded range is at most VALUE. `other` is the
+    other side's price (de-vigs the book's chance); `support` how well the
+    chance is measured (support_at; MARKET_SUPPORT for game lines, which
+    are anchored to the market already)."""
     from engines import model_view as mv
     px = valid_price(price)
     if chance is None or px is None:
@@ -76,11 +96,13 @@ def judge(chance, price, staking=None):
     a = vl.assess(chance, px, bankroll or None, frac, cap)
     if not a:
         return None
-    tier = mv.edge_tier(a["edge"], a["value"])
-    return {"call": "BET" if tier != "none" else "SKIP", "tier": tier,
+    tier, guard = mv.guarded_tier(a, px, valid_price(other), support)
+    book, _devig = mv.market_chance(px, valid_price(other))
+    bet = tier in ("strong", "value", "thin")
+    return {"call": "BET" if bet else ("CHECK" if tier == "check" else "SKIP"), "tier": tier,
             "edge": a["edge"], "break_even": a["break_even"],
-            "ev_per_100": a["ev_per_100"],
-            "stake": a.get("stake") if tier != "none" else 0.0}
+            "ev_per_100": a["ev_per_100"], "book": book, "guard": guard,
+            "stake": a.get("stake") if bet else 0.0}
 
 
 def price_list(rows, stat, line, side, markets, calibration):
@@ -93,17 +115,20 @@ def price_list(rows, stat, line, side, markets, calibration):
         if ch is None or not 0 < ch < 1:
             continue
         out.append({"name": r.get("_name"), "chance": ch, "raw": raw, "basis": basis,
-                    "worth": mm.fair_american(ch), "why": r.get("_why")})
+                    "worth": mm.fair_american(ch), "why": r.get("_why"),
+                    "support": support_at(r, stat, line, markets, calibration)})
     out.sort(key=lambda x: -x["chance"])
     return out
 
 
-def results(items, prices, staking=None):
-    """items: price_list rows; prices: {name: price}. Judged rows for every
-    name with a real price, BETs first (strongest edge first), then SKIPs."""
+def results(items, prices, staking=None, others=None):
+    """items: price_list rows; prices: {name: price}; others: {name: the
+    other side's price}. Judged rows for every name with a real price,
+    BETs first (strongest edge first), then CHECK, then SKIP."""
     out = []
     for it in items or []:
-        j = judge(it["chance"], prices.get(it["name"]), staking)
+        j = judge(it["chance"], prices.get(it["name"]), staking, (others or {}).get(it["name"]),
+                  it.get("support"))
         if j:
             out.append(dict(it, price=valid_price(prices.get(it["name"])), **j))
     out.sort(key=lambda x: (CALL_ORDER[x["tier"]], -x["edge"]))

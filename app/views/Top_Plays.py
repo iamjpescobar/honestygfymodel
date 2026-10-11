@@ -141,11 +141,12 @@ with card("tp_props"):
         if res:
             # Same tiers and colours as every Model page's checker — the
             # fair price itself is break-even, not value (edge_tier).
-            _tier = mv.edge_tier(res["edge"], res["value"])
-            _lab, _fg, _bg = mv.TIER_STYLE[_tier]
-            verdict = (f'<span style="color:{_fg}; font-weight:800;">{_lab}</span>'
-                       if _tier != "none" else
-                       f'<span style="color:{COLOR["error"]}; font-weight:800;">NO VALUE</span>')
+            # ...and the same guard (10-11, model_view.guarded_tier).
+            _rec = pl.get("record") or {}
+            _tier, _guard = mv.guarded_tier(res, price, None, (
+                {"measured": True, "in_range": True, "n": _rec.get("n") or 0, "untested": False}
+                if _rec else None))
+            verdict = mv.tier_label_html(_tier)
             mv.render_verdict_box(_tier, (
                 f"<b>{pl.get('player')}</b> \u00b7 {pl.get('label')} at "
                 f"<b>{mm.fmt_american(int(price))}</b> \u2192 <b>{verdict}</b><br>"
@@ -153,7 +154,9 @@ with card("tp_props"):
                 f"<b>{mm.fmt_american(pl.get('fair'))}</b> or better \u00b7 break-even at your price "
                 f"{_pct(res['break_even'])} \u00b7 edge <b>{100 * res['edge']:+.1f} pts</b> "
                 f"\u00b7 EV {res['ev_per_100']:+.2f} per $100"
-                + (f" \u00b7 stake ${res['stake']:.2f}" if res.get("stake") else "")))
+                + (f" \u00b7 stake ${res['stake']:.2f}"
+                   if res.get("stake") and _tier in ("strong", "value", "thin") else "")
+                + (f"<br><span style='color:{COLOR['warn']};'>{_guard}</span>" if _guard else "")))
         _bits = []
         if pl.get("matchup"):
             _mfg = (mv.MATCHUP_STYLE.get(pl.get("matchup_tier")) or ("", COLOR["text_muted"]))[1]

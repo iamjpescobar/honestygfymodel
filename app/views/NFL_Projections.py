@@ -218,9 +218,13 @@ else:
                     _sides = [(f"Over {_line:g}", _po, _po_px),
                               (f"Under {_line:g}", None if _po is None else 1 - _po, _pu_px)]
                 _out, _tiers = [], []
-                for _lab, _p, _price in _sides:
+                for _si, (_lab, _p, _price) in enumerate(_sides):
                     _a = _vl.assess(_p, _price, _stk[0] or None, _stk[1], _stk[2]) if _p is not None else None
-                    _tiers.append(_mv.edge_tier(_a["edge"] if _a else None, bool(_a and _a["value"])))
+                    # The guard (10-11): with both prices the book's own
+                    # chance is known — a 10+ point gap is CHECK.
+                    _other = (_sides[1 - _si][2] if len(_sides) == 2 else None)
+                    _tiers.append(_mv.guarded_tier(_a, _price, _other, None)[0] if _a
+                                  else "none")
                     _out.append({
                         "Tier": _mv.TIER_STYLE[_tiers[-1]][0],
                         "Bet": _lab,
@@ -229,7 +233,8 @@ else:
                         "Price": _mm.fmt_american(int(_price)),
                         "Edge": f"{100 * _a['edge']:+.1f}" if _a else "\u2014",
                         "EV / $100": f"{_a['ev_per_100']:+.2f}" if _a else "\u2014",
-                        "Stake": (f"${_a['stake']:.2f}" if _a and _a.get("stake") else "\u2014"),
+                        "Stake": (f"${_a['stake']:.2f}" if _a and _a.get("stake")
+                                  and _tiers[-1] in ("strong", "value", "thin") else "\u2014"),
                         "Value": "\u2705" if _a and _a["value"] else "",
                     })
                 # NFL prop chances have NOT been graded against outcomes,

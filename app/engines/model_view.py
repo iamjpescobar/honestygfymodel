@@ -430,20 +430,135 @@ def delivered_over(p_over, stat, line, markets, calibration):
     from engines import top_plays_board as tpb
     if p_over is None:
         return None, "raw"
+    bins, basis = curve_for(stat, line, markets, calibration)
+    c = tpb.calibrate(p_over, bins) if bins else None
+    return (c, basis) if c is not None else (p_over, "raw")
+
+
+def curve_for(stat, line, markets, calibration):
+    """(bins, basis) — the calibration curve delivered_over reads for this
+    stat and line: the exact tested line's, else the nearest tested line
+    of the same stat, else the stat-level "@stat" curve (NFL props are
+    tested next to each player's own average, so their record is one
+    curve per stat). (None, "raw") when there is none."""
     cands = [(k, n - 0.5) for k, _l, s_, n in (markets or ()) if s_ == stat
              and (calibration or {}).get(k)]
     if not cands:
-        # A STAT-LEVEL curve ("@stat"): NFL props are tested at a line next
-        # to each player's own average, not at one fixed line, so their
-        # record is one curve per stat.
         bins = (calibration or {}).get(f"@{stat}")
-        c = tpb.calibrate(p_over, bins) if bins else None
-        return (c, "this stat's record") if c is not None else (p_over, "raw")
+        return (bins, "this stat's record") if bins else (None, "raw")
     k, ln = min(cands, key=lambda x: abs(x[1] - line))
-    c = tpb.calibrate(p_over, calibration[k])
-    if c is None:
-        return p_over, "raw"
-    return c, ("exact" if abs(ln - line) < 1e-9 else f"nearest O{ln:g}")
+    return calibration[k], ("exact" if abs(ln - line) < 1e-9 else f"nearest O{ln:g}")
+
+
+# ----------------------------------------------------------------------
+# THE GUARD ON A BET CALL (10-11) - no false STRONG
+# ----------------------------------------------------------------------
+# Izzy leans on STRONG. On 10-11 the Bet Finder would have called
+# Brissett UNDER 266.5 (-113) STRONG: the model projected 200 yards, the
+# book 266.5, and the book knew what the model did not (Detroit's pass
+# defense, a big underdog throwing). Three rules, applied to every prop
+# call on the site (the checkers, the Bet Finder, Goal Edge, Top Plays,
+# Player of the Day, TD Edge); game lines are already anchored to the
+# market (engines/market_blend):
+#
+# 1. BOOK DISAGREES -> CHECK. When our chance beats the book's by
+#    GAP_CHECK or more, the call is CHECK, not a bet. MEASURED on 3,050
+#    NHL + NFL 2025-26 game lines (moneyline, total, spread) where the
+#    model's walk-forward chance and the market's were both recorded:
+#        gap  0-3 pts   n 946  model vs market: no difference (z  0.29)
+#        gap  3-6 pts   n 975  no difference           (z -0.73)
+#        gap  6-10 pts  n 711  no difference           (z -1.08)
+#        gap 10-15 pts  n 314  MARKET RIGHT            (z -2.52)
+#        gap 15+ pts    n 104  MARKET RIGHT            (z -2.23)
+#    Big disagreements were the model missing something. Prop markets
+#    are softer than game lines, so this is the cautious side of the
+#    line until prop prices are recorded and the same test can be run
+#    on props themselves. With the other side's price the book's chance
+#    is de-vigged; with one price, its break-even is used (the edge).
+# 2. UNTESTED -> at most THIN. A chance with no graded curve behind it
+#    (basis "raw") is the model's own number.
+# 3. OUTSIDE THE TESTED RANGE -> at most VALUE. STRONG needs the raw call
+#    inside the range the curve was measured on, with STRONG_MIN_N calls
+#    in its band (the site's judgeability floor). Past the ends the
+#    curve is extrapolated, and an extrapolated number cannot carry the
+#    site's strongest word.
+GAP_CHECK = 0.10
+STRONG_MIN_N = 30
+
+
+def curve_support(p_raw, bins):
+    """{"in_range", "n", "measured"} for a raw call on one curve."""
+    pts = sorted((b["predicted"], b["n"]) for b in (bins or []) if b.get("n"))
+    if p_raw is None or not pts:
+        return {"in_range": False, "n": 0, "measured": False, "untested": True}
+    near = min(pts, key=lambda x: abs(x[0] - p_raw))
+    return {"in_range": pts[0][0] <= p_raw <= pts[-1][0], "n": near[1], "measured": True,
+            "untested": False}
+
+
+def support_for(p_raw_over, stat, line, markets, calibration):
+    """curve_support for an any-line call (over or under: the same curve)."""
+    bins, _basis = curve_for(stat, line, markets, calibration)
+    return curve_support(p_raw_over, bins)
+
+
+def valid_american(x):
+    try:
+        v = float(x)
+    except (TypeError, ValueError):
+        return False
+    return v <= -100 or v >= 100
+
+
+def market_chance(price, other=None):
+    """(the book's chance for this side, de-vigged?): de-vigged when the
+    other side's price is known, else the price's own break-even."""
+    if valid_american(other):
+        ph, _pa = mm.no_vig_pair(price, other)
+        if ph is not None:
+            return ph, True
+    d = vl.decimal_odds(price) if valid_american(price) else None
+    return (1.0 / d if d else None), False
+
+
+def guarded_tier(a, price=None, other=None, support=None):
+    """(tier, why) for a PROP call: edge_tier, then the three rules above.
+    tier is "strong" | "value" | "thin" | "none" | "check"; why is a plain
+    sentence when a rule changed the call, else None. support: from
+    curve_support / support_for, or None when the caller has no curve."""
+    tier = edge_tier(a["edge"] if a else None, bool(a and a["value"]))
+    if tier == "none":
+        return "none", None
+    mk, devig = market_chance(price if price is not None else a["price"], other)
+    if mk is not None and a["p"] - mk >= GAP_CHECK - 1e-9:
+        return "check", (
+            f"Book disagrees: our {100 * a['p']:.0f}% vs the book's {100 * mk:.0f}%"
+            f"{'' if devig else ' (its break-even)'} - a {100 * (a['p'] - mk):.0f}-point gap. "
+            f"On 3,050 past game lines, gaps of 10+ points went the market's way: the book "
+            f"usually knows something the model doesn't (injury, role, defense, game script). "
+            f"Not a bet until you know why.")
+    if support is None:
+        if tier == "strong":
+            return "value", ("Capped at VALUE: no graded curve is attached to this call, and "
+                             "STRONG needs one.")
+        return tier, None
+    if support.get("untested"):
+        return "thin", ("Capped at THIN: this stat has no graded record yet - the model's "
+                        "own number.")
+    if tier == "strong" and (not support["in_range"] or support["n"] < STRONG_MIN_N):
+        where = "outside the range" if not support["in_range"] else "in a thin part"
+        return "value", (
+            f"Capped at VALUE: this call sits {where} of what the model has been graded on "
+            f"({support['n']} calls nearby), so its chance is extrapolated, not measured.")
+    return tier, None
+
+
+def tier_label_html(tier):
+    """The call as coloured text (NO VALUE in red)."""
+    lab, fg, _bg = TIER_STYLE[tier]
+    if tier == "none":
+        return f'<span style="color:{COLOR["error"]}; font-weight:800;">NO VALUE</span>'
+    return f'<span style="color:{fg}; font-weight:800;">{lab}</span>'
 
 
 # Chance bands for COLOUR ONLY — where the eye should land, on the
@@ -713,12 +828,13 @@ def _any_line_tool(rows, stats, markets, verdicts, key, staking, default_stat, c
             mkt_txt = (f" \u00b7 the book's own no-vig chance {100 * pair[0]:.1f}% "
                        f"(model {'above' if p > pair[0] else 'below'} it by "
                        f"{100 * abs(p - pair[0]):.1f} pts)")
-    _tier = edge_tier(a["edge"], a["value"])
-    _tl, _tfg, _tbg = TIER_STYLE[_tier]
-    verdict = (f'<span style="color:{_tfg}; font-weight:800;">{_tl}</span>'
-               if _tier != "none" else
-               f'<span style="color:{COLOR["error"]}; font-weight:800;">NO VALUE</span>')
-    stake_txt = (f" \u00b7 stake ${a['stake']:.2f}" if a["value"] and a.get("stake") else "")
+    # THE GUARD (10-11): book-disagrees -> CHECK, untested -> THIN, past
+    # the graded range -> VALUE. See guarded_tier.
+    _tier, _guard = guarded_tier(a, price, other,
+                                 support_for(po_raw, stat, line, markets, calibration))
+    verdict = tier_label_html(_tier)
+    stake_txt = (f" \u00b7 stake ${a['stake']:.2f}"
+                 if _tier in ("strong", "value", "thin") and a.get("stake") else "")
     if basis == "raw":
         chance_txt = (f"model <b>{100 * p:.1f}%</b> <span style='color:{COLOR['text_faint']};'>"
                       f"(no graded record for this stat yet \u2014 the model's own number)</span>")
@@ -734,7 +850,8 @@ def _any_line_tool(rows, stats, markets, verdicts, key, staking, default_stat, c
         f"{chance_txt} \u00b7 worth it at <b>{mm.fmt_american(mm.fair_american(p))}</b> or "
         f"better \u00b7 break-even at your price {100 * a['break_even']:.1f}% \u00b7 edge "
         f"<b>{100 * a['edge']:+.1f} pts</b> \u00b7 EV {a['ev_per_100']:+.2f} per $100"
-        f"{stake_txt}{mkt_txt}"))
+        f"{stake_txt}{mkt_txt}"
+        + (f"<br><span style='color:{COLOR['warn']};'>{_guard}</span>" if _guard else "")))
     _why = sel.get("_why")
     _card = (sel.get("_dvp") or {}).get(stat)
     _note = sel.get("_notice", {}).get(stat) if isinstance(sel.get("_notice"), dict) else None
@@ -954,11 +1071,12 @@ def render_prop_value_tool(rows, markets, key, staking, name_key="_name"):
     if not a:
         st.caption("Enter an American price of -100 or lower, or +100 or higher.")
         return
-    _tl, _tfg, _tbg = TIER_STYLE[edge_tier(a["edge"], a["value"])]
-    verdict = (f'<span style="color:{_tfg}; font-weight:800;">{_tl}</span>'
-               if edge_tier(a["edge"], a["value"]) != "none" else "no value")
-    stake_txt = (f" \u00b7 stake ${a['stake']:.2f}" if a["value"] and a.get("stake")
-                 else "")
+    _tier, _guard = guarded_tier(a, price, None, None)
+    verdict = tier_label_html(_tier)
+    stake_txt = (f" \u00b7 stake ${a['stake']:.2f}"
+                 if _tier in ("strong", "value", "thin") and a.get("stake") else "")
+    if _guard:
+        stake_txt += f" \u00b7 {_guard}"
     st.markdown(f"{who} \u00b7 {labels[mkt]}: model **{100 * p:.1f}%** vs break-even "
                 f"{100 * a['break_even']:.1f}% at {mm.fmt_american(int(price))} \u2192 "
                 f"**{verdict}** (edge {100 * a['edge']:+.1f} pts, EV {a['ev_per_100']:+.2f} "
@@ -978,6 +1096,9 @@ TIER_STYLE = {
     # Grey, not a third blue: on the first screenshot steel-blue THIN read
     # as a paler STRONG — a weak edge must not look like a strong one.
     "thin": ("THIN", COLOR["text_muted"], "rgba(152, 163, 173, 0.12)"),
+    # The guard's word (guarded_tier): the book disagrees too much to bet
+    # until you know why. Amber, never a bet colour.
+    "check": ("CHECK", COLOR["warn"], COLOR["warn_dim"]),
     "none": ("\u2014", COLOR["text_faint"], None),
 }
 TRUST_STYLE = {
@@ -1333,21 +1454,29 @@ def _nfl_why(p, proj, team, opp, implied):
     each defense multiplier is IN the number (from the nightly's test)."""
     bits = []
     use = proj.get("matchup_in_number") or {}
+    stg = proj.get("matchup_strength") or {}
+
+    def _in(fam, word="in the number"):
+        # the strength the nightly fitted and tested (10-11), or context
+        if not use.get(fam, True):
+            return "context only"
+        s = stg.get(fam, 1.0)
+        return word if s >= 1.0 else f"{word} at {100 * s:.0f}% strength"
     if proj.get("carries") is not None:
         bits.append(f"{(p.get('carry_share') or 0) * 100:.0f}% of {team}'s carries "
                     f"\u2192 {proj['carries']:.1f}")
         if proj.get("rush_matchup"):
             bits.append(f"{opp} allows {proj['rush_matchup']:.2f}x the league per carry "
-                        f"({'in the number' if use.get('rush', True) else 'context only'})")
+                        f"({_in('rush')})")
     if proj.get("targets") is not None:
         bits.append(f"{(p.get('target_share') or 0) * 100:.0f}% of {team}'s targets "
                     f"\u2192 {proj['targets']:.1f}")
         if proj.get("rec_matchup"):
             bits.append(f"{opp} allows {proj['rec_matchup']:.2f}x the league per target "
-                        f"({'in the number' if use.get('rec', True) else 'context only'})")
+                        f"({_in('rec')})")
     if proj.get("pass_att") is not None:
         bits.append(f"{proj['pass_att']:.0f} attempts at {proj.get('ypa_adj') or 0:.2f} yds "
-                    f"({'defense in the number' if use.get('pass', True) else 'defense context only'})")
+                    f"(defense {_in('pass')})")
     if implied is not None:
         bits.append(f"market implies {team} {implied:g} pts")
     if p.get("gp_last_season"):

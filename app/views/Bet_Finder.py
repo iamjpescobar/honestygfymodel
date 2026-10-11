@@ -35,7 +35,11 @@ st.markdown(
     f'<span style="color:{COLOR["stat_high"]}; font-weight:800;">STRONG</span> / '
     f'<span style="color:{COLOR["gold"]}; font-weight:800;">VALUE</span> rows at the stake '
     f'shown; <span style="color:{COLOR["text_muted"]}; font-weight:800;">THIN</span> is a '
-    f'tiny edge; SKIP means the book is not paying enough.</div>',
+    f'tiny edge; SKIP means the book is not paying enough. '
+    f'<span style="color:{COLOR["warn"]}; font-weight:800;">CHECK</span> means our number '
+    f'and the book&rsquo;s are 10+ points apart &mdash; the book usually knows something '
+    f'(injury, role, defense, game script), so it is <b>not</b> a bet until you know why. '
+    f'Typing the <b>Other side</b> price too makes that check sharper.</div>',
     unsafe_allow_html=True)
 
 _stk = mv.staking_controls("bet_finder")
@@ -180,6 +184,8 @@ def _call_css(tier):
     lab, fg, bg = mv.TIER_STYLE.get(tier, mv.TIER_STYLE["none"])
     if tier == "none":
         return f"color: {COLOR['error']}; font-weight: 700;"
+    if tier == "check":
+        return f"color: {COLOR['warn']}; font-weight: 800; background-color: {COLOR['warn_dim']};"
     return f"color: {fg}; font-weight: 800;" + (f" background-color: {bg};" if bg else "")
 
 
@@ -191,6 +197,7 @@ def _results_table(res, key, line_col=True):
         "Call": bf.TIER_LABEL[r["tier"]], "Player": r["name"],
         **({"Line": r.get("line_label")} if line_col else {}),
         "Your price": _amer(r["price"]), "Our chance": _pct(r["chance"]),
+        "Book says": _pct(r.get("book")),
         "Worth it at": _amer(r["worth"]), "Edge": f"{100 * r['edge']:+.1f} pts",
         "Stake": (f"${r['stake']:.2f}" if r.get("stake") else "—"),
         "Needs": _pct(r["break_even"])} for r in res])
@@ -202,6 +209,15 @@ def _results_table(res, key, line_col=True):
             out.at[i, "Our chance"] = mv.chance_css(res[i]["chance"])
         return out
     st.dataframe(mv.painted(df, _paint), hide_index=True, width="stretch", key=key)
+
+
+def _notes(res):
+    """Why a call was changed by the guard — one line per player."""
+    lines = [f"<b>{r['name']}</b> \u2014 {r['guard']}" for r in res if r.get("guard")]
+    if lines:
+        st.markdown(f'<div style="font-size:var(--lc-text-small); line-height:1.6; '
+                    f'color:{COLOR["warn"]};">' + "<br>".join(lines) + "</div>",
+                    unsafe_allow_html=True)
 
 
 def _add_to_card(res, sport, game, what):
@@ -289,7 +305,7 @@ else:
                 return float(mv.balanced_line((r.get("_pmfs") or {}).get(stat)))
 
             base = pd.DataFrame([{"Player": r["_name"], "Line": _start_line(r),
-                                  "Your price": None} for r in players])
+                                  "Your price": None, "Other side": None} for r in players])
             ed_key = f"bf_ed_{sport}_{gi}_{gname}_{stat}_{side}_{line}"
             edited = st.data_editor(
                 base, key=ed_key, hide_index=True, width="stretch",
@@ -298,6 +314,11 @@ else:
                     "Line": st.column_config.NumberColumn(step=0.5, format="%.1f"),
                     "Your price": st.column_config.NumberColumn(
                         help="Your book's American price, e.g. +700 or -150. Leave blank to skip.",
+                        step=5, format="%d"),
+                    "Other side": st.column_config.NumberColumn(
+                        help="Optional: the opposite side's price (the Under if you are on the "
+                             "Over). It lets the page read the BOOK's own chance and catch a "
+                             "line where the book knows something the model doesn't.",
                         step=5, format="%d"),
                 })
 
@@ -311,7 +332,8 @@ else:
                        "worth": mm.fair_american(ch), "line": ln, "side": side,
                        "line_label": f"{side[0]}{ln:g}"}
                 ref.append(row)
-                j = bf.judge(ch, edited.at[i, "Your price"], _stk)
+                j = bf.judge(ch, edited.at[i, "Your price"], _stk, edited.at[i, "Other side"],
+                             bf.support_at(r, stat, ln, grp["markets"], grp["cal"]))
                 if j:
                     res.append(dict(row, price=bf.valid_price(edited.at[i, "Your price"]), **j))
             res.sort(key=lambda x: (bf.CALL_ORDER[x["tier"]], -x["edge"]))
@@ -321,6 +343,7 @@ else:
                 st.markdown(f"**{n_bet} BET{'s' if n_bet != 1 else ''}** out of "
                             f"{len(res)} price{'s' if len(res) != 1 else ''} typed")
                 _results_table(res, key=f"bf_res_{ed_key}")
+                _notes(res)
                 if n_bet and st.button("Add these BETs to tonight's card",
                                        key=f"bf_add_{ed_key}"):
                     k = _add_to_card(res, sport, game_label, labels[stat])
@@ -364,13 +387,15 @@ else:
                                      help="Your book's price for this exact line.")})
             lres = []
             for i, it in enumerate(line_items):
-                j = bf.judge(it["chance"], edl.at[i, "Your price"], _stk)
+                j = bf.judge(it["chance"], edl.at[i, "Your price"], _stk, None,
+                             bf.MARKET_SUPPORT)
                 if j:
                     lres.append(dict(it, price=bf.valid_price(edl.at[i, "Your price"]),
                                      line=0.0, side=it["name"], **j))
             lres.sort(key=lambda x: (bf.CALL_ORDER[x["tier"]], -x["edge"]))
             if lres:
                 _results_table(lres, key=f"bf_lres_{lk}", line_col=False)
+                _notes(lres)
                 if any(x["call"] == "BET" for x in lres) and st.button(
                         "Add these BETs to tonight's card", key=f"bf_ladd_{lk}"):
                     k = _add_to_card(lres, sport, game_label, "game line")

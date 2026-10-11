@@ -187,12 +187,22 @@ def project_player(p, team, opp, league, implied_pts):
     # stays in. The ratio itself is still returned for the page to show.
     # Absent flags (an older games.json) keep the old behaviour: all on.
     use = (league or {}).get("matchup_in_number") or {}
-    pass_mult = rec_mult if use.get("pass", True) else 1.0
-    if not use.get("rush", True):
-        rush_mult = 1.0
-    if not use.get("rec", True):
+    # FITTED STRENGTH (10-11): each family's multiplier enters as
+    # ratio ** strength, the strength fitted and tested by nfl_prop_check
+    # on last season + this one (the way the NHL ice-time factor is). A
+    # +41% pass defence at full strength over-moves a projection; the
+    # fit says how much of it is real. Absent (an older file): 1.0, the
+    # old all-or-nothing behaviour.
+    a = (league or {}).get("matchup_strength") or {}
+    pass_mult = rec_mult ** a.get("pass", 1.0) if use.get("pass", True) else 1.0
+    rush_mult = rush_mult ** a.get("rush", 1.0) if use.get("rush", True) else 1.0
+    if use.get("rec", True):
+        rec_mult = rec_mult ** a.get("rec", 1.0)
+        catch_mult = catch_mult ** a.get("rec", 1.0)
+    else:
         rec_mult = catch_mult = 1.0
     out["matchup_in_number"] = {k: bool(use.get(k, True)) for k in ("rush", "rec", "pass")}
+    out["matchup_strength"] = {k: a.get(k, 1.0) for k in ("rush", "rec", "pass")}
 
     if out.get("carries") is not None and p.get("ypc") is not None:
         out["ypc_adj"] = round(p["ypc"] * rush_mult, 2)

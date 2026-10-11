@@ -206,16 +206,16 @@ with card("ge_check"):
                             step=5, key=f"ge_px_{i}")
     a = vl.assess(r["chance"], price, _stk[0] or None, _stk[1], _stk[2])
     if a:
-        tier = mv.edge_tier(a["edge"], a["value"])
-        lab, fg, _bg = mv.TIER_STYLE[tier]
-        verdict = (f'<span style="color:{fg}; font-weight:800;">{lab}</span>' if tier != "none"
-                   else f'<span style="color:{COLOR["error"]}; font-weight:800;">NO VALUE</span>')
+        _bins = (((model or {}).get("props_validation") or {}).get("g1") or {}).get("calibration")
+        tier, guard = mv.guarded_tier(a, price, None, mv.curve_support(r["raw"], _bins))
+        verdict = mv.tier_label_html(tier)
         mv.render_verdict_box(tier, (
             f"<b>{r['player']}</b> anytime goal at <b>{mm.fmt_american(int(price))}</b> "
             f"→ <b>{verdict}</b><br>chance <b>{100 * r['chance']:.1f}%</b> · worth it "
             f"at <b>{r['fair']}</b> or better · edge <b>{100 * a['edge']:+.1f} pts</b> "
             f"· EV {a['ev_per_100']:+.2f} per $100"
-            + (f" · stake ${a['stake']:.2f}" if a.get("stake") else "")))
+            + (f" · stake ${a['stake']:.2f}" if a.get("stake") and tier in ("strong", "value", "thin") else "")
+            + (f"<br><span style='color:{COLOR['warn']};'>{guard}</span>" if guard else "")))
     bits = []
     if r["card_g"]:
         bits.append(dm.notice(r["card_g"], "goals", nm.DVP_GROUP_LABELS.get(

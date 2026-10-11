@@ -154,6 +154,95 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — NFL props tested on last season + this one; defense strength fitted. 2026-10-11 (2)
+
+**Suite 135 (+ test_nfl_two_seasons), FAILING: none.** Three negative controls red
+by exit code (one first came back GREEN: the null world never fitted a
+strength above 0, so "adopt without the test" could not show; the fixture
+now has fit weeks that suggest a strength and test weeks that do not).
+NFL pages + Bet Finder rendered headless. This zip ALSO carries the
+10-11 guard batch (bet_guard), which had not been pushed yet.
+
+WHY: Izzy — "make NFL behave like MLB and NHL". NHL/MLB props are tested
+on a full past season; the NFL test ran on this season's weeks only (92
+QB games for passing yards), and its defense multipliers were all-or-
+nothing (all three failed).
+
+DATA: nfl_precompute.load_or_fetch_prior_logs — every 2025 box score
+through THIS season's parser (parse_summary_final), finals in this
+season's shape (week via PRIOR_WEEK1_TUESDAY 2025-09-02, abbrs from the
+summary, recorded line from pickcenter, team boxes), fetched ONCE by the
+nightly (~272 summaries) and committed as data/nfl/prior_logs.json
+(nightly-data.yml commit step). Refuses to save under 90% parsed.
+
+TEST (nfl_prop_check.run, prior=): walk_forward on 2025 AND 2026, rows now
+8 fields (+ {strength: p} on STRENGTH_GRID 0/.25/.5/.75/1 for the
+family's stats). split_rows: fit on 2025's first half of weeks; test on
+2025's second half + all of 2026 (never a week the fit saw). fit_strength
+per family (rush / rec / pass): lowest log loss on the fit block, then
+paired vs strength 0 on the test block; in the number only on "beats".
+Then the props are graded (verdicts + calibration) on BOTH seasons with
+the adopted strengths — the curves the delivered chances and the guard
+read are now built on thousands of rows, not hundreds.
+
+PROJECTION: nfl_projection.project_player applies ratio ** strength
+(league["matchup_strength"]; absent = 1.0, old behaviour). Why lines say
+"in the number at 50% strength" or "context only".
+
+READ IN THE NEXT NIGHTLY: "[verify] NFL prior box scores", "NFL prop
+test rows {prior_rows, current_rows}", "NFL defense strength (fam)".
+
+FILES (this batch): nfl_precompute.py, nfl_prop_check.py,
+app/engines/nfl_projection.py, app/engines/model_view.py,
+.github/workflows/nightly-data.yml, tests/test_nfl_two_seasons.py (NEW),
+HANDOFF.md, HANDOFF_ARCHIVE.md — plus the guard batch's files.
+
+---
+
+## PICK UP HERE — the guard on every bet call: no false STRONG. 2026-10-11
+
+**Suite 134 (+ test_bet_guard), FAILING: none.** Three negative controls red by
+exit code (listed in the test). Every changed page rendered headless; the
+Bet Finder replays Brissett UNDER 266.5 (-113/-113) as CHECK with the reason.
+
+WHY: 10-11, DET @ ARI. Model ~200 pass yds for Brissett, book 266.5. The
+Finder would have called UNDER 266.5 STRONG (78% vs 53% break-even). Izzy
+leans on STRONG; a false one is the most expensive bug on the site.
+
+THE GUARD (model_view.guarded_tier; every PROP call — _any_line_tool for
+all sports, render_prop_value_tool, Bet Finder, Top Plays, NHL Goal Edge,
+NHL POTD, NFL TD Edge, NFL Projections; game lines are market-anchored):
+1. BOOK DISAGREES -> CHECK when our chance - the book's >= GAP_CHECK 0.10.
+   MEASURED: 3,050 NHL + NFL 2025-26 game lines with model walk-forward and
+   market both recorded; gaps 0-10 pts no difference (z 0.29/-0.73/-1.08),
+   10-15 pts market right (z -2.52, n 314), 15+ market right (z -2.23,
+   n 104). Transfer to props is the cautious side; re-measure on props
+   once prop prices are recorded. Book's chance = de-vigged with the other
+   side's price (Bet Finder "Other side" column, checker's optional box),
+   else the price's break-even.
+2. No graded curve -> at most THIN.
+3. STRONG needs the raw call inside its curve's graded range with >= 30
+   calls in the nearest band (STRONG_MIN_N); else VALUE. No curve attached
+   -> STRONG capped at VALUE.
+curve_for() now holds the curve choice delivered_over uses (unchanged).
+TIER_STYLE gains "check" (amber). Stakes are shown only on BET tiers.
+
+ALSO MEASURED (no code change, 2025 data in the repo): game script —
+QB attempts vs the team's spread, 153 QB games with lines: -0.05 att per
+point (se 0.09), yards +0.15 (se 0.79): NOT measurable. Defense pass yds
+allowed (walk-forward, 369 QB games) does not carry into QB yards the way
+a multiplier assumes (slope -0.54, se 0.13 — confounded, not usable). So
+neither was put in the projection; the guard is the protection. NEXT:
+record prop prices (needs a durable store the app can write) so the
+model-vs-book test can run on props and GAP_CHECK be re-fitted for them.
+
+FILES: app/engines/model_view.py, app/engines/bet_finder.py,
+app/views/{Bet_Finder,Top_Plays,NHL_Goal_Edge,NHL_Player_Of_The_Day,
+NFL_TD_Edge,NFL_Projections}.py, tests/test_bet_guard.py (NEW),
+tests/test_bet_finder.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — Bet Finder: type your book's prices, get BET or SKIP. 2026-10-09 (3)
 
 **Suite 133 (+ test_bet_finder), FAILING: none.** Three negative controls red by
@@ -911,81 +1000,3 @@ consumer uses current_staking().
     calibration_picks.py, nhl_precompute.py, nfl_precompute.py
     .github/workflows/{nightly-data,slate-picks}.yml
     tests/test_nhl_pipeline.py, tests/test_nfl_pipeline.py, tests/test_nhl_model.py
-
----
-
-## PICK UP HERE — the first model nightly died on a file a TEST wrote. 2026-10-03 (6)
-
-**Suite 121, FAILING: none.** One negative control red by exit code.
-
-### WHAT THE FIRST REAL RUN SAID (before it died)
-
-    MLB  2,430 finals, 2,428 with both starters, 376/376 start logs.
-         walk-forward 2,415 games: log loss 0.6847 vs coin 0.6931 vs
-         home-rate 0.6924. Starters USED (team-only 0.6876).
-         Totals MAE 3.555 vs league-average 3.567 — barely better.
-    NHL  fit on 2025-26: 1,292-game walk-forward 0.6874 vs 0.6931/0.6939.
-         All SIX skater markets beat the skater's own rate (17,343 each).
-         Goals came back Poisson (dispersion None), as hockey should.
-    NFL  2025 fetched (272). Walk-forward 0.6441 vs 0.6931/0.6988;
-         margin MAE 10.66 vs 11.44 home-edge; total MAE 10.96 vs 10.97 —
-         the TOTAL is a tie with the league average. Say so; don't tune.
-
-The MLB prop model did NOT run: it lives in precompute.py, which comes
-after the step that failed. Its verdicts arrive with the next nightly.
-
-### THE FAILURE
-
-tests/test_calibration_picks sandboxed RECORD_PATH but not
-MLB_SLATE_PATH. In CI the schedule fetch works, so each of its six
-cp.main() calls rewrote the REAL data/mlb/games.json — silently, for
-weeks. Harmless until "Commit MLB game model" (new today) did `git pull
---rebase --autostash` while upstream had a fresh games.json: the stash
-pop conflicted, that step still pushed, and "Commit NFL projection log"
-died on `U data/mlb/games.json` (exit 128) — after every model was built,
-before the archive was published or Render redeployed.
-
-Fixed twice: the test stubs the slate writer and sandboxes its path; and
-nightly-data.yml now has "Restore any tracked files the tests touched"
-between the tests and the first commit — a future leak is a ::warning::
-with the file list, then restored. tests/test_ci_hygiene.py pins the
-step's existence and position. (Offline, test_calibration_picks never
-reached the network, so the leak was invisible locally — rule 5 again.)
-
-### FILES, 2026-10-03 (6)
-
-    tests/test_calibration_picks.py   slate writer stubbed + sandboxed
-    .github/workflows/nightly-data.yml restore step after Run tests
-    tests/test_ci_hygiene.py          NEW
-
----
-
-## PICK UP HERE — a day with no WNBA games took the late refresh red. 2026-10-03 (5)
-
-**Suite 120, FAILING: none.** Two negative controls red by exit code.
-
-The 10-03 `intl-late-refresh` run failed at the WNBA step with "every
-ESPN scoreboard source failed". It had not: site.api answered a REAL
-scoreboard with events=[] — there were no games — while cdn.espn gave
-nothing parseable and the header gave no scoreboard. require_events=True
-counted the honest empty answer as a failure, and the step's red took
-the whole job red although NPB and KBO had succeeded.
-
-`espn_wnba.fetch_today()` runs the require_events=True pass first (so on
-a game day a host answering [] cannot shadow one with the slate), and
-only if nobody has games accepts an empty answer — and only from a host
-that returned a real scoreboard. All hosts broken still raises, naming
-each. wnba_precompute.main uses it; the downstream "zero box scores ->
-refuse to publish" guard is untouched and still catches real outages.
-
-Fixture lesson (rule 5): the source NAMED "site.api" is served from
-site.web.api.espn.com, so a fake that routes by hostname hands every
-source the wrong answer. Route by URL path. And a bare {"id"} event is
-correctly dropped by _normalize_header_events — game-day fixtures need
-a full competitions block.
-
-### FILES, 2026-10-03 (5)
-
-    app/engines/espn_wnba.py   fetch_today()
-    wnba_precompute.py         tonight via fetch_today
-    tests/test_wnba_off_day.py NEW — replays the logged responses

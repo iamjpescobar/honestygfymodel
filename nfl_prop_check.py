@@ -182,13 +182,17 @@ def _line_for(hist, stat):
     return floor(sum(hist) / len(hist)) + 0.5
 
 
-def walk_forward(finals, logs, pc, prior_players=None, prior_w=None, spreads=None, flags=None):
-    """[(stat, week, pid, p_model, p_no_matchup, p_baseline, y)] — every
-    player-game after week one, priced from earlier weeks only. p_model
-    uses the defense multipliers `flags` switches on (default: all);
-    p_no_matchup uses none."""
+def walk_forward(finals, logs, pc, prior_players=None, prior_w=None, spreads=None, flags=None,
+                 strength=None, grid=None):
+    """[(stat, week, pid, p_model, p_no_matchup, p_baseline, y, by_strength)]
+    — every player-game after week one, priced from earlier weeks only.
+    p_model uses the defense multipliers `flags` switches on (default: all)
+    at `strength` ({family: s}, default full); p_no_matchup uses none.
+    by_strength: with `grid`, {s: p} for every family at strength s (the
+    input the strength fit reads), else None."""
     all_off = {f: False for f in MATCHUP_FAMILIES}
     flags = dict(flags) if flags is not None else {f: True for f in MATCHUP_FAMILIES}
+    all_on = {f: True for f in MATCHUP_FAMILIES}
     weeks = sorted({f["week"] for f in finals if f.get("week")})
     out = []
     for w in weeks[1:]:
@@ -227,10 +231,15 @@ def walk_forward(finals, logs, pc, prior_players=None, prior_w=None, spreads=Non
                     if not game:
                         continue                      # did not play: void, not a miss
                     actual = game_values(game)
-                    on = nproj.project_player(p, team, opp, dict(league, matchup_in_number=flags),
-                                              implied)
+                    on = nproj.project_player(p, team, opp, dict(
+                        league, matchup_in_number=flags, matchup_strength=dict(strength or {})),
+                        implied)
                     off = nproj.project_player(p, team, opp, dict(league, matchup_in_number=all_off),
                                                implied)
+                    at = ({s: nproj.project_player(p, team, opp, dict(
+                        league, matchup_in_number=all_on,
+                        matchup_strength={f: s for f in MATCHUP_FAMILIES}), implied)
+                        for s in grid} if grid else None)
                     for stat, _lab, key, market, roles in npo.STATS:
                         if p["role"] not in roles or actual.get(stat) is None and stat != "td":
                             continue
@@ -244,17 +253,28 @@ def walk_forward(finals, logs, pc, prior_players=None, prior_w=None, spreads=Non
                         if not pm_on or not pm_off:
                             continue
                         base = sum(1 for h in hist if h > line) / len(hist)
+                        by_s = None
+                        if at and _family_of(stat):
+                            by_s = {}
+                            for s, proj_s in at.items():
+                                pm_s = npo.stat_pmf(market, proj_s.get(key), spreads)
+                                by_s[s] = mm.over_prob_pmf(pm_s, line) if pm_s else None
                         out.append((stat, w, p["pid"], mm.over_prob_pmf(pm_on, line),
                                     mm.over_prob_pmf(pm_off, line), base,
-                                    1 if y_val > line else 0))
+                                    1 if y_val > line else 0, by_s))
     return out
+
+
+def _family_of(stat):
+    return next((f for f, stats in MATCHUP_FAMILIES.items() if stat in stats), None)
 
 
 def score(rows):
     """{stat: {n, briers, verdict vs his own rate, calibration}}."""
     out = {"n": len(rows)}
     by = {}
-    for stat, _w, _pid, p, _p0, b, y in rows:
+    for row in rows:
+        stat, p, b, y = row[0], row[3], row[5], row[6]
         if p is None:
             continue
         by.setdefault(stat, []).append((p, b, y))
@@ -275,7 +295,8 @@ def matchup_verdicts(rows):
     out = {}
     for fam, stats in MATCHUP_FAMILIES.items():
         on, off = [], []
-        for stat, _w, _pid, p, p0, _b, y in rows:
+        for row in rows:
+            stat, p, p0, y = row[0], row[3], row[4], row[6]
             if stat in stats and p is not None and p0 is not None:
                 on.append(mm.log_loss(p, y))
                 off.append(mm.log_loss(p0, y))
@@ -284,18 +305,92 @@ def matchup_verdicts(rows):
     return out
 
 
-def run(finals, logs, pc, prior_players=None, prior_w=None, spreads=None):
-    """The whole test: decide the multipliers, then grade the props the
-    page will actually show (with only the adopted multipliers)."""
-    rows = walk_forward(finals, logs, pc, prior_players, prior_w, spreads)
-    if not rows:
+# FITTED DEFENSE STRENGTH (10-11). Until today a family's defense
+# multiplier was all-or-nothing, and all three failed: a +41% pass defence
+# applied at full strength over-moves a projection. Now each family's
+# strength s (multiplier ** s) is FITTED on one block of weeks and TESTED
+# on later ones against s = 0, the way the NHL ice-time factor is — in the
+# number only on "beats". The grid is coarse on purpose: with a few hundred
+# rows per family a finer fit is noise.
+STRENGTH_GRID = (0.0, 0.25, 0.5, 0.75, 1.0)
+
+
+def _ll(rows, fam, s):
+    """[log loss] for a family's rows at strength s."""
+    stats = MATCHUP_FAMILIES[fam]
+    return [mm.log_loss(r[7][s], r[6]) for r in rows
+            if r[0] in stats and r[7] and r[7].get(s) is not None]
+
+
+def fit_strength(train, test):
+    """{family: {"strength", "fitted", "n_train", "n", "verdict", "in_number"}}:
+    strength fitted on `train` (lowest mean log loss on the grid), tested
+    on `test` against strength 0. Adopted only on "beats"."""
+    out = {}
+    for fam in MATCHUP_FAMILIES:
+        best = None
+        for s in STRENGTH_GRID:
+            ls = _ll(train, fam, s)
+            if ls and (best is None or sum(ls) / len(ls) < best[1]):
+                best = (s, sum(ls) / len(ls), len(ls))
+        if best is None or best[0] == 0.0:
+            out[fam] = {"strength": 0.0, "fitted": 0.0 if best else None,
+                        "n_train": best[2] if best else 0, "n": 0,
+                        "verdict": {"verdict": None}, "in_number": False}
+            continue
+        s = best[0]
+        on, off = _ll(test, fam, s), _ll(test, fam, 0.0)
+        v = mm.paired_verdict(on, off) if on and len(on) == len(off) else {"verdict": None}
+        adopted = v.get("verdict") == "beats"
+        out[fam] = {"strength": s if adopted else 0.0, "fitted": s, "n_train": best[2],
+                    "n": len(on), "verdict": v, "in_number": adopted}
+    return out
+
+
+def split_rows(prior_rows, cur_rows):
+    """(train, test): last season's first half of weeks to fit, its second
+    half plus this season to test — so the test is always on weeks the fit
+    never saw, and as large as the data allows. With no last season, this
+    season's own weeks split the same way."""
+    if prior_rows:
+        wks = sorted({r[1] for r in prior_rows})
+        cut = wks[len(wks) // 2] if wks else None
+        return ([r for r in prior_rows if r[1] < cut],
+                [r for r in prior_rows if r[1] >= cut] + list(cur_rows))
+    wks = sorted({r[1] for r in cur_rows})
+    if len(wks) < 2:
+        return [], []
+    cut = wks[len(wks) // 2]
+    return [r for r in cur_rows if r[1] < cut], [r for r in cur_rows if r[1] >= cut]
+
+
+def run(finals, logs, pc, prior_players=None, prior_w=None, spreads=None, prior=None):
+    """The whole test, on LAST SEASON + this one (10-11): fit each family's
+    defense strength, then grade the props the page will actually show
+    (with the adopted strengths) on every graded player-game of both
+    seasons. prior: {"finals", "logs"} for 2025 (load_or_fetch_prior_logs),
+    or None to run on this season alone."""
+    cur = walk_forward(finals, logs, pc, prior_players, prior_w, spreads, grid=STRENGTH_GRID)
+    old = []
+    if prior and prior.get("finals") and prior.get("logs"):
+        old = walk_forward(prior["finals"], prior["logs"], pc, None, None, spreads,
+                           grid=STRENGTH_GRID)
+    if not cur and not old:
         return {"note": "needs two weeks of finals"}
-    fam = matchup_verdicts(rows)
+    train, test = split_rows(old, cur)
+    fam = fit_strength(train, test) if train and test else {
+        f: {"strength": 0.0, "fitted": None, "n_train": 0, "n": 0,
+            "verdict": {"verdict": None}, "in_number": False} for f in MATCHUP_FAMILIES}
     flags = {f: v["in_number"] for f, v in fam.items()}
-    if not all(flags.values()):
-        rows = walk_forward(finals, logs, pc, prior_players, prior_w, spreads, flags)
-    out = score(rows)
+    strength = {f: v["strength"] for f, v in fam.items()}
+    cur = walk_forward(finals, logs, pc, prior_players, prior_w, spreads, flags, strength)
+    if old:
+        old = walk_forward(prior["finals"], prior["logs"], pc, None, None, spreads, flags,
+                           strength)
+    out = score(old + cur)
     out["matchup"] = fam
     out["matchup_in_number"] = flags
-    out["weeks"] = sorted({r[1] for r in rows})
+    out["matchup_strength"] = strength
+    out["weeks"] = sorted({r[1] for r in cur})
+    out["seasons"] = {"prior_rows": len(old), "current_rows": len(cur)}
     return out

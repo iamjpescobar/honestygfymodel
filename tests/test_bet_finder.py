@@ -47,7 +47,12 @@ check("...with a stake at the reader's settings", j["stake"] and j["stake"] > 0)
 check("15% at +500 is SKIP (needs 16.7%)", bf.judge(0.15, 500)["call"] == "SKIP")
 fair = mm.fair_american(0.25)
 check("a price that only breaks even is SKIP", bf.judge(0.25, fair)["call"] == "SKIP")
-check("a big edge is STRONG", bf.judge(0.42, 200)["tier"] == "strong")
+check("a measured 5-10 point edge is STRONG",
+      bf.judge(0.42, 200, support=bf.MARKET_SUPPORT)["tier"] == "strong")
+check("without a measured curve STRONG is capped at VALUE", bf.judge(0.42, 200)["tier"] == "value")
+j = bf.judge(0.78, -113, None, -113, bf.MARKET_SUPPORT)
+check("a 10+ point gap to the book is CHECK, not a bet (the Brissett under)",
+      j["call"] == "CHECK" and abs(j["book"] - 0.5) < 1e-9 and j["guard"])
 check("no price, no call", bf.judge(0.3, None) is None)
 
 # --- 3. the chance is the boards' chance ---------------------------------
@@ -68,14 +73,19 @@ check("no distribution for that stat -> nothing", bf.chance_at(row, "sog", 1.5, 
 # --- 4. a list ------------------------------------------------------------
 rows = [{"_name": n, "_pmfs": {"g": mm.poisson_pmf(mu, 10)}}
         for n, mu in (("Low", 0.1), ("Mid", 0.25), ("High", 0.5))]
-items = bf.price_list(rows, "g", 0.5, "Over", (), {})
+# an honest curve (delivered = called) with plenty of calls in every band,
+# so the list is judged on its edges alone
+flat = {"@g": [{"band": f"{b}", "n": 100, "predicted": x, "actual": x}
+               for b, x in enumerate((0.05, 0.15, 0.25, 0.35, 0.45))]}
+items = bf.price_list(rows, "g", 0.5, "Over", (), flat)
 check("the price list is most likely first", [x["name"] for x in items] == ["High", "Mid", "Low"])
 check("each row carries the price it is worth",
       all(x["worth"] == mm.fair_american(x["chance"]) for x in items))
-res = bf.results(items, {"High": 300, "Mid": 300, "Low": 2000})   # 39% / 22% / 9.5%
+res = bf.results(items, {"High": 200, "Mid": 300, "Low": 2000})   # 39% / 22% / 9.5%
 check("only priced rows are judged", len(res) == 3 and bf.results(items, {}) == [])
 check("BETs come first, strongest edge first",
-      [r["name"] for r in res][:2] == ["High", "Low"] and res[-1]["call"] == "SKIP")
+      [r["name"] for r in res] == ["High", "Low", "Mid"] and res[0]["tier"] == "strong"
+      and res[-1]["call"] == "SKIP")
 
 # --- 5. game lines --------------------------------------------------------
 proj = {"p_home": 0.6, "p_home_mkt": 0.55, "p_home_final": 0.55,
