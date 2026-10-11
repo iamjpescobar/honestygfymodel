@@ -4,8 +4,8 @@
   "measured_on": "2026-08-19",
   "naive_baseline_pct": 81.7,
   "window_accuracy_pct": 82.2,
-  "generated_at_et": "2026-10-10T20:53:05-04:00",
-  "slate_date_et": "2026-10-10",
+  "generated_at_et": "2026-10-11T10:41:10-04:00",
+  "slate_date_et": "2026-10-11",
   "teams": {
     "Athletics": {
       "games": 7,
@@ -2983,13 +2983,13 @@
           "rate": 1.0,
           "vs": {
             "L": {
-              "starts": 3,
-              "games": 3,
+              "starts": 2,
+              "games": 2,
               "rate": 1.0
             },
             "R": {
-              "starts": 4,
-              "games": 4,
+              "starts": 5,
+              "games": 5,
               "rate": 1.0
             }
           }
@@ -3000,14 +3000,14 @@
           "rate": 0.857,
           "vs": {
             "L": {
-              "starts": 3,
-              "games": 3,
+              "starts": 2,
+              "games": 2,
               "rate": 1.0
             },
             "R": {
-              "starts": 3,
-              "games": 4,
-              "rate": 0.75
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
             }
           }
         },
@@ -3017,65 +3017,48 @@
           "rate": 1.0,
           "vs": {
             "L": {
-              "starts": 3,
-              "games": 3,
-              "rate": 1.0
-            },
-            "R": {
-              "starts": 4,
-              "games": 4,
-              "rate": 1.0
-            }
-          }
-        },
-        "805367": {
-          "starts": 6,
-          "games": 7,
-          "rate": 0.857,
-          "vs": {
-            "L": {
               "starts": 2,
-              "games": 3,
-              "rate": 0.667
+              "games": 2,
+              "rate": 1.0
             },
             "R": {
-              "starts": 4,
-              "games": 4,
+              "starts": 5,
+              "games": 5,
               "rate": 1.0
             }
           }
         },
         "691019": {
-          "starts": 6,
+          "starts": 7,
           "games": 7,
-          "rate": 0.857,
+          "rate": 1.0,
           "vs": {
             "L": {
               "starts": 2,
-              "games": 3,
-              "rate": 0.667
+              "games": 2,
+              "rate": 1.0
             },
             "R": {
-              "starts": 4,
-              "games": 4,
+              "starts": 5,
+              "games": 5,
               "rate": 1.0
             }
           }
         },
-        "502054": {
-          "starts": 4,
+        "805367": {
+          "starts": 7,
           "games": 7,
-          "rate": 0.571,
+          "rate": 1.0,
           "vs": {
             "L": {
-              "starts": 3,
-              "games": 3,
+              "starts": 2,
+              "games": 2,
               "rate": 1.0
             },
             "R": {
-              "starts": 1,
-              "games": 4,
-              "rate": 0.25
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
             }
           }
         },
@@ -3085,48 +3068,31 @@
           "rate": 1.0,
           "vs": {
             "L": {
-              "starts": 3,
-              "games": 3,
+              "starts": 2,
+              "games": 2,
               "rate": 1.0
             },
             "R": {
-              "starts": 4,
-              "games": 4,
-              "rate": 1.0
-            }
-          }
-        },
-        "695731": {
-          "starts": 7,
-          "games": 7,
-          "rate": 1.0,
-          "vs": {
-            "L": {
-              "starts": 3,
-              "games": 3,
-              "rate": 1.0
-            },
-            "R": {
-              "starts": 4,
-              "games": 4,
+              "starts": 5,
+              "games": 5,
               "rate": 1.0
             }
           }
         },
         "643217": {
-          "starts": 4,
+          "starts": 5,
           "games": 7,
-          "rate": 0.571,
+          "rate": 0.714,
           "vs": {
             "L": {
               "starts": 1,
-              "games": 3,
-              "rate": 0.333
+              "games": 2,
+              "rate": 0.5
             },
             "R": {
-              "starts": 3,
-              "games": 4,
-              "rate": 0.75
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
             }
           }
         },
@@ -3136,14 +3102,14 @@
           "rate": 0.857,
           "vs": {
             "L": {
-              "starts": 3,
-              "games": 3,
+              "starts": 2,
+              "games": 2,
               "rate": 1.0
             },
             "R": {
-              "starts": 3,
-              "games": 4,
-              "rate": 0.75
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
             }
           }
         },
@@ -3153,65 +3119,82 @@
           "rate": 1.0,
           "vs": {
             "L": {
-              "starts": 3,
-              "games": 3,
+              "starts": 2,
+              "games": 2,
               "rate": 1.0
             },
             "R": {
-              "starts": 4,
-              "games": 4,
+              "starts": 5,
+              "games": 5,
               "rate": 1.0
             }
           }
         },
         "678246": {
+          "starts": 7,
+          "games": 7,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            }
+          }
+        },
+        "502054": {
+          "starts": 3,
+          "games": 7,
+          "rate": 0.429,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 1,
+              "games": 5,
+              "rate": 0.2
+            }
+          }
+        },
+        "695731": {
           "starts": 6,
           "games": 7,
           "rate": 0.857,
           "vs": {
             "L": {
               "starts": 2,
-              "games": 3,
-              "rate": 0.667
+              "games": 2,
+              "rate": 1.0
             },
             "R": {
               "starts": 4,
-              "games": 4,
-              "rate": 1.0
+              "games": 5,
+              "rate": 0.8
             }
           }
         },
         "682668": {
-          "starts": 3,
+          "starts": 2,
           "games": 7,
-          "rate": 0.429,
+          "rate": 0.286,
           "vs": {
             "L": {
-              "starts": 1,
-              "games": 3,
-              "rate": 0.333
+              "starts": 0,
+              "games": 2,
+              "rate": 0.0
             },
             "R": {
               "starts": 2,
-              "games": 4,
-              "rate": 0.5
-            }
-          }
-        },
-        "691011": {
-          "starts": 1,
-          "games": 7,
-          "rate": 0.143,
-          "vs": {
-            "L": {
-              "starts": 1,
-              "games": 3,
-              "rate": 0.333
-            },
-            "R": {
-              "starts": 0,
-              "games": 4,
-              "rate": 0.0
+              "games": 5,
+              "rate": 0.4
             }
           }
         }
@@ -5481,13 +5464,13 @@
           "rate": 0.714,
           "vs": {
             "L": {
-              "starts": 4,
-              "games": 6,
-              "rate": 0.667
+              "starts": 3,
+              "games": 5,
+              "rate": 0.6
             },
             "R": {
-              "starts": 1,
-              "games": 1,
+              "starts": 2,
+              "games": 2,
               "rate": 1.0
             }
           }
@@ -5498,31 +5481,14 @@
           "rate": 0.857,
           "vs": {
             "L": {
-              "starts": 5,
-              "games": 6,
-              "rate": 0.833
-            },
-            "R": {
-              "starts": 1,
-              "games": 1,
-              "rate": 1.0
-            }
-          }
-        },
-        "595978": {
-          "starts": 4,
-          "games": 7,
-          "rate": 0.571,
-          "vs": {
-            "L": {
               "starts": 4,
-              "games": 6,
-              "rate": 0.667
+              "games": 5,
+              "rate": 0.8
             },
             "R": {
-              "starts": 0,
-              "games": 1,
-              "rate": 0.0
+              "starts": 2,
+              "games": 2,
+              "rate": 1.0
             }
           }
         },
@@ -5532,13 +5498,13 @@
           "rate": 1.0,
           "vs": {
             "L": {
-              "starts": 6,
-              "games": 6,
+              "starts": 5,
+              "games": 5,
               "rate": 1.0
             },
             "R": {
-              "starts": 1,
-              "games": 1,
+              "starts": 2,
+              "games": 2,
               "rate": 1.0
             }
           }
@@ -5549,13 +5515,13 @@
           "rate": 1.0,
           "vs": {
             "L": {
-              "starts": 6,
-              "games": 6,
+              "starts": 5,
+              "games": 5,
               "rate": 1.0
             },
             "R": {
-              "starts": 1,
-              "games": 1,
+              "starts": 2,
+              "games": 2,
               "rate": 1.0
             }
           }
@@ -5566,13 +5532,13 @@
           "rate": 1.0,
           "vs": {
             "L": {
-              "starts": 6,
-              "games": 6,
+              "starts": 5,
+              "games": 5,
               "rate": 1.0
             },
             "R": {
-              "starts": 1,
-              "games": 1,
+              "starts": 2,
+              "games": 2,
               "rate": 1.0
             }
           }
@@ -5583,13 +5549,13 @@
           "rate": 0.857,
           "vs": {
             "L": {
-              "starts": 5,
-              "games": 6,
-              "rate": 0.833
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
             },
             "R": {
-              "starts": 1,
-              "games": 1,
+              "starts": 2,
+              "games": 2,
               "rate": 1.0
             }
           }
@@ -5600,13 +5566,13 @@
           "rate": 0.714,
           "vs": {
             "L": {
-              "starts": 4,
-              "games": 6,
-              "rate": 0.667
+              "starts": 3,
+              "games": 5,
+              "rate": 0.6
             },
             "R": {
-              "starts": 1,
-              "games": 1,
+              "starts": 2,
+              "games": 2,
               "rate": 1.0
             }
           }
@@ -5617,13 +5583,13 @@
           "rate": 1.0,
           "vs": {
             "L": {
-              "starts": 6,
-              "games": 6,
+              "starts": 5,
+              "games": 5,
               "rate": 1.0
             },
             "R": {
-              "starts": 1,
-              "games": 1,
+              "starts": 2,
+              "games": 2,
               "rate": 1.0
             }
           }
@@ -5634,13 +5600,13 @@
           "rate": 0.857,
           "vs": {
             "L": {
-              "starts": 5,
-              "games": 6,
-              "rate": 0.833
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
             },
             "R": {
-              "starts": 1,
-              "games": 1,
+              "starts": 2,
+              "games": 2,
               "rate": 1.0
             }
           }
@@ -5651,47 +5617,64 @@
           "rate": 0.857,
           "vs": {
             "L": {
-              "starts": 5,
-              "games": 6,
-              "rate": 0.833
+              "starts": 4,
+              "games": 5,
+              "rate": 0.8
             },
             "R": {
-              "starts": 1,
-              "games": 1,
+              "starts": 2,
+              "games": 2,
               "rate": 1.0
             }
           }
         },
-        "682657": {
-          "starts": 7,
-          "games": 7,
-          "rate": 1.0,
-          "vs": {
-            "L": {
-              "starts": 6,
-              "games": 6,
-              "rate": 1.0
-            },
-            "R": {
-              "starts": 1,
-              "games": 1,
-              "rate": 1.0
-            }
-          }
-        },
-        "681807": {
+        "595978": {
           "starts": 3,
           "games": 7,
           "rate": 0.429,
           "vs": {
             "L": {
               "starts": 3,
-              "games": 6,
-              "rate": 0.5
+              "games": 5,
+              "rate": 0.6
             },
             "R": {
               "starts": 0,
-              "games": 1,
+              "games": 2,
+              "rate": 0.0
+            }
+          }
+        },
+        "682657": {
+          "starts": 6,
+          "games": 7,
+          "rate": 0.857,
+          "vs": {
+            "L": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 1,
+              "games": 2,
+              "rate": 0.5
+            }
+          }
+        },
+        "681807": {
+          "starts": 2,
+          "games": 7,
+          "rate": 0.286,
+          "vs": {
+            "L": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
+            },
+            "R": {
+              "starts": 0,
+              "games": 2,
               "rate": 0.0
             }
           }
@@ -5703,12 +5686,12 @@
           "vs": {
             "L": {
               "starts": 1,
-              "games": 6,
-              "rate": 0.167
+              "games": 5,
+              "rate": 0.2
             },
             "R": {
               "starts": 0,
-              "games": 1,
+              "games": 2,
               "rate": 0.0
             }
           }
