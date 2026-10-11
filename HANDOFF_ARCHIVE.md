@@ -10,6 +10,66 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — value, stakes and a graded record for every model pick. 2026-10-03 (7)
+
+**Suite 122, FAILING: none.** Three negative controls red by exit code.
+
+Izzy wants to stake model picks. Nothing showed they beat the BOOK —
+only that they beat a coin flip — so this batch makes every pick
+checkable at the real price and grades every value pick in public.
+
+### WHAT SHIPPED
+
+`engines/value.py` — break-even, edge, EV per $100, fractional Kelly
+with a per-bet cap. Bankroll / fraction / cap are the BETTOR's risk
+settings (rule 1 is about numbers that describe the world), defaults
+1/4 Kelly and 2%, shown wherever a stake prints.
+
+Every model card (MLB Model, Game Card, NHL Model, NFL Model) has a
+value table: model %, fair price, the posted price pre-filled where ESPN
+has one, EDITABLE so the reader types his own book's price; edge, EV,
+stake, ✅. MLB/NHL prop tables get a "check a prop at your price" tool;
+NFL Projections gets one with real over/under chances
+(`engines/nfl_prop_odds.py`: game-to-game scatter MEASURED per market —
+NB size for counts, pooled cv for yards — not yet graded, page says so).
+
+`engines/model_picks.py` + `model_picks_grade.py` — every side with
+positive EV at the POSTED price is logged pre-game, first writer wins
+per (game, market), to data/model_picks/{mlb,nhl,nfl}.json; graded
+nightly from statsapi / ESPN finals by game id; void after 3 days not
+final. Results → "Model picks": W-L-P, units, ROI, split by edge bucket
+and market. **If bigger edges do not do better, the model's confidence
+is not real — that table is the check.** MLB lines come from ESPN
+(`espn_feed` gained "mlb", odds only) via calibration_picks at slate
+time; odds_of now reads over/under and spread PRICES when published and
+never fills in -110.
+
+### RULES THIS BATCH ADDS
+
+A side with no posted price is never logged (an assumed -110 reports a
+profit nobody saw). A pick after first pitch is not a pick. Two
+staking_controls() on one page is a duplicate-widget crash — the second
+consumer uses current_staking().
+
+### FOR THE FIRST LOGS
+
+    mlb model: N/N games projected, N with an ESPN line, N new value pick(s)
+    [verify] ... with a posted moneyline: N, total price: N
+    [verify] NHL/NFL value picks logged this run: N
+    model picks <sport>: graded N, voided N | record W-L-P ...
+
+### FILES, 2026-10-03 (7)
+
+    app/engines/{value,model_picks,nfl_prop_odds}.py, model_picks_grade.py   NEW
+    tests/test_value_picks.py                                                NEW
+    app/engines/{model_view,mlb_game_model,espn_feed}.py
+    app/views/{MLB_Model,GameCard,NHL_Model,NFL_Model,NFL_Projections,Results}.py
+    calibration_picks.py, nhl_precompute.py, nfl_precompute.py
+    .github/workflows/{nightly-data,slate-picks}.yml
+    tests/test_nhl_pipeline.py, tests/test_nfl_pipeline.py, tests/test_nhl_model.py
+
+---
+
 ## PICK UP HERE — the first model nightly died on a file a TEST wrote. 2026-10-03 (6)
 
 **Suite 121, FAILING: none.** One negative control red by exit code.

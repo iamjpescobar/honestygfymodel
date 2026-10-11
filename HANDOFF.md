@@ -154,6 +154,41 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Long Shots page; the 10-11 NFL nightly read. 2026-10-11 (3)
+
+**Suite 136 (+ test_long_shots), FAILING: none.** Three negative controls red by
+exit code (listed in the test). Long Shots rendered headless for NHL
+(60 rows, signals filled), NFL (TD rows); MLB is network (lineups) and is
+wrapped per game, so a feed failure costs that game only.
+
+THE 10-11 NIGHTLY (two-season NFL batch, confirmed):
+- NFL prior box scores 272/272 parsed, 605 players, 95 with a recorded
+  line; data/nfl/prior_logs.json committed.
+- Prop test rows: 21,599 from 2025 + 5,199 from 2026 (was ~2,000 total).
+- Defense strength: rush fitted 0.25 -> thin (z 0.06, n 1,023); rec 0.5
+  -> thin (z 0.58, n 5,716); pass fitted 0.0 (n 231 to fit) -> all
+  CONTEXT ONLY. The defense does not add on top of the model in NFL
+  either; the guard (CHECK) stays the protection.
+- All 12 NFL prop stats BEAT the player's own rate on 618-4,961 graded
+  player-games each (passing yards n 618, was 92).
+
+LONG SHOTS (engines/long_shots.py, views/Long_Shots.py; MLB nav, NHL +
+NFL subpages, Home card): every player whose DELIVERED chance is in
++300..+2000 (1/21..1/4), only on TESTED markets with the raw call inside
+its curve's graded range and >= STRONG_MIN_N calls in the band.
+NHL: every nhl_model market; MLB: every mlb_props market (lineup or last
+lineup); NFL: anytime TD (td curve). "Why it's live" signals for NHL:
+ice time up (>= 5%), PP1, team goal env >= +5%, opposing goalie below the
+league save rate. Price-range filter opens on +600..+2000. Typed prices
+go through bet_finder.judge with the row's support (the one guard); BETs
+land on the Bet Finder's session card.
+
+FILES: app/engines/long_shots.py, app/views/Long_Shots.py,
+tests/test_long_shots.py (NEW), app/app.py, app/views/Home.py,
+HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NFL props tested on last season + this one; defense strength fitted. 2026-10-11 (2)
 
 **Suite 135 (+ test_nfl_two_seasons), FAILING: none.** Three negative controls red
@@ -940,63 +975,3 @@ root=PICKS_ROOT (AST); grading ownership per workflow.
     model_picks_grade.py      sports as arguments
     .github/workflows/nightly-data.yml, slate-picks.yml
     tests/test_ci_hygiene.py
-
----
-
-## PICK UP HERE — value, stakes and a graded record for every model pick. 2026-10-03 (7)
-
-**Suite 122, FAILING: none.** Three negative controls red by exit code.
-
-Izzy wants to stake model picks. Nothing showed they beat the BOOK —
-only that they beat a coin flip — so this batch makes every pick
-checkable at the real price and grades every value pick in public.
-
-### WHAT SHIPPED
-
-`engines/value.py` — break-even, edge, EV per $100, fractional Kelly
-with a per-bet cap. Bankroll / fraction / cap are the BETTOR's risk
-settings (rule 1 is about numbers that describe the world), defaults
-1/4 Kelly and 2%, shown wherever a stake prints.
-
-Every model card (MLB Model, Game Card, NHL Model, NFL Model) has a
-value table: model %, fair price, the posted price pre-filled where ESPN
-has one, EDITABLE so the reader types his own book's price; edge, EV,
-stake, ✅. MLB/NHL prop tables get a "check a prop at your price" tool;
-NFL Projections gets one with real over/under chances
-(`engines/nfl_prop_odds.py`: game-to-game scatter MEASURED per market —
-NB size for counts, pooled cv for yards — not yet graded, page says so).
-
-`engines/model_picks.py` + `model_picks_grade.py` — every side with
-positive EV at the POSTED price is logged pre-game, first writer wins
-per (game, market), to data/model_picks/{mlb,nhl,nfl}.json; graded
-nightly from statsapi / ESPN finals by game id; void after 3 days not
-final. Results → "Model picks": W-L-P, units, ROI, split by edge bucket
-and market. **If bigger edges do not do better, the model's confidence
-is not real — that table is the check.** MLB lines come from ESPN
-(`espn_feed` gained "mlb", odds only) via calibration_picks at slate
-time; odds_of now reads over/under and spread PRICES when published and
-never fills in -110.
-
-### RULES THIS BATCH ADDS
-
-A side with no posted price is never logged (an assumed -110 reports a
-profit nobody saw). A pick after first pitch is not a pick. Two
-staking_controls() on one page is a duplicate-widget crash — the second
-consumer uses current_staking().
-
-### FOR THE FIRST LOGS
-
-    mlb model: N/N games projected, N with an ESPN line, N new value pick(s)
-    [verify] ... with a posted moneyline: N, total price: N
-    [verify] NHL/NFL value picks logged this run: N
-    model picks <sport>: graded N, voided N | record W-L-P ...
-
-### FILES, 2026-10-03 (7)
-
-    app/engines/{value,model_picks,nfl_prop_odds}.py, model_picks_grade.py   NEW
-    tests/test_value_picks.py                                                NEW
-    app/engines/{model_view,mlb_game_model,espn_feed}.py
-    app/views/{MLB_Model,GameCard,NHL_Model,NFL_Model,NFL_Projections,Results}.py
-    calibration_picks.py, nhl_precompute.py, nfl_precompute.py
-    .github/workflows/{nightly-data,slate-picks}.yml
-    tests/test_nhl_pipeline.py, tests/test_nfl_pipeline.py, tests/test_nhl_model.py
