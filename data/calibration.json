@@ -8139,6 +8139,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-10-12": {
+      "picks": [
+        {
+          "id": "666018",
+          "name": "Jonathan Aranda",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666176",
+          "name": "Jo Adell",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "680757",
+          "name": "Steven Kwan",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "668930",
+          "name": "Brice Turang",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "661388",
+          "name": "William Contreras",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683748",
+          "name": "Victor Mesa Jr.",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "676356",
+          "name": "Jonny DeLuca",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "650490",
+          "name": "Yandy D\u00edaz",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "694192",
+          "name": "Jackson Chourio",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "800050",
+          "name": "Chase DeLauter",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "592885",
+          "name": "Christian Yelich",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "608070",
+          "name": "Jos\u00e9 Ram\u00edrez",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -9176,6 +9286,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-12": {
+      "picks": [
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "Tampa Bay Rays",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -12528,6 +12652,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-12": {
+      "picks": [
+        {
+          "id": "660271",
+          "name": "Shohei Ohtani",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "571970",
+          "name": "Max Muncy",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "694192",
+          "name": "Jackson Chourio",
+          "team": "Milwaukee Brewers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "669257",
+          "name": "Will Smith",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641343",
+          "name": "Jake Bauers",
+          "team": "Milwaukee Brewers",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -38720,6 +38890,44 @@
           "team": "LAD",
           "stat": "strikeOuts",
           "line": 7.0,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    },
+    "2026-10-12": {
+      "picks": [
+        {
+          "id": 808967,
+          "name": "Yoshinobu Yamamoto (RHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 6.6,
+          "result": null
+        },
+        {
+          "id": 656876,
+          "name": "Drew Rasmussen (RHP)",
+          "team": "TB",
+          "stat": "strikeOuts",
+          "line": 5.5,
+          "result": null
+        },
+        {
+          "id": 701656,
+          "name": "Logan Henderson (RHP)",
+          "team": "MIL",
+          "stat": "strikeOuts",
+          "line": 5.4,
+          "result": null
+        },
+        {
+          "id": 656492,
+          "name": "Foster Griffin (LHP)",
+          "team": "CLE",
+          "stat": "strikeOuts",
+          "line": 4.4,
           "result": null
         }
       ],
