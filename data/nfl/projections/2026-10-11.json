@@ -1,161 +1,161 @@
 {
-  "generated_at_et": "2026-10-11 16:37",
+  "generated_at_et": "2026-10-11 21:06",
   "week": 5,
   "league": {
-    "team_games": 146,
+    "team_games": 154,
     "td_per_point": 0.1084,
-    "points_pg": 22.9,
-    "td_pg": 2.48,
-    "ypc": 4.16,
-    "yards_per_target": 7.44,
+    "points_pg": 23.1,
+    "td_pg": 2.51,
+    "ypc": 4.17,
+    "yards_per_target": 7.41,
     "catch_rate": 0.674,
     "carries_pg": 26.6,
     "targets_pg": 31.5,
-    "td_per_opportunity": 0.04269,
-    "prior_strength": 152.5,
-    "prior_a": 6.5097,
-    "prior_b": 145.9818,
-    "players_fitted": 447,
-    "touches_fitted": 8480,
+    "td_per_opportunity": 0.04314,
+    "prior_strength": 159.2,
+    "prior_a": 6.867,
+    "prior_b": 152.3194,
+    "players_fitted": 452,
+    "touches_fitted": 8948,
     "qb_priors": {
       "cmp": [
-        0.6429,
-        7509.59
+        0.64192,
+        8103.08
       ],
       "td": [
-        0.04663,
+        0.04695,
         8103.08
       ],
       "int": [
-        0.02114,
-        1048.22
+        0.02102,
+        625.49
       ]
     },
     "prop_spreads": {
       "Rushing yards": {
         "kind": "yards",
-        "cv": 0.7933,
-        "players": 141,
-        "games": 503
+        "cv": 0.7859,
+        "players": 144,
+        "games": 537
       },
       "Carries": {
         "kind": "count",
-        "size": 48.431,
-        "players": 147,
-        "games": 519
+        "size": 53.003,
+        "players": 150,
+        "games": 553
       },
       "Receiving yards": {
         "kind": "yards",
-        "cv": 0.8609,
-        "players": 307,
-        "games": 1109
+        "cv": 0.865,
+        "players": 316,
+        "games": 1177
       },
       "Receptions": {
         "kind": "count",
         "size": null,
-        "players": 308,
-        "games": 1111
+        "players": 317,
+        "games": 1179
       },
       "Targets": {
         "kind": "count",
         "size": null,
-        "players": 313,
-        "games": 1121
+        "players": 320,
+        "games": 1185
       },
       "Passing yards": {
         "kind": "yards",
-        "cv": 0.3368,
+        "cv": 0.3365,
         "players": 40,
-        "games": 153
+        "games": 161
       },
       "Pass attempts": {
         "kind": "count",
-        "size": 35.646,
+        "size": 33.336,
         "players": 40,
-        "games": 153
+        "games": 161
       },
       "Rush + rec yards": {
         "kind": "yards",
         "cv": 0.7955,
-        "players": 361,
-        "games": 1331
+        "players": 371,
+        "games": 1414
       },
       "Completions": {
         "kind": "count",
-        "size": 54.685,
+        "size": 49.279,
         "players": 40,
-        "games": 153
+        "games": 161
       },
       "Passing TDs": {
         "kind": "count",
         "size": null,
         "players": 39,
-        "games": 150
+        "games": 158
       },
       "Interceptions": {
         "kind": "count",
         "size": null,
         "players": 32,
-        "games": 128
+        "games": 134
       }
     },
     "prior_weights": {
-      "share": 0.6933,
+      "share": 0.7003,
       "catch": 1.0,
-      "ypc": 0.071,
-      "ypt": 0.0113,
+      "ypc": 0.0842,
+      "ypt": 0.0134,
       "td": 1.0,
-      "qb_rate": 0.3343,
-      "ypa": 0.0078
+      "qb_rate": 0.5473,
+      "ypa": 0.0088
     },
     "prior_weight_report": {
       "share": {
-        "weight": 0.6933,
-        "n_players": 730,
-        "loglik_gain": 5411.32
+        "weight": 0.7003,
+        "n_players": 734,
+        "loglik_gain": 5685.72
       },
       "catch": {
         "weight": 1.0,
-        "n_players": 305,
-        "loglik_gain": 25.71
+        "n_players": 308,
+        "loglik_gain": 30.96
       },
       "ypc": {
-        "weight": 0.071,
-        "n_players": 159,
-        "loglik_gain": 49.19
+        "weight": 0.0842,
+        "n_players": 163,
+        "loglik_gain": 65.34
       },
       "ypt": {
-        "weight": 0.0113,
-        "n_players": 305,
-        "loglik_gain": 283.57
+        "weight": 0.0134,
+        "n_players": 308,
+        "loglik_gain": 308.2
       },
       "td": {
         "weight": 1.0,
-        "n_players": 362,
-        "loglik_gain": 10.03
+        "n_players": 364,
+        "loglik_gain": 10.0
       },
       "qb_rate": {
-        "weight": 0.3343,
+        "weight": 0.5473,
         "n_players": 126,
-        "loglik_gain": 0.03
+        "loglik_gain": 0.16
       },
       "ypa": {
-        "weight": 0.0078,
+        "weight": 0.0088,
         "n_players": 42,
-        "loglik_gain": 49.19
+        "loglik_gain": 52.65
       }
     },
     "prop_validation": {
-      "n": 26798,
+      "n": 27175,
       "pass_yds": {
-        "n": 618,
-        "model_brier": 0.2527,
-        "baseline_brier": 0.3021,
+        "n": 626,
+        "model_brier": 0.2516,
+        "baseline_brier": 0.302,
         "verdict": {
-          "n": 618,
-          "diff": 0.0494,
-          "se": 0.01095,
-          "z": 4.51,
+          "n": 626,
+          "diff": 0.05041,
+          "se": 0.01083,
+          "z": 4.65,
           "verdict": "beats"
         },
         "calibration": [
@@ -173,38 +173,38 @@
           },
           {
             "band": "30-39%",
-            "n": 39,
+            "n": 40,
             "predicted": 0.362,
-            "actual": 0.513
+            "actual": 0.5
           },
           {
             "band": "40-49%",
-            "n": 368,
+            "n": 372,
             "predicted": 0.458,
-            "actual": 0.492
+            "actual": 0.489
           },
           {
             "band": "50-59%",
-            "n": 91,
-            "predicted": 0.534,
-            "actual": 0.538
+            "n": 92,
+            "predicted": 0.535,
+            "actual": 0.543
           },
           {
             "band": "60-69%",
             "n": 44,
-            "predicted": 0.642,
+            "predicted": 0.643,
             "actual": 0.568
           },
           {
             "band": "70-79%",
-            "n": 22,
-            "predicted": 0.754,
-            "actual": 0.636
+            "n": 24,
+            "predicted": 0.753,
+            "actual": 0.667
           },
           {
             "band": "80-89%",
             "n": 22,
-            "predicted": 0.85,
+            "predicted": 0.851,
             "actual": 0.636
           },
           {
@@ -216,156 +216,156 @@
         ]
       },
       "pass_cmp": {
-        "n": 618,
-        "model_brier": 0.2434,
+        "n": 626,
+        "model_brier": 0.2422,
         "baseline_brier": 0.2816,
         "verdict": {
-          "n": 618,
-          "diff": 0.03826,
-          "se": 0.01115,
-          "z": 3.43,
+          "n": 626,
+          "diff": 0.03937,
+          "se": 0.01102,
+          "z": 3.57,
           "verdict": "beats"
         },
         "calibration": [
           {
             "band": "0-9%",
             "n": 1,
-            "predicted": 0.076,
+            "predicted": 0.078,
             "actual": 0.0
           },
           {
             "band": "10-19%",
             "n": 13,
-            "predicted": 0.16,
+            "predicted": 0.163,
             "actual": 0.385
           },
           {
             "band": "20-29%",
             "n": 44,
-            "predicted": 0.264,
+            "predicted": 0.265,
             "actual": 0.273
           },
           {
             "band": "30-39%",
-            "n": 158,
-            "predicted": 0.354,
-            "actual": 0.449
+            "n": 159,
+            "predicted": 0.355,
+            "actual": 0.453
           },
           {
             "band": "40-49%",
-            "n": 208,
+            "n": 211,
             "predicted": 0.443,
-            "actual": 0.433
+            "actual": 0.427
           },
           {
             "band": "50-59%",
-            "n": 67,
-            "predicted": 0.541,
-            "actual": 0.507
+            "n": 70,
+            "predicted": 0.543,
+            "actual": 0.486
           },
           {
             "band": "60-69%",
-            "n": 40,
-            "predicted": 0.65,
-            "actual": 0.6
+            "n": 37,
+            "predicted": 0.649,
+            "actual": 0.622
           },
           {
             "band": "70-79%",
-            "n": 30,
-            "predicted": 0.75,
-            "actual": 0.533
+            "n": 34,
+            "predicted": 0.745,
+            "actual": 0.588
           },
           {
             "band": "80-89%",
-            "n": 16,
-            "predicted": 0.854,
-            "actual": 0.875
+            "n": 18,
+            "predicted": 0.859,
+            "actual": 0.889
           },
           {
             "band": "90-99%",
-            "n": 41,
-            "predicted": 0.96,
-            "actual": 0.756
+            "n": 39,
+            "predicted": 0.962,
+            "actual": 0.744
           }
         ]
       },
       "pass_att": {
-        "n": 618,
-        "model_brier": 0.255,
-        "baseline_brier": 0.2999,
+        "n": 626,
+        "model_brier": 0.2549,
+        "baseline_brier": 0.2995,
         "verdict": {
-          "n": 618,
-          "diff": 0.04488,
-          "se": 0.01125,
-          "z": 3.99,
+          "n": 626,
+          "diff": 0.04469,
+          "se": 0.01113,
+          "z": 4.02,
           "verdict": "beats"
         },
         "calibration": [
           {
             "band": "10-19%",
             "n": 6,
-            "predicted": 0.142,
+            "predicted": 0.145,
             "actual": 0.5
           },
           {
             "band": "20-29%",
             "n": 24,
-            "predicted": 0.252,
+            "predicted": 0.254,
             "actual": 0.417
           },
           {
             "band": "30-39%",
             "n": 155,
-            "predicted": 0.366,
+            "predicted": 0.367,
             "actual": 0.477
           },
           {
             "band": "40-49%",
-            "n": 273,
+            "n": 279,
             "predicted": 0.441,
-            "actual": 0.454
+            "actual": 0.452
           },
           {
             "band": "50-59%",
             "n": 52,
-            "predicted": 0.542,
-            "actual": 0.442
+            "predicted": 0.541,
+            "actual": 0.462
           },
           {
             "band": "60-69%",
-            "n": 36,
-            "predicted": 0.656,
-            "actual": 0.472
+            "n": 38,
+            "predicted": 0.655,
+            "actual": 0.474
           },
           {
             "band": "70-79%",
-            "n": 15,
-            "predicted": 0.743,
-            "actual": 0.667
+            "n": 16,
+            "predicted": 0.752,
+            "actual": 0.688
           },
           {
             "band": "80-89%",
-            "n": 18,
-            "predicted": 0.851,
-            "actual": 0.667
+            "n": 17,
+            "predicted": 0.85,
+            "actual": 0.647
           },
           {
             "band": "90-99%",
             "n": 39,
-            "predicted": 0.965,
+            "predicted": 0.964,
             "actual": 0.744
           }
         ]
       },
       "pass_td": {
-        "n": 618,
-        "model_brier": 0.2272,
-        "baseline_brier": 0.2935,
+        "n": 626,
+        "model_brier": 0.2269,
+        "baseline_brier": 0.2928,
         "verdict": {
-          "n": 618,
-          "diff": 0.06636,
-          "se": 0.01135,
-          "z": 5.85,
+          "n": 626,
+          "diff": 0.06592,
+          "se": 0.01122,
+          "z": 5.88,
           "verdict": "beats"
         },
         "calibration": [
@@ -377,9 +377,9 @@
           },
           {
             "band": "10-19%",
-            "n": 48,
+            "n": 50,
             "predicted": 0.164,
-            "actual": 0.208
+            "actual": 0.2
           },
           {
             "band": "20-29%",
@@ -389,21 +389,21 @@
           },
           {
             "band": "30-39%",
-            "n": 104,
+            "n": 106,
             "predicted": 0.367,
-            "actual": 0.462
+            "actual": 0.472
           },
           {
             "band": "40-49%",
-            "n": 217,
-            "predicted": 0.444,
-            "actual": 0.415
+            "n": 220,
+            "predicted": 0.443,
+            "actual": 0.409
           },
           {
             "band": "50-59%",
-            "n": 45,
+            "n": 46,
             "predicted": 0.529,
-            "actual": 0.6
+            "actual": 0.609
           },
           {
             "band": "60-69%",
@@ -426,28 +426,28 @@
         ]
       },
       "pass_int": {
-        "n": 618,
-        "model_brier": 0.2244,
-        "baseline_brier": 0.2733,
+        "n": 626,
+        "model_brier": 0.2245,
+        "baseline_brier": 0.273,
         "verdict": {
-          "n": 618,
-          "diff": 0.04891,
-          "se": 0.0084,
-          "z": 5.83,
+          "n": 626,
+          "diff": 0.0485,
+          "se": 0.00836,
+          "z": 5.8,
           "verdict": "beats"
         },
         "calibration": [
           {
             "band": "0-9%",
             "n": 23,
-            "predicted": 0.052,
+            "predicted": 0.051,
             "actual": 0.13
           },
           {
             "band": "10-19%",
-            "n": 92,
+            "n": 96,
             "predicted": 0.158,
-            "actual": 0.152
+            "actual": 0.156
           },
           {
             "band": "20-29%",
@@ -457,89 +457,89 @@
           },
           {
             "band": "30-39%",
-            "n": 82,
-            "predicted": 0.366,
-            "actual": 0.524
+            "n": 80,
+            "predicted": 0.364,
+            "actual": 0.525
           },
           {
             "band": "40-49%",
-            "n": 293,
-            "predicted": 0.456,
-            "actual": 0.457
+            "n": 297,
+            "predicted": 0.455,
+            "actual": 0.458
           },
           {
             "band": "50-59%",
-            "n": 92,
-            "predicted": 0.526,
-            "actual": 0.467
+            "n": 94,
+            "predicted": 0.525,
+            "actual": 0.457
           }
         ]
       },
       "rush_yds": {
-        "n": 1607,
-        "model_brier": 0.2529,
-        "baseline_brier": 0.2854,
+        "n": 1631,
+        "model_brier": 0.2528,
+        "baseline_brier": 0.285,
         "verdict": {
-          "n": 1607,
-          "diff": 0.03245,
-          "se": 0.00621,
+          "n": 1631,
+          "diff": 0.03224,
+          "se": 0.00617,
           "z": 5.23,
           "verdict": "beats"
         },
         "calibration": [
           {
             "band": "0-9%",
-            "n": 31,
+            "n": 33,
             "predicted": 0.045,
-            "actual": 0.452
+            "actual": 0.455
           },
           {
             "band": "10-19%",
-            "n": 29,
-            "predicted": 0.151,
-            "actual": 0.345
+            "n": 34,
+            "predicted": 0.156,
+            "actual": 0.382
           },
           {
             "band": "20-29%",
-            "n": 60,
-            "predicted": 0.252,
-            "actual": 0.45
+            "n": 59,
+            "predicted": 0.258,
+            "actual": 0.441
           },
           {
             "band": "30-39%",
-            "n": 117,
+            "n": 115,
             "predicted": 0.355,
-            "actual": 0.342
+            "actual": 0.33
           },
           {
             "band": "40-49%",
-            "n": 707,
-            "predicted": 0.48,
-            "actual": 0.446
+            "n": 714,
+            "predicted": 0.479,
+            "actual": 0.444
           },
           {
             "band": "50-59%",
-            "n": 581,
+            "n": 590,
             "predicted": 0.512,
-            "actual": 0.441
+            "actual": 0.444
           },
           {
             "band": "60-69%",
             "n": 50,
-            "predicted": 0.646,
-            "actual": 0.54
+            "predicted": 0.648,
+            "actual": 0.56
           },
           {
             "band": "70-79%",
-            "n": 14,
-            "predicted": 0.741,
-            "actual": 0.786
+            "n": 17,
+            "predicted": 0.742,
+            "actual": 0.706
           },
           {
             "band": "80-89%",
-            "n": 13,
-            "predicted": 0.84,
-            "actual": 0.615
+            "n": 14,
+            "predicted": 0.844,
+            "actual": 0.643
           },
           {
             "band": "90-99%",
@@ -550,22 +550,22 @@
         ]
       },
       "carries": {
-        "n": 1110,
-        "model_brier": 0.2557,
-        "baseline_brier": 0.2896,
+        "n": 1126,
+        "model_brier": 0.2567,
+        "baseline_brier": 0.2895,
         "verdict": {
-          "n": 1110,
-          "diff": 0.03387,
-          "se": 0.00721,
-          "z": 4.7,
+          "n": 1126,
+          "diff": 0.03279,
+          "se": 0.00725,
+          "z": 4.52,
           "verdict": "beats"
         },
         "calibration": [
           {
             "band": "0-9%",
-            "n": 38,
-            "predicted": 0.044,
-            "actual": 0.342
+            "n": 40,
+            "predicted": 0.046,
+            "actual": 0.375
           },
           {
             "band": "10-19%",
@@ -575,113 +575,113 @@
           },
           {
             "band": "20-29%",
-            "n": 74,
-            "predicted": 0.252,
-            "actual": 0.324
+            "n": 77,
+            "predicted": 0.251,
+            "actual": 0.312
           },
           {
             "band": "30-39%",
-            "n": 144,
+            "n": 146,
             "predicted": 0.351,
-            "actual": 0.451
+            "actual": 0.445
           },
           {
             "band": "40-49%",
-            "n": 597,
+            "n": 599,
             "predicted": 0.455,
-            "actual": 0.472
+            "actual": 0.471
           },
           {
             "band": "50-59%",
-            "n": 162,
-            "predicted": 0.523,
-            "actual": 0.488
+            "n": 165,
+            "predicted": 0.524,
+            "actual": 0.479
           },
           {
             "band": "60-69%",
-            "n": 21,
+            "n": 22,
             "predicted": 0.64,
-            "actual": 0.524
+            "actual": 0.545
           },
           {
             "band": "70-79%",
             "n": 16,
-            "predicted": 0.73,
+            "predicted": 0.732,
             "actual": 0.375
           },
           {
             "band": "80-89%",
-            "n": 8,
+            "n": 9,
             "predicted": 0.848,
-            "actual": 0.5
+            "actual": 0.444
           },
           {
             "band": "90-99%",
-            "n": 9,
-            "predicted": 0.95,
-            "actual": 0.667
+            "n": 11,
+            "predicted": 0.959,
+            "actual": 0.636
           }
         ]
       },
       "targets": {
-        "n": 4573,
-        "model_brier": 0.2433,
-        "baseline_brier": 0.2861,
+        "n": 4630,
+        "model_brier": 0.2432,
+        "baseline_brier": 0.2865,
         "verdict": {
-          "n": 4573,
-          "diff": 0.04278,
+          "n": 4630,
+          "diff": 0.04331,
           "se": 0.00319,
-          "z": 13.42,
+          "z": 13.59,
           "verdict": "beats"
         },
         "calibration": [
           {
             "band": "0-9%",
-            "n": 153,
+            "n": 155,
             "predicted": 0.055,
-            "actual": 0.216
+            "actual": 0.213
           },
           {
             "band": "10-19%",
-            "n": 243,
+            "n": 253,
             "predicted": 0.158,
-            "actual": 0.333
+            "actual": 0.336
           },
           {
             "band": "20-29%",
-            "n": 490,
+            "n": 491,
             "predicted": 0.257,
-            "actual": 0.386
+            "actual": 0.385
           },
           {
             "band": "30-39%",
-            "n": 1147,
+            "n": 1154,
             "predicted": 0.355,
-            "actual": 0.402
+            "actual": 0.399
           },
           {
             "band": "40-49%",
-            "n": 1578,
+            "n": 1588,
             "predicted": 0.443,
             "actual": 0.416
           },
           {
             "band": "50-59%",
-            "n": 760,
-            "predicted": 0.527,
-            "actual": 0.521
+            "n": 772,
+            "predicted": 0.528,
+            "actual": 0.519
           },
           {
             "band": "60-69%",
-            "n": 99,
-            "predicted": 0.649,
-            "actual": 0.556
+            "n": 107,
+            "predicted": 0.648,
+            "actual": 0.561
           },
           {
             "band": "70-79%",
-            "n": 48,
-            "predicted": 0.743,
-            "actual": 0.708
+            "n": 54,
+            "predicted": 0.746,
+            "actual": 0.685
           },
           {
             "band": "80-89%",
@@ -691,21 +691,21 @@
           },
           {
             "band": "90-99%",
-            "n": 16,
-            "predicted": 0.932,
-            "actual": 0.688
+            "n": 17,
+            "predicted": 0.933,
+            "actual": 0.706
           }
         ]
       },
       "scrim_yds": {
-        "n": 4961,
-        "model_brier": 0.2511,
-        "baseline_brier": 0.2892,
+        "n": 5025,
+        "model_brier": 0.2512,
+        "baseline_brier": 0.2894,
         "verdict": {
-          "n": 4961,
-          "diff": 0.03806,
+          "n": 5025,
+          "diff": 0.03825,
           "se": 0.00349,
-          "z": 10.89,
+          "z": 10.95,
           "verdict": "beats"
         },
         "calibration": [
@@ -717,51 +717,51 @@
           },
           {
             "band": "10-19%",
-            "n": 39,
-            "predicted": 0.156,
-            "actual": 0.359
+            "n": 41,
+            "predicted": 0.158,
+            "actual": 0.341
           },
           {
             "band": "20-29%",
-            "n": 93,
+            "n": 96,
             "predicted": 0.257,
-            "actual": 0.462
+            "actual": 0.469
           },
           {
             "band": "30-39%",
-            "n": 209,
+            "n": 212,
             "predicted": 0.359,
-            "actual": 0.459
+            "actual": 0.462
           },
           {
             "band": "40-49%",
-            "n": 2457,
+            "n": 2470,
             "predicted": 0.48,
             "actual": 0.434
           },
           {
             "band": "50-59%",
-            "n": 1880,
+            "n": 1902,
             "predicted": 0.516,
-            "actual": 0.457
+            "actual": 0.454
           },
           {
             "band": "60-69%",
-            "n": 131,
-            "predicted": 0.641,
-            "actual": 0.603
+            "n": 138,
+            "predicted": 0.64,
+            "actual": 0.587
           },
           {
             "band": "70-79%",
-            "n": 80,
-            "predicted": 0.747,
-            "actual": 0.613
+            "n": 88,
+            "predicted": 0.746,
+            "actual": 0.614
           },
           {
             "band": "80-89%",
-            "n": 46,
-            "predicted": 0.845,
-            "actual": 0.804
+            "n": 52,
+            "predicted": 0.847,
+            "actual": 0.827
           },
           {
             "band": "90-99%",
@@ -772,70 +772,70 @@
         ]
       },
       "rec_yds": {
-        "n": 4464,
-        "model_brier": 0.2556,
-        "baseline_brier": 0.2855,
+        "n": 4520,
+        "model_brier": 0.2553,
+        "baseline_brier": 0.2859,
         "verdict": {
-          "n": 4464,
-          "diff": 0.02999,
-          "se": 0.00363,
-          "z": 8.26,
+          "n": 4520,
+          "diff": 0.03064,
+          "se": 0.00364,
+          "z": 8.43,
           "verdict": "beats"
         },
         "calibration": [
           {
             "band": "0-9%",
-            "n": 90,
-            "predicted": 0.038,
-            "actual": 0.533
+            "n": 89,
+            "predicted": 0.039,
+            "actual": 0.528
           },
           {
             "band": "10-19%",
             "n": 96,
-            "predicted": 0.151,
-            "actual": 0.427
+            "predicted": 0.15,
+            "actual": 0.417
           },
           {
             "band": "20-29%",
-            "n": 165,
-            "predicted": 0.257,
-            "actual": 0.442
+            "n": 172,
+            "predicted": 0.255,
+            "actual": 0.448
           },
           {
             "band": "30-39%",
             "n": 336,
             "predicted": 0.359,
-            "actual": 0.426
+            "actual": 0.429
           },
           {
             "band": "40-49%",
-            "n": 2158,
+            "n": 2175,
             "predicted": 0.476,
-            "actual": 0.417
+            "actual": 0.416
           },
           {
             "band": "50-59%",
-            "n": 1411,
+            "n": 1429,
             "predicted": 0.517,
-            "actual": 0.463
+            "actual": 0.46
           },
           {
             "band": "60-69%",
-            "n": 112,
-            "predicted": 0.644,
-            "actual": 0.518
+            "n": 119,
+            "predicted": 0.645,
+            "actual": 0.513
           },
           {
             "band": "70-79%",
-            "n": 65,
-            "predicted": 0.739,
-            "actual": 0.677
+            "n": 72,
+            "predicted": 0.743,
+            "actual": 0.694
           },
           {
             "band": "80-89%",
-            "n": 27,
-            "predicted": 0.843,
-            "actual": 0.852
+            "n": 28,
+            "predicted": 0.846,
+            "actual": 0.857
           },
           {
             "band": "90-99%",
@@ -846,132 +846,138 @@
         ]
       },
       "rec": {
-        "n": 4507,
-        "model_brier": 0.2384,
-        "baseline_brier": 0.2671,
+        "n": 4563,
+        "model_brier": 0.2382,
+        "baseline_brier": 0.2677,
         "verdict": {
-          "n": 4507,
-          "diff": 0.02863,
-          "se": 0.00306,
-          "z": 9.36,
+          "n": 4563,
+          "diff": 0.02941,
+          "se": 0.00307,
+          "z": 9.57,
           "verdict": "beats"
         },
         "calibration": [
           {
             "band": "0-9%",
-            "n": 146,
+            "n": 149,
             "predicted": 0.058,
-            "actual": 0.185
+            "actual": 0.181
           },
           {
             "band": "10-19%",
-            "n": 250,
+            "n": 253,
             "predicted": 0.163,
-            "actual": 0.288
+            "actual": 0.289
           },
           {
             "band": "20-29%",
-            "n": 573,
+            "n": 581,
             "predicted": 0.254,
-            "actual": 0.363
+            "actual": 0.365
           },
           {
             "band": "30-39%",
-            "n": 1233,
+            "n": 1241,
             "predicted": 0.354,
-            "actual": 0.388
+            "actual": 0.387
           },
           {
             "band": "40-49%",
-            "n": 1369,
+            "n": 1376,
             "predicted": 0.445,
-            "actual": 0.437
+            "actual": 0.436
           },
           {
             "band": "50-59%",
-            "n": 791,
+            "n": 805,
             "predicted": 0.531,
-            "actual": 0.532
+            "actual": 0.529
           },
           {
             "band": "60-69%",
-            "n": 75,
+            "n": 82,
             "predicted": 0.646,
-            "actual": 0.64
+            "actual": 0.634
           },
           {
             "band": "70-79%",
-            "n": 36,
+            "n": 40,
             "predicted": 0.755,
-            "actual": 0.75
+            "actual": 0.775
           },
           {
             "band": "80-89%",
             "n": 18,
-            "predicted": 0.847,
+            "predicted": 0.848,
             "actual": 0.778
           },
           {
             "band": "90-99%",
-            "n": 16,
-            "predicted": 0.94,
-            "actual": 0.938
+            "n": 18,
+            "predicted": 0.939,
+            "actual": 0.944
           }
         ]
       },
       "td": {
-        "n": 2486,
-        "model_brier": 0.1576,
-        "baseline_brier": 0.1973,
+        "n": 2550,
+        "model_brier": 0.1575,
+        "baseline_brier": 0.1969,
         "verdict": {
-          "n": 2486,
-          "diff": 0.03966,
-          "se": 0.00425,
-          "z": 9.33,
+          "n": 2550,
+          "diff": 0.03938,
+          "se": 0.00418,
+          "z": 9.41,
           "verdict": "beats"
         },
         "calibration": [
           {
             "band": "0-9%",
-            "n": 856,
+            "n": 875,
             "predicted": 0.063,
-            "actual": 0.112
+            "actual": 0.111
           },
           {
             "band": "10-19%",
-            "n": 847,
+            "n": 869,
             "predicted": 0.146,
-            "actual": 0.192
+            "actual": 0.193
           },
           {
             "band": "20-29%",
-            "n": 415,
+            "n": 427,
             "predicted": 0.242,
-            "actual": 0.304
+            "actual": 0.307
           },
           {
             "band": "30-39%",
-            "n": 220,
+            "n": 228,
             "predicted": 0.342,
-            "actual": 0.355
+            "actual": 0.351
           },
           {
             "band": "40-49%",
-            "n": 89,
-            "predicted": 0.449,
-            "actual": 0.371
+            "n": 90,
+            "predicted": 0.45,
+            "actual": 0.378
           },
           {
             "band": "50-59%",
-            "n": 40,
-            "predicted": 0.537,
-            "actual": 0.55
+            "n": 41,
+            "predicted": 0.536,
+            "actual": 0.537
           },
           {
             "band": "60-69%",
             "n": 19,
             "predicted": 0.639,
             "actual": 0.737
+          },
+          {
+            "band": "70-79%",
+            "n": 1,
+            "predicted": 0.716,
+            "actual": 1.0
           }
         ]
       },
@@ -980,13 +986,13 @@
           "strength": 0.0,
           "fitted": 0.25,
           "n_train": 584,
-          "n": 1023,
+          "n": 1047,
           "verdict": {
-            "n": 1023,
-            "diff": 0.00014,
-            "se": 0.00211,
-            "z": 0.06,
-            "verdict": "thin"
+            "n": 1047,
+            "diff": -3e-05,
+            "se": 0.0021,
+            "z": -0.01,
+            "verdict": "fails"
           },
           "in_number": false
         },
@@ -994,13 +1000,13 @@
           "strength": 0.0,
           "fitted": 0.5,
           "n_train": 3255,
-          "n": 5716,
+          "n": 5828,
           "verdict": {
-            "n": 5716,
-            "diff": 0.00051,
-            "se": 0.00087,
-            "z": 0.58,
-            "verdict": "thin"
+            "n": 5828,
+            "diff": -0.00116,
+            "se": 0.00192,
+            "z": -0.6,
+            "verdict": "fails"
           },
           "in_number": false
         },
@@ -1033,7 +1039,7 @@
       ],
       "seasons": {
         "prior_rows": 21599,
-        "current_rows": 5199
+        "current_rows": 5576
       }
     },
     "matchup_in_number": {
@@ -1050,30 +1056,12 @@
   "markets": {
     "Anytime TD": [
       {
-        "player": "Derrick Henry",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 58,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Bijan Robinson",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 58,
-        "window": "Sunday Night"
-      },
-      {
         "player": "James Cook III",
         "team": "BUF",
         "opp": "LAR",
         "pos": "RB",
         "gp": 4,
-        "proj": 55,
+        "proj": 54,
         "window": "Monday Night"
       },
       {
@@ -1104,24 +1092,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Drake London",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 35,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Brian Robinson Jr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 28,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Blake Corum",
         "team": "LAR",
         "opp": "BUF",
@@ -1131,39 +1101,12 @@
         "window": "Monday Night"
       },
       {
-        "player": "Zay Flowers",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 26,
-        "window": "Sunday Night"
-      },
-      {
         "player": "DJ Moore",
         "team": "BUF",
         "opp": "LAR",
         "pos": "WR",
         "gp": 4,
-        "proj": 26,
-        "window": "Monday Night"
-      },
-      {
-        "player": "Kyle Pitts Sr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "TE",
-        "gp": 4,
-        "proj": 23,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Dalton Kincaid",
-        "team": "BUF",
-        "opp": "LAR",
-        "pos": "TE",
-        "gp": 4,
-        "proj": 21,
+        "proj": 25,
         "window": "Monday Night"
       },
       {
@@ -1171,6 +1114,15 @@
         "team": "BUF",
         "opp": "LAR",
         "pos": "WR",
+        "gp": 4,
+        "proj": 20,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dalton Kincaid",
+        "team": "BUF",
+        "opp": "LAR",
+        "pos": "TE",
         "gp": 4,
         "proj": 20,
         "window": "Monday Night"
@@ -1194,15 +1146,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Mark Andrews",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "TE",
-        "gp": 4,
-        "proj": 19,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Ty Johnson",
         "team": "BUF",
         "opp": "LAR",
@@ -1210,15 +1153,6 @@
         "gp": 2,
         "proj": 19,
         "window": "Monday Night"
-      },
-      {
-        "player": "Justice Hill",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 17,
-        "window": "Sunday Night"
       },
       {
         "player": "Ronnie Rivers",
@@ -1239,24 +1173,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Jahan Dotson",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 12,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Chris Blair",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 1,
-        "proj": 12,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Joshua Palmer",
         "team": "BUF",
         "opp": "LAR",
@@ -1275,42 +1191,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Rashod Bateman",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 11,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Austin Hooper",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "TE",
-        "gp": 3,
-        "proj": 11,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Ja'Kobi Lane",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 1,
-        "proj": 10,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Chris Moore",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 10,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Davis Allen",
         "team": "LAR",
         "opp": "BUF",
@@ -1318,15 +1198,6 @@
         "gp": 4,
         "proj": 10,
         "window": "Monday Night"
-      },
-      {
-        "player": "Zachariah Branch",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 8,
-        "window": "Sunday Night"
       },
       {
         "player": "Frank Gore Jr.",
@@ -1340,31 +1211,13 @@
     ],
     "Rushing yards": [
       {
-        "player": "Bijan Robinson",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 119.8,
-        "window": "Sunday Night"
-      },
-      {
         "player": "James Cook III",
         "team": "BUF",
         "opp": "LAR",
         "pos": "RB",
         "gp": 4,
-        "proj": 93.3,
+        "proj": 93.0,
         "window": "Monday Night"
-      },
-      {
-        "player": "Derrick Henry",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 88.4,
-        "window": "Sunday Night"
       },
       {
         "player": "Kyren Williams",
@@ -1372,7 +1225,7 @@
         "opp": "BUF",
         "pos": "RB",
         "gp": 4,
-        "proj": 75.6,
+        "proj": 75.4,
         "window": "Monday Night"
       },
       {
@@ -1385,40 +1238,13 @@
         "window": "Monday Night"
       },
       {
-        "player": "Lamar Jackson",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "QB",
-        "gp": 4,
-        "proj": 39.0,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Brian Robinson Jr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 35.6,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Josh Allen",
         "team": "BUF",
         "opp": "LAR",
         "pos": "QB",
         "gp": 4,
-        "proj": 25.7,
+        "proj": 25.9,
         "window": "Monday Night"
-      },
-      {
-        "player": "Tyler Huntley",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "QB",
-        "gp": 1,
-        "proj": 19.7,
-        "window": "Sunday Night"
       },
       {
         "player": "Ronnie Rivers",
@@ -1426,17 +1252,8 @@
         "opp": "BUF",
         "pos": "RB",
         "gp": 1,
-        "proj": 17.0,
+        "proj": 17.1,
         "window": "Monday Night"
-      },
-      {
-        "player": "Cooper Rush",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "QB",
-        "gp": 2,
-        "proj": 11.2,
-        "window": "Sunday Night"
       },
       {
         "player": "Frank Gore Jr.",
@@ -1453,38 +1270,11 @@
         "opp": "BUF",
         "pos": "QB",
         "gp": 4,
-        "proj": 3.1,
+        "proj": 3.0,
         "window": "Monday Night"
-      },
-      {
-        "player": "Michael Penix Jr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "QB",
-        "gp": 2,
-        "proj": 0.5,
-        "window": "Sunday Night"
       }
     ],
     "Carries": [
-      {
-        "player": "Bijan Robinson",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 21.1,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Derrick Henry",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 20.1,
-        "window": "Sunday Night"
-      },
       {
         "player": "James Cook III",
         "team": "BUF",
@@ -1513,15 +1303,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Brian Robinson Jr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 8.1,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Ronnie Rivers",
         "team": "LAR",
         "opp": "BUF",
@@ -1542,31 +1323,13 @@
     ],
     "Receiving yards": [
       {
-        "player": "Zay Flowers",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 116.0,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Puka Nacua",
         "team": "LAR",
         "opp": "BUF",
         "pos": "WR",
         "gp": 2,
-        "proj": 110.8,
+        "proj": 110.9,
         "window": "Monday Night"
-      },
-      {
-        "player": "Drake London",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 97.6,
-        "window": "Sunday Night"
       },
       {
         "player": "Davante Adams",
@@ -1574,7 +1337,7 @@
         "opp": "BUF",
         "pos": "WR",
         "gp": 4,
-        "proj": 97.4,
+        "proj": 97.2,
         "window": "Monday Night"
       },
       {
@@ -1583,7 +1346,7 @@
         "opp": "LAR",
         "pos": "WR",
         "gp": 4,
-        "proj": 61.1,
+        "proj": 60.9,
         "window": "Monday Night"
       },
       {
@@ -1610,7 +1373,7 @@
         "opp": "LAR",
         "pos": "WR",
         "gp": 4,
-        "proj": 40.8,
+        "proj": 40.7,
         "window": "Monday Night"
       },
       {
@@ -1623,42 +1386,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Rashod Bateman",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 36.0,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Kyle Pitts Sr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "TE",
-        "gp": 4,
-        "proj": 36.0,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Bijan Robinson",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 31.7,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Mark Andrews",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "TE",
-        "gp": 4,
-        "proj": 29.8,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Kyren Williams",
         "team": "LAR",
         "opp": "BUF",
@@ -1668,21 +1395,12 @@
         "window": "Monday Night"
       },
       {
-        "player": "Chris Moore",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 28.2,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Joshua Palmer",
         "team": "BUF",
         "opp": "LAR",
         "pos": "WR",
         "gp": 3,
-        "proj": 26.6,
+        "proj": 26.5,
         "window": "Monday Night"
       },
       {
@@ -1691,7 +1409,7 @@
         "opp": "BUF",
         "pos": "WR",
         "gp": 4,
-        "proj": 24.6,
+        "proj": 24.5,
         "window": "Monday Night"
       },
       {
@@ -1702,24 +1420,6 @@
         "gp": 2,
         "proj": 20.4,
         "window": "Monday Night"
-      },
-      {
-        "player": "Justice Hill",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 17.5,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Jahan Dotson",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 17.0,
-        "window": "Sunday Night"
       },
       {
         "player": "Terrance Ferguson",
@@ -1740,67 +1440,13 @@
         "window": "Monday Night"
       },
       {
-        "player": "Ja'Kobi Lane",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 1,
-        "proj": 11.7,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Austin Hooper",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "TE",
-        "gp": 3,
-        "proj": 10.6,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Zachariah Branch",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 9.8,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Derrick Henry",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 8.8,
-        "window": "Sunday Night"
-      },
-      {
         "player": "James Cook III",
         "team": "BUF",
         "opp": "LAR",
         "pos": "RB",
         "gp": 4,
-        "proj": 6.3,
+        "proj": 6.4,
         "window": "Monday Night"
-      },
-      {
-        "player": "Chris Blair",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 1,
-        "proj": 4.6,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Brian Robinson Jr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 4.1,
-        "window": "Sunday Night"
       },
       {
         "player": "Blake Corum",
@@ -1832,15 +1478,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Zay Flowers",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 5.5,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Davante Adams",
         "team": "LAR",
         "opp": "BUF",
@@ -1848,15 +1485,6 @@
         "gp": 4,
         "proj": 5.2,
         "window": "Monday Night"
-      },
-      {
-        "player": "Drake London",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 4.5,
-        "window": "Sunday Night"
       },
       {
         "player": "Khalil Shakir",
@@ -1875,33 +1503,6 @@
         "gp": 3,
         "proj": 3.8,
         "window": "Monday Night"
-      },
-      {
-        "player": "Bijan Robinson",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 3.6,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Kyle Pitts Sr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "TE",
-        "gp": 4,
-        "proj": 3.5,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Mark Andrews",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "TE",
-        "gp": 4,
-        "proj": 3.4,
-        "window": "Sunday Night"
       },
       {
         "player": "Dalton Kincaid",
@@ -1940,15 +1541,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Justice Hill",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 1.9,
-        "window": "Sunday Night"
-      },
-      {
         "player": "James Cook III",
         "team": "BUF",
         "opp": "LAR",
@@ -1956,24 +1548,6 @@
         "gp": 4,
         "proj": 1.9,
         "window": "Monday Night"
-      },
-      {
-        "player": "Rashod Bateman",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 1.8,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Zachariah Branch",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 1.6,
-        "window": "Sunday Night"
       },
       {
         "player": "Joshua Palmer",
@@ -2012,24 +1586,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Austin Hooper",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "TE",
-        "gp": 3,
-        "proj": 1.4,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Chris Moore",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 1.3,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Konata Mumpfield",
         "team": "LAR",
         "opp": "BUF",
@@ -2037,42 +1593,6 @@
         "gp": 4,
         "proj": 1.3,
         "window": "Monday Night"
-      },
-      {
-        "player": "Jahan Dotson",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 1.2,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Derrick Henry",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 1.1,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Ja'Kobi Lane",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 1,
-        "proj": 1.1,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Chris Blair",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 1,
-        "proj": 0.8,
-        "window": "Sunday Night"
       },
       {
         "player": "Blake Corum",
@@ -2091,15 +1611,6 @@
         "gp": 1,
         "proj": 0.5,
         "window": "Monday Night"
-      },
-      {
-        "player": "Brian Robinson Jr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 0.4,
-        "window": "Sunday Night"
       }
     ],
     "Targets": [
@@ -2122,24 +1633,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Zay Flowers",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 7.4,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Drake London",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 7.0,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Khalil Shakir",
         "team": "BUF",
         "opp": "LAR",
@@ -2156,33 +1649,6 @@
         "gp": 3,
         "proj": 5.2,
         "window": "Monday Night"
-      },
-      {
-        "player": "Mark Andrews",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "TE",
-        "gp": 4,
-        "proj": 4.8,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Kyle Pitts Sr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "TE",
-        "gp": 4,
-        "proj": 4.8,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Bijan Robinson",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 4.7,
-        "window": "Sunday Night"
       },
       {
         "player": "DJ Moore",
@@ -2221,24 +1687,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Rashod Bateman",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 3.2,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Ja'Kobi Lane",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 1,
-        "proj": 3.2,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Terrance Ferguson",
         "team": "LAR",
         "opp": "BUF",
@@ -2266,33 +1714,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Chris Moore",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 2.7,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Jahan Dotson",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 2.5,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Justice Hill",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 2.4,
-        "window": "Sunday Night"
-      },
-      {
         "player": "James Cook III",
         "team": "BUF",
         "opp": "LAR",
@@ -2300,15 +1721,6 @@
         "gp": 4,
         "proj": 2.4,
         "window": "Monday Night"
-      },
-      {
-        "player": "Chris Blair",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 1,
-        "proj": 2.3,
-        "window": "Sunday Night"
       },
       {
         "player": "Davis Allen",
@@ -2329,33 +1741,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Zachariah Branch",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 1.9,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Austin Hooper",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "TE",
-        "gp": 3,
-        "proj": 1.8,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Derrick Henry",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 1.4,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Blake Corum",
         "team": "LAR",
         "opp": "BUF",
@@ -2363,15 +1748,6 @@
         "gp": 4,
         "proj": 1.2,
         "window": "Monday Night"
-      },
-      {
-        "player": "Brian Robinson Jr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 0.6,
-        "window": "Sunday Night"
       },
       {
         "player": "Ronnie Rivers",
@@ -2399,26 +1775,8 @@
         "opp": "BUF",
         "pos": "QB",
         "gp": 4,
-        "proj": 286.6,
+        "proj": 287.0,
         "window": "Monday Night"
-      },
-      {
-        "player": "Lamar Jackson",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "QB",
-        "gp": 4,
-        "proj": 255.8,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Michael Penix Jr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "QB",
-        "gp": 2,
-        "proj": 249.7,
-        "window": "Sunday Night"
       },
       {
         "player": "Josh Allen",
@@ -2426,26 +1784,8 @@
         "opp": "LAR",
         "pos": "QB",
         "gp": 4,
-        "proj": 243.9,
+        "proj": 243.6,
         "window": "Monday Night"
-      },
-      {
-        "player": "Tyler Huntley",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "QB",
-        "gp": 1,
-        "proj": 177.5,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Cooper Rush",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "QB",
-        "gp": 2,
-        "proj": 139.7,
-        "window": "Sunday Night"
       }
     ],
     "Pass attempts": [
@@ -2466,70 +1806,16 @@
         "gp": 4,
         "proj": 28.0,
         "window": "Monday Night"
-      },
-      {
-        "player": "Lamar Jackson",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "QB",
-        "gp": 4,
-        "proj": 25.5,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Tyler Huntley",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "QB",
-        "gp": 1,
-        "proj": 25.5,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Michael Penix Jr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "QB",
-        "gp": 2,
-        "proj": 23.8,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Cooper Rush",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "QB",
-        "gp": 2,
-        "proj": 23.8,
-        "window": "Sunday Night"
       }
     ],
     "Rush + rec yards": [
-      {
-        "player": "Bijan Robinson",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 151.5,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Zay Flowers",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 123.1,
-        "window": "Sunday Night"
-      },
       {
         "player": "Puka Nacua",
         "team": "LAR",
         "opp": "BUF",
         "pos": "WR",
         "gp": 2,
-        "proj": 114.1,
+        "proj": 114.4,
         "window": "Monday Night"
       },
       {
@@ -2538,7 +1824,7 @@
         "opp": "BUF",
         "pos": "RB",
         "gp": 4,
-        "proj": 104.5,
+        "proj": 104.3,
         "window": "Monday Night"
       },
       {
@@ -2547,17 +1833,8 @@
         "opp": "LAR",
         "pos": "RB",
         "gp": 4,
-        "proj": 99.6,
+        "proj": 99.4,
         "window": "Monday Night"
-      },
-      {
-        "player": "Drake London",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 98.0,
-        "window": "Sunday Night"
       },
       {
         "player": "Davante Adams",
@@ -2565,17 +1842,8 @@
         "opp": "BUF",
         "pos": "WR",
         "gp": 4,
-        "proj": 97.4,
-        "window": "Monday Night"
-      },
-      {
-        "player": "Derrick Henry",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "RB",
-        "gp": 4,
         "proj": 97.2,
-        "window": "Sunday Night"
+        "window": "Monday Night"
       },
       {
         "player": "Keon Coleman",
@@ -2583,7 +1851,7 @@
         "opp": "LAR",
         "pos": "WR",
         "gp": 4,
-        "proj": 61.1,
+        "proj": 60.9,
         "window": "Monday Night"
       },
       {
@@ -2623,15 +1891,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Brian Robinson Jr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 39.7,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Tyler Higbee",
         "team": "LAR",
         "opp": "BUF",
@@ -2641,57 +1900,12 @@
         "window": "Monday Night"
       },
       {
-        "player": "Rashod Bateman",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 36.0,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Kyle Pitts Sr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "TE",
-        "gp": 4,
-        "proj": 36.0,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Mark Andrews",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "TE",
-        "gp": 4,
-        "proj": 31.7,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Justice Hill",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 29.7,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Chris Moore",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 29.1,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Ty Johnson",
         "team": "BUF",
         "opp": "LAR",
         "pos": "RB",
         "gp": 2,
-        "proj": 29.1,
+        "proj": 29.2,
         "window": "Monday Night"
       },
       {
@@ -2700,7 +1914,7 @@
         "opp": "LAR",
         "pos": "WR",
         "gp": 3,
-        "proj": 26.6,
+        "proj": 26.5,
         "window": "Monday Night"
       },
       {
@@ -2709,7 +1923,7 @@
         "opp": "BUF",
         "pos": "WR",
         "gp": 4,
-        "proj": 24.6,
+        "proj": 24.5,
         "window": "Monday Night"
       },
       {
@@ -2718,17 +1932,8 @@
         "opp": "BUF",
         "pos": "RB",
         "gp": 1,
-        "proj": 19.5,
+        "proj": 19.6,
         "window": "Monday Night"
-      },
-      {
-        "player": "Jahan Dotson",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 17.0,
-        "window": "Sunday Night"
       },
       {
         "player": "Terrance Ferguson",
@@ -2749,42 +1954,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Ja'Kobi Lane",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 1,
-        "proj": 11.7,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Austin Hooper",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "TE",
-        "gp": 3,
-        "proj": 10.6,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Zachariah Branch",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 9.8,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Chris Blair",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 1,
-        "proj": 4.6,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Frank Gore Jr.",
         "team": "BUF",
         "opp": "LAR",
@@ -2801,7 +1970,7 @@
         "opp": "BUF",
         "pos": "QB",
         "gp": 4,
-        "proj": 25.06,
+        "proj": 25.03,
         "window": "Monday Night"
       },
       {
@@ -2810,44 +1979,8 @@
         "opp": "LAR",
         "pos": "QB",
         "gp": 4,
-        "proj": 18.04,
+        "proj": 18.02,
         "window": "Monday Night"
-      },
-      {
-        "player": "Lamar Jackson",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "QB",
-        "gp": 4,
-        "proj": 16.41,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Tyler Huntley",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "QB",
-        "gp": 1,
-        "proj": 16.41,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Michael Penix Jr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "QB",
-        "gp": 2,
-        "proj": 15.3,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Cooper Rush",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "QB",
-        "gp": 2,
-        "proj": 15.29,
-        "window": "Sunday Night"
       }
     ],
     "Passing TDs": [
@@ -2857,7 +1990,7 @@
         "opp": "BUF",
         "pos": "QB",
         "gp": 4,
-        "proj": 1.84,
+        "proj": 1.87,
         "window": "Monday Night"
       },
       {
@@ -2866,44 +1999,8 @@
         "opp": "LAR",
         "pos": "QB",
         "gp": 4,
-        "proj": 1.31,
+        "proj": 1.32,
         "window": "Monday Night"
-      },
-      {
-        "player": "Lamar Jackson",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "QB",
-        "gp": 4,
-        "proj": 1.2,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Tyler Huntley",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "QB",
-        "gp": 1,
-        "proj": 1.19,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Michael Penix Jr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "QB",
-        "gp": 2,
-        "proj": 1.11,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Cooper Rush",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "QB",
-        "gp": 2,
-        "proj": 1.11,
-        "window": "Sunday Night"
       }
     ],
     "Interceptions": [
@@ -2913,7 +2010,7 @@
         "opp": "BUF",
         "pos": "QB",
         "gp": 4,
-        "proj": 0.85,
+        "proj": 0.82,
         "window": "Monday Night"
       },
       {
@@ -2922,72 +2019,18 @@
         "opp": "LAR",
         "pos": "QB",
         "gp": 4,
-        "proj": 0.6,
+        "proj": 0.61,
         "window": "Monday Night"
-      },
-      {
-        "player": "Cooper Rush",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "QB",
-        "gp": 2,
-        "proj": 0.59,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Lamar Jackson",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "QB",
-        "gp": 4,
-        "proj": 0.52,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Tyler Huntley",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "QB",
-        "gp": 1,
-        "proj": 0.52,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Michael Penix Jr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "QB",
-        "gp": 2,
-        "proj": 0.49,
-        "window": "Sunday Night"
       }
     ],
     "2+ TDs": [
-      {
-        "player": "Bijan Robinson",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 21.3,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Derrick Henry",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 21.2,
-        "window": "Sunday Night"
-      },
       {
         "player": "James Cook III",
         "team": "BUF",
         "opp": "LAR",
         "pos": "RB",
         "gp": 4,
-        "proj": 18.9,
+        "proj": 18.6,
         "window": "Monday Night"
       },
       {
@@ -2996,7 +2039,7 @@
         "opp": "BUF",
         "pos": "RB",
         "gp": 4,
-        "proj": 18.2,
+        "proj": 18.4,
         "window": "Monday Night"
       },
       {
@@ -3014,26 +2057,8 @@
         "opp": "BUF",
         "pos": "WR",
         "gp": 2,
-        "proj": 10.9,
+        "proj": 11.0,
         "window": "Monday Night"
-      },
-      {
-        "player": "Drake London",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 6.8,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Brian Robinson Jr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 4.3,
-        "window": "Sunday Night"
       },
       {
         "player": "Blake Corum",
@@ -3041,17 +2066,8 @@
         "opp": "BUF",
         "pos": "RB",
         "gp": 4,
-        "proj": 4.3,
+        "proj": 4.4,
         "window": "Monday Night"
-      },
-      {
-        "player": "Zay Flowers",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 3.7,
-        "window": "Sunday Night"
       },
       {
         "player": "DJ Moore",
@@ -3059,17 +2075,8 @@
         "opp": "LAR",
         "pos": "WR",
         "gp": 4,
-        "proj": 3.6,
+        "proj": 3.5,
         "window": "Monday Night"
-      },
-      {
-        "player": "Kyle Pitts Sr.",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "TE",
-        "gp": 4,
-        "proj": 2.9,
-        "window": "Sunday Night"
       },
       {
         "player": "Dalton Kincaid",
@@ -3077,7 +2084,7 @@
         "opp": "LAR",
         "pos": "TE",
         "gp": 4,
-        "proj": 2.3,
+        "proj": 2.2,
         "window": "Monday Night"
       },
       {
@@ -3108,15 +2115,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Mark Andrews",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "TE",
-        "gp": 4,
-        "proj": 2.0,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Ty Johnson",
         "team": "BUF",
         "opp": "LAR",
@@ -3126,21 +2124,12 @@
         "window": "Monday Night"
       },
       {
-        "player": "Justice Hill",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 1.5,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Ronnie Rivers",
         "team": "LAR",
         "opp": "BUF",
         "pos": "RB",
         "gp": 1,
-        "proj": 1.5,
+        "proj": 1.6,
         "window": "Monday Night"
       },
       {
@@ -3149,35 +2138,8 @@
         "opp": "BUF",
         "pos": "TE",
         "gp": 3,
-        "proj": 0.9,
+        "proj": 1.0,
         "window": "Monday Night"
-      },
-      {
-        "player": "Chris Blair",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 1,
-        "proj": 0.8,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Rashod Bateman",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 0.7,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Jahan Dotson",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 0.7,
-        "window": "Sunday Night"
       },
       {
         "player": "Joshua Palmer",
@@ -3198,33 +2160,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Austin Hooper",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "TE",
-        "gp": 3,
-        "proj": 0.6,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Ja'Kobi Lane",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 1,
-        "proj": 0.5,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Chris Moore",
-        "team": "BAL",
-        "opp": "ATL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 0.5,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Davis Allen",
         "team": "LAR",
         "opp": "BUF",
@@ -3232,15 +2167,6 @@
         "gp": 4,
         "proj": 0.5,
         "window": "Monday Night"
-      },
-      {
-        "player": "Zachariah Branch",
-        "team": "ATL",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 0.4,
-        "window": "Sunday Night"
       },
       {
         "player": "Frank Gore Jr.",
