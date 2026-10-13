@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-13 16:20",
+  "generated_at_et": "2026-10-13 16:47",
   "slate_date_et": "2026-10-13",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -31,15 +31,15 @@
       ],
       "proj_total": 7.9,
       "odds": {
-        "details": "TB -132",
+        "details": "TB -136",
         "total": 7.0,
         "spread": -1.5,
-        "home_ml": -132,
-        "away_ml": 110,
+        "home_ml": -136,
+        "away_ml": 113,
         "over_price": 102,
         "under_price": -122,
-        "home_spread_price": 163,
-        "away_spread_price": -199
+        "home_spread_price": 159,
+        "away_spread_price": -194
       },
       "model": {
         "home_score": 3.44,
@@ -50,9 +50,9 @@
         "fair_home": 133,
         "fair_away": -133,
         "tie_rule_measured": true,
-        "market_home": 0.5444,
-        "market_away": 0.4556,
-        "edge_home": -0.1149,
+        "market_home": 0.5511,
+        "market_away": 0.4489,
+        "edge_home": -0.1216,
         "market_total": 7.0,
         "p_over": 0.5086,
         "fair_over": -104,
@@ -67,8 +67,8 @@
           "total": 0.0,
           "spread": 0.0
         },
-        "p_home_mkt": 0.5444,
-        "p_home_final": 0.5444,
+        "p_home_mkt": 0.5511,
+        "p_home_final": 0.5511,
         "p_over_mkt": 0.4739,
         "p_over_final": 0.4739,
         "total_priced": true,
@@ -76,8 +76,8 @@
         "p_home_cover": 0.2724,
         "fair_cover_home": 267,
         "fair_cover_away": -267,
-        "p_cover_mkt": 0.3636,
-        "p_cover_final": 0.3636,
+        "p_cover_mkt": 0.3691,
+        "p_cover_final": 0.3691,
         "spread_priced": true,
         "starters_used": true,
         "home_starter": {
