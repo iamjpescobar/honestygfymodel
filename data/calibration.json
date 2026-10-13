@@ -8148,7 +8148,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "666176",
@@ -8156,7 +8156,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "680757",
@@ -8164,7 +8164,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "668930",
@@ -8172,7 +8172,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "661388",
@@ -8180,7 +8180,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "683748",
@@ -8188,7 +8188,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "691406",
@@ -8196,7 +8196,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "676356",
@@ -8204,7 +8204,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "650490",
@@ -8212,7 +8212,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "694192",
@@ -8220,7 +8220,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "800050",
@@ -8228,7 +8228,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "592885",
@@ -8236,7 +8236,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "608070",
@@ -8244,10 +8244,10 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -9296,10 +9296,10 @@
           "team": "Tampa Bay Rays",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -12662,7 +12662,7 @@
           "team": "Los Angeles Dodgers",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "571970",
@@ -12670,7 +12670,7 @@
           "team": "Los Angeles Dodgers",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "694192",
@@ -12678,7 +12678,7 @@
           "team": "Milwaukee Brewers",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "669257",
@@ -12686,7 +12686,7 @@
           "team": "Los Angeles Dodgers",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "641343",
@@ -12694,10 +12694,10 @@
           "team": "Milwaukee Brewers",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -29943,7 +29943,8 @@
           "team": "Atlanta Dream",
           "stat": "pts",
           "line": 19.0,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": "2529622",
@@ -30055,7 +30056,8 @@
           "team": "Atlanta Dream",
           "stat": "ast",
           "line": 3.0,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": "2998928",
@@ -30239,7 +30241,8 @@
           "team": "Atlanta Dream",
           "stat": "tpm",
           "line": 2.5,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": "4398915",
@@ -30274,7 +30277,7 @@
           "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -35739,7 +35742,8 @@
           "team": "Atlanta Dream",
           "stat": "pts",
           "line": 17.0,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": "4398674",
@@ -35835,7 +35839,8 @@
           "team": "Atlanta Dream",
           "stat": "ast",
           "line": 2.7,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": "4433402",
@@ -35854,7 +35859,7 @@
           "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
