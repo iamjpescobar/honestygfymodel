@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-14 10:05",
+  "generated_at_et": "2026-10-14 10:55",
   "week": 6,
   "league": {
     "team_games": 158,
@@ -1331,7 +1331,7 @@
         "opp": "PIT",
         "pos": "RB",
         "gp": 5,
-        "proj": 37,
+        "proj": 36,
         "window": "Sunday Early"
       },
       {
@@ -3480,6 +3480,15 @@
         "window": "Sunday Early"
       },
       {
+        "player": "Baker Mayfield",
+        "team": "TB",
+        "opp": "PIT",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 189.0,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Jayden Daniels",
         "team": "WSH",
         "opp": "SF",
@@ -3775,6 +3784,15 @@
         "opp": "BAL",
         "pos": "QB",
         "gp": 1,
+        "proj": 29.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Baker Mayfield",
+        "team": "TB",
+        "opp": "PIT",
+        "pos": "QB",
+        "gp": 3,
         "proj": 29.4,
         "window": "Sunday Early"
       },
@@ -4476,6 +4494,15 @@
         "window": "Sunday Early"
       },
       {
+        "player": "Baker Mayfield",
+        "team": "TB",
+        "opp": "PIT",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 18.89,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Bo Nix",
         "team": "DEN",
         "opp": "SEA",
@@ -4807,6 +4834,15 @@
         "opp": "BAL",
         "pos": "QB",
         "gp": 5,
+        "proj": 1.38,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Baker Mayfield",
+        "team": "TB",
+        "opp": "PIT",
+        "pos": "QB",
+        "gp": 3,
         "proj": 1.38,
         "window": "Sunday Early"
       },
@@ -5171,6 +5207,15 @@
         "gp": 5,
         "proj": 0.64,
         "window": "Monday Night"
+      },
+      {
+        "player": "Baker Mayfield",
+        "team": "TB",
+        "opp": "PIT",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 0.61,
+        "window": "Sunday Early"
       },
       {
         "player": "Patrick Mahomes",
@@ -5562,13 +5607,13 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Bucky Irving",
-        "team": "TB",
-        "opp": "PIT",
+        "player": "David Montgomery",
+        "team": "HOU",
+        "opp": "JAX",
         "pos": "RB",
         "gp": 5,
-        "proj": 8.0,
-        "window": "Sunday Early"
+        "proj": 7.9,
+        "window": "Sunday Morning"
       },
       {
         "player": "Kyle Monangai",
@@ -5580,15 +5625,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "David Montgomery",
-        "team": "HOU",
-        "opp": "JAX",
-        "pos": "RB",
-        "gp": 5,
-        "proj": 7.8,
-        "window": "Sunday Morning"
-      },
-      {
         "player": "George Kittle",
         "team": "SF",
         "opp": "WSH",
@@ -5596,6 +5632,15 @@
         "gp": 5,
         "proj": 7.6,
         "window": "Monday Night"
+      },
+      {
+        "player": "Bucky Irving",
+        "team": "TB",
+        "opp": "PIT",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 7.3,
+        "window": "Sunday Early"
       },
       {
         "player": "J.K. Dobbins",
@@ -5614,6 +5659,15 @@
         "gp": 5,
         "proj": 6.9,
         "window": "Monday Night"
+      },
+      {
+        "player": "Nico Collins",
+        "team": "HOU",
+        "opp": "JAX",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 6.7,
+        "window": "Sunday Morning"
       },
       {
         "player": "Drake London",
@@ -5643,24 +5697,6 @@
         "window": "Sunday Night"
       },
       {
-        "player": "Nico Collins",
-        "team": "HOU",
-        "opp": "JAX",
-        "pos": "WR",
-        "gp": 3,
-        "proj": 6.6,
-        "window": "Sunday Morning"
-      },
-      {
-        "player": "Bhayshul Tuten",
-        "team": "JAX",
-        "opp": "HOU",
-        "pos": "RB",
-        "gp": 5,
-        "proj": 6.6,
-        "window": "Sunday Morning"
-      },
-      {
         "player": "Breece Hall",
         "team": "NYJ",
         "opp": "NE",
@@ -5668,6 +5704,15 @@
         "gp": 3,
         "proj": 6.6,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Bhayshul Tuten",
+        "team": "JAX",
+        "opp": "HOU",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 6.4,
+        "window": "Sunday Morning"
       }
     ]
   }
