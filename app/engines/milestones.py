@@ -241,13 +241,14 @@ def season_value(vals):
 
 def is_current_season(label, sport, start_year):
     """Is this ESPN season label the one being played now? NFL labels a
-    season by its start year ("2026"); NHL by both years ("2026-27") or
-    by its end year ("2027")."""
+    season by its start year ("2026"). NHL, as the 10-14 nightly's probe
+    showed, by two-digit years ("26-27"); "2026-27" and the end year
+    ("2027") are accepted too."""
     lab = str(label or "").strip()
     if sport == "nfl":
         return lab == str(start_year)
-    nxt = str(start_year + 1)
-    return f"{start_year}-{nxt[2:]}" in lab or f"{start_year}-{nxt}" in lab or lab == nxt
+    a, b = str(start_year), str(start_year + 1)
+    return lab in (f"{a[2:]}-{b[2:]}", f"{a}-{b[2:]}", f"{a}-{b}", b)
 
 
 def parse_espn_career(data, sport, start_year):
@@ -348,15 +349,22 @@ def season_start_year(d, sport):
 # ----------------------------------------------------------------------
 # The committed prior-career file
 # ----------------------------------------------------------------------
-class PriorCareer:
-    """data/<sport>/career_prior.json: {"season": start_year, "players":
-    {pid: {"name", "prior": {stat: n}}}}. A player is fetched once per
-    season; a file from another season is started over."""
+# The file's format per sport. Bumped when a file on disk is known wrong,
+# so the next nightly starts it over: NHL 2 (10-14) — format 1 read
+# ESPN's "26-27" row as a past season and counted this season twice.
+FORMAT = {"nhl": 2, "nfl": 1}
 
-    def __init__(self, data, start_year):
+
+class PriorCareer:
+    """data/<sport>/career_prior.json: {"season": start_year, "format": n,
+    "players": {pid: {"name", "prior": {stat: n}}}}. A player is fetched
+    once per season; a file from another season or format is started over."""
+
+    def __init__(self, data, start_year, fmt=1):
         data = data if isinstance(data, dict) else {}
-        same = data.get("season") == start_year
+        same = data.get("season") == start_year and (data.get("format") or 1) == fmt
         self.season = start_year
+        self.format = fmt
         self.players = dict(data.get("players") or {}) if same else {}
         self.fetched = 0
         self.failed = 0
@@ -399,4 +407,4 @@ class PriorCareer:
         return ((self.players.get(str(pid)) or {}).get("prior")) or None
 
     def to_json(self):
-        return {"season": self.season, "players": self.players}
+        return {"season": self.season, "format": self.format, "players": self.players}

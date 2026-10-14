@@ -15,6 +15,8 @@ Negative controls, confirmed red by exit code when written (rule 4):
     -> "a night of 'everyone is a rookie' is not saved" fails
   - crossed() missing a mark landed on exactly
     -> "reaching exactly 300 counts" fails
+  - is_current_season without the two-digit NHL label (the 10-14 bug)
+    -> "ESPN's real NHL label '26-27' is this season, never a past one" fails
 """
 import json
 import sys
@@ -83,6 +85,17 @@ check("this season is not counted twice", got["prior"]["g"] == 40 + 30 + 35)
 check("a traded season's two rows are summed", got["prior"]["gp"] == 82 + 80 + 80)
 check("an averages category is never summed as totals", got["prior"]["a"] == 30 + 15 + 35)
 check("the current season was recognised", got["current_seen"])
+# The label ESPN actually sends for NHL seasons (10-14 nightly probe).
+real = espn([("24-25", 82, 30, 20, 50), ("25-26", 82, 40, 30, 70), ("26-27", 7, 5, 2, 7)],
+            names=("games", "goals", "assists", "points"), cat="defense")
+gr = ms.parse_espn_career(real, "nhl", 2026)
+check("ESPN's real NHL label '26-27' is this season, never a past one",
+      gr["prior"] == {"gp": 164, "g": 70, "a": 50, "pts": 120} and gr["current_seen"])
+check("a file written before the fix is started over",
+      ms.PriorCareer({"season": 2026, "players": {"1": {"prior": {"g": 9}}}}, 2026,
+                     ms.FORMAT["nhl"]).players == {}
+      and ms.PriorCareer({"season": 2026, "players": {"1": {"prior": {"g": 9}}}}, 2026,
+                         ms.FORMAT["nfl"]).players != {})
 comb = espn([("2024-25", 30, 10, 5, 15), ("2024-25", 50, 20, 10, 30),
              ("2024-25", 80, 30, 15, 45)])
 check("ESPN's combined row is read once, not added to its parts",

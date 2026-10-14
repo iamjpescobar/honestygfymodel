@@ -154,6 +154,33 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — the 10-14 nightly read; NHL career totals counted this season twice. 2026-10-14 (2)
+
+**Suite 138, FAILING: none.** One new negative control, red by exit code
+(test_milestones: is_current_season without the two-digit label).
+
+THE 10-14 NIGHTLY (first run of the injury + milestone batch):
+- NFL injuries: 490 roster tags, 800 on ESPN's league list; 23 players
+  held out of the prop pool across 14 games. NHL: 19 roster tags, 131
+  league-list tags; 4 slate skaters held out. Both sources answer.
+- NFL careers: 360 fetched, 0 unreadable; labels "2023".."2026" — read
+  right (Rodgers' prior 66,274 pass yds). 71 within reach, 16 reached.
+- NHL careers: 400 fetched (the cap), 0 unreadable — but ESPN labels NHL
+  seasons "26-27", not "2026-27". is_current_season missed it, so this
+  season's row was counted as a past one and then added AGAIN from our
+  box scores (Ovechkin prior GP 1,579 = 1,572 + this season's 7).
+  FIX: the two-digit label is this season; milestones.FORMAT["nhl"] = 2
+  makes PriorCareer start the NHL file over (the NFL file is kept). The
+  next two nightlies refetch ~677 skaters at 400 a night; until then
+  the NHL watch only lists players already refetched.
+- NHL category for a defenseman is "defense", stat "games" (not
+  gamesPlayed) — both already matched.
+
+FILES: app/engines/milestones.py, milestone_log.py,
+tests/test_milestones.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — who is actually playing (NHL + NFL injuries); the Milestone Watch. 2026-10-14
 
 **Suite 138 (+ test_who_plays, test_milestones), FAILING: none.** Six
@@ -966,50 +993,5 @@ Results splits the record: "Market-anchored (from 10-04)" vs "Model only
     nfl_precompute.py, nfl_projection_probe.py
     tests/test_value_picks.py, tests/test_mlb_props.py
     HANDOFF.md, HANDOFF_ARCHIVE.md (09-15 entry rotated out)
-
----
-
-## PICK UP HERE — colour that says what to do, badges that say what to trust. 2026-10-03 (9)
-
-**Suite 122, FAILING: none.** Six negative controls red by exit code.
-Looked at in a real browser (Playwright screenshots of NFL/NHL Model
-with the site theme) — that pass caught two things no test would:
-steel-blue THIN read as a paler STRONG (now grey), and a raw 1.997-pt
-edge printed "+2.0" under a THIN label (tier now on the printed 0.1-pt
-grid, which is also how the log stores and Results buckets it).
-
-### WHAT SHIPPED
-
-**Edge tiers** on every value row and the new strip — STRONG (5+ pts,
-cyan), VALUE (2-5, gold), THIN (0-2, grey), none — cut points shared
-with model_picks.EDGE_BUCKETS so a colour names the Results bucket its
-record lands in. Text label on every colour.
-
-**Trust badges** per market: BEATS BASELINE / THIN EDGE / NOT PROVEN /
-UNTESTED, from `model_math.paired_verdict` — paired per-game loss
-differences vs the baseline, z >= 2 (a statistical convention, printed)
-= beats, better-on-average = thin, else fails. Written into every
-validation by the nightly (ml / total / spread verdicts on the game
-models, a verdict per prop market). Older files fall back to the plain
-booleans and can never show THIN. NFL prop chances are UNTESTED by
-construction until graded.
-
-**Best value tonight** atop MLB/NHL/NFL Model: every side with positive
-EV at the POSTED price across the slate, strongest first, tinted, with
-stake and trust. Games are projected once up front so strip and cards
-read the same numbers.
-
-Known: an editable data_editor cell ignores Styler formatting, so an
-empty Price shows Streamlit's grey "None" placeholder; the caption says
-what it means. Never pre-filled.
-
-### FILES, 2026-10-03 (9)
-
-    app/engines/model_math.py       paired_verdict, SIGNIFICANCE_Z
-    app/engines/{game_model,nfl_game_model,nhl_model}.py, mlb_prop_precompute.py  verdicts
-    app/engines/model_view.py       tiers, trust, legend, styled tables, best-value strip
-    app/engines/mlb_props.py        market_verdicts -> verdict strings
-    app/views/{MLB_Model,NHL_Model,NFL_Model,GameCard,NFL_Projections}.py
-    tests/test_value_picks.py       section 8
 
 ---

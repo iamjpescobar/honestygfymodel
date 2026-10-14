@@ -10,6 +10,51 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — colour that says what to do, badges that say what to trust. 2026-10-03 (9)
+
+**Suite 122, FAILING: none.** Six negative controls red by exit code.
+Looked at in a real browser (Playwright screenshots of NFL/NHL Model
+with the site theme) — that pass caught two things no test would:
+steel-blue THIN read as a paler STRONG (now grey), and a raw 1.997-pt
+edge printed "+2.0" under a THIN label (tier now on the printed 0.1-pt
+grid, which is also how the log stores and Results buckets it).
+
+### WHAT SHIPPED
+
+**Edge tiers** on every value row and the new strip — STRONG (5+ pts,
+cyan), VALUE (2-5, gold), THIN (0-2, grey), none — cut points shared
+with model_picks.EDGE_BUCKETS so a colour names the Results bucket its
+record lands in. Text label on every colour.
+
+**Trust badges** per market: BEATS BASELINE / THIN EDGE / NOT PROVEN /
+UNTESTED, from `model_math.paired_verdict` — paired per-game loss
+differences vs the baseline, z >= 2 (a statistical convention, printed)
+= beats, better-on-average = thin, else fails. Written into every
+validation by the nightly (ml / total / spread verdicts on the game
+models, a verdict per prop market). Older files fall back to the plain
+booleans and can never show THIN. NFL prop chances are UNTESTED by
+construction until graded.
+
+**Best value tonight** atop MLB/NHL/NFL Model: every side with positive
+EV at the POSTED price across the slate, strongest first, tinted, with
+stake and trust. Games are projected once up front so strip and cards
+read the same numbers.
+
+Known: an editable data_editor cell ignores Styler formatting, so an
+empty Price shows Streamlit's grey "None" placeholder; the caption says
+what it means. Never pre-filled.
+
+### FILES, 2026-10-03 (9)
+
+    app/engines/model_math.py       paired_verdict, SIGNIFICANCE_Z
+    app/engines/{game_model,nfl_game_model,nhl_model}.py, mlb_prop_precompute.py  verdicts
+    app/engines/model_view.py       tiers, trust, legend, styled tables, best-value strip
+    app/engines/mlb_props.py        market_verdicts -> verdict strings
+    app/views/{MLB_Model,NHL_Model,NFL_Model,GameCard,NFL_Projections}.py
+    tests/test_value_picks.py       section 8
+
+---
+
 ## PICK UP HERE — a picks file with two writers, and a second leaking test. 2026-10-03 (8)
 
 **Suite 122, FAILING: none.** Four negative controls red by exit code.

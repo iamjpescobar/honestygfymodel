@@ -42,7 +42,7 @@ def load(league, start_year, root=None):
         data = json.loads(p.read_text())
     except Exception:  # noqa: BLE001 — no file yet is the first night
         data = {}
-    return ms.PriorCareer(data, start_year)
+    return ms.PriorCareer(data, start_year, ms.FORMAT.get(league, 1))
 
 
 def _minus(a, b):
