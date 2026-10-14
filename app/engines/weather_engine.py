@@ -130,6 +130,9 @@ def _fetch_todays_games_json(date_str: str) -> str:
 
             games.append({
                 "game_pk": game_pk,
+                # R = regular season; postseason games do not count toward
+                # career totals (the milestone watch reads this, 10-14)
+                "game_type": _clean(g.get("gameType")),
                 "away": _clean(g.get("teams", {}).get("away", {}).get("team", {}).get("name"), "TBD"),
                 "home": _clean(g.get("teams", {}).get("home", {}).get("team", {}).get("name"), "TBD"),
                 "away_pitcher": _clean(g.get("teams", {}).get("away", {}).get("probablePitcher", {}).get("fullName"), "TBD"),

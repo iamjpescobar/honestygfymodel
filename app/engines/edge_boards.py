@@ -28,6 +28,7 @@ price is judged against.
 
 Pure — no streamlit, no requests.
 """
+from engines import availability as _av
 from engines import defense_matchup as dm
 from engines import model_math as mm
 from engines import top_plays_board as tpb
@@ -127,6 +128,8 @@ def nhl_goal_rows(games, model):
                     "pp_season": pp.get("season"),
                     "pid": p.get("pid"), "game_id": g.get("event_id"),
                     "start": g.get("start_et"),
+                    # may not play (10-14): Day-to-day / missed last game
+                    "status": p.get("status") or "", "flag": _av.flag(p),
                 })
     out.sort(key=lambda r: -(r["chance"] or 0))
     return out
@@ -219,7 +222,7 @@ def nfl_td_rows(games, league, dvp=None):
         opp_of[(g.get("home_abbr") or g.get("home"))] = (g.get("away"), g.get("away_profile"))
     out = []
     for r in rows:
-        if str(r.get("Status") or "").lower() == "out":
+        if _av.is_out(r.get("Status")):
             continue
         raw = (r.get("Proj") or 0) / 100.0 if r.get("Proj") is not None else None
         ch, basis = _delivered(raw, bins)
@@ -331,8 +334,11 @@ def nhl_player_of_the_day(games, model, n=5):
                 if (p.get("gp") or 0) < POTD_MIN_GP:
                     gated["gp"] += 1
                     continue
-                lg, tl = p.get("last_game"), p.get("team_last_game")
-                if lg and tl and lg < tl:
+                if _av.missed_last(p):
+                    gated["missed"] += 1
+                    continue
+                # an injury tag of any kind keeps him off the one pick (10-14)
+                if _av.is_out(p.get("status")) or _av.maybe_label(p.get("status")):
                     gated["missed"] += 1
                     continue
                 ch, basis = _delivered(raw, bins)

@@ -993,17 +993,56 @@ def fetch_roster(team_id, _get=None):
 SIDE_ROLE_CAP = {"QB": 2, "RB": 3, "REC": 6}
 
 
-def side_players(team, players, roster):
+def held_out(team, players, roster, injuries=None, feed=None):
+    """Names (with tags) of the players who WOULD have made this team's
+    card and are not playing — what the boards print as 'held out'."""
+    from engines import availability as av
+    healthy = {r["pid"] for r in side_players(team, players, roster, injuries, feed)}
+    every = {r["pid"]: r for r in side_players(team, players, roster, injuries, feed,
+                                               keep_out=True)}
+    rep = {av.name_key(x.get("name")): x.get("status") for x in injuries or []
+           if x.get("name") and x.get("status")}
+    out = []
+    for pid, r in every.items():
+        if pid in healthy:
+            continue
+        info = (roster or {}).get(pid) or {}
+        st = av.status_for(pid, r.get("name"),
+                           info.get("status") or rep.get(av.name_key(r.get("name"))), feed)
+        if av.is_out(st):
+            out.append(f"{r.get('name')} ({st})")
+    return sorted(out)
+
+
+def side_players(team, players, roster, injuries=None, feed=None, keep_out=False):
     """This week's prop pool for one team: roster-gated, volume-ranked.
 
     The roster decides WHO (a traded or released player keeps his box
     score history but is not on this team's card). When the roster call
     failed, history is used instead, so a failed fetch degrades rather
     than emptying the card.
+
+    WHO IS PLAYING (10-14, engines/availability): his injury tag is the
+    roster's, else the game's injury report (`injuries`, the summary's
+    [{"name", "status"}] for this team), else ESPN's league list
+    (`feed`). Out / IR / PUP / Suspended leave the pool BEFORE the
+    per-role cap, so a healthy player takes the slot.
     """
+    from engines import availability as av
+    rep = {av.name_key(x.get("name")): x.get("status") for x in injuries or []
+           if x.get("name") and x.get("status")}
     pool = [p for p in players.values() if p.get("team") == team]
     if roster:
         pool = [p for p in pool if p["pid"] in roster]
+    tag = {}
+    for p in pool:
+        info = (roster or {}).get(p["pid"]) or {}
+        st = av.status_for(p["pid"], p.get("name"),
+                           info.get("status") or rep.get(av.name_key(p.get("name"))), feed)
+        if st:
+            tag[p["pid"]] = st
+    if not keep_out:
+        pool = [p for p in pool if not av.is_out(tag.get(p["pid"]))]
     rows = []
     for role, cap in SIDE_ROLE_CAP.items():
         mine = [p for p in pool if role_of(p) == role]
@@ -1015,7 +1054,7 @@ def side_players(team, players, roster):
             info = roster.get(p["pid"]) if roster else None
             if info:
                 r["pos"] = info.get("pos") or r.get("pos")
-                r["status"] = info.get("status")
+            r["status"] = tag.get(p["pid"])
             rows.append(r)
     return rows
 
@@ -1070,6 +1109,29 @@ def slate_game(event):
         if a is not None and h is not None:
             g["away_score"], g["home_score"] = int(a), int(h)
     return g
+
+
+def nfl_milestones(week_events, logs, today, root=None, fetch=None, pause=0.15):
+    """Hang each card player's within-reach milestones on his row and
+    return the marks reached lately (milestone_log.run)."""
+    import milestone_log as mlog
+    from engines import milestones as ms
+    holders = [(str(p.get("pid")), p.get("name"), p) for g in week_events
+               for side in ("away", "home") for p in g.get(f"{side}_players") or []
+               if p.get("pid")]
+    season_of, last = {}, {}
+    for pid, rec in (logs or {}).items():
+        games = sorted((rec.get("games") or {}).values(), key=lambda x: x.get("date") or "")
+        if games:
+            season_of[str(pid)] = ms.nfl_season(games)
+            last[str(pid)] = (games[-1].get("date"), ms.nfl_season(games[-1:]))
+    since = (today - timedelta(days=mlog.HAPPENED_DAYS["nfl"])).isoformat()
+    also = [(pid, (logs.get(pid) or {}).get("name")) for pid, (d, _l) in last.items()
+            if d and d >= since]
+    res = mlog.run("nfl", holders, season_of, last, today, root=root, fetch=fetch,
+                   pause=pause, also=also)
+    print(mlog.verify_line("nfl", res))
+    return res["happened"]
 
 
 def main(today=None):
@@ -1288,6 +1350,13 @@ def main(today=None):
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NFL defense table / prop test failed: {type(exc).__name__}: {exc}")
 
+    # WHO IS PLAYING (10-14, engines/availability): roster tag, else the
+    # game's injury report, else ESPN's league list. Out / IR / PUP /
+    # Suspended leave the pool before the per-role cap.
+    _nfl_feed = ef.fetch_injury_list(LEAGUE)
+    _roster_tags = sum(1 for r in rosters.values() for i in (r or {}).values() if i.get("status"))
+    print(f"  [verify] NFL injuries: {_roster_tags} roster tags, {len(_nfl_feed['by_id'])} "
+          f"league-list tags by id ({len(_nfl_feed['by_name'])} by name)")
     for g in week_events:
         if g["status"] != "final":
             try:
@@ -1304,8 +1373,22 @@ def main(today=None):
             if prof:
                 g[f"{side}_profile"] = prof
             g[f"{side}_players"] = side_players(
-                g[side], players, rosters.get(g.get(f"{side}_id")) or {})
+                g[side], players, rosters.get(g.get(f"{side}_id")) or {},
+                (g.get("injuries") or {}).get(g[side]), _nfl_feed)
+            g[f"{side}_held_out"] = held_out(
+                g[side], players, rosters.get(g.get(f"{side}_id")) or {},
+                (g.get("injuries") or {}).get(g[side]), _nfl_feed)
 
+    print(f"  [verify] NFL held out of the prop pool (injured): "
+          f"{sum(len(g.get('away_held_out') or []) + len(g.get('home_held_out') or []) for g in week_events)} "
+          f"players across {len(week_events)} games")
+    # MILESTONE WATCH (10-14, milestone_log). Own try: costs the watch,
+    # never the week.
+    milestones_happened = []
+    try:
+        milestones_happened = nfl_milestones(week_events, logs, today)
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::NFL milestones failed: {type(exc).__name__}: {exc}")
     week_events.sort(key=lambda g: g.get("kickoff_et") or "")
 
     # THE GAME MODEL (engines/nfl_game_model): the site's own projected
@@ -1409,6 +1492,7 @@ def main(today=None):
         "games": week_events,
         "teams": teams,
         "dvp": dvp_table,
+        "milestones_happened": milestones_happened,
     }, ensure_ascii=False, indent=2))
     print(f"NFL: wrote games.json (week {wk}, {len(week_events)} games)")
 

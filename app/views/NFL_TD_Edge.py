@@ -104,7 +104,7 @@ with card("td_board"):
              "the model's own chances (no graded record yet)")
     st.caption(f"Anytime TD tested week by week against the player's own scoring rate: "
                f"{mv.trust_label(v)}. Shown: {basis}. Opp ranks: 1 = stingiest, last = "
-               f"most generous. Out players are left off; check Status on game day.")
+               f"most generous. Out, IR, PUP and suspended players are left off; check Status on game day (inactives post 90 minutes before kickoff).")
 
 with card("td_check"):
     st.markdown("**Check a TD at your book's price**")

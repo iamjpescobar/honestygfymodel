@@ -131,6 +131,9 @@ EXPLORE = [
     ("Long Shots", "MLB",
      "Every well-measured long shot tonight, +300 to +2000, with the price it is "
      "worth \u2014 find a name your book pays more for and the page says BET."),
+    ("Milestone Watch", "MLB",
+     "Who is one game from a big number tonight \u2014 a 300th goal, 10,000 "
+     "passing yards, 3,000 hits \u2014 with the chance he gets it tonight."),
     ("Top Plays", "MLB",
      "The most likely outcomes tonight that have proven themselves, each at "
      "the chance it has actually delivered — with the graded record of "

@@ -238,6 +238,8 @@ def build_mlb_pages(include_admin: bool):
         ("Bet Finder", "views/Bet_Finder.py"),
         # +300 to +2000, well-measured only, with the price each is worth (10-11).
         ("Long Shots", "views/Long_Shots.py"),
+        # Who is close to a round career / season number tonight (10-14).
+        ("Milestone Watch", "views/Milestones.py"),
         # Slate-wide HR Edge. The Game Card shows one game's version of
         # the same number; this ranks every bat on the slate, and it is
         # the exact list the calibration logger records.
@@ -317,6 +319,7 @@ SPORT_SUBPAGES = {
         ("Defenses to Target", "views/NFL_Defenses_To_Target.py"),
         ("Bet Finder", "views/Bet_Finder.py"),
         ("Long Shots", "views/Long_Shots.py"),
+        ("Milestone Watch", "views/Milestones.py"),
     ],
     # Hockey is a nightly slate through slate_guard("nhl"). The Crease
     # Report and Shots Lab read regular-season box scores only.
@@ -333,6 +336,7 @@ SPORT_SUBPAGES = {
         ("Player of the Day", "views/NHL_Player_Of_The_Day.py"),
         ("Bet Finder", "views/Bet_Finder.py"),
         ("Long Shots", "views/Long_Shots.py"),
+        ("Milestone Watch", "views/Milestones.py"),
     ],
 }
 

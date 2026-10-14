@@ -10,6 +10,46 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — a picks file with two writers, and a second leaking test. 2026-10-03 (8)
+
+**Suite 122, FAILING: none.** Four negative controls red by exit code.
+
+The first nightly after the value batch died at "Commit graded model
+picks": `CONFLICT (add/add) in data/model_picks/mlb.json`. Two causes,
+both fixed at the mechanism:
+
+1. **A second test leaked.** tests/test_calibration_lines ran
+   calibration_picks.main() with only RECORD_PATH sandboxed, so in CI it
+   wrote the real games.json AND created data/model_picks/mlb.json (3
+   real value picks off real ESPN lines — the odds path works: "4/4
+   projected, 4 with an ESPN line"). The restore step fixed the tracked
+   file but not the NEW one. It now also removes untracked files under
+   data/ by explicit path (never git clean — rule 7); run against a
+   throwaway repo before shipping: tracked restored, leaked file gone,
+   ignored app/data and root files untouched.
+2. **mlb.json had two writers** — slate-picks logs it, the nightly
+   graded it, and Izzy ran both at once. ONE OWNER PER FILE now:
+   slate-picks logs AND grades MLB (`model_picks_grade.py mlb`); the
+   nightly logs and grades NHL/NFL (`model_picks_grade.py nhl nfl`) and
+   never stages mlb.json.
+
+tests/test_ci_hygiene.py now pins all of it, reading CODE not comments
+(its first draft failed on its own explanatory comments): restore step
+position and untracked cleanup; every test that runs calibration_picks
+.main() sandboxes BOTH MLB_SLATE_PATH and PICKS_ROOT (suite-wide — the
+leak moved from one test to another); every log_picks call passes
+root=PICKS_ROOT (AST); grading ownership per workflow.
+
+### FILES, 2026-10-03 (8)
+
+    tests/test_calibration_lines.py, tests/test_calibration_picks.py
+    calibration_picks.py      PICKS_ROOT module-level
+    model_picks_grade.py      sports as arguments
+    .github/workflows/nightly-data.yml, slate-picks.yml
+    tests/test_ci_hygiene.py
+
+---
+
 ## PICK UP HERE — value, stakes and a graded record for every model pick. 2026-10-03 (7)
 
 **Suite 122, FAILING: none.** Three negative controls red by exit code.

@@ -27,6 +27,7 @@ Band: +300 .. +2000 = a delivered chance of 1/21 .. 1/4.
 
 Pure — no streamlit, no requests.
 """
+from engines import availability as av
 from engines import model_math as mm
 
 LO_P, HI_P = 1.0 / 21.0, 0.25        # +2000 .. +300
@@ -115,7 +116,16 @@ def nhl_players(g, model):
             sum(x["sv_pct"] for x in ogp[:2]) / len(ogp[:2]) if ogp else None)
         env = g.get(f"{side}_env") or {}
         for p in g.get(f"{side}_props") or []:
+            if av.is_out(p.get("status")):
+                continue
+            sig = nhl_signals(p, env, sv, league_sv)
+            mi = next((m for m in p.get("milestones") or [] if m.get("short")), None)
+            if mi:
+                sig = (f"{sig} · " if sig else "") + f"\U0001F3C1 {mi['short']}"
+            fl = av.flag(p)
+            if fl:
+                sig = f"\u26a0 {fl}" + (f" · {sig}" if sig else "")
             out.append({"_name": f"{p.get('name')} ({abbr})", "_probs": p.get("probs") or {},
                         "_why": p.get("why"), "team": abbr, "opp": opp,
-                        "_signals": nhl_signals(p, env, sv, league_sv)})
+                        "_signals": sig})
     return out

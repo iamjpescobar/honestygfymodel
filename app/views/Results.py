@@ -440,6 +440,33 @@ def _render_model_picks():
                 "posted prices, and grade the morning after.")
 
 
+def _render_milestones():
+    """Milestones reached in the last few days (10-14, milestone_log) —
+    NHL and NFL, from the nightly payloads."""
+    try:
+        from engines.slate_guard import payload_field
+        from engines.nfl_week import load_week
+        nhl = payload_field("nhl", "milestones_happened") or []
+        wk, _st = load_week()
+        nfl = (wk or {}).get("milestones_happened") or []
+    except Exception:  # noqa: BLE001 — a missing payload costs this section only
+        return
+    rows = ([dict(h, sport="NHL") for h in nhl] + [dict(h, sport="NFL") for h in nfl])
+    if not rows:
+        return
+    rows.sort(key=lambda h: (h.get("date") or "", h.get("mark") or 0), reverse=True)
+    import pandas as pd
+    with card("results_milestones"):
+        st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">'
+                    f'Milestones reached lately</div>', unsafe_allow_html=True)
+        st.dataframe(pd.DataFrame([{"Date": h.get("date"), "Sport": h["sport"],
+                                    "Player": h.get("name") or "—", "Reached": h.get("what"),
+                                    "Kind": "Career" if h.get("scope") == "career" else "Season"}
+                                   for h in rows[:30]]),
+                     hide_index=True, width="stretch", key="results_ms")
+        st.caption("Who is close tonight lives on the Milestone Watch page.")
+
+
 def render():
     page_header(
         "Results",
@@ -467,6 +494,7 @@ def render():
             "from tomorrow."
         )
         _render_model_picks()
+        _render_milestones()
         footer()
         return
 
@@ -525,6 +553,7 @@ def render():
                           sums.get(board, {}), data.get(board, {}))
 
     _render_model_picks()
+    _render_milestones()
     footer()
 
 

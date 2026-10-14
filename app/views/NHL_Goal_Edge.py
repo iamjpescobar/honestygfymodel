@@ -14,6 +14,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import COLOR, card, footer, how_to_read, page_header
+from engines import availability as av
 from engines.slate_guard import load_slate, payload_field, staleness_note, today_for
 from engines import defense_matchup as dm
 from engines import edge_boards as eb
@@ -142,7 +143,8 @@ with card("ge_board"):
 
 
     df = pd.DataFrame([{
-        "Player": r["player"], "Pos": r["pos"], "Goal %": _pct(r["chance"]),
+        "Player": r["player"], "Heads up": r.get("flag") or "", "Pos": r["pos"],
+        "Goal %": _pct(r["chance"]),
         "Worth it at": r["fair"], "Def vs pos": dm.badge(r["card_g"]),
         "2+ Goals %": _pct1(r.get("chance2")), "2+ worth it at": r.get("fair2") or "—",
         "PP": _pp(r),
@@ -161,16 +163,25 @@ with card("ge_board"):
             out.at[i, "Def vs pos"] = mv.matchup_css((show[i]["card_g"] or {}).get("tier"))
             if show[i].get("pp_unit") == "PP1":
                 out.at[i, "PP"] = f"color: {COLOR['accent']}; font-weight: 700;"
+            if show[i].get("flag"):
+                out.at[i, "Heads up"] = f"color: {COLOR['warn']}; font-weight: 700;"
         return out
 
     st.dataframe(mv.painted(df, _paint), hide_index=True, width="stretch", key="ge_tab")
+    _held = [n for g in games or [] if gsel == "All games"
+             or f"{g.get('away_abbr')} @ {g.get('home_abbr')}" == gsel
+             for side in ("away", "home") for n in g.get(f"{side}_held_out") or []]
+    if _held:
+        st.caption(av.held_out_note(_held) + " — left off every board.")
     mv.render_chance_legend()
     _t = ((model.get("props_validation") or {}).get("g1") or {})
     _v = ((_t.get("verdict") or {}).get("verdict"))
     st.caption(f"Goal O0.5 tested on last season's games the model had not seen: "
                f"{mv.trust_label(_v)}. Point % is the chance of 1+ point, from the same "
                f"model. NOT in the number: tonight's line combinations and power-play units, "
-               f"late scratches, and which goalie actually starts.")
+               f"late scratches, and which goalie actually starts. Heads up = he is "
+               f"day-to-day, or missed his team's last game (a scratch or an injury shows "
+               f"there first) — check he is in tonight's lineup before betting him.")
 
 with card("ge_multi"):
     st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">'

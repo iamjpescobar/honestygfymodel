@@ -445,16 +445,27 @@ def slate_game(event, on_date):
     return g
 
 
-def _walk_roster(obj, out):
+def _walk_roster(obj, out, status=None):
     if isinstance(obj, dict):
         if obj.get("id") and obj.get("displayName") and isinstance(obj.get("position"), dict):
             out[str(obj["id"])] = obj["position"].get("abbreviation") or ""
+            if status is not None:
+                # the roster's own injury tag, when ESPN sends one (10-14)
+                inj = obj.get("injuries") or []
+                st = None
+                if inj and isinstance(inj[0], dict):
+                    st = inj[0].get("status") or (inj[0].get("type") or {}).get("description")
+                if st and str(st).strip().lower() != "active":
+                    status[str(obj["id"])] = str(st)
             return
         for v in obj.values():
-            _walk_roster(v, out)
+            _walk_roster(v, out, status)
     elif isinstance(obj, list):
         for v in obj:
-            _walk_roster(v, out)
+            _walk_roster(v, out, status)
+
+
+ROSTER_STATUS = {}      # pid -> injury tag, filled by fetch_roster (10-14)
 
 
 def fetch_roster(team_id):
@@ -464,8 +475,57 @@ def fetch_roster(team_id):
         print(f"  roster {team_id} failed: {exc}")
         return {}
     out = {}
-    _walk_roster(data.get("athletes") or data, out)
+    _walk_roster(data.get("athletes") or data, out, ROSTER_STATUS)
     return out
+
+
+def fetch_injury_feed(_get=None):
+    """ESPN's NHL injury list (espn_feed.fetch_injury_list)."""
+    return ef.fetch_injury_list(LEAGUE, _get)
+
+
+def apply_availability(slate, sk, feed, roster_status):
+    """Tag every skater with his injury status; take the ones who will not
+    play OUT of the pool (before the 18-man cut, so a healthy skater gets
+    the slot) and list them on the game. Returns how many were held out."""
+    from engines import availability as av
+    held = 0
+    for p in sk.values():
+        st = av.status_for(p.get("pid"), p.get("name"), roster_status.get(str(p.get("pid"))), feed)
+        if st:
+            p["status"] = st
+    for g in slate:
+        for side in ("away", "home"):
+            out = [f"{p['name']} ({p['status']})" for p in sk.values()
+                   if p["team"] == g[side] and av.is_out(p.get("status"))
+                   and (p.get("gp") or 0) >= 1]
+            g[f"{side}_held_out"] = sorted(out)
+            held += len(out)
+    return held
+
+
+def nhl_milestones(slate, skaters, regular_ids, today, root=None, fetch=None, pause=0.15):
+    """Hang each slate skater's within-reach milestones on his prop row
+    and return the marks reached lately (milestone_log.run)."""
+    import milestone_log as mlog
+    from engines import milestones as ms
+    holders = [(str(p.get("pid")), p.get("name"), p) for g in slate
+               for side in ("away", "home") for p in g.get(f"{side}_props") or []
+               if p.get("pid")]
+    season_of, last = {}, {}
+    for pid, rec in skaters.items():
+        lines = sorted((ln for eid, ln in (rec.get("games") or {}).items()
+                        if eid in regular_ids), key=lambda ln: ln.get("date") or "")
+        if lines:
+            season_of[str(pid)] = ms.nhl_season(lines)
+            last[str(pid)] = (lines[-1].get("date"), ms.nhl_season(lines[-1:]))
+    since = (today - timedelta(days=mlog.HAPPENED_DAYS["nhl"])).isoformat()
+    also = [(pid, (skaters.get(pid) or {}).get("name")) for pid, (d, _l) in last.items()
+            if d and d >= since]
+    res = mlog.run("nhl", holders, season_of, last, today, root=root, fetch=fetch,
+                   pause=pause, also=also)
+    print(mlog.verify_line("nhl", res))
+    return res["happened"]
 
 
 def main(today=None):
@@ -584,13 +644,24 @@ def main(today=None):
                 if tid and tid not in rosters:
                     rosters[tid] = fetch_roster(tid)
 
+    # WHO IS PLAYING (10-14, engines/availability): the roster's injury
+    # tag, else ESPN's league injury list. Out / IR / LTIR leave the pool.
+    from engines import availability as _av
+    _feed = fetch_injury_feed() if sk else {"by_id": {}, "by_name": {}}
+    _held = apply_availability(slate, sk, _feed, ROSTER_STATUS)
+    print(f"  [verify] NHL injuries: {len(ROSTER_STATUS)} roster tags, "
+          f"{len(_feed['by_id'])} league-list tags by id ({len(_feed['by_name'])} by name); "
+          f"{_held} slate skaters held out"
+          + ("" if (ROSTER_STATUS or _feed['by_id'] or _feed['by_name']) else
+             " -> NO INJURY SOURCE ANSWERED: only the missed-last-game flag protects the boards"))
     for g in slate:
         for side in ("away", "home"):
             if teams.get(g[side]):
                 g[f"{side}_profile"] = teams[g[side]]
             roster = rosters.get(g.get(f"{side}_id")) or {}
             pool = [p for p in sk.values() if p["team"] == g[side]
-                    and (not roster or p["pid"] in roster)]
+                    and (not roster or p["pid"] in roster)
+                    and not _av.is_out(p.get("status"))]
             for p in pool:
                 if roster.get(p["pid"]):
                     p["pos"] = roster[p["pid"]]
@@ -604,6 +675,7 @@ def main(today=None):
     # fitted on last season's committed file while this one is young.
     # A model failure costs the model block, never the slate.
     model_block = None
+    milestones_happened = []
     try:
         from engines import nhl_model
         for g in slate:
@@ -713,6 +785,12 @@ def main(today=None):
             except Exception as exc:  # noqa: BLE001
                 print(f"::warning::NHL POTD / multi-goal boards failed: "
                       f"{type(exc).__name__}: {exc}")
+            # MILESTONE WATCH (10-14, milestone_log / engines/milestones).
+            # Own try: costs the watch, never the model or the slate.
+            try:
+                milestones_happened[:] = nhl_milestones(slate, skaters, regular_ids, today)
+            except Exception as exc:  # noqa: BLE001
+                print(f"::warning::NHL milestones failed: {type(exc).__name__}: {exc}")
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NHL model failed: {type(exc).__name__}: {exc}")
 
@@ -728,6 +806,7 @@ def main(today=None):
         "games": slate,
         "teams": teams,
         "goalies": gk,
+        "milestones_happened": milestones_happened,
     }, ensure_ascii=False, indent=2))
     print(f"NHL: wrote games.json ({slate_date}, {len(slate)} games)")
 

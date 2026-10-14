@@ -65,6 +65,7 @@ def _nhl_games():
 
 
 def _nhl_groups(item):
+    from engines import availability as av
     from engines import nhl_model as nm
     g, model = item["g"], item["model"]
     pv = model.get("props_validation") or {}
@@ -74,7 +75,11 @@ def _nhl_groups(item):
     for side in ("away", "home"):
         abbr = g.get(f"{side}_abbr") or g.get(side)
         for p in g.get(f"{side}_props") or []:
-            sk.append({"_name": f"{p.get('name')} ({abbr})", "_why": p.get("why"),
+            if av.is_out(p.get("status")):
+                continue
+            _f = av.flag(p)
+            sk.append({"_name": f"{p.get('name')} ({abbr})" + (f" ⚠ {_f}" if _f else ""),
+                       "_why": p.get("why"),
                        "_pmfs": nm.skater_pmfs(p.get("mu"), sog_disp)})
         for gp in g.get(f"{side}_goalie_props") or []:
             pm = nm.saves_pmf(gp.get("exp_sa"), shot_disp, gp.get("sv_pct"))
@@ -107,8 +112,12 @@ def _nfl_games():
 
 def _nfl_groups(item):
     g, league = item["g"], item["league"]
+    from engines import availability as av
     rows = [r for r in mv.nfl_game_prop_rows(g, league, item.get("dvp"))
-            if str(r.get("Status")).lower() != "out" and r.get("_pmfs")]
+            if not av.is_out(r.get("Status")) and r.get("_pmfs")]
+    for r in rows:
+        if av.maybe_label(r.get("Status")):
+            r["_name"] += f" ⚠ {av.maybe_label(r.get('Status'))}"
     stats = tuple((s, lab, (0.5,)) for s, lab, *_ in mv.NFL_STATS)
     away, home = g.get("away_abbr") or g.get("away"), g.get("home_abbr") or g.get("home")
     return ([{"label": "Players", "rows": rows, "stats": stats, "markets": (),

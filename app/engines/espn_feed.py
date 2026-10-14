@@ -150,6 +150,26 @@ def fetch_summary(league, event_id, _get=None):
     return get(f"{base(league)}/summary?event={event_id}")
 
 
+def fetch_injury_list(league, _get=None):
+    """ESPN's league injury list, parsed (engines/availability) — the
+    NHL's injury source and a second one for the NFL (10-14). Both hosts
+    are tried; returns {"by_id": {}, "by_name": {}} when neither answers,
+    never raises."""
+    from engines import availability as av
+    get = _get or get_json
+    sport, lg = _paths(league)
+    for url in (f"{base(league)}/injuries",
+                f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{lg}/injuries"):
+        try:
+            feed = av.parse_injury_feed(get(url))
+        except Exception as exc:  # noqa: BLE001
+            print(f"  injuries {url} failed: {exc}")
+            continue
+        if feed["by_id"] or feed["by_name"]:
+            return feed
+    return {"by_id": {}, "by_name": {}}
+
+
 def event_sides(event):
     """(comp, away, home) or (None, None, None)."""
     comp = ((event or {}).get("competitions") or [{}])[0]

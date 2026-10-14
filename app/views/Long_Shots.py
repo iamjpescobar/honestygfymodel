@@ -12,6 +12,7 @@ import pandas as pd
 import streamlit as st
 
 from styles.kc_theme import COLOR, card, footer, page_header
+from engines import availability as av
 from engines import bet_finder as bf
 from engines import long_shots as ls
 from engines import model_math as mm
@@ -106,6 +107,8 @@ def _nfl(_day):
                                f"{r.get('team')} vs {r.get('opp')}", "NFL",
                                r.get("team"), r.get("opp"),
                                signals=" · ".join(b for b in (
+                                   (f"\u26a0 {av.maybe_label(r.get('status'))}"
+                                    if av.maybe_label(r.get("status")) else ""),
                                    (f"{r['opp']} soft vs his position"
                                     if ((r.get("card_td") or {}).get("tier") == "soft") else ""),
                                ) if b), why=None)

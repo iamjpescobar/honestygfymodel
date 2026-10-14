@@ -1001,6 +1001,9 @@ def build(current_finals, prior, current_skaters=None, current_id_of=None, slate
                 env = {"goal_ratio": round(gr, 3), "shot_ratio": round(sr, 3)}
                 rows.append({"pid": sk.get("pid"), "name": sk.get("name") or p.get("name"),
                              "pos": pos, "gp": r["gp"],
+                             # injury tag (10-14, engines/availability) —
+                             # Out / IR never reach here; this is the maybe
+                             "status": sk.get("status"),
                              "toi": sk.get("toi"), "exp_sog": pr["_exp_sog"],
                              "exp_pts": pr["_exp_pts"], "mu": pr["_mu"],
                              "rate": {"sog": round(r["sog"], 3), "g": round(r["g"], 3),

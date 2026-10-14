@@ -267,7 +267,8 @@ def mlb_lineup_props(batters, opp_pitcher_id, opp_name=None):
         _dvp, _notes, _why = _mlb_batter_context(pm, b_counts, proj, opp_pitcher_id, opp_name)
         row = {"#": slot, "Batter": b.get("name"),
                "PA": _pa_label(b_counts), "Exp PA": proj["exp_pa"],
-               "_name": b.get("name"), "_probs": proj["probs"], "_pmfs": proj.get("pmfs") or {},
+               "_name": b.get("name"), "_id": b.get("id"),
+               "_probs": proj["probs"], "_pmfs": proj.get("pmfs") or {},
                "_dvp": _dvp, "_notice": _notes, "_why": _why}
         for k, *_ in mp.MARKETS:
             row[k] = prob_cell(proj["probs"][k])
@@ -1438,13 +1439,15 @@ def nfl_game_prop_rows(g, league, dvp=None):
                     cards[stat] = c
                     notes[stat] = dm.notice(c, NFL_STAT_LABELS[stat], NFL_GROUP_LABELS[grp], opp_lab)
             row_why = _nfl_why(p, proj, g.get(f"{side}_abbr") or side, opp_lab, implied)
-            rows.append({"Player": p.get("name"), "Pos": p.get("pos") or p.get("role"),
+            rows.append({"_pid": p.get("pid"),
+                         "Player": p.get("name"), "Pos": p.get("pos") or p.get("role"),
                          "Team": g.get(f"{side}_abbr") or g.get(side),
                          "Status": p.get("status") or "",
                          "GP": f"{gp} + {ly} last yr" if ly else str(gp),
                          "_name": f"{p.get('name')} ({g.get(f'{side}_abbr') or side})",
                          "_pmfs": pmfs, "_means": means,
                          "_dvp": cards, "_notice": notes, "_why": row_why,
+                         "_milestones": p.get("milestones") or [],
                          "_moved": p.get("last_season_team")})
     return rows
 
@@ -1502,8 +1505,8 @@ def render_nfl_props(g, league, key, staking, dvp=None):
     price. Status from the team's injury report is printed on the row
     (Out players are left off)."""
     from engines import defense_matchup as dm
-    rows = [r for r in nfl_game_prop_rows(g, league, dvp)
-            if str(r["Status"]).lower() != "out"]
+    from engines import availability as _av
+    rows = [r for r in nfl_game_prop_rows(g, league, dvp) if not _av.is_out(r["Status"])]
     if not rows:
         st.caption("No player projections for this game yet.")
         return
