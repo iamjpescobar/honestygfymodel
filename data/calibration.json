@@ -8371,16 +8371,16 @@
           "result": null
         },
         {
-          "id": "668930",
-          "name": "Brice Turang",
-          "team": "MIL",
+          "id": "605141",
+          "name": "Mookie Betts",
+          "team": "LAD",
           "stat": null,
           "line": null,
           "result": null
         },
         {
-          "id": "661388",
-          "name": "William Contreras",
+          "id": "668930",
+          "name": "Brice Turang",
           "team": "MIL",
           "stat": null,
           "line": null,
@@ -8395,24 +8395,16 @@
           "result": null
         },
         {
-          "id": "605141",
-          "name": "Mookie Betts",
+          "id": "518692",
+          "name": "Freddie Freeman",
           "team": "LAD",
           "stat": null,
           "line": null,
           "result": null
         },
         {
-          "id": "571970",
-          "name": "Max Muncy",
-          "team": "LAD",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "592885",
-          "name": "Christian Yelich",
+          "id": "661388",
+          "name": "William Contreras",
           "team": "MIL",
           "stat": null,
           "line": null,
@@ -8427,9 +8419,9 @@
           "result": null
         },
         {
-          "id": "518692",
-          "name": "Freddie Freeman",
-          "team": "LAD",
+          "id": "592885",
+          "name": "Christian Yelich",
+          "team": "MIL",
           "stat": null,
           "line": null,
           "result": null
@@ -8462,6 +8454,14 @@
           "id": "669257",
           "name": "Will Smith",
           "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641343",
+          "name": "Jake Bauers",
+          "team": "MIL",
           "stat": null,
           "line": null,
           "result": null
@@ -12992,6 +12992,36 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-14": {
+      "picks": [
+        {
+          "id": "660271",
+          "name": "Shohei Ohtani",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "606192",
+          "name": "Teoscar Hern\u00e1ndez",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "669257",
+          "name": "Will Smith",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
