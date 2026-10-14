@@ -89,6 +89,7 @@
    "why": "3.41 shots and 1.19 points a game over 80 games (this season + last, pulled toward the forward average) \u00b7 ice time 22.0 min over his last 5 vs 21.2 on his rate \u2192 shots x1.02 \u00b7 MIN matchup sets tonight's shot volume x1.01 and scoring x0.91 \u00b7 MIN allows the 2nd-most of 32 shots to centres (10.4 a game vs 9.6) \u00b7 \u2192 3.53 expected shots, 1.11 expected points \u00b7 PP1 by minutes (4.8 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 4.0,
    "at_least": 1,
    "date": "2026-10-13",
    "fair": -265,
@@ -103,11 +104,32 @@
    "p_cal": 0.7262,
    "player": "Connor McDavid",
    "player_id": "3895074",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-13T22:30:00-04:00",
    "stat": "pts",
    "team": "Edmonton Oilers",
    "why": "3.59 shots and 1.61 points a game over 87 games (this season + last, pulled toward the forward average) \u00b7 ice time 24.0 min over his last 5 vs 23.0 on his rate \u2192 shots x1.02 \u00b7 LA matchup sets tonight's shot volume x0.97 and scoring x0.99 \u00b7 LA allows the 6th-most of 32 shots to centres (10.1 a game vs 9.6) \u00b7 \u2192 3.56 expected shots, 1.64 expected points \u00b7 PP1 by minutes (4.3 PP min a game over his last 5; context, not in the number)"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-14",
+   "fair": -235,
+   "game": "Dallas Stars @ Colorado Avalanche",
+   "game_id": "401892505",
+   "label": "Pts O0.5",
+   "logged_at": "2026-10-14T13:22:12+00:00",
+   "market": "pt1",
+   "matchup": null,
+   "matchup_tier": null,
+   "p": 0.7203,
+   "p_cal": 0.7019,
+   "player": "Nathan MacKinnon",
+   "player_id": "3041969",
+   "result": null,
+   "start": "2026-10-14T20:30:00-04:00",
+   "stat": "pts",
+   "team": "Colorado Avalanche",
+   "why": "4.28 shots and 1.49 points a game over 86 games (this season + last, pulled toward the forward average) \u00b7 ice time 20.2 min over his last 5 vs 22.1 on his rate \u2192 shots x0.96 \u00b7 DAL matchup sets tonight's shot volume x0.94 and scoring x0.91 \u00b7 DAL allows the 2nd-fewest of 32 shots to centres (8.7 a game vs 9.6) \u00b7 \u2192 3.86 expected shots, 1.27 expected points \u00b7 PP1 by minutes (4.3 PP min a game over his last 5; context, not in the number)"
   }
  ]
 }
