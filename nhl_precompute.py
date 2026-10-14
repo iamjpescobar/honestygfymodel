@@ -528,6 +528,55 @@ def nhl_milestones(slate, skaters, regular_ids, today, root=None, fetch=None, pa
     return res["happened"]
 
 
+def _paths_matching(obj, words, path="", out=None, limit=12):
+    """Key paths in a JSON payload whose key names contain any of words."""
+    out = [] if out is None else out
+    if len(out) >= limit:
+        return out
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            p = f"{path}.{k}"
+            if any(w in str(k).lower() for w in words):
+                out.append(p + (f"={str(v)[:80]}" if not isinstance(v, (dict, list)) else ""))
+            _paths_matching(v, words, p, out, limit)
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj[:3]):
+            _paths_matching(v, words, f"{path}[{i}]", out, limit)
+    return out
+
+
+def goalie_probe(slate, _get=None):
+    """THE STARTING-GOALIE PROBE (10-14), print only: does ESPN's game
+    summary or the NHL's own gamecenter name tonight's starters before
+    puck drop? Nothing reads the answer yet (rule 1: measure first)."""
+    get = _get or ef.get_json
+    g = next((x for x in slate if x.get("status") not in ("final", "in progress")), None)
+    if not g:
+        print("  [verify] NHL goalie probe: no unstarted game to probe")
+        return
+    words = ("probable", "starter", "starting", "goalie", "confirmed")
+    try:
+        summ = ef.fetch_summary(LEAGUE, g["event_id"])
+        print(f"  [verify] NHL goalie probe ESPN summary {g['event_id']}: "
+              f"{_paths_matching(summ, words) or 'no goalie/starter keys'}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"  [verify] NHL goalie probe ESPN summary failed: {type(exc).__name__}: {exc}")
+    try:
+        day = (g.get("start_et") or "")[:10]
+        sched = get(f"https://api-web.nhle.com/v1/schedule/{day}")
+        games = [x for wk in (sched.get("gameWeek") or []) for x in (wk.get("games") or [])
+                 if str(wk.get("date")) == day]
+        if not games:
+            print(f"  [verify] NHL goalie probe NHL API: no games on {day} in the schedule")
+            return
+        gid = games[0].get("id")
+        land = get(f"https://api-web.nhle.com/v1/gamecenter/{gid}/landing")
+        print(f"  [verify] NHL goalie probe NHL API gamecenter {gid}: top keys "
+              f"{sorted(land)[:20]}; {_paths_matching(land, words) or 'no goalie/starter keys'}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"  [verify] NHL goalie probe NHL API failed: {type(exc).__name__}: {exc}")
+
+
 def main(today=None):
     now_et = datetime.now(EASTERN)
     today = today or now_et.date()
@@ -809,6 +858,10 @@ def main(today=None):
         "milestones_happened": milestones_happened,
     }, ensure_ascii=False, indent=2))
     print(f"NHL: wrote games.json ({slate_date}, {len(slate)} games)")
+    try:
+        goalie_probe(slate)
+    except Exception as exc:  # noqa: BLE001 — a probe never costs the build
+        print(f"  [verify] NHL goalie probe failed: {type(exc).__name__}: {exc}")
 
 
 if __name__ == "__main__":

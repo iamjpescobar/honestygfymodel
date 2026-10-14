@@ -12,6 +12,7 @@ import streamlit as st
 
 from styles.kc_theme import COLOR, card, footer, how_to_read, page_header, status_banner
 from engines.slate_guard import load_slate, payload_field, staleness_note, today_for
+from engines import live_injuries as _li
 from engines import defense_matchup as dm
 from engines import edge_boards as eb
 from engines import model_math as mm
@@ -26,12 +27,13 @@ page_header("NHL Player of the Day", "Tonight's best 1+ point play — and the r
 
 @st.cache_data(ttl=900, show_spinner=False)
 def _load(day):
-    games, _slate_date, _cur = load_slate("nhl")
+    games, _slate_date, _cur = _li.load_slate_live("nhl")
     return games, payload_field("nhl", "model")
 
 
 _today = today_for("nhl")
 games, model = _load(_today)
+_li.render_note("nhl")
 pick, cands, note = eb.nhl_player_of_the_day(games, model) if model else (None, [], None)
 
 status_banner(

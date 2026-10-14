@@ -15,6 +15,7 @@ import streamlit as st
 
 from styles.kc_theme import page_header, footer, how_to_read, COLOR, SPORT_ACCENTS
 from styles.table_style import style_stat_table
+from engines import live_injuries as _li
 from engines.nfl_week import (EASTERN, PROP_COLUMNS, load_week,
                               staleness_note, prop_rows)
 
@@ -26,7 +27,7 @@ page_header("NFL Prop Lab", "Volume, form and the defense across the line",
 
 @st.cache_data(ttl=900, show_spinner=False)
 def _load_week_for(day):
-    return load_week()
+    return _li.load_week_live()
 
 
 _ROLES = {"Quarterbacks": "QB", "Running backs": "RB", "Pass catchers": "REC"}

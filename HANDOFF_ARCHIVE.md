@@ -10,6 +10,130 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — every bet is priced on the market first, and there are far more props. 2026-10-04
+
+**Suite 124, FAILING: none.** Fourteen negative controls red by exit code.
+Python 3.11 venv (Render's runtime) runs the whole suite green too.
+Pages looked at in a real browser against the site theme (NHL Model and
+NFL Model from fixtures, the MLB prop board from the simulated season).
+
+### WHY: THE FORMULA WAS PRICING THE MODEL AS IF IT WERE THE TRUTH
+
+The first weekend of logged picks said so. NFL: **44 "value" bets out of
+16 games**, edges up to 22 points — Colts-Commanders Over 46.5 at 75% on
+a model whose total TIES the league average (MAE 10.96 vs 10.97). NHL
+10-03: nine moneyline picks, mostly +170 to +230 dogs, 3-6. Every edge
+was model % minus break-even, so whenever the model (team rates, plus
+the MLB starter) disagreed with a market that also knows QBs, goalies,
+injuries and weather, the page called the model right. Staking made it
+worse: nearly every one of those 44 hit the 2% cap — about 88% of the
+bankroll on one Sunday — and many were the same bet twice (ML + spread).
+
+### THE FORMULA (engines/market_blend.py)
+
+    logit(Final) = w * logit(model) + (1 - w) * logit(market no-vig)
+
+w is the MODEL'S WEIGHT, fitted by maximum likelihood on past games that
+have both a walk-forward model prediction and a recorded line, one per
+market (moneyline / total / spread-run line-puck line). It is scored
+CROSS-FITTED (fit on one half, score the other) against the market alone
+with paired_verdict, and the model gets its say ONLY on "beats". "thin"
+is NOT proof — on a simulated season where the market knew every true
+strength, a noisy model still came out thin with w = 0.31 — so thin and
+fails both price at the market. Badges: BEATS MARKET / NOT PROVEN YET /
+MARKET WINS / UNTESTED. Every edge, tier, stake, logged pick and the
+best-value strip use Final. No market line -> no Final -> no edge
+claimed (the model is still shown).
+
+A total with no over/under prices reads as 50% at its own line (that is
+what a total line means); `priced` is recorded and the nightly prints
+the share. The spread's sign is checked against BOTH `details` and the
+moneyline (market_blend.home_spread) — either disagreeing means no
+spread is priced.
+
+**Until the Market history workflow runs, Final IS the market** — the
+pages say so, and value can only come from a better price at the
+reader's book than the posted one.
+
+### THE HISTORY IT IS FITTED ON (market_history.py, NEW manual workflow)
+
+`Market history` (Actions -> Run workflow) walks ESPN for NFL 2025, NHL
+2025-26 and MLB 2026 regular season and writes data/market_lines/
+{nfl_2025, nhl_2025-26, mlb_2026}.json — the scoreboard event's odds,
+else the summary's pickcenter. ONLY writer of data/market_lines/.
+Doubleheaders under one key are dropped, never guessed. The file says
+"recorded line", not "closing line" — ESPN promises nothing more.
+This season's NFL/NHL lines ride on the nightly's own finals rows
+(`odds` via espn_feed.recorded_line), never a second fetch.
+
+### STAKING
+
+One bet per game SIDE: moneyline and spread on the same team are one
+opinion (model_picks.GROUP) — value_bets keeps the higher-EV one, the
+log's first-writer-wins key is (game, group). New "Max per slate"
+setting (default 10%, a bettor preference like the per-bet cap): the
+best-value strip scales every stake down together past it.
+Results splits the record: "Market-anchored (from 10-04)" vs "Model only
+(before 10-04)" — the new formula is judged on its own picks.
+
+### MORE RESEARCH (all from distributions the models already had)
+
+- **MLB batters** — 15 tested lines: hits 0.5/1.5/2.5, TB 0.5-3.5, HR,
+  K 0.5/1.5, walks, singles, doubles, RBI 0.5/1.5. RBI = runs scoring on
+  his PA (post_bat_score - bat_score), from a league table P(RBI | outcome,
+  lineup slot) the nightly MEASURES — reads a touch high vs official RBI
+  (errors, DPs); said under the table. No score columns -> no RBI market.
+- **MLB starters** (mlb_props.project_pitcher) — K 3.5-6.5, hits allowed
+  4.5/5.5, walks 1.5, HR 0.5: each slot of tonight's lineup against him,
+  PA by PA, for his own (shrunk) batters-faced. Walk-forward vs his own
+  rate (mlb_prop_precompute.validate_pitchers). BF is taken as
+  independent of how the game goes (an early hook is not modelled) —
+  stated on the page.
+- **NHL** — skaters any line (SOG to 4.5, points 1.5 added) from stored
+  means (nhl_model.skater_pmfs); **goalie saves** (shots NB at a measured
+  size x his save rate shrunk by a fitted beta prior, last season + this),
+  tested at TEAM level on last season (validate_saves). Both of a team's
+  goalies are priced — who starts is not known until morning skate.
+- **Team totals, alt spreads, alt totals** for all three sports
+  (engines/alt_lines.py) — NFL one-side SD DERIVED from the measured
+  margin/total SDs. Model only: no posted price exists to anchor them.
+- **NFL QB** — completions, passing TDs, interceptions (his per-attempt
+  rate shrunk by a FITTED beta prior, nfl_precompute.qb_rate_priors) and
+  2+ TDs (the anytime Poisson read at two).
+- **Prop board** (model_view.render_prop_board): pick a stat, every
+  tested line in the table, and "check any line at your price" — line
+  defaults to the one nearest 50% for that player, price defaults to the
+  model's fair price so nothing reads as value until a real price is
+  typed. Optional other-side price shows the book's own no-vig chance.
+
+### RULES THIS BATCH ADDS
+
+11, 12 and 13 in STANDING RULES above.
+
+### FOR THE FIRST LOGS
+
+    [verify] MLB moneyline: n=.. market LL .. vs blend (cross-fitted) .. -> beats|thin|fails
+    [verify] NHL/NFL market coverage {... with_line ..}
+    [verify] Hits O0.5 .. RBI O0.5 ..   [verify] K O4.5 .. (starters)
+    [verify] Saves O24.5 (team level) ..   [verify] save prior ..
+    [verify] RBI table measured: yes; slot 4 HR drives in 1/2/3/4: [..]
+
+### FILES, 2026-10-04
+
+    app/engines/market_blend.py, app/engines/alt_lines.py, market_history.py   NEW
+    .github/workflows/market-history.yml                                         NEW
+    tests/test_market_blend.py, tests/test_more_props.py                         NEW
+    app/engines/{model_math,game_model,mlb_game_model,nfl_game_model,nhl_model,
+                 model_picks,model_view,mlb_props,espn_feed,nfl_projection,
+                 nfl_prop_odds}.py
+    app/views/{MLB_Model,NHL_Model,NFL_Model,GameCard,Results,NFL_Projections}.py
+    mlb_model_precompute.py, mlb_prop_precompute.py, nhl_precompute.py,
+    nfl_precompute.py, nfl_projection_probe.py
+    tests/test_value_picks.py, tests/test_mlb_props.py
+    HANDOFF.md, HANDOFF_ARCHIVE.md (09-15 entry rotated out)
+
+---
+
 ## PICK UP HERE — colour that says what to do, badges that say what to trust. 2026-10-03 (9)
 
 **Suite 122, FAILING: none.** Six negative controls red by exit code.

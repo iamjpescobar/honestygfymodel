@@ -16,6 +16,7 @@ from styles.kc_theme import (page_header, footer, card, how_to_read,
                              COLOR, SPORT_ACCENTS)
 from styles.table_style import style_stat_table
 from engines.slate_guard import load_slate, today_for, payload_field, staleness_note
+from engines import live_injuries as _li
 from engines.nhl_rink import (phase, countdown_text, crease_rows,
                               REGULAR_SEASON_START)
 
@@ -27,7 +28,7 @@ page_header("NHL Crease Report", "Every goalie \u2014 workload, save quality, fo
 
 @st.cache_data(ttl=900, show_spinner=False)
 def _load_crease_for(day):
-    games, slate_date, _current = load_slate("nhl")
+    games, slate_date, _current = _li.load_slate_live("nhl")
     # A slate the guard rejected (dated in the past) means the nightly has
     # not published since — its goalie sheet is just as old, so it is not
     # shown as current either.

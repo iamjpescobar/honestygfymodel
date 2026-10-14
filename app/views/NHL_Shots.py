@@ -17,6 +17,7 @@ from styles.kc_theme import (page_header, footer, card, how_to_read,
                              COLOR, SPORT_ACCENTS)
 from styles.table_style import style_stat_table
 from engines.slate_guard import load_slate, staleness_note, today_for
+from engines import live_injuries as _li
 from engines.nhl_rink import (phase, countdown_text, shots_rows, HIT_RATES,
                               REGULAR_SEASON_START)
 
@@ -28,7 +29,7 @@ page_header("NHL Shots Lab", "Shots, points and ice time for every skater tonigh
 
 @st.cache_data(ttl=900, show_spinner=False)
 def _load_shots_for(day):
-    games, slate_date, current = load_slate("nhl")
+    games, slate_date, current = _li.load_slate_live("nhl")
     return games, slate_date
 
 

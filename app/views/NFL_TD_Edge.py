@@ -15,6 +15,7 @@ import streamlit as st
 
 from styles.kc_theme import COLOR, card, footer, how_to_read, page_header
 from engines.nfl_week import load_week
+from engines import live_injuries as _li
 from engines import defense_matchup as dm
 from engines import edge_boards as eb
 from engines import model_math as mm
@@ -27,13 +28,14 @@ page_header("TD Edge", "Every player's chance to score a touchdown this week —
 
 @st.cache_data(ttl=900, show_spinner=False)
 def _load():
-    wk, state = load_week()
+    wk, state = _li.load_week_live()
     return wk or {}, state
 
 
 wk, state = _load()
 league = wk.get("league") or {}
 rows = eb.nfl_td_rows(wk.get("games") or [], league, wk.get("dvp")) if wk else []
+_li.render_note("nfl")
 
 how_to_read([
     ("TD %", "His chance to score a rushing or receiving touchdown — what calls like "

@@ -17,6 +17,7 @@ import streamlit as st
 
 from styles.kc_theme import COLOR, card, footer, page_header
 from engines import bet_finder as bf
+from engines import live_injuries as _li
 from engines import model_math as mm
 from engines import model_view as mv
 
@@ -52,7 +53,7 @@ ss.setdefault("bf_card", {})
 # ----------------------------------------------------------------------
 def _nhl_games():
     from engines.slate_guard import load_slate, payload_field
-    games, _d, _cur = load_slate("nhl")
+    games, _d, _cur = _li.load_slate_live("nhl")
     model = payload_field("nhl", "model") or {}
     out = []
     for g in games or []:
@@ -98,7 +99,7 @@ def _nhl_groups(item):
 
 def _nfl_games():
     from engines.nfl_week import load_week
-    payload, _state = load_week()
+    payload, _state = _li.load_week_live()
     payload = payload or {}
     out = []
     for g in payload.get("games") or []:
@@ -254,6 +255,8 @@ try:
 except Exception as exc:  # noqa: BLE001 — a missing feed costs this sport, never the page
     games = []
     st.caption(f"{sport} data unavailable right now ({type(exc).__name__}).")
+if sport in ("NHL", "NFL"):
+    _li.render_note(sport.lower())
 
 if not games:
     st.info(f"No upcoming {sport} games with a model on the current slate.")

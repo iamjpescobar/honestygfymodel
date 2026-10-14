@@ -15,6 +15,7 @@ import streamlit as st
 
 from styles.kc_theme import COLOR, card, footer, how_to_read, page_header
 from engines import availability as av
+from engines import live_injuries as _li
 from engines.slate_guard import load_slate, payload_field, staleness_note, today_for
 from engines import defense_matchup as dm
 from engines import edge_boards as eb
@@ -29,13 +30,14 @@ page_header("Goal Edge", "Every skater's chance to score tonight — and why",
 
 @st.cache_data(ttl=900, show_spinner=False)
 def _load(day):
-    games, slate_date, _cur = load_slate("nhl")
+    games, slate_date, _cur = _li.load_slate_live("nhl")
     return games, payload_field("nhl", "model")
 
 
 _today = today_for("nhl")
 games, model = _load(_today)
 rows = eb.nhl_goal_rows(games, model) if model else []
+_li.render_note("nhl")
 
 how_to_read([
     ("Goal %", "His chance to score at least once tonight — what calls like this "

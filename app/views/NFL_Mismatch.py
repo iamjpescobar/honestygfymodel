@@ -16,6 +16,7 @@ import streamlit as st
 from styles.kc_theme import (page_header, badge, footer, card, how_to_read,
                              COLOR, SPORT_ACCENTS)
 from styles.table_style import style_stat_table
+from engines import live_injuries as _li
 from engines.nfl_week import (EASTERN, UNIT_PAIRS, load_week, staleness_note,
                               mismatches, edge_tier)
 
@@ -27,7 +28,7 @@ page_header("NFL Mismatch Finder", "Unit vs unit, every game this week, "
 
 @st.cache_data(ttl=900, show_spinner=False)
 def _load_week_for(day):
-    return load_week()
+    return _li.load_week_live()
 
 
 _today = datetime.now(EASTERN).date()

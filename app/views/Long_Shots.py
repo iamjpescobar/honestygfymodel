@@ -13,6 +13,7 @@ import streamlit as st
 
 from styles.kc_theme import COLOR, card, footer, page_header
 from engines import availability as av
+from engines import live_injuries as _li
 from engines import bet_finder as bf
 from engines import long_shots as ls
 from engines import model_math as mm
@@ -47,7 +48,7 @@ ss.setdefault("bf_card", {})
 def _nhl(_day):
     from engines.slate_guard import load_slate, payload_field
     from engines import nhl_model as nm
-    games, _d, _cur = load_slate("nhl")
+    games, _d, _cur = _li.load_slate_live("nhl")
     model = payload_field("nhl", "model") or {}
     cal = mv.calibration_map(model.get("props_validation") or {}, nm.MARKETS)
     rows = []
@@ -96,7 +97,7 @@ def _mlb(_day):
 def _nfl(_day):
     from engines.nfl_week import load_week
     from engines import edge_boards as eb
-    wk, _state = load_week()
+    wk, _state = _li.load_week_live()
     wk = wk or {}
     league = wk.get("league") or {}
     bins = ((league.get("prop_validation") or {}).get("td") or {}).get("calibration")
@@ -134,6 +135,8 @@ with st.spinner("Finding tonight's long shots…"):
     except Exception as exc:  # noqa: BLE001 — a missing feed costs this sport, never the page
         rows = []
         st.caption(f"{sport} data unavailable right now ({type(exc).__name__}).")
+if sport in ("NHL", "NFL"):
+    _li.render_note(sport.lower())
 
 
 

@@ -16,6 +16,7 @@ import streamlit as st
 
 from styles.kc_theme import COLOR, card, footer, page_header
 from engines import bet_finder as bf
+from engines import live_injuries as _li
 from engines import milestones as ms
 from engines import model_math as mm
 from engines import model_view as mv
@@ -52,7 +53,7 @@ def _row(player, team, game, it, chance):
 def _nhl(_d):
     from engines.slate_guard import load_slate, payload_field
     from engines import nhl_model as nm
-    games, _sd, _cur = load_slate("nhl")
+    games, _sd, _cur = _li.load_slate_live("nhl")
     model = payload_field("nhl", "model") or {}
     cal = mv.calibration_map(model.get("props_validation") or {}, nm.MARKETS)
     disp = (model.get("skater_priors") or {}).get("sog_dispersion")
@@ -81,7 +82,7 @@ def _nhl(_d):
 @st.cache_data(ttl=900, show_spinner=False)
 def _nfl(_d):
     from engines.nfl_week import load_week
-    wk, _state = load_week()
+    wk, _state = _li.load_week_live()
     wk = wk or {}
     league = wk.get("league") or {}
     cal = mv.nfl_calibration(league)
@@ -168,6 +169,8 @@ with st.spinner("Checking who is close tonight…"):
         rows, happened, note = [], [], f"{sport} data unavailable right now ({type(exc).__name__})."
 
 rows = sorted(rows, key=lambda r: (r["chance"] is None, -(r["chance"] or 0), r["need"]))
+if sport in ("NHL", "NFL"):
+    _li.render_note(sport.lower())
 
 with card("ms_watch"):
     st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">'

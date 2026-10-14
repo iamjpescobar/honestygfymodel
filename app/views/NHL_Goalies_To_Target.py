@@ -16,6 +16,7 @@ import streamlit as st
 
 from styles.kc_theme import COLOR, card, footer, how_to_read, page_header
 from engines.slate_guard import load_slate, payload_field, staleness_note, today_for
+from engines import live_injuries as _li
 from engines import edge_boards as eb
 from engines import model_view as mv
 
@@ -25,7 +26,7 @@ page_header("Goalies to Target", "Who gives up the most tonight — and who is s
 
 @st.cache_data(ttl=900, show_spinner=False)
 def _load(day):
-    games, _sd, _cur = load_slate("nhl")
+    games, _sd, _cur = _li.load_slate_live("nhl")
     return games, payload_field("nhl", "model")
 
 

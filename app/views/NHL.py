@@ -17,6 +17,7 @@ import streamlit as st
 
 from styles.kc_theme import page_header, badge, footer, card, COLOR, SPORT_ACCENTS
 from engines.live_sync import sync_latest_button
+from engines import live_injuries as _li
 from engines.slate_guard import load_slate, staleness_note, today_for, generated_at
 from engines.espn_feed import live_scores
 from engines.nhl_rink import (phase, countdown_text, fmt_svp, tape_rows,
@@ -31,7 +32,7 @@ sync_latest_button(key="sync_nhl", include_data_package=True)
 
 @st.cache_data(ttl=900, show_spinner=False)
 def _load_slate_for(day):
-    games, slate_date, current = load_slate("nhl")
+    games, slate_date, current = _li.load_slate_live("nhl")
     return games, slate_date, current, generated_at("nhl")
 
 

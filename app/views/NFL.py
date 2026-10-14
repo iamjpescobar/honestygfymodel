@@ -17,6 +17,7 @@ import streamlit as st
 from styles.kc_theme import (page_header, badge, footer, card, how_to_read,
                              COLOR, SPORT_ACCENTS)
 from engines.live_sync import sync_latest_button
+from engines import live_injuries as _li
 from engines.nfl_week import (EASTERN, WINDOW_ORDER, load_week, live_days,
                               staleness_note, mismatches, edge_tier)
 from engines.espn_feed import live_scores
@@ -33,7 +34,7 @@ def _load_week_for(day):
     """Keyed on the Eastern date (a real argument, not _day — Streamlit
     leaves underscore args OUT of the key) so the week rolls over at
     midnight without waiting out the TTL."""
-    return load_week()
+    return _li.load_week_live()
 
 
 @st.cache_data(ttl=60, max_entries=8, show_spinner=False)

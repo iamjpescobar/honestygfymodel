@@ -14,6 +14,7 @@ import streamlit as st
 
 from styles.kc_theme import COLOR, SPORT_ACCENTS, card, footer, page_header
 from engines.live_sync import sync_latest_button
+from engines import live_injuries as _li
 from engines.nfl_week import EASTERN, load_week, staleness_note
 from engines import model_math as mm
 from engines import model_view as mv
@@ -27,7 +28,7 @@ sync_latest_button(key="sync_nfl_model", include_data_package=True)
 
 @st.cache_data(ttl=900, show_spinner=False)
 def _load_week_for(day):
-    return load_week()
+    return _li.load_week_live()
 
 
 payload, state = _load_week_for(datetime.now(EASTERN).date().isoformat())

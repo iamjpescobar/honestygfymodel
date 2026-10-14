@@ -18,6 +18,7 @@ from styles.kc_theme import (page_header, badge, footer, card, how_to_read,
                              COLOR, SPORT_ACCENTS)
 from styles.table_style import style_stat_table
 from engines.live_sync import sync_latest_button
+from engines import live_injuries as _li
 from engines.nfl_week import EASTERN, load_week, staleness_note
 from engines.nfl_projection import MARKETS, projection_rows, why
 from engines.nfl_prop_odds import p_over
@@ -34,7 +35,7 @@ sync_latest_button(key="sync_nfl_proj", include_data_package=True)
 
 @st.cache_data(ttl=900, show_spinner=False)
 def _load_week_for(day):
-    return load_week()
+    return _li.load_week_live()
 
 
 # Columns worth showing beside the projection, per market. Kept short on
@@ -58,6 +59,7 @@ _EXTRA = {
 
 _today = datetime.now(EASTERN).date()
 payload, state = _load_week_for(_today.isoformat())
+_li.render_note("nfl")
 
 if state != "current":
     st.info(staleness_note(payload or {}, state, _today))

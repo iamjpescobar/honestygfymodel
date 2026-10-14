@@ -13,6 +13,7 @@ import streamlit as st
 
 from styles.kc_theme import COLOR, card, footer, how_to_read, page_header
 from engines.nfl_week import load_week
+from engines import live_injuries as _li
 from engines import defense_matchup as dm
 from engines import edge_boards as eb
 from engines import model_view as mv
@@ -23,7 +24,7 @@ page_header("Defenses to Target", "Where every defense bleeds — and who gets t
 
 @st.cache_data(ttl=900, show_spinner=False)
 def _load():
-    wk, state = load_week()
+    wk, state = _li.load_week_live()
     return wk or {}, state
 
 

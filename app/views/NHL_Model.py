@@ -11,6 +11,7 @@ import streamlit as st
 
 from styles.kc_theme import COLOR, SPORT_ACCENTS, card, footer, page_header
 from engines.slate_guard import load_slate, payload_field, today_for, generated_at, staleness_note
+from engines import live_injuries as _li
 from engines import model_view as mv
 from engines import nhl_model as nm
 from engines.live_sync import sync_latest_button
@@ -24,12 +25,13 @@ sync_latest_button(key="sync_nhl_model", include_data_package=True)
 
 @st.cache_data(ttl=900, show_spinner=False)
 def _load(day):
-    games, slate_date, current = load_slate("nhl")
+    games, slate_date, current = _li.load_slate_live("nhl")
     return games, slate_date, payload_field("nhl", "model"), generated_at("nhl")
 
 
 _today = today_for("nhl")
 games, slate_date, model, built = _load(_today)
+_li.render_note("nhl")
 
 if not model:
     _note = staleness_note("nhl", _today)

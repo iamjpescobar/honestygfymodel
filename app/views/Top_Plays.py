@@ -22,6 +22,7 @@ import streamlit as st
 
 from styles.kc_theme import COLOR, card, footer, page_header
 from engines import model_math as mm
+from engines import live_injuries as _li
 from engines import model_picks as mpk
 from engines import model_view as mv
 from engines import top_plays_board as tpb
@@ -178,14 +179,14 @@ try:
     for g in (g_mlb if cur else []):
         if g.get("model") and g.get("odds"):
             entries.append(("mlb", g.get("away"), g.get("home"), g["model"], g["odds"]))
-    g_nhl, _d2, cur2 = load_slate("nhl")
+    g_nhl, _d2, cur2 = _li.load_slate_live("nhl")
     blends["nhl"] = (payload_field("nhl", "model") or {}).get("blend")
     for g in (g_nhl if cur2 else []):
         if g.get("model") and g.get("game_type") != "preseason":
             entries.append(("nhl", g.get("away_abbr") or g.get("away"),
                             g.get("home_abbr") or g.get("home"), g["model"], g.get("odds")))
     from engines.nfl_week import load_week
-    wk, state = load_week()
+    wk, state = _li.load_week_live()
     blends["nfl"] = ((wk or {}).get("model") or {}).get("blend")
     for g in ((wk or {}).get("games") or [] if state == "current" else []):
         if g.get("model") and g.get("status") != "final":
