@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-13 13:25",
+  "generated_at_et": "2026-10-13 20:57",
   "week": 6,
   "league": {
     "team_games": 158,
@@ -1083,15 +1083,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Javonte Williams",
-        "team": "DAL",
-        "opp": "GB",
-        "pos": "RB",
-        "gp": 5,
-        "proj": 62,
-        "window": "Sunday Night"
-      },
-      {
         "player": "James Cook III",
         "team": "BUF",
         "opp": "LV",
@@ -1101,13 +1092,13 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Kyren Williams",
-        "team": "LAR",
-        "opp": "ARI",
+        "player": "Javonte Williams",
+        "team": "DAL",
+        "opp": "GB",
         "pos": "RB",
         "gp": 5,
-        "proj": 58,
-        "window": "Sunday Late"
+        "proj": 59,
+        "window": "Sunday Night"
       },
       {
         "player": "Bijan Robinson",
@@ -1117,6 +1108,15 @@
         "gp": 5,
         "proj": 57,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Kyren Williams",
+        "team": "LAR",
+        "opp": "ARI",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 57,
+        "window": "Sunday Late"
       },
       {
         "player": "D'Andre Swift",
@@ -1133,7 +1133,7 @@
         "opp": "BUF",
         "pos": "RB",
         "gp": 5,
-        "proj": 51,
+        "proj": 50,
         "window": "Sunday Late"
       },
       {
@@ -1160,7 +1160,7 @@
         "opp": "ARI",
         "pos": "WR",
         "gp": 3,
-        "proj": 48,
+        "proj": 47,
         "window": "Sunday Late"
       },
       {
@@ -1200,15 +1200,6 @@
         "window": "Thursday Night"
       },
       {
-        "player": "Chuba Hubbard",
-        "team": "CAR",
-        "opp": "PHI",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 42,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Omarion Hampton",
         "team": "LAC",
         "opp": "KC",
@@ -1227,15 +1218,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Brock Bowers",
-        "team": "LV",
-        "opp": "BUF",
-        "pos": "TE",
-        "gp": 3,
-        "proj": 42,
-        "window": "Sunday Late"
-      },
-      {
         "player": "Rhamondre Stevenson",
         "team": "NE",
         "opp": "NYJ",
@@ -1243,6 +1225,24 @@
         "gp": 5,
         "proj": 41,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Chuba Hubbard",
+        "team": "CAR",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 41,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Brock Bowers",
+        "team": "LV",
+        "opp": "BUF",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 41,
+        "window": "Sunday Late"
       },
       {
         "player": "Cam Skattebo",
@@ -1268,7 +1268,7 @@
         "opp": "TB",
         "pos": "RB",
         "gp": 5,
-        "proj": 39,
+        "proj": 38,
         "window": "Sunday Early"
       },
       {
@@ -1313,35 +1313,8 @@
         "opp": "PIT",
         "pos": "RB",
         "gp": 5,
-        "proj": 36,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Rico Dowdle",
-        "team": "PIT",
-        "opp": "TB",
-        "pos": "RB",
-        "gp": 2,
         "proj": 35,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Jeremiyah Love",
-        "team": "ARI",
-        "opp": "LAR",
-        "pos": "RB",
-        "gp": 5,
-        "proj": 35,
-        "window": "Sunday Late"
-      },
-      {
-        "player": "George Pickens",
-        "team": "DAL",
-        "opp": "GB",
-        "pos": "WR",
-        "gp": 5,
-        "proj": 35,
-        "window": "Sunday Night"
       },
       {
         "player": "Jacory Croskey-Merritt",
@@ -1407,13 +1380,40 @@
         "window": "Sunday Early"
       },
       {
-        "player": "CeeDee Lamb",
-        "team": "DAL",
-        "opp": "GB",
-        "pos": "WR",
+        "player": "Rico Dowdle",
+        "team": "PIT",
+        "opp": "TB",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 34,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jeremiyah Love",
+        "team": "ARI",
+        "opp": "LAR",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 34,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Tucker Kraft",
+        "team": "GB",
+        "opp": "DAL",
+        "pos": "TE",
         "gp": 5,
         "proj": 34,
         "window": "Sunday Night"
+      },
+      {
+        "player": "George Kittle",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 34,
+        "window": "Monday Night"
       }
     ],
     "Rushing yards": [
@@ -5378,17 +5378,8 @@
         "opp": "CLE",
         "pos": "RB",
         "gp": 5,
-        "proj": 25.0,
+        "proj": 25.6,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Javonte Williams",
-        "team": "DAL",
-        "opp": "GB",
-        "pos": "RB",
-        "gp": 5,
-        "proj": 25.0,
-        "window": "Sunday Night"
       },
       {
         "player": "James Cook III",
@@ -5396,8 +5387,17 @@
         "opp": "LV",
         "pos": "RB",
         "gp": 5,
-        "proj": 23.9,
+        "proj": 24.5,
         "window": "Sunday Late"
+      },
+      {
+        "player": "Javonte Williams",
+        "team": "DAL",
+        "opp": "GB",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 22.7,
+        "window": "Sunday Night"
       },
       {
         "player": "Kyren Williams",
@@ -5405,7 +5405,7 @@
         "opp": "ARI",
         "pos": "RB",
         "gp": 5,
-        "proj": 21.4,
+        "proj": 20.9,
         "window": "Sunday Late"
       },
       {
@@ -5432,16 +5432,7 @@
         "opp": "BUF",
         "pos": "RB",
         "gp": 5,
-        "proj": 16.0,
-        "window": "Sunday Late"
-      },
-      {
-        "player": "Davante Adams",
-        "team": "LAR",
-        "opp": "ARI",
-        "pos": "WR",
-        "gp": 5,
-        "proj": 14.9,
+        "proj": 15.5,
         "window": "Sunday Late"
       },
       {
@@ -5454,12 +5445,21 @@
         "window": "Sunday Late"
       },
       {
+        "player": "Davante Adams",
+        "team": "LAR",
+        "opp": "ARI",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 14.6,
+        "window": "Sunday Late"
+      },
+      {
         "player": "Puka Nacua",
         "team": "LAR",
         "opp": "ARI",
         "pos": "WR",
         "gp": 3,
-        "proj": 13.7,
+        "proj": 13.3,
         "window": "Sunday Late"
       },
       {
@@ -5517,12 +5517,21 @@
         "window": "Sunday Late"
       },
       {
+        "player": "Rhamondre Stevenson",
+        "team": "NE",
+        "opp": "NYJ",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 10.0,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Chuba Hubbard",
         "team": "CAR",
         "opp": "PHI",
         "pos": "RB",
         "gp": 4,
-        "proj": 10.2,
+        "proj": 9.8,
         "window": "Sunday Early"
       },
       {
@@ -5531,17 +5540,8 @@
         "opp": "BUF",
         "pos": "TE",
         "gp": 3,
-        "proj": 10.2,
+        "proj": 9.8,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Rhamondre Stevenson",
-        "team": "NE",
-        "opp": "NYJ",
-        "pos": "RB",
-        "gp": 5,
-        "proj": 10.0,
-        "window": "Sunday Early"
       },
       {
         "player": "Cam Skattebo",
@@ -5567,7 +5567,7 @@
         "opp": "TB",
         "pos": "RB",
         "gp": 5,
-        "proj": 8.6,
+        "proj": 8.3,
         "window": "Sunday Early"
       },
       {
@@ -5603,7 +5603,7 @@
         "opp": "CAR",
         "pos": "RB",
         "gp": 4,
-        "proj": 7.7,
+        "proj": 7.4,
         "window": "Sunday Early"
       },
       {
@@ -5612,25 +5612,7 @@
         "opp": "PIT",
         "pos": "RB",
         "gp": 5,
-        "proj": 7.3,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Jeremiyah Love",
-        "team": "ARI",
-        "opp": "LAR",
-        "pos": "RB",
-        "gp": 5,
         "proj": 7.0,
-        "window": "Sunday Late"
-      },
-      {
-        "player": "Rico Dowdle",
-        "team": "PIT",
-        "opp": "TB",
-        "pos": "RB",
-        "gp": 2,
-        "proj": 6.9,
         "window": "Sunday Early"
       },
       {
@@ -5641,15 +5623,6 @@
         "gp": 5,
         "proj": 6.9,
         "window": "Monday Night"
-      },
-      {
-        "player": "George Pickens",
-        "team": "DAL",
-        "opp": "GB",
-        "pos": "WR",
-        "gp": 5,
-        "proj": 6.8,
-        "window": "Sunday Night"
       },
       {
         "player": "Jonah Coleman",
@@ -5670,13 +5643,13 @@
         "window": "Sunday Early"
       },
       {
-        "player": "CeeDee Lamb",
-        "team": "DAL",
-        "opp": "GB",
-        "pos": "WR",
+        "player": "Jeremiyah Love",
+        "team": "ARI",
+        "opp": "LAR",
+        "pos": "RB",
         "gp": 5,
         "proj": 6.7,
-        "window": "Sunday Night"
+        "window": "Sunday Late"
       },
       {
         "player": "Nico Collins",
@@ -5706,6 +5679,15 @@
         "window": "Sunday Early"
       },
       {
+        "player": "Rico Dowdle",
+        "team": "PIT",
+        "opp": "TB",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 6.6,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Tony Pollard",
         "team": "TEN",
         "opp": "IND",
@@ -5713,6 +5695,24 @@
         "gp": 5,
         "proj": 6.4,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Tucker Kraft",
+        "team": "GB",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 6.4,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "George Kittle",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 6.4,
+        "window": "Monday Night"
       }
     ]
   }
