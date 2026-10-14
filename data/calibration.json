@@ -8359,6 +8359,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-10-14": {
+      "picks": [
+        {
+          "id": "663656",
+          "name": "Kyle Tucker",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "668930",
+          "name": "Brice Turang",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "661388",
+          "name": "William Contreras",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "606192",
+          "name": "Teoscar Hern\u00e1ndez",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "605141",
+          "name": "Mookie Betts",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "571970",
+          "name": "Max Muncy",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "592885",
+          "name": "Christian Yelich",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "681624",
+          "name": "Andy Pages",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "518692",
+          "name": "Freddie Freeman",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "660271",
+          "name": "Shohei Ohtani",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "694192",
+          "name": "Jackson Chourio",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "806198",
+          "name": "Cooper Pratt",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "669257",
+          "name": "Will Smith",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -9424,6 +9534,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-14": {
+      "picks": [
+        {
+          "id": "660271",
+          "name": "Shohei Ohtani",
+          "team": "Los Angeles Dodgers",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -39125,6 +39249,28 @@
           "id": 642547,
           "name": "Freddy Peralta (RHP)",
           "team": "TB",
+          "stat": "strikeOuts",
+          "line": 4.5,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    },
+    "2026-10-14": {
+      "picks": [
+        {
+          "id": 605483,
+          "name": "Blake Snell (LHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 5.9,
+          "result": null
+        },
+        {
+          "id": 688107,
+          "name": "Robert Gasser (LHP)",
+          "team": "MIL",
           "stat": "strikeOuts",
           "line": 4.5,
           "result": null
