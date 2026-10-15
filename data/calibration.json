@@ -8368,7 +8368,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "663656",
@@ -8376,7 +8376,7 @@
           "team": "LAD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "661388",
@@ -8384,7 +8384,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "605141",
@@ -8392,7 +8392,7 @@
           "team": "LAD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "606192",
@@ -8400,7 +8400,7 @@
           "team": "LAD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "518692",
@@ -8408,7 +8408,7 @@
           "team": "LAD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "694192",
@@ -8416,7 +8416,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "681624",
@@ -8424,7 +8424,7 @@
           "team": "LAD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "660271",
@@ -8432,7 +8432,7 @@
           "team": "LAD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "806198",
@@ -8440,7 +8440,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "641343",
@@ -8448,7 +8448,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "669257",
@@ -8456,7 +8456,7 @@
           "team": "LAD",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "800325",
@@ -8464,10 +8464,10 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -9544,10 +9544,10 @@
           "team": "Los Angeles Dodgers",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -13002,7 +13002,7 @@
           "team": "Los Angeles Dodgers",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "694192",
@@ -13010,7 +13010,7 @@
           "team": "Milwaukee Brewers",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "641343",
@@ -13018,7 +13018,7 @@
           "team": "Milwaukee Brewers",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "606192",
@@ -13026,7 +13026,7 @@
           "team": "Los Angeles Dodgers",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         },
         {
           "id": "669257",
@@ -13034,10 +13034,10 @@
           "team": "Los Angeles Dodgers",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "dnp"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -39229,7 +39229,8 @@
           "team": "MIL",
           "stat": "strikeOuts",
           "line": 7.5,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": 669373,
@@ -39237,10 +39238,11 @@
           "team": "LAD",
           "stat": "strikeOuts",
           "line": 7.0,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     },
     "2026-10-12": {
