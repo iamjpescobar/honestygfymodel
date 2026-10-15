@@ -2141,6 +2141,48 @@
    "stat": "k",
    "team": "Los Angeles Dodgers",
    "why": "4.4 expected PA from slot 3 vs Shane Drohan, then a league-average pen"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-15",
+   "fair": -320,
+   "game": "Milwaukee Brewers @ Los Angeles Dodgers",
+   "game_id": "849810",
+   "label": "K O0.5",
+   "logged_at": "2026-10-15T23:40:25+00:00",
+   "market": "k1",
+   "matchup": "Soft matchup \u2014 Tyler Glasnow allows the 5th-most of 418 strikeouts to batters (0.313 per plate appearance vs 0.222 league, +41%; ranked on this season + last, blended).",
+   "matchup_tier": "soft",
+   "p": 0.793,
+   "p_cal": 0.7618,
+   "player": "Christian Yelich",
+   "player_id": "592885",
+   "result": null,
+   "start": "2026-10-16T00:00:00Z",
+   "stat": "k",
+   "team": "Milwaukee Brewers",
+   "why": "4.2 expected PA from slot 5 vs Tyler Glasnow, then a league-average pen"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-15",
+   "fair": -273,
+   "game": "Milwaukee Brewers @ Los Angeles Dodgers",
+   "game_id": "849810",
+   "label": "K O0.5",
+   "logged_at": "2026-10-15T23:40:25+00:00",
+   "market": "k1",
+   "matchup": "Neutral matchup \u2014 Shane Drohan allows the 117th-most of 418 strikeouts to batters (0.236 per plate appearance vs 0.222 league, +6%; ranked on this season only).",
+   "matchup_tier": "neutral",
+   "p": 0.7494,
+   "p_cal": 0.732,
+   "player": "Shohei Ohtani",
+   "player_id": "660271",
+   "result": null,
+   "start": "2026-10-16T00:00:00Z",
+   "stat": "k",
+   "team": "Los Angeles Dodgers",
+   "why": "4.6 expected PA from slot 1 vs Shane Drohan, then a league-average pen"
   }
  ]
 }
