@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-15 14:35",
+  "generated_at_et": "2026-10-15 15:19",
   "slate_date_et": "2026-10-15",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -139,10 +139,10 @@
         "spread": -1.5,
         "home_ml": -157,
         "away_ml": 130,
-        "over_price": -111,
-        "under_price": -109,
-        "home_spread_price": 140,
-        "away_spread_price": -170
+        "over_price": -119,
+        "under_price": -101,
+        "home_spread_price": 138,
+        "away_spread_price": -167
       },
       "model": {
         "home_score": 4.98,
@@ -172,15 +172,15 @@
         },
         "p_home_mkt": 0.5842,
         "p_home_final": 0.5842,
-        "p_over_mkt": 0.5022,
-        "p_over_final": 0.5022,
+        "p_over_mkt": 0.5195,
+        "p_over_final": 0.5195,
         "total_priced": true,
         "market_spread_home": -1.5,
         "p_home_cover": 0.4192,
         "fair_cover_home": 139,
         "fair_cover_away": -139,
-        "p_cover_mkt": 0.3982,
-        "p_cover_final": 0.3982,
+        "p_cover_mkt": 0.4018,
+        "p_cover_final": 0.4018,
         "spread_priced": true,
         "starters_used": true,
         "home_starter": {
