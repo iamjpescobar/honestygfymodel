@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-14 19:53",
+  "generated_at_et": "2026-10-14 21:15",
   "slate_date_et": "2026-10-14",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -12,8 +12,8 @@
       "venue": "UNIQLO Field at Dodger Stadium",
       "game_time": "2026-10-15T00:00:00Z",
       "weather_condition": "Clear",
-      "weather_temp": "84",
-      "weather_wind": "1 mph, Varies",
+      "weather_temp": "79",
+      "weather_wind": "4 mph, Out To CF",
       "park_factor": 101,
       "park_verified": true,
       "away_pitcher_id": 688107,
@@ -30,9 +30,8 @@
         "SLG against: edge Los Angeles Dodgers (0.393 vs 0.246)"
       ],
       "ou_lean": "Under",
-      "ou_grade": "C-",
+      "ou_grade": "C",
       "ou_signals": [
-        "Temp 84F (carry weather)",
         "Starters' avg HR/9 0.61 (low)",
         "Starters' avg SLG against 0.32 (low)"
       ],
@@ -43,8 +42,8 @@
         "spread": -1.5,
         "home_ml": -175,
         "away_ml": 156,
-        "over_price": -124,
-        "under_price": 103,
+        "over_price": -123,
+        "under_price": 102,
         "home_spread_price": 114,
         "away_spread_price": -138
       },
@@ -76,8 +75,8 @@
         },
         "p_home_mkt": 0.6196,
         "p_home_final": 0.6196,
-        "p_over_mkt": 0.5291,
-        "p_over_final": 0.5291,
+        "p_over_mkt": 0.527,
+        "p_over_final": 0.527,
         "total_priced": true,
         "market_spread_home": -1.5,
         "p_home_cover": 0.4031,
