@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-14 14:08",
+  "generated_at_et": "2026-10-14 20:25",
   "week": 6,
   "league": {
     "team_games": 158,
@@ -1061,7 +1061,7 @@
         "opp": "TEN",
         "pos": "RB",
         "gp": 5,
-        "proj": 72,
+        "proj": 71,
         "window": "Sunday Early"
       },
       {
@@ -1079,7 +1079,7 @@
         "opp": "CLE",
         "pos": "RB",
         "gp": 5,
-        "proj": 65,
+        "proj": 64,
         "window": "Sunday Early"
       },
       {
@@ -1092,6 +1092,15 @@
         "window": "Sunday Late"
       },
       {
+        "player": "Bijan Robinson",
+        "team": "ATL",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 60,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Javonte Williams",
         "team": "DAL",
         "opp": "GB",
@@ -1099,15 +1108,6 @@
         "gp": 5,
         "proj": 60,
         "window": "Sunday Night"
-      },
-      {
-        "player": "Bijan Robinson",
-        "team": "ATL",
-        "opp": "CHI",
-        "pos": "RB",
-        "gp": 5,
-        "proj": 58,
-        "window": "Sunday Early"
       },
       {
         "player": "Kyren Williams",
@@ -1200,15 +1200,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Chuba Hubbard",
-        "team": "CAR",
-        "opp": "PHI",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 43,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Jaylen Warren",
         "team": "PIT",
         "opp": "TB",
@@ -1232,6 +1223,15 @@
         "opp": "NO",
         "pos": "RB",
         "gp": 5,
+        "proj": 42,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Chuba Hubbard",
+        "team": "CAR",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 4,
         "proj": 42,
         "window": "Sunday Early"
       },
@@ -1317,6 +1317,15 @@
         "window": "Sunday Early"
       },
       {
+        "player": "Drake London",
+        "team": "ATL",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 36,
+        "window": "Sunday Early"
+      },
+      {
         "player": "George Kittle",
         "team": "SF",
         "opp": "WSH",
@@ -1333,24 +1342,6 @@
         "gp": 5,
         "proj": 35,
         "window": "Thursday Night"
-      },
-      {
-        "player": "Drake London",
-        "team": "ATL",
-        "opp": "CHI",
-        "pos": "WR",
-        "gp": 5,
-        "proj": 35,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Saquon Barkley",
-        "team": "PHI",
-        "opp": "CAR",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 35,
-        "window": "Sunday Early"
       },
       {
         "player": "Bucky Irving",
@@ -1398,20 +1389,29 @@
         "window": "Sunday Morning"
       },
       {
-        "player": "Tony Pollard",
-        "team": "TEN",
-        "opp": "IND",
-        "pos": "RB",
-        "gp": 5,
-        "proj": 34,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Breece Hall",
         "team": "NYJ",
         "opp": "NE",
         "pos": "RB",
         "gp": 3,
+        "proj": 34,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Alvin Kamara",
+        "team": "NO",
+        "opp": "NYG",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 34,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tetairoa McMillan",
+        "team": "CAR",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 4,
         "proj": 34,
         "window": "Sunday Early"
       }
@@ -5360,7 +5360,7 @@
         "opp": "TEN",
         "pos": "RB",
         "gp": 5,
-        "proj": 36.4,
+        "proj": 35.3,
         "window": "Sunday Early"
       },
       {
@@ -5378,7 +5378,7 @@
         "opp": "CLE",
         "pos": "RB",
         "gp": 5,
-        "proj": 27.8,
+        "proj": 27.2,
         "window": "Sunday Early"
       },
       {
@@ -5405,7 +5405,7 @@
         "opp": "CHI",
         "pos": "RB",
         "gp": 5,
-        "proj": 21.9,
+        "proj": 23.2,
         "window": "Sunday Early"
       },
       {
@@ -5499,15 +5499,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Chuba Hubbard",
-        "team": "CAR",
-        "opp": "PHI",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 11.1,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Jaylen Warren",
         "team": "PIT",
         "opp": "TB",
@@ -5524,6 +5515,15 @@
         "gp": 5,
         "proj": 11.1,
         "window": "Sunday Night"
+      },
+      {
+        "player": "Chuba Hubbard",
+        "team": "CAR",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 10.7,
+        "window": "Sunday Early"
       },
       {
         "player": "Cam Skattebo",
@@ -5616,6 +5616,15 @@
         "window": "Sunday Morning"
       },
       {
+        "player": "Drake London",
+        "team": "ATL",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 7.6,
+        "window": "Sunday Early"
+      },
+      {
         "player": "George Kittle",
         "team": "SF",
         "opp": "WSH",
@@ -5623,24 +5632,6 @@
         "gp": 5,
         "proj": 7.6,
         "window": "Monday Night"
-      },
-      {
-        "player": "Drake London",
-        "team": "ATL",
-        "opp": "CHI",
-        "pos": "WR",
-        "gp": 5,
-        "proj": 7.1,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Saquon Barkley",
-        "team": "PHI",
-        "opp": "CAR",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 7.0,
-        "window": "Sunday Early"
       },
       {
         "player": "Bucky Irving",
@@ -5679,15 +5670,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Tetairoa McMillan",
-        "team": "CAR",
-        "opp": "PHI",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 6.8,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Nico Collins",
         "team": "HOU",
         "opp": "JAX",
@@ -5695,6 +5677,15 @@
         "gp": 3,
         "proj": 6.7,
         "window": "Sunday Morning"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "CAR",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 6.7,
+        "window": "Sunday Early"
       },
       {
         "player": "Jeremiyah Love",
@@ -5712,6 +5703,15 @@
         "pos": "RB",
         "gp": 3,
         "proj": 6.6,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tetairoa McMillan",
+        "team": "CAR",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 6.5,
         "window": "Sunday Early"
       }
     ]
