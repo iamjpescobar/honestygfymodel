@@ -8469,6 +8469,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-10-15": {
+      "picks": [
+        {
+          "id": "800050",
+          "name": "Chase DeLauter",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "608070",
+          "name": "Jos\u00e9 Ram\u00edrez",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "668930",
+          "name": "Brice Turang",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "680757",
+          "name": "Steven Kwan",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666176",
+          "name": "Jo Adell",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663656",
+          "name": "Kyle Tucker",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "605141",
+          "name": "Mookie Betts",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "650490",
+          "name": "Yandy D\u00edaz",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "661388",
+          "name": "William Contreras",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666018",
+          "name": "Jonathan Aranda",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "660271",
+          "name": "Shohei Ohtani",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "606192",
+          "name": "Teoscar Hern\u00e1ndez",
+          "team": "LAD",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -9548,6 +9658,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-15": {
+      "picks": [
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "Tampa Bay Rays",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -13038,6 +13162,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-15": {
+      "picks": [
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "Tampa Bay Rays",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666018",
+          "name": "Jonathan Aranda",
+          "team": "Tampa Bay Rays",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "650490",
+          "name": "Yandy D\u00edaz",
+          "team": "Tampa Bay Rays",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672275",
+          "name": "Patrick Bailey",
+          "team": "Cleveland Guardians",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663993",
+          "name": "Nathaniel Lowe",
+          "team": "Cleveland Guardians",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -39321,6 +39491,44 @@
           "team": "MIL",
           "stat": "strikeOuts",
           "line": 4.5,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    },
+    "2026-10-15": {
+      "picks": [
+        {
+          "id": 607192,
+          "name": "Tyler Glasnow (RHP)",
+          "team": "LAD",
+          "stat": "strikeOuts",
+          "line": 7.4,
+          "result": null
+        },
+        {
+          "id": 668909,
+          "name": "Gavin Williams (RHP)",
+          "team": "CLE",
+          "stat": "strikeOuts",
+          "line": 6.5,
+          "result": null
+        },
+        {
+          "id": 675660,
+          "name": "Shane Drohan (LHP)",
+          "team": "MIL",
+          "stat": "strikeOuts",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": 643377,
+          "name": "Griffin Jax (RHP)",
+          "team": "TB",
+          "stat": "strikeOuts",
+          "line": 3.1,
           "result": null
         }
       ],
