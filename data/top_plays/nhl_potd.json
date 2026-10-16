@@ -133,6 +133,7 @@
    "why": "4.28 shots and 1.49 points a game over 86 games (this season + last, pulled toward the forward average) \u00b7 ice time 20.2 min over his last 5 vs 22.1 on his rate \u2192 shots x0.96 \u00b7 DAL matchup sets tonight's shot volume x0.94 and scoring x0.91 \u00b7 DAL allows the 2nd-fewest of 32 shots to centres (8.7 a game vs 9.6) \u00b7 \u2192 3.86 expected shots, 1.27 expected points \u00b7 PP1 by minutes (4.3 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 0.0,
    "at_least": 1,
    "date": "2026-10-15",
    "fair": -265,
@@ -147,11 +148,32 @@
    "p_cal": 0.7262,
    "player": "Nikita Kucherov",
    "player_id": "2563060",
-   "result": null,
+   "result": "miss",
    "start": "2026-10-15T19:00:00-04:00",
    "stat": "pts",
    "team": "Tampa Bay Lightning",
    "why": "2.89 shots and 1.56 points a game over 82 games (this season + last, pulled toward the forward average) \u00b7 ice time 21.3 min over his last 5 vs 20.4 on his rate \u2192 shots x1.02 \u00b7 SEA matchup sets tonight's shot volume x1.12 and scoring x1.01 \u00b7 SEA allows the 10th-most of 32 shots to wingers (10.8 a game vs 10.5) \u00b7 \u2192 3.31 expected shots, 1.63 expected points \u00b7 PP1 by minutes (5.1 PP min a game over his last 5; context, not in the number)"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-16",
+   "fair": -265,
+   "game": "Pittsburgh Penguins @ Colorado Avalanche",
+   "game_id": "401892517",
+   "label": "Pts O0.5",
+   "logged_at": "2026-10-16T13:03:32+00:00",
+   "market": "pt1",
+   "matchup": null,
+   "matchup_tier": null,
+   "p": 0.7809,
+   "p_cal": 0.7262,
+   "player": "Nathan MacKinnon",
+   "player_id": "3041969",
+   "result": null,
+   "start": "2026-10-16T21:00:00-04:00",
+   "stat": "pts",
+   "team": "Colorado Avalanche",
+   "why": "4.27 shots and 1.48 points a game over 87 games (this season + last, pulled toward the forward average) \u00b7 ice time 21.6 min over his last 5 vs 22.1 on his rate \u2192 shots x0.99 \u00b7 PIT matchup sets tonight's shot volume x1.05 and scoring x1.04 \u00b7 PIT allows the 12th-fewest of 32 shots to centres (9.3 a game vs 9.6) \u00b7 \u2192 4.44 expected shots, 1.52 expected points \u00b7 PP1 by minutes (4.3 PP min a game over his last 5; context, not in the number)"
   }
  ]
 }
