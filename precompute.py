@@ -131,6 +131,7 @@ def fetch_season() -> pd.DataFrame:
     _expected_cols = {"estimated_woba_using_speedangle",
                       "estimated_slg_using_speedangle"}
     _saw_expected = False
+    _post_pitches = 0
     for start, stop in week_ranges(SEASON_START, today):
         s, e = start.strftime("%Y-%m-%d"), stop.strftime("%Y-%m-%d")
         df = None
@@ -147,6 +148,11 @@ def fetch_season() -> pd.DataFrame:
 
         if _expected_cols.issubset(df.columns):
             _saw_expected = True
+        # POSTSEASON PROBE (10-16): Savant's game_type is R for the
+        # regular season; anything else is October. Counted so the log
+        # says whether the prop model's pitches include the postseason.
+        if "game_type" in df.columns:
+            _post_pitches += int((df["game_type"].astype(str) != "R").sum())
 
         # MODEL_COLS ride along in the SEASON frame only (the prop model
         # needs each PA's batting side) and are dropped before the
@@ -160,6 +166,7 @@ def fetch_season() -> pd.DataFrame:
 
     if not chunks:
         raise SystemExit("No Statcast data fetched — aborting without writing anything.")
+    print(f"  [verify] Statcast postseason pitches in the season pull: {_post_pitches:,}")
 
     if not _saw_expected:
         print("  *** WARNING: bulk statcast() never returned the expected-stat "

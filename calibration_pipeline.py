@@ -36,6 +36,15 @@ from zoneinfo import ZoneInfo
 
 import requests
 
+# The one MLB game-log reader with the postseason (10-16). Loaded by file
+# path, not through app/engines, so this bare-runner script still needs
+# nothing from the app's package.
+import importlib.util as _ilu
+_spec = _ilu.spec_from_file_location(
+    "mlb_gamelog", Path(__file__).resolve().parent / "app" / "engines" / "mlb_gamelog.py")
+_gamelog = _ilu.module_from_spec(_spec)
+_spec.loader.exec_module(_gamelog)
+
 EASTERN = ZoneInfo("America/New_York")
 
 # Where the pipeline stages files that get packed into the archive.
@@ -169,16 +178,14 @@ def _mlb_line(pid, date_str):
     """
     season = int(date_str[:4])
     try:
-        resp = requests.get(MLB_URL.format(pid=pid),
-                            params={"stats": "gameLog", "group": "hitting",
-                                    "season": season},
-                            timeout=15)
-        resp.raise_for_status()
-        stats = resp.json().get("stats") or []
+        # Regular season + POSTSEASON (10-16, engines/mlb_gamelog): the
+        # default log is regular-season only, so every October pick was
+        # closed as a did-not-play.
+        splits = _gamelog.splits(_gamelog.requests_getter(15), MLB_URL.format(pid=pid),
+                                 "hitting", season)
     except Exception:
         # The request failed. NOT evidence about whether he played.
         return None
-    splits = [sp for entry in stats for sp in (entry.get("splits") or [])]
     for sp in splits:
         if sp.get("date") == date_str:
             stat = sp.get("stat", {}) or {}
@@ -208,13 +215,8 @@ def _mlb_pitching_line(pid, date_str):
     """
     season = int(date_str[:4])
     try:
-        resp = requests.get(MLB_URL.format(pid=pid),
-                            params={"stats": "gameLog", "group": "pitching",
-                                    "season": season},
-                            timeout=15)
-        resp.raise_for_status()
-        stats = resp.json().get("stats") or []
-        splits = (stats[0].get("splits") if stats else []) or []
+        splits = _gamelog.splits(_gamelog.requests_getter(15), MLB_URL.format(pid=pid),
+                                 "pitching", season)
     except Exception:
         return None
     for sp in splits:
@@ -640,6 +642,39 @@ def reopen_stuck(record, days_back: int = FINALIZE_AFTER_DAYS) -> int:
     return reopened
 
 
+# The first day after the 2026 regular season (it ended 09-27). Picks on
+# or after it were graded against regular-season-only logs until 10-16.
+POSTSEASON_FROM = "2026-09-28"
+
+
+def reopen_postseason(record):
+    """ONE-TIME recovery (10-16): every MLB pick dated in the postseason
+    that was closed "dnp" is reopened once, so grade() re-checks it
+    against the log that now includes postseason games. Each reopened
+    pick is stamped "ps_regraded", so a genuine DNP is never reopened
+    twice (the loop reopen_stuck warns about). Hits and misses are
+    never touched."""
+    n = 0
+    today = datetime.now(EASTERN).strftime("%Y-%m-%d")
+    for board, days in record.items():
+        if not str((BOARDS.get(board) or {}).get("sport") or "").startswith("mlb"):
+            continue
+        for date_str, entry in days.items():
+            if date_str < POSTSEASON_FROM or date_str >= today:
+                continue
+            touched = False
+            for pick in entry.get("picks", []):
+                if (has_id(pick.get("id")) and pick.get("result") == "dnp"
+                        and not pick.get("ps_regraded")):
+                    pick["result"] = None
+                    pick["ps_regraded"] = True
+                    n += 1
+                    touched = True
+            if touched:
+                entry["graded"] = False
+    return n
+
+
 def prune(record):
     """Drop days older than the retention window."""
     keep_after = (datetime.now(EASTERN) - timedelta(days=RETENTION_DAYS)).strftime("%Y-%m-%d")
@@ -680,6 +715,10 @@ def main():
         print(f"Calibration: reopened {reopened} pick(s) stranded as DNP by the "
               f"freeze bug — re-grading them against box scores that have "
               f"since posted.")
+    _ps = reopen_postseason(record)
+    if _ps:
+        print(f"Calibration: reopened {_ps} postseason pick(s) closed as DNP by the "
+              f"regular-season-only game log - re-grading with the postseason included.")
     graded = grade(record)
     # Printed BEFORE the per-board summary below, because the summary is
     # what makes this invisible: a board with zero graded picks prints

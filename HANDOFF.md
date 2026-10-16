@@ -154,6 +154,48 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — MLB postseason: game logs, grading, trend windows. 2026-10-16
+
+**Suite 140 (+ test_mlb_postseason_logs), FAILING: none.** Four negative
+controls red by exit code (listed in the test).
+
+WHY: Izzy, in the playoffs: "all of the data provided is for the last
+game of regular season." The Stats API gameLog defaults to the REGULAR
+season and every reader asked for it that way. Two consequences:
+  1. Trend windows (2026 / L25 / L15 / L5, batters and pitchers) stopped
+     at 09-27.
+  2. GRADING: a postseason pick's date was never in the log, so
+     calibration_pipeline closed it DID_NOT_PLAY at once — no postseason
+     pick on Daily 13 / HR Edge / POTD / K Board ever counted.
+
+FIX (engines/mlb_gamelog.py, NEW, pure): splits(get, url, group, season)
+= regular log + postseason log (gameType "P", falling back to "F,D,L,W"),
+every stats entry (trades), one row per gamePk, date order, "_post"
+tag. A failed postseason read costs only postseason rows; a failed
+regular read still raises (unknown != did-not-play). Used by
+calibration_pipeline._mlb_line / _mlb_pitching_line (loaded by FILE
+PATH — the pipeline has no app/ on sys.path), calibration._player_day_json
+(its twin), batter_trends and pitcher_trends (opp label "(PS)").
+reopen_postseason(record): ONE-TIME — MLB-board "dnp" picks dated >=
+POSTSEASON_FROM (2026-09-28) are reopened once, stamped "ps_regraded",
+so a genuine DNP is never reopened twice.
+
+NOT CHANGED (rule 1): k_projection's own game-log reads (the K Board's
+number) stay regular-season — adding October starts is a model change
+and gets tested first. Statcast: pybaseball's query already asks for
+PO; precompute now prints "[verify] Statcast postseason pitches in the
+season pull: N" — if N is 0, the prop model's pitches stop at 09-27 too.
+
+FIRST NIGHTLY: "Calibration: reopened N postseason pick(s)..." then the
+board totals should rise; the Statcast line above.
+
+FILES: app/engines/mlb_gamelog.py, tests/test_mlb_postseason_logs.py
+(NEW); calibration_pipeline.py, app/engines/calibration.py,
+app/engines/batter_trends.py, app/engines/pitcher_trends.py,
+precompute.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — the live injury check; a starting-goalie probe. 2026-10-14 (3)
 
 **Suite 139 (+ test_live_injuries), FAILING: none.** Three negative
@@ -800,113 +842,5 @@ and the page says it is context.
     nhl_precompute.py, nfl_precompute.py, mlb_prop_precompute.py, top_plays_log.py
     .github/workflows/nightly-data.yml (commit data/nfl/prior_dvp.json)
     tests/{test_top_plays,test_nfl_pipeline}.py
-
----
-
-## PICK UP HERE — last season in every model, NFL props on the Model page, Top Plays with a record. 2026-10-04 (2)
-
-**Suite 127, FAILING: none.** Twelve negative controls red by exit code;
-the whole suite green on Python 3.11 too. NFL Model and Top Plays looked
-at in a real browser from fixtures.
-
-### WHY
-
-Izzy: four weeks of NFL and one season of MLB is too little to judge a
-player on — use last season; the NFL Model page had no player props; and
-he wants a page he can hand his friends where everything shown is as
-reliable as it can honestly be. Profit first, most likely outcomes up
-front.
-
-### LAST SEASON, AT A FITTED WEIGHT (model_math.fit_prior_weight)
-
-    rate = (this season + w x last season + league x s) / (n + w x n_ly + s)
-
-w is fitted by maximum likelihood of THIS season's totals predicted from
-LAST season's alone, on everyone in both seasons. A last season shuffled
-across players earns ~0 (asserted, live control in the test); a skill
-that persists earns most of 1.
-
-- **MLB game model**: 2025 finals via statsapi -> game_model.build's
-  walk-forward-fitted team carryover (it existed; MLB never passed a
-  prior). Starters: 2025 runs/outs at weights fitted on starters in both
-  (mlb_model_precompute.fit_starter_prior_weight); a starter with only a
-  2025 line now gets a layer. Validation, blend and page all use it.
-- **MLB props**: 2025 per-player outcome counts from statsapi SEASON
-  stats (one call each for hitting and pitching — not a second Statcast
-  pull) + each 2025 starter's batters-faced. Weights per batter /
-  pitcher / depth fitted in mlb_prop_precompute.fit_prior_weights; the
-  walk-forward folds them in so the verdicts test the model the page uses.
-  A line missing doubles/triples is left out, not split by a guess;
-  traded players keep their largest line.
-- **NFL player props**: every 2025 box score (272 summaries, the SAME
-  parser) -> data/nfl/prior_players.json, raw totals per player
-  (player_summaries now emits `tot`). Seven families with their own
-  weights (shares, catch rate, ypc, ypt, TD per touch, QB rates, ypa —
-  yardage via a quasi-Poisson likelihood). merge_prior recomputes every
-  rate from weighted SUMS and flags a player who changed teams.
-- **NHL** already did this (skaters pooled, team carryover) — unchanged.
-
-Files written ONCE, the first night missing, committed by the nightly:
-data/mlb/prior_season.json (Commit MLB game model), data/nfl/
-prior_players.json (Commit NFL projection log). Under a near-complete
-season they are refused, never saved partial.
-
-### NFL PLAYER PROPS ON THE MODEL PAGE (model_view.render_nfl_props)
-
-Under each game: pick a stat (passing yds/att/completions/TDs/INTs,
-rushing yds, carries, receiving yds, receptions, targets, rush+rec,
-TDs) -> every player's projection and a Low/Mid/High ladder of over
-chances, then any line at your price. Yards are the measured-cv normal
-discretised to whole yards (64.5 = P(65+), same as p_over). Out players
-are left off; Questionable/Doubtful printed. UNTESTED badge — NFL prop
-chances are not graded yet, so they never reach Top Plays.
-
-### TOP PLAYS (views/Top_Plays.py, engines/top_plays_board.py, top_plays_log.py)
-
-- **Props**: only lines whose market BEAT the player's own rate out of
-  sample; probability CALIBRATED through that market's own walk-forward
-  curve (PAV-monotone, linear between bins, flat past the ends) — the
-  page shows what calls like it DELIVERED, not what the model claimed.
-  One play per player; TB O0.5 never beside Hits O0.5. SHOW_N = 10 is a
-  presentation choice. "Worth it at X or better" = fair price at the
-  calibrated chance.
-- **Logged before, graded after**: data/top_plays/mlb.json (slate-picks:
-  grade then log, statsapi boxscore; batter lines from batting, starter
-  plays from the STARTER's pitching line only, walks incl. HBP as the
-  model counts them) and nhl.json (nhl_precompute, graded from the finals
-  it already parsed). DNP -> void. The page leads with PROMISED vs
-  DELIVERED overall and by band.
-- **Game bets**: value at the posted price on the Final chance, ONLY in
-  markets whose blend verdict is "beats" — empty until Market history has
-  run and a market proves itself, and the page says why.
-
-### ALSO
-
-MLB walks markets relabelled "Walks+HBP" (rule 9: the model's walk
-outcome includes HBP; books' walk props do not). edge_tier: +0.0 on the
-printed grid is "none" — a price box at the fair price read THIN.
-
-### FIRST RUNS
-
-Nightly (writes both prior files) -> the next slate-picks run logs MLB
-plays; the nightly logs NHL plays. Read:
-
-    [verify] MLB 2025 prior season: ~2430 finals; N starters, N batters / N pitchers
-    [verify] team carryover from 2025: ..   [verify] starter last-season weight: {..}
-    [verify] last-season weights {'batter': .., 'pitcher': .., 'bf': ..}
-    [verify] NFL prior players: 272/272 box scores ..; NFL last-season weights {..}
-    [verify] top plays mlb: N candidate props, N selected, N new logged
-    [verify] NHL top plays: graded N, voided N; N selected, N new logged
-
-### FILES, 2026-10-04 (2)
-
-    app/engines/top_plays_board.py, app/views/Top_Plays.py, top_plays_log.py   NEW
-    tests/test_prior_season.py, tests/test_top_plays.py                         NEW
-    app/engines/{model_math,mlb_game_model,mlb_props,model_view}.py
-    app/views/{NFL_Model}.py, app/app.py (Top Plays in MLB/NFL/NHL navs)
-    mlb_model_precompute.py, mlb_prop_precompute.py, nfl_precompute.py, nhl_precompute.py
-    .github/workflows/{nightly-data,slate-picks}.yml
-    tests/{test_game_model,test_mlb_props,test_nfl_pipeline,test_nhl_model,test_nhl_pipeline}.py
-    HANDOFF.md, HANDOFF_ARCHIVE.md (09-27 projections entry rotated out)
 
 ---

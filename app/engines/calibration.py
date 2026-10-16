@@ -431,14 +431,9 @@ def log_picks(board: str, rows, date_str: str = None) -> bool:
 def _player_day_json(pid: int, date_str: str, season: int) -> str:
     """That player's official box-score line for one date."""
     try:
-        resp = requests.get(
-            _URL.format(pid=pid),
-            params={"stats": "gameLog", "group": "hitting", "season": season},
-            timeout=10,
-        )
-        resp.raise_for_status()
-        stats = resp.json().get("stats") or []
-        splits = (stats[0].get("splits") if stats else []) or []
+        # regular season + postseason (10-16, engines/mlb_gamelog)
+        from engines import mlb_gamelog as _gl
+        splits = _gl.splits(_gl.requests_getter(10), _URL.format(pid=pid), "hitting", season)
     except Exception:
         return json.dumps(None)
     for sp in splits:

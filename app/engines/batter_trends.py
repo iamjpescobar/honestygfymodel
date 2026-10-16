@@ -50,12 +50,11 @@ _WIN_N = {"L25": 25, "L15": 15, "L5": 5}
 @st.cache_data(ttl=1800, max_entries=512, show_spinner=False)
 def _game_log_json(batter_id: int, season: int) -> str:
     try:
-        data = _get_json(
-            _URL.format(pid=batter_id),
-            params={"stats": "gameLog", "group": "hitting", "season": season},
-        ) or {}
-        stats = data.get("stats") or []
-        splits = (stats[0].get("splits") if stats else []) or []
+        # Regular season + POSTSEASON (10-16, engines/mlb_gamelog): the
+        # default log stops at the last regular-season game.
+        from engines import mlb_gamelog as _gl
+        splits = _gl.splits(lambda url, params: _get_json(url, params=params) or {},
+                            _URL.format(pid=batter_id), "hitting", season)
     except Exception as e:
         return json.dumps({"games": [], "error": f"Game log request failed: {e}"})
 
@@ -82,6 +81,8 @@ def _game_log_json(batter_id: int, season: int) -> str:
             b1 = 0
         opp = (sp.get("opponent") or {})
         opp_label = opp.get("abbreviation") or opp.get("teamName") or opp.get("name") or ""
+        if sp.get("_post"):
+            opp_label = f"{opp_label} (PS)"      # a postseason game
         games.append({"date": sp.get("date", ""), "opp": opp_label,
                       "opp_id": opp.get("id"),
                       "h": h, "b1": b1, "b2": b2, "b3": b3, "hr": hr,
