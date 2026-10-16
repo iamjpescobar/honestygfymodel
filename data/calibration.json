@@ -8739,16 +8739,16 @@
     "2026-10-16": {
       "picks": [
         {
-          "id": "800050",
-          "name": "Chase DeLauter",
+          "id": "680757",
+          "name": "Steven Kwan",
           "team": "CLE",
           "stat": null,
           "line": null,
           "result": null
         },
         {
-          "id": "680757",
-          "name": "Steven Kwan",
+          "id": "800050",
+          "name": "Chase DeLauter",
           "team": "CLE",
           "stat": null,
           "line": null,
@@ -8771,14 +8771,6 @@
           "result": null
         },
         {
-          "id": "683953",
-          "name": "Travis Bazzana",
-          "team": "CLE",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
           "id": "663993",
           "name": "Nathaniel Lowe",
           "team": "CLE",
@@ -8787,17 +8779,17 @@
           "result": null
         },
         {
-          "id": "676356",
-          "name": "Jonny DeLuca",
-          "team": "TB",
+          "id": "683953",
+          "name": "Travis Bazzana",
+          "team": "CLE",
           "stat": null,
           "line": null,
           "result": null
         },
         {
-          "id": "677587",
-          "name": "Brayan Rocchio",
-          "team": "CLE",
+          "id": "802415",
+          "name": "Chandler Simpson",
+          "team": "TB",
           "stat": null,
           "line": null,
           "result": null
@@ -8811,8 +8803,8 @@
           "result": null
         },
         {
-          "id": "802415",
-          "name": "Chandler Simpson",
+          "id": "676356",
+          "name": "Jonny DeLuca",
           "team": "TB",
           "stat": null,
           "line": null,
@@ -8827,9 +8819,9 @@
           "result": null
         },
         {
-          "id": "680700",
-          "name": "Richie Palacios",
-          "team": "TB",
+          "id": "677587",
+          "name": "Brayan Rocchio",
+          "team": "CLE",
           "stat": null,
           "line": null,
           "result": null
@@ -8837,6 +8829,14 @@
         {
           "id": "666018",
           "name": "Jonathan Aranda",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "680700",
+          "name": "Richie Palacios",
           "team": "TB",
           "stat": null,
           "line": null,
@@ -13560,6 +13560,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-16": {
+      "picks": [
+        {
+          "id": "666018",
+          "name": "Jonathan Aranda",
+          "team": "Tampa Bay Rays",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "Tampa Bay Rays",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683748",
+          "name": "Victor Mesa Jr.",
+          "team": "Tampa Bay Rays",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "672275",
+          "name": "Patrick Bailey",
+          "team": "Cleveland Guardians",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663993",
+          "name": "Nathaniel Lowe",
+          "team": "Cleveland Guardians",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
