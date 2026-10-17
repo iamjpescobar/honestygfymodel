@@ -2401,6 +2401,48 @@
    "stat": "k",
    "team": "Cleveland Guardians",
    "why": "4.1 expected PA from slot 6 vs Nick Martinez, then a league-average pen"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-17",
+   "fair": 110,
+   "game": "Tampa Bay Rays @ Cleveland Guardians",
+   "game_id": "849816",
+   "label": "HR allowed O0.5",
+   "logged_at": "2026-10-17T17:30:33+00:00",
+   "market": "phr1",
+   "matchup": null,
+   "matchup_tier": null,
+   "p": 0.5294,
+   "p_cal": 0.4751,
+   "player": "Nick Martinez",
+   "player_id": "607259",
+   "result": null,
+   "start": "2026-10-18T00:08:00Z",
+   "stat": "p_hr",
+   "team": "Tampa Bay Rays",
+   "why": null
+  },
+  {
+   "at_least": 2,
+   "date": "2026-10-17",
+   "fair": 150,
+   "game": "Tampa Bay Rays @ Cleveland Guardians",
+   "game_id": "849816",
+   "label": "Walks+HBP allowed O1.5",
+   "logged_at": "2026-10-17T17:30:33+00:00",
+   "market": "pbb2",
+   "matchup": null,
+   "matchup_tier": null,
+   "p": 0.3671,
+   "p_cal": 0.4004,
+   "player": "Shawn Armstrong",
+   "player_id": "542888",
+   "result": null,
+   "start": "2026-10-18T00:08:00Z",
+   "stat": "p_bb",
+   "team": "Cleveland Guardians",
+   "why": null
   }
  ]
 }
