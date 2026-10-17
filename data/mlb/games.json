@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-16 19:29",
+  "generated_at_et": "2026-10-16 21:07",
   "slate_date_et": "2026-10-16",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -37,17 +37,6 @@
         "Starters' avg SLG against 0.374 (low)"
       ],
       "proj_total": 7.9,
-      "odds": {
-        "details": "TB -114",
-        "total": 6.5,
-        "spread": 1.5,
-        "home_ml": -105,
-        "away_ml": -114,
-        "over_price": -107,
-        "under_price": -112,
-        "home_spread_price": -193,
-        "away_spread_price": 158
-      },
       "model": {
         "home_score": 3.48,
         "away_score": 4.31,
@@ -57,13 +46,6 @@
         "fair_home": 138,
         "fair_away": -138,
         "tie_rule_measured": true,
-        "market_home": 0.4902,
-        "market_away": 0.5098,
-        "edge_home": -0.0698,
-        "market_total": 6.5,
-        "p_over": 0.5769,
-        "fair_over": -136,
-        "fair_under": 136,
         "mu_home": 3.475696577427825,
         "mu_away": 4.311535673800128,
         "dispersion": 3.498,
@@ -74,18 +56,6 @@
           "total": 0.0,
           "spread": 0.0
         },
-        "p_home_mkt": 0.4902,
-        "p_home_final": 0.4902,
-        "p_over_mkt": 0.4945,
-        "p_over_final": 0.4945,
-        "total_priced": true,
-        "market_spread_home": 1.5,
-        "p_home_cover": 0.587,
-        "fair_cover_home": -142,
-        "fair_cover_away": 142,
-        "p_cover_mkt": 0.6296,
-        "p_cover_final": 0.6296,
-        "spread_priced": true,
         "starters_used": true,
         "home_starter": {
           "name": "Shawn Armstrong",
