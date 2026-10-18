@@ -8955,6 +8955,116 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-10-18": {
+      "picks": [
+        {
+          "id": "680757",
+          "name": "Steven Kwan",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "800050",
+          "name": "Chase DeLauter",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "608070",
+          "name": "Jos\u00e9 Ram\u00edrez",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "676356",
+          "name": "Jonny DeLuca",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "802415",
+          "name": "Chandler Simpson",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "650490",
+          "name": "Yandy D\u00edaz",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666176",
+          "name": "Jo Adell",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683748",
+          "name": "Victor Mesa Jr.",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "680700",
+          "name": "Richie Palacios",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666018",
+          "name": "Jonathan Aranda",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "683953",
+          "name": "Travis Bazzana",
+          "team": "CLE",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "670764",
+          "name": "Taylor Walls",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "potd": {
@@ -10088,6 +10198,20 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-18": {
+      "picks": [
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "Tampa Bay Rays",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -13776,6 +13900,36 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-18": {
+      "picks": [
+        {
+          "id": "672275",
+          "name": "Patrick Bailey",
+          "team": "Cleveland Guardians",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "663993",
+          "name": "Nathaniel Lowe",
+          "team": "Cleveland Guardians",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666176",
+          "name": "Jo Adell",
+          "team": "Cleveland Guardians",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
@@ -40725,6 +40879,28 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-18": {
+      "picks": [
+        {
+          "id": 656876,
+          "name": "Drew Rasmussen (RHP)",
+          "team": "TB",
+          "stat": "strikeOuts",
+          "line": 5.5,
+          "result": null
+        },
+        {
+          "id": 800048,
+          "name": "Parker Messick (LHP)",
+          "team": "CLE",
+          "stat": "strikeOuts",
+          "line": 5.0,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   }

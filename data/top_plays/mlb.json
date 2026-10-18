@@ -2403,6 +2403,7 @@
    "why": "4.1 expected PA from slot 6 vs Nick Martinez, then a league-average pen"
   },
   {
+   "actual": 0,
    "at_least": 1,
    "date": "2026-10-17",
    "fair": 110,
@@ -2417,13 +2418,14 @@
    "p_cal": 0.4751,
    "player": "Nick Martinez",
    "player_id": "607259",
-   "result": null,
+   "result": "miss",
    "start": "2026-10-18T00:08:00Z",
    "stat": "p_hr",
    "team": "Tampa Bay Rays",
    "why": null
   },
   {
+   "actual": 0,
    "at_least": 2,
    "date": "2026-10-17",
    "fair": 150,
@@ -2438,13 +2440,14 @@
    "p_cal": 0.4004,
    "player": "Shawn Armstrong",
    "player_id": "542888",
-   "result": null,
+   "result": "miss",
    "start": "2026-10-18T00:08:00Z",
    "stat": "p_bb",
    "team": "Cleveland Guardians",
    "why": null
   },
   {
+   "actual": 0,
    "at_least": 1,
    "date": "2026-10-17",
    "fair": -250,
@@ -2459,13 +2462,14 @@
    "p_cal": 0.7141,
    "player": "Jonathan Aranda",
    "player_id": "666018",
-   "result": null,
+   "result": "miss",
    "start": "2026-10-18T00:08:00Z",
    "stat": "k",
    "team": "Tampa Bay Rays",
    "why": "4.5 expected PA from slot 2 vs Shawn Armstrong, then a league-average pen"
   },
   {
+   "actual": 1,
    "at_least": 1,
    "date": "2026-10-17",
    "fair": -180,
@@ -2480,13 +2484,14 @@
    "p_cal": 0.6423,
    "player": "Taylor Walls",
    "player_id": "670764",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-18T00:08:00Z",
    "stat": "k",
    "team": "Tampa Bay Rays",
    "why": "3.8 expected PA from slot 9 vs Shawn Armstrong, then a league-average pen"
   },
   {
+   "actual": 0,
    "at_least": 1,
    "date": "2026-10-17",
    "fair": -175,
@@ -2501,13 +2506,14 @@
    "p_cal": 0.6366,
    "player": "Patrick Bailey",
    "player_id": "672275",
-   "result": null,
+   "result": "miss",
    "start": "2026-10-18T00:08:00Z",
    "stat": "k",
    "team": "Cleveland Guardians",
    "why": "4.0 expected PA from slot 7 vs Nick Martinez, then a league-average pen"
   },
   {
+   "actual": 2,
    "at_least": 1,
    "date": "2026-10-17",
    "fair": -175,
@@ -2522,13 +2528,14 @@
    "p_cal": 0.6361,
    "player": "Jo Adell",
    "player_id": "666176",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-18T00:08:00Z",
    "stat": "k",
    "team": "Cleveland Guardians",
    "why": "4.3 expected PA from slot 4 vs Nick Martinez, then a league-average pen"
   },
   {
+   "actual": 2,
    "at_least": 1,
    "date": "2026-10-17",
    "fair": -174,
@@ -2543,13 +2550,14 @@
    "p_cal": 0.6344,
    "player": "Victor Mesa Jr.",
    "player_id": "683748",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-18T00:08:00Z",
    "stat": "k",
    "team": "Tampa Bay Rays",
    "why": "4.1 expected PA from slot 6 vs Shawn Armstrong, then a league-average pen"
   },
   {
+   "actual": 2,
    "at_least": 1,
    "date": "2026-10-17",
    "fair": -160,
@@ -2564,13 +2572,14 @@
    "p_cal": 0.6149,
    "player": "Junior Caminero",
    "player_id": "691406",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-18T00:08:00Z",
    "stat": "k",
    "team": "Tampa Bay Rays",
    "why": "4.3 expected PA from slot 4 vs Shawn Armstrong, then a league-average pen"
   },
   {
+   "actual": 1,
    "at_least": 1,
    "date": "2026-10-17",
    "fair": -158,
@@ -2585,13 +2594,14 @@
    "p_cal": 0.6128,
    "player": "Jonny DeLuca",
    "player_id": "676356",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-18T00:08:00Z",
    "stat": "k",
    "team": "Tampa Bay Rays",
    "why": "4.0 expected PA from slot 7 vs Shawn Armstrong, then a league-average pen"
   },
   {
+   "actual": 0,
    "at_least": 1,
    "date": "2026-10-17",
    "fair": -157,
@@ -2606,13 +2616,14 @@
    "p_cal": 0.6107,
    "player": "Nathaniel Lowe",
    "player_id": "663993",
-   "result": null,
+   "result": "miss",
    "start": "2026-10-18T00:08:00Z",
    "stat": "k",
    "team": "Cleveland Guardians",
    "why": "4.2 expected PA from slot 5 vs Nick Martinez, then a league-average pen"
   },
   {
+   "actual": 1,
    "at_least": 1,
    "date": "2026-10-17",
    "fair": -113,
@@ -2627,13 +2638,14 @@
    "p_cal": 0.5303,
    "player": "Richie Palacios",
    "player_id": "680700",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-18T00:08:00Z",
    "stat": "k",
    "team": "Tampa Bay Rays",
    "why": "3.9 expected PA from slot 8 vs Shawn Armstrong, then a league-average pen"
   },
   {
+   "actual": 1,
    "at_least": 1,
    "date": "2026-10-17",
    "fair": -110,
@@ -2648,11 +2660,32 @@
    "p_cal": 0.5246,
    "player": "Travis Bazzana",
    "player_id": "683953",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-18T00:08:00Z",
    "stat": "k",
    "team": "Cleveland Guardians",
    "why": "4.1 expected PA from slot 6 vs Nick Martinez, then a league-average pen"
+  },
+  {
+   "at_least": 4,
+   "date": "2026-10-18",
+   "fair": -184,
+   "game": "Tampa Bay Rays @ Cleveland Guardians",
+   "game_id": "849817",
+   "label": "K O3.5",
+   "logged_at": "2026-10-18T17:31:05+00:00",
+   "market": "pk4",
+   "matchup": null,
+   "matchup_tier": null,
+   "p": 0.6989,
+   "p_cal": 0.648,
+   "player": "Parker Messick",
+   "player_id": "800048",
+   "result": null,
+   "start": "2026-10-18T21:08:00Z",
+   "stat": "p_k",
+   "team": "Cleveland Guardians",
+   "why": null
   }
  ]
 }
