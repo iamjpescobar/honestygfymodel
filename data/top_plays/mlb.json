@@ -2686,6 +2686,27 @@
    "stat": "p_k",
    "team": "Cleveland Guardians",
    "why": null
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-18",
+   "fair": -240,
+   "game": "Tampa Bay Rays @ Cleveland Guardians",
+   "game_id": "849817",
+   "label": "K O0.5",
+   "logged_at": "2026-10-18T18:15:40+00:00",
+   "market": "k1",
+   "matchup": "Soft matchup \u2014 Parker Messick allows the 73rd-most of 419 strikeouts to batters (0.251 per plate appearance vs 0.222 league, +13%; ranked on this season + last, blended).",
+   "matchup_tier": "soft",
+   "p": 0.7125,
+   "p_cal": 0.706,
+   "player": "Ryan Vilade",
+   "player_id": "668723",
+   "result": null,
+   "start": "2026-10-18T21:08:00Z",
+   "stat": "k",
+   "team": "Tampa Bay Rays",
+   "why": "4.4 expected PA from slot 3 vs Parker Messick, then a league-average pen"
   }
  ]
 }
