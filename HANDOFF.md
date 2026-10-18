@@ -154,6 +154,90 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Parlay slip; the Live page's test on last season. 2026-10-18 (2)
+
+**Suite 143 (+ test_parlay, test_live_check), FAILING: none.** Six
+negative controls red by exit code (three per test). The slip rendered
+headless on the Bet Finder (three legs, two same-game: THIN, linked).
+
+WHY: Izzy bets parlays; every board judges singles, so he skipped legs
+marked SKIP that may belong on a ticket (next to a strong leg, under a
+boost) — and could not see a leg dragging a ticket down.
+
+PARLAY (engines/parlay.py, NEW): joint = product of leg chances; payout =
+the book's parlay price if typed, else the legs' product, boost on the
+winnings; EV = joint * payout - 1; each leg's chance * decimal = carries
+(> 1) / drags (< 1). Guard leg by leg: a CHECK leg -> CHECK; same-game
+legs (game_id: the two abbreviations from any page's label) -> THIN
+with the reason (the link is not priced); untested leg -> THIN; past
+graded range -> VALUE. Ticket tiers by EV per $100: THIN < 10, VALUE
+10-25, STRONG 25+ (display cuts). Stake = the single's Kelly rule on the
+ticket. model_view.parlay_add_ui puts ANY typed leg (BET or SKIP) on
+session_state["parlay"] from Bet Finder (props + game lines), Long
+Shots and Live; the slip is judged at the bottom of the Bet Finder.
+Izzy's 10-13 four-leg ticket: 1 in 356, +38,686 -> +9 per $100 (THIN),
+Holmstrom carries +23%, Coyle / Hagens drag; a 25% boost -> STRONG.
+
+LIVE TEST (nhl_live_check.py + MANUAL workflow nhl-live-check.yml, NEW):
+last 90 days of 2025-26; pregame mu walk-forward (nhl_model.build on the
+prior file alone, rates/probs/toi_scales — fitted 25,518 skater-games
+from 2025-12-28 offline in 80 s); ESPN summaries' scoring plays by period
+(plays[].scoringPlay or scoringPlays; scorer first when untyped;
+shootout dropped); at the end of P1 / P2, live_props.nhl_chance vs a
+naive read (his own season rate x time left), paired on squared error
+per market (g1, g2, pt1, pt2, a1); calibration by checkpoint and by
+score state. Refuses to write without scoring plays; prints the summary
+probe. data/nhl/live_check.json -> live_props.tested(): a market that
+BEAT gets its delivered chance + curve support (VALUE / STRONG possible
+in range) for NHL Overs; everything else (Unders, shots, NFL) stays
+UNTESTED. Game matched by the OPPONENT that night (traded players).
+
+FILES: app/engines/parlay.py, nhl_live_check.py,
+.github/workflows/nhl-live-check.yml, tests/test_parlay.py,
+tests/test_live_check.py (NEW); app/engines/live_props.py,
+app/engines/model_view.py, app/views/Bet_Finder.py,
+app/views/Long_Shots.py, app/views/Live.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md (+ the 10-18 Live files, shipped together)
+
+---
+
+## PICK UP HERE — Live: player props over the rest of a game in progress. 2026-10-18
+
+**Suite 141 (+ test_live_props), FAILING: none.** Three negative controls
+red by exit code (listed in the test). Rendered headless on an NHL slate
+with a faked live summary (2nd period, 10:00): Caufield 42% pregame ->
+25.2% rest of game; a skater with a goal shows CASHED.
+
+WHY: "I WANT TO LIVE BET MAKE IT POSSIBLE." Every board is pregame; a
+mid-game price typed into the Bet Finder is judged against a full-game
+chance and reads as a false VALUE.
+
+ENGINE (engines/live_props.py, NEW, pure): remaining(sport, state,
+period, clock) = fraction of regulation left (OT -> None, not priced).
+rest_pmf: Poisson at m*f (goals, assists, points, TDs); NB counts with
+the game rate's gamma UPDATED on what he already has (size r + have,
+mean (r+have)/(r/m + 1 - f) * f — a hot start raises the rest); yards
+normal, mean m*f, sd cv*m*sqrt(f). need = floor(line)+1 - have.
+game_state / nhl_box / nfl_box read ESPN's live summary (header status,
+boxscore groups via espn_feed.box_group_index).
+
+PAGE (views/Live.py, NHL + NFL navs): games from load_slate_live /
+load_week_live; ESPN summary re-read every 30 s (8 s timeout, both
+hosts) + a Refresh button; stat / line / side; Has / Needs / Chance /
+Worth it at / Your price; calls through bf.judge with
+live_props.UNTESTED -> THIN at most (CHECK at a 10+ gap), Edge shown.
+
+NOT IN THE NUMBER (on the page): score effects, an in-game injury, a
+power play in progress. NEXT: test it — last season's NHL summaries
+period by period (who had scored by the end of P1 / P2 vs the rest-of-
+game chance) — and only then lift the THIN cap for what passes.
+
+FILES: app/engines/live_props.py, app/views/Live.py,
+tests/test_live_props.py (NEW); app/app.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — MLB postseason: game logs, grading, trend windows. 2026-10-16
 
 **Suite 140 (+ test_mlb_postseason_logs), FAILING: none.** Four negative
@@ -691,156 +775,5 @@ Edge, Defenses to Target).
 
 FILES: app/engines/edge_boards.py, the four views, tests/test_edge_boards.py
 (all NEW), app/app.py, HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — money columns first on every model table (iPad width). 2026-10-06 (2)
-
-**Suite 130 (+ test_money_columns_first), FAILING: none.** Three negative
-controls red by exit code. NHL Model and Top Plays checked in a browser
-at 1180px and 800px: every decision column visible without a swipe.
-
-WHY: on the iPad the chance column and Defense vs pos sat off the right
-edge, and the table would not scroll sideways for Izzy.
-
-WHAT: model_view.lead_columns / prop_board_order (NEW) — one rule for
-every model table: name, Pos, the line chances, Avg/Proj, Defense vs
-pos, THEN GP / minutes / samples / team / status. Applied to
-render_prop_board (MLB batters + starters, NHL skaters + goalies), the
-NFL board (Low/Mid/High first), the game value table (Bet, Final, Price,
-Fair, Edge, Tier, Stake, Trust, then Model/Market/Break-even/EV), Best
-value tonight, Top Plays tonight (Player, Bet, Chance, Worth it at,
-Matchup, Status, then Sport/Game) and Top Plays game bets. Reorder only:
-nothing dropped, painters address columns by name, the value editor's
-edits are keyed by row. Research boards untouched (own column groups).
-
-NAMING NEAR-MISS: tests/test_column_order.py ALREADY EXISTS (Game Card
-lineup order from the HR Score weights). The new test was first written
-over it; restored from git — the new one is test_money_columns_first.py.
-
-FILES: app/engines/model_view.py, app/views/Top_Plays.py,
-tests/test_money_columns_first.py (NEW), HANDOFF.md
-
----
-
-## PICK UP HERE — defense vs position on every sport, ice time in the NHL number, the NFL props graded, every chance DELIVERED, colour. 2026-10-06
-
-**Suite 128 (+ test_defense_matchup), FAILING: none.** Nine negative
-controls red by exit code (listed in the new test's docstring + the
-calibration-ends control in test_top_plays). NHL Model, NFL Model, MLB
-Model and Top Plays opened in a real browser from the 10-06 nightly
-archive with the new NHL model block: no exceptions.
-
-### WHY
-
-Izzy: the boards "work" but give him the same obvious bet every night;
-he wants to know WHY a play is suggested and whether the defense is
-actually allowing it (this season AND last), a notice when a player
-faces a soft/tough defense and the defense's rank vs his position, on
-EVERY sport. No money for an odds feed — he checks his own book, so the
-"your price" checker must be as accurate as it can be (no "STRONG" on a
--200 that is really a -350). And colour: plain black tables are hard to
-read.
-
-### MEASURED BEFORE BUILT (rule 1) — last season's NHL, walk-forward
-
-| change | result on unseen games | in the number? |
-|---|---|---|
-| ice time (recent TOI / TOI the rate is built on)^alpha, shots | z 7.7, alpha 0.48, window 5 | YES |
-| same, goals/assists/points | z 6.8, alpha 0.74, window 5 | YES |
-| defense-vs-POSITION share on top of team shots/goals allowed | sog thin z 0.6, pts fails | NO — context |
-| calibration past the curve's ends: carry the gap vs hold flat | better on 6/8 markets (z 2.1-8.4) | YES (all sports) |
-
-The DvP result is the honest headline: a team's TOTAL shots allowed is
-a stable trait (split-half 0.92) and the shots model already has it;
-WHICH position gets them adds nothing measurable. It is still shown
-(rank, tier, notice) because Izzy asked whether the defense allows it —
-and the page says it is context.
-
-### ENGINES
-
-- **engines/defense_matchup.py (NEW, pure, all sports).** Rows (season,
-  defense, game, group, stats) -> per defense x group x stat: this
-  season / last / blended per game, ranks (1 = allows the MOST), quartile
-  tier (soft/neutral/tough — a presentation cut, said so), split-half
-  reliability ("is this matchup real?"), cards, one-sentence notices,
-  badges ("SOFT · 3rd-most", "TOUGH · 2nd-fewest"). Season weight: the
-  direct last->this fit is unidentified on two games a team (measured
-  10-06: C 0.0, W 1.0 the same night), so a REFERENCE weight fitted on
-  last season's first half -> second half is used until this season's
-  likelihood prefers the direct fit by an LR test (1.92, scaled by the
-  measured quasi-Poisson dispersion — yards are not counts). No
-  games-played cutoff anywhere. MLB: mlb_starter_table / cards (the
-  "defense" is the starter, per PA, at the props' fitted pitcher weight)
-  and mlb_lineup_card (tonight's nine vs this season's team lineups).
-- **nhl_model.** fit_toi (fit on the 60 days before the props window,
-  tested on it; alpha 0 unless "beats"); validate_props now uses the
-  adopted ice time so badges/calibration test the page's model;
-  validate_dvp; DvP table; rows carry rate, ice, dvp cards, why.
-  BUG FIXED: pool_skaters took EXHIBITION lines into every rate (the
-  live dict holds preseason games parsed as a parser check) — now
-  regular_ids only. ~2 min added to the nightly (fit_toi).
-- **nfl_prop_check.py (NEW).** DvP from box scores with ROSTER
-  positions (all 32 rosters read; box scores carry none; unknown -> ALL
-  only). Last season's player-game lines parsed once ->
-  data/nfl/prior_dvp.json (committed by the NFL step; written beside
-  PRIOR_PLAYERS_PATH so tests stay sandboxed). THE NFL PROPS ARE NO
-  LONGER UNTESTED: week-by-week walk-forward, line = floor(his average to
-  date)+0.5, vs his own hit rate -> verdict + calibration per stat. Each
-  defense multiplier family (rush/rec/pass) tested on vs off; only
-  "beats" stays in (league["matchup_in_number"], read by
-  nfl_projection.project_player; absent = all on, old files unchanged).
-- **mlb_prop_precompute.** starter_allowed + team_batting in
-  prop_model.json (batting team of the away side read from its batters'
-  home games — never guessed). home_team rides into plate_appearances.
-- **nfl_prop_odds** now owns STATS + stat_pmf (moved from model_view so
-  the nightly prices exactly what the page prices); a zero/unmeasured
-  yards cv returns no distribution instead of crashing.
-- **top_plays_board.calibrate**: gap carried past the ends (the old flat
-  top made Matthews 89% and Eichel 84.5% the same 84.4%).
-
-### PAGES
-
-- **Every prop board (model_view.render_prop_board, NFL board, Top
-  Plays):** cells coloured by an ABSOLUTE chance band (80+ cyan, 65-79
-  gold, 50-64 teal, 35-49 violet, under 35 faint — legend printed under
-  each board, colour only), "Defense vs pos" column coloured by tier.
-  Cells show the DELIVERED chance where a curve exists.
-- **The checker** judges your price on the delivered chance
-  (delivered_over: exact line's curve, else nearest tested line, else
-  NFL "@stat" curve, else raw — and says which), answers in a coloured
-  panel (STRONG / VALUE / THIN / NO VALUE), and under it prints the
-  matchup notice and the WHY line for that player.
-- NHL table adds TOI recent / TOI norm (window from the fit, rule 9).
-- Top Plays logs `why`, `matchup`, `matchup_tier` with each play;
-  Status green/red; the record's Delivered green at/above promised.
-
-### FIRST RUNS — read these lines
-
-    [verify] NHL ice time (sog): window 5 fitted alpha ~0.48 -> IN THE NUMBER (beats, z~7.7)
-    [verify] NHL defense-vs-position (sog): thin ... -> context only
-    [verify] NHL DvP table: 32 defenses; SOG to C league ~9.6 weight .. reliability ~0.63
-    [verify] NFL prior defense lines: 272/272 box scores parsed      (first night only)
-    [verify] NFL defense-vs-position: 32 defenses, N rostered positions, N 2025 lines
-    [verify] NFL defense multiplier (rush|rec|pass): .. -> IN THE NUMBER | context only
-    [verify] NFL prop rush_yds n=.. model .. vs his-own-rate .. -> beats|thin|fails
-    [verify] matchup tables: N starters ranked; 30 team batting lines   (MLB)
-
-### OPEN
-
-- NFL walk-forward uses this season's weeks only (2025 has no per-week
-  logs on disk); its sample grows weekly. Do not retune on a bad week
-  (rule 10).
-- MLB position split (platoon by batter hand) is still not in the
-  number; the starter card is vs all batters.
-
-### FILES, 2026-10-06
-
-    app/engines/defense_matchup.py, nfl_prop_check.py, tests/test_defense_matchup.py   NEW
-    app/engines/{nhl_model,model_view,nfl_projection,nfl_prop_odds,top_plays_board}.py
-    app/views/{NHL_Model,NFL_Model,MLB_Model,GameCard,Top_Plays}.py
-    nhl_precompute.py, nfl_precompute.py, mlb_prop_precompute.py, top_plays_log.py
-    .github/workflows/nightly-data.yml (commit data/nfl/prior_dvp.json)
-    tests/{test_top_plays,test_nfl_pipeline}.py
 
 ---

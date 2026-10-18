@@ -344,10 +344,12 @@ else:
                        "worth": mm.fair_american(ch), "line": ln, "side": side,
                        "line_label": f"{side[0]}{ln:g}"}
                 ref.append(row)
+                _sup = bf.support_at(r, stat, ln, grp["markets"], grp["cal"])
                 j = bf.judge(ch, edited.at[i, "Your price"], _stk, edited.at[i, "Other side"],
-                             bf.support_at(r, stat, ln, grp["markets"], grp["cal"]))
+                             _sup)
                 if j:
-                    res.append(dict(row, price=bf.valid_price(edited.at[i, "Your price"]), **j))
+                    res.append(dict(row, price=bf.valid_price(edited.at[i, "Your price"]),
+                                    support=_sup, **j))
             res.sort(key=lambda x: (bf.CALL_ORDER[x["tier"]], -x["edge"]))
 
             if res:
@@ -360,6 +362,11 @@ else:
                                        key=f"bf_add_{ed_key}"):
                     k = _add_to_card(res, sport, game_label, labels[stat])
                     st.success(f"Added {k} to tonight's card (bottom of the page).")
+                mv.parlay_add_ui([{"player": x["name"], "game": game_label,
+                                   "what": f"{labels[stat]} {x['line_label']}",
+                                   "chance": x["chance"], "price": x["price"],
+                                   "support": x.get("support"), "tier": x["tier"]}
+                                  for x in res], sport, f"bf_{ed_key}")
             else:
                 st.caption("Type a price in **Your price** for anyone you're looking at. "
                            "Until then, here is what each one is worth:")
@@ -412,6 +419,10 @@ else:
                         "Add these BETs to tonight's card", key=f"bf_ladd_{lk}"):
                     k = _add_to_card(lres, sport, game_label, "game line")
                     st.success(f"Added {k} to tonight's card.")
+                mv.parlay_add_ui([{"player": x["name"], "game": game_label,
+                                   "what": "game line", "chance": x["chance"],
+                                   "price": x["price"], "support": bf.MARKET_SUPPORT,
+                                   "tier": x["tier"]} for x in lres], sport, f"bf_l_{lk}")
             st.caption("Game lines are priced on the MARKET's chance, moved toward the model "
                        "only as far as the model has beaten the market on past games. When the "
                        "model has not earned a say, a BET here means your book's price is better "
@@ -456,4 +467,81 @@ with card("bf_card"):
                      "in repeating good prices for weeks. Check the Results page to see how "
                      "the models are doing.")
 
+# ---------------- the parlay slip (10-18, engines/parlay) ----------------
+ss.setdefault("parlay", {})
+with card("bf_parlay"):
+    from engines import parlay as pl
+    st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">'
+                f'Parlay slip</div>', unsafe_allow_html=True)
+    legs = list(ss["parlay"].values())
+    if not legs:
+        st.caption("Add legs from the Bet Finder, Long Shots or Live with your book's price "
+                   "typed — BET or SKIP. The slip checks the WHOLE ticket: the chance every "
+                   "leg hits, what the payout is worth, and which leg carries or drags it.")
+    else:
+        keys = list(ss["parlay"])
+        c1, c2, c3 = st.columns(3)
+        pprice = c1.number_input("Book's parlay price (optional)", value=None, step=5,
+                                 format="%d", key="pl_price",
+                                 help="What your book shows for the whole ticket. Blank = the "
+                                      "legs' prices multiplied.")
+        boost = c2.number_input("Profit boost %", min_value=0, max_value=200, value=0, step=5,
+                                key="pl_boost")
+        if c3.button("Clear the slip", key="pl_clear"):
+            ss["parlay"] = {}
+            st.rerun()
+        v = pl.judge(legs, pprice, boost / 100.0, _stk)
+        df = pd.DataFrame([{
+            "Leg": f"{x['player']} · {x['what']}", "Game": x.get("game") or "—",
+            "Price": _amer(x["price"]), "Our chance": _pct(x["chance"]),
+            "Does": (f"carries +{100 * (x['ratio'] - 1):.0f}%" if x["ratio"] >= 1
+                     else f"drags {100 * (x['ratio'] - 1):.0f}%")}
+            for x in (v["legs"] if v else [dict(l, ratio=1.0) for l in legs])])
+
+        def _paint_pl(frame):
+            out = pd.DataFrame("", index=frame.index, columns=frame.columns)
+            src = v["legs"] if v else []
+            for i in frame.index:
+                if i < len(src):
+                    out.at[i, "Does"] = (f"color: {COLOR['stat_high']}; font-weight: 700;"
+                                         if src[i]["ratio"] >= 1 else
+                                         f"color: {COLOR['error']}; font-weight: 700;")
+            return out
+        st.dataframe(mv.painted(df, _paint_pl), hide_index=True, width="stretch",
+                     key="pl_tab")
+        drop = st.multiselect("Remove a leg", range(len(keys)),
+                              format_func=lambda i: f"{legs[i]['player']} · {legs[i]['what']}",
+                              key="pl_drop")
+        if drop and st.button("Remove", key="pl_drop_go"):
+            for i in drop:
+                ss["parlay"].pop(keys[i], None)
+            st.rerun()
+        if not v:
+            st.caption("Two or more legs make a parlay.")
+        else:
+            lab, fg, bg = mv.TIER_STYLE[v["tier"]]
+            call = "SKIP" if v["tier"] == "none" else lab
+            st.markdown(
+                f'<div style="font-size:var(--lc-text-body); line-height:1.7;">'
+                f'<span style="color:{fg if v["tier"] != "none" else COLOR["error"]}; '
+                f'font-weight:800; font-size:1.15em;">{call}</span> &nbsp; '
+                f'All {len(v["legs"])} hit: <b>{100 * v["chance"]:.2f}%</b> '
+                f'(about 1 in {max(1, round(1 / v["chance"])):,}) · pays '
+                f'<b>{_amer(v["american"])}</b>'
+                + (f' with the {boost}% boost' if boost else '')
+                + f' · <b>{100 * v["ev"]:+.0f}</b> per $100 over time'
+                + (f' · stake ${v["stake"]:.2f}' if v.get("stake") else "")
+                + "</div>", unsafe_allow_html=True)
+            if v["reasons"]:
+                st.markdown(f'<div style="font-size:var(--lc-text-small); color:{COLOR["warn"]};">'
+                            + "<br>".join(v["reasons"]) + "</div>", unsafe_allow_html=True)
+            if v["drag"] and v["tier"] in ("none", "thin"):
+                st.caption("Dragging it: " + ", ".join(
+                    f"{x['player']} ({100 * (x['ratio'] - 1):+.0f}%)" for x in v["drag"])
+                    + " — drop or re-price those legs and watch the call change.")
+        st.caption("Carries / drags = that leg's chance times its price: above even it adds to "
+                   "the ticket, below it takes away. A boost raises every leg at once. Legs "
+                   "from the same game are linked (books price that) and are flagged.")
+
 footer()
+

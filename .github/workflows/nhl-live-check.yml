@@ -1,0 +1,46 @@
+name: NHL live test
+
+# Manual, run ONCE (10-18). Tests the Live page on last season: at the
+# end of the 1st and 2nd period of every game in the last 90 days of
+# 2025-26, what the page would have said each skater's rest-of-game
+# chance was, against what happened (nhl_live_check.py). Writes ONLY
+# data/nhl/live_check.json; the Live page lets a market go above THIN
+# only if it BEAT the naive read here.
+#
+# Read the [verify] lines: the ESPN summary probe (scoring plays must be
+# read), then one line per market (beats / thin / fails) and by score
+# state (ahead / tied / behind). ~600 game summaries: allow 20-40 minutes.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-archive
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Test the Live page on 2025-26
+        run: python nhl_live_check.py
+      - name: Commit the live test
+        run: |
+          if [ -z "$(git status --porcelain -- data/nhl/live_check.json)" ]; then
+            echo "No change to the live test file."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/nhl/live_check.json
+          git commit -m "chore: NHL live test on 2025-26 [skip ci]"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

@@ -222,6 +222,10 @@ else:
                                 x, sport=sport, what=x["market"], line_label="")
                             k += 1
                     st.success(f"Added {k} to tonight's card — it lives on the Bet Finder page.")
+                mv.parlay_add_ui([{"player": x["player"], "game": x["game"], "what": x["market"],
+                                   "chance": x["chance"], "price": x["price"],
+                                   "support": x.get("support"), "tier": x["tier"]}
+                                  for x in res], sport, f"ls_{ed_key}")
             st.caption("Chance = what calls like this actually hit on games the model had not seen. "
                        "Worth it at = the break-even price; your book must pay MORE. A gap of 10+ "
                        "points to your book's price is CHECK, not a bet: at a long price that usually "

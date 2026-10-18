@@ -1568,3 +1568,28 @@ def render_nfl_props(g, league, key, staking, dvp=None):
     stats = tuple((s, lab, (0.5,)) for s, lab, *_ in NFL_STATS)
     _any_line_tool([r for r in rows if r["_pmfs"]], stats, (), {}, f"nfl_{key}", staking, stat,
                    calibration=cal)
+
+# ----------------------------------------------------------------------
+# Parlay slip (10-18, engines/parlay) — any typed price, BET or SKIP,
+# can go on the slip; the slip itself lives on the Bet Finder page.
+# ----------------------------------------------------------------------
+def parlay_add_ui(rows, sport, key):
+    """rows: [{"player", "game", "what", "chance", "price", "support", "tier"}]
+    — every row with a typed price. A multiselect + one button."""
+    from engines import parlay as pl
+    rows = [r for r in rows or [] if r.get("price") is not None and r.get("chance") is not None]
+    if not rows:
+        return 0
+    ss = st.session_state
+    ss.setdefault("parlay", {})
+    labels = [f"{r['player']} · {r['what']} ({r['price']:+d})" for r in rows]
+    pick = st.multiselect("Add to your parlay slip (any leg — BET or not)", range(len(rows)),
+                          format_func=lambda i: labels[i], key=f"pl_pick_{key}")
+    if pick and st.button("Add to parlay slip", key=f"pl_add_{key}"):
+        for i in pick:
+            r = rows[i]
+            pl.add_leg(ss["parlay"], sport, r.get("game"), r["player"], r["what"],
+                       r["chance"], r["price"], r.get("support"), r.get("tier"))
+        st.success(f"{len(pick)} leg{'s' if len(pick) != 1 else ''} on the slip — "
+                   f"it lives at the bottom of the Bet Finder page.")
+    return len(pick)

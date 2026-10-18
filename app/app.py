@@ -320,6 +320,8 @@ SPORT_SUBPAGES = {
         ("Bet Finder", "views/Bet_Finder.py"),
         ("Long Shots", "views/Long_Shots.py"),
         ("Milestone Watch", "views/Milestones.py"),
+        # Props over the rest of a game in progress (10-18, live_props).
+        ("Live", "views/Live.py"),
     ],
     # Hockey is a nightly slate through slate_guard("nhl"). The Crease
     # Report and Shots Lab read regular-season box scores only.
@@ -337,6 +339,7 @@ SPORT_SUBPAGES = {
         ("Bet Finder", "views/Bet_Finder.py"),
         ("Long Shots", "views/Long_Shots.py"),
         ("Milestone Watch", "views/Milestones.py"),
+        ("Live", "views/Live.py"),
     ],
 }
 
