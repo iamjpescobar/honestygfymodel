@@ -1,0 +1,2273 @@
+{
+  "generated_at_et": "2026-10-19 11:12",
+  "week": 6,
+  "league": {
+    "team_games": 184,
+    "td_per_point": 0.107,
+    "points_pg": 23.1,
+    "td_pg": 2.47,
+    "ypc": 4.15,
+    "yards_per_target": 7.32,
+    "catch_rate": 0.669,
+    "carries_pg": 26.5,
+    "targets_pg": 32.1,
+    "td_per_opportunity": 0.04219,
+    "prior_strength": 289.6,
+    "prior_a": 12.218,
+    "prior_b": 277.3899,
+    "players_fitted": 469,
+    "touches_fitted": 10785,
+    "qb_priors": {
+      "cmp": [
+        0.63798,
+        2054.15
+      ],
+      "td": [
+        0.0457,
+        8103.08
+      ],
+      "int": [
+        0.02099,
+        1653.15
+      ]
+    },
+    "prop_spreads": {
+      "Rushing yards": {
+        "kind": "yards",
+        "cv": 0.8737,
+        "players": 158,
+        "games": 654
+      },
+      "Carries": {
+        "kind": "count",
+        "size": 37.446,
+        "players": 162,
+        "games": 664
+      },
+      "Receiving yards": {
+        "kind": "yards",
+        "cv": 0.945,
+        "players": 337,
+        "games": 1421
+      },
+      "Receptions": {
+        "kind": "count",
+        "size": null,
+        "players": 337,
+        "games": 1421
+      },
+      "Targets": {
+        "kind": "count",
+        "size": null,
+        "players": 339,
+        "games": 1425
+      },
+      "Passing yards": {
+        "kind": "yards",
+        "cv": 0.3216,
+        "players": 41,
+        "games": 191
+      },
+      "Pass attempts": {
+        "kind": "count",
+        "size": 30.277,
+        "players": 41,
+        "games": 191
+      },
+      "Rush + rec yards": {
+        "kind": "yards",
+        "cv": 0.8973,
+        "players": 392,
+        "games": 1703
+      },
+      "Completions": {
+        "kind": "count",
+        "size": 45.116,
+        "players": 41,
+        "games": 191
+      },
+      "Passing TDs": {
+        "kind": "count",
+        "size": null,
+        "players": 40,
+        "games": 188
+      },
+      "Interceptions": {
+        "kind": "count",
+        "size": null,
+        "players": 34,
+        "games": 171
+      }
+    },
+    "prior_weights": {
+      "share": 0.7203,
+      "catch": 1.0,
+      "ypc": 0.0768,
+      "ypt": 0.0089,
+      "td": 1.0,
+      "qb_rate": 1.0,
+      "ypa": 0.0048
+    },
+    "prior_weight_report": {
+      "share": {
+        "weight": 0.7203,
+        "n_players": 762,
+        "loglik_gain": 6868.94
+      },
+      "catch": {
+        "weight": 1.0,
+        "n_players": 318,
+        "loglik_gain": 35.1
+      },
+      "ypc": {
+        "weight": 0.0768,
+        "n_players": 174,
+        "loglik_gain": 69.33
+      },
+      "ypt": {
+        "weight": 0.0089,
+        "n_players": 318,
+        "loglik_gain": 252.86
+      },
+      "td": {
+        "weight": 1.0,
+        "n_players": 377,
+        "loglik_gain": 8.92
+      },
+      "qb_rate": {
+        "weight": 1.0,
+        "n_players": 135,
+        "loglik_gain": 1.09
+      },
+      "ypa": {
+        "weight": 0.0048,
+        "n_players": 45,
+        "loglik_gain": 49.82
+      }
+    },
+    "prop_validation": {
+      "n": 28537,
+      "pass_yds": {
+        "n": 655,
+        "model_brier": 0.2513,
+        "baseline_brier": 0.3029,
+        "verdict": {
+          "n": 655,
+          "diff": 0.05154,
+          "se": 0.01057,
+          "z": 4.87,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "10-19%",
+            "n": 2,
+            "predicted": 0.179,
+            "actual": 1.0
+          },
+          {
+            "band": "20-29%",
+            "n": 10,
+            "predicted": 0.263,
+            "actual": 0.3
+          },
+          {
+            "band": "30-39%",
+            "n": 47,
+            "predicted": 0.365,
+            "actual": 0.511
+          },
+          {
+            "band": "40-49%",
+            "n": 387,
+            "predicted": 0.456,
+            "actual": 0.488
+          },
+          {
+            "band": "50-59%",
+            "n": 93,
+            "predicted": 0.536,
+            "actual": 0.538
+          },
+          {
+            "band": "60-69%",
+            "n": 44,
+            "predicted": 0.647,
+            "actual": 0.568
+          },
+          {
+            "band": "70-79%",
+            "n": 25,
+            "predicted": 0.754,
+            "actual": 0.72
+          },
+          {
+            "band": "80-89%",
+            "n": 22,
+            "predicted": 0.851,
+            "actual": 0.636
+          },
+          {
+            "band": "90-99%",
+            "n": 25,
+            "predicted": 0.944,
+            "actual": 0.72
+          }
+        ]
+      },
+      "pass_cmp": {
+        "n": 655,
+        "model_brier": 0.2416,
+        "baseline_brier": 0.2834,
+        "verdict": {
+          "n": 655,
+          "diff": 0.04181,
+          "se": 0.01071,
+          "z": 3.9,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 1,
+            "predicted": 0.08,
+            "actual": 0.0
+          },
+          {
+            "band": "10-19%",
+            "n": 12,
+            "predicted": 0.162,
+            "actual": 0.333
+          },
+          {
+            "band": "20-29%",
+            "n": 47,
+            "predicted": 0.266,
+            "actual": 0.298
+          },
+          {
+            "band": "30-39%",
+            "n": 166,
+            "predicted": 0.356,
+            "actual": 0.464
+          },
+          {
+            "band": "40-49%",
+            "n": 223,
+            "predicted": 0.443,
+            "actual": 0.426
+          },
+          {
+            "band": "50-59%",
+            "n": 75,
+            "predicted": 0.543,
+            "actual": 0.493
+          },
+          {
+            "band": "60-69%",
+            "n": 42,
+            "predicted": 0.655,
+            "actual": 0.643
+          },
+          {
+            "band": "70-79%",
+            "n": 31,
+            "predicted": 0.75,
+            "actual": 0.613
+          },
+          {
+            "band": "80-89%",
+            "n": 18,
+            "predicted": 0.861,
+            "actual": 0.889
+          },
+          {
+            "band": "90-99%",
+            "n": 40,
+            "predicted": 0.96,
+            "actual": 0.75
+          }
+        ]
+      },
+      "pass_att": {
+        "n": 655,
+        "model_brier": 0.2524,
+        "baseline_brier": 0.299,
+        "verdict": {
+          "n": 655,
+          "diff": 0.04655,
+          "se": 0.01078,
+          "z": 4.32,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "10-19%",
+            "n": 5,
+            "predicted": 0.139,
+            "actual": 0.6
+          },
+          {
+            "band": "20-29%",
+            "n": 25,
+            "predicted": 0.256,
+            "actual": 0.4
+          },
+          {
+            "band": "30-39%",
+            "n": 164,
+            "predicted": 0.368,
+            "actual": 0.463
+          },
+          {
+            "band": "40-49%",
+            "n": 299,
+            "predicted": 0.442,
+            "actual": 0.458
+          },
+          {
+            "band": "50-59%",
+            "n": 49,
+            "predicted": 0.546,
+            "actual": 0.49
+          },
+          {
+            "band": "60-69%",
+            "n": 37,
+            "predicted": 0.654,
+            "actual": 0.514
+          },
+          {
+            "band": "70-79%",
+            "n": 17,
+            "predicted": 0.744,
+            "actual": 0.706
+          },
+          {
+            "band": "80-89%",
+            "n": 19,
+            "predicted": 0.844,
+            "actual": 0.632
+          },
+          {
+            "band": "90-99%",
+            "n": 40,
+            "predicted": 0.962,
+            "actual": 0.775
+          }
+        ]
+      },
+      "pass_td": {
+        "n": 655,
+        "model_brier": 0.2251,
+        "baseline_brier": 0.2916,
+        "verdict": {
+          "n": 655,
+          "diff": 0.06654,
+          "se": 0.01088,
+          "z": 6.12,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 22,
+            "predicted": 0.051,
+            "actual": 0.045
+          },
+          {
+            "band": "10-19%",
+            "n": 53,
+            "predicted": 0.165,
+            "actual": 0.208
+          },
+          {
+            "band": "20-29%",
+            "n": 75,
+            "predicted": 0.246,
+            "actual": 0.28
+          },
+          {
+            "band": "30-39%",
+            "n": 115,
+            "predicted": 0.366,
+            "actual": 0.452
+          },
+          {
+            "band": "40-49%",
+            "n": 225,
+            "predicted": 0.443,
+            "actual": 0.409
+          },
+          {
+            "band": "50-59%",
+            "n": 50,
+            "predicted": 0.53,
+            "actual": 0.6
+          },
+          {
+            "band": "60-69%",
+            "n": 15,
+            "predicted": 0.666,
+            "actual": 0.733
+          },
+          {
+            "band": "70-79%",
+            "n": 91,
+            "predicted": 0.752,
+            "actual": 0.648
+          },
+          {
+            "band": "80-89%",
+            "n": 9,
+            "predicted": 0.818,
+            "actual": 0.889
+          }
+        ]
+      },
+      "pass_int": {
+        "n": 655,
+        "model_brier": 0.2249,
+        "baseline_brier": 0.2721,
+        "verdict": {
+          "n": 655,
+          "diff": 0.0472,
+          "se": 0.00826,
+          "z": 5.72,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 26,
+            "predicted": 0.055,
+            "actual": 0.154
+          },
+          {
+            "band": "10-19%",
+            "n": 100,
+            "predicted": 0.159,
+            "actual": 0.16
+          },
+          {
+            "band": "20-29%",
+            "n": 37,
+            "predicted": 0.236,
+            "actual": 0.135
+          },
+          {
+            "band": "30-39%",
+            "n": 87,
+            "predicted": 0.365,
+            "actual": 0.506
+          },
+          {
+            "band": "40-49%",
+            "n": 304,
+            "predicted": 0.455,
+            "actual": 0.467
+          },
+          {
+            "band": "50-59%",
+            "n": 101,
+            "predicted": 0.525,
+            "actual": 0.465
+          }
+        ]
+      },
+      "rush_yds": {
+        "n": 1703,
+        "model_brier": 0.251,
+        "baseline_brier": 0.2868,
+        "verdict": {
+          "n": 1703,
+          "diff": 0.0358,
+          "se": 0.006,
+          "z": 5.97,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 27,
+            "predicted": 0.048,
+            "actual": 0.481
+          },
+          {
+            "band": "10-19%",
+            "n": 30,
+            "predicted": 0.155,
+            "actual": 0.367
+          },
+          {
+            "band": "20-29%",
+            "n": 62,
+            "predicted": 0.259,
+            "actual": 0.452
+          },
+          {
+            "band": "30-39%",
+            "n": 128,
+            "predicted": 0.357,
+            "actual": 0.32
+          },
+          {
+            "band": "40-49%",
+            "n": 751,
+            "predicted": 0.479,
+            "actual": 0.441
+          },
+          {
+            "band": "50-59%",
+            "n": 612,
+            "predicted": 0.512,
+            "actual": 0.443
+          },
+          {
+            "band": "60-69%",
+            "n": 58,
+            "predicted": 0.644,
+            "actual": 0.586
+          },
+          {
+            "band": "70-79%",
+            "n": 17,
+            "predicted": 0.751,
+            "actual": 0.765
+          },
+          {
+            "band": "80-89%",
+            "n": 11,
+            "predicted": 0.83,
+            "actual": 0.636
+          },
+          {
+            "band": "90-99%",
+            "n": 7,
+            "predicted": 1.0,
+            "actual": 0.857
+          }
+        ]
+      },
+      "carries": {
+        "n": 1170,
+        "model_brier": 0.2566,
+        "baseline_brier": 0.2888,
+        "verdict": {
+          "n": 1170,
+          "diff": 0.03218,
+          "se": 0.00709,
+          "z": 4.54,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 43,
+            "predicted": 0.047,
+            "actual": 0.349
+          },
+          {
+            "band": "10-19%",
+            "n": 48,
+            "predicted": 0.15,
+            "actual": 0.354
+          },
+          {
+            "band": "20-29%",
+            "n": 79,
+            "predicted": 0.253,
+            "actual": 0.304
+          },
+          {
+            "band": "30-39%",
+            "n": 155,
+            "predicted": 0.351,
+            "actual": 0.452
+          },
+          {
+            "band": "40-49%",
+            "n": 623,
+            "predicted": 0.454,
+            "actual": 0.469
+          },
+          {
+            "band": "50-59%",
+            "n": 162,
+            "predicted": 0.524,
+            "actual": 0.494
+          },
+          {
+            "band": "60-69%",
+            "n": 23,
+            "predicted": 0.646,
+            "actual": 0.478
+          },
+          {
+            "band": "70-79%",
+            "n": 17,
+            "predicted": 0.74,
+            "actual": 0.412
+          },
+          {
+            "band": "80-89%",
+            "n": 8,
+            "predicted": 0.844,
+            "actual": 0.5
+          },
+          {
+            "band": "90-99%",
+            "n": 12,
+            "predicted": 0.958,
+            "actual": 0.667
+          }
+        ]
+      },
+      "targets": {
+        "n": 4848,
+        "model_brier": 0.2436,
+        "baseline_brier": 0.2869,
+        "verdict": {
+          "n": 4848,
+          "diff": 0.04332,
+          "se": 0.00314,
+          "z": 13.79,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 161,
+            "predicted": 0.055,
+            "actual": 0.205
+          },
+          {
+            "band": "10-19%",
+            "n": 282,
+            "predicted": 0.156,
+            "actual": 0.344
+          },
+          {
+            "band": "20-29%",
+            "n": 527,
+            "predicted": 0.257,
+            "actual": 0.376
+          },
+          {
+            "band": "30-39%",
+            "n": 1182,
+            "predicted": 0.355,
+            "actual": 0.406
+          },
+          {
+            "band": "40-49%",
+            "n": 1636,
+            "predicted": 0.443,
+            "actual": 0.421
+          },
+          {
+            "band": "50-59%",
+            "n": 808,
+            "predicted": 0.528,
+            "actual": 0.522
+          },
+          {
+            "band": "60-69%",
+            "n": 125,
+            "predicted": 0.647,
+            "actual": 0.536
+          },
+          {
+            "band": "70-79%",
+            "n": 64,
+            "predicted": 0.746,
+            "actual": 0.703
+          },
+          {
+            "band": "80-89%",
+            "n": 41,
+            "predicted": 0.842,
+            "actual": 0.829
+          },
+          {
+            "band": "90-99%",
+            "n": 22,
+            "predicted": 0.929,
+            "actual": 0.727
+          }
+        ]
+      },
+      "scrim_yds": {
+        "n": 5252,
+        "model_brier": 0.2506,
+        "baseline_brier": 0.2898,
+        "verdict": {
+          "n": 5252,
+          "diff": 0.03915,
+          "se": 0.00339,
+          "z": 11.54,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 17,
+            "predicted": 0.038,
+            "actual": 0.588
+          },
+          {
+            "band": "10-19%",
+            "n": 37,
+            "predicted": 0.155,
+            "actual": 0.324
+          },
+          {
+            "band": "20-29%",
+            "n": 91,
+            "predicted": 0.26,
+            "actual": 0.462
+          },
+          {
+            "band": "30-39%",
+            "n": 226,
+            "predicted": 0.359,
+            "actual": 0.46
+          },
+          {
+            "band": "40-49%",
+            "n": 2580,
+            "predicted": 0.481,
+            "actual": 0.433
+          },
+          {
+            "band": "50-59%",
+            "n": 2016,
+            "predicted": 0.517,
+            "actual": 0.455
+          },
+          {
+            "band": "60-69%",
+            "n": 158,
+            "predicted": 0.645,
+            "actual": 0.576
+          },
+          {
+            "band": "70-79%",
+            "n": 90,
+            "predicted": 0.745,
+            "actual": 0.644
+          },
+          {
+            "band": "80-89%",
+            "n": 34,
+            "predicted": 0.833,
+            "actual": 0.912
+          },
+          {
+            "band": "90-99%",
+            "n": 3,
+            "predicted": 1.0,
+            "actual": 1.0
+          }
+        ]
+      },
+      "rec_yds": {
+        "n": 4730,
+        "model_brier": 0.2551,
+        "baseline_brier": 0.2861,
+        "verdict": {
+          "n": 4730,
+          "diff": 0.03103,
+          "se": 0.00352,
+          "z": 8.81,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 82,
+            "predicted": 0.036,
+            "actual": 0.549
+          },
+          {
+            "band": "10-19%",
+            "n": 96,
+            "predicted": 0.152,
+            "actual": 0.417
+          },
+          {
+            "band": "20-29%",
+            "n": 170,
+            "predicted": 0.255,
+            "actual": 0.471
+          },
+          {
+            "band": "30-39%",
+            "n": 353,
+            "predicted": 0.358,
+            "actual": 0.414
+          },
+          {
+            "band": "40-49%",
+            "n": 2283,
+            "predicted": 0.476,
+            "actual": 0.415
+          },
+          {
+            "band": "50-59%",
+            "n": 1520,
+            "predicted": 0.518,
+            "actual": 0.461
+          },
+          {
+            "band": "60-69%",
+            "n": 144,
+            "predicted": 0.646,
+            "actual": 0.5
+          },
+          {
+            "band": "70-79%",
+            "n": 58,
+            "predicted": 0.74,
+            "actual": 0.724
+          },
+          {
+            "band": "80-89%",
+            "n": 22,
+            "predicted": 0.826,
+            "actual": 1.0
+          },
+          {
+            "band": "90-99%",
+            "n": 2,
+            "predicted": 1.0,
+            "actual": 1.0
+          }
+        ]
+      },
+      "rec": {
+        "n": 4778,
+        "model_brier": 0.239,
+        "baseline_brier": 0.2684,
+        "verdict": {
+          "n": 4778,
+          "diff": 0.0294,
+          "se": 0.00304,
+          "z": 9.69,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 164,
+            "predicted": 0.059,
+            "actual": 0.189
+          },
+          {
+            "band": "10-19%",
+            "n": 270,
+            "predicted": 0.164,
+            "actual": 0.281
+          },
+          {
+            "band": "20-29%",
+            "n": 611,
+            "predicted": 0.255,
+            "actual": 0.373
+          },
+          {
+            "band": "30-39%",
+            "n": 1293,
+            "predicted": 0.354,
+            "actual": 0.389
+          },
+          {
+            "band": "40-49%",
+            "n": 1419,
+            "predicted": 0.445,
+            "actual": 0.44
+          },
+          {
+            "band": "50-59%",
+            "n": 839,
+            "predicted": 0.532,
+            "actual": 0.528
+          },
+          {
+            "band": "60-69%",
+            "n": 94,
+            "predicted": 0.646,
+            "actual": 0.606
+          },
+          {
+            "band": "70-79%",
+            "n": 52,
+            "predicted": 0.754,
+            "actual": 0.731
+          },
+          {
+            "band": "80-89%",
+            "n": 19,
+            "predicted": 0.847,
+            "actual": 0.842
+          },
+          {
+            "band": "90-99%",
+            "n": 17,
+            "predicted": 0.939,
+            "actual": 0.941
+          }
+        ]
+      },
+      "td": {
+        "n": 2781,
+        "model_brier": 0.1582,
+        "baseline_brier": 0.1998,
+        "verdict": {
+          "n": 2781,
+          "diff": 0.04161,
+          "se": 0.00397,
+          "z": 10.48,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 936,
+            "predicted": 0.063,
+            "actual": 0.114
+          },
+          {
+            "band": "10-19%",
+            "n": 963,
+            "predicted": 0.146,
+            "actual": 0.193
+          },
+          {
+            "band": "20-29%",
+            "n": 470,
+            "predicted": 0.243,
+            "actual": 0.302
+          },
+          {
+            "band": "30-39%",
+            "n": 245,
+            "predicted": 0.342,
+            "actual": 0.339
+          },
+          {
+            "band": "40-49%",
+            "n": 98,
+            "predicted": 0.451,
+            "actual": 0.408
+          },
+          {
+            "band": "50-59%",
+            "n": 48,
+            "predicted": 0.537,
+            "actual": 0.521
+          },
+          {
+            "band": "60-69%",
+            "n": 20,
+            "predicted": 0.638,
+            "actual": 0.75
+          },
+          {
+            "band": "70-79%",
+            "n": 1,
+            "predicted": 0.716,
+            "actual": 1.0
+          }
+        ]
+      },
+      "matchup": {
+        "rush": {
+          "strength": 0.0,
+          "fitted": 0.5,
+          "n_train": 584,
+          "n": 1119,
+          "verdict": {
+            "n": 1119,
+            "diff": -0.00075,
+            "se": 0.00337,
+            "z": -0.22,
+            "verdict": "fails"
+          },
+          "in_number": false
+        },
+        "rec": {
+          "strength": 0.0,
+          "fitted": 0.5,
+          "n_train": 3255,
+          "n": 6253,
+          "verdict": {
+            "n": 6253,
+            "diff": 0.00035,
+            "se": 0.0008,
+            "z": 0.43,
+            "verdict": "thin"
+          },
+          "in_number": false
+        },
+        "pass": {
+          "strength": 0.0,
+          "fitted": 0.0,
+          "n_train": 231,
+          "n": 0,
+          "verdict": {
+            "verdict": null
+          },
+          "in_number": false
+        }
+      },
+      "matchup_in_number": {
+        "rush": false,
+        "rec": false,
+        "pass": false
+      },
+      "matchup_strength": {
+        "rush": 0.0,
+        "rec": 0.0,
+        "pass": 0.0
+      },
+      "weeks": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "seasons": {
+        "prior_rows": 21599,
+        "current_rows": 6938
+      }
+    },
+    "matchup_in_number": {
+      "rush": false,
+      "rec": false,
+      "pass": false
+    },
+    "matchup_strength": {
+      "rush": 0.0,
+      "rec": 0.0,
+      "pass": 0.0
+    }
+  },
+  "markets": {
+    "Anytime TD": [
+      {
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 67,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Kittle",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 34,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 32,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mike Evans",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 32,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Stefon Diggs",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 28,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kaelon Black",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 28,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Terry McLaurin",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 26,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Antonio Williams",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 19,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chig Okonkwo",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 17,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jordan James",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 17,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dyami Brown",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 14,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Treylon Burks",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 13,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Craig Reynolds",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 11,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brandin Cooks",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 11,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Juszczyk",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "FB",
+        "gp": 3,
+        "proj": 10,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jacob Cowing",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jordan Watkins",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 7,
+        "window": "Monday Night"
+      }
+    ],
+    "Rushing yards": [
+      {
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 72.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 69.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 32.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kaelon Black",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 27.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Athan Kaliakmanis",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 21.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brock Purdy",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 5,
+        "proj": 20.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jordan James",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 15.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Craig Reynolds",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 5.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mac Jones",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 1.8,
+        "window": "Monday Night"
+      }
+    ],
+    "Carries": [
+      {
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 16.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 7.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kaelon Black",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 7.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jordan James",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 4.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Craig Reynolds",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 2.8,
+        "window": "Monday Night"
+      }
+    ],
+    "Receiving yards": [
+      {
+        "player": "Mike Evans",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 61.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Kittle",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 55.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Terry McLaurin",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 54.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jordan Watkins",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 53.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Stefon Diggs",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 37.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 33.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Antonio Williams",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 31.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chig Okonkwo",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 28.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Treylon Burks",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 24.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dyami Brown",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 18.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Juszczyk",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "FB",
+        "gp": 3,
+        "proj": 15.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 13.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brandin Cooks",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 6.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jacob Cowing",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 3.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kaelon Black",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 1.0,
+        "window": "Monday Night"
+      }
+    ],
+    "Receptions": [
+      {
+        "player": "Stefon Diggs",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 5.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 4.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Kittle",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 4.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Terry McLaurin",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 4.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mike Evans",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 3.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chig Okonkwo",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 3.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Antonio Williams",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 3.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 2.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dyami Brown",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 1.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Treylon Burks",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 1.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brandin Cooks",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 1.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Juszczyk",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "FB",
+        "gp": 3,
+        "proj": 1.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jordan Watkins",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 1.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jacob Cowing",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 0.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kaelon Black",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 0.2,
+        "window": "Monday Night"
+      }
+    ],
+    "Targets": [
+      {
+        "player": "Terry McLaurin",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 7.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Stefon Diggs",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 6.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mike Evans",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 6.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 6.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Kittle",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 5.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chig Okonkwo",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 4.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Antonio Williams",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 4.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Treylon Burks",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 3.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dyami Brown",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 3.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 2.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brandin Cooks",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 2.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jordan Watkins",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 1.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Juszczyk",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "FB",
+        "gp": 3,
+        "proj": 1.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jacob Cowing",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 1.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kaelon Black",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 0.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Craig Reynolds",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 0.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jordan James",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 0.0,
+        "window": "Monday Night"
+      }
+    ],
+    "Passing yards": [
+      {
+        "player": "Brock Purdy",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 5,
+        "proj": 230.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mac Jones",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 203.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 183.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Athan Kaliakmanis",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 171.5,
+        "window": "Monday Night"
+      }
+    ],
+    "Pass attempts": [
+      {
+        "player": "Athan Kaliakmanis",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 30.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 30.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mac Jones",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 27.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brock Purdy",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 5,
+        "proj": 27.4,
+        "window": "Monday Night"
+      }
+    ],
+    "Rush + rec yards": [
+      {
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 106.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mike Evans",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 61.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Kittle",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 55.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Terry McLaurin",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 54.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jordan Watkins",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 53.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 46.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Stefon Diggs",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 37.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Antonio Williams",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 31.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chig Okonkwo",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 28.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kaelon Black",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 28.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Treylon Burks",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 24.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dyami Brown",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 20.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jordan James",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 15.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Juszczyk",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "FB",
+        "gp": 3,
+        "proj": 15.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brandin Cooks",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 6.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Craig Reynolds",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 5.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jacob Cowing",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 3.7,
+        "window": "Monday Night"
+      }
+    ],
+    "Completions": [
+      {
+        "player": "Athan Kaliakmanis",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 19.31,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 19.28,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brock Purdy",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 5,
+        "proj": 17.74,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mac Jones",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 17.68,
+        "window": "Monday Night"
+      }
+    ],
+    "Passing TDs": [
+      {
+        "player": "Athan Kaliakmanis",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 1.39,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 1.39,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brock Purdy",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 5,
+        "proj": 1.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mac Jones",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 1.25,
+        "window": "Monday Night"
+      }
+    ],
+    "Interceptions": [
+      {
+        "player": "Athan Kaliakmanis",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 0.64,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brock Purdy",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 5,
+        "proj": 0.62,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 0.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mac Jones",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 0.57,
+        "window": "Monday Night"
+      }
+    ],
+    "2+ TDs": [
+      {
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 30.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Kittle",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 6.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 5.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mike Evans",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 5.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Stefon Diggs",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 4.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kaelon Black",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 4.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Terry McLaurin",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 3.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Antonio Williams",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 1.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chig Okonkwo",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 1.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jordan James",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 1.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dyami Brown",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 1.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Treylon Burks",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 1.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Craig Reynolds",
+        "team": "WSH",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 0.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brandin Cooks",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 0.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kyle Juszczyk",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "FB",
+        "gp": 3,
+        "proj": 0.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jacob Cowing",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 0.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jordan Watkins",
+        "team": "SF",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 0.3,
+        "window": "Monday Night"
+      }
+    ]
+  }
+}
