@@ -8744,7 +8744,8 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         },
         {
           "id": "800050",
@@ -8752,7 +8753,8 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         },
         {
           "id": "608070",
@@ -8760,7 +8762,8 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         },
         {
           "id": "666176",
@@ -8768,7 +8771,8 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         },
         {
           "id": "663993",
@@ -8776,7 +8780,8 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         },
         {
           "id": "683953",
@@ -8784,7 +8789,8 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         },
         {
           "id": "802415",
@@ -8792,7 +8798,8 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         },
         {
           "id": "691406",
@@ -8800,7 +8807,8 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         },
         {
           "id": "676356",
@@ -8808,7 +8816,8 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         },
         {
           "id": "650490",
@@ -8816,7 +8825,8 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         },
         {
           "id": "677587",
@@ -8824,7 +8834,8 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         },
         {
           "id": "666018",
@@ -8832,7 +8843,8 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         },
         {
           "id": "680700",
@@ -8840,7 +8852,8 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         }
       ],
       "graded": true,
@@ -9074,7 +9087,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "800050",
@@ -9082,7 +9095,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "680757",
@@ -9090,7 +9103,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "650490",
@@ -9098,7 +9111,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "691406",
@@ -9106,7 +9119,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "666176",
@@ -9114,7 +9127,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "802415",
@@ -9122,7 +9135,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "666018",
@@ -9130,7 +9143,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "683953",
@@ -9138,7 +9151,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "676356",
@@ -9146,7 +9159,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "663993",
@@ -9154,7 +9167,7 @@
           "team": "CLE",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "680700",
@@ -9162,7 +9175,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "683748",
@@ -9170,10 +9183,10 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -10290,7 +10303,8 @@
           "team": "Tampa Bay Rays",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         }
       ],
       "graded": true,
@@ -10332,10 +10346,10 @@
           "team": "Tampa Bay Rays",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -13942,7 +13956,8 @@
           "team": "Tampa Bay Rays",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         },
         {
           "id": "691406",
@@ -13950,7 +13965,8 @@
           "team": "Tampa Bay Rays",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         },
         {
           "id": "683748",
@@ -13958,7 +13974,8 @@
           "team": "Tampa Bay Rays",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         },
         {
           "id": "672275",
@@ -13966,7 +13983,8 @@
           "team": "Cleveland Guardians",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         },
         {
           "id": "663993",
@@ -13974,7 +13992,8 @@
           "team": "Cleveland Guardians",
           "stat": null,
           "line": null,
-          "result": "dnp"
+          "result": "dnp",
+          "ps_regraded": true
         }
       ],
       "graded": true,
@@ -14080,7 +14099,7 @@
           "team": "Tampa Bay Rays",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "691406",
@@ -14088,7 +14107,7 @@
           "team": "Tampa Bay Rays",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "683748",
@@ -14096,7 +14115,7 @@
           "team": "Tampa Bay Rays",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "672275",
@@ -14104,7 +14123,7 @@
           "team": "Cleveland Guardians",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "663993",
@@ -14112,10 +14131,10 @@
           "team": "Cleveland Guardians",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -32112,7 +32131,7 @@
           "team": "Golden State Valkyries",
           "stat": "pts",
           "line": 18.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "1054",
@@ -32120,7 +32139,7 @@
           "team": "Golden State Valkyries",
           "stat": "pts",
           "line": 11.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3142250",
@@ -32128,7 +32147,7 @@
           "team": "Atlanta Dream",
           "stat": "pts",
           "line": 14.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4065780",
@@ -32136,7 +32155,7 @@
           "team": "Golden State Valkyries",
           "stat": "pts",
           "line": 7.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433402",
@@ -32144,7 +32163,7 @@
           "team": "Atlanta Dream",
           "stat": "pts",
           "line": 18.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398935",
@@ -32152,7 +32171,7 @@
           "team": "Golden State Valkyries",
           "stat": "pts",
           "line": 10.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4899328",
@@ -32160,7 +32179,7 @@
           "team": "Golden State Valkyries",
           "stat": "pts",
           "line": 7.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3058901",
@@ -32168,7 +32187,7 @@
           "team": "Atlanta Dream",
           "stat": "pts",
           "line": 18.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398674",
@@ -32176,7 +32195,7 @@
           "team": "Atlanta Dream",
           "stat": "pts",
           "line": 17.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2590093",
@@ -32184,7 +32203,7 @@
           "team": "Golden State Valkyries",
           "stat": "pts",
           "line": 3.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2590093",
@@ -32192,7 +32211,7 @@
           "team": "Golden State Valkyries",
           "stat": "reb",
           "line": 8.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4065780",
@@ -32200,7 +32219,7 @@
           "team": "Golden State Valkyries",
           "stat": "reb",
           "line": 5.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "1054",
@@ -32208,7 +32227,7 @@
           "team": "Golden State Valkyries",
           "stat": "reb",
           "line": 2.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4398674",
@@ -32216,7 +32235,7 @@
           "team": "Atlanta Dream",
           "stat": "reb",
           "line": 4.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3142328",
@@ -32224,7 +32243,7 @@
           "team": "Golden State Valkyries",
           "stat": "reb",
           "line": 4.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4899328",
@@ -32232,7 +32251,7 @@
           "team": "Golden State Valkyries",
           "stat": "reb",
           "line": 1.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3058901",
@@ -32240,7 +32259,7 @@
           "team": "Atlanta Dream",
           "stat": "reb",
           "line": 4.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398935",
@@ -32248,7 +32267,7 @@
           "team": "Golden State Valkyries",
           "stat": "reb",
           "line": 4.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4257500",
@@ -32256,7 +32275,7 @@
           "team": "Golden State Valkyries",
           "stat": "reb",
           "line": 2.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "869",
@@ -32264,7 +32283,7 @@
           "team": "Atlanta Dream",
           "stat": "reb",
           "line": 5.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "2590093",
@@ -32272,7 +32291,7 @@
           "team": "Golden State Valkyries",
           "stat": "ast",
           "line": 1.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4398674",
@@ -32280,7 +32299,7 @@
           "team": "Atlanta Dream",
           "stat": "ast",
           "line": 3.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3142328",
@@ -32288,7 +32307,7 @@
           "team": "Golden State Valkyries",
           "stat": "ast",
           "line": 3.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3142250",
@@ -32296,7 +32315,7 @@
           "team": "Atlanta Dream",
           "stat": "ast",
           "line": 7.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "1054",
@@ -32304,7 +32323,7 @@
           "team": "Golden State Valkyries",
           "stat": "ast",
           "line": 2.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398915",
@@ -32312,7 +32331,7 @@
           "team": "Atlanta Dream",
           "stat": "ast",
           "line": 2.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "869",
@@ -32320,7 +32339,7 @@
           "team": "Atlanta Dream",
           "stat": "ast",
           "line": 1.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3058901",
@@ -32328,7 +32347,7 @@
           "team": "Atlanta Dream",
           "stat": "ast",
           "line": 3.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4398935",
@@ -32336,7 +32355,7 @@
           "team": "Golden State Valkyries",
           "stat": "ast",
           "line": 5.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4899328",
@@ -32344,7 +32363,7 @@
           "team": "Golden State Valkyries",
           "stat": "ast",
           "line": 1.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2590093",
@@ -32352,7 +32371,7 @@
           "team": "Golden State Valkyries",
           "stat": "pra",
           "line": 13.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3142328",
@@ -32360,7 +32379,7 @@
           "team": "Golden State Valkyries",
           "stat": "pra",
           "line": 25.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3142250",
@@ -32368,7 +32387,7 @@
           "team": "Atlanta Dream",
           "stat": "pra",
           "line": 24.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "1054",
@@ -32376,7 +32395,7 @@
           "team": "Golden State Valkyries",
           "stat": "pra",
           "line": 17.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433402",
@@ -32384,7 +32403,7 @@
           "team": "Atlanta Dream",
           "stat": "pra",
           "line": 32.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398674",
@@ -32392,7 +32411,7 @@
           "team": "Atlanta Dream",
           "stat": "pra",
           "line": 25.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4065780",
@@ -32400,7 +32419,7 @@
           "team": "Golden State Valkyries",
           "stat": "pra",
           "line": 14.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3058901",
@@ -32408,7 +32427,7 @@
           "team": "Atlanta Dream",
           "stat": "pra",
           "line": 25.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "869",
@@ -32416,7 +32435,7 @@
           "team": "Atlanta Dream",
           "stat": "pra",
           "line": 18.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4398935",
@@ -32424,7 +32443,7 @@
           "team": "Golden State Valkyries",
           "stat": "pra",
           "line": 19.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3142328",
@@ -32432,7 +32451,7 @@
           "team": "Golden State Valkyries",
           "stat": "tpm",
           "line": 2.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "1054",
@@ -32440,7 +32459,7 @@
           "team": "Golden State Valkyries",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4433402",
@@ -32448,7 +32467,7 @@
           "team": "Atlanta Dream",
           "stat": "tpm",
           "line": 0.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4065780",
@@ -32456,7 +32475,7 @@
           "team": "Golden State Valkyries",
           "stat": "tpm",
           "line": 0.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "3142250",
@@ -32464,7 +32483,7 @@
           "team": "Atlanta Dream",
           "stat": "tpm",
           "line": 1.5,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "869",
@@ -32472,7 +32491,7 @@
           "team": "Atlanta Dream",
           "stat": "tpm",
           "line": 1.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4257500",
@@ -32480,7 +32499,7 @@
           "team": "Golden State Valkyries",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4899328",
@@ -32488,7 +32507,7 @@
           "team": "Golden State Valkyries",
           "stat": "tpm",
           "line": 1.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3058901",
@@ -32496,7 +32515,7 @@
           "team": "Atlanta Dream",
           "stat": "tpm",
           "line": 2.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398915",
@@ -32504,10 +32523,10 @@
           "team": "Atlanta Dream",
           "stat": "tpm",
           "line": 1.5,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -38226,7 +38245,7 @@
           "team": "Golden State Valkyries",
           "stat": "pts",
           "line": 20.9,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4257500",
@@ -38234,7 +38253,7 @@
           "team": "Golden State Valkyries",
           "stat": "pts",
           "line": 8.8,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4432834",
@@ -38242,7 +38261,7 @@
           "team": "Golden State Valkyries",
           "stat": "pts",
           "line": 5.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "1054",
@@ -38250,7 +38269,7 @@
           "team": "Golden State Valkyries",
           "stat": "pts",
           "line": 10.9,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398935",
@@ -38258,7 +38277,7 @@
           "team": "Golden State Valkyries",
           "stat": "pts",
           "line": 10.1,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4433402",
@@ -38266,7 +38285,7 @@
           "team": "Atlanta Dream",
           "stat": "reb",
           "line": 9.0,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "869",
@@ -38274,7 +38293,7 @@
           "team": "Atlanta Dream",
           "stat": "reb",
           "line": 5.6,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4398915",
@@ -38282,7 +38301,7 @@
           "team": "Atlanta Dream",
           "stat": "reb",
           "line": 4.1,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4398674",
@@ -38290,7 +38309,7 @@
           "team": "Atlanta Dream",
           "stat": "reb",
           "line": 4.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3058901",
@@ -38298,7 +38317,7 @@
           "team": "Atlanta Dream",
           "stat": "reb",
           "line": 3.8,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "2590093",
@@ -38306,7 +38325,7 @@
           "team": "Golden State Valkyries",
           "stat": "ast",
           "line": 2.0,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3142328",
@@ -38314,7 +38333,7 @@
           "team": "Golden State Valkyries",
           "stat": "ast",
           "line": 3.5,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "3142250",
@@ -38322,7 +38341,7 @@
           "team": "Atlanta Dream",
           "stat": "ast",
           "line": 7.6,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "4398674",
@@ -38330,7 +38349,7 @@
           "team": "Atlanta Dream",
           "stat": "ast",
           "line": 3.9,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "4257500",
@@ -38338,10 +38357,10 @@
           "team": "Golden State Valkyries",
           "stat": "ast",
           "line": 0.9,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -41563,7 +41582,8 @@
           "team": "TB",
           "stat": "strikeOuts",
           "line": 3.1,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": 542888,
@@ -41571,10 +41591,11 @@
           "team": "CLE",
           "stat": "strikeOuts",
           "line": 0.8,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     },
     "2026-10-17": {
@@ -41629,7 +41650,7 @@
           "team": "TB",
           "stat": "strikeOuts",
           "line": 4.4,
-          "result": null
+          "result": "miss"
         },
         {
           "id": 542888,
@@ -41637,10 +41658,10 @@
           "team": "CLE",
           "stat": "strikeOuts",
           "line": 0.7,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   }
