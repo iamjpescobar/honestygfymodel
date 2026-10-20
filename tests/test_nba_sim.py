@@ -18,6 +18,8 @@ Negative controls, confirmed red by exit code when written (rule 4):
     -> the same check fails
   - the book's total in a caption with <b> tags
     -> "no HTML inside a caption" fails
+  - sgp_support ignoring the number of legs
+    -> "3+ legs were never tested" fails
   - joint_precise counting only the last chunk
     -> "every chunk counts" fails
   - joint_precise simulating every player
@@ -153,6 +155,11 @@ check("no HTML inside a caption (st.caption prints tags as text — the <b>47%</
       _caps and not any("<b>" in c or "</" in c for c in _caps))
 check("the scoreboard shows each team's score on its own, never one squeezed metric",
       "def _team(" in page and 'metric("Typical score"' not in page)
+r_3 = bf.judge(0.36, 250, None, None, ns.sgp_support({"n": 1065, "verdict": {"verdict": "beats"}},
+                                                    3))
+check("3+ legs were never tested: THIN even when the pairs test beats",
+      r_3["tier"] == "thin" and ns.sgp_support(None, 8)["untested"]
+      and "ns.sgp_support(test, len(legs))" in page and "ns.SGP_MAX_LEGS" in page)
 check("the SGP is priced on the precise run, and says when the link is just noise",
       "_legs_run(" in page and "ns.joint_precise(" in page and "no real link" in page
       and "ns.joint(sim, legs)" not in page)

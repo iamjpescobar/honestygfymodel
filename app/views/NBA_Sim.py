@@ -225,7 +225,9 @@ with card("nbs_sgp"):
     st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Same-game parlay</div>',
                 unsafe_allow_html=True)
     names = [f"{p['name']} ({p['team']})" for p in players]
-    nlegs = st.number_input("Legs", 2, 4, 2, key="nbs_n")
+    nlegs = st.number_input("Legs", 2, ns.SGP_MAX_LEGS, 2, key="nbs_n",
+                            help="Up to 8. Two-leg pairs are what the simulator was tested on; "
+                                 "3+ legs are priced the same way but capped at THIN.")
     legs, show = [], []
     for i in range(int(nlegs)):
         a, b, c, d = st.columns([3, 2, 1, 1])
@@ -269,9 +271,10 @@ with card("nbs_sgp"):
         k1, k2 = st.columns(2)
         price = k1.number_input("Your book's SGP price", value=None, step=5, format="%d",
                                 key="nbs_price")
-        res = bf.judge(jp, price, _stk, None, SGP_SUPPORT)
+        sup = ns.sgp_support(test, len(legs))
+        res = bf.judge(jp, price, _stk, None, sup)
         if res and res.get("guard") and res["tier"] in ns.SGP_GUARD:
-            res["guard"] = ns.SGP_GUARD[res["tier"]]
+            res["guard"] = ns.SGP_GUARD["thin_legs" if sup.get("legs") else res["tier"]]
         if res:
             lab_, fg, bg = mv.TIER_STYLE[res["tier"]]
             st.markdown(f'<span style="color:{fg if res["tier"] != "none" else COLOR["error"]}; '
@@ -288,7 +291,7 @@ with card("nbs_sgp"):
                 from engines import parlay as pl
                 pl.add_leg(ss.setdefault("parlay", {}), "NBA", labels[gi],
                            "SGP: " + " + ".join(l_ for l_, _c in show), "same-game parlay",
-                           jp, bf.valid_price(price), SGP_SUPPORT, res["tier"])
+                           jp, bf.valid_price(price), sup, res["tier"])
                 st.success("On the slip (Bet Finder page) as one leg, its legs' link priced in.")
         st.caption("Each leg is the Props board's delivered chance; only the link between them "
                    "comes from the simulator. A lift above 1 means the legs tend to hit together "

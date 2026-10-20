@@ -164,14 +164,21 @@ def simulate(mu_home, mu_away, sd_margin, sd_total, players, sizes, links=None, 
     return out
 
 
-def sgp_support(test):
+SGP_MAX_LEGS = 8          # 500,000 games keep an 8-leg link to +/- 0.02 (measured 10-20)
+SGP_TESTED_LEGS = 2       # the test on last season grades two-player pairs
+
+
+def sgp_support(test, n_legs=2):
     """How a same-game parlay priced with the simulator is guarded.
     Until its test on last season BEATS plain multiplication: untested,
     capped at THIN. Once it beats: measured, but OUTSIDE the tested range
     (in_range False), so at most VALUE — the test was two-man points
-    pairs, and an SGP of rebounds, assists or 3+ legs was never graded,
-    so STRONG would be a claim the test did not make (no false STRONG)."""
+    pairs, so STRONG would be a claim the test did not make. More legs
+    than were ever tested (3+): untested again, THIN — the link grows
+    with every leg (8 overs: x1.7), all of it the model's assumption."""
     t = test or {}
+    if n_legs > SGP_TESTED_LEGS:
+        return {"measured": False, "in_range": False, "n": 0, "untested": True, "legs": n_legs}
     if ((t.get("verdict") or {}).get("verdict")) == "beats":
         return {"measured": True, "in_range": False, "n": t.get("n") or 0, "untested": False}
     return {"measured": False, "in_range": False, "n": 0, "untested": True}
@@ -180,6 +187,8 @@ def sgp_support(test):
 SGP_GUARD = {
     "thin": ("Capped at THIN: the simulator's link between legs has not yet beaten plain "
              "multiplication on last season's same-game pairs."),
+    "thin_legs": ("Capped at THIN: the simulator was tested on two-leg pairs; with more legs "
+                  "the link between them is the model's assumption, not something graded."),
     "value": ("Capped at VALUE: the simulator passed its test on two-player points pairs; "
               "STRONG on a same-game parlay would need that kind of parlay graded."),
 }

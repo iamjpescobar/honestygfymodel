@@ -210,6 +210,15 @@ SIMULATOR on the context model: links e pts 1.005 reb -0.26 ast 1.06 3PM
 between THIN and BEATS; the nightly's verdict sets the SGP cap.
 Nightly cost: base fit ~70 s, context ~35 s, sim ~25 s.
 
+SGP LEGS (Izzy: "why 4?" — it was my pick, not a measurement): the
+Simulator's builder takes up to nba_sim.SGP_MAX_LEGS = 8. Measured at
+500,000 games: the link's noise is +/- 0.002 at 2 legs, 0.009 at 6,
+0.017 at 8, 0.035 at 10. But the test grades two-leg pairs only and the
+link grows with every leg (8 overs: x1.7, 6 HOU overs on the dry run:
+x2.1) — so sgp_support(test, n_legs) caps 3+ legs at THIN (untested),
+SGP_GUARD["thin_legs"] says why. test_nba_sim +1 control (n_legs
+ignored). The Bet Finder's parlay slip never had a cap.
+
 FILES: app/engines/nba_model.py, app/engines/nba_context.py (new),
 app/engines/nba_sim.py, app/engines/nba_view.py, app/views/NBA.py,
 app/views/NBA_Props.py, nba_precompute.py, tests/test_nba.py,
