@@ -154,6 +154,37 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Why 10,000 sims, and the parlay now runs 500,000. 2026-10-20 (5)
+
+**Suite 146, FAILING: none.** test_nba_sim +2 controls, red by exit code
+(joint_precise counting only the last chunk; simulating every player).
+
+Izzy: "why 10,000? best simulator ever". MEASURED (one 4-leg SGP, 20
+runs per size): the lift's run-to-run SD was 0.022 at 10k, 0.016 at
+50k, 0.008 at 200k, 0.003 at 1M — at 10k the noise was as big as the
+lift (+2%). The game numbers are fine at 10k (a 50% chance is +/- 0.5
+pts); the parlay's link was not. Sim count is precision, not accuracy:
+past the noise, more games add nothing — the model inside decides.
+
+nba_sim.joint_precise: the parlay at SGP_SIMS = 500,000 games in
+SGP_CHUNK = 100,000 chunks, simulating ONLY the leg players (a player's
+draw needs the shared score and his own numbers, so the rest of the
+roster changes nothing): 1.4 s, 62 MB peak here; cached per game + leg
+set (_legs_run). Returns lift_se (from the all-hit count); the page says
+"move together" / "pull apart" only when the lift is 2 SE from 1, else
+"no real link". The game and player tables stay at 10,000.
+
+NEXT, the real upgrades (each measured on the fit window, tested on the
+unseen one, before shipping): tonight's opponent and pace in the props
+(not in the number today); a teammate OUT moving minutes and usage
+inside the sim (Next Man Up data already exists); then the top-scorer
+gap (entry (4)).
+
+FILES: app/engines/nba_sim.py, app/views/NBA_Sim.py, tests/test_nba_sim.py,
+HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — Points model fixed (stars no longer shrunk to average); the Simulator passes; the Bet Log. 2026-10-20 (4)
 
 **Suite 146, FAILING: none.** New tests/test_bet_log.py (4 controls, red
@@ -773,48 +804,5 @@ FILES: app/engines/model_view.py, app/engines/bet_finder.py,
 app/views/{Bet_Finder,Top_Plays,NHL_Goal_Edge,NHL_Player_Of_The_Day,
 NFL_TD_Edge,NFL_Projections}.py, tests/test_bet_guard.py (NEW),
 tests/test_bet_finder.py, HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — Bet Finder: type your book's prices, get BET or SKIP. 2026-10-09 (3)
-
-**Suite 133 (+ test_bet_finder), FAILING: none.** Three negative controls red by
-exit code (listed in the test). Bet Finder rendered headless on the NHL
-archive: prices typed -> STRONG / VALUE / SKIP rows, stakes, the card;
-NFL source renders; MLB source is network (lineups) and is wrapped so a
-failed feed costs MLB, never the page.
-
-FIRST, THE PP RESULT (10-09): prior_pp.json committed (47,229 of 47,229
-skater-games). Run locally on it: PP-weighted ice time does NOT beat plain
-ice time — sog thin z 1.16 (w 2.0), pts fails z -1.81 (w 1.5). Context
-only; nothing changed. (The nightly that printed "0 skaters" had been
-queued before the PP commit and checked out the older SHA.)
-
-ALSO MEASURED 10-09 (no code): our g1 model vs "hot streak" hit rates on
-2025-26 (16,955 games): beats last-5 (z 24.3), last-8 (z 18.2), last-20
-(z 11.6). Players at 50%+ over their last 8 scored 29.4% next game; the
-model said 30.3%.
-
-WHY: Izzy, reading the boards: colour means LIKELY, and he could not tell
-a good bet from a bad one. The rule is "book pays more than Worth it at";
-this page applies it to a whole list at once.
-
-ENGINE app/engines/bet_finder.py (pure, + model_view for delivered_over
-/ edge_tier): chance_at (the DELIVERED chance, same as every board),
-judge (BET iff edge > 0 on the printed grid, tiers THIN/VALUE/STRONG,
-stake via value.assess), price_list, results, game_line_items (FINAL
-chance at the posted line; no market -> left out), card_rows.
-
-PAGE app/views/Bet_Finder.py: sport (defaults to the switcher's sport),
-game, who (skaters/goalies, batters/starters, players), stat, line,
-side; a 3-column data_editor (Player / Line / Your price — Line editable
-for NFL, where lines differ by player); results table; game lines with
-price inputs; "Tonight's card" in session state across sports, scaled
-to the per-slate cap. In the MLB nav, NHL and NFL subpages, and a Home
-explore card (test_home requires a route).
-
-FILES: app/engines/bet_finder.py, app/views/Bet_Finder.py,
-tests/test_bet_finder.py (NEW), app/app.py, app/views/Home.py,
-HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

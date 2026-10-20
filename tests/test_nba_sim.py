@@ -18,6 +18,10 @@ Negative controls, confirmed red by exit code when written (rule 4):
     -> the same check fails
   - the book's total in a caption with <b> tags
     -> "no HTML inside a caption" fails
+  - joint_precise counting only the last chunk
+    -> "every chunk counts" fails
+  - joint_precise simulating every player
+    -> "only the parlay's own players are simulated" fails
 """
 import sys
 from pathlib import Path
@@ -99,6 +103,38 @@ check("same seed, same games", np.array_equal(
     ns.simulate(115, 111, 13.5, 19.0, players[:1], SIZES, LINKS, n=500, seed=9)["stats"]["a"]["pts"],
     ns.simulate(115, 111, 13.5, 19.0, players[:1], SIZES, LINKS, n=500, seed=9)["stats"]["a"]["pts"]))
 
+# the parlay at SGP_SIMS: chunked, only its own players, with its noise
+pleg = [{"pid": "a", "stat": "pts", "line": 25.5, "side": "Over"},
+        {"pid": "b", "stat": "pts", "line": 19.5, "side": "Over"},
+        {"pid": "c", "stat": "pts", "line": 23.5, "side": "Under"}]
+seen = []
+_orig = ns.simulate
+
+
+def _spy(*a, **k):
+    seen.append(sorted(str(p["pid"]) for p in a[4]))
+    return _orig(*a, **k)
+
+
+ns.simulate = _spy
+jp1 = ns.joint_precise(115, 111, 13.5, 19.0, players, SIZES, LINKS, pleg, n=300_000, chunk=70_000)
+ns.simulate = _orig
+gap = max(abs(jp1["each"][0] - nm.over(26, SIZES["pts"], 25.5)),
+          abs(jp1["each"][1] - nm.over(20, SIZES["pts"], 19.5)),
+          abs(jp1["each"][2] - (1 - nm.over(24, SIZES["pts"], 23.5))))
+print(f"     300k games in 70k chunks: worst leg gap {gap:.4f}, lift {jp1['lift']:.3f} "
+      f"+/- {jp1['lift_se']:.4f}")
+check("every chunk counts: each leg matches the props model at 300k games (within 0.6 pts)",
+      gap < 0.006 and len(seen) == 5)
+check("only the parlay's own players are simulated (the bench never runs)",
+      all(x == ["a", "b", "c"] for x in seen))
+jp_small = ns.joint_precise(115, 111, 13.5, 19.0, players, SIZES, LINKS, pleg, n=20_000)
+ratio = jp1["lift_se"] / jp_small["lift_se"]
+check("the noise shrinks with the square root of the games (300k vs 20k: ~0.26x)",
+      0.2 < ratio < 0.32)
+check("the precise lift agrees with the 40k-game run within its noise",
+      abs(jp1["lift"] - ns.joint(sim, pleg)["lift"]) < 4 * (jp1["lift_se"] + 0.01))
+
 # the page's honesty and wiring
 page = (ROOT / "app" / "views" / "NBA_Sim.py").read_text(encoding="utf-8")
 from engines import bet_finder as bf  # noqa: E402
@@ -117,6 +153,9 @@ check("no HTML inside a caption (st.caption prints tags as text — the <b>47%</
       _caps and not any("<b>" in c or "</" in c for c in _caps))
 check("the scoreboard shows each team's score on its own, never one squeezed metric",
       "def _team(" in page and 'metric("Typical score"' not in page)
+check("the SGP is priced on the precise run, and says when the link is just noise",
+      "_legs_run(" in page and "ns.joint_precise(" in page and "no real link" in page
+      and "ns.joint(sim, legs)" not in page)
 check("Out players are left out of the simulation", "av.is_out(r.get(\"status\"))" in page)
 app = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
 check("the Simulator is in the NBA nav", '("Simulator", "views/NBA_Sim.py")' in app)

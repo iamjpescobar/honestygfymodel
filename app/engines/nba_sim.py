@@ -212,6 +212,38 @@ def joint(sim, legs):
     return {"each": each, "all": allp, "product": prod, "lift": lift}
 
 
+SGP_SIMS = 500_000       # the parlay's legs: 10k left a 4-leg lift +/- 2.2% (run to run),
+SGP_CHUNK = 100_000      # as big as the lift itself; 500k is +/- 0.4%, in 100k chunks
+
+
+def joint_precise(mu_home, mu_away, sd_margin, sd_total, players, sizes, links, legs,
+                  n=SGP_SIMS, chunk=SGP_CHUNK, seed=7):
+    """joint() for a parlay, at n games, simulating ONLY the leg players
+    (each player's draw needs only the shared score and his own numbers),
+    in chunks so memory stays flat. Adds lift_se: the Monte Carlo
+    standard error of the lift (from the all-hit count)."""
+    need = {str(lg["pid"]) for lg in legs if lg.get("pid") != "_game"}
+    pl = [p for p in players or [] if str(p["pid"]) in need]
+    each_hits = [0] * len(legs)
+    all_hits = done = k = 0
+    while done < n:
+        m = min(chunk, n - done)
+        sim = simulate(mu_home, mu_away, sd_margin, sd_total, pl, sizes, links, n=m,
+                       seed=seed + 1000 * k)
+        hs = [leg_hits(sim, lg) for lg in legs]
+        for i, h in enumerate(hs):
+            each_hits[i] += int(h.sum())
+        all_hits += int(np.logical_and.reduce(hs).sum()) if hs else 0
+        done += m
+        k += 1
+    each = [h / n for h in each_hits]
+    allp = all_hits / n if legs else None
+    prod = float(np.prod(each)) if each else None
+    lift = (allp / prod) if (prod and allp) else None
+    se = (float(np.sqrt(allp * (1 - allp) / n)) / prod) if lift else None
+    return {"each": each, "all": allp, "product": prod, "lift": lift, "lift_se": se, "n": n}
+
+
 # ----------------------------------------------------------------------
 # The test on last season
 # ----------------------------------------------------------------------

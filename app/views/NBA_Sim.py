@@ -81,6 +81,16 @@ def _run(key, mu_h, mu_a, sd_m, sd_t, plist, sizes, links):
     return sim
 
 
+@st.cache_data(ttl=900, show_spinner=False, max_entries=64)
+def _legs_run(key, mu_h, mu_a, sd_m, sd_t, plist, sizes, links, legs):
+    """The parlay at SGP_SIMS games — only its own players, so it stays
+    light; cached per game and leg set."""
+    import json
+    import zlib
+    return ns.joint_precise(mu_h, mu_a, sd_m, sd_t, json.loads(plist), json.loads(sizes),
+                            json.loads(links), json.loads(legs), seed=zlib.crc32(key.encode()))
+
+
 import json as _json  # noqa: E402
 with st.spinner("Simulating 10,000 games…"):
     sim = _run(f"{g.get('event_id')}|{len(players)}", pj["mu_home"], pj["mu_away"], sd_m, sd_t,
@@ -230,19 +240,29 @@ with card("nbs_sgp"):
         ch, _raw, _sup = nv.chance(p["row"], st_, ln, model, sd)
         legs.append({"pid": p["pid"], "stat": st_, "line": ln, "side": sd})
         show.append((f"{p['name']} {sd} {ln:g} {slab}", ch))
-    j = ns.joint(sim, legs)
+    with st.spinner(f"Playing this parlay {ns.SGP_SIMS:,} times…"):
+        j = _legs_run(f"{g.get('event_id')}|{_json.dumps(legs, sort_keys=True)}",
+                      pj["mu_home"], pj["mu_away"], sd_m, sd_t,
+                      _json.dumps([{k: p[k] for k in ("pid", "side", "min", "mu")}
+                                   for p in players]),
+                      _json.dumps(model.get("sizes") or {}), _json.dumps(links),
+                      _json.dumps(legs))
     prod = float(np.prod([c_ for _l, c_ in show])) if all(c_ is not None for _l, c_ in show) \
         else None
     if prod is not None and not j["lift"]:
-        st.warning("In 10,000 games these legs never all hit together — the simulator can't "
-                   "price this one. Check the lines.")
+        st.warning(f"In {ns.SGP_SIMS:,} games these legs never all hit together — the simulator "
+                   f"can't price this one. Check the lines.")
     if prod is not None and j["lift"]:
         jp = min(0.999, prod * j["lift"])
         st.markdown(
             f'<div style="font-size:var(--lc-text-body); line-height:1.8;">'
             + "<br>".join(f"{l_} — <b>{100 * c_:.0f}%</b>" for l_, c_ in show)
-            + f'<br>Multiplied as strangers: <b>{100 * prod:.1f}%</b> · they move together '
-              f'<b>x{j["lift"]:.2f}</b> in the simulator → '
+            + f'<br>Multiplied as strangers: <b>{100 * prod:.1f}%</b> · '
+              + (f'they move together <b>x{j["lift"]:.2f}</b>' if j["lift"] - 2 * j["lift_se"] > 1
+                 else f'they pull apart <b>x{j["lift"]:.2f}</b>' if j["lift"] + 2 * j["lift_se"] < 1
+                 else f'no real link (<b>x{j["lift"]:.2f}</b>)')
+            + f' <span style="color:{COLOR["text_muted"]};">(\u00b1{j["lift_se"]:.3f}, '
+              f'{ns.SGP_SIMS:,} games)</span> → '
               f'<span style="{mv.chance_css(jp)} padding:2px 8px; border-radius:6px;">'
               f'<b>{100 * jp:.1f}%</b></span> · worth it at '
               f'<b>{mm.fmt_american(mm.fair_american(jp))}</b></div>', unsafe_allow_html=True)
