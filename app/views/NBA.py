@@ -47,10 +47,16 @@ else:
         chips += "".join(_chip(lab, ((_gv.get(k) or {}).get("verdict")))
                          for k, lab in (("ml_verdict", "Winner"), ("spread_verdict", "Margin"),
                                         ("total_verdict", "Total")))
+    _cx = (model.get("context") or {}).get("vs_base") or {}
+    if _cx:
+        chips += "".join(_chip(f"{lab} + context", (_cx.get(st_) or {}).get("verdict"))
+                         for st_, lab in nm.STATS[:4])
     st.markdown(f'<div style="font-size:var(--lc-text-small); color:{COLOR["text_muted"]};">'
                 f'Tested on last season\'s games the model had not seen — player stats against each '
                 f'player\'s own hit rate over his usual line; the game model against the home '
-                f'team\'s record and the league\'s average margin and total:</div>{chips}',
+                f'team\'s record and the league\'s average margin and total'
+                + ('; "+ context" = with tonight\'s opponent and teammates-out against '
+                   'without them' if _cx else '') + f':</div>{chips}',
                 unsafe_allow_html=True)
 
 
@@ -161,9 +167,8 @@ for gi, g in enumerate(games):
                        "not bet.")
         st.caption("Numbers = projected minutes and per-game means. Colour = the chance he "
                    "clears HIS usual line for that stat (his last-10 average set at the half "
-                   "point) — green likely over, faint unlikely. NOT in the number: tonight's "
-                   "opponent and pace, a teammate out, rest. Price any line on NBA Props or the "
-                   "Bet Finder.")
+                   "point) — green likely over, faint unlikely. " + nv.in_the_number(model)
+                   + " Price any line on NBA Props or the Bet Finder.")
 
 # ---------------- preseason role watch ----------------
 watch = pget("role_watch") or []

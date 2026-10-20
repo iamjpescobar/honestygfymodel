@@ -126,9 +126,8 @@ with card("nbap_board"):
                            "price": x["price"], "support": x.get("support"),
                            "tier": x["tier"]} for x in res], "NBA", f"nbap_{gsel}_{stat}")
     st.caption("Chance = what calls like it delivered on the last 45 days of 2025-26, games the "
-               "model had not seen. NOT in the number: tonight's opponent and pace, a teammate "
-               "out (see Next Man Up), rest. An early-season player is mostly last season's "
-               "numbers until his own games pile up.")
+               "model had not seen. " + nv.in_the_number(model) + " An early-season player is "
+               "mostly last season's numbers until his own games pile up.")
 
 # ---------------- his trend ----------------
 with card("nbap_trend"):

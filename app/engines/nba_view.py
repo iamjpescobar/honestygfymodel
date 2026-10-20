@@ -25,6 +25,30 @@ def verdicts(model):
             for k, v in ((model or {}).get("test") or {}).items() if isinstance(v, dict)}
 
 
+def in_the_number(model):
+    """One sentence: what tonight's numbers include and what they don't
+    (engines/nba_context). Every NBA page's caption reads it, so the claim
+    follows the model the nightly actually shipped."""
+    ctx = (model or {}).get("context") or {}
+    on_opp = [s for s in nm.BASE if (ctx.get("opp") or {}).get(s)]
+    on_out = [s for s in nm.BASE if (ctx.get("out") or {}).get(s)]
+    vb = ctx.get("vs_base") or {}
+    won = sum(1 for s, _l in nm.STATS if (vb.get(s) or {}).get("verdict") == "beats")
+    if not (on_opp or on_out):
+        return ("NOT in the number: tonight's opponent and pace, a teammate out (see Next Man "
+                "Up), rest.")
+    lab = {"pts": "points", "reb": "rebounds", "ast": "assists", "tpm": "3s"}
+    bits = []
+    if on_opp:
+        bits.append("tonight's opponent, defense and pace (" + ", ".join(lab[s] for s in on_opp)
+                    + ")")
+    if on_out:
+        bits.append("teammates ruled OUT (" + ", ".join(lab[s] for s in on_out) + ")")
+    return ("IN the number: " + " and ".join(bits) + f" — better than without them on {won} of "
+            f"{len(nm.STATS)} stats on last season's unseen games. NOT in it: late scratches "
+            f"after the nightly, rest / back-to-backs.")
+
+
 def chance(row, stat, line, model, side="Over"):
     """(delivered chance, raw chance, support) for one player's line —
     the model's over chance mapped through what calls like it delivered

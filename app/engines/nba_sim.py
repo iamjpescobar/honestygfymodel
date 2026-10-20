@@ -332,9 +332,13 @@ def build(prior, model):
     preds = ngm._wf(gfin, gpar["shrink_k"])
     outcomes, gp = game_outcomes(prior.get("finals")), game_preds(preds)
     lr = model.get("league") or nm.league_rates(players, before=model["test_window"][0])
-    two = (model.get("hl_long"), model.get("k_long"))
-    fit_rows = nm.walk(players, model["hl"], model["k"], lr, *model["fit_window"], *two)
-    test_rows = nm.walk(players, model["hl"], model["k"], lr, model["test_window"][0], "9999", *two)
+    # the rows the pages' numbers come from: with the opponent and
+    # teammates-out context when the model carries it (engines/nba_context)
+    from engines import nba_context as nc
+    every = nc.context_rows(prior, dict(model, league=lr))
+    fw, tw = model["fit_window"], model["test_window"]
+    fit_rows = [r for r in every if fw[0] <= r[1][0] < fw[1]]
+    test_rows = [r for r in every if r[1][0] >= tw[0]]
     links = fit_links(fit_rows, outcomes, gp)
     sds = (gpar["sd_margin"], gpar["sd_total"])
     return {"links": links, "sds": list(sds),

@@ -20,6 +20,8 @@ Negative controls, confirmed red by exit code when written (rule 4):
     -> "tonight's games carry the game model" fails
   - Running.project ignoring k_long (one level, straight to the league)
     -> "a star's cold week is shrunk toward HIS rate" fails
+  - Running.add carrying the short window across the offseason as is
+    -> "after the offseason, his minutes come from his season" fails
 """
 import math
 import random
@@ -140,6 +142,24 @@ print(f"     cold week for a 31-a-night scorer: two-level {two['mu']['pts']:.1f}
       f"one-level {one['mu']['pts']:.1f}")
 check("a star's cold week is shrunk toward HIS rate, not the league's",
       two["mu"]["pts"] > 26 and one["mu"]["pts"] < 22 and two["mu"]["pts"] - one["mu"]["pts"] > 4)
+# ACROSS THE OFFSEASON: 70 games at 34 minutes, then 3 rested April games at
+# 20 — October must not be projected off those three.
+season = [[(date(2026, 1, 1) + timedelta(days=k)).isoformat(), "1", "2", 34, 28, 6, 5, 3, 0, 0, 0]
+          for k in range(70)]
+season += [["2026-04-1%d" % k, "1", "2", 20, 10, 3, 2, 1, 0, 0, 0] for k in (0, 1, 2)]
+p_apr = nm.project_now(season, {"hl": 2, "k": 600, "hl_long": 120, "k_long": 100,
+                                "league": lg}, "G")
+r_oct = nm.Running(2, 120)
+for gm in season:
+    r_oct.add(gm)
+r_oct.add(["2026-10-21", "1", "2", 33, 27, 6, 5, 3, 0, 0, 0])
+print(f"     rested April: {p_apr['min']:.1f} min; after one October game: "
+      f"{r_oct.m / r_oct.w:.1f} min")
+p_oct = nm.project_now(season, {"hl": 2, "k": 600, "hl_long": 120, "k_long": 100,
+                                "league": lg}, "G", today="2026-10-21")
+print(f"     opening night, before he plays: {p_oct['min']:.1f} min")
+check("after the offseason, his minutes come from his season, not three rested games",
+      p_apr["min"] < 26 and r_oct.m / r_oct.w > 31 and p_oct["min"] > 31)
 check("the fit picks both levels from the grid",
       fit.get("hl_long") in nm.FIT_HL_LONG and fit.get("k_long") in nm.FIT_K_LONG)
 check("over chance from the NB", 0.4 < nm.over(30, 8, 29.5) < 0.6

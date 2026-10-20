@@ -28,7 +28,7 @@ that share at the offseason gap), so a player's October number is
 mostly last year and his own games take over as they come.
 
 HL, K, HL_LONG and K_LONG are FITTED (grid) on the 45 days before the
-test window, by squared error of the means; never on the test window.
+test window, by Poisson deviance of the means; never on the test window.
 
 THE TEST (rule 1)
 -----------------
@@ -60,7 +60,7 @@ STATS = (("pts", "Points"), ("reb", "Rebounds"), ("ast", "Assists"),
          ("tpm", "3-pointers made"), ("pra", "Pts + Reb + Ast"), ("pr", "Pts + Reb"),
          ("pa", "Pts + Ast"), ("ra", "Reb + Ast"))
 LABEL = dict(STATS)
-FIT_HL = (2, 3, 5, 10)
+FIT_HL = (1, 2, 3, 5, 10)
 FIT_K = (100, 300, 600, 1200)
 FIT_HL_LONG = (30, 60, 120)
 FIT_K_LONG = (100, 300, 1000)
@@ -128,13 +128,10 @@ class Running:
         self.last = None
 
     def add(self, g):
+        if self.last and _days(self.last, g[0]) > SEASON_GAP_DAYS:
+            self.offseason()
         if self.long is not None:
             self.long.add(g)
-        if self.last and _days(self.last, g[0]) > SEASON_GAP_DAYS:
-            self.w *= CARRY
-            self.m *= CARRY
-            for k in BASE:
-                self.s[k] *= CARRY
         m = val(g, "min")
         self.last = g[0]
         if not m or any(val(g, k) is None for k in BASE):
@@ -144,6 +141,25 @@ class Running:
         for k in BASE:
             self.s[k] = self.s[k] * self.decay + val(g, k)
         self.n += 1
+
+    def offseason(self):
+        """The cut at a season gap (and before a projection made across one).
+        ACROSS THE OFFSEASON the recent window restarts from his long-run
+        averages, at CARRY weight: last season's final weeks (stars rested,
+        tanking, a playoff push) are not October — with a 2-game half-life
+        the old cut projected a star off his last two April games. NOT
+        MEASURED: last season's file has no offseason in it; this season's
+        games will test it. Without a long tracker: the plain CARRY cut."""
+        if self.long is not None and self.long.w > 0:
+            scale = self.w * CARRY / self.long.w
+            self.m = self.long.m * scale
+            for k in BASE:
+                self.s[k] = self.long.s[k] * scale
+        else:
+            self.m *= CARRY
+            for k in BASE:
+                self.s[k] *= CARRY
+        self.w *= CARRY
 
     def rate(self, st, k_min, toward):
         return (self.s[st] + k_min * toward) / (self.m + k_min) if (self.m + k_min) else 0.0
@@ -183,13 +199,22 @@ def walk(players, hl, k_min, lr, lo, hi, hl_long=None, k_long=None):
     return out
 
 
+def deviance(y, mu):
+    """Poisson deviance of a mean against a count — a proper score for a
+    mean. (The old (mu - y)^2 / mu grew its denominator with mu, so it
+    rewarded projecting HIGH: measured 10-20, it called a redistribution
+    that made every Brier worse a 10% improvement.)"""
+    mu = max(float(mu), 1e-6)
+    return 2.0 * ((y * math.log(y / mu) if y > 0 else 0.0) - (y - mu))
+
+
 def _sse(rows):
     tot = 0.0
     for _pid, g, pr, _h in rows:
         for st in BASE:
             y = val(g, st)
             if y is not None:
-                tot += (pr["mu"][st] - y) ** 2 / max(1.0, pr["mu"][st])
+                tot += deviance(y, pr["mu"][st])
     return tot / max(1, len(rows))
 
 
@@ -298,14 +323,20 @@ def minutes_check(rows):
             "season_avg_mae": round(b / n, 2) if n else None}
 
 
-def project_now(games, params, pos):
+def project_now(games, params, pos, today=None):
     """Tonight's projection for one player from every game he has played
-    (last season + this one, date order)."""
+    (last season + this one, date order). `today` past the offseason gap
+    since his last game -> the offseason cut first (opening night is not
+    his last two April games)."""
     run = Running(params["hl"], params.get("hl_long"))
     for g in sorted(games or [], key=lambda x: x[0]):
         run.add(g)
     if run.n < 1:
         return None
+    if today and run.last and _days(run.last, str(today)) > SEASON_GAP_DAYS:
+        run.offseason()
+        if run.long is not None:
+            run.long.offseason()
     lr = (params.get("league") or {}).get(group(pos)) or {}
     return run.project(params["k"], lr, params.get("k_long"))
 

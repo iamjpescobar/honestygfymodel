@@ -31,6 +31,7 @@ sys.path.insert(0, str(ROOT / "app"))
 from engines import availability as av  # noqa: E402
 from engines import espn_feed as ef  # noqa: E402
 from engines import nba_box as nb  # noqa: E402
+from engines import nba_context as nc  # noqa: E402
 from engines import nba_model as nm  # noqa: E402
 
 EASTERN = ZoneInfo("America/New_York")
@@ -205,7 +206,7 @@ def side_props(team_id, pool, pre, params, roster, feed, team_abbr, cur_from):
         if av.is_out(st):
             held.append(f"{p.get('name')} ({st})")
             continue
-        proj = nm.project_now(p["games"], params, p.get("pos"))
+        proj = nm.project_now(p["games"], params, p.get("pos"), today=cur_from)
         if not proj or proj["min"] < nm.MIN_PROJ_MIN:
             continue
         last = avg_line([g for g in p["games"] if g[0] < cur_from])
@@ -340,6 +341,31 @@ def main(today=None):
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NBA model failed: {type(exc).__name__}: {exc}")
 
+    # TONIGHT'S CONTEXT (10-20, engines/nba_context): the opponent (defense
+    # and pace) and teammates out, each fitted on 2025-26 and kept only
+    # where it beat the plain projection; when it ships, the model's
+    # sizes / test / curves are the context's, so every page prices it.
+    try:
+        if model:
+            t0 = time.time()
+            ctx = nc.fit(prior, model)
+            if ctx:
+                model["base_test"] = model["test"]
+                model["sizes"], model["test"] = ctx["sizes"], ctx["test"]
+                model["context"] = {k: ctx[k] for k in ("opp", "mean", "out", "vs_base")}
+                print(f"  [verify] NBA context ({time.time() - t0:.0f}s): opponent {ctx['opp']}; "
+                      f"teammate out {ctx['out']}")
+                for st, lab in nm.STATS:
+                    x, v = ctx["test"].get(st) or {}, ctx["vs_base"].get(st) or {}
+                    print(f"  [verify] NBA {lab:16s} WITH CONTEXT model {x.get('model_brier')} vs "
+                          f"his-own-rate {x.get('baseline_brier')} -> "
+                          f"{(x.get('verdict') or {}).get('verdict')} "
+                          f"(z={(x.get('verdict') or {}).get('z')}); vs no context -> "
+                          f"{v.get('verdict')} (z={v.get('z')})")
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::NBA context failed (props stay without it): "
+              f"{type(exc).__name__}: {exc}")
+
     # THE GAME MODEL (10-20): the NFL module's normal margin / total on
     # team ratings — basketball scores are big and near-normal, the same
     # shape — fitted on 2025-26 while this season is young, then this
@@ -383,6 +409,14 @@ def main(today=None):
     tags = sum(1 for r in rosters.values() for x in r.values() if x.get("status"))
     print(f"  [verify] NBA injuries: {tags} roster tags, {len(feed['by_id'])} league-list tags")
 
+    book, team_dates = None, {}
+    if model and model.get("context"):
+        try:
+            book = nc.book_now(pool, model, model["context"])
+            team_dates = nc.schedules(list(prior.get("finals") or []) + cur_finals)
+        except Exception as exc:  # noqa: BLE001
+            print(f"::warning::NBA tonight's opponent book failed: {type(exc).__name__}: {exc}")
+    n_ctx = 0
     held_total = 0
     for g in slate:
         if g.get("game_type") == "preseason":
@@ -402,6 +436,21 @@ def main(today=None):
                  if x.get("status")], key=lambda x: (not av.is_out(x["status"]), x["name"] or ""))
             held_pids = [pid for pid, x in roster.items()
                          if av.is_out(av.status_for(pid, x.get("name"), x.get("status"), feed))]
+            if model and model.get("context") and g.get(f"{side}_props"):
+                try:
+                    opp_side = "home" if side == "away" else "away"
+                    outs = nc.outs_now(pool, tid, held_pids, team_dates.get(str(tid)), model,
+                                       slate_date.isoformat())
+                    names = [(pool.get(pid) or {}).get("name") or "" for pid in held_pids
+                             if nc.outs_now(pool, tid, [pid], team_dates.get(str(tid)), model,
+                                            slate_date.isoformat())]
+                    nc.apply_tonight(g[f"{side}_props"], g[f"{opp_side}_id"],
+                                     g[f"{opp_side}_abbr"], book, outs, names,
+                                     model["context"], slate_date.isoformat())
+                    n_ctx += len(g[f"{side}_props"])
+                except Exception as exc:  # noqa: BLE001
+                    print(f"::warning::NBA context for {g.get(side + '_abbr')} failed: "
+                          f"{type(exc).__name__}: {exc}")
             try:
                 g[f"{side}_next_man_up"] = next_man_up_boards(pool, tid, held_pids,
                                                               since="2025-10-01")
@@ -416,7 +465,8 @@ def main(today=None):
     n_nmu = sum(len(g.get("away_next_man_up") or []) + len(g.get("home_next_man_up") or [])
                 for g in slate)
     print(f"  [verify] NBA slate: {n_props} players projected, {held_total} held out (injured), "
-          f"{n_nmu} Next Man Up boards")
+          f"{n_nmu} Next Man Up boards; {n_ctx} with tonight's opponent / teammates-out "
+          f"context applied")
 
     watch = role_watch(pre, prior.get("players"), top=40)
     for r in watch:

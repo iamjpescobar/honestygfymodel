@@ -10,6 +10,50 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — the guard on every bet call: no false STRONG. 2026-10-11
+
+**Suite 134 (+ test_bet_guard), FAILING: none.** Three negative controls red by
+exit code (listed in the test). Every changed page rendered headless; the
+Bet Finder replays Brissett UNDER 266.5 (-113/-113) as CHECK with the reason.
+
+WHY: 10-11, DET @ ARI. Model ~200 pass yds for Brissett, book 266.5. The
+Finder would have called UNDER 266.5 STRONG (78% vs 53% break-even). Izzy
+leans on STRONG; a false one is the most expensive bug on the site.
+
+THE GUARD (model_view.guarded_tier; every PROP call — _any_line_tool for
+all sports, render_prop_value_tool, Bet Finder, Top Plays, NHL Goal Edge,
+NHL POTD, NFL TD Edge, NFL Projections; game lines are market-anchored):
+1. BOOK DISAGREES -> CHECK when our chance - the book's >= GAP_CHECK 0.10.
+   MEASURED: 3,050 NHL + NFL 2025-26 game lines with model walk-forward and
+   market both recorded; gaps 0-10 pts no difference (z 0.29/-0.73/-1.08),
+   10-15 pts market right (z -2.52, n 314), 15+ market right (z -2.23,
+   n 104). Transfer to props is the cautious side; re-measure on props
+   once prop prices are recorded. Book's chance = de-vigged with the other
+   side's price (Bet Finder "Other side" column, checker's optional box),
+   else the price's break-even.
+2. No graded curve -> at most THIN.
+3. STRONG needs the raw call inside its curve's graded range with >= 30
+   calls in the nearest band (STRONG_MIN_N); else VALUE. No curve attached
+   -> STRONG capped at VALUE.
+curve_for() now holds the curve choice delivered_over uses (unchanged).
+TIER_STYLE gains "check" (amber). Stakes are shown only on BET tiers.
+
+ALSO MEASURED (no code change, 2025 data in the repo): game script —
+QB attempts vs the team's spread, 153 QB games with lines: -0.05 att per
+point (se 0.09), yards +0.15 (se 0.79): NOT measurable. Defense pass yds
+allowed (walk-forward, 369 QB games) does not carry into QB yards the way
+a multiplier assumes (slope -0.54, se 0.13 — confounded, not usable). So
+neither was put in the projection; the guard is the protection. NEXT:
+record prop prices (needs a durable store the app can write) so the
+model-vs-book test can run on props and GAP_CHECK be re-fitted for them.
+
+FILES: app/engines/model_view.py, app/engines/bet_finder.py,
+app/views/{Bet_Finder,Top_Plays,NHL_Goal_Edge,NHL_Player_Of_The_Day,
+NFL_TD_Edge,NFL_Projections}.py, tests/test_bet_guard.py (NEW),
+tests/test_bet_finder.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — Bet Finder: type your book's prices, get BET or SKIP. 2026-10-09 (3)
 
 **Suite 133 (+ test_bet_finder), FAILING: none.** Three negative controls red by
