@@ -41583,7 +41583,8 @@
           "stat": "strikeOuts",
           "line": 3.1,
           "result": "dnp",
-          "dnp_reason": "no box-score line after 3 days"
+          "dnp_reason": "no box-score line after 3 days",
+          "ps_regraded": true
         },
         {
           "id": 542888,
@@ -41592,7 +41593,8 @@
           "stat": "strikeOuts",
           "line": 0.8,
           "result": "dnp",
-          "dnp_reason": "no box-score line after 3 days"
+          "dnp_reason": "no box-score line after 3 days",
+          "ps_regraded": true
         }
       ],
       "graded": true,
