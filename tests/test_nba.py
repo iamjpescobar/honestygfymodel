@@ -16,6 +16,8 @@ Negative controls, confirmed red by exit code when written (rule 4):
     -> "a traded player's old team never counts" fails
   - side_props projecting an Out player
     -> "an Out player is held out, not projected" fails
+  - nba_game_model not attaching its projection to the slate
+    -> "tonight's games carry the game model" fails
 """
 import math
 import random
@@ -177,6 +179,41 @@ check("an Out player is held out, not projected", "Gone" not in names
       and held == ["Gone (Out)"])
 check("the roster decides the team (an offseason trade with no game yet)",
       "New Guy" in names and "Sure" in names)
+
+# --- 4b. the game model ------------------------------------------------------------
+check("last season's finals in the game model's shape",
+      npc.prior_game_rows([{"date": "2025-11-01", "home": "2", "away": "8", "hs": 110, "as": 100}])
+      == [{"date": "2025-11-01", "home_id": "2", "away_id": "8", "home_score": 110,
+           "away_score": 100}])
+_g = random.Random(9)
+_strength = {str(t): _g.gauss(0, 6) for t in range(1, 11)}
+_finals = []
+for k in range(900):
+    h, a = _g.sample(sorted(_strength), 2)
+    mu = 112 + _strength[h] / 2 - _strength[a] / 2
+    hs = round(_g.gauss(mu + 1.5, 11))
+    as_ = round(_g.gauss(112 - _strength[h] / 2 + _strength[a] / 2, 11))
+    if hs == as_:
+        hs += 1
+    _finals.append({"date": (date(2025, 10, 21) + timedelta(days=k // 7)).isoformat(),
+                    "home": h, "away": a, "hs": hs, "as": as_})
+_best = max(_strength, key=_strength.get)
+_worst = min(_strength, key=_strength.get)
+_slate = [{"home_id": _best, "away_id": _worst, "home_abbr": "AAA", "away_abbr": "ZZZ",
+           "odds": {"total": 224.5}}]
+_blk = npc.nba_game_model(_finals, [], _slate)
+check("tonight's games carry the game model", bool(_slate[0].get("model")))
+check("the best team at home is the favourite, with a fair spread and total",
+      _slate[0]["model"]["p_home"] > 0.6 and _slate[0]["model"]["fair_spread_home"] < 0
+      and _slate[0]["model"]["total"] > 200)
+check("the game model is tested on unseen games", (_blk["validation"] or {}).get("n", 0) > 500)
+nba_page = (ROOT / "app" / "views" / "NBA.py").read_text(encoding="utf-8")
+check("the rotation tables are coloured by the chance over his line",
+      "mv.chance_css(chances[k][c])" in nba_page and "render_chance_legend" in nba_page)
+check("the role watch and the verdict chips are coloured",
+      "_paint_w" in nba_page and "TRUST_STYLE" in nba_page)
+check("a big model-vs-book total gap reads CHECK, not a lean", "CHECK: the book likely knows"
+      in nba_page and "lean" not in nba_page.replace("lean = ", "").replace("{lean}", ""))
 
 # --- 5. Live / Milestones / wiring --------------------------------------------------
 from engines import live_props as lp  # noqa: E402

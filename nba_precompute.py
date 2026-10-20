@@ -263,6 +263,7 @@ def main(today=None):
 
     # This season so far: regular games join the pool; preseason is reference.
     cur, pre, team_abbr, team_logo = {}, {}, {}, {}
+    cur_finals = []
     seen = parsed = 0
     d = PRESEASON_START
     while d <= today:
@@ -286,6 +287,12 @@ def main(today=None):
             if not lines:
                 continue
             parsed += 1
+            if g["game_type"] == "regular" and g.get("home_score") is not None:
+                cur_finals.append({"date": d.isoformat(), "home_id": g["home_id"],
+                                   "away_id": g["away_id"], "home_score": g["home_score"],
+                                   "away_score": g["away_score"],
+                                   "home_abbr": g["home_abbr"], "away_abbr": g["away_abbr"],
+                                   "odds": ef.recorded_line(g.get("odds"), summ) or None})
             store = cur if g["game_type"] == "regular" else pre
             for pid, ln in lines.items():
                 p = store.setdefault(pid, {"name": ln["name"], "pos": ln["pos"], "games": []})
@@ -330,6 +337,16 @@ def main(today=None):
                 print(f"::warning::NBA model not fitted: {params.get('note')}")
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NBA model failed: {type(exc).__name__}: {exc}")
+
+    # THE GAME MODEL (10-20): the NFL module's normal margin / total on
+    # team ratings — basketball scores are big and near-normal, the same
+    # shape — fitted on 2025-26 while this season is young, then this
+    # season's games move it; anchored to the market by its fitted weight.
+    game_model = None
+    try:
+        game_model = nba_game_model(prior.get("finals"), cur_finals, slate)
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::NBA game model failed: {type(exc).__name__}: {exc}")
 
     pool = merge_pool(prior.get("players"), cur)
     cur_from = REGULAR_SEASON_START.isoformat()
@@ -399,11 +416,48 @@ def main(today=None):
         "regular_season_start": cur_from,
         "games": slate,
         "model": model,
+        "game_model": ({k: v for k, v in game_model.items() if k != "rates"}
+                       if game_model else None),
         "teams": {tid: {"abbr": a, "logo": team_logo.get(tid)} for tid, a in team_abbr.items()},
         "role_watch": watch,
         "milestones_happened": happened,
     }, ensure_ascii=False, separators=(",", ":")))
     print(f"NBA: wrote games.json ({slate_date}, {len(slate)} games)")
+
+
+def prior_game_rows(prior_finals):
+    """data/nba/prior_season.json finals -> the game model's finals shape."""
+    return [{"date": f["date"], "home_id": f["home"], "away_id": f["away"],
+             "home_score": f.get("hs"), "away_score": f.get("as")}
+            for f in prior_finals or [] if f.get("home") and f.get("away")]
+
+
+def nba_game_model(prior_finals, cur_finals, slate):
+    from engines import nfl_game_model as ngm
+    block = ngm.build(cur_finals, prior_game_rows(prior_finals))
+    if not block:
+        print("::warning::NBA game model not built (no finals)")
+        return None
+    pr, v = block["params"], block["validation"]
+    print(f"  [verify] NBA game model fit on {pr['fit_on']} season: k={pr['shrink_k']} "
+          f"carryover={pr.get('carryover')} sd_margin={pr['sd_margin']} sd_total={pr['sd_total']} "
+          f"home_mult={block['league'].get('home_mult')}")
+    if v.get("n"):
+        print(f"  [verify] NBA walk-forward {v['n']} games: log loss {v['model']['log_loss']} vs "
+              f"coin {v['coin_flip']['log_loss']} vs home-rate {v['home_rate']['log_loss']} "
+              f"({(v.get('ml_verdict') or {}).get('verdict')}); margin MAE {v['margin_mae_model']} "
+              f"vs home-edge {v['margin_mae_home_edge']} ({(v.get('spread_verdict') or {}).get('verdict')}); "
+              f"total MAE {v['total_mae_model']} vs league avg {v['total_mae_league_avg']} "
+              f"({(v.get('total_verdict') or {}).get('verdict')})")
+    n = 0
+    for g in slate:
+        pj = ngm.project(block, g.get("home_id"), g.get("away_id"), g.get("odds"),
+                         g.get("home_abbr", ""), g.get("away_abbr", ""))
+        if pj:
+            g["model"] = pj
+            n += 1
+    print(f"  [verify] NBA slate games with a projection: {n} of {len(slate)}")
+    return block
 
 
 def nba_milestones(slate, pool, cur, today):

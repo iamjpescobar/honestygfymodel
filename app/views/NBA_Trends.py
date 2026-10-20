@@ -50,7 +50,20 @@ with card("nbat_head"):
                     ("pts", "reb", "ast", "tpm") else None,
                     "Last season": (r.get("last_season") or {}).get(st_) if st_ in
                     ("pts", "reb", "ast", "tpm") else None})
-    st.dataframe(pd.DataFrame(tab), hide_index=True, width="stretch", key="nbat_tab")
+    _ch = []
+    for st_, _lab in nm.STATS:
+        line = nv.his_line(r, st_)
+        _ch.append(nv.chance(r, st_, line, model)[0] if (model and line is not None) else None)
+
+    def _paint(frame):
+        o = pd.DataFrame("", index=frame.index, columns=frame.columns)
+        for k in frame.index:
+            if _ch[k] is not None:
+                o.at[k, "Over %"] = mv.chance_css(_ch[k])
+        return o
+    st.dataframe(mv.painted(pd.DataFrame(tab), _paint), hide_index=True, width="stretch",
+                 key="nbat_tab")
+    mv.render_chance_legend()
     st.caption((r.get("why") or "") + " · Price any line on NBA Props or the Bet Finder.")
 
 for st_, lab in (("pts", "Points"), ("reb", "Rebounds"), ("ast", "Assists"),

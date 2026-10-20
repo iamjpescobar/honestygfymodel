@@ -10,6 +10,54 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — the Model Scorecard, and the NFL totals were already fixed. 2026-10-08
+
+**Suite 130 (+ test_scorecard), FAILING: none.** Three negative controls red by
+exit code (listed in tests/test_scorecard.py). Results page rendered
+headless (streamlit AppTest) against the committed records: no exceptions.
+
+WHY: Izzy asked that every model give its best possible performance. The
+honest version of that is a record per model judged against the bar it
+has to beat, checked every night, with a recent window that catches a
+model that WAS good and stopped. That did not exist in one place.
+
+THE NFL TOTALS 4-11 (looked into first, nothing changed): every graded
+game bet so far (44 NFL, 23 NHL, 3 MLB) is formula "model-only", logged
+10-03/10-04, i.e. BEFORE engines/market_blend went live. Rebuilt the blend
+on 2025 (95 games with lines): total -> fails vs market (z -1.33),
+moneyline thin, spread thin, w_used 0 everywhere. So today the final
+chance IS the market's and no game bet clears the vig; the totals that
+went 4-11 were the ones the 10-04 fix was built to stop. No over/under
+lean either (8 over / 7 under). Rule 10: not retuned.
+
+ENGINE: app/engines/scorecard.py (NEW, pure). Three kinds of record,
+three targets (rule 9):
+- pick boards (calibration.summary): vs the measured league rate.
+- Top Plays (data/top_plays): vs the SUM of the delivered chances they
+  printed (p_cal). Landing it = ON TARGET, which is the job.
+- game bets (data/model_picks): market-anchored vs their logged chance;
+  model-only = RETIRED, shown, never judged.
+- boards graded vs their own printed number (K board, WNBA) = NO TARGET,
+  never coloured. A 43% K board is not "bad": a Poisson count clears a
+  non-integer mean less than half the time.
+Verdict: MIN_N 30, |z| >= 2. SLIPPING also fires on the last 30 days
+(>= 30 picks, z <= -2) — window anchored to the record's newest date.
+
+PAGE: Results now opens with the scorecard (cards, not a table, so they
+wrap on iPad; problems first). First real read: Daily 13, HR Edge, POTD
+BEATING; NHL + MLB Top Plays ON TARGET; game bets NO PICKS YET.
+
+NEXT (agreed order): NHL batch — PP-time probe (ESPN box score fields;
+the free NHL API has PP TOI if ESPN does not), 2+ goals column + its
+walk-forward verdict, NHL Player of the Day built like MLB's, and the
+"where did tonight's multi-goal scorers rank" log. Then NFL Player of
+the Week. The scorecard is how those get judged.
+
+FILES: app/engines/scorecard.py, tests/test_scorecard.py (NEW),
+app/views/Results.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — Goal Edge + Goalies to Target (NHL), TD Edge + Defenses to Target (NFL). 2026-10-06 (3)
 
 **Suite 131 (+ test_edge_boards), FAILING: none.** Four negative controls
