@@ -16,6 +16,8 @@ Negative controls, confirmed red by exit code when written (rule 4):
     -> "an untested SGP is capped at THIN..." fails
   - sgp_support putting a beating test IN range (STRONG allowed)
     -> the same check fails
+  - the book's total in a caption with <b> tags
+    -> "no HTML inside a caption" fails
 """
 import sys
 from pathlib import Path
@@ -109,6 +111,12 @@ check("an untested SGP is capped at THIN; a tested one at VALUE, never STRONG",
       and ns.sgp_support(None)["untested"] and "ns.sgp_support(test)" in page)
 check("the SGP joint is delivered leg chances x the simulator's lift",
       "prod * j[\"lift\"]" in page and "nv.chance(p[\"row\"], st_, ln, model, sd)" in page)
+import re as _re  # noqa: E402
+_caps = _re.findall(r"st\.caption\((.*?)\)\n", page, flags=_re.S)
+check("no HTML inside a caption (st.caption prints tags as text — the <b>47%</b> bug)",
+      _caps and not any("<b>" in c or "</" in c for c in _caps))
+check("the scoreboard shows each team's score on its own, never one squeezed metric",
+      "def _team(" in page and 'metric("Typical score"' not in page)
 check("Out players are left out of the simulation", "av.is_out(r.get(\"status\"))" in page)
 app = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
 check("the Simulator is in the NBA nav", '("Simulator", "views/NBA_Sim.py")' in app)

@@ -210,6 +210,15 @@ read/write), optional BETLOG_REPO (a private repo, if this one is
 public). Commit message "[skip render] [skip ci]". Stale sha -> reload,
 merge, retry once. No token -> session only + download / upload.
 
+SIMULATOR PAGE, READABILITY (Izzy's iPad screenshot): the "Typical
+score" metric truncated to "BOS 108 – D..." and the book's total printed
+as "<b>47%</b>" (st.caption shows tags as text). Now two team boxes (big
+score, win %, scoring range; the favourite outlined), a "Typical result /
+Total" line, the margin table shaded by share; players read Line /
+Typical / Most nights / Over / Under / Lean (a side at 55%+, else
+toss-up), <1% / >99% at the ends. test_nba_sim: no HTML in a caption
+(control red).
+
 FILES: app/engines/nba_model.py, app/engines/nba_sim.py,
 app/engines/bet_log.py (new), app/engines/bet_log_ui.py (new),
 app/views/Bet_Log.py (new), app/views/NBA_Sim.py, app/views/Bet_Finder.py,

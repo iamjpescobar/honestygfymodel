@@ -90,59 +90,125 @@ home, away = sim["home"], sim["away"]
 ha, aa = g.get("home_abbr"), g.get("away_abbr")
 
 # ---------------- the game ----------------
+LEAN_AT = 0.55          # a side shows as a lean from 55%; 45-55% reads "toss-up"
+
+
+def _pc(p):
+    return "<1%" if p < 0.005 else (">99%" if p > 0.995 else f"{100 * p:.0f}%")
+
+
+def _rng(arr):
+    return f"{np.percentile(arr, 10):.0f}\u2013{np.percentile(arr, 90):.0f}"
+
+
 with card("nbs_game"):
     p_home = float((home > away).mean())
     margin = home - away
     total = home + away
     st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">{aa} @ {ha} — '
-                f'{N_SIMS:,} games</div>', unsafe_allow_html=True)
-    c1, c2, c3 = st.columns(3)
-    c1.metric(f"{ha} wins", f"{100 * p_home:.0f}%")
-    c2.metric("Typical score", f"{aa} {np.median(away):.0f} – {ha} {np.median(home):.0f}")
-    c3.metric("Total (middle 80%)", f"{np.percentile(total, 10):.0f}–{np.percentile(total, 90):.0f}")
+                f'played {N_SIMS:,} times</div>', unsafe_allow_html=True)
+
+    def _team(abbr, pts, win, logo):
+        hot = win >= 0.5
+        img = (f'<img src="{logo}" style="height:40px; vertical-align:middle; margin-right:8px;">'
+               if logo else "")
+        return (f'<div style="flex:1 1 220px; padding:14px 16px; border-radius:12px; '
+                f'border:1px solid {COLOR["stat_high"] if hot else "rgba(152,163,173,0.25)"}; '
+                f'background:{"rgba(59,184,255,0.08)" if hot else "transparent"};">'
+                f'<div style="font-size:1.15em; font-weight:800;">{img}{abbr}</div>'
+                f'<div style="font-size:3em; font-weight:800; line-height:1.1; '
+                f'color:{COLOR["stat_high"] if hot else COLOR["text"]};">{np.median(pts):.0f}</div>'
+                f'<div style="font-size:var(--lc-text-small); color:{COLOR["text_muted"]};">'
+                f'wins <b style="color:{COLOR["text"]};">{100 * win:.0f}%</b> of games · '
+                f'scores {_rng(pts)} most nights</div></div>')
+    fav, fav_by = (ha, np.median(margin)) if np.median(margin) >= 0 else (aa, -np.median(margin))
     o = g.get("odds") or {}
-    bits = []
+    tot_line = (f'Total: typically <b>{np.median(total):.0f}</b>, {_rng(total)} most nights')
     if o.get("total") is not None:
         po = float((total > o["total"]).mean())
-        bits.append(f"over the book's {o['total']:g}: <b>{100 * po:.0f}%</b>")
+        tot_line += (f' · over the book\'s {o["total"]:g}: <b>{100 * po:.0f}%</b>, '
+                     f'under: <b>{100 * (1 - po):.0f}%</b>')
+    st.markdown(
+        f'<div style="display:flex; gap:12px; flex-wrap:wrap; margin:6px 0 10px;">'
+        f'{_team(aa, away, 1 - p_home, g.get("away_logo"))}'
+        f'{_team(ha, home, p_home, g.get("home_logo"))}</div>'
+        f'<div style="font-size:var(--lc-text-body); line-height:1.8;">'
+        f'Typical result: <b>{fav} by {fav_by:.0f}</b>'
+        + (f' (book: {o["details"]})' if o.get("details") else "")
+        + f'<br>{tot_line}</div>', unsafe_allow_html=True)
     lab = [f"{aa} by 20+", f"{aa} by 10-19", f"{aa} by 1-9", f"{ha} by 1-9",
            f"{ha} by 10-19", f"{ha} by 20+"]
     counts = np.histogram(margin, bins=[-1e9, -19.5, -9.5, 0, 9.5, 19.5, 1e9])[0]
-    dist = pd.DataFrame({"Result": lab, "Share of games": [f"{100 * c / N_SIMS:.0f}%"
-                                                            for c in counts]})
-    st.dataframe(dist, hide_index=True, width="stretch", key="nbs_dist")
-    st.caption(" · ".join(bits) + (" — " if bits else "")
-               + "the game model has not been tested against the book; a big gap to its total "
-                 "or spread means look closer (injuries, rest), not bet.")
+    shares = [c / N_SIMS for c in counts]
+    dist = pd.DataFrame({"How it ends": lab,
+                         "Share of games": [f"{100 * x:.0f}%" for x in shares]})
+
+    def _paint_d(frame):
+        o_ = pd.DataFrame("", index=frame.index, columns=frame.columns)
+        top = max(shares)
+        for k in frame.index:
+            a_ = 0.10 + 0.45 * shares[k] / top
+            o_.at[k, "Share of games"] = (f"background-color: rgba(59,184,255,{a_:.2f}); "
+                                          f"font-weight: 700;")
+        return o_
+    st.dataframe(mv.painted(dist, _paint_d), hide_index=True, width="stretch", key="nbs_dist")
+    st.caption("Big number = the score in a typical game; 'most nights' = 8 of every 10 "
+               "simulated games land in that range. The game model has not been tested against "
+               "the book — a big gap to the book's total or spread means look closer "
+               "(injuries, rest), not bet.")
 
 # ---------------- every player ----------------
 with card("nbs_players"):
-    st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Every player, '
-                f'10,000 times</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Every player — '
+                f'over or under his line?</div>', unsafe_allow_html=True)
     stat_lab = st.selectbox("Stat", [lab for _s, lab in nm.STATS], key="nbs_stat")
     stat = next(s_ for s_, lab in nm.STATS if lab == stat_lab)
-    rows, chances = [], []
+    rows, sides = [], []
     for p in sorted(players, key=lambda p: -(p["mu"].get(stat) or 0)):
         arr = sim["stats"][str(p["pid"])][stat]
         line = nv.his_line(p["row"], stat)
         ch = nv.chance(p["row"], stat, line, model)[0] if line is not None else None
-        chances.append(ch)
+        un = None if ch is None else 1.0 - ch
+        if ch is None:
+            lean = "—"
+        elif ch >= LEAN_AT:
+            lean = f"OVER {_pc(ch)}"
+        elif un >= LEAN_AT:
+            lean = f"UNDER {_pc(un)}"
+        else:
+            lean = "toss-up"
+        sides.append((ch, un))
         rows.append({"Player": f"{p['name']} ({p['team']})",
-                     "Low (10%)": int(np.percentile(arr, 10)), "Typical": int(np.median(arr)),
-                     "High (90%)": int(np.percentile(arr, 90)), "His line": line,
-                     "Over %": "—" if ch is None else f"{100 * ch:.0f}%"})
+                     "Line": "—" if line is None else f"{line:.1f}",
+                     "Typical": f"{np.median(arr):.0f}", "Most nights": _rng(arr),
+                     "Over": "—" if ch is None else _pc(ch),
+                     "Under": "—" if un is None else _pc(un),
+                     "Lean": lean})
 
     def _paint(frame):
         o_ = pd.DataFrame("", index=frame.index, columns=frame.columns)
         for k in frame.index:
-            if chances[k] is not None:
-                o_.at[k, "Over %"] = mv.chance_css(chances[k])
+            ch, un = sides[k]
+            if ch is None:
+                continue
+            o_.at[k, "Over"] = mv.chance_css(ch)
+            o_.at[k, "Under"] = mv.chance_css(un)
+            best = max(ch, un)
+            if best >= LEAN_AT:
+                o_.at[k, "Lean"] = (f"color: {COLOR['stat_high'] if ch >= un else COLOR['warn']}; "
+                                    f"font-weight: 800;")
+            else:
+                o_.at[k, "Lean"] = f"color: {COLOR['text_muted']};"
         return o_
     st.dataframe(mv.painted(pd.DataFrame(rows), _paint), hide_index=True, width="stretch",
                  key=f"nbs_pl_{stat}")
     mv.render_chance_legend()
-    st.caption("Low / Typical / High = his 10th / 50th / 90th percentile over the 10,000 games. "
-               "Over % = the same delivered chance the Props board prints.")
+    st.caption("Line = his usual number for this stat (his last-10 average, the way a book "
+               "hangs one) — change it to your book's line in the parlay builder below. "
+               "Typical = what he gets in a normal game; most nights = 8 of 10 games land in "
+               "that range. Over / Under = his chance to clear / miss the line. Lean = the "
+               "side at 55% or more; 45-55% is a toss-up. A lean is not a bet until your "
+               "book's price is checked (Bet Finder / Props).")
 
 # ---------------- same-game parlay ----------------
 with card("nbs_sgp"):
