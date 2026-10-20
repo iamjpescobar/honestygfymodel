@@ -55,7 +55,8 @@ if cap:
     live, _, soon = cap.group(1).partition("live")
     check("caption lists NFL and NHL as live", "NFL" in live and "NHL" in live)
     check("caption no longer lists NFL/NHL as soon", "NFL" not in soon and "NHL" not in soon)
-    check("caption still lists NBA as soon", "NBA" in soon)
+    # NBA went live 10-20 (nba_precompute / engines/nba_model).
+    check("caption lists NBA as live", "NBA" in live and "NBA" not in soon)
 
 for v in ("NFL", "NFL_Mismatch", "NFL_Props", "NFL_Projections", "NHL",
           "NHL_Crease", "NHL_Shots"):
@@ -102,8 +103,8 @@ for _v in ("NFL", "NHL"):
     check(f"{_v} passes a unique slot into its game card",
           "slot=" in _src and "_render_game(g, live, " in _src)
 
-check("NBA is still the honest coming-soon page",
-      "coming_soon_page(" in (ROOT / "app" / "views" / "NBA.py").read_text())
+check("NBA is a real page now, not the coming-soon stub (10-20)",
+      "coming_soon_page(" not in (ROOT / "app" / "views" / "NBA.py").read_text())
 
 wf = (ROOT / ".github" / "workflows" / "nightly-data.yml").read_text()
 steps = yaml.safe_load(wf)["jobs"]["build-data"]["steps"]

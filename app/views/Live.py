@@ -22,7 +22,7 @@ from engines import model_math as mm
 from engines import model_view as mv
 
 EASTERN = ZoneInfo("America/New_York")
-page_header("Live", "Player props while the game is on", eyebrow="NHL · NFL", align="left")
+page_header("Live", "Player props while the game is on", eyebrow="NHL · NFL · NBA", align="left")
 st.markdown(
     f'<div style="font-size:var(--lc-text-body); line-height:1.6; color:{COLOR["text"]};">'
     f'Pick a game in progress. Every player&rsquo;s chance is for the <b>rest of the game</b>: '
@@ -48,10 +48,17 @@ def _summary(sport, event_id):
     return json.dumps({"t": datetime.now(EASTERN).strftime("%-I:%M:%S %p"), "data": data})
 
 
-sport = st.segmented_control("Sport", ["NHL", "NFL"], default="NHL", key="live_sport") or "NHL"
+_here = st.session_state.get("lc_sport_seg") or st.session_state.get("lc_sport")
+_here = _here if _here in ("NHL", "NFL", "NBA") else "NHL"
+sport = st.segmented_control("Sport", ["NHL", "NFL", "NBA"], default=_here,
+                             key="live_sport") or _here
 sp = sport.lower()
 
-if sp == "nhl":
+if sp == "nba":
+    from engines import nba_view as _nv
+    games, model, _pg = _nv.load()
+    league = None
+elif sp == "nhl":
     games, _d, _cur = _li.load_slate_live("nhl")
     from engines.slate_guard import payload_field
     model = payload_field("nhl", "model") or {}
@@ -130,6 +137,27 @@ if sp == "nhl":
             ch, sup = lp.tested(_check, stat, line, ch) if nd > 0 else (ch, lp.UNTESTED)
             rows.append({"player": f"{p.get('name')} ({abbr})", "have": have, "need": nd,
                          "over": ch, "support": sup})
+elif sp == "nba":
+    from engines import nba_model as _nm
+    box = lp.nba_have(summ)
+    sizes = (model or {}).get("sizes") or {}
+    c1, c2, c3 = st.columns(3)
+    slab = c1.selectbox("Stat", [lab for _s, lab in _nm.STATS], key="live_nba_stat")
+    stat = next(s_ for s_, lab in _nm.STATS if lab == slab)
+    line = c2.number_input("Line", min_value=0.5, max_value=89.5, step=1.0,
+                           value=19.5 if stat in ("pts", "pra", "pr", "pa") else 4.5,
+                           key=f"live_nba_line_{stat}")
+    side = c3.segmented_control("Side", ["Over", "Under"], default="Over", key="live_nba_side") \
+        or "Over"
+    for s_ in ("away", "home"):
+        abbr = g.get(f"{s_}_abbr")
+        for p in g.get(f"{s_}_props") or []:
+            have = (box.get(str(p.get("pid"))) or {}).get(stat, 0)
+            ch, nd = lp.nba_chance((p.get("mu") or {}).get(stat), sizes.get(stat), line, have, f)
+            if ch is None:
+                continue
+            rows.append({"player": f"{p.get('name')} ({abbr})", "have": have, "need": nd,
+                         "over": ch})
 else:
     NFL = [(s, lab, key, mk) for s, lab, key, mk, _r in mv.NFL_STATS]
     box = lp.nfl_box(summ)
@@ -171,7 +199,7 @@ with card("live_board"):
                   "LOST" if r["done"] else f"{r['need']} more"),
         "Chance": f"{100 * r['chance']:.1f}%",
         "Worth it at": (mm.fmt_american(mm.fair_american(r["chance"]))
-                        if 0 < r["chance"] < 1 else "—"),
+                        if 0.01 < r["chance"] < 0.99 else "—"),
         "Your price": None} for r in rows])
     ed = st.data_editor(base, key=f"live_ed_{sp}_{stat}_{line}_{side}_{gi}", hide_index=True,
                         width="stretch",

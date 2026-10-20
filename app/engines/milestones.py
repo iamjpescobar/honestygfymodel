@@ -59,6 +59,13 @@ CAREER = {
         ("rec", "Receptions", "career catch", _ladder(100, 100, 1600)),
         ("td", "Rush + rec TDs", "career rush/rec TD", _ladder(25, 25, 225)),
     ),
+    "nba": (
+        ("pts", "Points", "career point", _ladder(5000, 1000, 45000, extra=(1000, 2500))),
+        ("reb", "Rebounds", "career rebound", _ladder(1000, 1000, 16000)),
+        ("ast", "Assists", "career assist", _ladder(1000, 1000, 16000)),
+        ("tpm", "3-pointers made", "career three", _ladder(250, 250, 4500)),
+        ("gp", "Games played", "career game", (500, 1000, 1500)),
+    ),
     "mlb": (
         ("hr", "Home runs", "career home run", _ladder(100, 50, 800)),
         ("h", "Hits", "career hit", _ladder(500, 500, 4500)),
@@ -79,12 +86,26 @@ SEASON = {
         ("rec", "Receptions", "catch of the season", (100, 125, 150)),
         ("td", "Rush + rec TDs", "rush/rec TD of the season", (10, 15, 20, 25)),
     ),
+    "nba": (
+        ("pts", "Points", "point of the season", (1000, 1500, 2000)),
+        ("reb", "Rebounds", "rebound of the season", (500, 750, 1000)),
+        ("ast", "Assists", "assist of the season", (500, 750)),
+        ("tpm", "3-pointers made", "three of the season", (200, 250, 300)),
+    ),
     "mlb": (),
 }
 # The most a player can plausibly need in ONE game to count as "close".
 REACH = {"g": 2, "a": 2, "pts": 3, "gp": 1,
          "pass_yds": 400, "pass_td": 4, "rush_yds": 175, "rec_yds": 175, "rec": 12, "td": 3,
          "hr": 2, "h": 3, "rbi": 4, "sb": 2}
+# Basketball counts are bigger: "pts" is 3 in hockey, 45 here.
+REACH_BY = {"nba": {"pts": 45, "reb": 18, "ast": 15, "tpm": 7, "gp": 1}}
+
+
+def reach(sport, stat):
+    return (REACH_BY.get(sport) or {}).get(stat, REACH.get(stat, 0))
+
+
 # Yardage reads "300 yards", counts read "2".
 YARDS = {"pass_yds", "rush_yds", "rec_yds"}
 
@@ -126,13 +147,13 @@ def needs(career=None, season=None, sport="nhl"):
             if mark is None:
                 continue
             need = mark - have
-            if need <= 0 or need > REACH.get(stat, 0):
+            if need <= 0 or need > reach(sport, stat):
                 continue
             out.append({"stat": stat, "label": label, "scope": scope, "mark": mark,
                         "have": have, "need": need, "what": describe(stat, mark, noun)})
     # The one item per stat that matters most: a career mark beats a
     # season mark for the same stat on the same night.
-    out.sort(key=lambda x: (x["need"] / max(1, REACH.get(x["stat"], 1)), x["scope"] != "career"))
+    out.sort(key=lambda x: (x["need"] / max(1, reach(sport, x["stat"])), x["scope"] != "career"))
     return out
 
 
@@ -186,6 +207,17 @@ def nfl_season(games):
     return {k: int(v) for k, v in out.items()}
 
 
+def nba_season(games):
+    """{pts, reb, ast, tpm, gp} from one player's regular-season game
+    tuples this season (engines/nba_model.IDX)."""
+    games = [g for g in games or [] if g and g[3]]
+    out = {"pts": 0, "reb": 0, "ast": 0, "tpm": 0, "gp": len(games)}
+    for g in games:
+        for k, i in (("pts", 4), ("reb", 5), ("ast", 6), ("tpm", 7)):
+            out[k] += int(g[i] or 0)
+    return out
+
+
 def add(prior, season):
     """career now = prior + this season, stat by stat; a stat the prior
     table lacks stays missing."""
@@ -206,14 +238,25 @@ ESPN_NAMES = {
             "rec_td": ("receivingTouchdowns",)},
 }
 DERIVED = {"nhl": {"pts": ("g", "a")}, "nfl": {"td": ("rush_td", "rec_td")}}
+ESPN_NAMES["nba"] = {"pts": ("points",), "reb": ("totalRebounds", "rebounds"),
+                     "ast": ("assists",),
+                     "tpm": ("threePointFieldGoalsMade",
+                             "threePointFieldGoalsMade-threePointFieldGoalsAttempted"),
+                     "gp": ("gamesPlayed",)}
 _SKIP_CATS = ("average", "avg", "per")
 
 
 def _num(x):
+    t = str(x).replace(",", "")
     try:
-        return float(str(x).replace(",", ""))
+        return float(t)
     except (TypeError, ValueError):
-        return None
+        # "made-attempted" cells (basketball threes): the made part
+        head = t.split("-")[0] if "-" in t[1:] else None
+        try:
+            return float(head) if head else None
+        except ValueError:
+            return None
 
 
 def season_label(row):
@@ -352,7 +395,7 @@ def season_start_year(d, sport):
 # The file's format per sport. Bumped when a file on disk is known wrong,
 # so the next nightly starts it over: NHL 2 (10-14) — format 1 read
 # ESPN's "26-27" row as a past season and counted this season twice.
-FORMAT = {"nhl": 2, "nfl": 1}
+FORMAT = {"nhl": 2, "nfl": 1, "nba": 1}
 
 
 class PriorCareer:

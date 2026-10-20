@@ -154,6 +154,73 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — NBA goes live: model, Tonight, Props, Trends, Next Man Up. 2026-10-20
+
+**Suite 144 (+ test_nba), FAILING: none.** Three negative controls red by
+exit code (listed in the test). Every NBA page, plus the Bet Finder,
+Live and Milestone Watch on NBA, rendered headless on a simulated slate
+(fitted model, a star out, preseason games) with no exceptions.
+
+WHY: opening night 10-20; the NBA page was a coming-soon stub. Izzy: make
+it special, preseason for reference, player trend charts, "create a gem".
+
+DATA: nba_prior_season.py + MANUAL workflow nba-prior-season.yml (RUN
+ONCE) -> data/nba/prior_season.json (2025-26 regular season, ~1,230
+box scores; tuples [date, team, opp, min, pts, reb, ast, tpm, stl, blk,
+tov]). engines/nba_box parses ESPN's summary by LABELS (MIN PTS REB AST
+3PT STL BLK TO); did-not-play / zero minutes are not games.
+
+MODEL (engines/nba_model.py): recency-weighted minutes x per-minute rate
+shrunk to the position group's league rate by K minutes; combos = sums;
+NB spread per stat by method of moments; last season carries at CARRY
+0.5 across the offseason gap. HL (5/10/20/40) and K (0/30/100/300)
+FITTED on the 45 days before the test window. TEST: last 45 days of
+2025-26, line = his last-10 average at the half point, vs his own last-20
+hit rate over it, paired verdict + "@stat" calibration (the NFL shape,
+so curve_for / support_for / the guard read it unchanged). Simulated
+season: all 8 stats beat. NOT in the number (said on the pages):
+opponent, pace, a teammate out, rest.
+
+NIGHTLY (nba_precompute.py, step in nightly-data.yml, archive expects
+data/nba/games.json): slate (14-day lookahead), this season's box
+scores (regular -> pool; PRESEASON -> reference only, never a rate),
+fit + verify lines, roster + league injury list (Out never projected),
+per-team props rows (min, mu, season / last-season lines, why, a
+30-game + preseason TREND list tagged LAST / PRE / REG), Next Man Up
+boards for 20+ min players OUT, WHAT IF boards for each team's top six,
+the preseason role watch, milestones (NBA in engines/milestones with a
+sport-aware REACH; ESPN "made-att" threes parsed).
+
+PAGES (NBA nav: Tonight, Props, Player Trends, Next Man Up, Bet Finder,
+Live, Milestone Watch, Results): NBA.py (game cards, injury chips,
+projected rotations, Next Man Up teaser, role watch, model verdict
+chips); NBA_Props.py (stat board, editable line from his last-10 half
+point, chance delivered, your price -> guard, card + parlay slip, trend
+chart); NBA_Trends.py (one player, all stats, charts with PRE toggle);
+NBA_Next_Man_Up.py (the gem: OUT tonight + What If). engines/nba_view
+is the one chance function for all of them. Bet Finder SOURCES["NBA"];
+Live NBA (4 x 12, NB rest-of-game updated on what he has; untested ->
+THIN); live injury check covers nba props. Switcher caption: NBA live.
+
+FIRST RUNS: 1) "NBA prior season" workflow -> [verify] ~1,230 box
+scores, scoring leader. 2) nightly -> "[verify] NBA model fit", one line
+per stat (beats / thin / fails), minutes MAE, injuries, Next Man Up
+boards, role watch, the career feed probe.
+
+FILES: app/engines/nba_box.py, nba_model.py, nba_view.py,
+app/views/NBA_Props.py, NBA_Trends.py, NBA_Next_Man_Up.py,
+nba_prior_season.py, nba_precompute.py,
+.github/workflows/nba-prior-season.yml, tests/test_nba.py (NEW);
+app/views/NBA.py (rewritten), app/app.py, app/views/Bet_Finder.py,
+app/views/Live.py, app/views/Milestones.py, app/views/Results.py,
+app/engines/live_props.py, live_injuries.py, milestones.py,
+espn_feed.py, slate_guard.py, app/styles/kc_theme.py,
+.github/workflows/nightly-data.yml, tests/test_live_props.py,
+tests/test_bet_finder.py, tests/test_milestones.py,
+tests/test_nfl_nhl_wiring.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — Parlay slip; the Live page's test on last season. 2026-10-18 (2)
 
 **Suite 143 (+ test_parlay, test_live_check), FAILING: none.** Six
@@ -732,48 +799,5 @@ the Week. The scorecard is how those get judged.
 
 FILES: app/engines/scorecard.py, tests/test_scorecard.py (NEW),
 app/views/Results.py, HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — Goal Edge + Goalies to Target (NHL), TD Edge + Defenses to Target (NFL). 2026-10-06 (3)
-
-**Suite 131 (+ test_edge_boards), FAILING: none.** Four negative controls
-red by exit code (one first came back GREEN — the goalie fixture's game
-goals agreed with the save-rate ranking, so it could not tell the two
-apart; the fixture now makes them disagree). All four pages opened in a
-real browser against the 10-06 nightly archive: no exceptions.
-
-WHY: Izzy wanted hockey and football versions of HR Edge and Pitchers to
-Target: one page that ranks the scoring chance, one that names who to
-attack.
-
-ENGINE: app/engines/edge_boards.py (NEW, pure). NOTHING NEW IS
-ESTIMATED; it gathers what the nightly already fits and tests.
-- nhl_goal_rows: every skater's Goal O0.5 from nhl_model through the g1
-  calibration curve (the delivered chance, same as Top Plays), with exp
-  G / SOG, ice time, goal environment, the goalie he SHOOTS AT and the
-  DvP cards. No 0-100 composite: the ranked number has a graded record.
-- likely_starter: most recent starts from the crease string; a TIE
-  returns None (a split crease shows both names and their averaged save
-  rate, never a guess).
-- nhl_goalie_rows: ranked by HIS expected goals against = exp shots
-  against x (1 - his shrunk save rate); the game model's team goals ride
-  beside it as the cross-check. Saves are tested at TEAM level only, and
-  the page says so.
-- nfl_td_rows: projection_rows("Anytime TD") through the nightly NFL
-  prop test's td calibration (nfl_prop_check), DvP td card, opponent TD
-  and red-zone ranks.
-- nfl_defense_rows: per position, the stat the defense allows MOST (of
-  2-3), its rank and % vs league; sorted by SOFT count, then summed size.
-  The page warns that max-of-three makes any defense look a bit softer.
-
-PAGES (NEW): views/NHL_Goal_Edge.py, NHL_Goalies_To_Target.py,
-NFL_TD_Edge.py, NFL_Defenses_To_Target.py: money columns first, chance
-colours, price checker with the verdict box + matchup notices. Added to
-SPORT_SUBPAGES in app.py (NHL: Goal Edge, Goalies to Target; NFL: TD
-Edge, Defenses to Target).
-
-FILES: app/engines/edge_boards.py, the four views, tests/test_edge_boards.py
-(all NEW), app/app.py, HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

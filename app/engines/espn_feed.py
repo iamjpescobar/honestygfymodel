@@ -35,6 +35,7 @@ EASTERN = ZoneInfo("America/New_York")
 LEAGUES = {
     "nfl": ("football", "nfl"),
     "nhl": ("hockey", "nhl"),
+    "nba": ("basketball", "nba"),
     # MLB is here ONLY for the posted line (moneyline/total) the game
     # model is compared against. Every MLB stat still comes from statsapi.
     "mlb": ("baseball", "mlb"),

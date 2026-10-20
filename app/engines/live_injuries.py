@@ -30,7 +30,8 @@ _CACHE = {}               # league -> (read_at, feed, ok)
 
 _HOSTS = ("https://site.web.api.espn.com/apis/site/v2/sports/{sp}/{lg}/injuries",
           "https://site.api.espn.com/apis/site/v2/sports/{sp}/{lg}/injuries")
-_PATHS = {"nhl": ("hockey", "nhl"), "nfl": ("football", "nfl")}
+_PATHS = {"nhl": ("hockey", "nhl"), "nfl": ("football", "nfl"),
+          "nba": ("basketball", "nba")}
 
 
 def _fetch(league, _get=None):
@@ -87,8 +88,8 @@ def overlay(games, f, league):
     """A copy of the slate with the live tags laid over it, and the names
     ruled out since the nightly (each game gets "{side}_out_live")."""
     games = copy.deepcopy(games or [])
-    lists = (("props", "goalie_props", "skaters", "goalies") if league == "nhl"
-             else ("players",))
+    lists = {"nhl": ("props", "goalie_props", "skaters", "goalies"),
+             "nba": ("props",)}.get(league, ("players",))
     total = []
     for g in games:
         for side in ("away", "home"):

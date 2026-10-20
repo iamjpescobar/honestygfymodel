@@ -40,7 +40,7 @@ from engines import espn_feed as ef
 from engines import model_math as mm
 
 UNTESTED = {"measured": False, "in_range": False, "n": 0, "untested": True}
-REG = {"nhl": (3, 20.0), "nfl": (4, 15.0)}
+REG = {"nhl": (3, 20.0), "nfl": (4, 15.0), "nba": (4, 12.0)}
 
 
 # ----------------------------------------------------------------------
@@ -256,6 +256,28 @@ def nfl_chance(mean, market, spreads, line, have, f):
     return over_chance(pmf, nd), nd
 
 
+def nba_have(summary):
+    """{pid: {stat: so far}} in engines/nba_model's stat keys, combos summed."""
+    from engines import nba_box as nbx
+    from engines import nba_model as nmod
+    out = {}
+    for pid, ln in nbx.parse(summary).items():
+        d = {k: int(ln.get(k) or 0) for k in nmod.BASE}
+        for c, parts in nmod.COMBOS.items():
+            d[c] = sum(d[x] for x in parts)
+        out[pid] = d
+    return out
+
+
+def nba_chance(mean, size, line, have, f):
+    """(over chance for the rest of the game, still needs) for one player:
+    negative binomial with the game rate updated on what he has."""
+    nd = need(line, have)
+    if nd <= 0:
+        return 1.0, nd
+    return over_chance(rest_pmf("nb", mean, f, have=have, size=size), nd), nd
+
+
 # ----------------------------------------------------------------------
 # The test's verdict (data/nhl/live_check.json, nhl_live_check.py)
 # ----------------------------------------------------------------------
@@ -301,7 +323,7 @@ def fetch_summary(sport, event_id, _get=None, timeout=8):
     """ESPN's live game summary, or None. Both hosts, one try each, a
     short timeout — a page never waits long on ESPN."""
     import requests
-    path = {"nhl": "hockey/nhl", "nfl": "football/nfl"}[sport]
+    path = {"nhl": "hockey/nhl", "nfl": "football/nfl", "nba": "basketball/nba"}[sport]
     for host in _HOSTS:
         url = _SUMMARY.format(host=host, path=path)
         try:

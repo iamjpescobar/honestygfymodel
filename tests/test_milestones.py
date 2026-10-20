@@ -188,8 +188,8 @@ with tempfile.TemporaryDirectory() as td:
 
 # --- 7. wiring ----------------------------------------------------------------
 app = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
-check("Milestone Watch is in the MLB, NHL and NFL navs",
-      app.count('("Milestone Watch", "views/Milestones.py")') == 3)
+check("Milestone Watch is in the MLB, NHL, NFL and NBA navs",
+      app.count('("Milestone Watch", "views/Milestones.py")') == 4)
 home = (ROOT / "app" / "views" / "Home.py").read_text(encoding="utf-8")
 check("Home has a route to it", '("Milestone Watch", "MLB"' in home)
 res = (ROOT / "app" / "views" / "Results.py").read_text(encoding="utf-8")

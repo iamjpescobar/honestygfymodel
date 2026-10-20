@@ -449,9 +449,11 @@ def _render_milestones():
         nhl = payload_field("nhl", "milestones_happened") or []
         wk, _st = load_week()
         nfl = (wk or {}).get("milestones_happened") or []
+        nba = payload_field("nba", "milestones_happened") or []
     except Exception:  # noqa: BLE001 — a missing payload costs this section only
         return
-    rows = ([dict(h, sport="NHL") for h in nhl] + [dict(h, sport="NFL") for h in nfl])
+    rows = ([dict(h, sport="NHL") for h in nhl] + [dict(h, sport="NFL") for h in nfl]
+            + [dict(h, sport="NBA") for h in nba])
     if not rows:
         return
     rows.sort(key=lambda h: (h.get("date") or "", h.get("mark") or 0), reverse=True)

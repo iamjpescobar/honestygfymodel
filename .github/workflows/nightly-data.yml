@@ -187,6 +187,12 @@ jobs:
       - name: Fetch NHL slate (real ESPN data)
         run: python nhl_precompute.py || echo "NHL fetch failed - continuing without it"
 
+      # NBA (10-20): slate, projections fitted + tested on 2025-26
+      # (data/nba/prior_season.json, the manual nba-prior-season
+      # workflow), preseason for reference, Next Man Up, milestones.
+      - name: Fetch NBA slate (real ESPN data)
+        run: python nba_precompute.py || echo "NBA fetch failed - continuing without it"
+
       # Who actually starts, from MLB's own posted lineups. Feeds the
       # projected-lineup caption on the Game Card, which is what a
       # morning read has instead of a real lineup.
@@ -230,7 +236,7 @@ jobs:
         run: |
           # --porcelain, not git diff: a brand-new dated file is
           # untracked, and git diff reports untracked as no change.
-          if [ -z "$(git status --porcelain -- data/nfl/projections data/nfl/prior_season.json data/nfl/prior_players.json data/nfl/prior_dvp.json data/nfl/prior_logs.json data/model_picks/nhl.json data/model_picks/nfl.json data/top_plays/nhl.json data/top_plays/nhl_potd.json data/top_plays/nhl_multigoal.json data/top_plays/nhl_multigoal_ranks.json data/nhl/career_prior.json data/nfl/career_prior.json)" ]; then
+          if [ -z "$(git status --porcelain -- data/nfl/projections data/nfl/prior_season.json data/nfl/prior_players.json data/nfl/prior_dvp.json data/nfl/prior_logs.json data/model_picks/nhl.json data/model_picks/nfl.json data/top_plays/nhl.json data/top_plays/nhl_potd.json data/top_plays/nhl_multigoal.json data/top_plays/nhl_multigoal_ranks.json data/nhl/career_prior.json data/nfl/career_prior.json data/nba/career_prior.json)" ]; then
             echo "No new NFL projections to commit."
           else
             git config user.name "github-actions[bot]"
@@ -258,7 +264,8 @@ jobs:
             for f in data/model_picks/nhl.json data/model_picks/nfl.json data/top_plays/nhl.json \
                      data/top_plays/nhl_potd.json data/top_plays/nhl_multigoal.json \
                      data/top_plays/nhl_multigoal_ranks.json \
-                     data/nhl/career_prior.json data/nfl/career_prior.json; do
+                     data/nhl/career_prior.json data/nfl/career_prior.json \
+                     data/nba/career_prior.json; do
               if [ -f "$f" ]; then git add "$f"; fi
             done
             git commit -m "chore: log NFL projections [skip ci]"
@@ -349,7 +356,8 @@ jobs:
                       "data/kbo/games.json": "KBO slate",
                       "data/npb/games.json": "NPB slate",
                       "data/nfl/games.json": "NFL week",
-                      "data/nhl/games.json": "NHL slate"}
+                      "data/nhl/games.json": "NHL slate",
+                      "data/nba/games.json": "NBA slate"}
 
           missing_required = [d for p, d in required.items() if p not in names]
           missing_expected = [d for p, d in expected.items() if p not in names]

@@ -90,6 +90,7 @@ _LEAGUES = {
     # NOT here: a football slate is a Tuesday-to-Monday RANGE and a single
     # date key would be a wrong label on it — see engines/nfl_week.py.
     "nhl":  ("slate_date_et",  "generated_at_et",  "America/New_York"),
+    "nba":  ("slate_date_et",  "generated_at_et",  "America/New_York"),
 }
 
 # WHICH JOB PUBLISHES EACH SLATE — for the staleness sentence only.
@@ -110,6 +111,7 @@ _WRITER = {
     "npb":  "the nightly build",
     "mlb":  "the slate-picks job",
     "nhl":  "the nightly build",
+    "nba":  "the nightly build",
 }
 
 # WHEN EACH LEAGUE'S SLATE FIRST EXISTS, in the league's own timezone.

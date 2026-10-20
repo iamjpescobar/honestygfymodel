@@ -10,6 +10,49 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — Goal Edge + Goalies to Target (NHL), TD Edge + Defenses to Target (NFL). 2026-10-06 (3)
+
+**Suite 131 (+ test_edge_boards), FAILING: none.** Four negative controls
+red by exit code (one first came back GREEN — the goalie fixture's game
+goals agreed with the save-rate ranking, so it could not tell the two
+apart; the fixture now makes them disagree). All four pages opened in a
+real browser against the 10-06 nightly archive: no exceptions.
+
+WHY: Izzy wanted hockey and football versions of HR Edge and Pitchers to
+Target: one page that ranks the scoring chance, one that names who to
+attack.
+
+ENGINE: app/engines/edge_boards.py (NEW, pure). NOTHING NEW IS
+ESTIMATED; it gathers what the nightly already fits and tests.
+- nhl_goal_rows: every skater's Goal O0.5 from nhl_model through the g1
+  calibration curve (the delivered chance, same as Top Plays), with exp
+  G / SOG, ice time, goal environment, the goalie he SHOOTS AT and the
+  DvP cards. No 0-100 composite: the ranked number has a graded record.
+- likely_starter: most recent starts from the crease string; a TIE
+  returns None (a split crease shows both names and their averaged save
+  rate, never a guess).
+- nhl_goalie_rows: ranked by HIS expected goals against = exp shots
+  against x (1 - his shrunk save rate); the game model's team goals ride
+  beside it as the cross-check. Saves are tested at TEAM level only, and
+  the page says so.
+- nfl_td_rows: projection_rows("Anytime TD") through the nightly NFL
+  prop test's td calibration (nfl_prop_check), DvP td card, opponent TD
+  and red-zone ranks.
+- nfl_defense_rows: per position, the stat the defense allows MOST (of
+  2-3), its rank and % vs league; sorted by SOFT count, then summed size.
+  The page warns that max-of-three makes any defense look a bit softer.
+
+PAGES (NEW): views/NHL_Goal_Edge.py, NHL_Goalies_To_Target.py,
+NFL_TD_Edge.py, NFL_Defenses_To_Target.py: money columns first, chance
+colours, price checker with the verdict box + matchup notices. Added to
+SPORT_SUBPAGES in app.py (NHL: Goal Edge, Goalies to Target; NFL: TD
+Edge, Defenses to Target).
+
+FILES: app/engines/edge_boards.py, the four views, tests/test_edge_boards.py
+(all NEW), app/app.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — money columns first on every model table (iPad width). 2026-10-06 (2)
 
 **Suite 130 (+ test_money_columns_first), FAILING: none.** Three negative

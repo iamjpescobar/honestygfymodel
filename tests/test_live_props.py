@@ -106,7 +106,7 @@ check("every live call goes through the guard as UNTESTED (THIN at most)",
       "bf.judge(" in page and "lp.UNTESTED" in page)
 check("the page says it is untested", "Not yet tested on past games" in page)
 app = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
-check("Live is in the NHL and NFL navs", app.count('("Live", "views/Live.py")') == 2)
+check("Live is in the NHL, NFL and NBA navs", app.count('("Live", "views/Live.py")') == 3)
 from engines import model_view as mv  # noqa: E402
 from engines import value as vl  # noqa: E402
 check("an untested 12-point gap is CHECK, a 6-point one THIN, never STRONG",

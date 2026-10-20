@@ -156,7 +156,34 @@ def _mlb(_d):
     return out, [], None
 
 
-SOURCES = {"NHL": _nhl, "NFL": _nfl, "MLB": _mlb}
+@st.cache_data(ttl=900, show_spinner=False)
+def _nba(_d):
+    from engines import nba_model as nm
+    from engines import nba_view as nv
+    games, model, pget = nv.load()
+    cal = nv.calibration(model)
+    out = []
+    for g in games or []:
+        if g.get("status") == "final":
+            continue
+        label = f"{g.get('away_abbr')} @ {g.get('home_abbr')}"
+        for side in ("away", "home"):
+            abbr = g.get(f"{side}_abbr")
+            for p in g.get(f"{side}_props") or []:
+                items = p.get("milestones") or []
+                if not items:
+                    continue
+                row = {"_pmfs": nm.player_pmfs(p.get("mu"), (model or {}).get("sizes"))}
+                for it in items:
+                    ch = None
+                    if it["stat"] in row["_pmfs"]:
+                        ch, _raw, _b = bf.chance_at(row, it["stat"], it["need"] - 0.5, "Over",
+                                                    (), cal)
+                    out.append(_row(p.get("name"), abbr, label, it, ch))
+    return out, pget("milestones_happened") or [], None
+
+
+SOURCES = {"NHL": _nhl, "NFL": _nfl, "NBA": _nba, "MLB": _mlb}
 _here = ss.get("lc_sport_seg") or ss.get("lc_sport")
 sport = st.segmented_control("Sport", list(SOURCES),
                              default=_here if _here in SOURCES else "NHL", key="ms_sport")
@@ -169,7 +196,7 @@ with st.spinner("Checking who is close tonight…"):
         rows, happened, note = [], [], f"{sport} data unavailable right now ({type(exc).__name__})."
 
 rows = sorted(rows, key=lambda r: (r["chance"] is None, -(r["chance"] or 0), r["need"]))
-if sport in ("NHL", "NFL"):
+if sport in ("NHL", "NFL", "NBA"):
     _li.render_note(sport.lower())
 
 with card("ms_watch"):

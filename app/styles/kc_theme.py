@@ -1092,7 +1092,7 @@ def sport_switcher(active: str = "MLB"):
         f'<div style="text-align:center; font-size:var(--lc-text-micro); font-weight:700; '
         f'letter-spacing:0.14em; color:{COLOR["text_faint"]}; opacity:0.75; '
         f'margin-top:var(--lc-space-hair); text-transform:uppercase;">'
-        f'MLB · KBO · NPB · WNBA · NFL · NHL live — NBA soon</div>',
+        f'MLB · KBO · NPB · WNBA · NFL · NHL · NBA live</div>',
         unsafe_allow_html=True,
     )
 

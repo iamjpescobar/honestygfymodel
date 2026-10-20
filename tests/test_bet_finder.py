@@ -110,8 +110,8 @@ check("card keys separate line and side",
 
 # --- 7. the page ----------------------------------------------------------
 app = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
-check("Bet Finder is in the MLB, NHL and NFL navs",
-      app.count('("Bet Finder", "views/Bet_Finder.py")') == 3)
+check("Bet Finder is in the MLB, NHL, NFL and NBA navs",
+      app.count('("Bet Finder", "views/Bet_Finder.py")') == 4)
 page = (ROOT / "app" / "views" / "Bet_Finder.py").read_text(encoding="utf-8")
 check("the page judges with the engine (one definition of a good bet)",
       "bf.chance_at(" in page and "bf.judge(" in page)

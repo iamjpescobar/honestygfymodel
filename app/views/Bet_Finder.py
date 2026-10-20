@@ -175,8 +175,40 @@ def _mlb_groups(item):
                                       team_abbr(g.get("home")))
 
 
+def _nba_games():
+    from engines import nba_view as nv
+    games, model, _pget = nv.load()
+    if not model:
+        return []
+    return [{"label": f"{g.get('away_abbr')} @ {g.get('home_abbr')}  "
+                      f"{g.get('time_et') or ''}".strip(), "g": g, "model": model}
+            for g in games if g.get("status") != "final" and g.get("game_type") != "preseason"]
+
+
+def _nba_groups(item):
+    from engines import availability as av
+    from engines import nba_model as nm
+    from engines import nba_view as nv
+    g, model = item["g"], item["model"]
+    rows = []
+    for side in ("away", "home"):
+        abbr = g.get(f"{side}_abbr")
+        for r in g.get(f"{side}_props") or []:
+            if av.is_out(r.get("status")):
+                continue
+            lab = av.maybe_label(r.get("status"))
+            rows.append({"_name": f"{r['name']} ({abbr})" + (f" \u26a0 {lab}" if lab else ""),
+                         "_why": r.get("why"),
+                         "_pmfs": nm.player_pmfs(r.get("mu"), model.get("sizes"))})
+    stats = tuple((s, lab, (0.5,)) for s, lab in nm.STATS)
+    away, home = g.get("away_abbr"), g.get("home_abbr")
+    return ([{"label": "Players", "rows": rows, "stats": stats, "markets": (),
+              "cal": nv.calibration(model), "per_player_line": True}],
+            bf.game_line_items(g.get("model"), g.get("odds"), away, home))
+
+
 SOURCES = {"NHL": (_nhl_games, _nhl_groups), "MLB": (_mlb_games, _mlb_groups),
-           "NFL": (_nfl_games, _nfl_groups)}
+           "NFL": (_nfl_games, _nfl_groups), "NBA": (_nba_games, _nba_groups)}
 
 
 # ----------------------------------------------------------------------

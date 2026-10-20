@@ -323,6 +323,18 @@ SPORT_SUBPAGES = {
         # Props over the rest of a game in progress (10-18, live_props).
         ("Live", "views/Live.py"),
     ],
+    # Basketball (10-20): a nightly slate through slate_guard("nba"),
+    # projections fitted and tested on 2025-26 (engines/nba_model).
+    "NBA": [
+        ("Tonight", "views/NBA.py"),
+        ("Props", "views/NBA_Props.py"),
+        ("Player Trends", "views/NBA_Trends.py"),
+        ("Next Man Up", "views/NBA_Next_Man_Up.py"),
+        ("Bet Finder", "views/Bet_Finder.py"),
+        ("Live", "views/Live.py"),
+        ("Milestone Watch", "views/Milestones.py"),
+        ("Results", "views/Results.py"),
+    ],
     # Hockey is a nightly slate through slate_guard("nhl"). The Crease
     # Report and Shots Lab read regular-season box scores only.
     "NHL": [
