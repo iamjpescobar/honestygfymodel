@@ -10,6 +10,51 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — NFL props tested on last season + this one; defense strength fitted. 2026-10-11 (2)
+
+**Suite 135 (+ test_nfl_two_seasons), FAILING: none.** Three negative controls red
+by exit code (one first came back GREEN: the null world never fitted a
+strength above 0, so "adopt without the test" could not show; the fixture
+now has fit weeks that suggest a strength and test weeks that do not).
+NFL pages + Bet Finder rendered headless. This zip ALSO carries the
+10-11 guard batch (bet_guard), which had not been pushed yet.
+
+WHY: Izzy — "make NFL behave like MLB and NHL". NHL/MLB props are tested
+on a full past season; the NFL test ran on this season's weeks only (92
+QB games for passing yards), and its defense multipliers were all-or-
+nothing (all three failed).
+
+DATA: nfl_precompute.load_or_fetch_prior_logs — every 2025 box score
+through THIS season's parser (parse_summary_final), finals in this
+season's shape (week via PRIOR_WEEK1_TUESDAY 2025-09-02, abbrs from the
+summary, recorded line from pickcenter, team boxes), fetched ONCE by the
+nightly (~272 summaries) and committed as data/nfl/prior_logs.json
+(nightly-data.yml commit step). Refuses to save under 90% parsed.
+
+TEST (nfl_prop_check.run, prior=): walk_forward on 2025 AND 2026, rows now
+8 fields (+ {strength: p} on STRENGTH_GRID 0/.25/.5/.75/1 for the
+family's stats). split_rows: fit on 2025's first half of weeks; test on
+2025's second half + all of 2026 (never a week the fit saw). fit_strength
+per family (rush / rec / pass): lowest log loss on the fit block, then
+paired vs strength 0 on the test block; in the number only on "beats".
+Then the props are graded (verdicts + calibration) on BOTH seasons with
+the adopted strengths — the curves the delivered chances and the guard
+read are now built on thousands of rows, not hundreds.
+
+PROJECTION: nfl_projection.project_player applies ratio ** strength
+(league["matchup_strength"]; absent = 1.0, old behaviour). Why lines say
+"in the number at 50% strength" or "context only".
+
+READ IN THE NEXT NIGHTLY: "[verify] NFL prior box scores", "NFL prop
+test rows {prior_rows, current_rows}", "NFL defense strength (fam)".
+
+FILES (this batch): nfl_precompute.py, nfl_prop_check.py,
+app/engines/nfl_projection.py, app/engines/model_view.py,
+.github/workflows/nightly-data.yml, tests/test_nfl_two_seasons.py (NEW),
+HANDOFF.md, HANDOFF_ARCHIVE.md — plus the guard batch's files.
+
+---
+
 ## PICK UP HERE — the guard on every bet call: no false STRONG. 2026-10-11
 
 **Suite 134 (+ test_bet_guard), FAILING: none.** Three negative controls red by

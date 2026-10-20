@@ -154,6 +154,46 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Same-game parlays graded by kind (2/3/4 legs, points/mixed); the test grows nightly. 2026-10-20 (7)
+
+**Suite 147, FAILING: none.** test_nba_sim +3 controls, red by exit code
+(a kind's verdict ignored; an under kept in range; the leg count ignored
+with no combos test). Dry run of the nightly offline + the Simulator
+page headless on its payload ("What has been graded" table rendered).
+
+Izzy: "so none of them will give strong signals" -> build the way out.
+nba_sim.test_combos: from every test game, the parlays people build —
+2|pts (top-2 teammates; top scorer each side), 2|mixed (top scorer pts +
+team's top rebounder reb), 3|pts (top-3 teammates), 3|mixed (pts + reb +
+ast leaders), 4|pts (top-2 each side), 4|mixed (pts + reb leader each
+side) — every leg an over at his own last-10 half-line, the delivered
+chance per stat (that stat's curve), simulated at COMBO_SIMS = 20,000;
+simulator (product x lift) vs multiplied, paired Brier per kind.
+sgp_support(test, legs, combos): kind BEAT + all overs + 100+ graded ->
+in range (STRONG allowed); beat with an under, or < 100 -> VALUE;
+not beaten / never graded (5+ legs) -> THIN; sgp_guard() names which.
+
+THE TEST GROWS: build(prior, model, pool, cur_finals) — the test window
+is last season's final 45 days PLUS every game of this season (pool =
+merge_pool, season_finals() converts this season's finals' shape). Links
+stay fitted on last season. Checked with 6 re-dated days: +1,062
+player-games, ~+58 per kind of pairs. Nightly sim step now ~47 s.
+
+REAL 2025-26 (context model): no kind beats yet — 2|pts z 1.95 (the
+closest), 3|pts 0.42, 4|pts 1.04, 2|mixed 0.35, 3|mixed -0.13, 4|mixed
+0.78. The simulator moves the joint the right way in every pts kind
+(3|pts: multiplied 11.6%, sim 12.8%, actual 13.3%), but the samples are
+small. ALL kinds hit MORE than either predicts (4|mixed: 5.2% vs 8.2%) —
+leaders' overs run 2-4 pts above their delivered chance on both windows.
+A role shift (logit, per rank, fitted on the fit window) did NOT beat on
+the test (pts z 0.1, reb -1.2, ast 1.9) — NOT shipped. Revisit with this
+season's games.
+
+FILES: app/engines/nba_sim.py, app/views/NBA_Sim.py, nba_precompute.py,
+tests/test_nba_sim.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NBA context: tonight's opponent + teammates out; a proper fit score; opening night. 2026-10-20 (6)
 
 **Suite 147, FAILING: none.** New tests/test_nba_context.py (5 controls,
@@ -787,50 +827,5 @@ land on the Bet Finder's session card.
 FILES: app/engines/long_shots.py, app/views/Long_Shots.py,
 tests/test_long_shots.py (NEW), app/app.py, app/views/Home.py,
 HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — NFL props tested on last season + this one; defense strength fitted. 2026-10-11 (2)
-
-**Suite 135 (+ test_nfl_two_seasons), FAILING: none.** Three negative controls red
-by exit code (one first came back GREEN: the null world never fitted a
-strength above 0, so "adopt without the test" could not show; the fixture
-now has fit weeks that suggest a strength and test weeks that do not).
-NFL pages + Bet Finder rendered headless. This zip ALSO carries the
-10-11 guard batch (bet_guard), which had not been pushed yet.
-
-WHY: Izzy — "make NFL behave like MLB and NHL". NHL/MLB props are tested
-on a full past season; the NFL test ran on this season's weeks only (92
-QB games for passing yards), and its defense multipliers were all-or-
-nothing (all three failed).
-
-DATA: nfl_precompute.load_or_fetch_prior_logs — every 2025 box score
-through THIS season's parser (parse_summary_final), finals in this
-season's shape (week via PRIOR_WEEK1_TUESDAY 2025-09-02, abbrs from the
-summary, recorded line from pickcenter, team boxes), fetched ONCE by the
-nightly (~272 summaries) and committed as data/nfl/prior_logs.json
-(nightly-data.yml commit step). Refuses to save under 90% parsed.
-
-TEST (nfl_prop_check.run, prior=): walk_forward on 2025 AND 2026, rows now
-8 fields (+ {strength: p} on STRENGTH_GRID 0/.25/.5/.75/1 for the
-family's stats). split_rows: fit on 2025's first half of weeks; test on
-2025's second half + all of 2026 (never a week the fit saw). fit_strength
-per family (rush / rec / pass): lowest log loss on the fit block, then
-paired vs strength 0 on the test block; in the number only on "beats".
-Then the props are graded (verdicts + calibration) on BOTH seasons with
-the adopted strengths — the curves the delivered chances and the guard
-read are now built on thousands of rows, not hundreds.
-
-PROJECTION: nfl_projection.project_player applies ratio ** strength
-(league["matchup_strength"]; absent = 1.0, old behaviour). Why lines say
-"in the number at 50% strength" or "context only".
-
-READ IN THE NEXT NIGHTLY: "[verify] NFL prior box scores", "NFL prop
-test rows {prior_rows, current_rows}", "NFL defense strength (fam)".
-
-FILES (this batch): nfl_precompute.py, nfl_prop_check.py,
-app/engines/nfl_projection.py, app/engines/model_view.py,
-.github/workflows/nightly-data.yml, tests/test_nfl_two_seasons.py (NEW),
-HANDOFF.md, HANDOFF_ARCHIVE.md — plus the guard batch's files.
 
 ---

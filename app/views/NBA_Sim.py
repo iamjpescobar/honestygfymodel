@@ -36,19 +36,23 @@ if not games or not model:
 
 test = sim_meta.get("test") or {}
 tv = (test.get("verdict") or {}).get("verdict")
-SGP_SUPPORT = ns.sgp_support(test)
+combos = sim_meta.get("combos") or {}
 st.markdown(
     f'<div style="font-size:var(--lc-text-body); line-height:1.6; color:{COLOR["text"]};">'
     f'Each run draws a final score from the game model, then every player&rsquo;s minutes and '
     f'stats <b>together</b>: a blowout sits the starters, a shootout lifts everyone. Each player '
     f'on his own still prices like the Props board &mdash; what the simulator adds is how the '
     f'legs of a <b>same-game parlay</b> move together.<br>'
-    f'<span style="color:{COLOR["text_muted"]};">Tested on last season&rsquo;s same-game pairs '
-    f'({test.get("n") or 0} of them): {mv.trust_label(tv)} vs simply multiplying the legs'
-    + (" &mdash; same-game parlays priced here can reach VALUE (never STRONG: only two-man "
-       "points pairs were graded)" if tv == "beats" else
-       " &mdash; so a same-game parlay priced here stays at THIN until it beats")
-    + '.</span></div>', unsafe_allow_html=True)
+    + (f'<span style="color:{COLOR["text_muted"]};">Every kind of same-game parlay is graded '
+       f'on real games (last season&rsquo;s final 45 days plus this season so far) — see '
+       f'&ldquo;What has been graded&rdquo; under the parlay builder. A kind that beats simply '
+       f'multiplying its legs can reach STRONG; the rest stay at THIN.</span>'
+       if combos else
+       f'<span style="color:{COLOR["text_muted"]};">Tested on last season&rsquo;s same-game pairs '
+       f'({test.get("n") or 0} of them): {mv.trust_label(tv)} vs simply multiplying the legs'
+       + (" &mdash; same-game parlays priced here can reach VALUE" if tv == "beats" else
+          " &mdash; so a same-game parlay priced here stays at THIN until it beats") + '.</span>')
+    + '</div>', unsafe_allow_html=True)
 
 _stk = mv.staking_controls("nba_sim")
 ss = st.session_state
@@ -271,10 +275,10 @@ with card("nbs_sgp"):
         k1, k2 = st.columns(2)
         price = k1.number_input("Your book's SGP price", value=None, step=5, format="%d",
                                 key="nbs_price")
-        sup = ns.sgp_support(test, len(legs))
+        sup = ns.sgp_support(test, legs, sim_meta.get("combos"))
         res = bf.judge(jp, price, _stk, None, sup)
-        if res and res.get("guard") and res["tier"] in ns.SGP_GUARD:
-            res["guard"] = ns.SGP_GUARD["thin_legs" if sup.get("legs") else res["tier"]]
+        if res and res.get("guard"):
+            res["guard"] = ns.sgp_guard(sup, res["tier"]) or res["guard"]
         if res:
             lab_, fg, bg = mv.TIER_STYLE[res["tier"]]
             st.markdown(f'<span style="color:{fg if res["tier"] != "none" else COLOR["error"]}; '
@@ -293,6 +297,37 @@ with card("nbs_sgp"):
                            "SGP: " + " + ".join(l_ for l_, _c in show), "same-game parlay",
                            jp, bf.valid_price(price), sup, res["tier"])
                 st.success("On the slip (Bet Finder page) as one leg, its legs' link priced in.")
+        if combos:
+            mine = ns.combo_kind(legs)
+            names_k = {"pts": "all points overs", "mixed": "mixed stats"}
+            gr = []
+            for kind in sorted(combos, key=lambda k_: (int(k_.split("|")[0]), k_)):
+                x = combos[kind]
+                nl, kk = kind.split("|")
+                gr.append({"Parlay": f"{nl} legs, {names_k[kk]}" + ("  ← yours" if kind == mine
+                                                                   else ""),
+                           "Graded": x["n"], "Predicted": f"{100 * x['predicted_sim']:.1f}%",
+                           "Multiplied": f"{100 * x['predicted_ind']:.1f}%",
+                           "Hit": f"{100 * x['actual']:.1f}%",
+                           "Verdict": mv.trust_label((x.get("verdict") or {}).get("verdict"))})
+            vlist = [(combos[k_].get("verdict") or {}).get("verdict")
+                     for k_ in sorted(combos, key=lambda k_: (int(k_.split("|")[0]), k_))]
+
+            def _paint_g(frame):
+                o_ = pd.DataFrame("", index=frame.index, columns=frame.columns)
+                for k_ in frame.index:
+                    _n, fg_, bg_, _bd = mv.TRUST_STYLE.get(vlist[k_], mv.TRUST_STYLE[None])
+                    o_.at[k_, "Verdict"] = f"color: {fg_}; background-color: {bg_}; font-weight: 700;"
+                return o_
+            st.markdown(f'<div style="font-size:var(--lc-text-small); font-weight:700; '
+                        f'margin-top:8px;">What has been graded</div>', unsafe_allow_html=True)
+            st.dataframe(mv.painted(pd.DataFrame(gr), _paint_g), hide_index=True,
+                         width="stretch", key="nbs_graded")
+            st.caption("Each row: same-game parlays of that kind built from real games (the top "
+                       "scorers, rebounders and passers, every leg an over at his own line). "
+                       "Predicted = the simulator's chance they all hit, Multiplied = the legs as "
+                       "strangers, Hit = how often they really did. The verdict is the simulator "
+                       "against multiplying; it grows with every game this season.")
         st.caption("Each leg is the Props board's delivered chance; only the link between them "
                    "comes from the simulator. A lift above 1 means the legs tend to hit together "
                    "(teammates in a shootout); below 1, they pull against each other (two players "

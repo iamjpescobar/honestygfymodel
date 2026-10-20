@@ -19,7 +19,11 @@ Negative controls, confirmed red by exit code when written (rule 4):
   - the book's total in a caption with <b> tags
     -> "no HTML inside a caption" fails
   - sgp_support ignoring the number of legs
-    -> "3+ legs were never tested" fails
+    -> "without a combos test ... 3+ legs stay THIN" fails
+  - sgp_support ignoring a kind's verdict (any graded kind measured)
+    -> "a kind that has not beaten -> THIN" fails
+  - sgp_support putting a parlay with an under in range
+    -> "an under in it" fails
   - joint_precise counting only the last chunk
     -> "every chunk counts" fails
   - joint_precise simulating every player
@@ -144,9 +148,9 @@ thin_t = {"n": 1065, "verdict": {"verdict": "thin", "z": 1.3}}
 r_thin = bf.judge(0.36, 250, None, None, ns.sgp_support(thin_t))
 r_beat = bf.judge(0.36, 250, None, None, ns.sgp_support({"n": 1065, "verdict": {"verdict": "beats"}}))
 print(f"     36% at +250: thin test -> {r_thin['tier']}, beating test -> {r_beat['tier']}")
-check("an untested SGP is capped at THIN; a tested one at VALUE, never STRONG",
+check("without a combos test: untested pairs THIN, a beating pairs test VALUE at most",
       r_thin["tier"] == "thin" and r_beat["tier"] == "value"
-      and ns.sgp_support(None)["untested"] and "ns.sgp_support(test)" in page)
+      and ns.sgp_support(None)["untested"])
 check("the SGP joint is delivered leg chances x the simulator's lift",
       "prod * j[\"lift\"]" in page and "nv.chance(p[\"row\"], st_, ln, model, sd)" in page)
 import re as _re  # noqa: E402
@@ -157,9 +161,58 @@ check("the scoreboard shows each team's score on its own, never one squeezed met
       "def _team(" in page and 'metric("Typical score"' not in page)
 r_3 = bf.judge(0.36, 250, None, None, ns.sgp_support({"n": 1065, "verdict": {"verdict": "beats"}},
                                                     3))
-check("3+ legs were never tested: THIN even when the pairs test beats",
-      r_3["tier"] == "thin" and ns.sgp_support(None, 8)["untested"]
-      and "ns.sgp_support(test, len(legs))" in page and "ns.SGP_MAX_LEGS" in page)
+check("without a combos test (an older nightly), 3+ legs stay THIN",
+      r_3["tier"] == "thin" and ns.sgp_support(None, 8)["untested"] and "ns.SGP_MAX_LEGS" in page)
+# graded by kind: 2 / 3 / 4 legs, all-points vs mixed (10-20)
+P = lambda pid, st="pts", side="Over": {"pid": pid, "stat": st, "line": 9.5, "side": side}
+check("a parlay's kind: legs x all-points-overs / mixed",
+      ns.combo_kind([P("a"), P("b")]) == "2|pts" and ns.combo_kind([P("a"), P("b", "reb")])
+      == "2|mixed" and ns.combo_kind([P("a"), P("b"), P("c", side="Under")]) == "3|mixed")
+CB = {"2|pts": {"n": 1065, "verdict": {"verdict": "beats", "z": 2.4}},
+      "3|pts": {"n": 709, "verdict": {"verdict": "thin", "z": 0.4}},
+      "4|pts": {"n": 60, "verdict": {"verdict": "beats", "z": 2.1}}}
+s2 = ns.sgp_support(None, [P("a"), P("b")], CB)
+s2u = ns.sgp_support(None, [P("a"), P("b", side="Under")], CB)
+s3 = ns.sgp_support(None, [P("a"), P("b"), P("c")], CB)
+s4 = ns.sgp_support(None, [P("a"), P("b"), P("c"), P("d")], CB)
+s5 = ns.sgp_support(None, [P(x) for x in "abcde"], CB)
+t2 = bf.judge(0.36, 250, None, None, s2)["tier"]
+t2u = bf.judge(0.36, 250, None, None, s2u)["tier"]
+print(f"     36% at +250: 2 points overs (kind beats) {t2}; with an under {t2u}; "
+      f"3 legs (kind thin) {bf.judge(0.36, 250, None, None, s3)['tier']}")
+check("a kind that BEAT, every leg an over, 100+ graded: STRONG allowed",
+      s2["in_range"] and not s2["untested"] and t2 == "strong")
+check("an under in it: outside what was graded -> VALUE at most", t2u == "value"
+      and ns.sgp_guard(s2u, "value") == ns.SGP_GUARD["unders"])
+check("a kind that has not beaten -> THIN, and says so",
+      s3["untested"] and ns.sgp_guard(s3, "thin") == ns.SGP_GUARD["not_beaten"])
+check("a kind that beat on too few parlays -> VALUE at most",
+      s4["measured"] and not s4["in_range"] and ns.sgp_guard(s4, "value") == ns.SGP_GUARD["small"])
+check("a size never graded (5+ legs) -> THIN",
+      s5["untested"] and ns.sgp_guard(s5, "thin") == ns.SGP_GUARD["untested"])
+
+# the combos test on a synthetic game, every kind built
+top = {"H": [("h%d" % i, "H", {"min": 34 - 3 * i, "mu": {"pts": 25 - 4 * i, "reb": 4 + (i == 2) * 6,
+                                                       "ast": 3 + (i == 1) * 5, "tpm": 2}},
+              {"pts": (20.5, 22), "reb": (5.5, 6), "ast": (4.5, 3)}) for i in range(5)],
+       "A": [("a%d" % i, "A", {"min": 34 - 3 * i, "mu": {"pts": 24 - 4 * i, "reb": 4 + (i == 3) * 6,
+                                                       "ast": 3 + (i == 1) * 5, "tpm": 2}},
+              {"pts": (19.5, 18), "reb": (5.5, 9), "ast": (4.5, 7)}) for i in range(5)]}
+kinds = sorted({k for k, _l in ns._combos(top, "H", "A")})
+check("one game yields every kind of parlay people build",
+      kinds == ["2|mixed", "2|pts", "3|mixed", "3|pts", "4|mixed", "4|pts"])
+check("this season's finals join the test in last season's shape",
+      ns.season_finals([{"date": "2026-10-21", "home_id": 5, "away_id": 7, "home_score": 110,
+                         "away_score": 99}, {"date": "2026-10-22", "home_id": 1,
+                                             "away_id": 2, "home_score": None}])
+      == [{"date": "2026-10-21", "home": "5", "away": "7", "hs": 110, "as": 99}])
+pc = (ROOT / "nba_precompute.py").read_text(encoding="utf-8")
+check("the nightly grades parlays on this season too (pool + this season's finals)",
+      "nba_sim.build(prior, model, merge_pool(prior.get(\"players\"), cur)" in pc
+      and "cur_finals)" in pc and "NBA SGP" in pc)
+check("the page reads the kinds and shows what has been graded",
+      'ns.sgp_support(test, legs, sim_meta.get("combos"))' in page and '"nbs_graded"' in page)
+
 check("the SGP is priced on the precise run, and says when the link is just noise",
       "_legs_run(" in page and "ns.joint_precise(" in page and "no real link" in page
       and "ns.joint(sim, legs)" not in page)
@@ -168,7 +221,7 @@ app = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
 check("the Simulator is in the NBA nav", '("Simulator", "views/NBA_Sim.py")' in app)
 pc = (ROOT / "nba_precompute.py").read_text(encoding="utf-8")
 check("the nightly ships the simulator's links and test",
-      "nba_sim.build(prior, model)" in pc and '"sim": sim_block' in pc)
+      "nba_sim.build(prior, model" in pc and '"sim": sim_block' in pc)
 
 if failures:
     print(f"\n{len(failures)} FAILED")

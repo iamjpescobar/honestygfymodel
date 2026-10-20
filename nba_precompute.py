@@ -384,7 +384,8 @@ def main(today=None):
         if model and prior.get("players"):
             from engines import nba_sim
             t0 = time.time()
-            sim_block = nba_sim.build(prior, model)
+            sim_block = nba_sim.build(prior, model, merge_pool(prior.get("players"), cur),
+                                      cur_finals)
             if sim_block:
                 L, T = sim_block["links"], sim_block["test"]
                 print(f"  [verify] NBA simulator links ({time.time() - t0:.0f}s): elasticities "
@@ -394,6 +395,14 @@ def main(today=None):
                       f"{T['sim_brier']} vs multiplied {T['independent_brier']} -> "
                       f"{(T.get('verdict') or {}).get('verdict')} (z={(T.get('verdict') or {}).get('z')}); "
                       f"teammates {T['teammates']}; opponents {T['opponents']}")
+                print(f"  [verify] NBA same-game parlays graded: {sim_block['test_rows']} "
+                      f"player-games ({sim_block['this_season_rows']} from this season)")
+                for kind, x in (sim_block.get("combos") or {}).items():
+                    v = x.get("verdict") or {}
+                    print(f"  [verify] NBA SGP {kind:8s} n={x['n']} sim {x['sim_brier']} vs "
+                          f"multiplied {x['independent_brier']} -> {v.get('verdict')} "
+                          f"(z={v.get('z')}); predicted {x['predicted_sim']} (multiplied "
+                          f"{x['predicted_ind']}) vs actual {x['actual']}")
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NBA simulator failed: {type(exc).__name__}: {exc}")
 

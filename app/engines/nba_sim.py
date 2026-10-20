@@ -165,33 +165,65 @@ def simulate(mu_home, mu_away, sd_margin, sd_total, players, sizes, links=None, 
 
 
 SGP_MAX_LEGS = 8          # 500,000 games keep an 8-leg link to +/- 0.02 (measured 10-20)
-SGP_TESTED_LEGS = 2       # the test on last season grades two-player pairs
+STRONG_MIN_COMBOS = 100   # graded parlays of this kind before one may read STRONG
 
 
-def sgp_support(test, n_legs=2):
-    """How a same-game parlay priced with the simulator is guarded.
-    Until its test on last season BEATS plain multiplication: untested,
-    capped at THIN. Once it beats: measured, but OUTSIDE the tested range
-    (in_range False), so at most VALUE — the test was two-man points
-    pairs, so STRONG would be a claim the test did not make. More legs
-    than were ever tested (3+): untested again, THIN — the link grows
-    with every leg (8 overs: x1.7), all of it the model's assumption."""
+def sgp_support(test, legs=2, combos=None):
+    """How a same-game parlay priced with the simulator is guarded. The
+    parlay's group (combo_kind: legs x all-points / mixed) is looked up in
+    the combos test on last season:
+      group BEAT plain multiplication, every leg an over, 100+ graded
+        -> measured and IN range: STRONG allowed (it is the kind graded);
+      group beat but the parlay has an under, or the group is small
+        -> measured, out of range: at most VALUE;
+      group not beaten, or never graded (5+ legs)  -> untested: THIN.
+    Without a combos test (an older nightly): the pairs test alone, as
+    before — beats -> VALUE at most for 2 legs, 3+ legs THIN."""
     t = test or {}
-    if n_legs > SGP_TESTED_LEGS:
-        return {"measured": False, "in_range": False, "n": 0, "untested": True, "legs": n_legs}
+    n_legs = legs if isinstance(legs, int) else len(legs)
+    if combos and not isinstance(legs, int):
+        kind = combo_kind(legs)
+        if any(lg.get("side", "Over") != "Over" for lg in legs):
+            kind = f"{n_legs}|{'pts' if all(lg.get('stat') == 'pts' for lg in legs) else 'mixed'}"
+        g = combos.get(kind)
+        if not g or (g.get("verdict") or {}).get("verdict") != "beats":
+            return {"measured": False, "in_range": False, "n": 0, "untested": True,
+                    "kind": kind, "why": "untested" if not g else "not_beaten"}
+        overs = all(lg.get("side", "Over") == "Over" for lg in legs)
+        return {"measured": True, "in_range": overs and g["n"] >= STRONG_MIN_COMBOS,
+                "n": g["n"], "untested": False, "kind": kind,
+                "why": None if overs else "unders"}
+    if n_legs > 2:
+        return {"measured": False, "in_range": False, "n": 0, "untested": True, "legs": n_legs,
+                "why": "untested"}
     if ((t.get("verdict") or {}).get("verdict")) == "beats":
-        return {"measured": True, "in_range": False, "n": t.get("n") or 0, "untested": False}
-    return {"measured": False, "in_range": False, "n": 0, "untested": True}
+        return {"measured": True, "in_range": False, "n": t.get("n") or 0, "untested": False,
+                "why": "pairs_only"}
+    return {"measured": False, "in_range": False, "n": 0, "untested": True, "why": "not_beaten"}
 
 
 SGP_GUARD = {
-    "thin": ("Capped at THIN: the simulator's link between legs has not yet beaten plain "
-             "multiplication on last season's same-game pairs."),
-    "thin_legs": ("Capped at THIN: the simulator was tested on two-leg pairs; with more legs "
-                  "the link between them is the model's assumption, not something graded."),
-    "value": ("Capped at VALUE: the simulator passed its test on two-player points pairs; "
-              "STRONG on a same-game parlay would need that kind of parlay graded."),
+    "not_beaten": ("Capped at THIN: on last season's games, parlays like this one priced with "
+                   "the simulator did not beat simply multiplying the legs."),
+    "untested": ("Capped at THIN: no parlay of this size has been graded on last season's "
+                 "games, so the link between its legs is the model's assumption."),
+    "unders": ("Capped at VALUE: parlays like this were graded with every leg an over; an "
+               "under in it is outside what was tested."),
+    "pairs_only": ("Capped at VALUE: the simulator passed its test on two-player points pairs; "
+                   "STRONG on a same-game parlay would need that kind of parlay graded."),
+    "small": ("Capped at VALUE: too few parlays like this were graded for STRONG."),
 }
+
+
+def sgp_guard(sup, tier):
+    """The page's sentence for a capped SGP call, or None."""
+    why = (sup or {}).get("why")
+    if tier == "thin" and why in ("not_beaten", "untested"):
+        return SGP_GUARD[why]
+    if tier == "value":
+        return SGP_GUARD.get(why) or (SGP_GUARD["small"] if not (sup or {}).get("in_range")
+                                      else None)
+    return None
 
 
 def leg_hits(sim, leg):
@@ -325,31 +357,166 @@ def test(rows, outcomes, gpreds, sds, sizes, links, n=4000, seed=11, bins=None):
             "teammates": summ(teammates), "opponents": summ(opponents)}
 
 
-def build(prior, model):
-    """{"links", "test", "sds"} from last season, with the props model's
-    params (nba_model.fit) — what the nightly ships."""
+COMBO_SIMS = 20_000       # per test game: a 4-leg joint near 5% keeps its noise near 3%
+
+
+def combo_kind(legs):
+    """The test group a parlay belongs to: "<legs>|pts" when every leg is
+    a points over, else "<legs>|mixed" (rebounds / assists / 3s, or any
+    under — unders were never graded, see sgp_support)."""
+    pts = all(lg.get("stat") == "pts" and lg.get("side", "Over") == "Over" for lg in legs)
+    return f"{len(legs)}|{'pts' if pts else 'mixed'}"
+
+
+def _combos(top, tm, opp):
+    """The parlays a bettor actually builds, from one game's players:
+    (kind, [(player, stat), ...]). top: {team: [players by projected
+    points]}; reb / ast leaders found per team."""
+    out = []
+
+    def lead(team, stat, skip):
+        c = [x for x in sorted(top[team], key=lambda x: -x[2]["mu"][stat]) if x[0] not in skip]
+        return c[0] if c else None
+    for t, o in ((tm, opp), (opp, tm)):
+        T = top[t]
+        if len(T) >= 2:
+            out.append(("2|pts", [(T[0], "pts"), (T[1], "pts")]))
+        if len(T) >= 3:
+            out.append(("3|pts", [(T[0], "pts"), (T[1], "pts"), (T[2], "pts")]))
+        if T:
+            rb = lead(t, "reb", {T[0][0]})
+            asst = lead(t, "ast", {T[0][0]} | ({rb[0]} if rb else set()))
+            if rb:
+                out.append(("2|mixed", [(T[0], "pts"), (rb, "reb")]))
+            if rb and asst:
+                out.append(("3|mixed", [(T[0], "pts"), (rb, "reb"), (asst, "ast")]))
+    A, B = top[tm], top[opp]
+    if A and B:
+        out.append(("2|pts", [(A[0], "pts"), (B[0], "pts")]))
+    if len(A) >= 2 and len(B) >= 2:
+        out.append(("4|pts", [(A[0], "pts"), (A[1], "pts"), (B[0], "pts"), (B[1], "pts")]))
+        ra, rb_ = lead(tm, "reb", {A[0][0]}), lead(opp, "reb", {B[0][0]})
+        if ra and rb_:
+            out.append(("4|mixed", [(A[0], "pts"), (ra, "reb"), (B[0], "pts"), (rb_, "reb")]))
+    return out
+
+
+def test_combos(rows, outcomes, gpreds, sds, sizes, links, bins_by_stat, n=COMBO_SIMS, seed=23):
+    """The simulator on the same-game parlays people build — 2, 3 and 4
+    legs, all-points and mixed stats, every leg an over at the player's
+    own last-10 line — priced as the delivered chances multiplied, and
+    times the simulator's lift, against what happened. Per group:
+    {n, sim_brier, independent_brier, verdict, avg_lift, predicted_ind,
+    predicted_sim, actual}."""
+    from engines import model_math as mm
+    from engines import top_plays_board as tpb
+
+    def delivered(p, st):
+        b = (bins_by_stat or {}).get(st)
+        c = tpb.calibrate(p, b) if (b and p is not None) else None
+        return c if c is not None else p
+    by_game = {}
+    for pid, g, pr, hist in rows:
+        lines = {}
+        for st in ("pts", "reb", "ast"):
+            hv = [nm.val(h, st) for h in hist if nm.val(h, "min")]
+            hv = [v for v in hv if v is not None]
+            if len(hv) < nm.MIN_PRIOR_GAMES or nm.val(g, st) is None:
+                break
+            lines[st] = (nm.half_line(hv[-10:]), nm.val(g, st))
+        else:
+            by_game.setdefault((g[0], tuple(sorted((str(g[1]), str(g[2]))))), []).append(
+                (str(pid), str(g[1]), pr, lines))
+    acc = {}
+    k = 0
+    for (d, teams), plist in sorted(by_game.items()):
+        tm = next((t for t in teams if (d, t) in gpreds), None)
+        if tm is None:
+            continue
+        opp = next((t for t in teams if t != tm), None)
+        top = {t: sorted([x for x in plist if x[1] == t], key=lambda x: -x[2]["mu"]["pts"])[:6]
+               for t in (tm, opp)}
+        combos = _combos(top, tm, opp)
+        if not combos:
+            continue
+        tproj, oproj = gpreds[(d, tm)]
+        need = {x[0][0]: x[0] for _k, legs in combos for x in legs}
+        players = [{"pid": p, "side": "home" if x[1] == tm else "away", "min": x[2]["min"],
+                    "mu": x[2]["mu"]} for p, x in need.items()]
+        sim = simulate(tproj, oproj, sds[0], sds[1], players, sizes, links, n=n, seed=seed + k)
+        k += 1
+        for kind, legs in combos:
+            L = [{"pid": x[0], "stat": st, "line": x[3][st][0], "side": "Over"} for x, st in legs]
+            j = joint(sim, L)
+            marg = [delivered(nm.over(x[2]["mu"][st], sizes.get(st), x[3][st][0]), st)
+                    for x, st in legs]
+            if None in marg or j["lift"] is None:
+                continue
+            y = 1 if all(x[3][st][1] > x[3][st][0] for x, st in legs) else 0
+            ind = 1.0
+            for q in marg:
+                ind *= q
+            sp = min(1.0, ind * j["lift"])
+            acc.setdefault(kind, []).append((j["lift"], ind, sp, y))
+    out = {}
+    for kind, xs in sorted(acc.items()):
+        m = mm.score_predictions([(x[2], x[3]) for x in xs])
+        b = mm.score_predictions([(x[1], x[3]) for x in xs])
+        out[kind] = {"n": len(xs), "sim_brier": m["brier"], "independent_brier": b["brier"],
+                     "verdict": mm.paired_verdict([(x[2] - x[3]) ** 2 for x in xs],
+                                                  [(x[1] - x[3]) ** 2 for x in xs]),
+                     "avg_lift": round(sum(x[0] for x in xs) / len(xs), 3),
+                     "predicted_ind": round(sum(x[1] for x in xs) / len(xs), 4),
+                     "predicted_sim": round(sum(x[2] for x in xs) / len(xs), 4),
+                     "actual": round(sum(x[3] for x in xs) / len(xs), 4)}
+    return out
+
+
+def season_finals(cur_finals):
+    """This season's finals (the nightly's home_id / home_score shape) in
+    last season's shape (home / hs) — so one list feeds every test."""
+    return [{"date": f["date"], "home": str(f.get("home_id")), "away": str(f.get("away_id")),
+             "hs": f.get("home_score"), "as": f.get("away_score")}
+            for f in cur_finals or [] if f.get("home_score") is not None]
+
+
+def build(prior, model, pool=None, cur_finals=None):
+    """{"links", "test", "combos", "sds"} — links fitted on last season;
+    the tests on last season's unseen 45 days PLUS every game of this
+    season so far (pool = last season + this one per player, cur_finals
+    this season's) — so the graded record grows every night and a group
+    of parlays can earn its way out of THIN."""
     from engines import nfl_game_model as ngm
     from engines import game_model as gm
-    players = prior.get("players") or {}
+    finals = list(prior.get("finals") or []) + season_finals(cur_finals)
+    data = {"players": pool or prior.get("players") or {}, "finals": finals}
+    players = data["players"]
     rows_f = [{"date": f["date"], "home_id": f["home"], "away_id": f["away"],
                "home_score": f.get("hs"), "away_score": f.get("as")}
-              for f in prior.get("finals") or []]
+              for f in finals]
     gfin = gm.clean_finals(ngm.rows(rows_f))
     gpar = ngm.fit(gfin)
     if not gpar or not model or not model.get("hl"):
         return None
     preds = ngm._wf(gfin, gpar["shrink_k"])
-    outcomes, gp = game_outcomes(prior.get("finals")), game_preds(preds)
+    outcomes, gp = game_outcomes(finals), game_preds(preds)
     lr = model.get("league") or nm.league_rates(players, before=model["test_window"][0])
     # the rows the pages' numbers come from: with the opponent and
     # teammates-out context when the model carries it (engines/nba_context)
     from engines import nba_context as nc
-    every = nc.context_rows(prior, dict(model, league=lr))
+    every = nc.context_rows(data, dict(model, league=lr))
     fw, tw = model["fit_window"], model["test_window"]
     fit_rows = [r for r in every if fw[0] <= r[1][0] < fw[1]]
     test_rows = [r for r in every if r[1][0] >= tw[0]]
     links = fit_links(fit_rows, outcomes, gp)
     sds = (gpar["sd_margin"], gpar["sd_total"])
-    return {"links": links, "sds": list(sds),
+    bins = {st: ((model.get("test") or {}).get(st) or {}).get("calibration")
+            for st in ("pts", "reb", "ast")}
+    this = sum(1 for r in test_rows if r[1][0] > (max(f["date"] for f in prior.get("finals")
+                                                         or [{"date": ""}])))
+    return {"links": links, "sds": list(sds), "test_rows": len(test_rows),
+            "this_season_rows": this,
             "test": test(test_rows, outcomes, gp, sds, model.get("sizes") or {}, links,
-                         bins=(((model.get("test") or {}).get("pts") or {}).get("calibration")))}
+                         bins=bins["pts"]),
+            "combos": test_combos(test_rows, outcomes, gp, sds, model.get("sizes") or {}, links,
+                                  bins)}
