@@ -45,8 +45,9 @@ st.markdown(
     f'legs of a <b>same-game parlay</b> move together.<br>'
     f'<span style="color:{COLOR["text_muted"]};">Tested on last season&rsquo;s same-game pairs '
     f'({test.get("n") or 0} of them): {mv.trust_label(tv)} vs simply multiplying the legs'
-    + ("" if tv == "beats" else " &mdash; so a same-game parlay priced here stays at THIN until "
-       "it beats")
+    + (" &mdash; same-game parlays priced here can reach VALUE (never STRONG: only two-man "
+       "points pairs were graded)" if tv == "beats" else
+       " &mdash; so a same-game parlay priced here stays at THIN until it beats")
     + '.</span></div>', unsafe_allow_html=True)
 
 _stk = mv.staking_controls("nba_sim")
@@ -183,9 +184,8 @@ with card("nbs_sgp"):
         price = k1.number_input("Your book's SGP price", value=None, step=5, format="%d",
                                 key="nbs_price")
         res = bf.judge(jp, price, _stk, None, SGP_SUPPORT)
-        if res and res.get("guard") and SGP_SUPPORT["untested"]:
-            res["guard"] = ("Capped at THIN: the simulator's link between legs has not yet beaten "
-                            "plain multiplication on last season's same-game pairs.")
+        if res and res.get("guard") and res["tier"] in ns.SGP_GUARD:
+            res["guard"] = ns.SGP_GUARD[res["tier"]]
         if res:
             lab_, fg, bg = mv.TIER_STYLE[res["tier"]]
             st.markdown(f'<span style="color:{fg if res["tier"] != "none" else COLOR["error"]}; '
@@ -194,6 +194,10 @@ with card("nbs_sgp"):
                         + (f' · stake ${res["stake"]:.2f}' if res.get("stake") else "")
                         + (f'<br><span style="color:{COLOR["warn"]};">{res["guard"]}</span>'
                            if res.get("guard") else ""), unsafe_allow_html=True)
+            from engines import bet_log_ui as _blu
+            _blu.log_button("NBA", "sgp", f"{labels[gi]}: " + " + ".join(l_ for l_, _c in show),
+                            jp, price, res.get("stake"), res["tier"], [l_ for l_, _c in show],
+                            "nbs_log")
             if k2.button("Add to parlay slip", key="nbs_add"):
                 from engines import parlay as pl
                 pl.add_leg(ss.setdefault("parlay", {}), "NBA", labels[gi],

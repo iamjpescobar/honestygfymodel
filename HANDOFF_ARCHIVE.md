@@ -10,6 +10,52 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — PP-weighted ice time: fitted, tested against plain ice time. 2026-10-09 (2)
+
+**Suite 132 (+ test_nhl_pp_factor), FAILING: none.** Three negative controls red by
+exit code (listed in the test). NHL pages rendered headless on the 10-06
+archive: no exceptions.
+
+FIRST, THE PROBE ANSWERED (10-09 nightly): ESPN's NHL box DOES carry
+powerPlayTimeOnIce — 2,340 of 2,340 skater lines. Also evenStrength- and
+shortHandedTimeOnIce (not used yet). First NHL Player of the Day: Mark
+Scheifele 68.7%.
+
+LAST SEASON'S PP MINUTES: nhl_prior_season.py --pp-only re-reads the
+2025-26 box scores and writes ONLY data/nhl/prior_pp.json ({pid: {date:
+minutes}}) — prior_season.json and everything fitted on it untouched; its
+game rows stay six fields (every reader unpacks six). Manual workflow
+"NHL prior PP minutes" (nhl-prior-pp.yml), run ONCE. A full prior-season
+rebuild now writes both files. nhl_precompute.load_prior_pp lays the file
+over the prior skaters as "pp"; pool_skaters carries pp from both seasons.
+
+THE FACTOR (nhl_model.fit_pp, called inside fit_toi per family): weighted
+minutes = TOI + (w - 1) x PP minutes; w = 1 IS today's ice-time ratio, so
+the PP version nests it. w from PP_WEIGHTS and its strength fitted on the
+train window, tested on the props window AGAINST THE ADOPTED PLAIN FACTOR;
+in the chance only on "beats" (toi[fam]["pp"]["adopted"]). Needs
+PP_MIN_COVERAGE 50% of fit rows with PP minutes, else a note.
+MEASURED BEFORE SHIPPING: on the real 2025-26 file with RANDOM PP minutes
+attached, both families FAIL (sog z -2.16, pts z -0.78) and the plain
+alphas are unchanged (0.478 / 0.774) — the test does not invent an edge.
+On a simulated season where PP minutes drive scoring it is adopted
+(z >= 2). Cost: fit_toi went to ~3.5 min at full size.
+
+PAGES: nhl_model.pp_note(toi) — one sentence, IN the chance / tested and
+not / untested — on Goal Edge, NHL Model, Player of the Day; why lines
+say "PP minutes weighted into his ice time" only when used.
+
+AFTER THE WORKFLOW RUNS: read "[verify] NHL PP-weighted minutes (sog|pts)"
+in the next nightly. Adopted -> the props validation, Top Plays, Goal
+Edge, POTD all move with it automatically.
+
+FILES: nhl_prior_season.py, nhl_precompute.py, app/engines/nhl_model.py,
+app/views/{NHL_Goal_Edge,NHL_Model,NHL_Player_Of_The_Day}.py,
+.github/workflows/nhl-prior-pp.yml (NEW), .github/workflows/nhl-prior-season.yml,
+tests/test_nhl_pp_factor.py (NEW), HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NHL: power-play minutes, 2+ goals, Player of the Day, the multi-goal check. 2026-10-09
 
 **Suite 131 (+ test_nhl_pp_potd), FAILING: none.** Three negative controls red

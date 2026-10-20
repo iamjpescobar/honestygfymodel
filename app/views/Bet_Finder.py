@@ -548,8 +548,15 @@ with card("bf_parlay"):
             for i in drop:
                 ss["parlay"].pop(keys[i], None)
             st.rerun()
+        from engines import bet_log_ui as _blu
+        _sports = {x.get("sport") for x in legs}
+        _sport = _sports.pop() if len(_sports) == 1 else "Mixed"
         if not v:
             st.caption("Two or more legs make a parlay.")
+            x = legs[0]
+            if x.get("price") is not None:
+                _blu.log_button(_sport, "single", f"{x['player']} · {x['what']}", x["chance"],
+                                x["price"], None, x.get("single_tier"), [], "pl_single")
         else:
             lab, fg, bg = mv.TIER_STYLE[v["tier"]]
             call = "SKIP" if v["tier"] == "none" else lab
@@ -567,6 +574,12 @@ with card("bf_parlay"):
             if v["reasons"]:
                 st.markdown(f'<div style="font-size:var(--lc-text-small); color:{COLOR["warn"]};">'
                             + "<br>".join(v["reasons"]) + "</div>", unsafe_allow_html=True)
+            _games = {x.get("game") for x in legs}
+            _blu.log_button(_sport, "sgp" if len(_games) == 1 else "parlay",
+                            " + ".join(f"{x['player']} · {x['what']}" for x in legs), v["chance"],
+                            v["american"], v.get("stake"), v["tier"],
+                            [f"{x['player']} · {x['what']} ({_amer(x['price'])})" for x in legs],
+                            "pl_parlay")
             if v["drag"] and v["tier"] in ("none", "thin"):
                 st.caption("Dragging it: " + ", ".join(
                     f"{x['player']} ({100 * (x['ratio'] - 1):+.0f}%)" for x in v["drag"])

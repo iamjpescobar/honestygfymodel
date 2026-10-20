@@ -8,9 +8,15 @@ THE NUMBER
 For each player, before each game:
 
   minutes  = his recency-weighted minutes (half-life HL games)
-  rate     = his recency-weighted production per minute, shrunk toward
-             his position group's league rate by K minutes of league
-             play:  (sum w*stat + K * league_rate) / (sum w*min + K)
+  rate     = his recent production per minute (half-life HL games),
+             shrunk by K minutes toward HIS OWN long-run rate (half-life
+             HL_LONG games), which is itself shrunk by K_LONG minutes
+             toward his position group's league rate (10-20 (4)):
+               own  = (sum_long w*stat + K_LONG * league) / (sum_long w*min + K_LONG)
+               rate = (sum w*stat + K * own) / (sum w*min + K)
+             One level (straight to the league rate) pulled every star
+             toward an average player: top-2 scorers on a team went over
+             their line 49% of the time against 45% delivered.
   mean     = minutes x rate, per stat (points, rebounds, assists, 3PM);
              combos (PRA, P+R, P+A, R+A) are the sums of their parts.
   spread   = negative binomial, size r per stat, MEASURED on the
@@ -21,8 +27,8 @@ Last season carries into this one at CARRY (the running sums are cut to
 that share at the offseason gap), so a player's October number is
 mostly last year and his own games take over as they come.
 
-HL and K are FITTED (FIT_HL x FIT_K grid) on the 45 days before the test
-window, by squared error of the means; never on the test window.
+HL, K, HL_LONG and K_LONG are FITTED (grid) on the 45 days before the
+test window, by squared error of the means; never on the test window.
 
 THE TEST (rule 1)
 -----------------
@@ -54,8 +60,10 @@ STATS = (("pts", "Points"), ("reb", "Rebounds"), ("ast", "Assists"),
          ("tpm", "3-pointers made"), ("pra", "Pts + Reb + Ast"), ("pr", "Pts + Reb"),
          ("pa", "Pts + Ast"), ("ra", "Reb + Ast"))
 LABEL = dict(STATS)
-FIT_HL = (5, 10, 20, 40)
-FIT_K = (0, 30, 100, 300)
+FIT_HL = (2, 3, 5, 10)
+FIT_K = (100, 300, 600, 1200)
+FIT_HL_LONG = (30, 60, 120)
+FIT_K_LONG = (100, 300, 1000)
 CARRY = 0.5
 SEASON_GAP_DAYS = 60
 TEST_DAYS = 45
@@ -110,7 +118,8 @@ def league_rates(players, before=None):
 class Running:
     """Recency-weighted sums for one player, game by game."""
 
-    def __init__(self, hl):
+    def __init__(self, hl, hl_long=None):
+        self.long = Running(hl_long) if hl_long else None
         self.decay = 0.5 ** (1.0 / hl)
         self.w = 0.0
         self.m = 0.0
@@ -119,6 +128,8 @@ class Running:
         self.last = None
 
     def add(self, g):
+        if self.long is not None:
+            self.long.add(g)
         if self.last and _days(self.last, g[0]) > SEASON_GAP_DAYS:
             self.w *= CARRY
             self.m *= CARRY
@@ -134,31 +145,38 @@ class Running:
             self.s[k] = self.s[k] * self.decay + val(g, k)
         self.n += 1
 
-    def project(self, k_min, lr):
+    def rate(self, st, k_min, toward):
+        return (self.s[st] + k_min * toward) / (self.m + k_min) if (self.m + k_min) else 0.0
+
+    def project(self, k_min, lr, k_long=None):
+        """k_long given (and a long tracker): two levels — recent toward
+        his own long-run rate, that toward the league; else one level."""
         if self.w <= 0 or self.n == 0:
             return None
         minutes = self.m / self.w
         mu = {}
         for st in BASE:
-            rate = (self.s[st] + k_min * lr.get(st, 0.0)) / (self.m + k_min) if (self.m + k_min) \
-                else 0.0
-            mu[st] = minutes * rate
+            toward = lr.get(st, 0.0)
+            if self.long is not None and k_long is not None:
+                toward = self.long.rate(st, k_long, toward)
+            mu[st] = minutes * self.rate(st, k_min, toward)
         for c, parts in COMBOS.items():
             mu[c] = sum(mu[p] for p in parts)
         return {"min": minutes, "mu": mu}
 
 
-def walk(players, hl, k_min, lr, lo, hi):
+def walk(players, hl, k_min, lr, lo, hi, hl_long=None, k_long=None):
     """[(pid, game, projection, prior_games)] for every game in [lo, hi)
-    with at least MIN_PRIOR_GAMES before it."""
+    with at least MIN_PRIOR_GAMES before it. hl_long / k_long: the
+    two-level shrink (None = one level, straight to the league)."""
     out = []
     for pid, p in (players or {}).items():
         games = sorted(p.get("games") or [], key=lambda g: g[0])
-        run = Running(hl)
+        run = Running(hl, hl_long)
         lrg = lr.get(group(p.get("pos"))) or {}
         for i, g in enumerate(games):
             if lo <= g[0] < hi and run.n >= MIN_PRIOR_GAMES:
-                pr = run.project(k_min, lrg)
+                pr = run.project(k_min, lrg, k_long)
                 if pr and pr["min"] >= MIN_PROJ_MIN and val(g, "min"):
                     out.append((pid, g, pr, games[:i]))
             run.add(g)
@@ -222,14 +240,17 @@ def fit(players):
     best = None
     for hl in FIT_HL:
         for k in FIT_K:
-            rows = walk(players, hl, k, lr, fit_lo, test_lo)
-            e = _sse(rows)
-            if best is None or e < best[0]:
-                best = (e, hl, k, rows)
-    _e, hl, k, fit_rows = best
+            for hl2 in FIT_HL_LONG:
+                for k2 in FIT_K_LONG:
+                    rows = walk(players, hl, k, lr, fit_lo, test_lo, hl2, k2)
+                    e = _sse(rows)
+                    if best is None or e < best[0]:
+                        best = (e, hl, k, hl2, k2, rows)
+    _e, hl, k, hl2, k2, fit_rows = best
     sizes = {st: nb_size(fit_rows, st) for st, _l in STATS}
-    test_rows = walk(players, hl, k, lr, test_lo, "9999")
-    return {"hl": hl, "k": k, "sizes": sizes, "league": lr, "carry": CARRY,
+    test_rows = walk(players, hl, k, lr, test_lo, "9999", hl2, k2)
+    return {"hl": hl, "k": k, "hl_long": hl2, "k_long": k2, "sizes": sizes, "league": lr,
+            "carry": CARRY,
             "fit_window": [fit_lo, test_lo], "test_window": [test_lo, dates[-1]],
             "fit_rows": len(fit_rows), "test": test(test_rows, sizes),
             "minutes": minutes_check(test_rows)}
@@ -280,13 +301,13 @@ def minutes_check(rows):
 def project_now(games, params, pos):
     """Tonight's projection for one player from every game he has played
     (last season + this one, date order)."""
-    run = Running(params["hl"])
+    run = Running(params["hl"], params.get("hl_long"))
     for g in sorted(games or [], key=lambda x: x[0]):
         run.add(g)
     if run.n < 1:
         return None
     lr = (params.get("league") or {}).get(group(pos)) or {}
-    return run.project(params["k"], lr)
+    return run.project(params["k"], lr, params.get("k_long"))
 
 
 def calibration(params):

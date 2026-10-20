@@ -154,6 +154,71 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Points model fixed (stars no longer shrunk to average); the Simulator passes; the Bet Log. 2026-10-20 (4)
+
+**Suite 146, FAILING: none.** New tests/test_bet_log.py (4 controls, red
+by exit code: minus price read like a plus price, open bets counted as
+losses, a missing close scored 0, the save without [skip render] — the
+last one first stayed GREEN because the replace hit the docstring's copy
+of the words; redone on the code line). test_nba +1 control (project
+ignoring k_long). test_nba_sim +1 control (sgp_support letting a beating
+test be in range). Headless: Simulator -> log SGP -> Bet Log -> grade,
+in session mode and against a fake GitHub store; slip logs a parlay and
+a single.
+
+WHY THE SIM WAS THIN (measured on the FIT window, then confirmed): not
+the link. Real teammate points correlation 0.02; real "both over" lift
+1.025 (fit) / 1.039 (test), +/- 0.07; the sim said 1.06. The gap was the
+LEGS: a team's top-2 projected scorers went over their line 49-50% of
+the time against 45% delivered — one-level shrinkage pulled every
+scorer's per-minute rate toward his position group's.
+
+THE FIX (engines/nba_model): two levels — recent rate (HL) shrunk by K
+min toward HIS OWN long-run rate (HL_LONG), which is shrunk by K_LONG
+min toward the league. Grid FIT_HL (2,3,5,10) x FIT_K (100,300,600,1200)
+x FIT_HL_LONG (30,60,120) x FIT_K_LONG (100,300,1000), fit window only;
+~63 s in the nightly. Real 2025-26: HL 3, K 600, HL_LONG 120, K_LONG 300.
+Test window (unseen): Points THIN z0.8 -> BEATS z4.45; 3PM THIN -> BEATS
+z2.06; PRA / P+R / P+A THIN -> BEATS (z 5.5-6.1); Reb 7.67, Ast 6.74,
+R+A 8.3. Minutes MAE 5.11 vs 5.87 (was 5.39). walk / Running / project_now
+take the two levels; params carry hl_long / k_long (absent = one level,
+so an old payload still projects).
+
+STILL OPEN: top-2 scorers still under-projected on the test window
+(18.6 vs 20.0) — partly a test artifact (top-2 among players who PLAYED:
+when a star sits, the next man is "top-2" and his usage jumps). Measure
+a usage-share adjustment on the fit window before touching it.
+
+SIMULATOR on the new model: links e pts 0.987 reb -0.276 ast 1.115 3PM
+1.082; test 1,065 pairs, 0.1955 vs 0.1963, z 2.93 -> BEATS. sgp_support:
+beats -> measured but in_range False -> at most VALUE (only two-man
+points pairs were graded; STRONG on an SGP would claim more than that).
+nba_sim.SGP_GUARD holds the page's two cap sentences.
+
+BET LOG (engines/bet_log, engines/bet_log_ui, views/Bet_Log.py; in every
+nav after Bet Finder; on Home): bets {id, placed, sport, kind single /
+parlay / sgp, desc, legs, chance, price, stake, tier, result, close}.
+Summary: record / profit / ROI; expected wins vs won; MODEL VS BOOK —
+the same bets scored on squared error, our chance vs the break-even of
+the price paid (mm.paired_verdict, shown from 30 graded bets); CLOSING
+LINE in points of chance when a close is typed (missing = left out).
+Logged from the parlay slip (parlay / sgp when all legs share a game /
+single) and the Simulator. STORAGE: Render's disk is wiped per deploy,
+so the log is data/bets/<user>.json written through GitHub's contents
+API — env BETLOG_TOKEN (fine-grained token, this repo, Contents
+read/write), optional BETLOG_REPO (a private repo, if this one is
+public). Commit message "[skip render] [skip ci]". Stale sha -> reload,
+merge, retry once. No token -> session only + download / upload.
+
+FILES: app/engines/nba_model.py, app/engines/nba_sim.py,
+app/engines/bet_log.py (new), app/engines/bet_log_ui.py (new),
+app/views/Bet_Log.py (new), app/views/NBA_Sim.py, app/views/Bet_Finder.py,
+app/views/Home.py, app/app.py, nba_precompute.py, tests/test_nba.py,
+tests/test_nba_sim.py, tests/test_bet_log.py (new), HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NBA Game Simulator: 10,000 games, same-game parlays priced together. 2026-10-20 (3)
 
 **Suite 145, FAILING: none.** New tests/test_nba_sim.py with four negative
@@ -742,51 +807,5 @@ explore card (test_home requires a route).
 FILES: app/engines/bet_finder.py, app/views/Bet_Finder.py,
 tests/test_bet_finder.py (NEW), app/app.py, app/views/Home.py,
 HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — PP-weighted ice time: fitted, tested against plain ice time. 2026-10-09 (2)
-
-**Suite 132 (+ test_nhl_pp_factor), FAILING: none.** Three negative controls red by
-exit code (listed in the test). NHL pages rendered headless on the 10-06
-archive: no exceptions.
-
-FIRST, THE PROBE ANSWERED (10-09 nightly): ESPN's NHL box DOES carry
-powerPlayTimeOnIce — 2,340 of 2,340 skater lines. Also evenStrength- and
-shortHandedTimeOnIce (not used yet). First NHL Player of the Day: Mark
-Scheifele 68.7%.
-
-LAST SEASON'S PP MINUTES: nhl_prior_season.py --pp-only re-reads the
-2025-26 box scores and writes ONLY data/nhl/prior_pp.json ({pid: {date:
-minutes}}) — prior_season.json and everything fitted on it untouched; its
-game rows stay six fields (every reader unpacks six). Manual workflow
-"NHL prior PP minutes" (nhl-prior-pp.yml), run ONCE. A full prior-season
-rebuild now writes both files. nhl_precompute.load_prior_pp lays the file
-over the prior skaters as "pp"; pool_skaters carries pp from both seasons.
-
-THE FACTOR (nhl_model.fit_pp, called inside fit_toi per family): weighted
-minutes = TOI + (w - 1) x PP minutes; w = 1 IS today's ice-time ratio, so
-the PP version nests it. w from PP_WEIGHTS and its strength fitted on the
-train window, tested on the props window AGAINST THE ADOPTED PLAIN FACTOR;
-in the chance only on "beats" (toi[fam]["pp"]["adopted"]). Needs
-PP_MIN_COVERAGE 50% of fit rows with PP minutes, else a note.
-MEASURED BEFORE SHIPPING: on the real 2025-26 file with RANDOM PP minutes
-attached, both families FAIL (sog z -2.16, pts z -0.78) and the plain
-alphas are unchanged (0.478 / 0.774) — the test does not invent an edge.
-On a simulated season where PP minutes drive scoring it is adopted
-(z >= 2). Cost: fit_toi went to ~3.5 min at full size.
-
-PAGES: nhl_model.pp_note(toi) — one sentence, IN the chance / tested and
-not / untested — on Goal Edge, NHL Model, Player of the Day; why lines
-say "PP minutes weighted into his ice time" only when used.
-
-AFTER THE WORKFLOW RUNS: read "[verify] NHL PP-weighted minutes (sog|pts)"
-in the next nightly. Adopted -> the props validation, Top Plays, Goal
-Edge, POTD all move with it automatically.
-
-FILES: nhl_prior_season.py, nhl_precompute.py, app/engines/nhl_model.py,
-app/views/{NHL_Goal_Edge,NHL_Model,NHL_Player_Of_The_Day}.py,
-.github/workflows/nhl-prior-pp.yml (NEW), .github/workflows/nhl-prior-season.yml,
-tests/test_nhl_pp_factor.py (NEW), HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

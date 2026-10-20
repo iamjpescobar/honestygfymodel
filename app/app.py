@@ -236,6 +236,7 @@ def build_mlb_pages(include_admin: bool):
         ("Top Plays", "views/Top_Plays.py"),
         # Type your book's prices, get BET or SKIP — every sport (10-09).
         ("Bet Finder", "views/Bet_Finder.py"),
+        ("Bet Log", "views/Bet_Log.py"),
         # +300 to +2000, well-measured only, with the price each is worth (10-11).
         ("Long Shots", "views/Long_Shots.py"),
         # Who is close to a round career / season number tonight (10-14).
@@ -318,6 +319,7 @@ SPORT_SUBPAGES = {
         ("TD Edge", "views/NFL_TD_Edge.py"),
         ("Defenses to Target", "views/NFL_Defenses_To_Target.py"),
         ("Bet Finder", "views/Bet_Finder.py"),
+        ("Bet Log", "views/Bet_Log.py"),
         ("Long Shots", "views/Long_Shots.py"),
         ("Milestone Watch", "views/Milestones.py"),
         # Props over the rest of a game in progress (10-18, live_props).
@@ -332,6 +334,7 @@ SPORT_SUBPAGES = {
         ("Next Man Up", "views/NBA_Next_Man_Up.py"),
         ("Simulator", "views/NBA_Sim.py"),
         ("Bet Finder", "views/Bet_Finder.py"),
+        ("Bet Log", "views/Bet_Log.py"),
         ("Live", "views/Live.py"),
         ("Milestone Watch", "views/Milestones.py"),
         ("Results", "views/Results.py"),
@@ -350,6 +353,7 @@ SPORT_SUBPAGES = {
         # MLB's Player of the Day structure on the tested 1+ point line (10-09).
         ("Player of the Day", "views/NHL_Player_Of_The_Day.py"),
         ("Bet Finder", "views/Bet_Finder.py"),
+        ("Bet Log", "views/Bet_Log.py"),
         ("Long Shots", "views/Long_Shots.py"),
         ("Milestone Watch", "views/Milestones.py"),
         ("Live", "views/Live.py"),

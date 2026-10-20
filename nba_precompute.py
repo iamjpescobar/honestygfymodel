@@ -324,7 +324,9 @@ def main(today=None):
             if params.get("hl"):
                 model = {k: v for k, v in params.items() if k != "fit_rows"}
                 print(f"  [verify] NBA model fit on 2025-26 ({time.time() - t0:.0f}s): half-life "
-                      f"{params['hl']} games, shrink {params['k']} min, fit window "
+                      f"{params['hl']} games, shrink {params['k']} min toward his own rate (half-life "
+                      f"{params.get('hl_long')} games, itself shrunk {params.get('k_long')} min "
+                      f"toward the league), fit window "
                       f"{params['fit_window']}, test {params['test_window']}")
                 print(f"  [verify] NBA minutes: {params['minutes']}")
                 for st, lab in nm.STATS:

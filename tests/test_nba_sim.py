@@ -13,7 +13,9 @@ Negative controls, confirmed red by exit code when written (rule 4):
   - simulate without the blowout minutes share
     -> "starters sit in blowouts" fails
   - sgp_support treating every test as one that beats
-    -> "an untested SGP is capped at THIN" fails
+    -> "an untested SGP is capped at THIN..." fails
+  - sgp_support putting a beating test IN range (STRONG allowed)
+    -> the same check fails
 """
 import sys
 from pathlib import Path
@@ -102,8 +104,8 @@ thin_t = {"n": 1065, "verdict": {"verdict": "thin", "z": 1.3}}
 r_thin = bf.judge(0.36, 250, None, None, ns.sgp_support(thin_t))
 r_beat = bf.judge(0.36, 250, None, None, ns.sgp_support({"n": 1065, "verdict": {"verdict": "beats"}}))
 print(f"     36% at +250: thin test -> {r_thin['tier']}, beating test -> {r_beat['tier']}")
-check("an untested SGP is capped at THIN (measured only when the test beats)",
-      r_thin["tier"] == "thin" and r_beat["tier"] == "strong"
+check("an untested SGP is capped at THIN; a tested one at VALUE, never STRONG",
+      r_thin["tier"] == "thin" and r_beat["tier"] == "value"
       and ns.sgp_support(None)["untested"] and "ns.sgp_support(test)" in page)
 check("the SGP joint is delivered leg chances x the simulator's lift",
       "prod * j[\"lift\"]" in page and "nv.chance(p[\"row\"], st_, ln, model, sd)" in page)

@@ -165,13 +165,24 @@ def simulate(mu_home, mu_away, sd_margin, sd_total, players, sizes, links=None, 
 
 
 def sgp_support(test):
-    """How a same-game parlay priced with the simulator is guarded: as
-    measured only once its test on last season BEATS plain multiplication;
-    until then untested, which caps it at THIN (model_view.guarded_tier)."""
+    """How a same-game parlay priced with the simulator is guarded.
+    Until its test on last season BEATS plain multiplication: untested,
+    capped at THIN. Once it beats: measured, but OUTSIDE the tested range
+    (in_range False), so at most VALUE — the test was two-man points
+    pairs, and an SGP of rebounds, assists or 3+ legs was never graded,
+    so STRONG would be a claim the test did not make (no false STRONG)."""
     t = test or {}
     if ((t.get("verdict") or {}).get("verdict")) == "beats":
-        return {"measured": True, "in_range": True, "n": t.get("n") or 0, "untested": False}
+        return {"measured": True, "in_range": False, "n": t.get("n") or 0, "untested": False}
     return {"measured": False, "in_range": False, "n": 0, "untested": True}
+
+
+SGP_GUARD = {
+    "thin": ("Capped at THIN: the simulator's link between legs has not yet beaten plain "
+             "multiplication on last season's same-game pairs."),
+    "value": ("Capped at VALUE: the simulator passed its test on two-player points pairs; "
+              "STRONG on a same-game parlay would need that kind of parlay graded."),
+}
 
 
 def leg_hits(sim, leg):
@@ -289,8 +300,9 @@ def build(prior, model):
     preds = ngm._wf(gfin, gpar["shrink_k"])
     outcomes, gp = game_outcomes(prior.get("finals")), game_preds(preds)
     lr = model.get("league") or nm.league_rates(players, before=model["test_window"][0])
-    fit_rows = nm.walk(players, model["hl"], model["k"], lr, *model["fit_window"])
-    test_rows = nm.walk(players, model["hl"], model["k"], lr, model["test_window"][0], "9999")
+    two = (model.get("hl_long"), model.get("k_long"))
+    fit_rows = nm.walk(players, model["hl"], model["k"], lr, *model["fit_window"], *two)
+    test_rows = nm.walk(players, model["hl"], model["k"], lr, model["test_window"][0], "9999", *two)
     links = fit_links(fit_rows, outcomes, gp)
     sds = (gpar["sd_margin"], gpar["sd_total"])
     return {"links": links, "sds": list(sds),

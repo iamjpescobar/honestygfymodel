@@ -18,6 +18,8 @@ Negative controls, confirmed red by exit code when written (rule 4):
     -> "an Out player is held out, not projected" fails
   - nba_game_model not attaching its projection to the slate
     -> "tonight's games carry the game model" fails
+  - Running.project ignoring k_long (one level, straight to the league)
+    -> "a star's cold week is shrunk toward HIS rate" fails
 """
 import math
 import random
@@ -124,6 +126,22 @@ pr = nm.project_now([["2026-01-0%d" % k, "1", "2", 30, 30, 10, 5, 3, 0, 0, 0]
 check("a steady 30-in-30 player projects 30 minutes, 30 points",
       abs(pr["min"] - 30) < 1e-9 and abs(pr["mu"]["pts"] - 30) < 1e-9
       and abs(pr["mu"]["pra"] - 45) < 1e-9)
+# THE TWO-LEVEL SHRINK (10-20 (4)): a scorer who has put up 0.9 points a
+# minute all season, with a cold week, is pulled toward HIS OWN 0.9 — not
+# toward an average guard's 0.45. One level (k_long None) pulls him to the
+# league; the fitted model must not.
+star = [[f"2025-1{1 + k // 28}-{1 + k % 28:02d}", "1", "2", 34, 31, 5, 6, 3, 0, 0, 0]
+        for k in range(50)]
+star += [[f"2026-01-{10 + k:02d}", "1", "2", 34, 22, 5, 6, 3, 0, 0, 0] for k in range(3)]
+lg = {"G": {"pts": 0.45, "reb": 0.15, "ast": 0.12, "tpm": 0.05}}
+two = nm.project_now(star, {"hl": 3, "k": 600, "hl_long": 60, "k_long": 300, "league": lg}, "G")
+one = nm.project_now(star, {"hl": 3, "k": 600, "league": lg}, "G")
+print(f"     cold week for a 31-a-night scorer: two-level {two['mu']['pts']:.1f}, "
+      f"one-level {one['mu']['pts']:.1f}")
+check("a star's cold week is shrunk toward HIS rate, not the league's",
+      two["mu"]["pts"] > 26 and one["mu"]["pts"] < 22 and two["mu"]["pts"] - one["mu"]["pts"] > 4)
+check("the fit picks both levels from the grid",
+      fit.get("hl_long") in nm.FIT_HL_LONG and fit.get("k_long") in nm.FIT_K_LONG)
 check("over chance from the NB", 0.4 < nm.over(30, 8, 29.5) < 0.6
       and nm.over(None, 8, 9.5) is None)
 

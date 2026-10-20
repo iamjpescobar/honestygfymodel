@@ -128,6 +128,9 @@ EXPLORE = [
      "Type your book's prices next to any game's players and get BET or "
      "SKIP back, with the edge and the stake — every sport, every model, "
      "no column-reading."),
+    ("Bet Log", "MLB",
+     "Every bet you actually placed, at the price you got, graded when it "
+     "settles — your record, and whether the model beats YOUR book."),
     ("Long Shots", "MLB",
      "Every well-measured long shot tonight, +300 to +2000, with the price it is "
      "worth \u2014 find a name your book pays more for and the page says BET."),
