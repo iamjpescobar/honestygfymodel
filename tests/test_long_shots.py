@@ -86,12 +86,13 @@ check("no signal is invented when nothing stands out",
 
 # --- 5. the page -----------------------------------------------------------------
 app = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
-check("Long Shots is in the MLB, NHL and NFL navs",
-      app.count('("Long Shots", "views/Long_Shots.py")') == 3)
+check("Long Shots is in the MLB, NHL, NFL and NBA navs",
+      app.count('("Long Shots", "views/Long_Shots.py")') == 4)
 page = (ROOT / "app" / "views" / "Long_Shots.py").read_text(encoding="utf-8")
 check("prices are judged by the site's one guard", 'bf.judge(r["chance"]' in page
       and 'r["support"]' in page)
 check("BETs go on the same card as the Bet Finder", 'ss["bf_card"]' in page)
+check("the page reads NBA long shots", '"NBA": _nba' in page and "nv.long_shots(" in page)
 home = (ROOT / "app" / "views" / "Home.py").read_text(encoding="utf-8")
 check("Home has a route to it", '("Long Shots", "MLB"' in home)
 

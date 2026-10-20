@@ -10,6 +10,41 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — Long Shots page; the 10-11 NFL nightly read. 2026-10-11 (3)
+
+**Suite 136 (+ test_long_shots), FAILING: none.** Three negative controls red by
+exit code (listed in the test). Long Shots rendered headless for NHL
+(60 rows, signals filled), NFL (TD rows); MLB is network (lineups) and is
+wrapped per game, so a feed failure costs that game only.
+
+THE 10-11 NIGHTLY (two-season NFL batch, confirmed):
+- NFL prior box scores 272/272 parsed, 605 players, 95 with a recorded
+  line; data/nfl/prior_logs.json committed.
+- Prop test rows: 21,599 from 2025 + 5,199 from 2026 (was ~2,000 total).
+- Defense strength: rush fitted 0.25 -> thin (z 0.06, n 1,023); rec 0.5
+  -> thin (z 0.58, n 5,716); pass fitted 0.0 (n 231 to fit) -> all
+  CONTEXT ONLY. The defense does not add on top of the model in NFL
+  either; the guard (CHECK) stays the protection.
+- All 12 NFL prop stats BEAT the player's own rate on 618-4,961 graded
+  player-games each (passing yards n 618, was 92).
+
+LONG SHOTS (engines/long_shots.py, views/Long_Shots.py; MLB nav, NHL +
+NFL subpages, Home card): every player whose DELIVERED chance is in
++300..+2000 (1/21..1/4), only on TESTED markets with the raw call inside
+its curve's graded range and >= STRONG_MIN_N calls in the band.
+NHL: every nhl_model market; MLB: every mlb_props market (lineup or last
+lineup); NFL: anytime TD (td curve). "Why it's live" signals for NHL:
+ice time up (>= 5%), PP1, team goal env >= +5%, opposing goalie below the
+league save rate. Price-range filter opens on +600..+2000. Typed prices
+go through bet_finder.judge with the row's support (the one guard); BETs
+land on the Bet Finder's session card.
+
+FILES: app/engines/long_shots.py, app/views/Long_Shots.py,
+tests/test_long_shots.py (NEW), app/app.py, app/views/Home.py,
+HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NFL props tested on last season + this one; defense strength fitted. 2026-10-11 (2)
 
 **Suite 135 (+ test_nfl_two_seasons), FAILING: none.** Three negative controls red

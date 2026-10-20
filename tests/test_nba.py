@@ -20,6 +20,10 @@ Negative controls, confirmed red by exit code when written (rule 4):
     -> "tonight's games carry the game model" fails
   - Running.project ignoring k_long (one level, straight to the league)
     -> "a star's cold week is shrunk toward HIS rate" fails
+  - nv.long_shots listing stats whose ladder has not beaten
+    -> "a stat whose ladder has not beaten is never a long shot" fails
+  - nv.chance ignoring the ladder curve past his line's range
+    -> "an alt line ... reads the ladder curve" fails
   - Running.add carrying the short window across the offseason as is
     -> "after the offseason, his minutes come from his season" fails
 """
@@ -103,6 +107,10 @@ fit = nm.fit(W)
 check("HL and K come from the grid, fitted before the test window",
       fit["hl"] in nm.FIT_HL and fit["k"] in nm.FIT_K
       and fit["fit_window"][1] == fit["test_window"][0])
+check("the ladder: every rung graded, finer bins at the long-shot end, beats his own rate",
+      set(fit["ladder"]) == set(nm.LADDER)
+      and fit["ladder"]["pts"]["verdict"]["verdict"] == "beats"
+      and any(b["band"] == "4-5%" for b in fit["ladder"]["pts"]["calibration"]))
 check("a spread is measured for every stat",
       set(fit["sizes"]) == {s for s, _l in nm.STATS}
       and all(v is None or v > 0 for v in fit["sizes"].values()))
@@ -164,6 +172,38 @@ check("the fit picks both levels from the grid",
       fit.get("hl_long") in nm.FIT_HL_LONG and fit.get("k_long") in nm.FIT_K_LONG)
 check("over chance from the NB", 0.4 < nm.over(30, 8, 29.5) < 0.6
       and nm.over(None, 8, 9.5) is None)
+
+# --- the ladder on the pages: long shots and alt lines --------------------------
+from engines import nba_view as nv  # noqa: E402
+lmodel = {"sizes": {"pts": 6.0, "reb": 10.0, "ast": 10.0, "tpm": 8.0, "pra": 9.0},
+          "test": {"pts": {"calibration": [{"band": "40-49%", "n": 400, "predicted": 0.45,
+                                            "actual": 0.45},
+                                           {"band": "50-59%", "n": 400, "predicted": 0.55,
+                                            "actual": 0.55}]}},
+          "ladder": {st: {"verdict": {"verdict": "beats" if st != "reb" else "thin"},
+                          "calibration": [{"band": "%d" % k, "n": 500, "predicted": p_,
+                                           "actual": p_ * 0.9} for k, p_ in
+                                          enumerate((0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5,
+                                                     0.7, 0.9))]}
+                     for st in nm.LADDER}}
+lrow = {"pid": "1", "name": "Scorer", "min": 34, "status": "",
+        "mu": {"pts": 26.0, "reb": 9.0, "ast": 6.0, "tpm": 3.0, "pra": 41.0}}
+lg_ = {"status": "scheduled", "away_abbr": "AAA", "home_abbr": "BBB",
+       "away_props": [lrow], "home_props": []}
+lsr = nv.long_shots([lg_], lmodel)
+check("NBA long shots: every row in +300..+2000, delivered through the ladder curve",
+      lsr and all(1 / 21 <= r["chance"] <= 0.25 and 300 <= r["worth"] <= 2000 for r in lsr)
+      and any(r["market"] == "35+ points" for r in lsr))
+check("a stat whose ladder has not beaten is never a long shot (rebounds here)",
+      not any("rebounds" in r["market"] for r in lsr))
+ch_alt, raw_alt, sup_alt = nv.chance(lrow, "pts", 34.5, lmodel)
+print(f"     alt line 35+ points: raw {raw_alt:.3f} -> delivered {ch_alt:.3f}, "
+      f"measured={sup_alt['measured']} in_range={sup_alt['in_range']}")
+check("an alt line past his own line's tested range reads the ladder curve",
+      sup_alt["in_range"] and abs(ch_alt - raw_alt * 0.9) < 0.02)
+pg = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
+check("Long Shots is in the NBA nav",
+      pg.split('"NBA": [')[1].split("],")[0].count('"views/Long_Shots.py"') == 1)
 
 # --- 3. Next Man Up ----------------------------------------------------------------
 def gm(d, team, mn, pts):

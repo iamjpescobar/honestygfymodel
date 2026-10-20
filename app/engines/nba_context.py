@@ -287,6 +287,7 @@ def fit(prior, model):
     test_rows = [adj[i] for i in test_idx]
     sizes = {st: nm.nb_size(fit_rows, st) for st, _l in nm.STATS}
     test = nm.test(test_rows, sizes)
+    ladder = nm.test_ladder(test_rows, sizes)
     vs_base = {}
     for st, _l in nm.STATS:
         new, old = [], []
@@ -307,7 +308,8 @@ def fit(prior, model):
             new.append((pn - yy) ** 2)
         vs_base[st] = mm.paired_verdict(new, old)
     return {"opp": opp, "mean": {k: round(v, 4) for k, v in mean.items()}, "out": out_cfg,
-            "sizes": sizes, "test": test, "vs_base": vs_base, "n_fit": len(fit_idx),
+            "sizes": sizes, "test": test, "ladder": ladder, "vs_base": vs_base,
+            "n_fit": len(fit_idx),
             "n_test": len(test_idx), "minutes": nm.minutes_check(test_rows)}
 
 

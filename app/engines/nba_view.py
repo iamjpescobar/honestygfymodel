@@ -4,6 +4,8 @@ check, the model block, and one chance function — so the Tonight page,
 the Props board, Trends, the Bet Finder and Live can never disagree
 about a number.
 """
+from engines import availability as av
+from engines import model_math as mm
 from engines import nba_model as nm
 
 
@@ -62,9 +64,69 @@ def chance(row, stat, line, model, side="Over"):
     cal = calibration(model)
     ch, _basis = mv.delivered_over(raw, stat, line, (), cal)
     sup = mv.support_for(raw, stat, line, (), cal)
+    lad = (((model or {}).get("ladder") or {}).get(stat) or {})
+    if not sup.get("in_range") and lad.get("calibration") and \
+            (lad.get("verdict") or {}).get("verdict") == "beats":
+        # past his own line's tested range (an alt line, a long shot):
+        # the ladder curve graded every rung on unseen games
+        from engines import top_plays_board as tpb
+        c2 = tpb.calibrate(raw, lad["calibration"])
+        if c2 is not None:
+            ch, sup = c2, mv.curve_support(raw, lad["calibration"])
     if side == "Under":
         return 1 - ch, 1 - raw, sup
     return ch, raw, sup
+
+
+def long_shots(games, model):
+    """Long Shots rows (engines/long_shots shape) from tonight's NBA slate:
+    every ladder rung of every projected player, delivered through the
+    ladder curve, in the +300..+2000 band and well measured — only stats
+    whose ladder BEAT his own hit rate on unseen games."""
+    from engines import long_shots as ls
+    lad = (model or {}).get("ladder") or {}
+    sizes = (model or {}).get("sizes") or {}
+    markets, cal = [], {}
+    for st, rungs in nm.LADDER.items():
+        x = lad.get(st) or {}
+        if (x.get("verdict") or {}).get("verdict") != "beats" or not x.get("calibration"):
+            continue
+        for n in rungs:
+            key = f"{st}{n}"
+            markets.append((key, f"{n}+ {nm.LADDER_LABEL[st]}", st, n))
+            cal[key] = x["calibration"]
+    if not markets:
+        return []
+    rows = []
+    for g in games or []:
+        if g.get("status") == "final":
+            continue
+        label = f"{g.get('away_abbr')} @ {g.get('home_abbr')}"
+        for side, other in (("away", "home"), ("home", "away")):
+            players = []
+            for r in g.get(side + "_props") or []:
+                if av.is_out(r.get("status")):
+                    continue
+                probs = {}
+                for key, _lab, st, n in markets:
+                    pm = nm.pmf((r.get("mu") or {}).get(st), sizes.get(st))
+                    if pm:
+                        probs[key] = mm.prob_at_least(pm, n)
+                c = (r.get("ctx") or {})
+                bits = [f"~{r.get('min', 0):.0f} min"]
+                opp = {k: v for k, v in (c.get("opp") or {}).items() if abs(v - 1) >= 0.03}
+                if opp:
+                    bits.append(f"vs {g.get(other + '_abbr')}: " + ", ".join(
+                        f"{k} {100 * (v - 1):+.0f}%" for k, v in opp.items()))
+                if any(v - 1 >= 0.02 for v in (c.get("bump") or {}).values()):
+                    bits.append("teammate out")
+                if av.flag(r):
+                    bits.append(f"\u26a0 {av.flag(r)}")
+                players.append({"_name": f"{r.get('name')} ({g.get(side + '_abbr')})",
+                                "_probs": probs, "_why": r.get("why"), "_signals": " · ".join(bits),
+                                "team": g.get(side + "_abbr"), "opp": g.get(other + "_abbr")})
+            rows += ls.rows_from_markets(players, markets, cal, label, "NBA")
+    return rows
 
 
 def his_line(row, stat):

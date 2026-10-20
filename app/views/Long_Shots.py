@@ -118,7 +118,14 @@ def _nfl(_day):
     return rows
 
 
-SOURCES = {"NHL": _nhl, "MLB": _mlb, "NFL": _nfl}
+@st.cache_data(ttl=900, show_spinner=False)
+def _nba(_day):
+    from engines import nba_view as nv
+    games, model, _pget = nv.load()
+    return nv.long_shots(games, model)
+
+
+SOURCES = {"NHL": _nhl, "MLB": _mlb, "NFL": _nfl, "NBA": _nba}
 # Where on the long-shot ladder to look. Opens on +600..+2000 — the
 # Caulfield zone, where a book's lazy price is worth the most.
 PRICE_BANDS = {"+300 to +2000 (all)": (300, 2000), "+600 to +2000": (600, 2000),
@@ -135,7 +142,7 @@ with st.spinner("Finding tonight's long shots…"):
     except Exception as exc:  # noqa: BLE001 — a missing feed costs this sport, never the page
         rows = []
         st.caption(f"{sport} data unavailable right now ({type(exc).__name__}).")
-if sport in ("NHL", "NFL"):
+if sport in ("NHL", "NFL", "NBA"):
     _li.render_note(sport.lower())
 
 

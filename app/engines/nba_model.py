@@ -278,6 +278,7 @@ def fit(players):
             "carry": CARRY,
             "fit_window": [fit_lo, test_lo], "test_window": [test_lo, dates[-1]],
             "fit_rows": len(fit_rows), "test": test(test_rows, sizes),
+            "ladder": test_ladder(test_rows, sizes),
             "minutes": minutes_check(test_rows)}
 
 
@@ -304,6 +305,51 @@ def test(rows, sizes):
                    "verdict": mm.paired_verdict([(q - y) ** 2 for q, y in preds],
                                                 [(q - y) ** 2 for q, y in base]),
                    "calibration": mm.calibration_bins(preds)}
+    return out
+
+
+# THE LADDER (10-20): the alternate lines a long shot lives on — "30+
+# points", "10+ rebounds", "5+ threes". The main test grades each player
+# at HIS line (chances near 50%); a +800 call is a 10% call, a range that
+# test never reaches. So every test-window player-game is also graded at
+# every rung, with finer bins at the low end, against his own last-20
+# hit rate at that rung.
+LADDER = {"pts": (10, 15, 20, 25, 30, 35, 40, 45, 50),
+          "reb": (4, 6, 8, 10, 12, 14, 16),
+          "ast": (2, 4, 6, 8, 10, 12, 14),
+          "tpm": (1, 2, 3, 4, 5, 6, 7),
+          "pra": (20, 25, 30, 35, 40, 45, 50, 55, 60)}
+LADDER_LABEL = {"pts": "points", "reb": "rebounds", "ast": "assists", "tpm": "threes",
+                "pra": "pts + reb + ast"}
+LADDER_EDGES = (0, .02, .04, .06, .08, .10, .13, .16, .20, .25, .30, .40, .50, .60, .70, .80,
+                .90, 1.0001)
+
+
+def test_ladder(rows, sizes):
+    """{stat: {n, model_brier, baseline_brier, verdict, calibration}} —
+    every rung of LADDER on every test row (its pmf computed once)."""
+    out = {}
+    for st, rungs in LADDER.items():
+        preds, base = [], []
+        for _pid, g, pr, hist in rows:
+            y = val(g, st)
+            last = [val(h, st) for h in hist if val(h, "min")]
+            last = [v for v in last if v is not None][-20:]
+            if y is None or len(last) < MIN_PRIOR_GAMES:
+                continue
+            pm = pmf(pr["mu"][st], sizes.get(st))
+            if not pm:
+                continue
+            for n in rungs:
+                p = mm.prob_at_least(pm, n)
+                hit = 1 if y >= n else 0
+                preds.append((p, hit))
+                base.append((sum(1 for v in last if v >= n) / len(last), hit))
+        m, b = mm.score_predictions(preds), mm.score_predictions(base)
+        out[st] = {"n": m["n"], "model_brier": m["brier"], "baseline_brier": b["brier"],
+                   "verdict": mm.paired_verdict([(q - y) ** 2 for q, y in preds],
+                                                [(q - y) ** 2 for q, y in base]),
+                   "calibration": mm.calibration_bins(preds, LADDER_EDGES)}
     return out
 
 

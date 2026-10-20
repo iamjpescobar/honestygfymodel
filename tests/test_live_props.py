@@ -7,6 +7,8 @@ players[].statistics[] with keys / labels / athletes) — rule 5.
 
 Negative controls, confirmed red by exit code when written (rule 4):
   - remaining() ignoring the period (clock only)
+  - clock_min reading only "M:SS" (the 10-20 halftime bug)
+    -> "NBA's last-minute clock" and "NBA halftime" fail
     -> "NHL: 10:00 left in the 2nd is half the game" fails
   - rest_pmf('nb') without the update on what he has done
     -> "a hot first half raises the rest of his game" fails
@@ -40,6 +42,20 @@ check("NHL: overtime is not priced", lp.remaining("nhl", "in", 4, "3:00") is Non
 check("NFL: 7:30 left in the 3rd is 37.5% of the game",
       abs(lp.remaining("nfl", "in", 3, "7:30") - 0.375) < 1e-9)
 check("an unreadable clock is not priced", lp.remaining("nfl", "in", 2, "??") is None)
+check("NBA's last-minute clock '45.3' is 45 seconds, not unreadable",
+      abs((lp.clock_min("45.3") or -1) - 45.3 / 60) < 1e-9 and lp.clock_min("0.0") == 0.0
+      and abs((lp.clock_min("1:05.5") or -1) - (1 + 5.5 / 60)) < 1e-9)
+check("NBA halftime: half the game left (clock '0.0' or none at all)",
+      abs((lp.remaining("nba", "in", 2, "0.0", "Halftime") or -1) - 0.5) < 1e-9
+      and abs((lp.remaining("nba", "in", 2, None, "Halftime") or -1) - 0.5) < 1e-9
+      and abs((lp.remaining("nba", "in", 3, "0.4", "End of 3rd") or -1) - 0.25 - 0.4 / 60 / 48)
+      < 1e-9)
+check("still: overtime is not priced, a clockless mid-period is not priced",
+      lp.remaining("nba", "in", 5, "3:00", "OT") is None
+      and lp.remaining("nba", "in", 2, None, "In Progress") is None)
+live = (ROOT / "app" / "views" / "Live.py").read_text(encoding="utf-8")
+check("the Live page passes the status words and says what each sport's number lacks",
+      'gs.get("clock"), gs.get("detail"))' in live and '"nba": "the score (a blowout' in live)
 
 # --- what is left -----------------------------------------------------------
 mu_g = -math.log(1 - 0.24)                      # a 24% pregame anytime goal

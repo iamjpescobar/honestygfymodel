@@ -23,17 +23,29 @@ from engines import model_view as mv
 
 EASTERN = ZoneInfo("America/New_York")
 page_header("Live", "Player props while the game is on", eyebrow="NHL · NFL · NBA", align="left")
-st.markdown(
-    f'<div style="font-size:var(--lc-text-body); line-height:1.6; color:{COLOR["text"]};">'
-    f'Pick a game in progress. Every player&rsquo;s chance is for the <b>rest of the game</b>: '
-    f'his pregame projection, cut to the time left, plus what he already has. Type your '
-    f'book&rsquo;s <b>live</b> price; bet only when it pays more than <b>Worth it at</b>.<br>'
-    f'<span style="color:{COLOR["warn"]};"><b>Not yet tested on past games</b> (until the '
-    f'NHL live test has run, and then only for the markets that pass it) &mdash; so a call '
-    f'here stays at THIN; the <b>Edge</b> column shows the gap in points. Not in the '
-    f'number: the score (a trailing team shoots more, a blowout sits stars), a player hurt in '
-    f'this game, a power play in progress. Overtime is not priced.</span></div>',
-    unsafe_allow_html=True)
+NOT_IN = {
+    "nhl": "the score (a trailing team shoots more, a blowout sits stars), a player hurt in "
+           "this game, a power play in progress",
+    "nfl": "the score (a trailing team throws more, a blowout sits starters), a player hurt "
+           "in this game, weather turning",
+    "nba": "the score (a blowout sits the starters in the 4th), foul trouble, a player hurt "
+           "in this game",
+}
+
+
+def _intro(sp_):
+    st.markdown(
+        f'<div style="font-size:var(--lc-text-body); line-height:1.6; color:{COLOR["text"]};">'
+        f'Pick a game in progress. Every player&rsquo;s chance is for the <b>rest of the '
+        f'game</b>: his pregame projection, cut to the time left, plus what he already has. '
+        f'Type your book&rsquo;s <b>live</b> price; bet only when it pays more than <b>Worth it '
+        f'at</b>.<br><span style="color:{COLOR["warn"]};"><b>Not yet tested on past games</b>'
+        + (" (until the NHL live test has run, and then only for the markets that pass it)"
+           if sp_ == "nhl" else "")
+        + f' &mdash; so a call here stays at THIN; the <b>Edge</b> column shows the gap in '
+          f'points. Not in the number: {NOT_IN.get(sp_, NOT_IN["nhl"])}. Overtime is not '
+          f'priced.</span></div>', unsafe_allow_html=True)
+
 
 _stk = mv.staking_controls("live")
 ss = st.session_state
@@ -53,6 +65,7 @@ _here = _here if _here in ("NHL", "NFL", "NBA") else "NHL"
 sport = st.segmented_control("Sport", ["NHL", "NFL", "NBA"], default=_here,
                              key="live_sport") or _here
 sp = sport.lower()
+_intro(sp)
 
 if sp == "nba":
     from engines import nba_view as _nv
@@ -86,7 +99,7 @@ raw = _summary(sp, str(g["event_id"]))
 _got = json.loads(raw) if raw else {}
 summ, read_at = _got.get("data") or {}, _got.get("t")
 gs = lp.game_state(summ) if summ else {"state": "pre"}
-f = lp.remaining(sp, gs.get("state"), gs.get("period"), gs.get("clock"))
+f = lp.remaining(sp, gs.get("state"), gs.get("period"), gs.get("clock"), gs.get("detail"))
 
 with card("live_state"):
     if not summ:

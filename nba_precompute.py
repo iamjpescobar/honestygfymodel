@@ -352,6 +352,7 @@ def main(today=None):
             if ctx:
                 model["base_test"] = model["test"]
                 model["sizes"], model["test"] = ctx["sizes"], ctx["test"]
+                model["ladder"] = ctx["ladder"]
                 model["context"] = {k: ctx[k] for k in ("opp", "mean", "out", "vs_base")}
                 print(f"  [verify] NBA context ({time.time() - t0:.0f}s): opponent {ctx['opp']}; "
                       f"teammate out {ctx['out']}")
@@ -362,6 +363,13 @@ def main(today=None):
                           f"{(x.get('verdict') or {}).get('verdict')} "
                           f"(z={(x.get('verdict') or {}).get('z')}); vs no context -> "
                           f"{v.get('verdict')} (z={v.get('z')})")
+        for st, x in ((model or {}).get("ladder") or {}).items():
+            v = x.get("verdict") or {}
+            print(f"  [verify] NBA ladder {st:4s} (every rung {nm.LADDER[st]}) n={x['n']} model "
+                  f"{x['model_brier']} vs his-own-rate {x['baseline_brier']} -> "
+                  f"{v.get('verdict')} (z={v.get('z')}); low bins "
+                  + ", ".join(f"{b['band']} {b['actual']:.3f}/{b['predicted']:.3f} n{b['n']}"
+                              for b in (x.get("calibration") or [])[:6]))
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NBA context failed (props stay without it): "
               f"{type(exc).__name__}: {exc}")

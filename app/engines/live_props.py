@@ -47,17 +47,30 @@ REG = {"nhl": (3, 20.0), "nfl": (4, 15.0), "nba": (4, 12.0)}
 # The clock
 # ----------------------------------------------------------------------
 def clock_min(s):
-    """'12:34' -> 12.5667 minutes left in the period; None if unreadable."""
+    """Minutes left in the period, None if unreadable: '12:34' -> 12.567,
+    '1:05.2' -> 1.087, and ESPN's NBA last-minute shape '45.3' / '0.0'
+    (seconds, no colon) -> 0.755 / 0.0. Until 10-20 the colon-less shape
+    read as unreadable, so every NBA game's final minute of each quarter
+    and halftime showed "Overtime (or a clock the feed did not send)"."""
+    t = str(s or "").strip()
+    if not t:
+        return None
     try:
-        m, _, sec = str(s or "").strip().partition(":")
-        return int(m) + (int(sec) if sec else 0) / 60.0
+        if ":" in t:
+            m, _, sec = t.partition(":")
+            return int(m) + (float(sec) if sec else 0.0) / 60.0
+        return float(t) / 60.0
     except (TypeError, ValueError):
         return None
 
 
-def remaining(sport, state, period, clock):
+BREAK_WORDS = ("half", "end of", "intermission", "end ")
+
+
+def remaining(sport, state, period, clock, detail=None):
     """Fraction of regulation left (1.0 before the start, 0.0 at the end),
-    or None in overtime / when the clock cannot be read."""
+    or None in overtime / when the clock cannot be read. A break between
+    periods ("Halftime", "End of 2nd") with no clock is the period's end."""
     if state == "pre":
         return 1.0
     if state == "post":
@@ -70,6 +83,8 @@ def remaining(sport, state, period, clock):
     if p > n:
         return None                       # overtime: not priced
     c = clock_min(clock)
+    if c is None and any(w in str(detail or "").lower() for w in BREAK_WORDS):
+        c = 0.0
     if c is None:
         return None
     left = (n - p) * length + max(0.0, min(length, c))
