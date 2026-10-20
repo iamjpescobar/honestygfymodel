@@ -348,6 +348,27 @@ def main(today=None):
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NBA game model failed: {type(exc).__name__}: {exc}")
 
+    # THE SIMULATOR'S LINKS AND ITS TEST (10-20, engines/nba_sim): how
+    # minutes and stats move with the score, measured on last season;
+    # whether same-game pairs priced with it beat plain multiplication.
+    sim_block = None
+    try:
+        if model and prior.get("players"):
+            from engines import nba_sim
+            t0 = time.time()
+            sim_block = nba_sim.build(prior, model)
+            if sim_block:
+                L, T = sim_block["links"], sim_block["test"]
+                print(f"  [verify] NBA simulator links ({time.time() - t0:.0f}s): elasticities "
+                      f"{L['e']}, minutes share starter {L['min_share']['starter']} bench "
+                      f"{L['min_share']['bench']} (close / comfortable / blowout)")
+                print(f"  [verify] NBA simulator test: n={T['n']} same-game pairs, sim "
+                      f"{T['sim_brier']} vs multiplied {T['independent_brier']} -> "
+                      f"{(T.get('verdict') or {}).get('verdict')} (z={(T.get('verdict') or {}).get('z')}); "
+                      f"teammates {T['teammates']}; opponents {T['opponents']}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::NBA simulator failed: {type(exc).__name__}: {exc}")
+
     pool = merge_pool(prior.get("players"), cur)
     cur_from = REGULAR_SEASON_START.isoformat()
     feed = ef.fetch_injury_list(LEAGUE)
@@ -418,6 +439,7 @@ def main(today=None):
         "model": model,
         "game_model": ({k: v for k, v in game_model.items() if k != "rates"}
                        if game_model else None),
+        "sim": sim_block,
         "teams": {tid: {"abbr": a, "logo": team_logo.get(tid)} for tid, a in team_abbr.items()},
         "role_watch": watch,
         "milestones_happened": happened,

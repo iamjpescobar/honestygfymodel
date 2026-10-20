@@ -154,6 +154,57 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — NBA Game Simulator: 10,000 games, same-game parlays priced together. 2026-10-20 (3)
+
+**Suite 145, FAILING: none.** New tests/test_nba_sim.py with four negative
+controls, each red by exit code: plain-Poisson draws (marginals), score
+link removed (teammate lift), blowout minutes share removed (starters
+sit), sgp_support treating every test as beating (the THIN cap). The
+page rendered headless on the synthetic slate; SGP added to the slip.
+
+Izzy: "Can we add a simulator?" ENGINE engines/nba_sim: each run draws a
+margin and total from the game model (its fitted SDs), then every
+player's stats: mean = his projection x minutes share for the game
+script (close / comfortable / blowout, |margin| 10 / 20) x (1 + e x
+shock) — points ride his team's score, the rest ride pace. The NB draw
+is sized so each player ON HIS OWN keeps the props model's distribution
+(test: worst gap 0.4 pts). The minutes share is normalised to average 1
+over the simulated games: unnormalised, last season's bench bias (1.02-
+1.05) moved bench means +3% and the sim no longer priced legs like the
+props board. joint(): share of games where every leg hit; lift = joint /
+product.
+
+MEASURED ON 2025-26 (fit window, then the 45-day test window): e pts
+0.969, reb -0.286, ast 1.11, 3PM 1.037; minutes share starter 1.037 /
+0.967 / 0.877, bench 1.049 / 1.019 / 1.017. TEST: 1,065 same-game pairs
+of top scorers (teammates and opponents), each leg's DELIVERED chance
+(the points calibration curve), joint = product x sim lift vs plain
+product: Brier 0.1929 vs 0.1934, z 1.86 -> THIN. Teammates: product
+20.4%, sim 21.5%, actual 25.8% — right direction, under-corrected.
+Opponents: 20.0 / 20.6 / 27.6. (On RAW legs it beat at z 4.9 — but the
+raw points model is overconfident at the ends, 0.84 predicted vs 0.57
+actual, so that was the curve's win, not the sim's.)
+
+PAGE app/views/NBA_Sim.py (NBA nav: "Simulator"): pick a game -> win %,
+typical score, total's middle 80%, margin buckets, P(over the book's
+total) with the not-tested-against-the-book note; every player's 10th /
+50th / 90th percentile for a stat, Over % coloured; SGP builder, 2-4
+legs, each leg = nv.chance (delivered), joint = product x lift, fair
+price, your price -> bf.judge with nba_sim.sgp_support(test): UNTESTED
+-> capped at THIN until the test BEATS. Out players are not simulated.
+Cached 15 min per game; seed from crc32 of the game, so stable.
+
+NEXT: the sim under-corrects teammates (21.5 vs 25.8). Candidates to
+measure, not guess: a shared player-level "hot night" shock, usage
+redistribution when a teammate goes cold. Never tune it on the test
+window.
+
+FILES: app/engines/nba_sim.py (new), app/views/NBA_Sim.py (new),
+nba_precompute.py, app/app.py, tests/test_nba_sim.py (new), HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NBA game model; colour on every measured NBA number. 2026-10-20 (2)
 
 **Suite 144, FAILING: none.** test_nba gains a fourth negative control
@@ -737,57 +788,5 @@ FILES: nhl_prior_season.py, nhl_precompute.py, app/engines/nhl_model.py,
 app/views/{NHL_Goal_Edge,NHL_Model,NHL_Player_Of_The_Day}.py,
 .github/workflows/nhl-prior-pp.yml (NEW), .github/workflows/nhl-prior-season.yml,
 tests/test_nhl_pp_factor.py (NEW), HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — NHL: power-play minutes, 2+ goals, Player of the Day, the multi-goal check. 2026-10-09
-
-**Suite 131 (+ test_nhl_pp_potd), FAILING: none.** Three negative controls red
-by exit code (listed in the test). Goal Edge, NHL Player of the Day, NHL
-Model, Top Plays and Results rendered headless against the 10-06 archive
-both as-is (old games.json: no exceptions) and with the new fields added.
-
-WHY: Izzy asked whether PP minutes are in the NHL model (they were not),
-why nobody could see the night's multi-goal scorers coming, and for MLB's
-Player of the Day structure in hockey.
-
-POWER PLAY — CONTEXT ONLY. nhl_precompute.SKATER gains "pptoi" (ESPN's
-PP TOI column under every spelling seen; ABSENT when the feed lacks it,
-rule 6). The nightly prints the skater box columns it saw and how many
-lines carried PP minutes: THAT IS THE PROBE — read it on the first run.
-If ESPN has no PP column, the NHL's own API is the fallback (not built).
-nhl_model.pp_units: PP1 = team's top 5 by last-5 PP minutes, PP2 next 5,
-under 1.0 min none; {} when nobody has PP minutes (unknown, not zero).
-Not in the number: prior_season.json has no PP minutes, so nothing to
-test on yet. NEXT: once this season has ~60 days of PP lines, test a PP
-factor walk-forward the way fit_toi was (adopt only on "beats").
-
-2+ GOALS: ("g2", "Goal O1.5", "g", 2) added to MARKETS; Goals board
-offers 1.5. Last season walk-forward: BEATS his own rate (z 4.86,
-n 17,343). Calibration: calls of 10-19% (n 92) delivered 6.5% vs 11.5%
-called — the delivered chance pulls the top of the list down to that.
-Tried equal-count calibration bands for crowded markets (2+ goals has 98%
-of calls under 10%); cross-fitted vs the 10-point bands: g2 thin (z 1.8),
-pt2 thin, sog4 WORSE (z -2.4) -> not adopted, 10-point bands kept.
-
-PLAYER OF THE DAY (edge_boards.nhl_player_of_the_day, views/
-NHL_Player_Of_The_Day.py, NHL nav): 1+ point, gates = pt1 verdict beats,
-20+ games both seasons, played his team's last game (nhl_model rows now
-carry last_game / team_last_game). Ranked by DELIVERED chance; no matchup
-nudges on top (already inside the chance — MLB nudges because its score
-has none). Logged + graded nightly to data/top_plays/nhl_potd.json.
-
-MULTI-GOAL WATCH + CHECK: top 10 by delivered 2+ goal chance logged to
-nhl_multigoal.json (graded like Top Plays). nhl_multigoal_ranks.json keeps
-each night's top-100 pre-game ranking; once every game of the night is
-final, the two-goal scorers are recorded with their rank. Goal Edge shows
-"X of Y were in our top 25; a random 25 would catch Z" — the yardstick.
-Both new records are on the Results scorecard. nightly-data.yml commits
-all three files.
-
-FILES: nhl_precompute.py, app/engines/{nhl_model,edge_boards,scorecard}.py,
-app/views/{NHL_Goal_Edge,NHL_Model,Results}.py, app/app.py,
-app/views/NHL_Player_Of_The_Day.py + tests/test_nhl_pp_potd.py (NEW),
-.github/workflows/nightly-data.yml, HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

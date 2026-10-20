@@ -10,6 +10,58 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — NHL: power-play minutes, 2+ goals, Player of the Day, the multi-goal check. 2026-10-09
+
+**Suite 131 (+ test_nhl_pp_potd), FAILING: none.** Three negative controls red
+by exit code (listed in the test). Goal Edge, NHL Player of the Day, NHL
+Model, Top Plays and Results rendered headless against the 10-06 archive
+both as-is (old games.json: no exceptions) and with the new fields added.
+
+WHY: Izzy asked whether PP minutes are in the NHL model (they were not),
+why nobody could see the night's multi-goal scorers coming, and for MLB's
+Player of the Day structure in hockey.
+
+POWER PLAY — CONTEXT ONLY. nhl_precompute.SKATER gains "pptoi" (ESPN's
+PP TOI column under every spelling seen; ABSENT when the feed lacks it,
+rule 6). The nightly prints the skater box columns it saw and how many
+lines carried PP minutes: THAT IS THE PROBE — read it on the first run.
+If ESPN has no PP column, the NHL's own API is the fallback (not built).
+nhl_model.pp_units: PP1 = team's top 5 by last-5 PP minutes, PP2 next 5,
+under 1.0 min none; {} when nobody has PP minutes (unknown, not zero).
+Not in the number: prior_season.json has no PP minutes, so nothing to
+test on yet. NEXT: once this season has ~60 days of PP lines, test a PP
+factor walk-forward the way fit_toi was (adopt only on "beats").
+
+2+ GOALS: ("g2", "Goal O1.5", "g", 2) added to MARKETS; Goals board
+offers 1.5. Last season walk-forward: BEATS his own rate (z 4.86,
+n 17,343). Calibration: calls of 10-19% (n 92) delivered 6.5% vs 11.5%
+called — the delivered chance pulls the top of the list down to that.
+Tried equal-count calibration bands for crowded markets (2+ goals has 98%
+of calls under 10%); cross-fitted vs the 10-point bands: g2 thin (z 1.8),
+pt2 thin, sog4 WORSE (z -2.4) -> not adopted, 10-point bands kept.
+
+PLAYER OF THE DAY (edge_boards.nhl_player_of_the_day, views/
+NHL_Player_Of_The_Day.py, NHL nav): 1+ point, gates = pt1 verdict beats,
+20+ games both seasons, played his team's last game (nhl_model rows now
+carry last_game / team_last_game). Ranked by DELIVERED chance; no matchup
+nudges on top (already inside the chance — MLB nudges because its score
+has none). Logged + graded nightly to data/top_plays/nhl_potd.json.
+
+MULTI-GOAL WATCH + CHECK: top 10 by delivered 2+ goal chance logged to
+nhl_multigoal.json (graded like Top Plays). nhl_multigoal_ranks.json keeps
+each night's top-100 pre-game ranking; once every game of the night is
+final, the two-goal scorers are recorded with their rank. Goal Edge shows
+"X of Y were in our top 25; a random 25 would catch Z" — the yardstick.
+Both new records are on the Results scorecard. nightly-data.yml commits
+all three files.
+
+FILES: nhl_precompute.py, app/engines/{nhl_model,edge_boards,scorecard}.py,
+app/views/{NHL_Goal_Edge,NHL_Model,Results}.py, app/app.py,
+app/views/NHL_Player_Of_The_Day.py + tests/test_nhl_pp_potd.py (NEW),
+.github/workflows/nightly-data.yml, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — the Model Scorecard, and the NFL totals were already fixed. 2026-10-08
 
 **Suite 130 (+ test_scorecard), FAILING: none.** Three negative controls red by
