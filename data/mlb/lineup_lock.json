@@ -4,13 +4,30 @@
   "measured_on": "2026-08-19",
   "naive_baseline_pct": 81.7,
   "window_accuracy_pct": 82.2,
-  "generated_at_et": "2026-10-21T09:32:24-04:00",
+  "generated_at_et": "2026-10-21T11:09:11-04:00",
   "slate_date_et": "2026-10-21",
   "teams": {
     "Athletics": {
       "games": 6,
       "players": {
         "671732": {
+          "starts": 6,
+          "games": 6,
+          "rate": 1.0,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 1,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 5,
+              "games": 5,
+              "rate": 1.0
+            }
+          }
+        },
+        "695720": {
           "starts": 6,
           "games": 6,
           "rate": 1.0,
@@ -41,23 +58,6 @@
               "starts": 4,
               "games": 5,
               "rate": 0.8
-            }
-          }
-        },
-        "695720": {
-          "starts": 6,
-          "games": 6,
-          "rate": 1.0,
-          "vs": {
-            "L": {
-              "starts": 1,
-              "games": 1,
-              "rate": 1.0
-            },
-            "R": {
-              "starts": 5,
-              "games": 5,
-              "rate": 1.0
             }
           }
         },
@@ -5164,23 +5164,6 @@
             }
           }
         },
-        "665828": {
-          "starts": 3,
-          "games": 6,
-          "rate": 0.5,
-          "vs": {
-            "L": {
-              "starts": 1,
-              "games": 1,
-              "rate": 1.0
-            },
-            "R": {
-              "starts": 2,
-              "games": 5,
-              "rate": 0.4
-            }
-          }
-        },
         "680574": {
           "starts": 5,
           "games": 6,
@@ -5195,6 +5178,23 @@
               "starts": 4,
               "games": 5,
               "rate": 0.8
+            }
+          }
+        },
+        "665828": {
+          "starts": 3,
+          "games": 6,
+          "rate": 0.5,
+          "vs": {
+            "L": {
+              "starts": 1,
+              "games": 1,
+              "rate": 1.0
+            },
+            "R": {
+              "starts": 2,
+              "games": 5,
+              "rate": 0.4
             }
           }
         },
