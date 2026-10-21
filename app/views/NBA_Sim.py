@@ -171,6 +171,49 @@ with card("nbs_game"):
                "the book — a big gap to the book's total or spread means look closer "
                "(injuries, rest), not bet.")
 
+# ---------------- halves and quarters ----------------
+if sim.get("periods"):
+    Qt = sim_meta.get("quarters") or {}
+    with card("nbs_periods"):
+        st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">First half and '
+                    f'first quarter</div>', unsafe_allow_html=True)
+        prow = []
+        for k, lab in (("h1", "1st half"), ("q1", "1st quarter")):
+            ph_, pa_ = sim["periods"][k]
+            tot = ph_ + pa_
+            mg = ph_ - pa_
+            fav_p = float((mg > 0).mean())
+            prow.append({"": lab,
+                         "Typical score": f"{aa} {np.median(pa_):.0f} – {ha} {np.median(ph_):.0f}",
+                         "Leads after it": (f"{ha} {100 * fav_p:.0f}%" if fav_p >= 0.5
+                                            else f"{aa} {100 * (1 - fav_p):.0f}%"),
+                         "Total": f"{np.median(tot):.0f}  ({_rng(tot)})"})
+        st.dataframe(pd.DataFrame(prow), hide_index=True, width="stretch", key="nbs_per")
+        c1_, c2_ = st.columns(2)
+        bt1 = c1_.number_input("Book's 1st-half total", value=None, step=0.5, key="nbs_bh1")
+        bq1 = c2_.number_input("Book's 1st-quarter total", value=None, step=0.5, key="nbs_bq1")
+        bits = []
+        for v, k, lab in ((bt1, "h1", "1st half"), (bq1, "q1", "1st quarter")):
+            if v:
+                tt = sim["periods"][k][0] + sim["periods"][k][1]
+                po = float((tt > v).mean())
+                bits.append(f"{lab} over {v:g}: <b>{100 * po:.0f}%</b>, under <b>"
+                            f"{100 * (1 - po):.0f}%</b>")
+        if bits:
+            st.markdown('<div style="font-size:var(--lc-text-body);">' + " · ".join(bits)
+                        + "</div>", unsafe_allow_html=True)
+        h1w = (Qt.get("h1_win") or {}).get("vs_coin") or {}
+        h1o, q1o = Qt.get("h1_over") or {}, Qt.get("q1_over") or {}
+        st.caption("Who leads after the half / quarter follows the game's own win chance — "
+                   "measured on last season's unseen games, that beat every richer try (a "
+                   "coin it beats, z " + str(h1w.get("z")) + "). The total is the projected "
+                   "game total times the share scored in it (half " +
+                   f"{100 * ((sim_meta.get('links') or {}).get('quarters') or {}).get('h1', {}).get('r_t', 0):.1f}%"
+                   + "); at its own middle line it went over " +
+                   f"{100 * (h1o.get('hit') or 0):.0f}% of halves and "
+                   f"{100 * (q1o.get('hit') or 0):.0f}% of first quarters on those games. The game "
+                   "model has not been tested against the book, so these are research, not calls.")
+
 # ---------------- the box score ----------------
 BOX = (("pts", "Pts"), ("reb", "Reb"), ("ast", "Ast"), ("tpm", "3PM"), ("pra", "PRA"))
 with card("nbs_box"):

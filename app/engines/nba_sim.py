@@ -130,6 +130,8 @@ def simulate(mu_home, mu_away, sd_margin, sd_total, players, sizes, links=None, 
     b = np.where(np.abs(margin) < BLOWOUT[0], 0, np.where(np.abs(margin) < BLOWOUT[1], 1, 2))
     pace = total / (mu_home + mu_away) - 1.0
     out = {"home": home, "away": away, "stats": {}}
+    if links.get("quarters"):
+        out["periods"] = periods(margin, mu_home + mu_away, links["quarters"], rng)
     for p in players or []:
         side = p.get("side")
         team = (home / mu_home - 1.0) if side == "home" else (away / mu_away - 1.0)
@@ -359,6 +361,118 @@ def test(rows, outcomes, gpreds, sds, sizes, links, n=4000, seed=11, bins=None):
             "teammates": summ(teammates), "opponents": summ(opponents)}
 
 
+# ----------------------------------------------------------------------
+# Quarters and halves (10-21), MEASURED on last season's quarter lines
+# (play-by-play, data/nba/prior_pbp.json), fit window only:
+#   WHO LEADS: the half's / quarter's margin is the simulated game margin
+#     scaled (R_M) — so P(home leads at the half) is the game's own win
+#     chance. Two richer tries (a random first-half share per team; a
+#     fitted line plus noise) both LOST to simply reusing the game's
+#     chance on unseen games (z -1.97, -1.55): halves follow the game.
+#   THE TOTAL: the predicted game total x R_T (the share of the final
+#     scored in it) + measured noise — it follows the game model as
+#     scoring moves through a season.
+# ----------------------------------------------------------------------
+def _period_rows(pbp_games, gpreds, lo, hi):
+    out = []
+    for g in pbp_games or []:
+        d = g.get("date", "")
+        if not (lo <= d < hi):
+            continue
+        key = (d, str(g.get("home")))
+        L = g.get("lines") or {}
+        qh, qa = L.get(str(g.get("home"))), L.get(str(g.get("away")))
+        if key not in gpreds or not qh or not qa or len(qh) < 4 or len(qa) < 4:
+            continue
+        mh, ma = gpreds[key]
+        out.append((mh - ma, mh + ma, qh[0] + qh[1] - qa[0] - qa[1], qh[0] + qh[1] + qa[0] + qa[1],
+                    qh[0] - qa[0], qh[0] + qa[0], sum(qh) + sum(qa)))
+    return out
+
+
+def quarter_links(pbp_games, gpreds, lo, hi):
+    """{"h1": {"r_m", "r_t", "sd_t"}, "q1": {...}, "n"} from games in [lo, hi)."""
+    rs = _period_rows(pbp_games, gpreds, lo, hi)
+    if len(rs) < 200:
+        return None
+    pm = np.array([r[0] for r in rs])
+    pt = np.array([r[1] for r in rs])
+    out = {"n": len(rs)}
+    for k, im, it in (("h1", 2, 3), ("q1", 4, 5)):
+        am = np.array([r[im] for r in rs])
+        at = np.array([r[it] for r in rs])
+        r_m = float((am * pm).sum() / max((pm * pm).sum(), 1e-9))
+        # the share of the ACTUAL final scored in it — a share of what
+        # happened, so a game-model bias in one window does not carry
+        # into the half (fitting on the predicted total did: the fit
+        # window's totals ran 4.6 high, and the halves came out 60% over)
+        fin = np.array([r[6] for r in rs])
+        r_t = float(at.sum() / fin.sum())
+        out[k] = {"r_m": r_m, "r_t": r_t, "sd_t": float(np.std(at - r_t * pt))}
+    return out
+
+
+def periods(margin_draws, mu_total, ql, rng):
+    """{"h1": (home, away), "q1": (home, away)} score arrays: the margin
+    from the simulated game margin, the total from the projected one."""
+    out = {}
+    n = len(margin_draws)
+    for k in ("h1", "q1"):
+        q = ql[k]
+        mg = margin_draws * q["r_m"]
+        tt = rng.normal(q["r_t"] * mu_total, q["sd_t"], n)
+        out[k] = ((tt + mg) / 2.0, (tt - mg) / 2.0)
+    return out
+
+
+def test_quarters(pbp_games, gpreds, sds, ql, lo, n=4000, seed=31):
+    """On games from `lo`: P(home leads at the half / after one) and P(the
+    half / first quarter goes over its median) from the simulator, against
+    what happened. Winners vs a coin AND vs simply reusing the game's win
+    chance; totals by calibration."""
+    from engines import model_math as mm
+    rng = np.random.default_rng(seed)
+    acc = {"h1_win": [], "q1_win": [], "h1_over": [], "q1_over": []}
+    base_game = {"h1_win": [], "q1_win": []}
+    for g in sorted(pbp_games or [], key=lambda x: x.get("date", "")):
+        if g.get("date", "") < lo:
+            continue
+        key = (g["date"], str(g["home"]))
+        L = g.get("lines") or {}
+        qh, qa = L.get(str(g["home"])), L.get(str(g["away"]))
+        if key not in gpreds or not qh or not qa or len(qh) < 4 or len(qa) < 4:
+            continue
+        mh, ma = gpreds[key]
+        margin = rng.normal(mh - ma, sds[0], n)
+        p_game = float((margin > 0).mean())
+        pr = periods(margin, mh + ma, ql, rng)
+        for k, (h, a), act_h, act_a in (("h1", pr["h1"], qh[0] + qh[1], qa[0] + qa[1]),
+                                        ("q1", pr["q1"], qh[0], qa[0])):
+            if act_h == act_a:
+                continue                       # a tied half / quarter: no winner
+            y = 1 if act_h > act_a else 0
+            acc[k + "_win"].append((float((h > a).mean()), y))
+            base_game[k + "_win"].append((p_game, y))
+            line = float(np.floor(np.median(h + a))) + 0.5
+            acc[k + "_over"].append((float(((h + a) > line).mean()),
+                                     1 if act_h + act_a > line else 0))
+    out = {}
+    for k in ("h1_win", "q1_win"):
+        xs, bs = acc[k], base_game[k]
+        out[k] = {"n": len(xs), "brier": mm.score_predictions(xs)["brier"],
+                  "vs_coin": mm.paired_verdict([(p - y) ** 2 for p, y in xs],
+                                               [(0.5 - y) ** 2 for _p, y in xs]),
+                  "vs_game": mm.paired_verdict([(p - y) ** 2 for p, y in xs],
+                                               [(p - y) ** 2 for p, y in bs]),
+                  "calibration": mm.calibration_bins(xs)}
+    for k in ("h1_over", "q1_over"):
+        xs = acc[k]
+        out[k] = {"n": len(xs), "hit": round(sum(y for _p, y in xs) / max(1, len(xs)), 4),
+                  "predicted": round(sum(p for p, _y in xs) / max(1, len(xs)), 4),
+                  "calibration": mm.calibration_bins(xs)}
+    return out
+
+
 COMBO_SIMS = 20_000       # per test game: a 4-leg joint near 5% keeps its noise near 3%
 
 
@@ -482,7 +596,7 @@ def season_finals(cur_finals):
             for f in cur_finals or [] if f.get("home_score") is not None]
 
 
-def build(prior, model, pool=None, cur_finals=None):
+def build(prior, model, pool=None, cur_finals=None, pbp_games=None):
     """{"links", "test", "combos", "sds"} — links fitted on last season;
     the tests on last season's unseen 45 days PLUS every game of this
     season so far (pool = last season + this one per player, cur_finals
@@ -511,6 +625,9 @@ def build(prior, model, pool=None, cur_finals=None):
     fit_rows = [r for r in every if fw[0] <= r[1][0] < fw[1]]
     test_rows = [r for r in every if r[1][0] >= tw[0]]
     links = fit_links(fit_rows, outcomes, gp)
+    ql = quarter_links(pbp_games, gp, fw[0], tw[0]) if pbp_games else None
+    if ql:
+        links["quarters"] = ql
     sds = (gpar["sd_margin"], gpar["sd_total"])
     bins = {st: ((model.get("test") or {}).get(st) or {}).get("calibration")
             for st in ("pts", "reb", "ast")}
@@ -521,4 +638,5 @@ def build(prior, model, pool=None, cur_finals=None):
             "test": test(test_rows, outcomes, gp, sds, model.get("sizes") or {}, links,
                          bins=bins["pts"]),
             "combos": test_combos(test_rows, outcomes, gp, sds, model.get("sizes") or {}, links,
-                                  bins)}
+                                  bins),
+            "quarters": (test_quarters(pbp_games, gp, sds, ql, tw[0]) if ql else None)}

@@ -10,6 +10,33 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — the 10-14 nightly read; NHL career totals counted this season twice. 2026-10-14 (2)
+
+**Suite 138, FAILING: none.** One new negative control, red by exit code
+(test_milestones: is_current_season without the two-digit label).
+
+THE 10-14 NIGHTLY (first run of the injury + milestone batch):
+- NFL injuries: 490 roster tags, 800 on ESPN's league list; 23 players
+  held out of the prop pool across 14 games. NHL: 19 roster tags, 131
+  league-list tags; 4 slate skaters held out. Both sources answer.
+- NFL careers: 360 fetched, 0 unreadable; labels "2023".."2026" — read
+  right (Rodgers' prior 66,274 pass yds). 71 within reach, 16 reached.
+- NHL careers: 400 fetched (the cap), 0 unreadable — but ESPN labels NHL
+  seasons "26-27", not "2026-27". is_current_season missed it, so this
+  season's row was counted as a past one and then added AGAIN from our
+  box scores (Ovechkin prior GP 1,579 = 1,572 + this season's 7).
+  FIX: the two-digit label is this season; milestones.FORMAT["nhl"] = 2
+  makes PriorCareer start the NHL file over (the NFL file is kept). The
+  next two nightlies refetch ~677 skaters at 400 a night; until then
+  the NHL watch only lists players already refetched.
+- NHL category for a defenseman is "defense", stat "games" (not
+  gamesPlayed) — both already matched.
+
+FILES: app/engines/milestones.py, milestone_log.py,
+tests/test_milestones.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — who is actually playing (NHL + NFL injuries); the Milestone Watch. 2026-10-14
 
 **Suite 138 (+ test_who_plays, test_milestones), FAILING: none.** Six

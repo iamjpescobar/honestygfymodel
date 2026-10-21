@@ -333,6 +333,7 @@ SPORT_SUBPAGES = {
         ("Player Trends", "views/NBA_Trends.py"),
         ("Next Man Up", "views/NBA_Next_Man_Up.py"),
         ("Simulator", "views/NBA_Sim.py"),
+        ("First Basket", "views/NBA_First_Basket.py"),
         ("Bet Finder", "views/Bet_Finder.py"),
         ("Bet Log", "views/Bet_Log.py"),
         ("Long Shots", "views/Long_Shots.py"),

@@ -24,6 +24,8 @@ Negative controls, confirmed red by exit code when written (rule 4):
     -> "a kind that has not beaten -> THIN" fails
   - sgp_support putting a parlay with an under in range
     -> "an under in it" fails
+  - quarter_links taking the half's share of the PREDICTED total
+    -> "the half's share ... of the ACTUAL final" fails
   - joint_precise counting only the last chunk
     -> "every chunk counts" fails
   - joint_precise simulating every player
@@ -140,6 +142,37 @@ check("the noise shrinks with the square root of the games (300k vs 20k: ~0.26x)
       0.2 < ratio < 0.32)
 check("the precise lift agrees with the 40k-game run within its noise",
       abs(jp1["lift"] - ns.joint(sim, pleg)["lift"]) < 4 * (jp1["lift_se"] + 0.01))
+
+# halves and quarters (10-21)
+import random as _r  # noqa: E402
+_g = _r.Random(2)
+pbp_games, gpr = [], {}
+for k in range(400):
+    d = f"2026-01-{1 + k % 28:02d}-{k}"
+    mh, ma = 112 + _g.gauss(0, 4), 110 + _g.gauss(0, 4)
+    gpr[(d, "H")] = (mh, ma)
+    # this window's games score 6 more than the model predicted
+    fh, fa = mh + 3 + _g.gauss(0, 10), ma + 3 + _g.gauss(0, 10)
+    qh = [fh * 0.25, fh * 0.25, fh * 0.25, fh * 0.25]
+    qa = [fa * 0.26, fa * 0.24, fa * 0.25, fa * 0.25]
+    pbp_games.append({"date": d, "home": "H", "away": "A", "lines": {"H": qh, "A": qa}})
+ql = ns.quarter_links(pbp_games, gpr, "0000", "9999")
+print(f"     halves: {ql['h1']}, quarters: {ql['q1']}")
+check("the half's share of the total is the share of the ACTUAL final (not of a biased "
+      "prediction)", abs(ql["h1"]["r_t"] - 0.50) < 0.005 and abs(ql["q1"]["r_t"] - 0.255) < 0.005)
+_rng = np.random.default_rng(4)
+mdraw = _rng.normal(4.0, 14.0, 20000)
+per = ns.periods(mdraw, 222.0, ql, _rng)
+check("who leads after the half follows the game's own win chance (measured best)",
+      abs(float(((per["h1"][0] - per["h1"][1]) > 0).mean()) - float((mdraw > 0).mean())) < 1e-12)
+check("the half total sits at its share of the projected game total",
+      abs(float(np.median(per["h1"][0] + per["h1"][1])) - 222.0 * ql["h1"]["r_t"]) < 0.5)
+sq = ns.simulate(115, 111, 13.5, 19.0, players[:1], SIZES, dict(LINKS, quarters=ql), n=2000, seed=5)
+check("the simulator carries halves and quarters when the links have them",
+      set(sq.get("periods") or {}) == {"h1", "q1"})
+check("the page shows halves and quarters, and the nightly prints their test",
+      '"nbs_per"' in (ROOT / "app" / "views" / "NBA_Sim.py").read_text(encoding="utf-8")
+      and "NBA halves / quarters" in (ROOT / "nba_precompute.py").read_text(encoding="utf-8"))
 
 # the page's honesty and wiring
 page = (ROOT / "app" / "views" / "NBA_Sim.py").read_text(encoding="utf-8")

@@ -32,12 +32,15 @@ from engines import availability as av  # noqa: E402
 from engines import espn_feed as ef  # noqa: E402
 from engines import nba_box as nb  # noqa: E402
 from engines import nba_context as nc  # noqa: E402
+from engines import nba_first as nf  # noqa: E402
+from engines import nba_pbp as pbp  # noqa: E402
 from engines import nba_model as nm  # noqa: E402
 
 EASTERN = ZoneInfo("America/New_York")
 LEAGUE = "nba"
 OUT = Path("build_data") / "data" / "nba"
 PRIOR_PATH = ROOT / "data" / "nba" / "prior_season.json"
+PBP_PATH = ROOT / "data" / "nba" / "prior_pbp.json"
 PRESEASON_START = date(2026, 10, 2)
 REGULAR_SEASON_START = date(2026, 10, 20)
 LOOKAHEAD_DAYS = 14
@@ -223,6 +226,36 @@ def side_props(team_id, pool, pre, params, roster, feed, team_abbr, cur_from):
     return rows, sorted(held)
 
 
+def first_basket_game(g, book, prm, pool):
+    """One slate game's first-basket prices from its projected rows (Out
+    players are already not in them)."""
+    avail, pmin, ppts, preb, names = {}, {}, {}, {}, {}
+    for side in ("home", "away"):
+        t = str(g[f"{side}_id"])
+        avail[t] = {str(r["pid"]) for r in g.get(f"{side}_props") or []}
+        for r in g.get(f"{side}_props") or []:
+            p = str(r["pid"])
+            pmin[p], ppts[p], preb[p], names[p] = r["min"], r["mu"]["pts"], r["mu"]["reb"], \
+                r["name"]
+    home, away = str(g["home_id"]), str(g["away_id"])
+    pg = nf.price_game(book, home, away, avail, pmin, ppts, preb, prm,
+                       (g.get("start_et") or "")[:10] or None)
+
+    def nm_(p):
+        return names.get(p) or (pool.get(p) or {}).get("name") or p
+    jump = {}
+    for t, p in pg["jumpers"].items():
+        w, n = (book.tip.get(p) or [0, 0]) if p else (0, 0)
+        jump[t] = {"pid": p, "name": nm_(p) if p else None, "wins": w, "jumps": n,
+                   "rate": round(nf.tip_rate(book, p, prm["k_tip"]), 3) if p else None}
+    return {"tip_home": round(pg["tip"], 4), "team": {t: round(v, 4) for t, v in pg["team"].items()},
+            "jumpers": jump,
+            "players": sorted([{"pid": p, "name": nm_(p), "team": t, "p": round(v, 5),
+                                "starts": book.starts.get(p, 0), "fb": book.fb.get(p, 0)}
+                               for p, (t, v) in pg["players"].items()], key=lambda x: -x["p"]),
+            "other": round(max(0.0, 1 - sum(v for _t, v in pg["players"].values())), 4)}
+
+
 def next_man_up_boards(pool, team_id, held_pids, since):
     out = []
     for opid in held_pids:
@@ -265,6 +298,7 @@ def main(today=None):
     # This season so far: regular games join the pool; preseason is reference.
     cur, pre, team_abbr, team_logo = {}, {}, {}, {}
     cur_finals = []
+    cur_pbp = {}
     seen = parsed = 0
     d = PRESEASON_START
     while d <= today:
@@ -288,6 +322,12 @@ def main(today=None):
             if not lines:
                 continue
             parsed += 1
+            if g["game_type"] == "regular":
+                try:
+                    cur_pbp[g["event_id"]] = dict(pbp.parse(summ), date=d.isoformat(),
+                                                  home=g["home_id"], away=g["away_id"])
+                except Exception as exc:  # noqa: BLE001 — one game's plays cost that game
+                    print(f"  play-by-play {g['event_id']} failed: {exc}")
             if g["game_type"] == "regular" and g.get("home_score") is not None:
                 cur_finals.append({"date": d.isoformat(), "home_id": g["home_id"],
                                    "away_id": g["away_id"], "home_score": g["home_score"],
@@ -392,8 +432,10 @@ def main(today=None):
         if model and prior.get("players"):
             from engines import nba_sim
             t0 = time.time()
+            _pg = json.loads(PBP_PATH.read_text()).get("games") if PBP_PATH.exists() else {}
             sim_block = nba_sim.build(prior, model, merge_pool(prior.get("players"), cur),
-                                      cur_finals)
+                                      cur_finals, list((_pg or {}).values())
+                                      + list(cur_pbp.values()))
             if sim_block:
                 L, T = sim_block["links"], sim_block["test"]
                 print(f"  [verify] NBA simulator links ({time.time() - t0:.0f}s): elasticities "
@@ -403,6 +445,23 @@ def main(today=None):
                       f"{T['sim_brier']} vs multiplied {T['independent_brier']} -> "
                       f"{(T.get('verdict') or {}).get('verdict')} (z={(T.get('verdict') or {}).get('z')}); "
                       f"teammates {T['teammates']}; opponents {T['opponents']}")
+                Q = sim_block.get("quarters") or {}
+                if Q:
+                    ql = (sim_block.get("links") or {}).get("quarters") or {}
+                    print(f"  [verify] NBA halves / quarters (n={ql['n']}): first-half margin "
+                          f"{ql['h1']['r_m']:.2f} x the game's, total {ql['h1']['r_t']:.3f} x "
+                          f"(sd {ql['h1']['sd_t']:.1f}); first quarter {ql['q1']['r_m']:.2f} x, "
+                          f"{ql['q1']['r_t']:.3f} x (sd {ql['q1']['sd_t']:.1f})")
+                    for k in ("h1_win", "q1_win"):
+                        x = Q[k]
+                        print(f"  [verify] NBA {k}: n={x['n']} brier {x['brier']} -> vs coin "
+                              f"{x['vs_coin']['verdict']} (z={x['vs_coin']['z']}), vs reusing "
+                              f"the game's win chance {x['vs_game']['verdict']} "
+                              f"(z={x['vs_game']['z']})")
+                    for k in ("h1_over", "q1_over"):
+                        x = Q[k]
+                        print(f"  [verify] NBA {k} at its median: predicted {x['predicted']} "
+                              f"vs hit {x['hit']} (n={x['n']})")
                 print(f"  [verify] NBA same-game parlays graded: {sim_block['test_rows']} "
                       f"player-games ({sim_block['this_season_rows']} from this season)")
                 for kind, x in (sim_block.get("combos") or {}).items():
@@ -413,6 +472,34 @@ def main(today=None):
                           f"{x['predicted_ind']}) vs actual {x['actual']}")
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NBA simulator failed: {type(exc).__name__}: {exc}")
+
+    # FIRST BASKET (10-21, engines/nba_first): fitted and tested on last
+    # season's play-by-play (data/nba/prior_pbp.json, a one-time backfill)
+    first_block, first_book = None, None
+    try:
+        prior_pbp = json.loads(PBP_PATH.read_text()).get("games") if PBP_PATH.exists() else None
+        if model and prior_pbp:
+            t0 = time.time()
+            byg = {}
+            for pid, g_, pr, _h in nc.context_rows(prior, model):
+                byg.setdefault((g_[0], str(g_[1])), []).append((str(pid), pr))
+            first_block = nf.fit(list(prior_pbp.values()), byg, model["fit_window"],
+                                 model["test_window"])
+            first_book = nf.book_from(list(prior_pbp.values()) + list(cur_pbp.values()))
+            F = first_block
+            print(f"  [verify] NBA first basket ({time.time() - t0:.0f}s): params "
+                  f"{F['params']}; test n={F['n_test']} games, log loss {F['test_loss']} vs "
+                  f"every projected starter equal {F['naive_loss']} -> "
+                  f"{F['verdict']['verdict']} (z={F['verdict']['z']}); first team "
+                  f"{F['team']['verdict']['verdict']} (z={F['team']['verdict']['z']}); tip "
+                  f"{F['tip']['verdict']['verdict']} (z={F['tip']['verdict']['z']}); scorer in "
+                  f"our five {F['scorer_in_five']}; this season's play-by-play {len(cur_pbp)} "
+                  f"games")
+        elif not prior_pbp:
+            print("::warning::NBA first basket: data/nba/prior_pbp.json missing - run the "
+                  "'NBA prior play-by-play' workflow once.")
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::NBA first basket failed: {type(exc).__name__}: {exc}")
 
     pool = merge_pool(prior.get("players"), cur)
     cur_from = REGULAR_SEASON_START.isoformat()
@@ -478,6 +565,19 @@ def main(today=None):
                 g[f"{side}_what_if"] = next_man_up_boards(pool, tid, key, since="2025-10-01")
             except Exception as exc:  # noqa: BLE001
                 print(f"::warning::NBA Next Man Up failed: {type(exc).__name__}: {exc}")
+    n_fb = 0
+    if first_block and first_book:
+        for g in slate:
+            if g.get("game_type") == "preseason" or not (g.get("home_props") and
+                                                         g.get("away_props")):
+                continue
+            try:
+                g["first_basket"] = first_basket_game(g, first_book, first_block["params"], pool)
+                n_fb += 1
+            except Exception as exc:  # noqa: BLE001
+                print(f"::warning::NBA first basket for {g.get('event_id')} failed: "
+                      f"{type(exc).__name__}: {exc}")
+        print(f"  [verify] NBA first basket priced for {n_fb} of {len(slate)} games")
     n_props = sum(len(g.get("away_props") or []) + len(g.get("home_props") or []) for g in slate)
     n_nmu = sum(len(g.get("away_next_man_up") or []) + len(g.get("home_next_man_up") or [])
                 for g in slate)
@@ -509,6 +609,7 @@ def main(today=None):
         "game_model": ({k: v for k, v in game_model.items() if k != "rates"}
                        if game_model else None),
         "sim": sim_block,
+        "first_basket": ({k: v for k, v in first_block.items()} if first_block else None),
         "teams": {tid: {"abbr": a, "logo": team_logo.get(tid)} for tid, a in team_abbr.items()},
         "role_watch": watch,
         "milestones_happened": happened,
