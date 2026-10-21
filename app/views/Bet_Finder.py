@@ -200,7 +200,8 @@ def _nba_groups(item):
             rows.append({"_name": f"{r['name']} ({abbr})" + (f" \u26a0 {lab}" if lab else ""),
                          "_why": r.get("why"),
                          "_pmfs": nm.player_pmfs(r.get("mu"), model.get("sizes"))})
-    stats = tuple((s, lab, (0.5,)) for s, lab in nm.STATS)
+    stats = tuple((s, lab, (0.5,)) for s, lab in nm.PAGE_STATS
+                  if s != "q1pts" or ((model.get("test") or {}).get("q1pts")))
     away, home = g.get("away_abbr"), g.get("home_abbr")
     return ([{"label": "Players", "rows": rows, "stats": stats, "markets": (),
               "cal": nv.calibration(model), "per_player_line": True}],

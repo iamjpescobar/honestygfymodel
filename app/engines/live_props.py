@@ -316,6 +316,20 @@ def tested(check, stat, line, raw):
     return (c if c is not None else raw), mv.curve_support(raw, bins)
 
 
+def tested_nba(check, stat, raw):
+    """(chance, support) for one NBA live call: points, when the nightly's
+    live test on last season BEAT the naive read, get its delivered chance
+    and curve support; everything else stays raw and UNTESTED (THIN)."""
+    from engines import model_view as mv
+    from engines import top_plays_board as tpb
+    m = (check or {}).get(stat)
+    if not m or ((m.get("verdict") or {}).get("verdict")) != "beats" or raw is None:
+        return raw, UNTESTED
+    bins = m.get("calibration")
+    c = tpb.calibrate(raw, bins) if bins else None
+    return (c if c is not None else raw), mv.curve_support(raw, bins)
+
+
 def load_check(path=None):
     """data/nhl/live_check.json, or {} before the test has run."""
     import json

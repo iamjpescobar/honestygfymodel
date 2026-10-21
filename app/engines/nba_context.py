@@ -232,7 +232,12 @@ def adjusted_rows(rows, groups, sched_outs, ctx):
 
 
 def fit(prior, model):
-    """{"opp", "mean", "out", "sizes", "test", "vs_base", "n_fit"} or None."""
+    """{"opp", "mean", "out", "sizes", "test", "vs_base", "n_fit"} or None.
+    prior = {"players", "finals"} — last season, or last season + this one
+    (the nightly passes both, 10-21): the fit window is last season's, the
+    TEST window runs from last season's final 45 days through every game
+    of this season so far, so the record and the calibration curves grow
+    every night."""
     players = prior.get("players") or {}
     if not model or not model.get("hl") or not players:
         return None
@@ -307,7 +312,11 @@ def fit(prior, model):
             old.append((po - yy) ** 2)
             new.append((pn - yy) ** 2)
         vs_base[st] = mm.paired_verdict(new, old)
-    return {"opp": opp, "mean": {k: round(v, 4) for k, v in mean.items()}, "out": out_cfg,
+    last_prior = max((f["date"] for f in prior.get("finals") or [] if f["date"] <= "2026-06-30"),
+                     default="")
+    n_this = sum(1 for i in test_idx if rows[i][1][0] > last_prior)
+    return {"n_this_season": n_this,
+            "opp": opp, "mean": {k: round(v, 4) for k, v in mean.items()}, "out": out_cfg,
             "sizes": sizes, "test": test, "ladder": ladder, "vs_base": vs_base,
             "n_fit": len(fit_idx),
             "n_test": len(test_idx), "minutes": nm.minutes_check(test_rows)}

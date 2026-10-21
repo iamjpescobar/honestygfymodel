@@ -39,12 +39,17 @@ def _intro(sp_):
         f'Pick a game in progress. Every player&rsquo;s chance is for the <b>rest of the '
         f'game</b>: his pregame projection, cut to the time left, plus what he already has. '
         f'Type your book&rsquo;s <b>live</b> price; bet only when it pays more than <b>Worth it '
-        f'at</b>.<br><span style="color:{COLOR["warn"]};"><b>Not yet tested on past games</b>'
-        + (" (until the NHL live test has run, and then only for the markets that pass it)"
-           if sp_ == "nhl" else "")
-        + f' &mdash; so a call here stays at THIN; the <b>Edge</b> column shows the gap in '
-          f'points. Not in the number: {NOT_IN.get(sp_, NOT_IN["nhl"])}. Overtime is not '
-          f'priced.</span></div>', unsafe_allow_html=True)
+        f'at</b>.<br><span style="color:{COLOR["warn"]};">'
+        + (('<b>Points are tested</b> on last season&rsquo;s games (the chance shown is what '
+            'calls like it hit, read at the end of each quarter); rebounds, assists and the '
+            'rest are not yet &mdash; those stay at THIN')
+           if sp_ == "nba" and _nba_live_ok else
+           ('<b>Not yet tested on past games</b>'
+            + (" (until the NHL live test has run, and then only for the markets that pass it)"
+               if sp_ == "nhl" else "") + ' &mdash; so a call here stays at THIN'))
+        + f'; the <b>Edge</b> column shows the gap in points. Not in the number: '
+          f'{NOT_IN.get(sp_, NOT_IN["nhl"])}. Overtime is not priced.</span></div>',
+        unsafe_allow_html=True)
 
 
 _stk = mv.staking_controls("live")
@@ -65,6 +70,11 @@ _here = _here if _here in ("NHL", "NFL", "NBA") else "NHL"
 sport = st.segmented_control("Sport", ["NHL", "NFL", "NBA"], default=_here,
                              key="live_sport") or _here
 sp = sport.lower()
+_nba_live_ok = False
+if sp == "nba":
+    from engines import nba_view as _nv0
+    _lc = ((_nv0.load()[1] or {}).get("live_check") or {}).get("pts") or {}
+    _nba_live_ok = (_lc.get("verdict") or {}).get("verdict") == "beats"
 _intro(sp)
 
 if sp == "nba":
@@ -169,8 +179,11 @@ elif sp == "nba":
             ch, nd = lp.nba_chance((p.get("mu") or {}).get(stat), sizes.get(stat), line, have, f)
             if ch is None:
                 continue
+            sup = lp.UNTESTED
+            if nd > 0:
+                ch, sup = lp.tested_nba((model or {}).get("live_check"), stat, ch)
             rows.append({"player": f"{p.get('name')} ({abbr})", "have": have, "need": nd,
-                         "over": ch})
+                         "over": ch, "support": sup})
 else:
     NFL = [(s, lab, key, mk) for s, lab, key, mk, _r in mv.NFL_STATS]
     box = lp.nfl_box(summ)

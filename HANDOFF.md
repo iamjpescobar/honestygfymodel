@@ -154,6 +154,55 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — NBA finished for now: 1Q player points, Live tested, tests grow nightly, model vs book. 2026-10-21 (3)
+
+**Suite 150, FAILING: none.** New tests/test_nba_quarters.py (4
+controls, red by exit code: a game with no play-by-play read as 0; mu
+ignoring his own first quarters; vs_book counting pushes; tested_nba
+trusting every stat). test_nba_context wiring updated (season_data).
+Dry run of the nightly offline; Props (1Q points), Bet Finder, Live (NBA,
+halftime) and Tonight headless on its payload.
+
+TESTS GROW NIGHTLY: nba_precompute builds season_data = last season's
+players + this season's (merge_pool) and both seasons' finals. nc.fit(
+season_data, model): fit window last season's, TEST window last season's
+final 45 days + every game this season (n_this_season printed) — the
+props verdicts, ladder and calibration curves now learn from this
+season. First basket fit / book: prior + this season's play-by-play.
+
+1Q PLAYER POINTS (engines/nba_quarters; stat "q1pts"; nm.PAGE_STATS):
+mu = (1-W) x mu_pts x (C0 + C1 x min/36) + W x his last N first quarters.
+MEASURED: share alone THIN (z 0.33); with W 0.4 of his last 20 BEATS his
+own rate (z 2.47). C0 .22, C1 .05, size 2.84. Raw calls run overconfident
+above 60% (0.74 called, 0.48 hit) — the delivered curve corrects it.
+Joins model sizes / test ("@q1pts" curve); Props and Bet Finder offer it
+only when fitted; trend games carry q1pts (his line).
+
+LIVE, TESTED (nq.live_check -> model["live_check"]; lp.tested_nba):
+points at the end of Q1 / Q2 / Q3 of every test game, the Live page's
+chance of going over his line vs a naive read (his average x time left,
+Poisson): 16,578 calls, BEATS z 6.4. Raw is badly overconfident at the
+ends (97% called, 80% hit; 3% -> 13% — garbage-time rest and hot hands)
+— the delivered curve is what the page prints. Points only (play-by-play
+has points per quarter); rebounds / assists stay THIN; the page says so.
+
+GAME MODEL VS BOOK (nba_precompute.vs_book -> game_model["vs_book"]):
+this season's finished games with a recorded line, the model's P(over
+the book's total) / P(home covers its spread; ESPN's spread is the
+home side's) vs the book's 50/50, paired; pushes out. Tonight shows chips
+from 30 games. Model weight stays 0 until it beats.
+
+STILL TO WATCH (no build): offseason minutes (unmeasured), leaders'
+overs, 2-leg points SGPs (z 1.95), first-team-to-score (thin).
+
+FILES: app/engines/nba_quarters.py (new), app/engines/live_props.py,
+app/engines/nba_context.py, app/engines/nba_model.py,
+app/views/Bet_Finder.py, app/views/Live.py, app/views/NBA.py,
+app/views/NBA_Props.py, nba_precompute.py, tests/test_nba_context.py,
+tests/test_nba_quarters.py (new), HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NBA First Basket; first half / first quarter on the Simulator. 2026-10-21 (2)
 
 **Suite 149, FAILING: none.** New tests/test_nba_first.py (3 controls,
@@ -797,44 +846,5 @@ FILES: app/engines/mlb_gamelog.py, tests/test_mlb_postseason_logs.py
 (NEW); calibration_pipeline.py, app/engines/calibration.py,
 app/engines/batter_trends.py, app/engines/pitcher_trends.py,
 precompute.py, HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — the live injury check; a starting-goalie probe. 2026-10-14 (3)
-
-**Suite 139 (+ test_live_injuries), FAILING: none.** Three negative
-controls red by exit code (listed in the test). Goal Edge and Long Shots
-rendered headless with a simulated same-day scratch: the player left
-both boards and the warning line named him.
-
-WHY: the nightly reads injury tags once in the morning; scratches at
-morning skate, NFL inactives and late downgrades landed after it. Izzy
-wanted the models to know what they did not.
-
-LIVE CHECK (engines/live_injuries.py, NEW): every NHL / NFL view now
-loads through load_slate_live("nhl") / load_week_live() (all views but
-Results). ESPN's league injury list is re-read at most every 10 min
-(2 min after a failure; 6 s timeout per host, no retries — a page never
-hangs on ESPN). Out / IR / Suspended NOW leaves props, skaters, goalie
-props and goalies (an Out goalie no longer anchors likely_starter) and
-NFL players; a new Questionable / Day-to-day is tagged. A deep copy —
-the cached nightly slate is never mutated. render_note prints one line
-(warning colour when someone was removed) on Goal Edge, Long Shots,
-Bet Finder, POTD, NHL Model, TD Edge, NFL Projections, Milestones.
-Tags never change a chance (rule 1).
-
-NOT YET KNOWN: whether ESPN's NFL list carries game-day inactives as
-"Out" — first Sunday will show it (names should appear in the warning).
-
-GOALIE PROBE (nhl_precompute.goalie_probe, print only): after writing
-games.json, prints any goalie/starter/probable key paths in ESPN's game
-summary and in the NHL API gamecenter landing for the first unstarted
-game. Read the "[verify] NHL goalie probe" lines; if a confirmed starter
-exists, the next batch swaps likely_starter for it — and tests it first.
-
-FILES: app/engines/live_injuries.py, tests/test_live_injuries.py (NEW);
-nhl_precompute.py; every NHL/NFL view in app/views (imports +
-load calls; render_note on the eight above), HANDOFF.md,
-HANDOFF_ARCHIVE.md
 
 ---

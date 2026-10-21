@@ -47,6 +47,12 @@ else:
         chips += "".join(_chip(lab, ((_gv.get(k) or {}).get("verdict")))
                          for k, lab in (("ml_verdict", "Winner"), ("spread_verdict", "Margin"),
                                         ("total_verdict", "Total")))
+    _vb = (pget("game_model") or {}).get("vs_book") or {}
+    for _k, _lab in (("total", "Totals vs book"), ("spread", "Spreads vs book")):
+        _x = _vb.get(_k) or {}
+        if _x.get("n"):
+            chips += _chip(f"{_lab} ({_x['n']} games)", (_x.get("verdict") or {}).get("verdict")
+                           if _x["n"] >= 30 else None)
     _cx = (model.get("context") or {}).get("vs_base") or {}
     if _cx:
         chips += "".join(_chip(f"{lab} + context", (_cx.get(st_) or {}).get("verdict"))

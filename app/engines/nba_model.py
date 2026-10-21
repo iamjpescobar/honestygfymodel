@@ -59,7 +59,11 @@ COMBOS = {"pra": ("pts", "reb", "ast"), "pr": ("pts", "reb"), "pa": ("pts", "ast
 STATS = (("pts", "Points"), ("reb", "Rebounds"), ("ast", "Assists"),
          ("tpm", "3-pointers made"), ("pra", "Pts + Reb + Ast"), ("pr", "Pts + Reb"),
          ("pa", "Pts + Ast"), ("ra", "Reb + Ast"))
-LABEL = dict(STATS)
+# What the Props board and the Bet Finder offer: the box-score stats plus
+# first-quarter points (engines/nba_quarters — play-by-play, its own fit
+# and test; present only when the nightly fitted it).
+PAGE_STATS = STATS + (("q1pts", "1st-quarter points"),)
+LABEL = dict(PAGE_STATS)
 FIT_HL = (1, 2, 3, 5, 10)
 FIT_K = (100, 300, 600, 1200)
 FIT_HL_LONG = (30, 60, 120)
@@ -396,7 +400,7 @@ def calibration(params):
 def player_pmfs(mu, sizes):
     """{stat: pmf} for one projection — what the Bet Finder prices."""
     out = {}
-    for st, _l in STATS:
+    for st, _l in PAGE_STATS:
         p = pmf((mu or {}).get(st), (sizes or {}).get(st))
         if p:
             out[st] = p

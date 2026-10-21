@@ -10,6 +10,45 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — the live injury check; a starting-goalie probe. 2026-10-14 (3)
+
+**Suite 139 (+ test_live_injuries), FAILING: none.** Three negative
+controls red by exit code (listed in the test). Goal Edge and Long Shots
+rendered headless with a simulated same-day scratch: the player left
+both boards and the warning line named him.
+
+WHY: the nightly reads injury tags once in the morning; scratches at
+morning skate, NFL inactives and late downgrades landed after it. Izzy
+wanted the models to know what they did not.
+
+LIVE CHECK (engines/live_injuries.py, NEW): every NHL / NFL view now
+loads through load_slate_live("nhl") / load_week_live() (all views but
+Results). ESPN's league injury list is re-read at most every 10 min
+(2 min after a failure; 6 s timeout per host, no retries — a page never
+hangs on ESPN). Out / IR / Suspended NOW leaves props, skaters, goalie
+props and goalies (an Out goalie no longer anchors likely_starter) and
+NFL players; a new Questionable / Day-to-day is tagged. A deep copy —
+the cached nightly slate is never mutated. render_note prints one line
+(warning colour when someone was removed) on Goal Edge, Long Shots,
+Bet Finder, POTD, NHL Model, TD Edge, NFL Projections, Milestones.
+Tags never change a chance (rule 1).
+
+NOT YET KNOWN: whether ESPN's NFL list carries game-day inactives as
+"Out" — first Sunday will show it (names should appear in the warning).
+
+GOALIE PROBE (nhl_precompute.goalie_probe, print only): after writing
+games.json, prints any goalie/starter/probable key paths in ESPN's game
+summary and in the NHL API gamecenter landing for the first unstarted
+game. Read the "[verify] NHL goalie probe" lines; if a confirmed starter
+exists, the next batch swaps likely_starter for it — and tests it first.
+
+FILES: app/engines/live_injuries.py, tests/test_live_injuries.py (NEW);
+nhl_precompute.py; every NHL/NFL view in app/views (imports +
+load calls; render_note on the eight above), HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — the 10-14 nightly read; NHL career totals counted this season twice. 2026-10-14 (2)
 
 **Suite 138, FAILING: none.** One new negative control, red by exit code

@@ -187,7 +187,7 @@ check("the reason is written on the row", "vs SFT" in r["why"] and "Star Guy out
 # --- 5. wiring ---------------------------------------------------------------------
 pc = (ROOT / "nba_precompute.py").read_text(encoding="utf-8")
 check("the nightly fits the context and prices with it (sizes / test replaced)",
-      "nc.fit(prior, model)" in pc and 'model["sizes"], model["test"] = ctx["sizes"], ctx["test"]'
+      "nc.fit(season_data, model)" in pc and 'model["sizes"], model["test"] = ctx["sizes"], ctx["test"]'
       in pc and "nc.apply_tonight(" in pc and "nc.book_now(" in pc)
 sim = (ROOT / "app" / "engines" / "nba_sim.py").read_text(encoding="utf-8")
 check("the simulator's links and test read the same numbers", "nc.context_rows(" in sim)

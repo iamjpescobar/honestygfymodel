@@ -34,6 +34,7 @@ from engines import nba_box as nb  # noqa: E402
 from engines import nba_context as nc  # noqa: E402
 from engines import nba_first as nf  # noqa: E402
 from engines import nba_pbp as pbp  # noqa: E402
+from engines import nba_quarters as nq  # noqa: E402
 from engines import nba_model as nm  # noqa: E402
 
 EASTERN = ZoneInfo("America/New_York")
@@ -357,6 +358,13 @@ def main(today=None):
         print("::warning::NBA: data/nba/prior_season.json missing - run the 'NBA prior "
               "season' workflow once. No projections until it exists.")
 
+    # last season + this one, for every test that should grow nightly
+    season_data = {"players": merge_pool(prior.get("players"), cur),
+                   "finals": list(prior.get("finals") or [])
+                   + [{"date": f["date"], "home": str(f.get("home_id")),
+                       "away": str(f.get("away_id")), "hs": f.get("home_score"),
+                       "as": f.get("away_score")} for f in cur_finals
+                      if f.get("home_score") is not None]}
     model = None
     try:
         if prior.get("players"):
@@ -388,12 +396,14 @@ def main(today=None):
     try:
         if model:
             t0 = time.time()
-            ctx = nc.fit(prior, model)
+            ctx = nc.fit(season_data, model)
             if ctx:
                 model["base_test"] = model["test"]
                 model["sizes"], model["test"] = ctx["sizes"], ctx["test"]
                 model["ladder"] = ctx["ladder"]
                 model["context"] = {k: ctx[k] for k in ("opp", "mean", "out", "vs_base")}
+                print(f"  [verify] NBA props test: {ctx['n_test']} player-games ("
+                      f"{ctx['n_this_season']} from this season)")
                 print(f"  [verify] NBA context ({time.time() - t0:.0f}s): opponent {ctx['opp']}; "
                       f"teammate out {ctx['out']}")
                 for st, lab in nm.STATS:
@@ -481,10 +491,34 @@ def main(today=None):
         if model and prior_pbp:
             t0 = time.time()
             byg = {}
-            for pid, g_, pr, _h in nc.context_rows(prior, model):
+            ctx_rows = nc.context_rows(season_data, model)
+            for pid, g_, pr, _h in ctx_rows:
                 byg.setdefault((g_[0], str(g_[1])), []).append((str(pid), pr))
-            first_block = nf.fit(list(prior_pbp.values()), byg, model["fit_window"],
-                                 model["test_window"])
+            # FIRST-QUARTER POINTS (engines/nba_quarters): fitted and tested
+            # on the same rows; joins the props model as stat "q1pts"
+            all_pbp = list(prior_pbp.values()) + list(cur_pbp.values())
+            q1_block = nq.fit(ctx_rows, all_pbp, model["fit_window"], model["test_window"])
+            # THE LIVE PAGE, TESTED: points at the end of each quarter
+            lc = nq.live_check(ctx_rows, all_pbp, model.get("sizes"), model["test_window"][0])
+            if lc:
+                model["live_check"] = lc
+                L_ = lc["pts"]
+                print(f"  [verify] NBA live points test: n={L_['n']} quarter-end calls, model "
+                      f"{L_['model_brier']} vs naive {L_['naive_brier']} -> "
+                      f"{L_['verdict']['verdict']} (z={L_['verdict']['z']}); "
+                      + ", ".join(f"{k} brier {v['brier']}"
+                                  for k, v in L_["by_checkpoint"].items()))
+            if q1_block:
+                model["q1"] = q1_block["params"]
+                model.setdefault("sizes", {})["q1pts"] = q1_block["size"]
+                model.setdefault("test", {})["q1pts"] = q1_block["test"]
+                Tq = q1_block["test"]
+                print(f"  [verify] NBA 1st-quarter points: params {q1_block['params']}, size "
+                      f"{q1_block['size']}; test n={Tq['n']} model {Tq['model_brier']} vs "
+                      f"his-own-rate {Tq['baseline_brier']} -> {Tq['verdict']['verdict']} "
+                      f"(z={Tq['verdict']['z']})")
+            first_block = nf.fit(list(prior_pbp.values()) + list(cur_pbp.values()), byg,
+                                 model["fit_window"], model["test_window"])
             first_book = nf.book_from(list(prior_pbp.values()) + list(cur_pbp.values()))
             F = first_block
             print(f"  [verify] NBA first basket ({time.time() - t0:.0f}s): params "
@@ -565,6 +599,27 @@ def main(today=None):
                 g[f"{side}_what_if"] = next_man_up_boards(pool, tid, key, since="2025-10-01")
             except Exception as exc:  # noqa: BLE001
                 print(f"::warning::NBA Next Man Up failed: {type(exc).__name__}: {exc}")
+    # tonight's first-quarter points per player, and his first quarters on
+    # the trend games (what "his line" reads)
+    if model and model.get("q1"):
+        try:
+            _pg_all = (json.loads(PBP_PATH.read_text()).get("games") or {}) \
+                if PBP_PATH.exists() else {}
+            qm, cov = nq.q1_map(list(_pg_all.values()) + list(cur_pbp.values()))
+            for g in slate:
+                for side in ("away", "home"):
+                    for r in g.get(f"{side}_props") or []:
+                        games_ = (pool.get(str(r["pid"])) or {}).get("games") or []
+                        hist = [nq.q1_of(r["pid"], x, qm, cov) for x in games_]
+                        r["mu"]["q1pts"] = round(nq.mu(r, model["q1"], hist), 3)
+                        team_on = {x[0]: str(x[1]) for x in games_}
+                        for t_ in r.get("trend") or []:
+                            tm = team_on.get(t_.get("date"))
+                            if tm and (tm, t_["date"]) in cov and t_.get("min"):
+                                t_["q1pts"] = qm.get((str(r["pid"]), t_["date"]), 0)
+        except Exception as exc:  # noqa: BLE001
+            print(f"::warning::NBA first-quarter points tonight failed: "
+                  f"{type(exc).__name__}: {exc}")
     n_fb = 0
     if first_block and first_book:
         for g in slate:
@@ -649,7 +704,54 @@ def nba_game_model(prior_finals, cur_finals, slate):
             g["model"] = pj
             n += 1
     print(f"  [verify] NBA slate games with a projection: {n} of {len(slate)}")
+    try:
+        vb = vs_book(prior_finals, cur_finals, pr)
+        block["vs_book"] = vb
+        print("  [verify] NBA game model vs the book this season: " + "; ".join(
+            f"{k} n={x['n']}" + (f" brier {x['brier']} -> {x['verdict']['verdict']} "
+                                 f"(z={x['verdict']['z']})" if x.get("verdict") else "")
+            for k, x in vb.items()))
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::NBA game model vs book failed: {type(exc).__name__}: {exc}")
     return block
+
+
+def vs_book(prior_finals, cur_finals, params):
+    """THE GAME MODEL AGAINST THE BOOK (10-21): every finished game this
+    season with a recorded line — the model's walk-forward chance of the
+    OVER (normal on its projected total, sd_total) and of the HOME COVER
+    (sd_margin) against the book's own 50/50 at that number, paired on
+    squared error. Until this beats, game lines stay priced on the book's
+    number (model weight 0). Pushes are left out."""
+    from engines import game_model as gm
+    from engines import model_math as mm
+    from engines import nfl_game_model as ngm
+    rows_f = prior_game_rows(prior_finals) + [
+        {k: f.get(k) for k in ("date", "home_id", "away_id", "home_score", "away_score")}
+        for f in cur_finals or []]
+    fin = gm.clean_finals(ngm.rows(rows_f))
+    preds = {(p["date"], str(p["home"])): p for p in ngm._wf(fin, params["shrink_k"])}
+    tot, spr = [], []
+    for f in cur_finals or []:
+        o = f.get("odds") or {}
+        p = preds.get((f["date"], str(f.get("home_id"))))
+        hs, as_ = f.get("home_score"), f.get("away_score")
+        if not p or hs is None or as_ is None:
+            continue
+        mt, mg = p["mu_h"] + p["mu_a"], p["mu_h"] - p["mu_a"]
+        if o.get("total") is not None and hs + as_ != o["total"]:
+            q = 1 - mm.normal_cdf(o["total"], mt, params["sd_total"])
+            tot.append((q, 1 if hs + as_ > o["total"] else 0))
+        if o.get("spread") is not None and hs - as_ + o["spread"] != 0:
+            q = 1 - mm.normal_cdf(-o["spread"], mg, params["sd_margin"])
+            spr.append((q, 1 if hs - as_ + o["spread"] > 0 else 0))
+    out = {}
+    for k, xs in (("total", tot), ("spread", spr)):
+        out[k] = {"n": len(xs), "brier": mm.score_predictions(xs)["brier"],
+                  "verdict": (mm.paired_verdict([(q - y) ** 2 for q, y in xs],
+                                                [(0.5 - y) ** 2 for _q, y in xs])
+                              if len(xs) >= 2 else None)}
+    return out
 
 
 def nba_milestones(slate, pool, cur, today):

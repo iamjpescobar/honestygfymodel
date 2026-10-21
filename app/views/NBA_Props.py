@@ -33,8 +33,10 @@ ver = nv.verdicts(model)
 c1, c2, c3 = st.columns(3)
 labels = sorted({f"{g.get('away_abbr')} @ {g.get('home_abbr')}" for g in games})
 gsel = c1.selectbox("Game", ["All games"] + labels, key="nbap_game")
-slab = c2.selectbox("Stat", [lab for _s, lab in nm.STATS], key="nbap_stat")
-stat = next(s for s, lab in nm.STATS if lab == slab)
+_stats = [(s_, l_) for s_, l_ in nm.PAGE_STATS if s_ in nm.LABEL and (
+    s_ != "q1pts" or ((model or {}).get("test") or {}).get("q1pts"))]
+slab = c2.selectbox("Stat", [lab for _s, lab in _stats], key="nbap_stat")
+stat = next(s for s, lab in _stats if lab == slab)
 side = c3.segmented_control("Side", ["Over", "Under"], default="Over", key="nbap_side") or "Over"
 
 rows = [r for r in nv.all_props(games) if gsel == "All games" or r["game"] == gsel]
