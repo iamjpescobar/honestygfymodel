@@ -10,6 +10,82 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — who is actually playing (NHL + NFL injuries); the Milestone Watch. 2026-10-14
+
+**Suite 138 (+ test_who_plays, test_milestones), FAILING: none.** Six
+negative controls red by exit code (three per test, listed in each).
+Milestones, Goal Edge and Long Shots rendered headless on an augmented
+NHL slate (milestones, a day-to-day skater, a held-out list).
+
+WHY: Izzy asked whether every player and injury report comes in. They
+did not. NFL boards dropped only status == "Out" (an IR receiver who had
+played kept his TD-board and Long Shots row); the NHL had NO injury
+source — only Player of the Day skipped a skater who missed his team's
+last game. MLB was already right (active-26 roster + transactions).
+Then: "inform me when a player is close to a 300th goal" -> the watch.
+
+WHO IS PLAYING (engines/availability.py, NEW — one reading for all):
+- is_out: Out, any Reserve list (IR, LTIR, PUP, NFI), Suspended,
+  Inactive. maybe_label: Questionable / Doubtful / Day-to-day / Probable.
+  flag(row): the maybe label + "missed last game".
+- NHL nightly: the roster's injury tag (_walk_roster now reads it into
+  ROSTER_STATUS), else ESPN's league list (espn_feed.fetch_injury_list,
+  both hosts; athlete id from the athlete or his link, else by name).
+  apply_availability tags every skater; Out players leave the pool
+  BEFORE the 18-skater cut; g[side_held_out] lists them. Rows carry
+  "status"; Goal Edge has a Heads up column + the held-out caption;
+  Long Shots prefixes the warning; POTD skips any tag; Bet Finder drops
+  Out and marks the rest.
+- NFL nightly: side_players reads roster tag, else the game's injury
+  report (summary), else the league list, and drops Out BEFORE the role
+  cap (a healthy WR takes the slot); held_out() lists who would have
+  played. TD board / prop board / Bet Finder use av.is_out.
+- NOT FIXED, stated: NFL inactives post ~90 min before kickoff, after
+  the nightly; a skater scratched today shows as healthy until he misses
+  a game (then the flag catches it).
+
+MILESTONE WATCH (engines/milestones.py, milestone_log.py, views/
+Milestones.py — all NEW; nav for MLB/NHL/NFL, Home card, Results card):
+- career now = career BEFORE this season (ESPN common/v3 athletes/{id}/
+  stats, per-season rows, this season's row excluded, a traded season's
+  combined row read once) + this season from our own box scores. Prior
+  careers in data/{nhl,nfl}/career_prior.json, fetched once per player
+  per season (cap 400/night), committed by nightly-data.yml.
+- Feed-shape guard: 20+ new players with >35% "no earlier season" = the
+  shape changed; that night's fetch is NOT saved (PriorCareer.suspect).
+- REACH (most needed in one game): 2 G / 2 A / 3 PTS, 400 pass yds,
+  175 rush/rec yds, 4 pass TD, 3 TD, 12 rec; MLB 2 HR / 3 H / 4 RBI.
+- Chance = bf.chance_at on the row's own pmf at need - 0.5 (delivered).
+  Games-played marks show "if he plays".
+- MLB: careers read live (stats API people bulk call, hitting career);
+  game_type now on weather_engine games; postseason games never count
+  (the page says so — every MLB game is postseason right now).
+- Marks reached in the last 3 (NHL) / 8 (NFL) days -> payload
+  "milestones_happened" -> Milestones page + Results.
+
+FIRST NIGHTLY — read these lines:
+  [verify] NHL injuries: N roster tags, N league-list tags ...; N held out
+  [verify] NFL injuries / NFL held out of the prop pool
+  [verify] NHL|NFL milestones: careers on file / fetched / unreadable;
+      the career feed probe line (categories, names, last season labels).
+  If the probe's season labels are not "2025-26"-style (NHL) or "2025"
+  (NFL), is_current_season needs the real label; if categories are
+  empty for everyone, the guard will refuse to save — both are the
+  expected failure shapes, not silent ones.
+
+FILES: app/engines/availability.py, app/engines/milestones.py,
+milestone_log.py, app/views/Milestones.py, tests/test_who_plays.py,
+tests/test_milestones.py (NEW); nhl_precompute.py, nfl_precompute.py,
+app/engines/espn_feed.py, app/engines/edge_boards.py,
+app/engines/nhl_model.py, app/engines/model_view.py,
+app/engines/long_shots.py, app/engines/weather_engine.py,
+app/views/NHL_Goal_Edge.py, app/views/Long_Shots.py,
+app/views/Bet_Finder.py, app/views/NFL_TD_Edge.py, app/views/Results.py,
+app/views/Home.py, app/app.py, .github/workflows/nightly-data.yml,
+HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — Long Shots page; the 10-11 NFL nightly read. 2026-10-11 (3)
 
 **Suite 136 (+ test_long_shots), FAILING: none.** Three negative controls red by

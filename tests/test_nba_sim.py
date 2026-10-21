@@ -216,6 +216,10 @@ check("the page reads the kinds and shows what has been graded",
 check("the SGP is priced on the precise run, and says when the link is just noise",
       "_legs_run(" in page and "ns.joint_precise(" in page and "no real link" in page
       and "ns.joint(sim, legs)" not in page)
+check("the box score: every player's typical night and range, per team",
+      '"nbs_box_' in page and "BOX = (" in page and "np.percentile(a_, 10)" in page)
+check("simulated stats are stored small (int16) so cached games fit a 512 MB server",
+      sim["stats"]["a"]["pts"].dtype == np.int16)
 check("Out players are left out of the simulation", "av.is_out(r.get(\"status\"))" in page)
 app = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
 check("the Simulator is in the NBA nav", '("Simulator", "views/NBA_Sim.py")' in app)

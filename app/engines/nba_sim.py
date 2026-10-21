@@ -160,7 +160,9 @@ def simulate(mu_home, mu_away, sd_margin, sd_total, players, sizes, links=None, 
                 st_out[st] = rng.poisson(rng.gamma(r2, mean / r2))
         for c, parts in nm.COMBOS.items():
             st_out[c] = sum(st_out[x] for x in parts)
-        out["stats"][str(p["pid"])] = st_out
+        # int16: a 10,000-game slate of 26 players x 8 stats is 4 MB, not
+        # 17 MB — the page caches several games on a 512 MB server
+        out["stats"][str(p["pid"])] = {k: np.asarray(v, dtype=np.int16) for k, v in st_out.items()}
     return out
 
 

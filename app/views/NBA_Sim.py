@@ -76,7 +76,7 @@ if not players:
     st.stop()
 
 
-@st.cache_data(ttl=900, show_spinner=False, max_entries=16)
+@st.cache_data(ttl=900, show_spinner=False, max_entries=8)
 def _run(key, mu_h, mu_a, sd_m, sd_t, plist, sizes, links):
     import json
     import zlib
@@ -170,6 +170,46 @@ with card("nbs_game"):
                "simulated games land in that range. The game model has not been tested against "
                "the book — a big gap to the book's total or spread means look closer "
                "(injuries, rest), not bet.")
+
+# ---------------- the box score ----------------
+BOX = (("pts", "Pts"), ("reb", "Reb"), ("ast", "Ast"), ("tpm", "3PM"), ("pra", "PRA"))
+with card("nbs_box"):
+    st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">The box score — '
+                f'{N_SIMS:,} games</div>', unsafe_allow_html=True)
+    for side, abbr in (("away", aa), ("home", ha)):
+        mine = [p for p in players if p["side"] == side]
+        mine.sort(key=lambda p: -p["min"])
+        if not mine:
+            continue
+        brow, typ = [], []
+        for p in mine:
+            arr = sim["stats"][str(p["pid"])]
+            r = {"Player": p["name"], "Min": f"{p['min']:.0f}"}
+            t = {}
+            for st_, lab in BOX:
+                a_ = arr[st_]
+                med = float(np.median(a_))
+                r[lab] = f"{med:.0f}  ({np.percentile(a_, 10):.0f}\u2013{np.percentile(a_, 90):.0f})"
+                t[lab] = med
+            brow.append(r)
+            typ.append(t)
+        tot = {lab: sum(t[lab] for t in typ) for _s, lab in BOX}
+        st.markdown(f"**{abbr}** — typical team total {tot['Pts']:.0f} pts from these players "
+                    f"(team: {np.median(away if side == 'away' else home):.0f})")
+        top = {lab: sorted((t[lab] for t in typ), reverse=True)[:3] for _s, lab in BOX}
+
+        def _paint_box(frame, typ=typ, top=top):
+            o_ = pd.DataFrame("", index=frame.index, columns=frame.columns)
+            for k_ in frame.index:
+                for _s, lab in BOX:
+                    if typ[k_][lab] >= (top[lab][-1] if top[lab] else 1e9) and typ[k_][lab] > 0:
+                        o_.at[k_, lab] = f"color: {COLOR['stat_high']}; font-weight: 800;"
+            return o_
+        st.dataframe(mv.painted(pd.DataFrame(brow), _paint_box), hide_index=True,
+                     width="stretch", key=f"nbs_box_{side}")
+    st.caption("Each cell: his typical night, then the range 8 of 10 simulated games land in. "
+               "Bold blue = his team's top three in that stat tonight. Minutes are the "
+               "projection; the simulator moves them with the score (a blowout sits starters).")
 
 # ---------------- every player ----------------
 with card("nbs_players"):

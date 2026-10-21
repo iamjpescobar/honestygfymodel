@@ -154,6 +154,49 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Simulator box score; NBA play-by-play backfill (first basket + quarters, step 1). 2026-10-21
+
+**Suite 148, FAILING: none.** New tests/test_nba_pbp.py (3 controls, red
+by exit code: a free throw as the first field goal; the tip team read
+from the jump ball; the backfill writing on a shape change). test_nba_sim
++2 checks (box score; int16 stats).
+
+Izzy's list (10-21): (1) the Simulator should show player stats; (2)
+per-quarter stats in every eligible league; (3) a simulator where there
+isn't one; (4) a First Basket page. Plan agreed in chat: (1) now; (4) and
+NBA quarters/halves need data we don't have — the tip, the first field
+goal and quarter scores live in play-by-play, last season's file has
+none — so step 1 is a one-time backfill; NHL periods / NFL quarters / MLB
+first 5 and simulators for NHL / NFL come after, each measured.
+
+(1) NBA_Sim "The box score": per team, every player's typical (median)
+and 10th-90th range for Pts / Reb / Ast / 3PM / PRA, team's top three per
+stat bold, the players' sum beside the team's simulated score. 10,000
+games stays: medians and ranges are steady to well under a point there
+(the parlay already runs 500,000). Stats now int16 (a 10,000-game slate
+4 MB, not 17), sim cache 16 -> 8 entries.
+
+(4/2 step 1) engines/nba_pbp.parse: quarter lines per team (header
+linescores), the tip (jumpers + the team of the first play after the
+jump ball that names one), first FIELD GOAL (books settle "first basket"
+on a field goal; a free throw is not one) and first point, starters
+(nba_box), per-player points per quarter (OT left out). check(): quarter
+lines add up to the final. nba_pbp_prior.py + nba-pbp-prior.yml (manual,
+once): every 2025-26 final's summary -> data/nba/prior_pbp.json; refuses
+to write under 80% parsed. SHAPE NOT YET SEEN FROM ESPN — the fixture is
+the documented shape; the [verify] lines on the first run are the check.
+
+NEXT: read the backfill's log; then First Basket (P(team scores first) =
+tip x measured conversion; P(player | team) = his share, fitted on the
+fit window, graded on the test window) and NBA 1Q / 1H team lines.
+
+FILES: app/engines/nba_pbp.py (new), nba_pbp_prior.py (new),
+.github/workflows/nba-pbp-prior.yml (new), app/engines/nba_sim.py,
+app/views/NBA_Sim.py, tests/test_nba_pbp.py (new), tests/test_nba_sim.py,
+HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NBA Long Shots: the ladder (30+ pts, 10+ reb, 5+ threes) graded on unseen games. 2026-10-20 (8)
 
 **Suite 147, FAILING: none.** test_nba +2 controls (long_shots listing a
@@ -764,81 +807,5 @@ THE 10-14 NIGHTLY (first run of the injury + milestone batch):
 
 FILES: app/engines/milestones.py, milestone_log.py,
 tests/test_milestones.py, HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — who is actually playing (NHL + NFL injuries); the Milestone Watch. 2026-10-14
-
-**Suite 138 (+ test_who_plays, test_milestones), FAILING: none.** Six
-negative controls red by exit code (three per test, listed in each).
-Milestones, Goal Edge and Long Shots rendered headless on an augmented
-NHL slate (milestones, a day-to-day skater, a held-out list).
-
-WHY: Izzy asked whether every player and injury report comes in. They
-did not. NFL boards dropped only status == "Out" (an IR receiver who had
-played kept his TD-board and Long Shots row); the NHL had NO injury
-source — only Player of the Day skipped a skater who missed his team's
-last game. MLB was already right (active-26 roster + transactions).
-Then: "inform me when a player is close to a 300th goal" -> the watch.
-
-WHO IS PLAYING (engines/availability.py, NEW — one reading for all):
-- is_out: Out, any Reserve list (IR, LTIR, PUP, NFI), Suspended,
-  Inactive. maybe_label: Questionable / Doubtful / Day-to-day / Probable.
-  flag(row): the maybe label + "missed last game".
-- NHL nightly: the roster's injury tag (_walk_roster now reads it into
-  ROSTER_STATUS), else ESPN's league list (espn_feed.fetch_injury_list,
-  both hosts; athlete id from the athlete or his link, else by name).
-  apply_availability tags every skater; Out players leave the pool
-  BEFORE the 18-skater cut; g[side_held_out] lists them. Rows carry
-  "status"; Goal Edge has a Heads up column + the held-out caption;
-  Long Shots prefixes the warning; POTD skips any tag; Bet Finder drops
-  Out and marks the rest.
-- NFL nightly: side_players reads roster tag, else the game's injury
-  report (summary), else the league list, and drops Out BEFORE the role
-  cap (a healthy WR takes the slot); held_out() lists who would have
-  played. TD board / prop board / Bet Finder use av.is_out.
-- NOT FIXED, stated: NFL inactives post ~90 min before kickoff, after
-  the nightly; a skater scratched today shows as healthy until he misses
-  a game (then the flag catches it).
-
-MILESTONE WATCH (engines/milestones.py, milestone_log.py, views/
-Milestones.py — all NEW; nav for MLB/NHL/NFL, Home card, Results card):
-- career now = career BEFORE this season (ESPN common/v3 athletes/{id}/
-  stats, per-season rows, this season's row excluded, a traded season's
-  combined row read once) + this season from our own box scores. Prior
-  careers in data/{nhl,nfl}/career_prior.json, fetched once per player
-  per season (cap 400/night), committed by nightly-data.yml.
-- Feed-shape guard: 20+ new players with >35% "no earlier season" = the
-  shape changed; that night's fetch is NOT saved (PriorCareer.suspect).
-- REACH (most needed in one game): 2 G / 2 A / 3 PTS, 400 pass yds,
-  175 rush/rec yds, 4 pass TD, 3 TD, 12 rec; MLB 2 HR / 3 H / 4 RBI.
-- Chance = bf.chance_at on the row's own pmf at need - 0.5 (delivered).
-  Games-played marks show "if he plays".
-- MLB: careers read live (stats API people bulk call, hitting career);
-  game_type now on weather_engine games; postseason games never count
-  (the page says so — every MLB game is postseason right now).
-- Marks reached in the last 3 (NHL) / 8 (NFL) days -> payload
-  "milestones_happened" -> Milestones page + Results.
-
-FIRST NIGHTLY — read these lines:
-  [verify] NHL injuries: N roster tags, N league-list tags ...; N held out
-  [verify] NFL injuries / NFL held out of the prop pool
-  [verify] NHL|NFL milestones: careers on file / fetched / unreadable;
-      the career feed probe line (categories, names, last season labels).
-  If the probe's season labels are not "2025-26"-style (NHL) or "2025"
-  (NFL), is_current_season needs the real label; if categories are
-  empty for everyone, the guard will refuse to save — both are the
-  expected failure shapes, not silent ones.
-
-FILES: app/engines/availability.py, app/engines/milestones.py,
-milestone_log.py, app/views/Milestones.py, tests/test_who_plays.py,
-tests/test_milestones.py (NEW); nhl_precompute.py, nfl_precompute.py,
-app/engines/espn_feed.py, app/engines/edge_boards.py,
-app/engines/nhl_model.py, app/engines/model_view.py,
-app/engines/long_shots.py, app/engines/weather_engine.py,
-app/views/NHL_Goal_Edge.py, app/views/Long_Shots.py,
-app/views/Bet_Finder.py, app/views/NFL_TD_Edge.py, app/views/Results.py,
-app/views/Home.py, app/app.py, .github/workflows/nightly-data.yml,
-HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---
