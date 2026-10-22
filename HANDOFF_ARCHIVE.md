@@ -10,6 +10,48 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — Same-game parlays graded by kind (2/3/4 legs, points/mixed); the test grows nightly. 2026-10-20 (7)
+
+**Suite 147, FAILING: none.** test_nba_sim +3 controls, red by exit code
+(a kind's verdict ignored; an under kept in range; the leg count ignored
+with no combos test). Dry run of the nightly offline + the Simulator
+page headless on its payload ("What has been graded" table rendered).
+
+Izzy: "so none of them will give strong signals" -> build the way out.
+nba_sim.test_combos: from every test game, the parlays people build —
+2|pts (top-2 teammates; top scorer each side), 2|mixed (top scorer pts +
+team's top rebounder reb), 3|pts (top-3 teammates), 3|mixed (pts + reb +
+ast leaders), 4|pts (top-2 each side), 4|mixed (pts + reb leader each
+side) — every leg an over at his own last-10 half-line, the delivered
+chance per stat (that stat's curve), simulated at COMBO_SIMS = 20,000;
+simulator (product x lift) vs multiplied, paired Brier per kind.
+sgp_support(test, legs, combos): kind BEAT + all overs + 100+ graded ->
+in range (STRONG allowed); beat with an under, or < 100 -> VALUE;
+not beaten / never graded (5+ legs) -> THIN; sgp_guard() names which.
+
+THE TEST GROWS: build(prior, model, pool, cur_finals) — the test window
+is last season's final 45 days PLUS every game of this season (pool =
+merge_pool, season_finals() converts this season's finals' shape). Links
+stay fitted on last season. Checked with 6 re-dated days: +1,062
+player-games, ~+58 per kind of pairs. Nightly sim step now ~47 s.
+
+REAL 2025-26 (context model): no kind beats yet — 2|pts z 1.95 (the
+closest), 3|pts 0.42, 4|pts 1.04, 2|mixed 0.35, 3|mixed -0.13, 4|mixed
+0.78. The simulator moves the joint the right way in every pts kind
+(3|pts: multiplied 11.6%, sim 12.8%, actual 13.3%), but the samples are
+small. ALL kinds hit MORE than either predicts (4|mixed: 5.2% vs 8.2%) —
+leaders' overs run 2-4 pts above their delivered chance on both windows.
+A role shift (logit, per rank, fitted on the fit window) did NOT beat on
+the test (pts z 0.1, reb -1.2, ast 1.9) — NOT shipped. Revisit with this
+season's games.
+
+FILES: app/engines/nba_sim.py, app/views/NBA_Sim.py, nba_precompute.py,
+tests/test_nba_sim.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
+---
+
 ## PICK UP HERE — NBA context: tonight's opponent + teammates out; a proper fit score; opening night. 2026-10-20 (6)
 
 **Suite 147, FAILING: none.** New tests/test_nba_context.py (5 controls,

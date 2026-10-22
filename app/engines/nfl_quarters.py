@@ -230,7 +230,8 @@ def parse(summary):
         at = low.find(" to ", low.find("pass"))
         rcv = next((p for pos, p in found if at >= 0 and pos > at and p != passer), None)
         add(passer, "pass_att", q, 1)
-        caught = "incomplete" not in low and "intercepted" not in low
+        # a spike to stop the clock is an incomplete attempt in the box
+        caught = "incomplete" not in low and "intercepted" not in low and "spiked" not in low
         if rcv:
             add(rcv, "targets", q, 1)
         if caught:

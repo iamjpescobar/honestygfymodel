@@ -42,5 +42,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/nba/prior_pbp.json
           git commit -m "chore: NBA 2025-26 play-by-play for first basket and quarters [skip ci]"
-          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          # retry: a push that lands while another run (or a manual push) moved
+          # main is turned away ("cannot lock ref") - pull again and retry
+          for _try in 1 2 3 4 5; do
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && break
+            if [ "$_try" = 5 ]; then echo "::error::push failed 5 times"; exit 1; fi
+            sleep $((_try * 15))
+          done

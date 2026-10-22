@@ -142,8 +142,13 @@ jobs:
           git commit -m "chore: log slate picks and MLB slate [skip ci]"
           # Another scheduled run may have pushed since checkout; rebase
           # rather than fail, so a race costs a retry and not a day.
-          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          # retry: a push that lands while another run (or a manual push) moved
+          # main is turned away ("cannot lock ref") - pull again and retry
+          for _try in 1 2 3 4 5; do
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && break
+            if [ "$_try" = 5 ]; then echo "::error::push failed 5 times"; exit 1; fi
+            sleep $((_try * 15))
+          done
 
       # WITHOUT THIS THE RECORD NEVER REACHES THE SITE.
       #
