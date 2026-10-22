@@ -265,6 +265,7 @@
    "why": "3.54 shots and 1.66 points a game over 90 games (this season + last, pulled toward the forward average) \u00b7 ice time 23.2 min over his last 5 vs 23.0 on his rate \u2192 shots x1.00 \u00b7 MIN matchup sets tonight's shot volume x1.04 and scoring x0.95 \u00b7 MIN allows the 3rd-most of 32 shots to centres (10.3 a game vs 9.6) \u00b7 \u2192 3.70 expected shots, 1.58 expected points \u00b7 PP1 by minutes (2.4 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 2.0,
    "at_least": 1,
    "date": "2026-10-21",
    "fair": -220,
@@ -279,11 +280,32 @@
    "p_cal": 0.6872,
    "player": "Tim Stutzle",
    "player_id": "4697384",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-21T19:30:00-04:00",
    "stat": "pts",
    "team": "Ottawa Senators",
    "why": "2.34 shots and 1.01 points a game over 89 games (this season + last, pulled toward the forward average) \u00b7 ice time 23.2 min over his last 5 vs 20.5 on his rate \u2192 shots x1.06 \u00b7 FLA matchup sets tonight's shot volume x0.95 and scoring x1.10 \u00b7 FLA allows the 7th-fewest of 32 shots to centres (9.1 a game vs 9.6) \u00b7 \u2192 2.35 expected shots, 1.22 expected points \u00b7 PP1 by minutes (4.9 PP min a game over his last 5; context, not in the number)"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-22",
+   "fair": -265,
+   "game": "Carolina Hurricanes @ Edmonton Oilers",
+   "game_id": "401892561",
+   "label": "Pts O0.5",
+   "logged_at": "2026-10-22T12:15:07+00:00",
+   "market": "pt1",
+   "matchup": null,
+   "matchup_tier": null,
+   "p": 0.8046,
+   "p_cal": 0.7259,
+   "player": "Connor McDavid",
+   "player_id": "3895074",
+   "result": null,
+   "start": "2026-10-22T21:00:00-04:00",
+   "stat": "pts",
+   "team": "Edmonton Oilers",
+   "why": "3.55 shots and 1.67 points a game over 91 games (this season + last, pulled toward the forward average) \u00b7 ice time 23.4 min over his last 5 vs 23.0 on his rate \u2192 shots x1.01 \u00b7 CAR matchup sets tonight's shot volume x0.88 and scoring x0.96 \u00b7 CAR allows the 6th-fewest of 32 shots to centres (9.0 a game vs 9.6) \u00b7 \u2192 3.13 expected shots, 1.63 expected points \u00b7 PP1 by minutes (2.8 PP min a game over his last 5; context, not in the number)"
   }
  ]
 }
