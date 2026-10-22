@@ -13,9 +13,11 @@ from engines import model_view as mv
 from engines import nba_model as nm
 from engines import nba_view as nv
 from engines.slate_guard import staleness_note
+from engines.live_sync import sync_latest_button
 
 page_header("NBA", "Tonight's slate — rotations, injuries, who steps up",
             eyebrow="NBA · 2026-27", align="left")
+sync_latest_button(key="sync_nba", include_data_package=True)
 
 games, model, pget = nv.load()
 _note = staleness_note("nba")
@@ -64,6 +66,19 @@ else:
                 + ('; "+ context" = with tonight\'s opponent and teammates-out against '
                    'without them' if _cx else '') + f':</div>{chips}',
                 unsafe_allow_html=True)
+    _se = model.get("settings") or {}
+    if _se.get("since"):
+        _ck = _se.get("check") or {}
+        _v = (_ck.get("verdict") or {})
+        st.caption(
+            f"Model settings in use since {_se['since']} ({_se.get('source')})"
+            + (f" · changed {_se['changes']} time{'s' if _se['changes'] != 1 else ''} this "
+               f"season" if _se.get("changes") else "")
+            + " · re-checked every night against a challenger fitted on newer games: "
+            + (_ck["note"] if _ck.get("note") else
+               ("REPLACED tonight" if _ck.get("replace") else "held")
+               + (f" (newest {_ck.get('n')} player-games, challenger z={_v.get('z')})"
+                  if _v else " (the challenger came out the same)")) + ".")
 
 
 def _pct(x):
@@ -115,6 +130,17 @@ for gi, g in enumerate(games):
                 f'border-radius:6px;">{fav} {100 * pf:.0f}%</span> · fair spread '
                 f'{g.get("home_abbr")} {pj["fair_spread_home"]:+.1f}{lean}</div>',
                 unsafe_allow_html=True)
+            _ro = g.get("roster") or {}
+            if _ro.get("margin") is not None:
+                _rm = _ro["margin"]
+                st.markdown(
+                    f'<div style="font-size:var(--lc-text-small); color:{COLOR["text_muted"]};">'
+                    f'Tonight\'s rosters say: {g.get("home_abbr") if _rm >= 0 else g.get("away_abbr")}'
+                    f' by {abs(_rm):.1f} (each player\'s own projection, minutes summed to 240) — '
+                    + ("in the model's margin at its tested weight"
+                       if _ro.get("w") else "information only: it has not yet beaten the team "
+                       "ratings on unseen games")
+                    + "</div>", unsafe_allow_html=True)
         for side in ("away", "home"):
             st.markdown(f"**{g.get(side + '_abbr')}** "
                         f"<span style='color:{COLOR['text_muted']};'>"
@@ -132,7 +158,8 @@ for gi, g in enumerate(games):
                 cells = ("pts", "reb", "ast", "tpm", "pra")
                 heads = {"pts": "Pts", "reb": "Reb", "ast": "Ast", "tpm": "3PM", "pra": "PRA"}
                 df = pd.DataFrame([{
-                    "Player": r["name"] + (f" ⚠ {av.flag(r)}" if av.flag(r) else ""),
+                    "Player": r["name"] + (f" ⚠ {av.flag(r)}" if av.flag(r) else "")
+                    + nv.tags(r),
                     "Min": round(r["min"]),
                     **{heads[c]: round(r["mu"][c], 1) for c in cells}} for r in rows])
                 chances = []
@@ -152,6 +179,9 @@ for gi, g in enumerate(games):
                     return o
                 st.dataframe(mv.painted(df, _paint), hide_index=True, width="stretch",
                              key=f"nba_rot_{gi}_{side}")
+            if g.get(side + "_no_data"):
+                st.caption("On the roster, no NBA games on file yet (not projected): "
+                           + ", ".join(g[side + "_no_data"]))
             for b in (g.get(side + "_next_man_up") or [])[:2]:
                 top = (b.get("rows") or [])[:3]
                 if top:
@@ -171,6 +201,14 @@ for gi, g in enumerate(games):
                        "tested against the BOOK yet — so game bets on the Bet Finder are priced on "
                        "the book's own number, and a big model-vs-book gap means look closer, "
                        "not bet.")
+        _tn = nv.tags_note([r for s_ in ("away", "home") for r in g.get(s_ + "_props") or []],
+                           model)
+        if _tn:
+            st.caption(_tn)
+        if any(r.get("new") for s_ in ("away", "home") for r in g.get(s_ + "_props") or []):
+            st.caption("NEW = no NBA regular-season games on file (a rookie, or back from a season "
+                       "out): projected from this preseason, never tested, so his calls stay "
+                       "at THIN until his own games come in.")
         st.caption("Numbers = projected minutes and per-game means. Colour = the chance he "
                    "clears HIS usual line for that stat (his last-10 average set at the half "
                    "point) — green likely over, faint unlikely. " + nv.in_the_number(model)

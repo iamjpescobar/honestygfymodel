@@ -17,9 +17,11 @@ from engines import live_injuries as _li
 from engines import defense_matchup as dm
 from engines import edge_boards as eb
 from engines import model_view as mv
+from engines.live_sync import sync_latest_button
 
 page_header("Defenses to Target", "Where every defense bleeds — and who gets to attack it",
             eyebrow="NFL", align="left")
+sync_latest_button(key="sync_nfl_defenses_to_target", include_data_package=True)
 
 
 @st.cache_data(ttl=900, show_spinner=False)

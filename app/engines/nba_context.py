@@ -19,6 +19,17 @@ number:
    out the teammates' own recent numbers already carry it (half-life 2
    games in the model), so counting it again would double it.
 
+3. THE TEAM'S MINUTES ADD UP (10-22). A team plays 240 minutes; when
+   its rotation's projected minutes (every player projected 10+ who
+   plays) add to more or less, each one is scaled
+       f = (VOL_T / their sum) ^ VOL_BETA
+   VOL_T and VOL_BETA fitted on the fit window. A new team with three
+   starters who each played 34 for their old teams cannot give all three
+   34 again. MEASURED 10-22 on 2025-26: the rotation's projections
+   summed to 237 on average, sd 30 — and scaling them beat leaving them
+   (deviance, fit and test windows). Ships only when it beats on the
+   unseen window (vol_test).
+
 THE FIT: per stat, each piece chosen on the fit window by Poisson
 deviance, and switched OFF when it does not beat the plain projection
 there. THE TEST: the props test (his own last-10 line at the half point,
@@ -42,6 +53,9 @@ OUT_ALPHA = (0.0, 0.1, 0.2, 0.3, 0.45, 0.6)
 OUT_HL = (0.5, 1, 2, 4)           # games already missed
 ROT_MIN = 15.0
 MAX_MISSED = 25
+VOL_T = (210.0, 215.0, 220.0, 225.0, 230.0, 235.0, 240.0)
+VOL_BETA = (0.1, 0.2, 0.3, 0.4, 0.5)
+VOL_CLIP = (0.8, 1.25)
 
 
 def _day(s):
@@ -159,7 +173,7 @@ def absences(players, sched, model):
             team = str(g[1])
             if nxt and str(nxt[1]) != team:
                 continue                      # traded: the gap is not "out"
-            pr = run.project(model["k"], lrg, model.get("k_long"))
+            pr = run.project(model["k"], lrg, model.get("k_long"), model.get("down_pull") or 0.0)
             if not pr or pr["min"] < ROT_MIN:
                 continue
             end = nxt[0] if nxt else "9999"
@@ -184,13 +198,43 @@ def bump(outs, present_sum, cfg):
     return b
 
 
-def adjust(pr, opp_f, bmp):
+def adjust(pr, opp_f, bmp, vf=1.0):
     """A projection with the context applied (combos re-summed)."""
-    mu = {st: pr["mu"][st] * (opp_f or {}).get(st, 1.0) * (bmp or {}).get(st, 1.0)
+    mu = {st: pr["mu"][st] * (opp_f or {}).get(st, 1.0) * (bmp or {}).get(st, 1.0) * vf
           for st in nm.BASE}
     for c, parts in nm.COMBOS.items():
         mu[c] = sum(mu[x] for x in parts)
     return dict(pr, mu=mu)
+
+
+def rotation_minutes(players, model):
+    """{(team, date): the summed projected minutes of every player who
+    played that game and was projected MIN_PROJ_MIN+ (one game on file is
+    enough — tonight's pages project anyone with a game). Walk-forward:
+    each projection is from the games before."""
+    out = {}
+    lr = model.get("league") or {}
+    for p in (players or {}).values():
+        run = nm.Running(model["hl"], model.get("hl_long"))
+        lrg = lr.get(nm.group(p.get("pos"))) or {}
+        for g in sorted(p.get("games") or [], key=lambda x: x[0]):
+            if nm.val(g, "min") and run.n >= 1:
+                pr = run.project(model["k"], lrg, model.get("k_long"),
+                                 model.get("down_pull") or 0.0)
+                if pr and pr["min"] >= nm.MIN_PROJ_MIN:
+                    key = (str(g[1]), g[0])
+                    out[key] = out.get(key, 0.0) + pr["min"]
+            run.add(g)
+    return out
+
+
+def vol_factor(total, cfg):
+    """The team-minutes scale for a rotation whose projections add to
+    `total`; 1 when the piece is off."""
+    if not cfg or not total:
+        return 1.0
+    f = (cfg["t"] / total) ** cfg["beta"]
+    return min(VOL_CLIP[1], max(VOL_CLIP[0], f))
 
 
 def team_sums(rows):
@@ -218,8 +262,9 @@ def _dev(rows, idx, st, mus):
     return tot / max(1, n)
 
 
-def adjusted_rows(rows, groups, sched_outs, ctx):
-    """rows (pid, game, pr, hist) -> the same rows with the context in pr."""
+def adjusted_rows(rows, groups, sched_outs, ctx, vols=None):
+    """rows (pid, game, pr, hist) -> the same rows with the context in pr.
+    vols: rotation_minutes(), read when the team-minutes piece is on."""
     F, _book = opp_walk(rows, groups, ctx.get("opp") or {}, ctx.get("mean") or {})
     sums = team_sums(rows)
     out = []
@@ -227,7 +272,8 @@ def adjusted_rows(rows, groups, sched_outs, ctx):
         g = r[1]
         key = (str(g[1]), g[0])
         b = bump(sched_outs.get(key), sums.get(key) or {}, ctx.get("out") or {})
-        out.append((r[0], g, adjust(r[2], F[k], b)) + tuple(r[3:]))
+        vf = vol_factor((vols or {}).get(key), ctx.get("vol"))
+        out.append((r[0], g, adjust(r[2], F[k], b, vf)) + tuple(r[3:]))
     return out
 
 
@@ -242,7 +288,7 @@ def fit(prior, model):
     if not model or not model.get("hl") or not players:
         return None
     rows = nm.walk(players, model["hl"], model["k"], model.get("league") or {}, "0000", "9999",
-                   model.get("hl_long"), model.get("k_long"))
+                   model.get("hl_long"), model.get("k_long"), model.get("down_pull") or 0.0)
     rows.sort(key=lambda r: r[1][0])
     groups = {pid: nm.group(p.get("pos")) for pid, p in players.items()}
     fw, tw = model["fit_window"], model["test_window"]
@@ -286,8 +332,45 @@ def fit(prior, model):
                 bestb[st] = (c, e)
     out_cfg = {st: bestb[st][0] for st in nm.BASE}
 
-    ctx = {"opp": opp, "mean": mean, "out": out_cfg}
-    adj = adjusted_rows(rows, groups, outs, ctx)
+    # 3. the team's minutes add up, on top of both
+    ctx = {"opp": opp, "mean": mean, "out": out_cfg, "vol": None}
+    pre = adjusted_rows(rows, groups, outs, ctx)
+    vols = rotation_minutes(players, model)
+    keys = [(str(r[1][1]), r[1][0]) for r in rows]
+
+    def vdev(cfg, idx):
+        tot = n = 0
+        for i in idx:
+            f = vol_factor(vols.get(keys[i]), cfg)
+            for st in nm.BASE:
+                y = nm.val(rows[i][1], st)
+                if y is not None:
+                    tot += nm.deviance(y, pre[i][2]["mu"][st] * f)
+                    n += 1
+        return tot / max(1, n)
+    bestv = (None, vdev(None, fit_idx))
+    for t, be in itertools.product(VOL_T, VOL_BETA):
+        c = {"t": t, "beta": be}
+        e = vdev(c, fit_idx)
+        if e < bestv[1] - 1e-9:
+            bestv = (c, e)
+    vol_test = None
+    if bestv[0]:
+        a_, b_ = [], []
+        for i in test_idx:
+            f = vol_factor(vols.get(keys[i]), bestv[0])
+            da = db = 0.0
+            for st in nm.BASE:
+                y = nm.val(rows[i][1], st)
+                if y is not None:
+                    da += nm.deviance(y, pre[i][2]["mu"][st] * f)
+                    db += nm.deviance(y, pre[i][2]["mu"][st])
+            a_.append(da)
+            b_.append(db)
+        vol_test = mm.paired_verdict(a_, b_)
+        if vol_test.get("verdict") == "beats":
+            ctx["vol"] = bestv[0]
+    adj = adjusted_rows(rows, groups, outs, ctx, vols)
     fit_rows = [adj[i] for i in fit_idx]
     test_rows = [adj[i] for i in test_idx]
     sizes = {st: nm.nb_size(fit_rows, st) for st, _l in nm.STATS}
@@ -317,6 +400,7 @@ def fit(prior, model):
     n_this = sum(1 for i in test_idx if rows[i][1][0] > last_prior)
     return {"n_this_season": n_this,
             "opp": opp, "mean": {k: round(v, 4) for k, v in mean.items()}, "out": out_cfg,
+            "vol": ctx["vol"], "vol_tried": bestv[0], "vol_test": vol_test,
             "sizes": sizes, "test": test, "ladder": ladder, "vs_base": vs_base,
             "n_fit": len(fit_idx),
             "n_test": len(test_idx), "minutes": nm.minutes_check(test_rows)}
@@ -328,14 +412,15 @@ def context_rows(prior, model):
     links and test read, so they see the numbers the pages print."""
     players = prior.get("players") or {}
     rows = nm.walk(players, model["hl"], model["k"], model.get("league") or {}, "0000", "9999",
-                   model.get("hl_long"), model.get("k_long"))
+                   model.get("hl_long"), model.get("k_long"), model.get("down_pull") or 0.0)
     rows.sort(key=lambda r: r[1][0])
     ctx = model.get("context")
     if not ctx:
         return rows
     groups = {pid: nm.group(p.get("pos")) for pid, p in players.items()}
     outs = absences(players, schedules(prior.get("finals")), model)
-    return adjusted_rows(rows, groups, outs, ctx)
+    vols = rotation_minutes(players, model) if ctx.get("vol") else None
+    return adjusted_rows(rows, groups, outs, ctx, vols)
 
 
 # ----------------------------------------------------------------------
@@ -345,7 +430,7 @@ def book_now(pool, model, ctx):
     """The opponent book after every game in the pool (last season + this
     one) — what tonight's factors read."""
     rows = nm.walk(pool, model["hl"], model["k"], model.get("league") or {}, "0000", "9999",
-                   model.get("hl_long"), model.get("k_long"))
+                   model.get("hl_long"), model.get("k_long"), model.get("down_pull") or 0.0)
     rows.sort(key=lambda r: r[1][0])
     groups = {pid: nm.group(p.get("pos")) for pid, p in (pool or {}).items()}
     _F, book = opp_walk(rows, groups, ctx.get("opp") or {}, ctx.get("mean") or {})
@@ -381,21 +466,27 @@ def apply_tonight(rows, opp_id, opp_abbr, book, outs, out_names, ctx, day):
     and the reason appended to row["why"]."""
     present = {st: sum(r["mu"][st] for r in rows) for st in nm.BASE}
     b = bump(outs, present, (ctx or {}).get("out") or {})
+    tot = sum(r["min"] for r in rows if (r.get("min") or 0) >= nm.MIN_PROJ_MIN)
+    vf = vol_factor(tot, (ctx or {}).get("vol"))
     for r in rows:
         f = book.factor(opp_id, nm.group(r.get("pos")), day) if book else \
             {st: 1.0 for st in nm.BASE}
-        r["mu"] = {k: round(v, 3) for k, v in adjust({"mu": r["mu"]}, f, b)["mu"].items()}
+        r["mu"] = {k: round(v, 3) for k, v in adjust({"mu": r["mu"]}, f, b, vf)["mu"].items()}
         r["ctx"] = {"opp": {k: round(v, 3) for k, v in f.items()},
-                    "bump": {k: round(v, 3) for k, v in b.items()}}
-        w = why(f, b, opp_abbr, out_names)
+                    "bump": {k: round(v, 3) for k, v in b.items()},
+                    "vol": round(vf, 3), "team_min": round(tot)}
+        w = why(f, b, opp_abbr, out_names, vf, tot)
         if w:
             r["why"] = (r.get("why") + " · " if r.get("why") else "") + w
     return rows
 
 
-def why(opp_f, bmp, opp_abbr, out_names):
+def why(opp_f, bmp, opp_abbr, out_names, vf=1.0, team_min=None):
     """One plain sentence for a player's row, or ''."""
     bits = []
+    if abs(vf - 1) >= 0.02 and team_min:
+        bits.append(f"team minutes: his rotation's projections add to {team_min:.0f} min — "
+                    f"scaled {100 * (vf - 1):+.0f}% so the team's 240 add up")
     big = {st: f for st, f in (opp_f or {}).items() if abs(f - 1) >= 0.03}
     lab = {"pts": "pts", "reb": "reb", "ast": "ast", "tpm": "3s"}
     if big:

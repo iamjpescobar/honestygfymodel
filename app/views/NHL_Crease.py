@@ -19,11 +19,13 @@ from engines.slate_guard import load_slate, today_for, payload_field, staleness_
 from engines import live_injuries as _li
 from engines.nhl_rink import (phase, countdown_text, crease_rows,
                               REGULAR_SEASON_START)
+from engines.live_sync import sync_latest_button
 
 _ACCENT = SPORT_ACCENTS.get("NHL") or COLOR["stat_high"]
 
 page_header("NHL Crease Report", "Every goalie \u2014 workload, save quality, form",
             eyebrow="GOALIES", align="left")
+sync_latest_button(key="sync_nhl_crease", include_data_package=True)
 
 
 @st.cache_data(ttl=900, show_spinner=False)

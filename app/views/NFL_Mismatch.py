@@ -19,11 +19,13 @@ from styles.table_style import style_stat_table
 from engines import live_injuries as _li
 from engines.nfl_week import (EASTERN, UNIT_PAIRS, load_week, staleness_note,
                               mismatches, edge_tier)
+from engines.live_sync import sync_latest_button
 
 _ACCENT = SPORT_ACCENTS.get("NFL") or COLOR["stat_high"]
 
 page_header("NFL Mismatch Finder", "Unit vs unit, every game this week, "
             "biggest gap first", eyebrow="WEEK EDGES", align="left")
+sync_latest_button(key="sync_nfl_mismatch", include_data_package=True)
 
 
 @st.cache_data(ttl=900, show_spinner=False)

@@ -18,11 +18,13 @@ from engines import bet_finder as bf
 from engines import long_shots as ls
 from engines import model_math as mm
 from engines import model_view as mv
+from engines.live_sync import sync_latest_button
 
 EASTERN = ZoneInfo("America/New_York")
 
 page_header("Long Shots", "+300 to +2000 — the prices worth hunting", eyebrow="EVERY SPORT",
             align="left")
+sync_latest_button(key="sync_long_shots", include_data_package=True)
 st.markdown(
     f'<div style="font-size:var(--lc-text-body); line-height:1.6; color:{COLOR["text"]};">'
     f'Every player tonight whose <b>tested</b> chance puts him between <b>+300 and +2000</b>, '

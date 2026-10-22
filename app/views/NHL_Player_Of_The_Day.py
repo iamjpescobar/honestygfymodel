@@ -20,9 +20,11 @@ from engines import model_view as mv
 from engines import nhl_model as nm
 from engines import top_plays_board as tpb
 from engines import value as vl
+from engines.live_sync import sync_latest_button
 
 page_header("NHL Player of the Day", "Tonight's best 1+ point play — and the record behind it",
             eyebrow="NHL", align="left")
+sync_latest_button(key="sync_nhl_player_of_the_day", include_data_package=True)
 
 
 @st.cache_data(ttl=900, show_spinner=False)

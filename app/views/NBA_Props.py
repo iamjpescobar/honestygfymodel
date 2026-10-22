@@ -15,9 +15,11 @@ from engines import model_math as mm
 from engines import model_view as mv
 from engines import nba_model as nm
 from engines import nba_view as nv
+from engines.live_sync import sync_latest_button
 
 page_header("NBA Props", "Projections, his line, the chance — type your price",
             eyebrow="NBA", align="left")
+sync_latest_button(key="sync_nba_props", include_data_package=True)
 games, model, _pget = nv.load()
 _li.render_note("nba")
 if not games or not model:
@@ -49,7 +51,8 @@ with card("nbap_board"):
                 f'{len(rows)} players · tested: {mv.trust_label(ver.get(stat))}</div>',
                 unsafe_allow_html=True)
     base = pd.DataFrame([{
-        "Player": r["name"] + (f" ⚠ {r['status']}" if av.maybe_label(r.get("status")) else ""),
+        "Player": r["name"] + (f" ⚠ {r['status']}" if av.maybe_label(r.get("status")) else "")
+        + nv.tags(r),
         "Team": r["team"], "Min": round(r["min"]), "Proj": round(r["mu"][stat], 1),
         "Line": nv.his_line(r, stat), "Your price": None} for r in rows])
     ed = st.data_editor(base, key=f"nbap_ed_{gsel}_{stat}", hide_index=True, width="stretch",

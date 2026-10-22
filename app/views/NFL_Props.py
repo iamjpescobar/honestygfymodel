@@ -18,11 +18,13 @@ from styles.table_style import style_stat_table
 from engines import live_injuries as _li
 from engines.nfl_week import (EASTERN, PROP_COLUMNS, load_week,
                               staleness_note, prop_rows)
+from engines.live_sync import sync_latest_button
 
 _ACCENT = SPORT_ACCENTS.get("NFL") or COLOR["stat_high"]
 
 page_header("NFL Prop Lab", "Volume, form and the defense across the line",
             eyebrow="PLAYER RESEARCH", align="left")
+sync_latest_button(key="sync_nfl_props", include_data_package=True)
 
 
 @st.cache_data(ttl=900, show_spinner=False)

@@ -27,12 +27,14 @@ from engines import model_picks as mpk
 from engines import model_view as mv
 from engines import top_plays_board as tpb
 from engines import value as vl
+from engines.live_sync import sync_latest_button
 
 EASTERN = ZoneInfo("America/New_York")
 _NAMES = {"mlb": "MLB", "nhl": "NHL", "nfl": "NFL"}
 
 page_header("Top Plays", "The most likely outcomes tonight that have proven themselves "
             "— and the record that proves it", eyebrow="LOS CAPPERS", align="left")
+sync_latest_button(key="sync_top_plays", include_data_package=True)
 
 _stk = mv.staking_controls("top_plays")
 _today = datetime.now(EASTERN).date().isoformat()

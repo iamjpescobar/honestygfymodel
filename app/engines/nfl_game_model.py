@@ -200,12 +200,16 @@ def build(current_finals, prior_finals=None, prior_lines=None):
     }
 
 
-def project(model, home_id, away_id, odds=None, home_abbr="", away_abbr=""):
-    """Card dict for one game, or None if a team is unknown."""
+def project(model, home_id, away_id, odds=None, home_abbr="", away_abbr="", mu=None):
+    """Card dict for one game, or None if a team is unknown. mu: (home,
+    away) expected scores to use instead of the ratings' (the NBA's
+    roster-aware margin, once it has been tested — engines/nba_roster)."""
     if not model:
         return None
     rates = {t: (r["off"], r["def"]) for t, r in (model.get("rates") or {}).items()}
     mu_h, mu_a = gm.expected_scores(str(home_id), str(away_id), rates, model["league"])
+    if mu is not None and mu_h is not None:
+        mu_h, mu_a = mu
     if mu_h is None:
         return None
     p = model["params"]

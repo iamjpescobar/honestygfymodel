@@ -23,9 +23,11 @@ from engines import model_math as mm
 from engines import model_view as mv
 from engines import nhl_model as nm
 from engines import value as vl
+from engines.live_sync import sync_latest_button
 
 page_header("Goal Edge", "Every skater's chance to score tonight — and why",
             eyebrow="NHL", align="left")
+sync_latest_button(key="sync_nhl_goal_edge", include_data_package=True)
 
 
 @st.cache_data(ttl=900, show_spinner=False)

@@ -19,9 +19,11 @@ from engines.slate_guard import load_slate, payload_field, staleness_note, today
 from engines import live_injuries as _li
 from engines import edge_boards as eb
 from engines import model_view as mv
+from engines.live_sync import sync_latest_button
 
 page_header("Goalies to Target", "Who gives up the most tonight — and who is shooting at him",
             eyebrow="NHL", align="left")
+sync_latest_button(key="sync_nhl_goalies_to_target", include_data_package=True)
 
 
 @st.cache_data(ttl=900, show_spinner=False)

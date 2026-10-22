@@ -36,12 +36,17 @@ from engines import nba_first as nf  # noqa: E402
 from engines import nba_pbp as pbp  # noqa: E402
 from engines import nba_quarters as nq  # noqa: E402
 from engines import nba_model as nm  # noqa: E402
+from engines import nba_roster as nr  # noqa: E402
 
 EASTERN = ZoneInfo("America/New_York")
 LEAGUE = "nba"
 OUT = Path("build_data") / "data" / "nba"
 PRIOR_PATH = ROOT / "data" / "nba" / "prior_season.json"
 PBP_PATH = ROOT / "data" / "nba" / "prior_pbp.json"
+# The settings in use (engines/nba_model.retune): committed by the nightly
+# so tomorrow's champion is tonight's.
+SETTINGS_PATH = ROOT / "data" / "nba" / "settings.json"
+NEW_TEAM_GAMES = 15       # fewer games than this with tonight's team -> NEW TEAM
 PRESEASON_START = date(2026, 10, 2)
 REGULAR_SEASON_START = date(2026, 10, 20)
 LOOKAHEAD_DAYS = 14
@@ -191,9 +196,17 @@ def why_line(name, proj, last, cur):
     return " · ".join(bits)
 
 
-def side_props(team_id, pool, pre, params, roster, feed, team_abbr, cur_from):
-    """(rows, held_out) for one team tonight."""
+def side_props(team_id, pool, pre, params, roster, feed, team_abbr, cur_from, no_data=None,
+               low=None):
+    """(rows, held_out) for one team tonight. Players with no NBA games on
+    file (rookies, a man back from a season out) are projected from this
+    preseason when he played 2+ games there — flagged "new" (untested, so
+    capped at THIN) — and otherwise listed in `no_data` by name. `low`
+    collects (minutes, points) of the players projected under
+    MIN_PROJ_MIN, for the roster's team total (engines/nba_roster)."""
     rows, held = [], []
+    rows += newcomer_rows(team_id, pool, pre, params, roster, feed, team_abbr, cur_from, held,
+                          no_data)
     for pid, p in pool.items():
         # The roster decides who is on this team tonight (an offseason
         # trade has no regular-season game yet); without a roster, his
@@ -212,6 +225,8 @@ def side_props(team_id, pool, pre, params, roster, feed, team_abbr, cur_from):
             continue
         proj = nm.project_now(p["games"], params, p.get("pos"), today=cur_from)
         if not proj or proj["min"] < nm.MIN_PROJ_MIN:
+            if low is not None:
+                low.append((proj["min"], proj["mu"]["pts"]) if proj else (None, None))
             continue
         last = avg_line([g for g in p["games"] if g[0] < cur_from])
         cur = avg_line([g for g in p["games"] if g[0] >= cur_from])
@@ -221,10 +236,112 @@ def side_props(team_id, pool, pre, params, roster, feed, team_abbr, cur_from):
                      "mu": {k: round(v, 3) for k, v in proj["mu"].items()},
                      "season": cur, "last_season": last,
                      "why": why_line(p.get("name"), proj, last, cur),
+                     "role": nm.role_now(p["games"], params, p.get("pos"), cur_from,
+                                         (params.get("role") or {}).get("sd_min")),
+                     "new_team": new_team(p["games"], team_id, team_abbr),
                      "trend": trend_games(p["games"], (pre.get(pid) or {}).get("games"),
                                           team_abbr, cur_from)})
+    if low is not None:
+        low += [(None, None)] * len(no_data or [])
     rows.sort(key=lambda r: -r["min"])
     return rows, sorted(held)
+
+
+def new_team(games, team_id, team_abbr):
+    """The team he came from (abbr) when fewer than NEW_TEAM_GAMES of his
+    games on file are with tonight's team, else None."""
+    gs = [g for g in games or [] if nm.val(g, "min")]
+    k = 0
+    while k < len(gs) and str(gs[-1 - k][1]) == str(team_id):
+        k += 1
+    if k == len(gs) or k >= NEW_TEAM_GAMES:
+        return None
+    t = str(gs[-1 - k][1])
+    return team_abbr.get(t) or t
+
+
+def settings_step(model, players, cur_from, today):
+    """THE NIGHTLY RE-TUNE (engines/nba_model.retune): the champion is
+    data/nba/settings.json (last season's fit until the first
+    replacement); a challenger fitted on newer games replaces it only
+    when it beats it on the newest games it never saw. Returns the model
+    with the champion's settings and model["settings"] for the pages."""
+    base = nm.settings_of(model)
+    try:
+        saved = json.loads(SETTINGS_PATH.read_text())
+    except (OSError, ValueError):
+        saved = None
+    rec = dict(saved) if saved and saved.get("settings") else {
+        "settings": base, "since": today,
+        "source": f"fit on 2025-26, window {model['fit_window'][0]} to {model['fit_window'][1]}",
+        "history": []}
+    champ = rec["settings"]
+    rt = nm.retune(players, champ, cur_from)
+    if rt.get("replace"):
+        v = rt.get("verdict") or {}
+        rec = dict(rec, settings=rt["challenger"], since=today,
+                   source=f"re-tuned on {rt['fit_window'][0]} to {rt['fit_window'][1]}; beat the "
+                          f"old settings on {rt['window'][0]} to {rt['window'][1]} (z={v.get('z')})")
+        rec["history"] = list(rec.get("history") or [])[-29:] + [
+            {"date": today, "from": champ, "to": rt["challenger"], "z": v.get("z"),
+             "window": rt["window"]}]
+    if rec != saved:
+        SETTINGS_PATH.parent.mkdir(parents=True, exist_ok=True)
+        SETTINGS_PATH.write_text(json.dumps(rec, indent=1) + "\n")
+    model.update(rec["settings"])
+    model["settings"] = {"since": rec["since"], "source": rec["source"],
+                         "changes": len(rec.get("history") or []),
+                         "values": rec["settings"],
+                         "check": {k: rt.get(k) for k in ("note", "window", "fit_window", "n",
+                                                          "verdict", "replace", "challenger")}}
+    return model, rt
+
+
+NEW_MIN_PRE_GAMES = 2
+
+
+def newcomer_rows(team_id, pool, pre, params, roster, feed, team_abbr, cur_from, held,
+                  no_data=None):
+    """Rows for tonight's players with no regular-season NBA games on file:
+    the roster's (or, without a roster, this preseason's team's) players
+    missing from the pool. Until 10-22 they were skipped — a rookie or a
+    man back from a lost season did not exist on the site until his first
+    regular-season game."""
+    out = []
+    if roster:
+        cands = [(pid, x.get("name")) for pid, x in roster.items() if pid not in pool]
+    else:
+        cands = [(pid, p.get("name")) for pid, p in (pre or {}).items()
+                 if pid not in pool and str(p.get("team")) == str(team_id)]
+    for pid, name in cands:
+        pp = (pre or {}).get(pid) or {}
+        name = name or pp.get("name") or pid
+        st = av.status_for(pid, name, (roster.get(pid) or {}).get("status") if roster else None,
+                           feed)
+        if av.is_out(st):
+            held.append(f"{name} ({st})")
+            continue
+        games = [g for g in pp.get("games") or [] if nm.val(g, "min")]
+        if len(games) < NEW_MIN_PRE_GAMES:
+            if no_data is not None:
+                no_data.append(name)
+            continue
+        proj = nm.project_now(games, params, pp.get("pos"))
+        if not proj or proj["min"] < nm.MIN_PROJ_MIN:
+            continue
+        pre_line = avg_line(games)
+        out.append({"pid": pid, "name": name,
+                    "pos": ((roster or {}).get(pid) or {}).get("pos") or pp.get("pos"),
+                    "status": st or "", "new": True,
+                    "min": round(proj["min"], 1),
+                    "mu": {k: round(v, 3) for k, v in proj["mu"].items()},
+                    "season": None, "last_season": None, "preseason": pre_line,
+                    "why": (f"{name}: NEW — no NBA regular-season games on file; projected from "
+                            f"{len(games)} preseason games ({pre_line['pts']} pts / "
+                            f"{pre_line['reb']} reb / {pre_line['ast']} ast in "
+                            f"{pre_line['min']} min) — untested, so THIN at most"),
+                    "trend": trend_games([], games, team_abbr, cur_from)})
+    return out
 
 
 def first_basket_game(g, book, prm, pool):
@@ -389,6 +506,36 @@ def main(today=None):
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NBA model failed: {type(exc).__name__}: {exc}")
 
+    # THE SETTINGS IN USE: champion / challenger on the newest games
+    if model:
+        try:
+            t0 = time.time()
+            if model.get("pull_test"):
+                print(f"  [verify] NBA minutes pull {model.get('down_pull')} (a drop toward his "
+                      f"usual minutes) vs none on unseen games -> "
+                      f"{model['pull_test'].get('verdict')} (z={model['pull_test'].get('z')})")
+            model, rt = settings_step(model, season_data["players"],
+                                      REGULAR_SEASON_START.isoformat(), today.isoformat())
+            se = model["settings"]
+            print(f"  [verify] NBA settings ({time.time() - t0:.0f}s): {se['values']} in use since "
+                  f"{se['since']} ({se['source']}); tonight's check: "
+                  + (rt["note"] if rt.get("note") else
+                     ("REPLACED" if rt.get("replace") else "held")
+                     + f" — challenger {rt.get('challenger')} on {rt.get('n')} newest "
+                       f"player-games, z={(rt.get('verdict') or {}).get('z')}"))
+        except Exception as exc:  # noqa: BLE001
+            print(f"::warning::NBA settings re-tune failed (last season's fit stays): "
+                  f"{type(exc).__name__}: {exc}")
+        # ROLE CHANGES: measured on last season, flagged tonight
+        try:
+            fw_rows = nm.walk(prior["players"], model["hl"], model["k"], model["league"],
+                              model["fit_window"][0], model["fit_window"][1], model.get("hl_long"),
+                              model.get("k_long"), model.get("down_pull") or 0.0)
+            model["role"] = nm.role_check(prior["players"], model, nm.minutes_sd(fw_rows))
+            print(f"  [verify] NBA role changes on 2025-26: {model['role']}")
+        except Exception as exc:  # noqa: BLE001
+            print(f"::warning::NBA role check failed: {type(exc).__name__}: {exc}")
+
     # TONIGHT'S CONTEXT (10-20, engines/nba_context): the opponent (defense
     # and pace) and teammates out, each fitted on 2025-26 and kept only
     # where it beat the plain projection; when it ships, the model's
@@ -401,11 +548,16 @@ def main(today=None):
                 model["base_test"] = model["test"]
                 model["sizes"], model["test"] = ctx["sizes"], ctx["test"]
                 model["ladder"] = ctx["ladder"]
-                model["context"] = {k: ctx[k] for k in ("opp", "mean", "out", "vs_base")}
+                model["context"] = {k: ctx[k] for k in ("opp", "mean", "out", "vs_base", "vol",
+                                                        "vol_test")}
                 print(f"  [verify] NBA props test: {ctx['n_test']} player-games ("
                       f"{ctx['n_this_season']} from this season)")
                 print(f"  [verify] NBA context ({time.time() - t0:.0f}s): opponent {ctx['opp']}; "
                       f"teammate out {ctx['out']}")
+                print(f"  [verify] NBA team minutes add up: {ctx['vol_tried']} vs without on "
+                      f"unseen games -> {(ctx.get('vol_test') or {}).get('verdict')} "
+                      f"(z={(ctx.get('vol_test') or {}).get('z')}); in the number: "
+                      f"{'yes' if ctx.get('vol') else 'no'}")
                 for st, lab in nm.STATS:
                     x, v = ctx["test"].get(st) or {}, ctx["vs_base"].get(st) or {}
                     print(f"  [verify] NBA {lab:16s} WITH CONTEXT model {x.get('model_brier')} vs "
@@ -433,6 +585,28 @@ def main(today=None):
         game_model = nba_game_model(prior.get("finals"), cur_finals, slate)
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NBA game model failed: {type(exc).__name__}: {exc}")
+
+    # THE ROSTER-AWARE MARGIN (engines/nba_roster): tonight's players'
+    # own projections against the team ratings, tested before it moves a
+    # margin
+    roster_block = None
+    try:
+        if model and game_model:
+            from engines import nfl_game_model as ngm
+            roster_block = nr.fit(season_data["players"],
+                                  ngm.rows(prior_game_rows(prior.get("finals")) + cur_finals),
+                                  model, game_model["params"], model["fit_window"],
+                                  model["test_window"])
+            if roster_block:
+                rb = roster_block
+                print(f"  [verify] NBA roster margin: weight {rb['w_tried']} fitted on "
+                      f"{rb['n_fit']} games; unseen {rb['n_test']} games margin MAE ratings "
+                      f"{rb['mae']['ratings']} / rosters {rb['mae']['roster']} / blend "
+                      f"{rb['mae']['blend']}; win chance -> "
+                      f"{(rb.get('test') or {}).get('verdict')} "
+                      f"(z={(rb.get('test') or {}).get('z')}); in the margin: weight {rb['w']}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::NBA roster margin failed: {type(exc).__name__}: {exc}")
 
     # THE SIMULATOR'S LINKS AND ITS TEST (10-20, engines/nba_sim): how
     # minutes and stats move with the score, measured on last season;
@@ -555,6 +729,7 @@ def main(today=None):
         except Exception as exc:  # noqa: BLE001
             print(f"::warning::NBA tonight's opponent book failed: {type(exc).__name__}: {exc}")
     n_ctx = 0
+    n_new = n_nodata = 0
     held_total = 0
     for g in slate:
         if g.get("game_type") == "preseason":
@@ -563,8 +738,15 @@ def main(today=None):
             tid = g[f"{side}_id"]
             roster = rosters.get(tid) or {}
             if model:
-                rows, held = side_props(tid, pool, pre, model, roster, feed, team_abbr, cur_from)
+                nodata, low = [], []
+                rows, held = side_props(tid, pool, pre, model, roster, feed, team_abbr, cur_from,
+                                        nodata, low)
+                g[f"{side}_roster_pts"] = nr.roster_points(
+                    [(r["min"], r["mu"]["pts"]) for r in rows] + low)
                 g[f"{side}_props"] = rows
+                g[f"{side}_no_data"] = sorted(nodata)
+                n_new += sum(1 for r in rows if r.get("new"))
+                n_nodata += len(nodata)
             else:
                 held = []
             g[f"{side}_held_out"] = held
@@ -633,12 +815,40 @@ def main(today=None):
                 print(f"::warning::NBA first basket for {g.get('event_id')} failed: "
                       f"{type(exc).__name__}: {exc}")
         print(f"  [verify] NBA first basket priced for {n_fb} of {len(slate)} games")
+    n_roster = 0
+    for g in slate:
+        try:
+            pj, rh, ra = g.get("model"), g.get("home_roster_pts"), g.get("away_roster_pts")
+            if not (pj and rh is not None and ra is not None):
+                continue
+            w = (roster_block or {}).get("w") or 0.0
+            g["roster"] = {"home_pts": round(rh, 1), "away_pts": round(ra, 1),
+                           "margin": round(rh - ra, 1), "ratings_margin": pj.get("margin"),
+                           "w": w}
+            n_roster += 1
+            if w:
+                from engines import nfl_game_model as ngm
+                tot, mg = pj["mu_home"] + pj["mu_away"], nr.blend_margin(
+                    pj["mu_home"] - pj["mu_away"], rh - ra, w)
+                new = ngm.project(game_model, g.get("home_id"), g.get("away_id"), g.get("odds"),
+                                  g.get("home_abbr", ""), g.get("away_abbr", ""),
+                                  mu=((tot + mg) / 2, (tot - mg) / 2))
+                if new:
+                    g["model"] = new
+        except Exception as exc:  # noqa: BLE001
+            print(f"::warning::NBA roster margin for {g.get('event_id')} failed: "
+                  f"{type(exc).__name__}: {exc}")
+    n_flag = sum(1 for g in slate for s_ in ("away", "home") for r in g.get(f"{s_}_props") or []
+                 if (r.get("role") or {}).get("dir") or r.get("new_team"))
+    print(f"  [verify] NBA rosters: {n_roster} games with a roster margin (weight "
+          f"{(roster_block or {}).get('w', 0.0)}); {n_flag} players flagged ROLE / NEW TEAM")
     n_props = sum(len(g.get("away_props") or []) + len(g.get("home_props") or []) for g in slate)
     n_nmu = sum(len(g.get("away_next_man_up") or []) + len(g.get("home_next_man_up") or [])
                 for g in slate)
     print(f"  [verify] NBA slate: {n_props} players projected, {held_total} held out (injured), "
           f"{n_nmu} Next Man Up boards; {n_ctx} with tonight's opponent / teammates-out "
-          f"context applied")
+          f"context applied; {n_new} newcomers projected from preseason (flagged NEW), "
+          f"{n_nodata} rostered with no NBA games at all")
 
     watch = role_watch(pre, prior.get("players"), top=40)
     for r in watch:

@@ -13,8 +13,10 @@ from engines import model_math as mm
 from engines import model_view as mv
 from engines import nba_view as nv
 from engines import top_plays_board as tpb
+from engines.live_sync import sync_latest_button
 
 page_header("First Basket", "Who scores first — and which team", eyebrow="NBA", align="left")
+sync_latest_button(key="sync_nba_first_basket", include_data_package=True)
 games, model, pget = nv.load()
 _li.render_note("nba")
 fb = pget("first_basket") or {}

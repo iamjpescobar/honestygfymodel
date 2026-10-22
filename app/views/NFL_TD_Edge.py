@@ -21,9 +21,11 @@ from engines import edge_boards as eb
 from engines import model_math as mm
 from engines import model_view as mv
 from engines import value as vl
+from engines.live_sync import sync_latest_button
 
 page_header("TD Edge", "Every player's chance to score a touchdown this week — and why",
             eyebrow="NFL", align="left")
+sync_latest_button(key="sync_nfl_td_edge", include_data_package=True)
 
 
 @st.cache_data(ttl=900, show_spinner=False)

@@ -20,11 +20,13 @@ from engines.slate_guard import load_slate, staleness_note, today_for
 from engines import live_injuries as _li
 from engines.nhl_rink import (phase, countdown_text, shots_rows, HIT_RATES,
                               REGULAR_SEASON_START)
+from engines.live_sync import sync_latest_button
 
 _ACCENT = SPORT_ACCENTS.get("NHL") or COLOR["stat_high"]
 
 page_header("NHL Shots Lab", "Shots, points and ice time for every skater tonight",
             eyebrow="PLAYER RESEARCH", align="left")
+sync_latest_button(key="sync_nhl_shots", include_data_package=True)
 
 
 @st.cache_data(ttl=900, show_spinner=False)

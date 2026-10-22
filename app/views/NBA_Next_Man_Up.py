@@ -19,8 +19,10 @@ from styles.kc_theme import COLOR, card, footer, page_header
 from engines import live_injuries as _li
 from engines import nba_model as nm
 from engines import nba_view as nv
+from engines.live_sync import sync_latest_button
 
 page_header("NBA Next Man Up", "Who steps up when a star sits", eyebrow="NBA", align="left")
+sync_latest_button(key="sync_nba_next_man_up", include_data_package=True)
 games, model, _pget = nv.load()
 _li.render_note("nba")
 st.markdown(

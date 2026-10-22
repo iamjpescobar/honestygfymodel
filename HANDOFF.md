@@ -154,6 +154,109 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — NBA learns this season: minutes pull, team minutes add to 240, ROLE / NEW TEAM flags, roster margin, nightly re-tune; a refresh on every page. 2026-10-22 (2)
+
+**Suite 152, FAILING: none.** New tests/test_nba_upgrades.py (7 controls,
+red by exit code, listed in the test) and tests/test_refresh_buttons.py
+(1 control, red). Dry run of the nightly; Tonight, Props, Simulator,
+First Basket, Trends, Next Man Up and the Bet Finder headless, plus 8
+non-NBA pages with the new button. Ships with the 10-22 newcomers batch
+below (Izzy uploaded nba_newcomers.zip but never unpacked it).
+
+WHY (Izzy): "none of the teams will operate like last season ... the
+site needs to recognize stuff like that and adapt." Every piece below
+was measured on 2025-26 before it moved a number:
+
+1. OLD-TEAM GAMES — NOT DISCOUNTED. 129 team changes last season (107 at
+   the deadline). Cutting the old team's games in the long-run tracker or
+   the shrink made it worse; cutting the 2-game window was thin (fit
+   window fails, test z 2.3, pooled z 0.2). The 2-game half-life already
+   moves his minutes within ~3 games. NEW TEAM is a flag, not a number.
+2. THE MINUTES PULL (nm.DOWN_PULL, fitted 0.3): a drop below his
+   long-run minutes is pulled 30% back (a rise is not). Drops held only
+   ~40% over the next 10 games, rises ~52% (nm.role_check). Paired vs no
+   pull on the unseen window: beats z 4.25; on traded players alone, z
+   2.5. Scored on the SAME player-games (the pull lifts rows over 10 min).
+3. TEAM MINUTES ADD UP (nc, piece 3): rotation (projected 10+, who
+   plays) scaled by (220 / their sum)^0.5. Their sum ran 237 +/- 30. vs
+   without, unseen: beats z 6.8. All 8 props tests improved (points Brier
+   0.2364 -> 0.2338, PRA 0.2351 -> 0.2310). Tonight: why line says
+   "team minutes ... scaled -6%". Backtest "who plays" = who played.
+4. ROSTER MARGIN (engines/nba_roster): sum of tonight's projections,
+   minutes to 240. Fit-window margin MAE 11.84 -> 11.45 at w 0.3; the
+   unseen window THIN (z 0.4) -> weight 0, shown on Tonight as
+   information ("Tonight's rosters say ..."). Totals did not help. The
+   test window includes this season, so it is re-judged nightly; at
+   "beats" the margin blends in (ngm.project mu=) and the Simulator
+   follows.
+5. ROLE ↑ / ↓: this season's minutes vs his opening-night projection,
+   3+ minutes and 2 SE (sd 6.5 min/game), 3+ games. Flag only.
+6. NIGHTLY RE-TUNE: champion = data/nba/settings.json (committed by the
+   nightly, in the "Commit NFL projection log" step); challenger = the
+   same grid on the 45 game-days before the newest 14; replaces only on
+   "beats" there. Starts once this season has 21 game-days and 1,500
+   player-games in the newest 14. Log: "[verify] NBA settings ...
+   held / REPLACED"; Tonight shows "settings in use since ...". On last
+   season's March as a fake season it replaced (k 600 -> 300, z 2.1).
+   Leak, said here: a replaced set is fitted on days the props test also
+   grades.
+
+REFRESH: "⟳ Sync latest" under the header on every nav page except Live
+(own Refresh), Bet Log, Home and the admin pages.
+
+NIGHTLY VERIFY LINES TO READ: "NBA minutes pull 0.3 ... beats", "NBA
+settings ...", "NBA role changes on 2025-26", "NBA team minutes add up:
+... in the number: yes", "NBA roster margin: ... in the margin: weight",
+"NBA rosters: N games with a roster margin; M players flagged".
+
+FILES: nba_precompute.py, .github/workflows/nightly-data.yml,
+app/engines/nba_model.py, nba_context.py, nba_roster.py (NEW),
+nba_view.py, nfl_game_model.py, bet_finder.py; app/views/NBA.py,
+NBA_Props.py, Bet_Finder.py, Results.py + the 18 pages with the new
+button; tests/test_nba_upgrades.py, tests/test_refresh_buttons.py (NEW),
+tests/test_nba.py; HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
+## PICK UP HERE — NBA newcomers (rookies, back from a lost season) on the site; the 10-21 slate graded. 2026-10-22
+
+**Suite 150, FAILING: none.** test_nba +3 checks, control (side_props
+without newcomer_rows — the bug) red by exit code. Dry run of the
+nightly; Tonight and Props headless.
+
+THE BUG (Izzy, 10-22: "players that came back from injury or got drafted
+weren't on the roster"): side_props walked only the POOL (last season's
+regular-season players + this season's), so a rookie, or a man who
+missed all of 2025-26, did not exist on the site until his first
+regular-season game — role_watch hid them too (sorted by minutes change,
+None last, cut at 40). newcomer_rows: tonight's roster players missing
+from the pool (no roster: this preseason's team) — 2+ preseason games ->
+projected from them (nm.project_now on the preseason box scores), row
+"new": True, the why says so; fewer -> g["<side>_no_data"], listed by
+name under the team on Tonight. A NEW row is UNTESTED everywhere:
+nv.chance forces it, bet_finder.support_at honours "_untested", Long
+Shots skips it, the Bet Finder name carries "· NEW". Once he plays a
+regular-season game he joins the pool and the tested model.
+
+THE 10-21 SLATE, GRADED BY HAND (the nightly archive is public:
+github.com/.../releases/download/nightly-data/statcast_data.tar.gz has
+data/nba/games.json): 8 finals — model winners 4 of 7 (one 50/50), the
+book's 6 of 8; margin MAE model 14.9 vs book 13.6 (last season's model
+11.5); total MAE model 10.9 vs book 9.5; 2 of 8 finals outside the
+model's 80% range (expected ~1.6). The weak point: team ratings carry
+last season at 0.956 and know no offseason moves. NEXT NBA BUILD: team
+projections from the sum of tonight's player projections (roster-aware,
+context-adjusted) — test on last season vs the team-rating model first.
+
+THE REPO IS PUBLIC (checked 10-22): the Bet Log must write to a PRIVATE
+repo (BETLOG_REPO), never this one. Izzy told.
+
+FILES: nba_precompute.py, app/engines/nba_view.py, app/engines/bet_finder.py,
+app/views/Bet_Finder.py, app/views/NBA.py, tests/test_nba.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NBA finished for now: 1Q player points, Live tested, tests grow nightly, model vs book. 2026-10-21 (3)
 
 **Suite 150, FAILING: none.** New tests/test_nba_quarters.py (4
@@ -767,84 +870,5 @@ tests/test_live_check.py (NEW); app/engines/live_props.py,
 app/engines/model_view.py, app/views/Bet_Finder.py,
 app/views/Long_Shots.py, app/views/Live.py, HANDOFF.md,
 HANDOFF_ARCHIVE.md (+ the 10-18 Live files, shipped together)
-
----
-
-## PICK UP HERE — Live: player props over the rest of a game in progress. 2026-10-18
-
-**Suite 141 (+ test_live_props), FAILING: none.** Three negative controls
-red by exit code (listed in the test). Rendered headless on an NHL slate
-with a faked live summary (2nd period, 10:00): Caufield 42% pregame ->
-25.2% rest of game; a skater with a goal shows CASHED.
-
-WHY: "I WANT TO LIVE BET MAKE IT POSSIBLE." Every board is pregame; a
-mid-game price typed into the Bet Finder is judged against a full-game
-chance and reads as a false VALUE.
-
-ENGINE (engines/live_props.py, NEW, pure): remaining(sport, state,
-period, clock) = fraction of regulation left (OT -> None, not priced).
-rest_pmf: Poisson at m*f (goals, assists, points, TDs); NB counts with
-the game rate's gamma UPDATED on what he already has (size r + have,
-mean (r+have)/(r/m + 1 - f) * f — a hot start raises the rest); yards
-normal, mean m*f, sd cv*m*sqrt(f). need = floor(line)+1 - have.
-game_state / nhl_box / nfl_box read ESPN's live summary (header status,
-boxscore groups via espn_feed.box_group_index).
-
-PAGE (views/Live.py, NHL + NFL navs): games from load_slate_live /
-load_week_live; ESPN summary re-read every 30 s (8 s timeout, both
-hosts) + a Refresh button; stat / line / side; Has / Needs / Chance /
-Worth it at / Your price; calls through bf.judge with
-live_props.UNTESTED -> THIN at most (CHECK at a 10+ gap), Edge shown.
-
-NOT IN THE NUMBER (on the page): score effects, an in-game injury, a
-power play in progress. NEXT: test it — last season's NHL summaries
-period by period (who had scored by the end of P1 / P2 vs the rest-of-
-game chance) — and only then lift the THIN cap for what passes.
-
-FILES: app/engines/live_props.py, app/views/Live.py,
-tests/test_live_props.py (NEW); app/app.py, HANDOFF.md,
-HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — MLB postseason: game logs, grading, trend windows. 2026-10-16
-
-**Suite 140 (+ test_mlb_postseason_logs), FAILING: none.** Four negative
-controls red by exit code (listed in the test).
-
-WHY: Izzy, in the playoffs: "all of the data provided is for the last
-game of regular season." The Stats API gameLog defaults to the REGULAR
-season and every reader asked for it that way. Two consequences:
-  1. Trend windows (2026 / L25 / L15 / L5, batters and pitchers) stopped
-     at 09-27.
-  2. GRADING: a postseason pick's date was never in the log, so
-     calibration_pipeline closed it DID_NOT_PLAY at once — no postseason
-     pick on Daily 13 / HR Edge / POTD / K Board ever counted.
-
-FIX (engines/mlb_gamelog.py, NEW, pure): splits(get, url, group, season)
-= regular log + postseason log (gameType "P", falling back to "F,D,L,W"),
-every stats entry (trades), one row per gamePk, date order, "_post"
-tag. A failed postseason read costs only postseason rows; a failed
-regular read still raises (unknown != did-not-play). Used by
-calibration_pipeline._mlb_line / _mlb_pitching_line (loaded by FILE
-PATH — the pipeline has no app/ on sys.path), calibration._player_day_json
-(its twin), batter_trends and pitcher_trends (opp label "(PS)").
-reopen_postseason(record): ONE-TIME — MLB-board "dnp" picks dated >=
-POSTSEASON_FROM (2026-09-28) are reopened once, stamped "ps_regraded",
-so a genuine DNP is never reopened twice.
-
-NOT CHANGED (rule 1): k_projection's own game-log reads (the K Board's
-number) stay regular-season — adding October starts is a model change
-and gets tested first. Statcast: pybaseball's query already asks for
-PO; precompute now prints "[verify] Statcast postseason pitches in the
-season pull: N" — if N is 0, the prop model's pitches stop at 09-27 too.
-
-FIRST NIGHTLY: "Calibration: reopened N postseason pick(s)..." then the
-board totals should rise; the Statcast line above.
-
-FILES: app/engines/mlb_gamelog.py, tests/test_mlb_postseason_logs.py
-(NEW); calibration_pipeline.py, app/engines/calibration.py,
-app/engines/batter_trends.py, app/engines/pitcher_trends.py,
-precompute.py, HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

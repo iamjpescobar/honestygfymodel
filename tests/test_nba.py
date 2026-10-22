@@ -20,6 +20,8 @@ Negative controls, confirmed red by exit code when written (rule 4):
     -> "tonight's games carry the game model" fails
   - Running.project ignoring k_long (one level, straight to the league)
     -> "a star's cold week is shrunk toward HIS rate" fails
+  - side_props skipping roster players with no NBA games (the 10-22 bug)
+    -> "a rookie on tonight's roster is projected" fails
   - nv.long_shots listing stats whose ladder has not beaten
     -> "a stat whose ladder has not beaten is never a long shot" fails
   - nv.chance ignoring the ladder curve past his line's range
@@ -204,6 +206,38 @@ check("an alt line past his own line's tested range reads the ladder curve",
 pg = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
 check("Long Shots is in the NBA nav",
       pg.split('"NBA": [')[1].split("],")[0].count('"views/Long_Shots.py"') == 1)
+
+# --- newcomers: rookies and men back from a lost season (10-22) ------------------
+import nba_precompute as _npc  # noqa: E402
+_pool = {"v1": {"name": "Vet", "pos": "G", "team": "T1",
+                "games": [["2026-03-0%d" % k, "T1", "X", 30, 15, 4, 4, 2, 0, 0, 0]
+                          for k in range(1, 9)]}}
+_pre = {"r1": {"name": "Rookie One", "pos": "F", "team": "T1",
+               "games": [["2026-10-0%d" % k, "T1", "X", 24, 12, 5, 2, 1, 0, 0, 0]
+                         for k in (3, 6, 9)]},
+        "r2": {"name": "One Game Guy", "pos": "G", "team": "T1",
+               "games": [["2026-10-03", "T1", "X", 12, 4, 1, 1, 0, 0, 0, 0]]}}
+_roster = {"v1": {"name": "Vet"}, "r1": {"name": "Rookie One"}, "r2": {"name": "One Game Guy"},
+           "r3": {"name": "Never Played"}}
+_feed = {"by_id": {}, "by_name": {}}
+_nd = []
+_rows, _held = _npc.side_props("T1", _pool, _pre, {"hl": 3, "k": 600, "league": {}}, _roster,
+                               _feed, {"X": "XXX"}, "2026-10-20", _nd)
+_names = {r["name"]: r for r in _rows}
+check("a rookie on tonight's roster is projected from his preseason, flagged NEW",
+      "Rookie One" in _names and _names["Rookie One"].get("new")
+      and abs(_names["Rookie One"]["min"] - 24) < 1e-6 and "Vet" in _names
+      and not _names["Vet"].get("new"))
+check("a rostered man with too little or no NBA data is listed, not invented",
+      sorted(_nd) == ["Never Played", "One Game Guy"])
+from engines import nba_view as _nv  # noqa: E402
+_lm = {"sizes": {"pts": 6.0}, "test": {"pts": {"calibration": [
+    {"band": "a", "n": 500, "predicted": 0.3, "actual": 0.3},
+    {"band": "b", "n": 500, "predicted": 0.7, "actual": 0.7}]}}}
+_c_new = _nv.chance(_names["Rookie One"], "pts", 11.5, _lm)
+_c_vet = _nv.chance(_names["Vet"], "pts", 14.5, _lm)
+check("a NEW player's calls are untested (THIN at most); a veteran's are measured",
+      _c_new[2].get("untested") and not _c_vet[2].get("untested"))
 
 # --- 3. Next Man Up ----------------------------------------------------------------
 def gm(d, team, mn, pts):

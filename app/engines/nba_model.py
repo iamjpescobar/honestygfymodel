@@ -68,6 +68,9 @@ FIT_HL = (1, 2, 3, 5, 10)
 FIT_K = (100, 300, 600, 1200)
 FIT_HL_LONG = (30, 60, 120)
 FIT_K_LONG = (100, 300, 1000)
+# the minutes pull (10-22): measured on 2025-26, a drop in minutes held
+# only half the time over the next 10 games (a rise: 71%)
+DOWN_PULL = (0.0, 0.1, 0.2, 0.3, 0.5)
 CARRY = 0.5
 SEASON_GAP_DAYS = 60
 TEST_DAYS = 45
@@ -168,12 +171,19 @@ class Running:
     def rate(self, st, k_min, toward):
         return (self.s[st] + k_min * toward) / (self.m + k_min) if (self.m + k_min) else 0.0
 
-    def project(self, k_min, lr, k_long=None):
+    def project(self, k_min, lr, k_long=None, down=0.0):
         """k_long given (and a long tracker): two levels — recent toward
-        his own long-run rate, that toward the league; else one level."""
+        his own long-run rate, that toward the league; else one level.
+        down (DOWN_PULL, fitted): when his recent minutes run BELOW his
+        long-run minutes, that share of the gap is pulled back — a drop
+        is half noise (foul trouble, a blowout, a night's rest)."""
         if self.w <= 0 or self.n == 0:
             return None
         minutes = self.m / self.w
+        if down and self.long is not None and self.long.w > 0:
+            long_min = self.long.m / self.long.w
+            if minutes < long_min:
+                minutes += down * (long_min - minutes)
         mu = {}
         for st in BASE:
             toward = lr.get(st, 0.0)
@@ -185,10 +195,11 @@ class Running:
         return {"min": minutes, "mu": mu}
 
 
-def walk(players, hl, k_min, lr, lo, hi, hl_long=None, k_long=None):
+def walk(players, hl, k_min, lr, lo, hi, hl_long=None, k_long=None, down=0.0):
     """[(pid, game, projection, prior_games)] for every game in [lo, hi)
     with at least MIN_PRIOR_GAMES before it. hl_long / k_long: the
-    two-level shrink (None = one level, straight to the league)."""
+    two-level shrink (None = one level, straight to the league); down:
+    the minutes pull (DOWN_PULL)."""
     out = []
     for pid, p in (players or {}).items():
         games = sorted(p.get("games") or [], key=lambda g: g[0])
@@ -196,7 +207,7 @@ def walk(players, hl, k_min, lr, lo, hi, hl_long=None, k_long=None):
         lrg = lr.get(group(p.get("pos"))) or {}
         for i, g in enumerate(games):
             if lo <= g[0] < hi and run.n >= MIN_PRIOR_GAMES:
-                pr = run.project(k_min, lrg, k_long)
+                pr = run.project(k_min, lrg, k_long, down)
                 if pr and pr["min"] >= MIN_PROJ_MIN and val(g, "min"):
                     out.append((pid, g, pr, games[:i]))
             run.add(g)
@@ -257,33 +268,79 @@ def half_line(vals):
     return math.floor(sum(vals) / len(vals)) + 0.5
 
 
+def grid(players, lr, fit_lo, fit_hi):
+    """(deviance, {"hl", "k", "hl_long", "k_long", "down_pull"}, rows) —
+    the settings with the lowest Poisson deviance on [fit_lo, fit_hi):
+    the four shrink settings on a grid, then the minutes pull on top."""
+    best = None
+    for hl in FIT_HL:
+        for k in FIT_K:
+            for hl2 in FIT_HL_LONG:
+                for k2 in FIT_K_LONG:
+                    rows = walk(players, hl, k, lr, fit_lo, fit_hi, hl2, k2)
+                    e = _sse(rows)
+                    if best is None or e < best[0]:
+                        best = (e, {"hl": hl, "k": k, "hl_long": hl2, "k_long": k2,
+                                    "down_pull": 0.0}, rows)
+    # the pull, scored on the SAME player-games as no pull (it lifts some
+    # projections over MIN_PROJ_MIN, and a different set of rows is not
+    # a comparison)
+    keys = {(r[0], r[1][0]) for r in best[2]}
+    base_e = _sse(best[2])
+    cand = (base_e, best[1], best[2])
+    for d in DOWN_PULL[1:]:
+        s = dict(best[1], down_pull=d)
+        rows = walk(players, s["hl"], s["k"], lr, fit_lo, fit_hi, s["hl_long"], s["k_long"], d)
+        e = _sse([r for r in rows if (r[0], r[1][0]) in keys])
+        if e < cand[0]:
+            cand = (e, s, rows)
+    return cand
+
+
+def _walk_s(players, s, lr, lo, hi):
+    return walk(players, s["hl"], s["k"], lr, lo, hi, s.get("hl_long"), s.get("k_long"),
+                s.get("down_pull") or 0.0)
+
+
+def paired_dev(players, a, b, lr, lo, hi):
+    """Settings a against settings b on the SAME player-games in [lo, hi)
+    (walk-forward, every base stat): mm.paired_verdict on the summed
+    Poisson deviance per player-game (positive diff = a better)."""
+    ra = {(r[0], r[1][0]): r for r in _walk_s(players, a, lr, lo, hi)}
+    rb = {(r[0], r[1][0]): r for r in _walk_s(players, b, lr, lo, hi)}
+    ks = [k for k in ra if k in rb]
+
+    def dv(r):
+        return sum(deviance(val(r[1], st), r[2]["mu"][st]) for st in BASE
+                   if val(r[1], st) is not None)
+    return mm.paired_verdict([dv(ra[k]) for k in ks], [dv(rb[k]) for k in ks])
+
+
 def fit(players):
-    """{"hl", "k", "sizes", "league", "fit_window", "test_window", "test"}
-    from last season's player games, or {"note"} when too short."""
+    """{"hl", "k", "hl_long", "k_long", "down_pull", "sizes", "league",
+    "fit_window", "test_window", "test", "pull_test"} from last season's
+    player games, or {"note"} when too short. The minutes pull ships only
+    when it beats no pull on the unseen test window (pull_test)."""
     dates = sorted({g[0] for p in (players or {}).values() for g in p.get("games") or []})
     if len(dates) < TEST_DAYS + FIT_DAYS + 30:
         return {"note": "season too short to fit / test"}
     test_lo = dates[-TEST_DAYS]
     fit_lo = dates[-(TEST_DAYS + FIT_DAYS)]
     lr = league_rates(players, before=test_lo)
-    best = None
-    for hl in FIT_HL:
-        for k in FIT_K:
-            for hl2 in FIT_HL_LONG:
-                for k2 in FIT_K_LONG:
-                    rows = walk(players, hl, k, lr, fit_lo, test_lo, hl2, k2)
-                    e = _sse(rows)
-                    if best is None or e < best[0]:
-                        best = (e, hl, k, hl2, k2, rows)
-    _e, hl, k, hl2, k2, fit_rows = best
+    _e, s, fit_rows = grid(players, lr, fit_lo, test_lo)
+    pull_test = None
+    if s["down_pull"]:
+        pull_test = paired_dev(players, s, dict(s, down_pull=0.0), lr, test_lo, "9999")
+        if pull_test.get("verdict") != "beats":
+            s = dict(s, down_pull=0.0)
+            fit_rows = _walk_s(players, s, lr, fit_lo, test_lo)
     sizes = {st: nb_size(fit_rows, st) for st, _l in STATS}
-    test_rows = walk(players, hl, k, lr, test_lo, "9999", hl2, k2)
-    return {"hl": hl, "k": k, "hl_long": hl2, "k_long": k2, "sizes": sizes, "league": lr,
-            "carry": CARRY,
-            "fit_window": [fit_lo, test_lo], "test_window": [test_lo, dates[-1]],
-            "fit_rows": len(fit_rows), "test": test(test_rows, sizes),
-            "ladder": test_ladder(test_rows, sizes),
-            "minutes": minutes_check(test_rows)}
+    test_rows = _walk_s(players, s, lr, test_lo, "9999")
+    return dict(s, sizes=sizes, league=lr, carry=CARRY,
+                fit_window=[fit_lo, test_lo], test_window=[test_lo, dates[-1]],
+                fit_rows=len(fit_rows), test=test(test_rows, sizes),
+                ladder=test_ladder(test_rows, sizes), minutes=minutes_check(test_rows),
+                pull_test=pull_test)
 
 
 def test(rows, sizes):
@@ -388,7 +445,7 @@ def project_now(games, params, pos, today=None):
         if run.long is not None:
             run.long.offseason()
     lr = (params.get("league") or {}).get(group(pos)) or {}
-    return run.project(params["k"], lr, params.get("k_long"))
+    return run.project(params["k"], lr, params.get("k_long"), params.get("down_pull") or 0.0)
 
 
 def calibration(params):
@@ -454,3 +511,148 @@ def next_man_up(players, team_id, out_pid, since=None):
                      "n_with": len(w), "n_without": len(wo)})
     rows.sort(key=lambda r: -(r["delta"].get("pts") or 0))
     return rows
+
+
+# ----------------------------------------------------------------------
+# ROLE CHANGES (10-22): a player whose minutes this season run outside
+# what he was projected at, beyond noise. Flag only — the number already
+# moves (half-life 2 games, and the fitted minutes pull for a drop).
+# MEASURED on 2025-26 (role_check, every 30 days): of players whose next
+# ROLE_N games ran ROLE_MIN+ minutes and ROLE_Z standard errors ABOVE
+# their projection, about half the rise held over the 10 games after;
+# BELOW, about 40% held — a drop is more noise than a rise, which is what
+# the minutes pull is for. The nightly re-measures and prints it.
+# ----------------------------------------------------------------------
+ROLE_N = 3
+ROLE_Z = 2.0
+ROLE_MIN = 3.0
+ROLE_NEXT = 10
+
+
+def minutes_sd(rows):
+    """One game's minutes against his projection: the residual SD."""
+    r = [val(g, "min") - pr["min"] for _pid, g, pr, *_h in rows if val(g, "min")]
+    if len(r) < 2:
+        return None
+    m = sum(r) / len(r)
+    return (sum((x - m) ** 2 for x in r) / len(r)) ** 0.5
+
+
+def role_dir(now_avg, was, n, sd):
+    """"up" / "down" / None: n games averaging now_avg minutes against a
+    projection of `was`."""
+    if not sd or n < ROLE_N or was is None:
+        return None
+    d = now_avg - was
+    z = d / (sd / n ** 0.5)
+    if d >= ROLE_MIN and z >= ROLE_Z:
+        return "up"
+    if d <= -ROLE_MIN and z <= -ROLE_Z:
+        return "down"
+    return None
+
+
+def role_check(players, params, sd, step_days=30):
+    """{"up"|"down": {n, shift, held, then_err}, "sd_min"} on the file's
+    own season: at a checkpoint every step_days days, each player's
+    projection from the games before it, his next ROLE_N games' minutes,
+    then the ROLE_NEXT after — the share of the shift that held, and the
+    projection's error over those games (made after the ROLE_N)."""
+    from datetime import date as _d, timedelta as _td
+    dates = sorted({g[0] for p in (players or {}).values() for g in p.get("games") or []})
+    if not dates or not sd:
+        return None
+    cks, d = [], _d.fromisoformat(dates[0]) + _td(days=step_days)
+    while d.isoformat() < dates[-1]:
+        cks.append(d.isoformat())
+        d += _td(days=step_days)
+    acc = {"up": [], "down": []}
+    for p in (players or {}).values():
+        gs = sorted(p.get("games") or [], key=lambda g: g[0])
+        for ck in cks:
+            before = [g for g in gs if g[0] < ck]
+            after = [g for g in gs if g[0] >= ck and val(g, "min")]
+            if len(before) < 10 or len(after) < ROLE_N + ROLE_NEXT:
+                continue
+            if any(str(g[1]) != str(before[-1][1]) for g in after[:ROLE_N + ROLE_NEXT]):
+                continue
+            a = project_now(before, params, p.get("pos"))
+            if not a:
+                continue
+            first = after[:ROLE_N]
+            now = sum(val(g, "min") for g in first) / ROLE_N
+            k = role_dir(now, a["min"], ROLE_N, sd)
+            if not k:
+                continue
+            nxt = after[ROLE_N:ROLE_N + ROLE_NEXT]
+            later = sum(val(g, "min") for g in nxt) / len(nxt)
+            b = project_now(before + first, params, p.get("pos"))
+            acc[k].append((now - a["min"], later - a["min"], b["min"] - later))
+    out = {"sd_min": round(sd, 2)}
+    for k, xs in acc.items():
+        if xs:
+            out[k] = {"n": len(xs), "shift": round(sum(x[0] for x in xs) / len(xs), 1),
+                      "held": round(sum(x[1] for x in xs) / sum(x[0] for x in xs), 2),
+                      "then_err": round(sum(x[2] for x in xs) / len(xs), 1)}
+    return out
+
+
+def role_now(games, params, pos, cur_from, sd):
+    """{"dir", "now", "was", "n"} for a player tonight, or None: this
+    season's games against his projection as of opening night."""
+    before = [g for g in games or [] if g[0] < cur_from]
+    cur = [g for g in games or [] if g[0] >= cur_from and val(g, "min")]
+    if not before or len(cur) < ROLE_N:
+        return None
+    a = project_now(before, params, pos, today=cur_from)
+    if not a:
+        return None
+    now = sum(val(g, "min") for g in cur) / len(cur)
+    k = role_dir(now, a["min"], len(cur), sd)
+    return {"dir": k, "now": round(now, 1), "was": round(a["min"], 1), "n": len(cur)} if k else None
+
+
+# ----------------------------------------------------------------------
+# THE NIGHTLY RE-TUNE (10-22): champion / challenger. The champion is the
+# settings in use (data/nba/settings.json — the 2025-26 fit until the
+# first replacement). Every night the challenger is fitted (the same
+# grid) on the FIT_DAYS game-days before the newest RETUNE_DAYS, and both
+# are walked over those newest games, which the challenger never saw:
+# the challenger REPLACES the champion only when it beats it there
+# (paired, summed Poisson deviance per player-game). No newest window
+# with RETUNE_MIN_ROWS player-games this season -> no re-tune yet.
+# ----------------------------------------------------------------------
+RETUNE_DAYS = 14
+RETUNE_MIN_ROWS = 1500
+SETTING_KEYS = ("hl", "k", "hl_long", "k_long", "down_pull")
+
+
+def settings_of(params):
+    return {k: (params or {}).get(k, 0.0 if k == "down_pull" else None) for k in SETTING_KEYS}
+
+
+def retune(players, champion, cur_from):
+    """{"window", "fit_window", "n", "challenger", "verdict", "replace"}
+    or {"note"}."""
+    cur = sorted({g[0] for p in (players or {}).values() for g in p.get("games") or []
+                  if g[0] >= cur_from})
+    if len(cur) < RETUNE_DAYS + 7:
+        return {"note": f"this season has {len(cur)} game-days; the re-tune starts at "
+                        f"{RETUNE_DAYS + 7}"}
+    dates = sorted({g[0] for p in players.values() for g in p.get("games") or []})
+    new_lo = cur[-RETUNE_DAYS]
+    i = dates.index(new_lo)
+    fit_lo = dates[max(0, i - FIT_DAYS)]
+    lr = league_rates(players, before=new_lo)
+    champ = settings_of(champion)
+    n = len(_walk_s(players, champ, lr, new_lo, "9999"))
+    if n < RETUNE_MIN_ROWS:
+        return {"note": f"{n} player-games in the newest {RETUNE_DAYS} game-days; the re-tune "
+                        f"starts at {RETUNE_MIN_ROWS}"}
+    _e, chal, _rows = grid(players, lr, fit_lo, new_lo)
+    if chal == champ:
+        return {"window": [new_lo, cur[-1]], "fit_window": [fit_lo, new_lo], "n": n,
+                "challenger": chal, "verdict": None, "replace": False, "same": True}
+    v = paired_dev(players, chal, champ, lr, new_lo, "9999")
+    return {"window": [new_lo, cur[-1]], "fit_window": [fit_lo, new_lo], "n": v.get("n"),
+            "challenger": chal, "verdict": v, "replace": v.get("verdict") == "beats"}

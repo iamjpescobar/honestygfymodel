@@ -20,9 +20,11 @@ from engines import model_view as mv
 from engines import nba_model as nm
 from engines import nba_sim as ns
 from engines import nba_view as nv
+from engines.live_sync import sync_latest_button
 
 N_SIMS = 10000
 page_header("NBA Simulator", "Play tonight's game 10,000 times", eyebrow="NBA", align="left")
+sync_latest_button(key="sync_nba_sim", include_data_package=True)
 games, model, pget = nv.load()
 _li.render_note("nba")
 sim_meta = pget("sim") or {}

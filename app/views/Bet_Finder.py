@@ -20,11 +20,13 @@ from engines import bet_finder as bf
 from engines import live_injuries as _li
 from engines import model_math as mm
 from engines import model_view as mv
+from engines.live_sync import sync_latest_button
 
 EASTERN = ZoneInfo("America/New_York")
 
 page_header("Bet Finder", "Type your book's prices — get BET or SKIP", eyebrow="EVERY SPORT",
             align="left")
+sync_latest_button(key="sync_bet_finder", include_data_package=True)
 
 st.markdown(
     f'<div style="font-size:var(--lc-text-body); line-height:1.6; color:{COLOR["text"]};">'
@@ -197,8 +199,9 @@ def _nba_groups(item):
             if av.is_out(r.get("status")):
                 continue
             lab = av.maybe_label(r.get("status"))
-            rows.append({"_name": f"{r['name']} ({abbr})" + (f" \u26a0 {lab}" if lab else ""),
-                         "_why": r.get("why"),
+            rows.append({"_name": f"{r['name']} ({abbr})" + (f" \u26a0 {lab}" if lab else "")
+                         + nv.tags(r),
+                         "_why": r.get("why"), "_untested": bool(r.get("new")),
                          "_pmfs": nm.player_pmfs(r.get("mu"), model.get("sizes"))})
     stats = tuple((s, lab, (0.5,)) for s, lab in nm.PAGE_STATS
                   if s != "q1pts" or ((model.get("test") or {}).get("q1pts")))

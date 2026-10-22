@@ -46,6 +46,7 @@ from styles.kc_theme import page_header, card, footer, data_timestamp, COLOR
 from engines.calibration import summary, BOARDS, _load
 from engines.calibration_trend import render_calibration_trend
 from engines import model_picks as _mpk
+from engines.live_sync import sync_latest_button
 
 # Theme injection lives in app.py, which renders once per script run
 # before this view is exec'd. It used to be called in each view as
@@ -476,6 +477,7 @@ def render():
                   "official box score. Picks are locked before first pitch."),
         align="left",
     )
+    sync_latest_button(key="sync_results", include_data_package=True)
     data_timestamp("Record updated")
 
     data = _load()

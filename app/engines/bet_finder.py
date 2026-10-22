@@ -70,6 +70,10 @@ def support_at(row, stat, line, markets, calibration):
     """How well-measured this call is (model_view.support_for) — what the
     guard reads to decide whether the chance may carry STRONG."""
     from engines import model_view as mv
+    if row.get("_untested"):
+        # a row the model was never tested on (an NBA newcomer projected
+        # from preseason): THIN at most, whatever the curve says
+        return {"measured": False, "in_range": False, "n": 0, "untested": True}
     pmf = (row.get("_pmfs") or {}).get(stat)
     raw_over = mm.over_prob_pmf(pmf, line) if pmf else None
     return mv.support_for(raw_over, stat, line, markets, calibration)

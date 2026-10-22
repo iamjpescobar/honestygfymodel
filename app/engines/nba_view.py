@@ -46,9 +46,47 @@ def in_the_number(model):
                     + ")")
     if on_out:
         bits.append("teammates ruled OUT (" + ", ".join(lab[s] for s in on_out) + ")")
+    if ctx.get("vol"):
+        bits.append("his team's rotation adding up to 240 minutes")
     return ("IN the number: " + " and ".join(bits) + f" — better than without them on {won} of "
             f"{len(nm.STATS)} stats on last season's unseen games. NOT in it: late scratches "
             f"after the nightly, rest / back-to-backs.")
+
+
+def tags(row):
+    """The player's flags after his name: NEW (no NBA games on file), NEW
+    TEAM (his games so far are mostly another team's), ROLE up / down
+    (this season's minutes outside his opening projection, beyond noise)."""
+    t = ""
+    if row.get("new"):
+        t += " · NEW"
+    if row.get("new_team"):
+        t += " · NEW TEAM"
+    rd = (row.get("role") or {}).get("dir")
+    if rd:
+        t += " · ROLE ↑" if rd == "up" else " · ROLE ↓"
+    return t
+
+
+def tags_note(rows, model):
+    """One caption for whichever flags are on these rows, or ''."""
+    rows = list(rows or [])
+    out = []
+    if any(r.get("new_team") for r in rows):
+        out.append("NEW TEAM = most of his games on file are for another team. His old-team "
+                   "games are NOT discounted — measured on last season's 129 mid-season moves, "
+                   "cutting them did not beat keeping them; his minutes follow the new team "
+                   "within a few games, and his team's rotation must add up to 240 minutes.")
+    rc = (model or {}).get("role") or {}
+    if any((r.get("role") or {}).get("dir") for r in rows):
+        up, dn = rc.get("up") or {}, rc.get("down") or {}
+        out.append(f"ROLE ↑ / ↓ = his minutes this season run {nm.ROLE_MIN:g}+ above / below "
+                   f"his opening-night projection, beyond noise"
+                   + (f" (last season about {100 * up['held']:.0f}% of such rises held over the "
+                      f"next 10 games, {100 * dn['held']:.0f}% of drops — so a drop is only "
+                      f"partly believed)" if up.get("held") is not None and dn.get("held")
+                      is not None else "") + ".")
+    return " ".join(out)
 
 
 def chance(row, stat, line, model, side="Over"):
@@ -73,6 +111,10 @@ def chance(row, stat, line, model, side="Over"):
         c2 = tpb.calibrate(raw, lad["calibration"])
         if c2 is not None:
             ch, sup = c2, mv.curve_support(raw, lad["calibration"])
+    if row.get("new"):
+        # projected from preseason only — the model was never tested on
+        # players like him, so no call on him goes above THIN
+        sup = {"measured": False, "in_range": False, "n": 0, "untested": True}
     if side == "Under":
         return 1 - ch, 1 - raw, sup
     return ch, raw, sup
@@ -105,8 +147,8 @@ def long_shots(games, model):
         for side, other in (("away", "home"), ("home", "away")):
             players = []
             for r in g.get(side + "_props") or []:
-                if av.is_out(r.get("status")):
-                    continue
+                if av.is_out(r.get("status")) or r.get("new"):
+                    continue                  # a newcomer is untested: never a long shot
                 probs = {}
                 for key, _lab, st, n in markets:
                     pm = nm.pmf((r.get("mu") or {}).get(st), sizes.get(st))

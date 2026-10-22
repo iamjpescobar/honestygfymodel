@@ -11,8 +11,10 @@ from engines import model_math as mm
 from engines import model_view as mv
 from engines import nba_model as nm
 from engines import nba_view as nv
+from engines.live_sync import sync_latest_button
 
 page_header("NBA Trends", "One player, every stat, every game", eyebrow="NBA", align="left")
+sync_latest_button(key="sync_nba_trends", include_data_package=True)
 games, model, _pget = nv.load()
 _li.render_note("nba")
 rows = nv.all_props(games)

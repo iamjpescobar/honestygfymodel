@@ -20,11 +20,13 @@ from engines import live_injuries as _li
 from engines import milestones as ms
 from engines import model_math as mm
 from engines import model_view as mv
+from engines.live_sync import sync_latest_button
 
 EASTERN = ZoneInfo("America/New_York")
 
 page_header("Milestone Watch", "Who is close to a big number tonight", eyebrow="EVERY SPORT",
             align="left")
+sync_latest_button(key="sync_milestones", include_data_package=True)
 st.markdown(
     f'<div style="font-size:var(--lc-text-body); line-height:1.6; color:{COLOR["text"]};">'
     f'Every player within one game of a round career or season number &mdash; a '
