@@ -137,7 +137,8 @@ def _nfl_games():
             continue
         out.append({"label": f"{g.get('away_abbr')} @ {g.get('home_abbr')}  "
                              f"{g.get('kickoff_label') or g.get('kick_date_et') or ''}".strip(),
-                    "g": g, "league": payload.get("league") or {}, "dvp": payload.get("dvp")})
+                    "g": g, "league": payload.get("league") or {}, "dvp": payload.get("dvp"),
+                    "quarters": (payload.get("sim") or {}).get("quarters")})
     return out
 
 
@@ -151,9 +152,41 @@ def _nfl_groups(item):
             r["_name"] += f" ⚠ {av.maybe_label(r.get('Status'))}"
     stats = tuple((s, lab, (0.5,)) for s, lab, *_ in mv.NFL_STATS)
     away, home = g.get("away_abbr") or g.get("away"), g.get("home_abbr") or g.get("home")
-    return ([{"label": "Players", "rows": rows, "stats": stats, "markets": (),
-              "cal": mv.nfl_calibration(league), "per_player_line": True}],
-            bf.game_line_items(g.get("model"), g.get("odds"), away, home))
+    groups = [{"label": "Players", "rows": rows, "stats": stats, "markets": (),
+               "cal": mv.nfl_calibration(league), "per_player_line": True}]
+    q = _nfl_quarter_group(rows, item.get("quarters"))
+    if q:
+        groups.append(q)
+    return groups, bf.game_line_items(g.get("model"), g.get("odds"), away, home)
+
+
+def _nfl_quarter_group(rows, qmeta):
+    """Players — 1st quarter / 1st half (10-22, engines/nfl_quarters): his
+    game projection through the measured 1Q / 1H spread. Only the spans
+    and stats that BEAT his own 1Q / 1H rate on unseen games are offered."""
+    from engines import nfl_quarters as nq
+    qmeta = qmeta or {}
+    keys = nq.offered(qmeta.get("test"))
+    if not keys or not qmeta.get("model"):
+        return None
+    out = []
+    for r in rows:
+        pm = {}
+        for k in keys:
+            per, st_ = k.split("_", 1)
+            mu = (r.get("_means") or {}).get(st_)
+            x = nq.pmf(qmeta["model"], per, st_, mu) if mu else None
+            if x:
+                pm[k] = x
+        if pm:
+            out.append({"_name": r["_name"], "_pmfs": pm})
+    if not out:
+        return None
+    cal = {f"@{k}": (qmeta["test"][k] or {}).get("calibration") for k in keys
+           if (qmeta["test"][k] or {}).get("calibration")}
+    stats = tuple((k, nq.label(*k.split("_", 1)).capitalize(), (0.5,)) for k in keys)
+    return {"label": "Players — 1st quarter / 1st half", "rows": out, "stats": stats,
+            "markets": (), "cal": cal, "per_player_line": True}
 
 
 def _mlb_games():

@@ -24,6 +24,7 @@ from engines import model_math as mm
 from engines import model_view as mv
 from engines import nfl_projection as nproj
 from engines import nfl_prop_odds as npo
+from engines import nfl_quarters as nq
 from engines import nfl_sim as fs
 from engines.live_sync import sync_latest_button
 
@@ -237,6 +238,69 @@ with card("nfs_box"):
                          key=f"nfs_box_{side}_{role}")
     st.caption("Each cell: his typical game, then the range 8 of 10 simulated games land in. TD "
                "= how often he scores at least one.")
+
+# ---------------- the 1st quarter / 1st half ----------------
+qmeta = sim_meta.get("quarters") or {}
+if qmeta.get("model"):
+    with card("nfs_q"):
+        st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">1st quarter / '
+                    f'1st half</div>', unsafe_allow_html=True)
+        qtest, qcal = qmeta.get("test") or {}, {}
+        for _k, _x in qtest.items():
+            if _x.get("calibration"):
+                qcal[f"@{_k}"] = _x["calibration"]
+        c1, c2 = st.columns([1, 2])
+        per_lab = c1.radio("Span", [lab for _p, lab, _i in nq.PERIODS], horizontal=True,
+                           key="nfs_q_per")
+        per = next(p_ for p_, lab, _i in nq.PERIODS if lab == per_lab)
+        tl = nq.team_lines(float(pj["mu_home"]), float(pj["mu_away"]), qmeta.get("team"), per)
+        tv = ((qmeta.get("team_test") or {}).get(f"{per}_lead_home") or {}).get("verdict") or {}
+        if tl:
+            st.markdown(
+                f'<div style="font-size:var(--lc-text-body); line-height:1.8;">'
+                f'Points in the {per_lab.lower()}: about <b>{tl["mu_total"]:.1f}</b> together '
+                f'(the {per_lab.lower()} holds {100 * qmeta["team"][per]["share"]:.0f}% of a '
+                f'game&rsquo;s points).<br>Leading after it: {ha} <b>{_pc(tl["lead_home"])}</b>, '
+                f'tied <b>{_pc(tl["tie"])}</b>, {aa} <b>{_pc(tl["lead_away"])}</b> '
+                f'<span style="color:{COLOR["text_muted"]};">'
+                f'({mv.trust_label(tv.get("verdict"))})</span></div>', unsafe_allow_html=True)
+        stl = c2.selectbox("Stat", [lab for _s, lab in nq.Q_STATS], index=5, key="nfs_q_stat")
+        qs = next(s_ for s_, lab in nq.Q_STATS if lab == stl)
+        k_ = nq.key(per, qs)
+        rows_q, sides_q = [], []
+        for p in sorted([p for p in players if (p["proj"].get(qs) or 0) > 0],
+                        key=lambda p: -(p["proj"].get(qs) or 0)):
+            pm = nq.pmf(qmeta["model"], per, qs, float(p["proj"][qs]))
+            if not pm:
+                continue
+            ln = float(mv.balanced_line(pm))
+            raw = mm.prob_at_least(pm, int(math.floor(ln)) + 1)
+            ch, _b = mv.delivered_over(raw, k_, ln, (), qcal)
+            sides_q.append((ch, 1 - ch))
+            rows_q.append({"Player": f"{p['name']} ({p['team']})", "Line": f"{ln:g}",
+                           "Average": f"{sum(i * x for i, x in enumerate(pm)):.1f}",
+                           "Over": _pc(ch), "Under": _pc(1 - ch)})
+
+        def _paint_q(frame):
+            o_ = pd.DataFrame("", index=frame.index, columns=frame.columns)
+            for k in frame.index:
+                o_.at[k, "Over"] = mv.chance_css(sides_q[k][0])
+                o_.at[k, "Under"] = mv.chance_css(sides_q[k][1])
+            return o_
+        if rows_q:
+            st.dataframe(mv.painted(pd.DataFrame(rows_q), _paint_q), hide_index=True,
+                         width="stretch", key=f"nfs_q_{k_}")
+        xv = (qtest.get(k_) or {})
+        st.caption(
+            f"{nq.label(per, qs).capitalize()}: his game projection, spread the way the "
+            f"{per_lab.lower()} really lands for players projected like him (2025, only games "
+            f"whose quarters add up to the box score). Graded against his own last-8 "
+            f"{per_lab.lower()} rate on 2025's second half: "
+            f"{mv.trust_label((xv.get('verdict') or {}).get('verdict'))}"
+            + (f" (n={xv.get('n')})" if xv.get("n") else "")
+            + ". Only graded spans that beat it reach the Bet Finder. The line is the one "
+              "nearest a coin flip for him — use your book's on the Bet Finder.")
+
 
 # ---------------- every player ----------------
 with card("nfs_players"):

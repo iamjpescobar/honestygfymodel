@@ -612,11 +612,14 @@ def _phome(margin, sd):
     return 0.5 * (1 + math.erf(margin / (sd * math.sqrt(2))))
 
 
-def build(prior, finals, logs, pc, league, prior_players=None, prior_w=None):
+def build(prior, finals, logs, pc, league, prior_players=None, prior_w=None, quarters=None):
     """{"links", "combos", "sds", "n_games", "this_season_games", "cut"}:
     links fitted on last season's first half of weeks, the parlay test on
     its second half plus this season (prior = {"finals", "logs"} for
-    2025, finals / logs this season's, pc = nfl_precompute)."""
+    2025, finals / logs this season's, pc = nfl_precompute). quarters:
+    data/nfl/prior_quarters.json's games -> "quarters": the 1st-quarter /
+    1st-half model fitted on the same first half of weeks, tested on the
+    second (engines/nfl_quarters.build)."""
     spreads = (league or {}).get("prop_spreads") or {}
     flags, strength = league.get("matchup_in_number"), league.get("matchup_strength")
     pf = list((prior or {}).get("finals") or [])
@@ -641,5 +644,10 @@ def build(prior, finals, logs, pc, league, prior_players=None, prior_w=None):
     cal = {f"@{k}": v["calibration"] for k, v in (league.get("prop_validation") or {}).items()
            if isinstance(v, dict) and v.get("calibration")}
     combos = test_combos(test, spreads, links, (par["sd_margin"], par["sd_total"]), cal)
+    qblk = None
+    if quarters:
+        from engines import nfl_quarters as nq
+        qblk = nq.build(old, quarters, cut)
     return {"links": links, "combos": combos, "sds": [par["sd_margin"], par["sd_total"]],
-            "n_games": len(test), "this_season_games": len(new), "cut_week": cut}
+            "n_games": len(test), "this_season_games": len(new), "cut_week": cut,
+            "quarters": qblk}

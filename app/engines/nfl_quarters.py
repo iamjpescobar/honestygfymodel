@@ -26,6 +26,7 @@ quarters add up to his box score, and refuses to write when they don't.
 
 Pure — no requests.
 """
+import math
 import re
 
 STATS = ("pass_yds", "pass_att", "pass_cmp", "pass_td", "rush_yds", "carries", "rec_yds",
@@ -266,3 +267,243 @@ def check(rec, box):
             out[st] = out.get(st, 0) + int(abs(got - v) <= tol)
             out[f"{st}_n"] = out.get(f"{st}_n", 0) + 1
     return out
+
+
+# ----------------------------------------------------------------------
+# THE 1ST QUARTER / 1ST HALF MODEL (10-22). A player's 1Q / 1H line is his
+# GAME projection (the props boards' number) times how a quarter's share
+# of that stat actually lands for players projected like him: the
+# measured distribution of (his 1Q value / his game projection) on last
+# season's first half of weeks, in three projection bands (a 30-yard
+# receiver blanks the 1st quarter far more often than a 90-yard one).
+# Only player-games whose quarters ADD UP to his box score are used —
+# missing is never zero. TESTED on the second half of weeks against his
+# OWN 1Q / 1H hit rate over his last 8 games, at a line next to his own
+# 1Q / 1H average (as books hang it).
+# ----------------------------------------------------------------------
+PERIODS = (("q1", "1st quarter", (0,)), ("h1", "1st half", (0, 1)))
+Q_STATS = (("pass_yds", "passing yards"), ("pass_cmp", "completions"),
+           ("pass_att", "pass attempts"), ("rush_yds", "rushing yards"),
+           ("carries", "carries"), ("rec_yds", "receiving yards"), ("rec", "receptions"))
+N_QUANT = 101
+HIST_N, HIST_MIN = 8, 4
+
+
+def key(per, stat):
+    return f"{per}_{stat}"
+
+
+def label(per, stat):
+    return f"{dict((p, l) for p, l, _i in PERIODS)[per]} {dict(Q_STATS)[stat]}"
+
+
+def _span(arr, per):
+    ix = dict((p, i) for p, _l, i in PERIODS)[per]
+    return sum((arr or [0] * SLOTS)[i] for i in ix)
+
+
+def clean_rows(rows, quarters):
+    """[(week, pid, stat, game projection, his quarters)] for every
+    player-game in nfl_sim.collect's rows whose quarters add up to his box
+    score for that stat (yards within 1)."""
+    out = []
+    for g in rows or []:
+        qg = (quarters or {}).get(str(g.get("event_id")))
+        if not qg:
+            continue
+        for p in g["players"]:
+            qa = (qg.get("players") or {}).get(str(p["pid"])) or {}
+            for s, _l in Q_STATS:
+                mu, y = p["proj"].get(s), p["actual"].get(s)
+                if mu is None or y is None or mu <= 0:
+                    continue
+                arr = qa.get(s) or [0] * SLOTS
+                if abs(sum(arr) - y) > (1 if s.endswith("yds") else 0):
+                    continue
+                out.append((g["week"], str(p["pid"]), s, float(mu), list(arr)))
+    return out
+
+
+def fit(clean, hi):
+    """{"q1": {stat: {"edges": [a, b], "q": [[quantiles of value / mu] x 3],
+    "share", "n"}}, "h1": ...} from rows in weeks before `hi`."""
+    import numpy as np
+    out = {}
+    for per, _l, _i in PERIODS:
+        out[per] = {}
+        for s, _sl in Q_STATS:
+            xs = [r for r in clean if r[2] == s and r[0] < hi]
+            if len(xs) < 150:
+                continue
+            mus = sorted(r[3] for r in xs)
+            edges = [mus[len(mus) // 3], mus[2 * len(mus) // 3]]
+            bands = [[], [], []]
+            for r in xs:
+                b = 0 if r[3] < edges[0] else (1 if r[3] < edges[1] else 2)
+                bands[b].append(_span(r[4], per) / r[3])
+            grid = np.linspace(0, 1, N_QUANT)
+            tot = sum(sum(r[4]) for r in xs)
+            out[per][s] = {"edges": [round(e, 2) for e in edges],
+                           "q": [[round(float(v), 4) for v in np.quantile(b_, grid)]
+                                 for b_ in bands],
+                           "share": round(sum(_span(r[4], per) for r in xs) / tot, 4)
+                           if tot else None, "n": len(xs)}
+    return out
+
+
+def pmf(model, per, stat, mu, top=None):
+    """P(value = k), k = 0..top, for a player projected `mu` for the GAME:
+    the measured ratio distribution of his band, scaled by mu."""
+    import numpy as np
+    m = ((model or {}).get(per) or {}).get(stat)
+    if not m or mu is None or mu <= 0:
+        return None
+    e = m["edges"]
+    b = 0 if mu < e[0] else (1 if mu < e[1] else 2)
+    q = np.asarray(m["q"][b], dtype=float) * float(mu)
+    top = int(top or max(3, math.ceil(q[-1]) + 2))
+
+    def cdf(x):                       # share of the quantile points <= x
+        return float(np.searchsorted(q, x, side="right")) / len(q)
+    out = []
+    prev = 0.0
+    for k in range(top + 1):
+        c = cdf(k + 0.5) if k < top else 1.0
+        out.append(max(0.0, c - prev))
+        prev = c
+    return out
+
+
+def test(clean, model, lo):
+    """{key(per, stat): {n, model_brier, baseline_brier, verdict,
+    calibration, predicted, actual}} on weeks from `lo`."""
+    from engines import model_math as mm
+    hist = {}
+    for r in sorted(clean, key=lambda r: r[0]):
+        hist.setdefault((r[1], r[2]), []).append((r[0], r[4]))
+    out = {}
+    for per, _l, _i in PERIODS:
+        for s, _sl in Q_STATS:
+            M, B = [], []
+            for w, pid, st_, mu, arr in clean:
+                if st_ != s or w < lo:
+                    continue
+                prev = [a for ww, a in hist[(pid, s)] if ww < w][-HIST_N:]
+                if len(prev) < HIST_MIN:
+                    continue
+                pv = [_span(a, per) for a in prev]
+                line = math.floor(sum(pv) / len(pv)) + 0.5
+                pm = pmf(model, per, s, mu)
+                if not pm:
+                    continue
+                y = 1 if _span(arr, per) > line else 0
+                M.append((mm.prob_at_least(pm, int(line) + 1), y))
+                B.append((sum(1 for v in pv if v > line) / len(pv), y))
+            if not M:
+                continue
+            sm, sb = mm.score_predictions(M), mm.score_predictions(B)
+            out[key(per, s)] = {
+                "n": sm["n"], "model_brier": sm["brier"], "baseline_brier": sb["brier"],
+                "verdict": mm.paired_verdict([(p - y) ** 2 for p, y in M],
+                                             [(q - y) ** 2 for q, y in B]),
+                "calibration": mm.calibration_bins(M),
+                "predicted": round(sum(p for p, _y in M) / len(M), 4),
+                "actual": round(sum(y for _p, y in M) / len(M), 4)}
+    return out
+
+
+def offered(test_block):
+    """The 1Q / 1H player markets a bet can be priced on: only those that
+    BEAT his own 1Q / 1H rate on unseen games (no false STRONG)."""
+    return tuple(k for k, x in (test_block or {}).items()
+                 if ((x or {}).get("verdict") or {}).get("verdict") == "beats")
+
+
+# --- the game: points by quarter -----------------------------------------------------
+def team_fit(rows, quarters, hi):
+    """{"q1": {"share", "sd"}, "h1": ...} — the share of a team's points
+    scored in the span and the spread of the span's MARGIN around the
+    game model's margin x share, on weeks before `hi`."""
+    import numpy as np
+    out = {}
+    for per, _l, _i in PERIODS:
+        pts = tot = 0.0
+        res = []
+        for g in rows or []:
+            qg = (quarters or {}).get(str(g.get("event_id")))
+            if g["week"] >= hi or not qg:
+                continue
+            lh, la = (qg.get("lines") or {}).get(str(g["home_id"])), \
+                (qg.get("lines") or {}).get(str(g["away_id"]))
+            if not lh or not la or len(lh) < 4 or len(la) < 4:
+                continue
+            pts += _span(lh, per) + _span(la, per)
+            tot += sum(lh) + sum(la)
+            res.append((g, _span(lh, per) - _span(la, per)))
+        if tot <= 0 or len(res) < 60:
+            continue
+        sh = pts / tot
+        r = [m - (g["mu_h"] - g["mu_a"]) * sh for g, m in res]
+        out[per] = {"share": round(sh, 4), "sd": round(float(np.std(r)), 3), "n": len(res)}
+    return out
+
+
+def team_lines(mu_h, mu_a, tf, per):
+    """{"lead_home", "tie", "lead_away", "mu_total"} for the span — the
+    margin normal around the game model's margin x share; a tie is the
+    band within half a point."""
+    from engines import model_math as mm
+    t = (tf or {}).get(per)
+    if not t:
+        return None
+    m, sd = (mu_h - mu_a) * t["share"], t["sd"]
+    lead = 1 - mm.normal_cdf((0.5 - m) / sd)
+    away = mm.normal_cdf((-0.5 - m) / sd)
+    return {"lead_home": lead, "lead_away": away, "tie": max(0.0, 1 - lead - away),
+            "mu_total": (mu_h + mu_a) * t["share"]}
+
+
+def team_test(rows, quarters, tf, lo):
+    """Home leads after the span: the model vs the league's own rate before
+    `lo`. {per + "_lead_home": {...}}."""
+    from engines import model_math as mm
+    out = {}
+    for per, _l, _i in PERIODS:
+        base, M, B = [], [], []
+        for g in rows or []:
+            qg = (quarters or {}).get(str(g.get("event_id")))
+            if not qg:
+                continue
+            lh, la = (qg.get("lines") or {}).get(str(g["home_id"])), \
+                (qg.get("lines") or {}).get(str(g["away_id"]))
+            if not lh or not la or len(lh) < 4 or len(la) < 4:
+                continue
+            y = 1 if _span(lh, per) > _span(la, per) else 0
+            if g["week"] < lo:
+                base.append(y)
+                continue
+            t = team_lines(g["mu_h"], g["mu_a"], tf, per)
+            if t:
+                M.append((t["lead_home"], y))
+        if not M or not base:
+            continue
+        br = sum(base) / len(base)
+        B = [(br, y) for _p, y in M]
+        sm, sb = mm.score_predictions(M), mm.score_predictions(B)
+        out[f"{per}_lead_home"] = {
+            "n": sm["n"], "model_brier": sm["brier"], "baseline_brier": sb["brier"],
+            "verdict": mm.paired_verdict([(p - y) ** 2 for p, y in M],
+                                         [(q - y) ** 2 for q, y in B]),
+            "predicted": round(sum(p for p, _y in M) / len(M), 4),
+            "actual": round(sum(y for _p, y in M) / len(M), 4)}
+    return out
+
+
+def build(rows, quarters, cut):
+    """The block the nightly ships: model fitted before `cut`, tested from it."""
+    clean = clean_rows(rows, quarters)
+    model = fit(clean, cut)
+    tf = team_fit(rows, quarters, cut)
+    return {"model": model, "test": test(clean, model, cut), "team": tf,
+            "team_test": team_test(rows, quarters, tf, cut), "cut_week": cut,
+            "clean_rows": len(clean)}

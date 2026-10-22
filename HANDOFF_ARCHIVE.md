@@ -10,6 +10,39 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — Why 10,000 sims, and the parlay now runs 500,000. 2026-10-20 (5)
+
+**Suite 146, FAILING: none.** test_nba_sim +2 controls, red by exit code
+(joint_precise counting only the last chunk; simulating every player).
+
+Izzy: "why 10,000? best simulator ever". MEASURED (one 4-leg SGP, 20
+runs per size): the lift's run-to-run SD was 0.022 at 10k, 0.016 at
+50k, 0.008 at 200k, 0.003 at 1M — at 10k the noise was as big as the
+lift (+2%). The game numbers are fine at 10k (a 50% chance is +/- 0.5
+pts); the parlay's link was not. Sim count is precision, not accuracy:
+past the noise, more games add nothing — the model inside decides.
+
+nba_sim.joint_precise: the parlay at SGP_SIMS = 500,000 games in
+SGP_CHUNK = 100,000 chunks, simulating ONLY the leg players (a player's
+draw needs the shared score and his own numbers, so the rest of the
+roster changes nothing): 1.4 s, 62 MB peak here; cached per game + leg
+set (_legs_run). Returns lift_se (from the all-hit count); the page says
+"move together" / "pull apart" only when the lift is 2 SE from 1, else
+"no real link". The game and player tables stay at 10,000.
+
+NEXT, the real upgrades (each measured on the fit window, tested on the
+unseen one, before shipping): tonight's opponent and pace in the props
+(not in the number today); a teammate OUT moving minutes and usage
+inside the sim (Next Man Up data already exists); then the top-scorer
+gap (entry (4)).
+
+FILES: app/engines/nba_sim.py, app/views/NBA_Sim.py, tests/test_nba_sim.py,
+HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
+---
+
 ## PICK UP HERE — Points model fixed (stars no longer shrunk to average); the Simulator passes; the Bet Log. 2026-10-20 (4)
 
 **Suite 146, FAILING: none.** New tests/test_bet_log.py (4 controls, red

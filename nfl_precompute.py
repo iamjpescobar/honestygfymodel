@@ -1446,8 +1446,13 @@ def main(today=None):
         _t0 = time.time()
         _plogs2 = load_or_fetch_prior_logs(_pf, lambda eid: ef.fetch_summary(LEAGUE, eid)) \
             if _pf else {}
+        _qp = ROOT / "data" / "nfl" / "prior_quarters.json"
+        _quarters = (json.loads(_qp.read_text()) or {}).get("games") if _qp.exists() else None
+        if not _quarters:
+            print("::warning::NFL quarters: data/nfl/prior_quarters.json missing - run the "
+                  "'NFL prior quarters' workflow once. No 1st-quarter / 1st-half props tonight.")
         sim_block = nfl_sim.build(_plogs2, finals, logs, sys.modules[__name__], league,
-                                  prior_players or None, pw)
+                                  prior_players or None, pw, quarters=_quarters)
         if sim_block:
             _L = sim_block["links"]
             print(f"  [verify] NFL simulator links ({time.time() - _t0:.0f}s): score / script "
@@ -1462,6 +1467,23 @@ def main(today=None):
                       f"{_x['sim_brier']} vs multiplied {_x['independent_brier']} -> "
                       f"{_v.get('verdict')} (z={_v.get('z')}); predicted {_x['predicted_sim']} "
                       f"(multiplied {_x['predicted_ind']}) vs actual {_x['actual']}")
+            _q = sim_block.get("quarters") or {}
+            if _q:
+                from engines import nfl_quarters as _nq
+                print(f"  [verify] NFL 1Q / 1H: {_q['clean_rows']} player-game stats whose "
+                      f"quarters add up to the box; fitted before week {_q['cut_week']}; team "
+                      f"points share {_q.get('team')}")
+                for _k, _x in (_q.get("test") or {}).items():
+                    _v = _x.get("verdict") or {}
+                    _per, _st = _k.split("_", 1)
+                    print(f"  [verify] NFL {_nq.label(_per, _st):30s} n={_x['n']} model "
+                          f"{_x['model_brier']} vs his own last-8 rate {_x['baseline_brier']} -> "
+                          f"{_v.get('verdict')} (z={_v.get('z')}); predicted {_x['predicted']} "
+                          f"vs actual {_x['actual']}")
+                for _k, _x in (_q.get("team_test") or {}).items():
+                    _v = _x.get("verdict") or {}
+                    print(f"  [verify] NFL {_k} n={_x['n']} model {_x['model_brier']} vs league "
+                          f"rate {_x['baseline_brier']} -> {_v.get('verdict')} (z={_v.get('z')})")
         else:
             print("::warning::NFL simulator not built (no 2025 box scores or game model)")
     except Exception as exc:  # noqa: BLE001

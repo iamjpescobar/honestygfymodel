@@ -154,6 +154,65 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — NFL 1st quarter / 1st half: player props on the Simulator and Bet Finder, half / quarter leader; quarters parser fixed again. 2026-10-22 (8)
+
+**Suite 157, FAILING: none.** New tests/test_nfl_quarter_props.py (5
+controls, red by exit code: quarters that miss the box kept, fit on every
+week, no projection band, offered() passing THIN, no tie band);
+tests/test_period_backfills.py +2 checks (controls red: statYardage
+instead of the text's gain, passer dropped when the catcher isn't
+found). NFL_Sim and Bet Finder headless on the archived week + a real
+build. Izzy: "Do nhl and nfl make sure player props are included". This
+zip supersedes qfix.zip (same parser files) if that was not pushed.
+
+PARSER (engines/nfl_quarters): the 10-22 rerun after (7) read receiving
+yards 93.1%, rushing 89.3% but QB passing yards only 72.9%. From 2025's
+box scores: QBs with the right attempts but short yards (completions
+dropped when the catcher's name wasn't found; a penalty enforced after
+the play riding statYardage — Dak wk1 +15). Now the gain is read from
+the text ('for 12 yards', 'for no gain', '22 Yd pass from', '4 yard
+rush'; statYardage only when the text has none) and the passer gets the
+completion and yards with or without a named catcher. The backfill log
+now prints completions with no catcher found and the first QBs whose
+quarters still miss (event, id, box yds, quarters yds, att). NEXT: Izzy
+reruns "NFL prior quarters"; the nightly refits on the new file itself.
+
+MODEL (nfl_quarters.fit / pmf / test, run inside nfl_sim.build on its
+own split: fit weeks < 10, test 10-18 of 2025): a player's 1Q / 1H stat =
+his GAME projection (the Prop Lab's) x the measured distribution of
+(1Q value / game projection) for players in his projection band (three
+bands per stat — a small role blanks the 1st quarter far more often).
+Only player-games whose quarters add up to his box (missing != zero).
+Test: vs his own last-8 1Q / 1H hit rate at a line next to his own
+1Q / 1H average. On the file before this fix (z): 1Q rec 6.2, rec yds
+5.3, rush yds 2.8, carries 2.2, completions 2.5 (n 161, over-predicts —
+the curve fixes delivery); 1H rec 7.3, rec yds 5.9, rush yds 3.1,
+carries 2.8 — BEAT. QB yards / attempts 1Q and 1H, 1H completions:
+thin or fail (n ~150 — the clean QB set is small until the rerun).
+Team: points share 1Q 0.195, 1H 0.491; margin sd 6.2 / 10.4. Leading
+after the 1Q fails vs the league rate (z -0.2), after the 1H thin
+(1.7) — on the page labelled, never on the Bet Finder.
+
+PAGES: NFL_Sim "1st quarter / 1st half" card (span toggle; points in the
+span, who leads / tie; every player's line nearest a coin flip with the
+test's delivered over / under, graded label). Bet Finder NFL: "Players —
+1st quarter / 1st half", ONLY the span x stat keys that beat
+(nfl_quarters.offered), per-player lines, the test's curves ("@q1_rec").
+Not in SGP legs yet (the simulator draws whole games).
+
+NIGHTLY: nfl_precompute loads data/nfl/prior_quarters.json -> nfl_sim
+.build(..., quarters=) -> payload "sim" gains "quarters" {model, test,
+team, team_test, cut_week, clean_rows}. VERIFY LINES: "NFL 1Q / 1H: N
+player-game stats whose quarters add up ...", one per span x stat, and
+"NFL q1_lead_home / h1_lead_home". SGP verdicts unchanged (UW, TW beat).
+
+FILES: app/engines/nfl_quarters.py, app/engines/nfl_sim.py,
+app/views/NFL_Sim.py, app/views/Bet_Finder.py, nfl_precompute.py,
+nfl_quarters_prior.py, tests/test_nfl_quarter_props.py (NEW),
+tests/test_period_backfills.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NHL 1st period: player props (point / SOG / goal) and period lines on the Simulator and Bet Finder; NFL quarter names fixed. 2026-10-22 (7)
 
 **Suite 156, FAILING: none.** tests/test_nhl_sim.py +9 checks (5 new
@@ -822,36 +881,5 @@ FILES: app/engines/nba_model.py, app/engines/nba_context.py (new),
 app/engines/nba_sim.py, app/engines/nba_view.py, app/views/NBA.py,
 app/views/NBA_Props.py, nba_precompute.py, tests/test_nba.py,
 tests/test_nba_context.py (new), HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — Why 10,000 sims, and the parlay now runs 500,000. 2026-10-20 (5)
-
-**Suite 146, FAILING: none.** test_nba_sim +2 controls, red by exit code
-(joint_precise counting only the last chunk; simulating every player).
-
-Izzy: "why 10,000? best simulator ever". MEASURED (one 4-leg SGP, 20
-runs per size): the lift's run-to-run SD was 0.022 at 10k, 0.016 at
-50k, 0.008 at 200k, 0.003 at 1M — at 10k the noise was as big as the
-lift (+2%). The game numbers are fine at 10k (a 50% chance is +/- 0.5
-pts); the parlay's link was not. Sim count is precision, not accuracy:
-past the noise, more games add nothing — the model inside decides.
-
-nba_sim.joint_precise: the parlay at SGP_SIMS = 500,000 games in
-SGP_CHUNK = 100,000 chunks, simulating ONLY the leg players (a player's
-draw needs the shared score and his own numbers, so the rest of the
-roster changes nothing): 1.4 s, 62 MB peak here; cached per game + leg
-set (_legs_run). Returns lift_se (from the all-hit count); the page says
-"move together" / "pull apart" only when the lift is 2 SE from 1, else
-"no real link". The game and player tables stay at 10,000.
-
-NEXT, the real upgrades (each measured on the fit window, tested on the
-unseen one, before shipping): tonight's opponent and pace in the props
-(not in the number today); a teammate OUT moving minutes and usage
-inside the sim (Next Man Up data already exists); then the top-scorer
-gap (entry (4)).
-
-FILES: app/engines/nba_sim.py, app/views/NBA_Sim.py, tests/test_nba_sim.py,
-HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---
