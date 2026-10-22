@@ -67,8 +67,9 @@ def unnamed_samples(summary, k=3):
 def main():
     prior = json.loads(PRIOR.read_text())
     finals = prior.get("finals") or []
-    games, chk, types, samples = {}, Counter(), Counter(), []
-    plays = named = 0
+    games, chk, types, samples, qb_miss = {}, Counter(), Counter(), [], []
+    plays = named = no_rcv = 0
+    no_rcv_texts = []
     for k, f in enumerate(finals):
         eid = str(f.get("event_id") or "")
         if not eid:
@@ -79,10 +80,20 @@ def main():
             print(f"  summary {eid} failed: {exc}")
             continue
         rec = nq.parse(summ)
-        chk.update(nq.check(rec, box_of(summ, eid)))
+        box = box_of(summ, eid)
+        chk.update(nq.check(rec, box))
+        for pid, b in box.items():          # which quarterbacks miss, and by how much
+            if b.get("pass_att") and len(qb_miss) < 8:
+                got = sum(((rec["players"].get(pid) or {}).get("pass_yds")) or [0])
+                if abs(got - (b.get("pass_yds") or 0)) > 1:
+                    qb_miss.append((eid, pid, b.get("pass_yds"), got, b.get("pass_att"), sum(
+                        ((rec["players"].get(pid) or {}).get("pass_att")) or [0])))
         types.update((((p.get("type") or {}).get("text")) or "?") for p in nq._plays(summ))
         plays += rec["plays"]
         named += rec["named"]
+        no_rcv += rec.get("no_receiver", 0)
+        if len(no_rcv_texts) < 6:
+            no_rcv_texts += rec.get("no_receiver_texts", [])[:2]
         if len(samples) < 6:
             samples += unnamed_samples(summ, 2)
         games[eid] = {"date": f.get("date"), "week": f.get("week"),
@@ -101,6 +112,10 @@ def main():
         for s in nq.STATS))
     print(f"  [verify] play types seen: {dict(types.most_common(16))}")
     print(f"  [verify] run / pass texts with no name found (first few): {samples[:6]}")
+    print(f"  [verify] completions whose catcher was not found: {no_rcv} (the passer still "
+          f"credited); first few: {no_rcv_texts[:6]}")
+    print(f"  [verify] quarterbacks whose quarters miss the box (event, id, box yds, quarters "
+          f"yds, box att, quarters att): {qb_miss}")
     ry = chk.get("rush_yds", 0) / max(1, chk.get("rush_yds_n", 0))
     cy = chk.get("rec_yds", 0) / max(1, chk.get("rec_yds_n", 0))
     if has_lines < MIN_SHARE * n or ry < MIN_SHARE or cy < MIN_SHARE:

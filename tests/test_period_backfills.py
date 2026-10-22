@@ -21,6 +21,10 @@ Negative controls, confirmed red by exit code when written (rule 4):
     -> "a shared short name goes to the team with the ball" fails
   - nfl_quarters reading 'X 10 Yd pass from Y' passer-first
     -> "a scoring play written receiver-first" fails
+  - yards from statYardage (a penalty enforced after the play added in)
+    -> "a play's yards are the gain the text writes" fails
+  - the passer's completion dropped when the catcher is not found
+    -> "a completion counts for the passer even when the catcher" fails
 """
 import sys
 from pathlib import Path
@@ -170,7 +174,13 @@ nfl2 = {"header": header("30", "40", [7, 0, 0, 0], [0, 7, 0, 0]), "boxscore": bo
         {"team": {"id": "40"}, "plays": [
             play(2, "Rush", "Ty.Johnson left end to CHI 42 for 3 yards (C.Williams).", 3, 23),
             play(2, "Passing Touchdown", "Justin Jefferson 15 Yd pass from Sam Darnold (Sam "
-                 "Darnold Pass to Ty Johnson for Two-Point Conversion)", 15, 24)]}]}}
+                 "Darnold Pass to Ty Johnson for Two-Point Conversion)", 15, 24)]},
+        {"team": {"id": "30"}, "plays": [
+            play(3, "Pass Reception", "C.Williams pass short right to D.Moore to MIN 40 for 12 "
+                 "yards (J.Doe). PENALTY on MIN-J.Doe, Unnecessary Roughness, 15 yards, enforced "
+                 "at MIN 40.", 27, 25),
+            play(3, "Pass Reception", "C.Williams pass short left to Z.Nobody to MIN 35 for 5 "
+                 "yards.", 5, 26)]}]}}
 Q2 = nq.parse(nfl2)
 G = Q2["players"]
 check("a shared short name goes to the team with the ball (the QB, not the defender; "
@@ -182,6 +192,11 @@ check("a scoring play written receiver-first: 'X 22 Yd pass from Y' (the try in 
       v("cw", "pass_yds", 0) == 30 and v("cw", "pass_td", 0) == 1 and v("dm", "td", 0) == 1
       and v("dm", "rec_yds", 0) == 30 and v("sd", "pass_td", 1) == 1
       and v("jj", "rec_yds", 1) == 15 and v("tj", "rec", 1) == 0)
+
+check("a play's yards are the gain the text writes (not a penalty enforced after it)",
+      v("dm", "rec_yds", 2) == 12)
+check("a completion counts for the passer even when the catcher's name is not found",
+      v("cw", "pass_cmp", 2) == 2 and v("cw", "pass_yds", 2) == 17 and Q2["no_receiver"] == 1)
 
 # --- the backfills ----------------------------------------------------------------------
 for script, out, wf in (("nhl_periods_prior.py", "data/nhl/prior_periods.json",

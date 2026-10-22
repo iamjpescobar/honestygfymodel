@@ -14,10 +14,10 @@ short right to A.St. Brown to DET 45 for 12 yards (T.Smith)."), so each
 team's box-score athletes are turned into the forms the text uses (first
 initial(s) + "." + last name, suffix dropped too) and found in it:
   pass  -> passer = the first name in the text; att +1; a catch (not
-           "incomplete" / "intercepted") -> cmp +1, his yards = the play's
-           statYardage; the receiver = the first name after " to "
+           "incomplete" / "intercepted") -> cmp +1, his yards = the gain the
+           text writes (play_yards); the receiver = the first name after " to "
            (targets +1 on every throw to him, a catch adds rec + yards)
-  rush  -> the first name; carries +1, yards = statYardage
+  rush  -> the first name; carries +1, yards = the text's gain
   a touchdown on the play -> passer pass_td, receiver / rusher td
 Skipped: "No Play" (penalty), two-point tries, sacks (not passing yards
 in the box), kicks and returns.
@@ -141,6 +141,21 @@ def _plays_with_offense(summary):
     return out
 
 
+YARDS = re.compile(r"for (-?\d+) yards?|for no gain|(-?\d+)\s+(?:yd|yard)s?\s+(?:pass|run|rush)",
+                   re.I)
+
+
+def play_yards(play, text):
+    """The play's own gain as the text writes it ('for 12 yards', 'for no
+    gain', '22 Yd pass from'); statYardage only when the text has none —
+    statYardage can carry a penalty's yards enforced after the play."""
+    m = YARDS.search(text or "")
+    if m:
+        g = m.group(1) or m.group(2)
+        return float(g) if g is not None else 0.0
+    return _num(play.get("statYardage")) or 0.0
+
+
 PAT = re.compile(r"\([^()]*(two-point|two point|kick|conversion)[^()]*\)", re.I)
 SCORING = re.compile(r"\d+\s+yd\s+(pass from|run)\b", re.I)
 
@@ -152,7 +167,8 @@ def _period(play):
 
 def parse(summary):
     names = Names(roster(summary))
-    out = {"lines": lines(summary), "players": {}, "plays": 0, "named": 0}
+    out = {"lines": lines(summary), "players": {}, "plays": 0, "named": 0, "no_receiver": 0,
+           "no_receiver_texts": []}
 
     def add(pid, stat, q, v):
         rec = out["players"].setdefault(pid, {s: [0] * SLOTS for s in STATS})
@@ -185,7 +201,7 @@ def parse(summary):
         if not found:
             continue
         out["named"] += 1
-        yds = _num(pl.get("statYardage")) or 0.0
+        yds = play_yards(pl, txt)
         td = "touchdown" in typ or "touchdown" in low
         sc = SCORING.search(txt)
         if sc and is_pass and "from" in sc.group(1).lower():
@@ -216,14 +232,22 @@ def parse(summary):
         caught = "incomplete" not in low and "intercepted" not in low
         if rcv:
             add(rcv, "targets", q, 1)
-        if caught and rcv:
+        if caught:
+            # the passer's completion counts even when the catcher's name
+            # is not found (his box does); the catch only when it is
             add(passer, "pass_cmp", q, 1)
             add(passer, "pass_yds", q, yds)
-            add(rcv, "rec", q, 1)
-            add(rcv, "rec_yds", q, yds)
             if td:
                 add(passer, "pass_td", q, 1)
-                add(rcv, "td", q, 1)
+            if rcv:
+                add(rcv, "rec", q, 1)
+                add(rcv, "rec_yds", q, yds)
+                if td:
+                    add(rcv, "td", q, 1)
+            else:
+                out["no_receiver"] += 1
+                if len(out["no_receiver_texts"]) < 3:
+                    out["no_receiver_texts"].append(txt[:160])
     return out
 
 
