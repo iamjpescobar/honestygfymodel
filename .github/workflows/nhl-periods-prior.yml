@@ -1,0 +1,46 @@
+name: NHL prior periods
+
+# Manual, run ONCE (10-22). Every 2025-26 NHL regular-season game's
+# play-by-play from ESPN -> data/nhl/prior_periods.json: each period's
+# goals and shots per team, every skater's goals, assists and shots by
+# period, the first goal. The period lines and the 1st-period player
+# props are fitted and tested on it (nhl_periods_prior.py,
+# engines/nhl_periods). Last season does not change: committed once.
+#
+# Read the [verify] lines: ~1,300 games, period lines in nearly all,
+# skaters' periods adding up to their box-score goals 95%+, shots per
+# game near the box score's. Allow 30-60 minutes.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-archive
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: pip install -c requirements.txt requests
+      - name: Collect NHL prior periods from ESPN
+        run: python nhl_periods_prior.py
+      - name: Commit the file
+        run: |
+          if [ -z "$(git status --porcelain -- data/nhl/prior_periods.json)" ]; then
+            echo "No change to data/nhl/prior_periods.json."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/nhl/prior_periods.json
+          git commit -m "chore: NHL 2025-26 periods for period lines and 1st-period props [skip ci]"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

@@ -10,6 +10,44 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — NBA game model; colour on every measured NBA number. 2026-10-20 (2)
+
+**Suite 144, FAILING: none.** test_nba gains a fourth negative control
+(nba_game_model not attaching its projection) — red by exit code. Tonight
+rendered headless with the game model on a simulated slate.
+
+THE FIRST REAL NBA NIGHTLY (10-20): model fit in 6 s, HL 10 games, K 100
+min. Test on the last 45 days of 2025-26 (6,754 player-games): Rebounds
+BEATS (z 6.4), Assists BEATS (z 5.6), Reb+Ast BEATS (z 6.7); Points,
+3PM, PRA, P+R, P+A THIN (z 0.8-1.6). Minutes MAE 5.39 vs season-average
+5.89. 73 players projected, 5 held out, 1 Next Man Up board; role watch
+40 (Julian Reese -24.9 min is real: 30.9 min over 13 late-2025 games).
+Career feed: categories averages / totals / miscellaneous, labels
+"2022-23" style — 73 fetched, 0 unreadable.
+
+GAME MODEL (nba_precompute.nba_game_model): engines/nfl_game_model reused
+as is — team ratings, normal margin / total with measured SDs, carryover
+fitted. Offline on the real 2025-26 file: walk-forward 1,215 games, log
+loss 0.600 vs coin 0.693 vs home-rate 0.689 (beats); margin MAE 11.54 vs
+13.18 (beats); total MAE 15.34 vs 16.00 (beats). NO market history ->
+model weight 0 on every game line (the market's own number prices game
+bets on the Bet Finder, which now has NBA game lines). Payload
+"game_model" (rates dropped); each slate game gets g["model"].
+
+COLOUR (Izzy: "colour everything that requires measuring"): Tonight's
+rotation cells coloured by the chance he clears HIS usual line
+(mv.chance_css, legend under each game); verdict chips in TRUST_STYLE
+colours, game-model chips added; win % chip coloured; a model-vs-book
+total gap of 8+ reads "CHECK: the book likely knows why" (never a
+"lean" — the model is not tested against the book); role watch Change
++/-4 coloured; Trends "Over %" coloured. Teams now stack (iPad width cut
+the PRA column).
+
+FILES: nba_precompute.py, app/views/NBA.py, app/views/NBA_Trends.py,
+tests/test_nba.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NBA goes live: model, Tonight, Props, Trends, Next Man Up. 2026-10-20
 
 **Suite 144 (+ test_nba), FAILING: none.** Three negative controls red by

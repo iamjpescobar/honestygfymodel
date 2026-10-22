@@ -1,0 +1,198 @@
+"""
+NFL quarters (10-22) — each quarter's score, and every player's passing,
+rushing and receiving line BY QUARTER, from ESPN's game summary (the
+drives' plays). What the quarter / half lines and the 1st-quarter /
+1st-half player props are fitted and tested on.
+
+parse(summary) -> {
+  "lines":   {team_id: [q1, q2, q3, q4, (ot)]}   team points per quarter
+  "players": {pid: {stat: [q1, q2, q3, q4, ot]}}  stat in STATS
+  "plays":   n plays read, "named": n of them a player was found in
+}
+ESPN's NFL plays name players only in the TEXT ("(Shotgun) J.Goff pass
+short right to A.St. Brown to DET 45 for 12 yards (T.Smith)."), so each
+team's box-score athletes are turned into the forms the text uses (first
+initial(s) + "." + last name, suffix dropped too) and found in it:
+  pass  -> passer = the first name in the text; att +1; a catch (not
+           "incomplete" / "intercepted") -> cmp +1, his yards = the play's
+           statYardage; the receiver = the first name after " to "
+           (targets +1 on every throw to him, a catch adds rec + yards)
+  rush  -> the first name; carries +1, yards = statYardage
+  a touchdown on the play -> passer pass_td, receiver / rusher td
+Skipped: "No Play" (penalty), two-point tries, sacks (not passing yards
+in the box), kicks and returns.
+Missing is never zero: the backfill checks, player by player, that his
+quarters add up to his box score, and refuses to write when they don't.
+
+Pure — no requests.
+"""
+import re
+
+STATS = ("pass_yds", "pass_att", "pass_cmp", "pass_td", "rush_yds", "carries", "rec_yds",
+         "rec", "targets", "td")
+SLOTS = 5                       # Q1-Q4, then all overtime
+SUFFIX = re.compile(r"\s+(jr\.?|sr\.?|ii|iii|iv|v)$", re.I)
+
+
+def _num(x):
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return None
+
+
+def lines(summary):
+    comp = (((summary or {}).get("header") or {}).get("competitions") or [{}])[0] or {}
+    out = {}
+    for c in comp.get("competitors") or []:
+        tid = str((c.get("team") or {}).get("id") or c.get("id") or "")
+        ls = [_num(x.get("displayValue") if isinstance(x, dict) else x)
+              for x in c.get("linescores") or []]
+        if tid and ls and None not in ls:
+            out[tid] = ls
+    return out
+
+
+def roster(summary):
+    """{pid: (team_id, name)} for every athlete in the box score's groups."""
+    out = {}
+    for b in (((summary or {}).get("boxscore") or {}).get("players") or []):
+        tid = str((b.get("team") or {}).get("id") or "")
+        for grp in b.get("statistics") or []:
+            for ent in grp.get("athletes") or []:
+                a = ent.get("athlete") or {}
+                if a.get("id") is not None and a.get("displayName"):
+                    out[str(a["id"])] = (tid, a["displayName"])
+    return out
+
+
+def forms(name):
+    """The ways play text writes a player: 'Amon-Ra St. Brown' ->
+    'A.St. Brown', 'Am.St. Brown', ...; suffixes dropped too."""
+    parts = str(name or "").strip().split()
+    if len(parts) < 2:
+        return set()
+    first, last = parts[0], " ".join(parts[1:])
+    lasts = {last, SUFFIX.sub("", last)}
+    out = set()
+    for ln in lasts:
+        for k in range(1, min(len(first), 4) + 1):
+            out.add(f"{first[:k]}.{ln}")
+            out.add(f"{first[:k]}. {ln}")
+    return out
+
+
+class Names:
+    """Finds a game's athletes in play text."""
+
+    def __init__(self, ros):
+        self.by_form = {}
+        for pid, (_t, nm) in (ros or {}).items():
+            for f in forms(nm):
+                self.by_form.setdefault(f, set()).add(pid)
+        # longest forms first: 'Am.St. Brown' before 'A.St. Brown'
+        keys = sorted(self.by_form, key=len, reverse=True)
+        self.rx = re.compile("|".join(r"(?<![A-Za-z.])" + re.escape(k) + r"(?![a-z])"
+                                      for k in keys)) if keys else None
+
+    def find(self, text):
+        """[(position, pid)] of the unambiguous names in the text."""
+        if not self.rx:
+            return []
+        out = []
+        for m in self.rx.finditer(text or ""):
+            ids = self.by_form.get(m.group(0))
+            if ids and len(ids) == 1:
+                out.append((m.start(), next(iter(ids))))
+        return out
+
+
+def _plays(summary):
+    d = (summary or {}).get("drives") or {}
+    out = []
+    for dr in (d.get("previous") or []) + ([d["current"]] if isinstance(d.get("current"),
+                                                                       dict) else []):
+        out += [p for p in dr.get("plays") or [] if isinstance(p, dict)]
+    return out
+
+
+def _period(play):
+    p = play.get("period")
+    return (p or {}).get("number") if isinstance(p, dict) else p
+
+
+def parse(summary):
+    names = Names(roster(summary))
+    out = {"lines": lines(summary), "players": {}, "plays": 0, "named": 0}
+
+    def add(pid, stat, q, v):
+        rec = out["players"].setdefault(pid, {s: [0] * SLOTS for s in STATS})
+        rec[stat][q] += v
+    seen = set()
+    for pl in _plays(summary):
+        pid_ = pl.get("id")
+        if pid_ is not None:
+            if pid_ in seen:
+                continue
+            seen.add(pid_)
+        txt = pl.get("text") or ""
+        low = txt.lower()
+        typ = (((pl.get("type") or {}).get("text")) or "").lower()
+        per = _period(pl)
+        if not isinstance(per, int) or per < 1:
+            continue
+        q = min(per, SLOTS) - 1
+        if "no play" in low or "two-point" in low or "two point" in low:
+            continue
+        is_pass = (" pass " in f" {low} " or "pass" in typ) and "sack" not in low \
+            and "sack" not in typ
+        is_rush = (typ.startswith("rush") or "rushing" in typ) and not is_pass
+        if not (is_pass or is_rush):
+            continue
+        out["plays"] += 1
+        found = names.find(txt)
+        if not found:
+            continue
+        out["named"] += 1
+        yds = _num(pl.get("statYardage")) or 0.0
+        td = "touchdown" in typ or "touchdown" in low
+        if is_rush:
+            r = found[0][1]
+            add(r, "carries", q, 1)
+            add(r, "rush_yds", q, yds)
+            if td:
+                add(r, "td", q, 1)
+            continue
+        passer = found[0][1]
+        at = low.find(" to ", low.find("pass"))
+        rcv = next((p for pos, p in found if at >= 0 and pos > at and p != passer), None)
+        add(passer, "pass_att", q, 1)
+        caught = "incomplete" not in low and "intercepted" not in low
+        if rcv:
+            add(rcv, "targets", q, 1)
+        if caught and rcv:
+            add(passer, "pass_cmp", q, 1)
+            add(passer, "pass_yds", q, yds)
+            add(rcv, "rec", q, 1)
+            add(rcv, "rec_yds", q, yds)
+            if td:
+                add(passer, "pass_td", q, 1)
+                add(rcv, "td", q, 1)
+    return out
+
+
+def check(rec, box):
+    """{"players", stat: n that add up} — his quarters against his box
+    line (box: {pid: {stat: total}}); yards within 1 for rounding."""
+    out = {"players": 0}
+    for pid, b in (box or {}).items():
+        per = (rec.get("players") or {}).get(pid) or {}
+        out["players"] += 1
+        for st, v in b.items():
+            if v is None:
+                continue
+            got = sum((per.get(st) or [0])) if per else 0
+            tol = 1.0 if st.endswith("yds") else 0.0
+            out[st] = out.get(st, 0) + int(abs(got - v) <= tol)
+            out[f"{st}_n"] = out.get(f"{st}_n", 0) + 1
+    return out

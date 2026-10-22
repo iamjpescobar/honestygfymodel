@@ -154,6 +154,44 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — NHL periods / NFL quarters, step 1: the one-time play-by-play backfills. 2026-10-22 (5)
+
+**Suite 155, FAILING: none.** New tests/test_period_backfills.py (4
+controls, red by exit code). Izzy (10-22): NHL and NFL period / quarter
+lines WITH player props; MLB: the simulator with player stats.
+
+TWO MANUAL WORKFLOWS, RUN ONCE EACH, then send the logs:
+- "NHL prior periods" (nhl-periods-prior.yml -> nhl_periods_prior.py ->
+  data/nhl/prior_periods.json): every 2025-26 regular-season summary ->
+  engines/nhl_periods.parse: goals per period per team, team shots by
+  period, each skater's [goals, assists, SOG] in P1 / P2 / P3 (OT out),
+  the first goal. Goalies are dropped from a goal's participants (ESPN
+  lists them). Refuses to write under 80% period lines or under 90% of
+  skaters whose periods add up to their box-score goals.
+- "NFL prior quarters" (nfl-quarters-prior.yml -> nfl_quarters_prior.py
+  -> data/nfl/prior_quarters.json): every 2025 game's drives ->
+  engines/nfl_quarters.parse. ESPN's NFL plays name players ONLY in the
+  text, so box-score athletes are turned into the text's forms
+  ('Amon-Ra St. Brown' -> 'A.St. Brown', 'Ja.Chase', suffix dropped) and
+  found: pass -> passer first name, receiver first name after " to ";
+  rush -> first name; TD on the play; No Play / two-point / sacks
+  skipped; Q1-Q4 + OT slot. Each player's quarters CHECKED against his
+  box line from the same summary; refuses under 80% rushing / receiving
+  yards adding up. Logs print the play types and texts no name was found
+  in — if it refuses, those lines say why.
+
+NEXT: with those files, the NHL period / NFL quarter lines and per-period
+player props (fit + test on last season, like NBA's 1Q points), and this
+season's periods parsed nightly from the summaries the nightlies already
+fetch. MLB simulator meanwhile (no backfill needed).
+
+FILES: app/engines/nhl_periods.py, app/engines/nfl_quarters.py,
+nhl_periods_prior.py, nfl_quarters_prior.py,
+.github/workflows/nhl-periods-prior.yml, nfl-quarters-prior.yml,
+tests/test_period_backfills.py (NEW); HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NFL Game Simulator: score, game script, QB-receiver yards together, TDs from points; SGPs graded by kind. 2026-10-22 (4)
 
 **Suite 154, FAILING: none.** New tests/test_nfl_sim.py (6 controls, red
@@ -819,43 +857,5 @@ window.
 FILES: app/engines/nba_sim.py (new), app/views/NBA_Sim.py (new),
 nba_precompute.py, app/app.py, tests/test_nba_sim.py (new), HANDOFF.md,
 HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — NBA game model; colour on every measured NBA number. 2026-10-20 (2)
-
-**Suite 144, FAILING: none.** test_nba gains a fourth negative control
-(nba_game_model not attaching its projection) — red by exit code. Tonight
-rendered headless with the game model on a simulated slate.
-
-THE FIRST REAL NBA NIGHTLY (10-20): model fit in 6 s, HL 10 games, K 100
-min. Test on the last 45 days of 2025-26 (6,754 player-games): Rebounds
-BEATS (z 6.4), Assists BEATS (z 5.6), Reb+Ast BEATS (z 6.7); Points,
-3PM, PRA, P+R, P+A THIN (z 0.8-1.6). Minutes MAE 5.39 vs season-average
-5.89. 73 players projected, 5 held out, 1 Next Man Up board; role watch
-40 (Julian Reese -24.9 min is real: 30.9 min over 13 late-2025 games).
-Career feed: categories averages / totals / miscellaneous, labels
-"2022-23" style — 73 fetched, 0 unreadable.
-
-GAME MODEL (nba_precompute.nba_game_model): engines/nfl_game_model reused
-as is — team ratings, normal margin / total with measured SDs, carryover
-fitted. Offline on the real 2025-26 file: walk-forward 1,215 games, log
-loss 0.600 vs coin 0.693 vs home-rate 0.689 (beats); margin MAE 11.54 vs
-13.18 (beats); total MAE 15.34 vs 16.00 (beats). NO market history ->
-model weight 0 on every game line (the market's own number prices game
-bets on the Bet Finder, which now has NBA game lines). Payload
-"game_model" (rates dropped); each slate game gets g["model"].
-
-COLOUR (Izzy: "colour everything that requires measuring"): Tonight's
-rotation cells coloured by the chance he clears HIS usual line
-(mv.chance_css, legend under each game); verdict chips in TRUST_STYLE
-colours, game-model chips added; win % chip coloured; a model-vs-book
-total gap of 8+ reads "CHECK: the book likely knows why" (never a
-"lean" — the model is not tested against the book); role watch Change
-+/-4 coloured; Trends "Over %" coloured. Teams now stack (iPad width cut
-the PRA column).
-
-FILES: nba_precompute.py, app/views/NBA.py, app/views/NBA_Trends.py,
-tests/test_nba.py, HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---
