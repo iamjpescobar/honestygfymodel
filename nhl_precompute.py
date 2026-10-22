@@ -577,6 +577,34 @@ def goalie_probe(slate, _get=None):
         print(f"  [verify] NHL goalie probe NHL API failed: {type(exc).__name__}: {exc}")
 
 
+def nhl_sim_block(prior, model_block, skaters, id_of, regular_ids, rows):
+    """The simulator's links and its graded same-game parlays (last
+    season's final 60 days + this season), with [verify] lines."""
+    import time as _t
+    from engines import nhl_model, nhl_sim
+    t0 = _t.time()
+    pool = nhl_model.pool_skaters(prior.get("skaters"), skaters, id_of,
+                                  {str(x) for x in regular_ids})
+    blk = nhl_sim.build(prior, model_block, pool, rows)
+    if not blk:
+        print("::warning::NHL simulator not built (no last-season file or model)")
+        return None
+    L = blk["links"]
+    print(f"  [verify] NHL simulator links ({_t.time() - t0:.0f}s): shot environment variance "
+          f"{L['shot_var']}, home/away {L['shot_rho']}; goals rise x shots ^ {L['e_goals']}; "
+          f"assists per goal 0/1/2 = {L['assists']}; OT home win {L['tie_home_win']} "
+          f"(n={L['n']} team-games)")
+    print(f"  [verify] NHL same-game parlays graded on {blk['n_games']} games from "
+          f"{blk['test_from']} ({blk['this_season_games']} this season)")
+    for kind, x in (blk.get("combos") or {}).items():
+        v = x.get("verdict") or {}
+        print(f"  [verify] NHL SGP {kind:6s} n={x['n']} lift {x['avg_lift']} sim {x['sim_brier']} "
+              f"vs multiplied {x['independent_brier']} -> {v.get('verdict')} (z={v.get('z')}); "
+              f"predicted {x['predicted_sim']} (multiplied {x['predicted_ind']}) vs actual "
+              f"{x['actual']}")
+    return blk
+
+
 def main(today=None):
     now_et = datetime.now(EASTERN)
     today = today or now_et.date()
@@ -724,6 +752,7 @@ def main(today=None):
     # fitted on last season's committed file while this one is young.
     # A model failure costs the model block, never the slate.
     model_block = None
+    sim_block = None
     milestones_happened = []
     try:
         from engines import nhl_model
@@ -840,6 +869,13 @@ def main(today=None):
                 milestones_happened[:] = nhl_milestones(slate, skaters, regular_ids, today)
             except Exception as exc:  # noqa: BLE001
                 print(f"::warning::NHL milestones failed: {type(exc).__name__}: {exc}")
+            # THE SIMULATOR (10-22, engines/nhl_sim): links measured on last
+            # season, same-game parlays graded. Own try: costs the
+            # simulator, never the model or the slate.
+            try:
+                sim_block = nhl_sim_block(prior, model_block, skaters, id_of, regular_ids, rows)
+            except Exception as exc:  # noqa: BLE001
+                print(f"::warning::NHL simulator failed: {type(exc).__name__}: {exc}")
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NHL model failed: {type(exc).__name__}: {exc}")
 
@@ -856,6 +892,7 @@ def main(today=None):
         "teams": teams,
         "goalies": gk,
         "milestones_happened": milestones_happened,
+        "sim": sim_block,
     }, ensure_ascii=False, indent=2))
     print(f"NHL: wrote games.json ({slate_date}, {len(slate)} games)")
     try:

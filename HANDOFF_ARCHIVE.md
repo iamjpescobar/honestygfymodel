@@ -10,6 +10,120 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — NBA goes live: model, Tonight, Props, Trends, Next Man Up. 2026-10-20
+
+**Suite 144 (+ test_nba), FAILING: none.** Three negative controls red by
+exit code (listed in the test). Every NBA page, plus the Bet Finder,
+Live and Milestone Watch on NBA, rendered headless on a simulated slate
+(fitted model, a star out, preseason games) with no exceptions.
+
+WHY: opening night 10-20; the NBA page was a coming-soon stub. Izzy: make
+it special, preseason for reference, player trend charts, "create a gem".
+
+DATA: nba_prior_season.py + MANUAL workflow nba-prior-season.yml (RUN
+ONCE) -> data/nba/prior_season.json (2025-26 regular season, ~1,230
+box scores; tuples [date, team, opp, min, pts, reb, ast, tpm, stl, blk,
+tov]). engines/nba_box parses ESPN's summary by LABELS (MIN PTS REB AST
+3PT STL BLK TO); did-not-play / zero minutes are not games.
+
+MODEL (engines/nba_model.py): recency-weighted minutes x per-minute rate
+shrunk to the position group's league rate by K minutes; combos = sums;
+NB spread per stat by method of moments; last season carries at CARRY
+0.5 across the offseason gap. HL (5/10/20/40) and K (0/30/100/300)
+FITTED on the 45 days before the test window. TEST: last 45 days of
+2025-26, line = his last-10 average at the half point, vs his own last-20
+hit rate over it, paired verdict + "@stat" calibration (the NFL shape,
+so curve_for / support_for / the guard read it unchanged). Simulated
+season: all 8 stats beat. NOT in the number (said on the pages):
+opponent, pace, a teammate out, rest.
+
+NIGHTLY (nba_precompute.py, step in nightly-data.yml, archive expects
+data/nba/games.json): slate (14-day lookahead), this season's box
+scores (regular -> pool; PRESEASON -> reference only, never a rate),
+fit + verify lines, roster + league injury list (Out never projected),
+per-team props rows (min, mu, season / last-season lines, why, a
+30-game + preseason TREND list tagged LAST / PRE / REG), Next Man Up
+boards for 20+ min players OUT, WHAT IF boards for each team's top six,
+the preseason role watch, milestones (NBA in engines/milestones with a
+sport-aware REACH; ESPN "made-att" threes parsed).
+
+PAGES (NBA nav: Tonight, Props, Player Trends, Next Man Up, Bet Finder,
+Live, Milestone Watch, Results): NBA.py (game cards, injury chips,
+projected rotations, Next Man Up teaser, role watch, model verdict
+chips); NBA_Props.py (stat board, editable line from his last-10 half
+point, chance delivered, your price -> guard, card + parlay slip, trend
+chart); NBA_Trends.py (one player, all stats, charts with PRE toggle);
+NBA_Next_Man_Up.py (the gem: OUT tonight + What If). engines/nba_view
+is the one chance function for all of them. Bet Finder SOURCES["NBA"];
+Live NBA (4 x 12, NB rest-of-game updated on what he has; untested ->
+THIN); live injury check covers nba props. Switcher caption: NBA live.
+
+FIRST RUNS: 1) "NBA prior season" workflow -> [verify] ~1,230 box
+scores, scoring leader. 2) nightly -> "[verify] NBA model fit", one line
+per stat (beats / thin / fails), minutes MAE, injuries, Next Man Up
+boards, role watch, the career feed probe.
+
+FILES: app/engines/nba_box.py, nba_model.py, nba_view.py,
+app/views/NBA_Props.py, NBA_Trends.py, NBA_Next_Man_Up.py,
+nba_prior_season.py, nba_precompute.py,
+.github/workflows/nba-prior-season.yml, tests/test_nba.py (NEW);
+app/views/NBA.py (rewritten), app/app.py, app/views/Bet_Finder.py,
+app/views/Live.py, app/views/Milestones.py, app/views/Results.py,
+app/engines/live_props.py, live_injuries.py, milestones.py,
+espn_feed.py, slate_guard.py, app/styles/kc_theme.py,
+.github/workflows/nightly-data.yml, tests/test_live_props.py,
+tests/test_bet_finder.py, tests/test_milestones.py,
+tests/test_nfl_nhl_wiring.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
+## PICK UP HERE — Parlay slip; the Live page's test on last season. 2026-10-18 (2)
+
+**Suite 143 (+ test_parlay, test_live_check), FAILING: none.** Six
+negative controls red by exit code (three per test). The slip rendered
+headless on the Bet Finder (three legs, two same-game: THIN, linked).
+
+WHY: Izzy bets parlays; every board judges singles, so he skipped legs
+marked SKIP that may belong on a ticket (next to a strong leg, under a
+boost) — and could not see a leg dragging a ticket down.
+
+PARLAY (engines/parlay.py, NEW): joint = product of leg chances; payout =
+the book's parlay price if typed, else the legs' product, boost on the
+winnings; EV = joint * payout - 1; each leg's chance * decimal = carries
+(> 1) / drags (< 1). Guard leg by leg: a CHECK leg -> CHECK; same-game
+legs (game_id: the two abbreviations from any page's label) -> THIN
+with the reason (the link is not priced); untested leg -> THIN; past
+graded range -> VALUE. Ticket tiers by EV per $100: THIN < 10, VALUE
+10-25, STRONG 25+ (display cuts). Stake = the single's Kelly rule on the
+ticket. model_view.parlay_add_ui puts ANY typed leg (BET or SKIP) on
+session_state["parlay"] from Bet Finder (props + game lines), Long
+Shots and Live; the slip is judged at the bottom of the Bet Finder.
+Izzy's 10-13 four-leg ticket: 1 in 356, +38,686 -> +9 per $100 (THIN),
+Holmstrom carries +23%, Coyle / Hagens drag; a 25% boost -> STRONG.
+
+LIVE TEST (nhl_live_check.py + MANUAL workflow nhl-live-check.yml, NEW):
+last 90 days of 2025-26; pregame mu walk-forward (nhl_model.build on the
+prior file alone, rates/probs/toi_scales — fitted 25,518 skater-games
+from 2025-12-28 offline in 80 s); ESPN summaries' scoring plays by period
+(plays[].scoringPlay or scoringPlays; scorer first when untyped;
+shootout dropped); at the end of P1 / P2, live_props.nhl_chance vs a
+naive read (his own season rate x time left), paired on squared error
+per market (g1, g2, pt1, pt2, a1); calibration by checkpoint and by
+score state. Refuses to write without scoring plays; prints the summary
+probe. data/nhl/live_check.json -> live_props.tested(): a market that
+BEAT gets its delivered chance + curve support (VALUE / STRONG possible
+in range) for NHL Overs; everything else (Unders, shots, NFL) stays
+UNTESTED. Game matched by the OPPONENT that night (traded players).
+
+FILES: app/engines/parlay.py, nhl_live_check.py,
+.github/workflows/nhl-live-check.yml, tests/test_parlay.py,
+tests/test_live_check.py (NEW); app/engines/live_props.py,
+app/engines/model_view.py, app/views/Bet_Finder.py,
+app/views/Long_Shots.py, app/views/Live.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md (+ the 10-18 Live files, shipped together)
+
+---
+
 ## PICK UP HERE — Live: player props over the rest of a game in progress. 2026-10-18
 
 **Suite 141 (+ test_live_props), FAILING: none.** Three negative controls

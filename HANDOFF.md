@@ -154,6 +154,107 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — NFL Game Simulator: score, game script, QB-receiver yards together, TDs from points; SGPs graded by kind. 2026-10-22 (4)
+
+**Suite 154, FAILING: none.** New tests/test_nfl_sim.py (6 controls, red
+by exit code, listed in the test). NFL Simulator page headless on the
+week-7 payload with the real sim block. Ships WITH the NHL simulator
+(this zip carries every NHL file too; nhl_sim.py no longer imports
+model_view, which pulls in streamlit). NEXT: NHL periods, NFL quarters,
+MLB first 5.
+
+ONE GAME (engines/nfl_sim.simulate): margin / total normal from the game
+model -> team points; per team x = points / projected - 1 and script m =
+(margin - projected) / sd. Each line = projection x (1 + e_score x +
+e_script m), e MEASURED per stat on 2025 weeks 2-9 (volume-weighted least
+squares): pass yds +0.53 / -0.15, rec yds +0.44 / -0.11, rush yds +0.10 /
++0.10 (ahead -> run). Yards: one residual per line, correlated by type at
+the MEASURED residual correlations after the score: QB-receiver +0.27,
+receiver-receiver 0.00, QB-rush -0.14, receiver-rush -0.04, back-back
++0.08 (Cholesky; shrunk if not positive definite); spread = the board's
+cv less what the shocks gave; floored at 0 like the board. Counts NB with
+the shocks. TDs: Poisson(team points x TDs per point), each passing at
+QB pass_td / team expected TDs, handed out by td_exp split receiving /
+rushing by targets vs carries; QB pass TDs = the passing ones.
+
+FIRST TRY DROPPED (measured): the QB's yards as the SUM of his receivers'
+— QB + top receiver priced x1.42 where real games ran ~x1.03 (a
+receiver's 0.29 residual correlation, not the arithmetic of the sum).
+
+THE TEST (2025 weeks 10-18, 137 games, + this season — grows nightly):
+BEATS: a back's rushing yards + his team wins (z 2.7), a TD + his team
+wins (z 2.2). THIN: QB + two receivers (z 0.7). FAILS: QB + top receiver,
+both QBs over, QB + receiver TD, two teammates to score (n 120-270 each;
+small — this season adds ~14 games a week). TDs in the test: anchored to
+the market's implied points when 2025 has a line (95 of 272), else the
+game model's projected points.
+
+PAGE (views/NFL_Sim.py, NFL nav after Model): the game (score, win %,
+total and spread vs the book's), box score by QB / backs / receivers,
+every player over / under (the Prop Lab's delivered chance), the SGP
+builder (players, team to win, totals, spreads), Bet Log, parlay slip.
+
+NIGHTLY VERIFY LINES: "NFL simulator links", "NFL same-game parlays
+graded on N games", "NFL SGP <kind> ...". ~20 s.
+
+FILES: app/engines/nfl_sim.py, app/views/NFL_Sim.py,
+tests/test_nfl_sim.py (NEW); nfl_precompute.py, app/app.py,
+app/engines/nhl_sim.py, app/views/NHL_Sim.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md (+ the NHL simulator files)
+
+---
+
+## PICK UP HERE — NHL Game Simulator: shots, goals from shots, assists, OT; same-game parlays graded by kind. 2026-10-22 (3)
+
+**Suite 153, FAILING: none.** New tests/test_nhl_sim.py (6 controls, red
+by exit code, listed in the test). Simulator page headless on the 10-22
+NHL slate (archive payload + the real sim block). NEXT: the NFL
+simulator (Izzy: "start with the simulators first"), then NHL periods /
+NFL quarters / MLB first 5.
+
+ONE GAME (engines/nhl_sim.simulate, numpy, 10k in 0.12 s): each team's
+shot environment Z (lognormal, variance 0.011 and home/away corr -0.14,
+MEASURED on last season's team shots past the Poisson part); each
+skater's SOG negative binomial at the board's size around mu x Z; HIS
+goals Binomial(his shots, his goals-per-shot x Z^(e-1)), e = 0.32
+measured (goals rise with shots, not one-for-one), scaled so the team
+averages the GAME MODEL's goals (18 dressed skaters' rates add to more);
+"someone else" for the rest; assists 0/1/2 per goal at 6/18/76%
+(measured from team-game goal and assist totals: mean AND variance per
+goal), from teammates other than the scorer by assist rate; tie -> OT,
+home wins at the model's measured 0.686; saves = other side's shots -
+its regulation goals.
+
+FIRST TRY DROPPED (measured): a fixed team total shared among shooters
+made two teammates' goals pull apart (lift 0.96 where real ones go
+together) — it failed its test. Goals from his own shots: lift 1.00.
+
+THE TEST (last season's final 60 days, 484 games, + this season — grows
+nightly): the delivered chances multiplied vs x the lift. BEATS: 2
+teammates with a point (z 3.4, lift 1.11), 3 with a point (z 4.0), a
+point + his team wins (z 3.0). THIN: goal + his team wins (z 1.8), 4
+point legs, 2 teammates over their shots lines. FAILS (no real link):
+2 teammates to score, a point-getter from each side. sgp_support: a
+beaten kind with 100+ graded can reach STRONG; anything else (unders,
+totals, saves, 2+ points) stays THIN, and the page says why.
+
+PAGE (views/NHL_Sim.py, NHL nav after Model): the game (average goals,
+win %, OT %, puck line, total vs the book's), the box score (SOG range,
+goal / point / 2+ / assist chances, starter's saves), every skater over
+or under (delivered like the boards), the SGP builder (skaters, team to
+win at the model's market-anchored chance, totals and puck lines at the
+simulator's own, goalie saves), Bet Log and parlay slip.
+
+NIGHTLY VERIFY LINES: "NHL simulator links", "NHL same-game parlays
+graded on N games", "NHL SGP <kind> ... -> beats / thin / fails".
+Runtime ~100 s (the walk-forward skater rows).
+
+FILES: app/engines/nhl_sim.py, app/views/NHL_Sim.py,
+tests/test_nhl_sim.py (NEW); nhl_precompute.py, app/app.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NBA learns this season: minutes pull, team minutes add to 240, ROLE / NEW TEAM flags, roster margin, nightly re-tune; a refresh on every page. 2026-10-22 (2)
 
 **Suite 152, FAILING: none.** New tests/test_nba_upgrades.py (7 controls,
@@ -756,119 +857,5 @@ the PRA column).
 
 FILES: nba_precompute.py, app/views/NBA.py, app/views/NBA_Trends.py,
 tests/test_nba.py, HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — NBA goes live: model, Tonight, Props, Trends, Next Man Up. 2026-10-20
-
-**Suite 144 (+ test_nba), FAILING: none.** Three negative controls red by
-exit code (listed in the test). Every NBA page, plus the Bet Finder,
-Live and Milestone Watch on NBA, rendered headless on a simulated slate
-(fitted model, a star out, preseason games) with no exceptions.
-
-WHY: opening night 10-20; the NBA page was a coming-soon stub. Izzy: make
-it special, preseason for reference, player trend charts, "create a gem".
-
-DATA: nba_prior_season.py + MANUAL workflow nba-prior-season.yml (RUN
-ONCE) -> data/nba/prior_season.json (2025-26 regular season, ~1,230
-box scores; tuples [date, team, opp, min, pts, reb, ast, tpm, stl, blk,
-tov]). engines/nba_box parses ESPN's summary by LABELS (MIN PTS REB AST
-3PT STL BLK TO); did-not-play / zero minutes are not games.
-
-MODEL (engines/nba_model.py): recency-weighted minutes x per-minute rate
-shrunk to the position group's league rate by K minutes; combos = sums;
-NB spread per stat by method of moments; last season carries at CARRY
-0.5 across the offseason gap. HL (5/10/20/40) and K (0/30/100/300)
-FITTED on the 45 days before the test window. TEST: last 45 days of
-2025-26, line = his last-10 average at the half point, vs his own last-20
-hit rate over it, paired verdict + "@stat" calibration (the NFL shape,
-so curve_for / support_for / the guard read it unchanged). Simulated
-season: all 8 stats beat. NOT in the number (said on the pages):
-opponent, pace, a teammate out, rest.
-
-NIGHTLY (nba_precompute.py, step in nightly-data.yml, archive expects
-data/nba/games.json): slate (14-day lookahead), this season's box
-scores (regular -> pool; PRESEASON -> reference only, never a rate),
-fit + verify lines, roster + league injury list (Out never projected),
-per-team props rows (min, mu, season / last-season lines, why, a
-30-game + preseason TREND list tagged LAST / PRE / REG), Next Man Up
-boards for 20+ min players OUT, WHAT IF boards for each team's top six,
-the preseason role watch, milestones (NBA in engines/milestones with a
-sport-aware REACH; ESPN "made-att" threes parsed).
-
-PAGES (NBA nav: Tonight, Props, Player Trends, Next Man Up, Bet Finder,
-Live, Milestone Watch, Results): NBA.py (game cards, injury chips,
-projected rotations, Next Man Up teaser, role watch, model verdict
-chips); NBA_Props.py (stat board, editable line from his last-10 half
-point, chance delivered, your price -> guard, card + parlay slip, trend
-chart); NBA_Trends.py (one player, all stats, charts with PRE toggle);
-NBA_Next_Man_Up.py (the gem: OUT tonight + What If). engines/nba_view
-is the one chance function for all of them. Bet Finder SOURCES["NBA"];
-Live NBA (4 x 12, NB rest-of-game updated on what he has; untested ->
-THIN); live injury check covers nba props. Switcher caption: NBA live.
-
-FIRST RUNS: 1) "NBA prior season" workflow -> [verify] ~1,230 box
-scores, scoring leader. 2) nightly -> "[verify] NBA model fit", one line
-per stat (beats / thin / fails), minutes MAE, injuries, Next Man Up
-boards, role watch, the career feed probe.
-
-FILES: app/engines/nba_box.py, nba_model.py, nba_view.py,
-app/views/NBA_Props.py, NBA_Trends.py, NBA_Next_Man_Up.py,
-nba_prior_season.py, nba_precompute.py,
-.github/workflows/nba-prior-season.yml, tests/test_nba.py (NEW);
-app/views/NBA.py (rewritten), app/app.py, app/views/Bet_Finder.py,
-app/views/Live.py, app/views/Milestones.py, app/views/Results.py,
-app/engines/live_props.py, live_injuries.py, milestones.py,
-espn_feed.py, slate_guard.py, app/styles/kc_theme.py,
-.github/workflows/nightly-data.yml, tests/test_live_props.py,
-tests/test_bet_finder.py, tests/test_milestones.py,
-tests/test_nfl_nhl_wiring.py, HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — Parlay slip; the Live page's test on last season. 2026-10-18 (2)
-
-**Suite 143 (+ test_parlay, test_live_check), FAILING: none.** Six
-negative controls red by exit code (three per test). The slip rendered
-headless on the Bet Finder (three legs, two same-game: THIN, linked).
-
-WHY: Izzy bets parlays; every board judges singles, so he skipped legs
-marked SKIP that may belong on a ticket (next to a strong leg, under a
-boost) — and could not see a leg dragging a ticket down.
-
-PARLAY (engines/parlay.py, NEW): joint = product of leg chances; payout =
-the book's parlay price if typed, else the legs' product, boost on the
-winnings; EV = joint * payout - 1; each leg's chance * decimal = carries
-(> 1) / drags (< 1). Guard leg by leg: a CHECK leg -> CHECK; same-game
-legs (game_id: the two abbreviations from any page's label) -> THIN
-with the reason (the link is not priced); untested leg -> THIN; past
-graded range -> VALUE. Ticket tiers by EV per $100: THIN < 10, VALUE
-10-25, STRONG 25+ (display cuts). Stake = the single's Kelly rule on the
-ticket. model_view.parlay_add_ui puts ANY typed leg (BET or SKIP) on
-session_state["parlay"] from Bet Finder (props + game lines), Long
-Shots and Live; the slip is judged at the bottom of the Bet Finder.
-Izzy's 10-13 four-leg ticket: 1 in 356, +38,686 -> +9 per $100 (THIN),
-Holmstrom carries +23%, Coyle / Hagens drag; a 25% boost -> STRONG.
-
-LIVE TEST (nhl_live_check.py + MANUAL workflow nhl-live-check.yml, NEW):
-last 90 days of 2025-26; pregame mu walk-forward (nhl_model.build on the
-prior file alone, rates/probs/toi_scales — fitted 25,518 skater-games
-from 2025-12-28 offline in 80 s); ESPN summaries' scoring plays by period
-(plays[].scoringPlay or scoringPlays; scorer first when untyped;
-shootout dropped); at the end of P1 / P2, live_props.nhl_chance vs a
-naive read (his own season rate x time left), paired on squared error
-per market (g1, g2, pt1, pt2, a1); calibration by checkpoint and by
-score state. Refuses to write without scoring plays; prints the summary
-probe. data/nhl/live_check.json -> live_props.tested(): a market that
-BEAT gets its delivered chance + curve support (VALUE / STRONG possible
-in range) for NHL Overs; everything else (Unders, shots, NFL) stays
-UNTESTED. Game matched by the OPPONENT that night (traded players).
-
-FILES: app/engines/parlay.py, nhl_live_check.py,
-.github/workflows/nhl-live-check.yml, tests/test_parlay.py,
-tests/test_live_check.py (NEW); app/engines/live_props.py,
-app/engines/model_view.py, app/views/Bet_Finder.py,
-app/views/Long_Shots.py, app/views/Live.py, HANDOFF.md,
-HANDOFF_ARCHIVE.md (+ the 10-18 Live files, shipped together)
 
 ---

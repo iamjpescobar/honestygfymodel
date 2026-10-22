@@ -1436,6 +1436,37 @@ def main(today=None):
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NFL game model failed: {type(exc).__name__}: {exc}")
 
+    # THE SIMULATOR (10-22, engines/nfl_sim): game-script links and the
+    # yards correlations measured on 2025's first half; same-game parlays
+    # graded on its second half + this season. Own try: costs the
+    # simulator, never the week.
+    sim_block = None
+    try:
+        from engines import nfl_sim
+        _t0 = time.time()
+        _plogs2 = load_or_fetch_prior_logs(_pf, lambda eid: ef.fetch_summary(LEAGUE, eid)) \
+            if _pf else {}
+        sim_block = nfl_sim.build(_plogs2, finals, logs, sys.modules[__name__], league,
+                                  prior_players or None, pw)
+        if sim_block:
+            _L = sim_block["links"]
+            print(f"  [verify] NFL simulator links ({time.time() - _t0:.0f}s): score / script "
+                  f"elasticities {_L['e']}; yards correlations {_L.get('corr')}; TDs per point "
+                  f"{_L['tpp']}")
+            print(f"  [verify] NFL same-game parlays graded on {sim_block['n_games']} games "
+                  f"(2025 from week {sim_block['cut_week']}, {sim_block['this_season_games']} "
+                  f"this season)")
+            for _k, _x in (sim_block.get("combos") or {}).items():
+                _v = _x.get("verdict") or {}
+                print(f"  [verify] NFL SGP {_k:4s} n={_x['n']} lift {_x['avg_lift']} sim "
+                      f"{_x['sim_brier']} vs multiplied {_x['independent_brier']} -> "
+                      f"{_v.get('verdict')} (z={_v.get('z')}); predicted {_x['predicted_sim']} "
+                      f"(multiplied {_x['predicted_ind']}) vs actual {_x['actual']}")
+        else:
+            print("::warning::NFL simulator not built (no 2025 box scores or game model)")
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::NFL simulator failed: {type(exc).__name__}: {exc}")
+
     # ------------------------------------------------------------------
     # THE PROJECTION LOG — written to the REPO, not the archive.
     #
@@ -1493,6 +1524,7 @@ def main(today=None):
         "teams": teams,
         "dvp": dvp_table,
         "milestones_happened": milestones_happened,
+        "sim": sim_block,
     }, ensure_ascii=False, indent=2))
     print(f"NFL: wrote games.json (week {wk}, {len(week_events)} games)")
 

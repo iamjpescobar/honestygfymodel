@@ -312,6 +312,7 @@ SPORT_SUBPAGES = {
         ("Prop Lab", "views/NFL_Props.py"),
         ("Projections", "views/NFL_Projections.py"),
         ("Model", "views/NFL_Model.py"),
+        ("Simulator", "views/NFL_Sim.py"),
         ("Top Plays", "views/Top_Plays.py"),
         # Football's HR Edge and Pitchers to Target (10-06,
         # engines/edge_boards): touchdown chances, and where each
@@ -348,6 +349,7 @@ SPORT_SUBPAGES = {
         ("Crease Report", "views/NHL_Crease.py"),
         ("Shots Lab", "views/NHL_Shots.py"),
         ("Model", "views/NHL_Model.py"),
+        ("Simulator", "views/NHL_Sim.py"),
         ("Top Plays", "views/Top_Plays.py"),
         # Hockey's HR Edge and Pitchers to Target (10-06).
         ("Goal Edge", "views/NHL_Goal_Edge.py"),
