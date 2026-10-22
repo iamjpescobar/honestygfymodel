@@ -11,6 +11,8 @@ on_2b / on_3b, bat_score, post_bat_score) played by known rules (rule 5).
 No network.
 
 Negative controls, confirmed red by exit code when written (rule 4):
+  - state_rows comparing pandas' NA directly (no _na) -> "Statcast's
+    nullable columns ... read exactly like plain ones" fails (10-22)
   - state_rows ending a half-inning's last PA with the next half's state
     -> "the last PA of a half-inning ends it" fails
   - _move putting the batter out before the lead runner on a hit (a
@@ -154,6 +156,18 @@ PA = mpp.plate_appearances(DF)
 rows = ms.state_rows(PA)
 check("every plate appearance with a state becomes a transition",
       len(rows) == len(PA) and all(0 <= r[1] <= 2 for r in rows))
+# Statcast hands these columns over as pandas' nullable integers: an empty
+# base is pd.NA, whose truth value raises (the 10-22 nightly died on it)
+PA_NA = PA.copy()
+for _c in ("on_1b", "on_2b", "on_3b", "outs_when_up", "inning", "bat_score", "post_bat_score"):
+    PA_NA[_c] = pd.to_numeric(PA_NA[_c], errors="coerce").astype("Int64")
+try:
+    _same = ms.state_rows(PA_NA) == rows and mpp._final_scores(PA_NA) == mpp._final_scores(PA)
+except TypeError as exc:
+    print(f"     {type(exc).__name__}: {exc}")
+    _same = False
+check("Statcast's nullable columns (an empty base is pandas' NA) read exactly like plain ones",
+      _same and PA_NA["on_1b"].isna().any())
 one = PA[PA["game_pk"] == PA["game_pk"].iloc[0]].sort_values("at_bat_number")
 n_top1 = int(((one["inning"] == 1) & (one["inning_topbot"] == "Top")).sum())
 last = ms.state_rows(one)[n_top1 - 1]               # followed by the bottom of the 1st

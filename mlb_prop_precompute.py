@@ -567,7 +567,7 @@ def _final_scores(pa):
         return {}
     s = pd.to_numeric(pa["post_bat_score"], errors="coerce")
     return {(int(g), side): float(v) for (g, side), v in
-            s.groupby([pa["game_pk"], pa["side"]]).max().items() if v == v}
+            s.groupby([pa["game_pk"], pa["side"]]).max().items() if pd.notna(v)}
 
 
 def _cal(model, key, raw, pitcher=False):

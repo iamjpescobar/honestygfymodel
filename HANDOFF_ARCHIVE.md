@@ -10,6 +10,56 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — NBA Long Shots: the ladder (30+ pts, 10+ reb, 5+ threes) graded on unseen games. 2026-10-20 (8)
+
+**Suite 147, FAILING: none.** test_nba +2 controls (long_shots listing a
+stat whose ladder has not beaten; nv.chance ignoring the ladder), red by
+exit code; test_long_shots nav count 3 -> 4. Dry run of the nightly +
+Long Shots (NBA) headless on its payload.
+
+Izzy: "why is there no long shots for NBA?" — it was never wired, and it
+could not be honestly: the props test grades each player at HIS line
+(chances near 50%), and Long Shots lists only chances inside a graded
+curve's range with 30+ calls (+300..+2000 = 4.8-25%).
+
+nm.test_ladder: every test-window player-game graded at every rung of
+nm.LADDER (pts 10..50 by 5, reb 4..16 by 2, ast 2..14 by 2, 3PM 1..7,
+PRA 20..60 by 5), vs his own last-20 hit rate at that rung, bins
+LADDER_EDGES (2-pt bins below 10%). Run on the context-adjusted rows in
+nc.fit (ctx["ladder"] -> model["ladder"]); nm.fit keeps a plain one.
+REAL 2025-26: pts z 13.5, reb 12.0, ast 14.4, 3PM 11.7, PRA 10.6 — all
+BEAT. Long-shot bins well calibrated for pts / 3PM (8-9%: 0.090 called,
+0.092 hit); raw reb / ast / PRA run high there (reb 8-9%: 0.090 vs
+0.069) — the delivered curve corrects it. Caveat: n includes the many
+0-1% rungs; the 2-25% bins hold 1,000-3,500 calls each.
+
+nv.long_shots(games, model): rungs of stats whose ladder BEAT, as
+long_shots.rows_from_markets markets ("35+ points"), delivered + support
+through the ladder curve, Out players skipped, signals "~33 min · vs
+OKC: pts -3% · teammate out". Long Shots page: SOURCES["NBA"]; NBA nav.
+nv.chance: a line outside his own line's tested range now reads the
+ladder curve when it beat — alt lines on Props / Bet Finder are measured
+instead of capped as out of range.
+
+LIVE AT HALFTIME (Izzy's screenshot, BOS @ DET 58-45 at the half: "Overtime
+(or a clock the feed did not send)"): live_props.clock_min read only
+"M:SS"; ESPN's NBA clock under a minute is "45.3" and at a break "0.0",
+so every NBA quarter's last minute and halftime were unpriced. Now
+seconds-only and "M:SS.s" read; remaining(..., detail) treats a
+clockless break ("Halftime", "End of 3rd", "intermission") as the
+period's end. Live's warning was NHL-only text on every sport — now per
+sport (NOT_IN). test_live_props +3 checks, control (colon-only parse) red.
+
+FILES: app/engines/nba_model.py, app/engines/nba_context.py,
+app/engines/live_props.py, app/views/Live.py, tests/test_live_props.py,
+app/engines/nba_view.py, app/views/Long_Shots.py, app/app.py,
+nba_precompute.py, tests/test_nba.py, tests/test_long_shots.py,
+HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
+---
+
 ## PICK UP HERE — Same-game parlays graded by kind (2/3/4 legs, points/mixed); the test grows nightly. 2026-10-20 (7)
 
 **Suite 147, FAILING: none.** test_nba_sim +3 controls, red by exit code

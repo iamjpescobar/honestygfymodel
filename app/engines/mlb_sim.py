@@ -64,6 +64,16 @@ KIND_LABEL = {"HH": "2 teammates with a hit", "HHH": "3 teammates with a hit",
 # ----------------------------------------------------------------------
 # The base-out transitions, measured on the season's plate appearances
 # ----------------------------------------------------------------------
+def _na(v):
+    """True for None, NaN and pandas' NA (any value that is not itself)."""
+    if v is None:
+        return True
+    try:
+        return bool(v != v)
+    except TypeError:
+        return True
+
+
 def state_rows(pa):
     """[(before_bases, outs, outcome, after_bases, runs, outs_added)] from a
     plate-appearance frame with inning, inning_topbot, outs_when_up,
@@ -74,15 +84,18 @@ def state_rows(pa):
     if pa is None or not all(c in pa.columns for c in need):
         return []
     df = pa.sort_values(["game_pk", "at_bat_number"])
-    cols = {c: df[c].tolist() for c in need}
+    # Statcast's nullable integer columns hold pandas' NA, whose truth value
+    # raises ("boolean value of NA is ambiguous" — the 10-22 nightly): every
+    # missing value becomes None before any comparison
+    cols = {c: [None if _na(v) else v for v in df[c].tolist()] for c in need}
     out = []
     n = len(df)
     for i in range(n):
         o = cols["outs_when_up"][i]
-        if o != o or o is None or int(o) > 2:
+        if o is None or int(o) > 2:
             continue
         bb = sum(b for b, c in ((1, "on_1b"), (2, "on_2b"), (4, "on_3b"))
-                 if cols[c][i] == cols[c][i] and cols[c][i] is not None)
+                 if cols[c][i] is not None)
         try:
             runs = int(cols["post_bat_score"][i]) - int(cols["bat_score"][i])
         except (TypeError, ValueError):
@@ -94,10 +107,10 @@ def state_rows(pa):
                 and cols["inning_topbot"][i + 1] == cols["inning_topbot"][i])
         if same:
             o2 = cols["outs_when_up"][i + 1]
-            if o2 != o2 or int(o2) < int(o):
+            if o2 is None or int(o2) < int(o):
                 continue
             ab = sum(b for b, c in ((1, "on_1b"), (2, "on_2b"), (4, "on_3b"))
-                     if cols[c][i + 1] == cols[c][i + 1] and cols[c][i + 1] is not None)
+                     if cols[c][i + 1] is not None)
             add = int(o2) - int(o)
         else:
             ab, add = 0, 3 - int(o)
