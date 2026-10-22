@@ -435,7 +435,9 @@ def test_rows(skaters, finals, priors, goal_preds, shot_preds, toi, lo):
             gr = mu_t / off if off else 1.0
             sr = ms / soff if (ms and soff) else 1.0
             sc = hm.toi_scales(games[:i], toi, p.get("pp"))
-            mu = {"sog": r["sog"] * sr * sc["sog"], "g": r["g"] * gr * sc["pts"],
+            shs = hm.shot_scales(r, games[:i], p.get("shots"), toi)
+            mu = {"sog": r["sog"] * sr * sc["sog"] * shs["sog"],
+                  "g": r["g"] * gr * sc["pts"] * shs["g"],
                   "a": r["a"] * gr * sc["pts"]}
             hv = [x[2] for x in games[:i] if x[2] is not None][-10:]
             line = _nb_.half_line(hv) if hv else None

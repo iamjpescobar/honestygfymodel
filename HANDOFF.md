@@ -154,6 +154,81 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — NHL shot attempts (iCF / iFF) and scoring chances (iSCF / iHDCF) from the NHL feed: on the Model page, tested as factors on SOG and goals. 2026-10-22 (9)
+
+**Suite 158, FAILING: none.** New tests/test_nhl_shots.py (5 controls,
+red by exit code: blocked counted as unblocked, shootout read, the net
+always at +89, last-name match without the first initial, shot_scales
+applying a fit that was not adopted). NHL_Model headless on the archived
+slate (columns "—" until the backfill). Izzy sent Natural Stat Trick's
+definitions list: "implement the missing stats ... to take the positive
+effect in the nhl page". TOI, G, iSF were already in; iCF, iFF, iSCF,
+iHDCF were missing.
+
+STEP 1 OF 2 — NEEDS THE BACKFILL: Izzy runs "NHL prior shots" once
+(nhl-shots-prior.yml -> nhl_shots_prior.py -> data/nhl/prior_shots.json).
+Until then the factors print "too few games carry shot attempts" and the
+page says context only. Then the nightly fits and tests them by itself.
+
+DATA (engines/nhl_shots): ESPN's plays don't reliably carry the spot, so
+the NHL's own play-by-play (api-web.nhle.com/v1/gamecenter/{id}/play-by-
+play — the same host the goalie probe already reaches): typeDescKey goal
+/ shot-on-goal / missed-shot / blocked-shot, details.shootingPlayerId
+(scoringPlayerId on goals), xCoord / yCoord, zoneCode; shootout dropped.
+The attacked net from homeTeamDefendingSide (else the zone code). Chances
+by SPOT only (NOT Natural Stat Trick's exact polygons, no rebounds /
+rush): high danger = inner slot (goal line to 25 ft, |y| <= 9); chance =
+that + home plate (to 35 ft, inside posts->dots, |y| <= 22). Blocked
+attempts count in iCF only (their spot is the block's). Row per skater-
+game [icf, iff, isf, g, iscf, ihdcf, g_sc, g_hd]. NHL ids -> ESPN ids by
+name inside the game (full name; else last name + first initial, unique);
+the ESPN game = most names in common (no abbreviation tables). Backfill
+refuses under 85% of skater-games matched or 90% of iSF == ESPN SOG.
+UNVERIFIED until the first run: the feed's field names above (from the
+public API as known in 2025) — the log prints kinds seen and % with a
+spot; if it refuses, read those lines.
+
+MODEL (nhl_model "SHOT ATTEMPTS AND SCORING CHANCES", fitted inside
+fit_toi on its train / test split, after ice time):
+  sog: mu x (iFF/game x his on-net share shrunk 150 attempts to the
+       league's  /  his SOG rate) ^ a
+  g:   mu x (chance-implied goals/game — HD, other chances, the rest at
+       the league's goals per attempt from each, measured before the test
+       — / his goal rate) ^ b     (assists untouched; points via goals)
+Ratios clipped [0.5, 2]; < 5 games of attempt data -> 1.0. Strength
+fitted (golden search, log loss) on train, TESTED on the props window vs
+strength 0; adopted only on "beats" (rule 1). shot_scales() applies the
+adopted ones in validate_props (so the props verdicts test the page's
+model), tonight's slate, and nhl_sim.test_rows (simulator / 1st-period
+tests). Synthetic check: where chances decide goals it fits 1.0 and
+beats z 3.7.
+
+NIGHTLY: load_prior_shots (prior skaters' "shots"); current_shots: this
+season's finals from the NHL feed every night (one schedule call a week
++ one play-by-play per game — ~1,300 calls by April; a cache file is the
+fix if it gets slow) laid on the lines as line["shots"]; pool_skaters
+merges both. VERIFY LINES: "NHL last-season shot attempts / chances: N
+skaters", "NHL shots this season: ...matched ...% ; shots on goal equal
+to ESPN's box ...%", "NHL shot attempts / chances: coverage, league",
+"NHL attempts -> SOG: ... IN THE NUMBER / context only", "NHL chances ->
+goals: ...".
+
+PAGE (NHL_Model, skater props): Att/G (iCF), HD/G (iHDCF), xG/G (goals
+his attempts are worth) + nm.shots_note(): what is in the number.
+
+APPLIES TO (if adopted): every SOG prop (incl. 1st-period SOG, the
+Simulator's shots), goal / point props, Player of the Day, Multi-Goal
+Watch (they read the props' mu). NEXT: after the backfill + a nightly,
+read the two verdict lines; if goals adopt, consider HD/G on the Goal
+Edge board.
+
+FILES: app/engines/nhl_shots.py (NEW), nhl_shots_prior.py (NEW),
+.github/workflows/nhl-shots-prior.yml (NEW), tests/test_nhl_shots.py
+(NEW), app/engines/nhl_model.py, app/engines/nhl_sim.py,
+app/views/NHL_Model.py, nhl_precompute.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NFL 1st quarter / 1st half: player props on the Simulator and Bet Finder, half / quarter leader; quarters parser fixed again. 2026-10-22 (8)
 
 **Suite 157, FAILING: none.** New tests/test_nfl_quarter_props.py (5
@@ -809,77 +884,5 @@ season's games.
 
 FILES: app/engines/nba_sim.py, app/views/NBA_Sim.py, nba_precompute.py,
 tests/test_nba_sim.py, HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — NBA context: tonight's opponent + teammates out; a proper fit score; opening night. 2026-10-20 (6)
-
-**Suite 147, FAILING: none.** New tests/test_nba_context.py (5 controls,
-red by exit code; the 5th first stayed GREEN — it checked the row's
-ctx/why, not its mu; the check now asserts mu = base x opp x bump).
-test_nba +1 control (offseason cut). Dry run of nba_precompute.main
-offline on the real 2025-26 file (ESPN patched: one game, HOU @ OKC,
-Amen Thompson Out) — every verify line below came from it; Tonight /
-Props / Simulator / Trends / Next Man Up / Bet Log render headless on
-that payload.
-
-THE FIT SCORE WAS BIASED (found while fitting the context): nm._sse was
-(mu - y)^2 / mu — its denominator grows with mu, so it rewards projecting
-HIGH (on Poisson(10) it is minimised at 10.49). It called a teammate-out
-redistribution that made every Brier WORSE a 10% improvement. Now
-nm.deviance (Poisson deviance — minimised at the mean). Base refit with
-it: HL 2, K 600, HL_LONG 120, K_LONG 100; every stat's Brier lower than
-the chi fit (3PM z 2.06 -> 4.66). FIT_HL gained 1.
-
-engines/nba_context — per stat, fit window, deviance; OFF unless better:
-  OPPONENT (defense + pace): walk-forward factor per opponent (by
-    position for 3s), (sum w*actual + K*m) / (sum w*proj + K*m), days
-    half-life: pts hl120 k40, reb hl30 k100, ast hl30 k100, tpm hl120
-    k100 by position. A day's games never see their own day.
-  TEAMMATE OUT: rotation players (15+ min) who miss a team game leave
-    ALPHA of their production to those who play, in proportion; weight
-    0.5^(games already missed / HL) — teammates' own recent games carry a
-    long absence already. pts a.3 hl2, reb a.3 hl2, ast a.45 hl.5, tpm
-    a.2 hl.5. Trades are not absences.
-TEST (unseen 45 days), context vs no context on the same lines: Points
-z 8.5, Reb 2.4, Ast 4.3, 3PM 3.9, PRA 8.4, P+R 8.0, P+A 9.0, R+A 4.7 —
-all BEAT. Vs his own rate: Points z 8.1 (was 4.9) ... R+A 9.5. The
-top-scorer gap from entry (4) CLOSED: test window top-2 projected 20.18
-vs actual 20.09 (was 19.14). The model's sizes / test / curves are the
-context's (model["base_test"] keeps the plain one; model["context"] has
-opp / mean / out / vs_base). Pages' captions read nv.in_the_number.
-
-TONIGHT: nc.book_now walks last season + this one; nc.outs_now counts
-this team's games since an Out player's last (cur + prior finals);
-nc.apply_tonight sets row mu, row["ctx"], appends the why ("vs DET: pts
-+4% · with X out: pts +3%"). Late scratches after the nightly are NOT
-in it.
-
-OPENING NIGHT (NOT MEASURED — the file has no offseason): with HL 2, a
-star was projected off his last two April games (SGA 30.1 min). Running
-.offseason(): across a 60+ day gap the recent window restarts from his
-long-run averages at CARRY weight; project_now(today=) applies it before
-a projection made across the gap. SGA 30.1 -> 33.2 (last season 33.3).
-Also changes 2025-26 players back from 60+ day injuries (test numbers
-moved in the third decimal).
-
-SIMULATOR on the context model: links e pts 1.005 reb -0.26 ast 1.06 3PM
-1.10; test 1,065 pairs z 1.7-2.0 across the last two fits — ON THE LINE
-between THIN and BEATS; the nightly's verdict sets the SGP cap.
-Nightly cost: base fit ~70 s, context ~35 s, sim ~25 s.
-
-SGP LEGS (Izzy: "why 4?" — it was my pick, not a measurement): the
-Simulator's builder takes up to nba_sim.SGP_MAX_LEGS = 8. Measured at
-500,000 games: the link's noise is +/- 0.002 at 2 legs, 0.009 at 6,
-0.017 at 8, 0.035 at 10. But the test grades two-leg pairs only and the
-link grows with every leg (8 overs: x1.7, 6 HOU overs on the dry run:
-x2.1) — so sgp_support(test, n_legs) caps 3+ legs at THIN (untested),
-SGP_GUARD["thin_legs"] says why. test_nba_sim +1 control (n_legs
-ignored). The Bet Finder's parlay slip never had a cap.
-
-FILES: app/engines/nba_model.py, app/engines/nba_context.py (new),
-app/engines/nba_sim.py, app/engines/nba_view.py, app/views/NBA.py,
-app/views/NBA_Props.py, nba_precompute.py, tests/test_nba.py,
-tests/test_nba_context.py (new), HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

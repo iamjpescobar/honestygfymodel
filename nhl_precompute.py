@@ -58,6 +58,55 @@ def load_prior_pp(prior, prior_path=None):
             s["pp"] = pp[pid]
             n += 1
     return n
+PRIOR_SHOTS_NAME = "prior_shots.json"
+
+
+def load_prior_shots(prior, prior_path=None):
+    """Lay last season's shot attempts / chances (nhl_shots_prior.py) over
+    its skaters as "shots" {date: row} (in place). Returns how many
+    skaters got them; 0 when the file is not there."""
+    path = Path(prior_path or PRIOR_PATH).parent / PRIOR_SHOTS_NAME
+    if not path.exists() or not prior.get("skaters"):
+        return 0
+    sh = (json.loads(path.read_text()) or {}).get("players") or {}
+    n = 0
+    for pid, s in prior["skaters"].items():
+        if sh.get(pid):
+            s["shots"] = sh[pid]
+            n += 1
+    return n
+
+
+def current_shots(skaters, start, end, _get=None):
+    """This season's attempts / chances from the NHL feed, laid on the
+    finals' skater lines as line["shots"] (in place) — what the attempt
+    and chance factors read for tonight. Prints the same checks as the
+    backfill. Returns the number of skater-games that got a row."""
+    import nhl_shots_prior as nsp
+    get = _get or ef.get_json
+    by_date, sog, eid_of = {}, {}, {}
+    for pid, rec in (skaters or {}).items():
+        for eid, line in (rec.get("games") or {}).items():
+            d = line.get("date")
+            if not d:
+                continue
+            by_date.setdefault(d, {}).setdefault(str(eid), {})[str(pid)] = rec.get("name")
+            eid_of[(d, str(pid))] = str(eid)
+            if line.get("sog") is not None:
+                sog[(d, str(pid))] = int(line["sog"])
+    games = nsp.schedule_games(get, start, end)
+    rows, st, samples = nsp.collect(get, games, by_date)
+    nsp.report(rows, st, samples, sog, "NHL shots this season")
+    n = 0
+    for (d, pid), row in rows.items():
+        eid = eid_of.get((d, pid))
+        line = (((skaters.get(pid) or {}).get("games") or {}).get(eid)) if eid else None
+        if line is not None:
+            line["shots"] = row
+            n += 1
+    return n
+
+
 # Top plays record (engines/top_plays_board); module-level so tests sandbox it.
 TOP_PLAYS_ROOT = ROOT / "data" / "top_plays"
 # The graded model-picks record (engines/model_picks). Module-level so a
@@ -796,6 +845,17 @@ def main(today=None):
             id_of[g["away"]], id_of[g["home"]] = g.get("away_id"), g.get("home_id")
         prior_path = PRIOR_PATH
         prior = json.loads(prior_path.read_text()) if prior_path.exists() else {}
+        _nsh = load_prior_shots(prior, prior_path)
+        print(f"  [verify] NHL last-season shot attempts / chances: {_nsh} skaters"
+              + ("" if _nsh else " -> none yet: run the 'NHL prior shots' workflow once so the "
+                                 "attempt and chance factors can be tested"))
+        # THIS season's attempts / chances from the NHL feed (10-22). Own
+        # try: costs the factors' inputs tonight, never the model.
+        try:
+            _ncur = current_shots(skaters, REGULAR_SEASON_START, today)
+            print(f"  [verify] NHL this-season skater-games with attempts: {_ncur}")
+        except Exception as exc:  # noqa: BLE001
+            print(f"::warning::NHL this-season shots failed: {type(exc).__name__}: {exc}")
         _npp = load_prior_pp(prior, prior_path)
         print(f"  [verify] NHL last-season PP minutes: {_npp} skaters"
               + ("" if _npp else " -> none yet: run the 'NHL prior PP minutes' workflow once "
@@ -856,6 +916,17 @@ def main(today=None):
                           f"({(_x.get('verdict') or {}).get('verdict')}, "
                           f"z={(_x.get('verdict') or {}).get('z')}, n={_x.get('n')})"
                           f"{' - ' + _x['note'] if _x.get('note') else ''}")
+            _sf = (model_block.get("toi") or {}).get("shots") or {}
+            print(f"  [verify] NHL shot attempts / chances: coverage {_sf.get('coverage')}; league "
+                  f"{_sf.get('league')}" + (f" - {_sf['note']}" if _sf.get("note") else ""))
+            for _fam, _what in (("sog", "attempts -> SOG"), ("g", "chances -> goals")):
+                _x = _sf.get(_fam) or {}
+                if _x:
+                    print(f"  [verify] NHL {_what}: fitted strength {_x.get('fitted_strength')} -> "
+                          f"{'IN THE NUMBER' if _x.get('adopted') else 'context only'} "
+                          f"({(_x.get('verdict') or {}).get('verdict')}, "
+                          f"z={(_x.get('verdict') or {}).get('z')}, n={_x.get('n')}; brier "
+                          f"{_x.get('brier_with')} vs {_x.get('brier_without')})")
             _dv = model_block.get("dvp_validation") or {}
             for _fam in ("sog", "pts"):
                 _x = _dv.get(_fam) or {}

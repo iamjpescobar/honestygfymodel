@@ -76,6 +76,7 @@ from collections import defaultdict
 
 from engines import defense_matchup as dm
 from engines import game_model as gm
+from engines import nhl_shots as _ns
 from engines import model_math as mm
 
 MARKETS = (
@@ -242,14 +243,17 @@ def rates(player, priors, before=None):
     return out
 
 
-def probs(r, shot_ratio=1.0, goal_ratio=1.0, sog_disp=None, toi_sog=1.0, toi_pts=1.0):
+def probs(r, shot_ratio=1.0, goal_ratio=1.0, sog_disp=None, toi_sog=1.0, toi_pts=1.0,
+          att_sog=1.0, chance_g=1.0):
     """{market: p} for one skater tonight. toi_sog / toi_pts are the
-    fitted ice-time scales (1.0 when the factor did not earn its way in)."""
+    fitted ice-time scales; att_sog / chance_g the shot-attempt and
+    scoring-chance scales (shot_scales) — each 1.0 when its factor did
+    not earn its way in."""
     if not r:
         return None
-    sog_mu = r["sog"] * (shot_ratio or 1.0) * (toi_sog or 1.0)
+    sog_mu = r["sog"] * (shot_ratio or 1.0) * (toi_sog or 1.0) * (att_sog or 1.0)
     gs = (goal_ratio or 1.0) * (toi_pts or 1.0)
-    g_mu, a_mu = r["g"] * gs, r["a"] * gs
+    g_mu, a_mu = r["g"] * gs * (chance_g or 1.0), r["a"] * gs
     pm = {"sog": mm.nb_pmf(sog_mu, sog_disp, 20), "g": mm.poisson_pmf(g_mu, 10),
           "a": mm.poisson_pmf(a_mu, 10), "pts": mm.poisson_pmf(g_mu + a_mu, 10)}
     out = {k: round(mm.prob_at_least(pm[stat], n), 4) for k, _l, stat, n in MARKETS}
@@ -521,6 +525,8 @@ def _wf_rows(skaters, goal_finals, shot_finals, lo, hi, goal_k, shot_k, priors):
                 ratios[w] = tr[2] if tr else 1.0
             if p.get("pp"):
                 ratios["pp"] = {w: pp_window_stats(games[:i], w, p["pp"]) for w in TOI_WINDOWS}
+            if p.get("shots"):
+                ratios["shots"] = _ns.window(p["shots"], [x[0] for x in games[:i]])
             rows.append((r, sr, gr, ratios,
                          {"sog": s, "g": g or 0, "a": a or 0, "pts": (g or 0) + (a or 0)},
                          (d, opp, dvp_group(p.get("pos")))))
@@ -588,6 +594,10 @@ def fit_toi(skaters, goal_finals, shot_finals, days=VALIDATION_DAYS, goal_k=None
                     "n": sw["n"], "brier_with": sw["brier"], "brier_without": sb["brier"],
                     "log_loss_with": sw["log_loss"], "log_loss_without": sb["log_loss"]}
         out[fam]["pp"] = fit_pp(train, test, fam, w, out[fam]["alpha"], disp)
+    try:
+        out["shots"] = fit_shots(train, test, out, disp, skaters, cut)
+    except Exception as exc:  # noqa: BLE001 — costs the shot factors, never ice time
+        out["shots"] = {"note": f"fit failed: {type(exc).__name__}: {exc}"}
     return out
 
 
@@ -618,6 +628,150 @@ def fit_pp(train, test, fam, window, toi_alpha, disp):
     return {"weight": pw, "fitted_alpha": round(al, 3), "alpha": round(al, 3),
             "adopted": adopted, "verdict": verdict, "coverage": round(cov, 3),
             "n": sw["n"], "log_loss_with": sw["log_loss"], "log_loss_without": sb["log_loss"]}
+
+
+# ----------------------------------------------------------------------
+# SHOT ATTEMPTS AND SCORING CHANCES (10-22, engines/nhl_shots)
+# ----------------------------------------------------------------------
+# Two candidate factors, each NESTING today's number at strength 0, each
+# FITTED on the window before the props test and ADOPTED only when the
+# props window says it beats the number without it (rule 1):
+#
+#   shots  his SOG rate re-read through his ATTEMPTS: unblocked attempts
+#          a game x his share of them that reach the net, shrunk toward
+#          the league's (ONNET_K attempts) —
+#              mu_sog' = mu_sog x (attempt-implied / his SOG rate) ^ a
+#   goals  his goal rate re-read through WHERE he shoots: his high-danger,
+#          other scoring-chance and other unblocked attempts a game x the
+#          league's goals per attempt from each (measured before the test)
+#              mu_g'   = mu_g   x (chance-implied / his goal rate) ^ b
+# Ratios clipped to [0.5, 2]; under SHOTS_MIN_GAMES games with attempt
+# data a skater keeps today's number.
+SHOTS_MIN_GAMES = 5
+ONNET_K = 150.0
+SHOTS_MIN_COVERAGE = 0.5
+SHOT_FAMS = {"sog": ("sog",), "g": ("g",)}
+
+
+def _clip(x):
+    return min(2.0, max(0.5, x))
+
+
+def shot_ratios(r, sums, lr):
+    """{"sog": attempt-implied / his SOG rate, "g": chance-implied / his
+    goal rate, "att_pg", "hd_pg", "sc_pg", "xg_pg", "onnet"} or None."""
+    n, t = sums or (0, None)
+    if not r or not lr or n < SHOTS_MIN_GAMES or not t:
+        return None
+    icf, iff, isf, g, sc, hd, _gsc, _ghd = t
+    out = {"att_pg": icf / n, "iff_pg": iff / n, "sc_pg": sc / n, "hd_pg": hd / n, "n": n}
+    if lr.get("onnet") and r.get("sog"):
+        on = (isf + ONNET_K * lr["onnet"]) / (iff + ONNET_K)
+        out["onnet"] = on
+        out["sog"] = _clip((iff / n) * on / r["sog"])
+    if all(lr.get(k) for k in ("c_hd", "c_md", "c_ld")) and r.get("g"):
+        xg = (hd * lr["c_hd"] + (sc - hd) * lr["c_md"] + (iff - sc) * lr["c_ld"]) / n
+        out["xg_pg"] = xg
+        out["g"] = _clip(xg / r["g"])
+    return out
+
+
+def _toi_sc(ratios, fam, toi):
+    """The adopted ice-time scale for a family on one row (plain or PP)."""
+    f = (toi or {}).get(fam) or {}
+    w = f.get("window")
+    if not w:
+        return 1.0
+    sc = ratios.get(w, 1.0) ** (f.get("alpha") or 0.0)
+    ppf = f.get("pp") or {}
+    if ppf.get("adopted"):
+        wr = weighted_ratio((ratios.get("pp") or {}).get(w), ppf["weight"])
+        if wr:
+            sc = wr ** ppf["alpha"]
+    return sc
+
+
+def _shot_losses(rows, fam, toi, disp, lr, strength):
+    """[(p, y)] over the family's markets with the shot factor at
+    `strength` on top of the adopted ice time."""
+    out = []
+    for r, sr, gr, ratios, actual, _key in rows:
+        sh = shot_ratios(r, ratios.get("shots"), lr) or {}
+        x = sh.get(fam)
+        f = (x ** strength) if x else 1.0
+        pr = probs(r, sr, gr, disp, toi_sog=_toi_sc(ratios, "sog", toi),
+                   toi_pts=_toi_sc(ratios, "pts", toi),
+                   att_sog=f if fam == "sog" else 1.0, chance_g=f if fam == "g" else 1.0)
+        for k, _l, stat, n in MARKETS:
+            if stat not in SHOT_FAMS[fam] or actual[stat] is None:
+                continue
+            out.append((pr[k], 1 if actual[stat] >= n else 0))
+    return out
+
+
+def fit_shots(train, test, toi, disp, skaters, cut):
+    """{"league": league rates before the test, "sog": {...}, "g": {...}} —
+    per family the strength FITTED on train, TESTED on the props window
+    against strength 0 (today's number); adopted only on "beats"."""
+    cov = sum(1 for row in train if (row[3].get("shots") or (0,))[0] >= SHOTS_MIN_GAMES) \
+        / max(len(train), 1)
+    lr = _ns.league_rates(skaters, before=cut)
+    out = {"coverage": round(cov, 3), "league": {k: (round(v, 5) if isinstance(v, float) else v)
+                                                 for k, v in lr.items()}}
+    if cov < SHOTS_MIN_COVERAGE or not lr.get("onnet"):
+        out["note"] = ("too few games carry shot attempts to fit on - run the 'NHL prior "
+                       "shots' workflow once")
+        return out
+    for fam in SHOT_FAMS:
+        def ll(a, fam=fam):
+            pts = _shot_losses(train, fam, toi, disp, lr, a)
+            return -sum(mm.log_loss(p, y) for p, y in pts) / max(len(pts), 1)
+        a = mm.golden_max(ll, 0.0, 1.5, iters=24)
+        with_ = _shot_losses(test, fam, toi, disp, lr, a)
+        without = _shot_losses(test, fam, toi, disp, lr, 0.0)
+        verdict = mm.paired_verdict([mm.log_loss(p, y) for p, y in with_],
+                                    [mm.log_loss(p, y) for p, y in without])
+        sw, sb = mm.score_predictions(with_), mm.score_predictions(without)
+        adopted = verdict.get("verdict") == "beats"
+        out[fam] = {"fitted_strength": round(a, 3), "strength": round(a, 3) if adopted else 0.0,
+                    "adopted": adopted, "verdict": verdict, "n": sw["n"],
+                    "brier_with": sw["brier"], "brier_without": sb["brier"],
+                    "log_loss_with": sw["log_loss"], "log_loss_without": sb["log_loss"]}
+    return out
+
+
+def shot_scales(r, games_before, shots_map, toi):
+    """{"sog": scale, "g": scale, ...context} for one skater: the adopted
+    strengths (0 -> 1.0) and his attempt / chance numbers for the page."""
+    fit = (toi or {}).get("shots") or {}
+    out = {"sog": 1.0, "g": 1.0}
+    if not shots_map or not fit.get("league"):
+        return out
+    sh = shot_ratios(r, _ns.window(shots_map, [x[0] for x in games_before]), fit["league"])
+    if not sh:
+        return out
+    for fam in SHOT_FAMS:
+        f = fit.get(fam) or {}
+        if f.get("adopted") and sh.get(fam):
+            out[fam] = sh[fam] ** f["strength"]
+    out.update({k: round(v, 3) for k, v in sh.items() if k not in SHOT_FAMS})
+    return out
+
+
+def shots_note(toi):
+    """One sentence for the pages: are attempts / chances in the number."""
+    fit = (toi or {}).get("shots") or {}
+    if not fit.get("sog") and not fit.get("g"):
+        return ("Shot attempts and scoring chances are context only until last season's "
+                "attempts are loaded and tested.")
+    bits = []
+    for fam, what in (("sog", "shot attempts (for shots on goal)"),
+                      ("g", "scoring chances (for goals)")):
+        f = fit.get(fam) or {}
+        z = (f.get("verdict") or {}).get("z")
+        bits.append(f"{what}: " + ("IN the number" if f.get("adopted") else "context only")
+                    + (f" (z={z} on unseen games)" if z is not None else ""))
+    return "; ".join(bits).capitalize() + "."
 
 
 # ----------------------------------------------------------------------
@@ -798,8 +952,10 @@ def validate_props(skaters, goal_finals, shot_finals, days=VALIDATION_DAYS,
             gr = ge[0] / ge[1] if ge and ge[1] else 1.0
             sr = se[0] / se[1] if se and se[1] else 1.0
             sc = toi_scales(games[:i], toi, p.get("pp"))
+            shs = shot_scales(r, games[:i], p.get("shots"), toi)
             pr = probs(r, sr, gr, priors.get("sog_dispersion"),
-                       toi_sog=sc["sog"], toi_pts=sc["pts"])
+                       toi_sog=sc["sog"], toi_pts=sc["pts"], att_sog=shs["sog"],
+                       chance_g=shs["g"])
             actual = {"sog": s, "g": g or 0, "a": a or 0, "pts": (g or 0) + (a or 0)}
             prior_games = games[:i]
             for k, _l, stat, n in MARKETS:
@@ -844,10 +1000,11 @@ def pool_skaters(prior_skaters, current_skaters, current_id_of, regular_ids=None
     for pid, p in (prior_skaters or {}).items():
         pool[pid] = {"name": p.get("name"), "pos": p.get("pos"), "team": p.get("team"),
                      "games": [tuple(x) for x in p.get("games") or []],
-                     "pp": dict(p.get("pp") or {})}
+                     "pp": dict(p.get("pp") or {}), "shots": dict(p.get("shots") or {})}
     for pid, rec in (current_skaters or {}).items():
         dst = pool.setdefault(str(pid), {"name": rec.get("name"), "pos": rec.get("pos"),
-                                         "team": None, "games": [], "pp": {}})
+                                         "team": None, "games": [], "pp": {},
+                                         "shots": {}})
         dst["name"] = rec.get("name") or dst["name"]
         dst["pos"] = rec.get("pos") or dst["pos"]
         for eid, line in (rec.get("games") or {}).items():
@@ -857,6 +1014,8 @@ def pool_skaters(prior_skaters, current_skaters, current_id_of, regular_ids=None
                                  line.get("sog"), line.get("g"), line.get("a"), line.get("toi")))
             if line.get("pptoi") is not None and line.get("date"):
                 dst["pp"][line["date"]] = line["pptoi"]
+            if line.get("shots") is not None and line.get("date"):
+                dst.setdefault("shots", {})[line["date"]] = line["shots"]
     for p in pool.values():
         p["games"].sort(key=lambda x: x[0] or "")
     return pool
@@ -989,8 +1148,10 @@ def build(current_finals, prior, current_skaters=None, current_id_of=None, slate
                     continue
                 r = rates(p, priors)
                 sc = toi_scales(p["games"], toi, p.get("pp"))
+                shs = shot_scales(r, p["games"], p.get("shots"), toi)
                 pr = probs(r, sr, gr, priors.get("sog_dispersion"),
-                           toi_sog=sc["sog"], toi_pts=sc["pts"])
+                           toi_sog=sc["sog"], toi_pts=sc["pts"], att_sog=shs["sog"],
+                           chance_g=shs["g"])
                 if not pr:
                     continue
                 pos = sk.get("pos") or p.get("pos")
@@ -1010,6 +1171,9 @@ def build(current_finals, prior, current_skaters=None, current_id_of=None, slate
                                       "a": round(r["a"], 3)},
                              "ice": {k: (round(v, 3) if isinstance(v, float) else v)
                                      for k, v in sc.items()},
+                             # attempts / chances (context; "sog" / "g" are
+                             # the scales in the number, 1.0 unless adopted)
+                             "shots": shs,
                              "dvp": {st: c for st, c in cards.items() if c},
                              "why": why_line(sk.get("name") or p.get("name"), pos, r, env, sc,
                                              opp_abbr, cards.get("sog"),

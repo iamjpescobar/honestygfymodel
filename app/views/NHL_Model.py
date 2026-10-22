@@ -115,6 +115,12 @@ def _in_number_note():
                 "context only \u2014 once the team's total shots and goals allowed are in, "
                 "which position gets them did not predict better on unseen games"))
     return "; ".join(bits)
+def _f1(x, nd=1):
+    """A per-game number for the board; "—" when he has no attempt data
+    (missing, never zero)."""
+    return "—" if x is None else f"{x:.{nd}f}"
+
+
 _val = model.get("validation")
 _blend = model.get("blend")
 
@@ -163,6 +169,13 @@ for i, g in enumerate(games or []):
                            "PP": ("—" if _ppm is None else
                                   f"{_pp.get('unit')} · {_ppm:.1f}"
                                   if _pp.get("unit") not in (None, "-") else f"{_ppm:.1f}"),
+                           # shot attempts / chances a game (10-22, nhl_shots):
+                           # Att = every attempt (iCF), HD = high-danger
+                           # chances (iHDCF), xG = goals his chances are
+                           # worth at the league's rate per spot
+                           "Att/G": _f1((p.get("shots") or {}).get("att_pg")),
+                           "HD/G": _f1((p.get("shots") or {}).get("hd_pg")),
+                           "xG/G": _f1((p.get("shots") or {}).get("xg_pg"), 2),
                            "Exp SOG": p.get("exp_sog"), "Exp Pts": p.get("exp_pts"),
                            "_name": p.get("name"), "_probs": p.get("probs") or {},
                            "_pmfs": nm.skater_pmfs(p.get("mu"), _sog_disp),
@@ -175,7 +188,7 @@ for i, g in enumerate(games or []):
                     mv.render_prop_board(rows, nm.STATS, nm.MARKETS, verdicts,
                                          key=f"nhlm_{i}_{side}", staking=_stk,
                                          info_cols=("Skater", "Pos", "GP", "TOI recent", "TOI norm",
-                                                    "PP"),
+                                                    "PP", "Att/G", "HD/G", "xG/G"),
                                          calibration=_cal)
                 else:
                     # a games.json from before the any-line build: the
@@ -214,6 +227,11 @@ for i, g in enumerate(games or []):
                 + (_in_number_note() + ". " if _in_number_note() else "") +
                 "PP = power-play unit by minutes (PP1 = his team's top 5 in PP time over the "
                 "last 5) and PP minutes a game. " + nm.pp_note(model.get("toi")) + " "
+                "Att/G = every shot attempt a game, blocked ones included (iCF); HD/G = "
+                "high-danger chances a game (unblocked attempts from the inner slot, read from "
+                "where the shot was taken — close to Natural Stat Trick's, not identical); xG/G = "
+                "the goals his attempts are worth at the league's rate from each spot. "
+                + nm.shots_note(model.get("toi")) + " "
                 "NOT in the number: tonight's lines and PP units, late scratches, the opposing "
                 "goalie. GP counts both seasons.")
 

@@ -10,6 +10,80 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — NBA context: tonight's opponent + teammates out; a proper fit score; opening night. 2026-10-20 (6)
+
+**Suite 147, FAILING: none.** New tests/test_nba_context.py (5 controls,
+red by exit code; the 5th first stayed GREEN — it checked the row's
+ctx/why, not its mu; the check now asserts mu = base x opp x bump).
+test_nba +1 control (offseason cut). Dry run of nba_precompute.main
+offline on the real 2025-26 file (ESPN patched: one game, HOU @ OKC,
+Amen Thompson Out) — every verify line below came from it; Tonight /
+Props / Simulator / Trends / Next Man Up / Bet Log render headless on
+that payload.
+
+THE FIT SCORE WAS BIASED (found while fitting the context): nm._sse was
+(mu - y)^2 / mu — its denominator grows with mu, so it rewards projecting
+HIGH (on Poisson(10) it is minimised at 10.49). It called a teammate-out
+redistribution that made every Brier WORSE a 10% improvement. Now
+nm.deviance (Poisson deviance — minimised at the mean). Base refit with
+it: HL 2, K 600, HL_LONG 120, K_LONG 100; every stat's Brier lower than
+the chi fit (3PM z 2.06 -> 4.66). FIT_HL gained 1.
+
+engines/nba_context — per stat, fit window, deviance; OFF unless better:
+  OPPONENT (defense + pace): walk-forward factor per opponent (by
+    position for 3s), (sum w*actual + K*m) / (sum w*proj + K*m), days
+    half-life: pts hl120 k40, reb hl30 k100, ast hl30 k100, tpm hl120
+    k100 by position. A day's games never see their own day.
+  TEAMMATE OUT: rotation players (15+ min) who miss a team game leave
+    ALPHA of their production to those who play, in proportion; weight
+    0.5^(games already missed / HL) — teammates' own recent games carry a
+    long absence already. pts a.3 hl2, reb a.3 hl2, ast a.45 hl.5, tpm
+    a.2 hl.5. Trades are not absences.
+TEST (unseen 45 days), context vs no context on the same lines: Points
+z 8.5, Reb 2.4, Ast 4.3, 3PM 3.9, PRA 8.4, P+R 8.0, P+A 9.0, R+A 4.7 —
+all BEAT. Vs his own rate: Points z 8.1 (was 4.9) ... R+A 9.5. The
+top-scorer gap from entry (4) CLOSED: test window top-2 projected 20.18
+vs actual 20.09 (was 19.14). The model's sizes / test / curves are the
+context's (model["base_test"] keeps the plain one; model["context"] has
+opp / mean / out / vs_base). Pages' captions read nv.in_the_number.
+
+TONIGHT: nc.book_now walks last season + this one; nc.outs_now counts
+this team's games since an Out player's last (cur + prior finals);
+nc.apply_tonight sets row mu, row["ctx"], appends the why ("vs DET: pts
++4% · with X out: pts +3%"). Late scratches after the nightly are NOT
+in it.
+
+OPENING NIGHT (NOT MEASURED — the file has no offseason): with HL 2, a
+star was projected off his last two April games (SGA 30.1 min). Running
+.offseason(): across a 60+ day gap the recent window restarts from his
+long-run averages at CARRY weight; project_now(today=) applies it before
+a projection made across the gap. SGA 30.1 -> 33.2 (last season 33.3).
+Also changes 2025-26 players back from 60+ day injuries (test numbers
+moved in the third decimal).
+
+SIMULATOR on the context model: links e pts 1.005 reb -0.26 ast 1.06 3PM
+1.10; test 1,065 pairs z 1.7-2.0 across the last two fits — ON THE LINE
+between THIN and BEATS; the nightly's verdict sets the SGP cap.
+Nightly cost: base fit ~70 s, context ~35 s, sim ~25 s.
+
+SGP LEGS (Izzy: "why 4?" — it was my pick, not a measurement): the
+Simulator's builder takes up to nba_sim.SGP_MAX_LEGS = 8. Measured at
+500,000 games: the link's noise is +/- 0.002 at 2 legs, 0.009 at 6,
+0.017 at 8, 0.035 at 10. But the test grades two-leg pairs only and the
+link grows with every leg (8 overs: x1.7, 6 HOU overs on the dry run:
+x2.1) — so sgp_support(test, n_legs) caps 3+ legs at THIN (untested),
+SGP_GUARD["thin_legs"] says why. test_nba_sim +1 control (n_legs
+ignored). The Bet Finder's parlay slip never had a cap.
+
+FILES: app/engines/nba_model.py, app/engines/nba_context.py (new),
+app/engines/nba_sim.py, app/engines/nba_view.py, app/views/NBA.py,
+app/views/NBA_Props.py, nba_precompute.py, tests/test_nba.py,
+tests/test_nba_context.py (new), HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
+---
+
 ## PICK UP HERE — Why 10,000 sims, and the parlay now runs 500,000. 2026-10-20 (5)
 
 **Suite 146, FAILING: none.** test_nba_sim +2 controls, red by exit code

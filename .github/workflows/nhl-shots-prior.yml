@@ -1,0 +1,46 @@
+name: NHL prior shots
+
+# Manual, run ONCE (10-22). Every 2025-26 NHL regular-season game's
+# play-by-play from the NHL's own feed (api-web.nhle.com) ->
+# data/nhl/prior_shots.json: each skater's shot attempts (iCF), unblocked
+# attempts (iFF), shots on goal (iSF), scoring chances and high-danger
+# chances by shot location (iSCF, iHDCF), matched to ESPN ids by name
+# (nhl_shots_prior.py, engines/nhl_shots). The attempt and chance factors
+# in the NHL model are fitted and tested on it. Committed once.
+#
+# Read the [verify] lines: ~1,300 games, 85%+ of skater-games matched,
+# 90%+ of shots on goal equal to ESPN's box. Allow 20-40 minutes.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-archive
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: pip install -c requirements.txt requests
+      - name: Collect NHL prior shots from ESPN
+        run: python nhl_shots_prior.py
+      - name: Commit the file
+        run: |
+          if [ -z "$(git status --porcelain -- data/nhl/prior_shots.json)" ]; then
+            echo "No change to data/nhl/prior_shots.json."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/nhl/prior_shots.json
+          git commit -m "chore: NHL 2025-26 shot attempts and chances [skip ci]"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
