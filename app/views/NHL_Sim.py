@@ -21,6 +21,7 @@ from engines import live_injuries as _li
 from engines import model_math as mm
 from engines import model_view as mv
 from engines import nhl_model as hm
+from engines import nhl_periods as npd
 from engines import nhl_sim as hs
 from engines.slate_guard import payload_field, today_for
 from engines.live_sync import sync_latest_button
@@ -54,6 +55,11 @@ sog_disp = (model.get("skater_priors") or {}).get("sog_dispersion")
 shot_disp = (model.get("shots") or {}).get("dispersion")
 cal = mv.calibration_map(model.get("props_validation") or {}, hm.MARKETS)
 cal_sv = mv.calibration_map(model.get("saves_validation") or {}, hm.SAVE_MARKETS)
+per_meta = sim_meta.get("periods") or {}
+per_test = per_meta.get("test") or {}
+per_sh = (per_meta.get("shares") or links.get("shares") or npd.DEFAULT_SHARES)
+cal_p1 = mv.calibration_map(per_test, npd.P1_MARKETS)
+P1_LAB = {"p1pts": "1st-period points", "p1sog": "1st-period SOG", "p1g": "1st-period goals"}
 beat = [hs.KIND_LABEL[k] for k, x in combos.items()
         if (x.get("verdict") or {}).get("verdict") == "beats" and k in hs.KIND_LABEL]
 st.markdown(
@@ -239,12 +245,15 @@ with card("nhs_box"):
 def skater_chance(row, stat, line, side="Over"):
     """(delivered chance, raw, support) for one skater leg — the props
     model's pmf through the props test's curve, like the Bet Finder."""
-    pm = hm.skater_pmfs(row.get("mu"), sog_disp).get(stat)
+    p1 = stat.startswith("p1")
+    pm = (npd.p1_pmfs(row.get("mu"), per_sh, sog_disp) if p1
+          else hm.skater_pmfs(row.get("mu"), sog_disp)).get(stat)
     if not pm:
         return None, None, None
+    mk, cm = (npd.P1_MARKETS, cal_p1) if p1 else (hm.MARKETS, cal)
     raw = mm.prob_at_least(pm, int(math.floor(line)) + 1)
-    ch, _basis = mv.delivered_over(raw, stat, line, hm.MARKETS, cal)
-    sup = mv.support_for(raw, stat, line, hm.MARKETS, cal)
+    ch, _basis = mv.delivered_over(raw, stat, line, mk, cm)
+    sup = mv.support_for(raw, stat, line, mk, cm)
     return (ch if side == "Over" else 1 - ch), raw, sup
 
 
@@ -258,9 +267,58 @@ def saves_chance(gk, line, side="Over"):
 
 
 def default_line(row, stat):
+    if stat == "p1sog":
+        return max(0.5, math.floor(float(row["mu"].get("sog") or 0) * per_sh["sog"][0]) + 0.5)
     if stat == "sog":
         return max(0.5, math.floor(float(row["mu"].get("sog") or 0)) + 0.5)
     return 0.5
+
+
+# ---------------- the 1st period ----------------
+with card("nhs_p1"):
+    st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">The 1st period'
+                f'</div>', unsafe_allow_html=True)
+    ph1, pa1 = sim["per"]["home"][:, 0], sim["per"]["away"][:, 0]
+    t1 = npd.team_p1(float(pj["mu_home"]), float(pj["mu_away"]), per_sh)
+
+    def _verd(k):
+        return mv.trust_label(((per_test.get(k) or {}).get("verdict") or {}).get("verdict"))
+    st.markdown(
+        f'<div style="font-size:var(--lc-text-body); line-height:1.8;">'
+        f'Goals in the 1st: {aa} <b>{pa1.mean():.2f}</b>, {ha} <b>{ph1.mean():.2f}</b> on average '
+        f'(the 1st holds {100 * per_sh["goals"][0]:.0f}% of a game&rsquo;s goals, '
+        f'{100 * per_sh["sog"][0]:.0f}% of its shots).<br>'
+        f'Over 1.5 goals in the 1st: <b>{_pc(t1["p1tot15"])}</b> '
+        f'<span style="color:{COLOR["text_muted"]};">({_verd("p1tot15")})</span><br>'
+        f'After one: {ha} leads <b>{_pc(t1["p1lead_home"])}</b> '
+        f'<span style="color:{COLOR["text_muted"]};">({_verd("p1lead_home")})</span>, tied '
+        f'<b>{_pc(t1["p1tie"])}</b>, {aa} leads <b>{_pc(t1["p1lead_away"])}</b></div>',
+        unsafe_allow_html=True)
+    prow, pchs = [], []
+    for p in sorted(players, key=lambda p: -float(p["mu"].get("sog") or 0)):
+        c = {k: skater_chance(p["row"], st_, n - 0.5)[0] for k, _l, st_, n in npd.P1_MARKETS}
+        pchs.append(c)
+        prow.append({"Player": f"{p['name']} ({p['team']})",
+                     "Point": _pc(c["p1pt"]) if c["p1pt"] is not None else "—",
+                     "Goal": _pc(c["p1g"]) if c["p1g"] is not None else "—",
+                     "1+ SOG": _pc(c["p1sog1"]) if c["p1sog1"] is not None else "—",
+                     "2+ SOG": _pc(c["p1sog2"]) if c["p1sog2"] is not None else "—"})
+    _cols = {"Point": "p1pt", "Goal": "p1g", "1+ SOG": "p1sog1", "2+ SOG": "p1sog2"}
+
+    def _paint_p1(frame):
+        o_ = pd.DataFrame("", index=frame.index, columns=frame.columns)
+        for k_ in frame.index:
+            for col, mk_ in _cols.items():
+                if pchs[k_][mk_] is not None:
+                    o_.at[k_, col] = mv.chance_css(pchs[k_][mk_])
+        return o_
+    st.dataframe(mv.painted(pd.DataFrame(prow), _paint_p1), hide_index=True, width="stretch",
+                 key="nhs_p1_tab")
+    st.caption("Each skater's 1st period: his game projection at the share of goals and shots "
+               "the 1st period MEASURED last season, through what those calls delivered on "
+               "unseen games. Graded against his own last-20 1st-period rate: "
+               + "; ".join(f"{lab} — {_verd(k)}" for k, lab, *_ in npd.P1_MARKETS)
+               + ". Team lines are the game model's goals at the 1st-period share.")
 
 
 # ---------------- every skater ----------------
@@ -309,13 +367,17 @@ with card("nhs_players"):
                "not a bet until your book's price is checked (Bet Finder).")
 
 # ---------------- same-game parlay ----------------
+SGP_STATS = tuple(hs.STATS) + tuple((s_, lab) for s_, lab, _l in npd.P1_STATS)
 with card("nhs_sgp"):
     st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Same-game parlay'
                 f'</div>',
                 unsafe_allow_html=True)
     opts = ([("game", "home_win", f"{ha} to win"), ("game", "away_win", f"{aa} to win"),
              ("game", "total", "Total goals"), ("game", "home_margin", f"{ha} puck line"),
-             ("game", "away_margin", f"{aa} puck line")]
+             ("game", "away_margin", f"{aa} puck line"),
+             ("game", "p1_total", "1st-period total goals"),
+             ("game", "p1_home_win", f"{ha} leads after the 1st"),
+             ("game", "p1_away_win", f"{aa} leads after the 1st")]
             + [("goalie", s_, f"{goalie[s_]['name']} saves ({ha if s_ == 'home' else aa})")
                for s_ in ("away", "home") if goalie[s_]]
             + [("skater", p["pid"], f"{p['name']} ({p['team']})") for p in players])
@@ -329,9 +391,9 @@ with card("nhs_sgp"):
                                                      len(opts) - 1))
         kind, key, name = opts[oi]
         if kind == "skater":
-            slab = b.selectbox("Stat", [lab for _s, lab in hs.STATS], key=f"nhs_s{i}",
+            slab = b.selectbox("Stat", [lab for _s, lab in SGP_STATS], key=f"nhs_s{i}",
                                index=3)
-            st_ = next(s_ for s_, lab in hs.STATS if lab == slab)
+            st_ = next(s_ for s_, lab in SGP_STATS if lab == slab)
             p = pmap[key]
             ln = c.number_input("Line", value=float(default_line(p["row"], st_)), step=1.0,
                                 key=f"nhs_l{i}_{key}_{st_}")
@@ -354,6 +416,20 @@ with card("nhs_sgp"):
             if key in ("home_win", "away_win"):
                 legs.append({"pid": "_game", "stat": key, "line": 0.5, "side": "Over"})
                 show.append((name, p_win(key.split("_")[0])))
+            elif key in ("p1_home_win", "p1_away_win"):
+                # leads after one: regulation 1st-period goals, ties lose
+                leg = {"pid": "_game", "stat": key.replace("_win", "_margin"), "line": 0.5,
+                       "side": "Over"}
+                legs.append(leg)
+                show.append((name, t1["p1lead_" + key.split("_")[1]]))
+            elif key == "p1_total":
+                ln = c.number_input("Line", value=1.5, step=1.0, key=f"nhs_l{i}_{key}")
+                sd = d.selectbox("Side", ["Over", "Under"], key=f"nhs_d{i}")
+                leg = {"pid": "_game", "stat": "p1_total", "line": ln, "side": sd}
+                legs.append(leg)
+                pt = (t1["p1tot15"] if ln == 1.5 else float(hs.leg_hits(sim, dict(
+                    leg, side="Over")).mean()))
+                show.append((f"{name} {sd} {ln:g}", pt if sd == "Over" else 1 - pt))
             else:
                 dflt = (float(o.get("total") or 5.5) if key == "total" else -1.5)
                 ln = c.number_input("Line", value=dflt, step=1.0, key=f"nhs_l{i}_{key}")

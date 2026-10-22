@@ -57,14 +57,39 @@ def _nhl_games():
     from engines.slate_guard import load_slate, payload_field
     games, _d, _cur = _li.load_slate_live("nhl")
     model = payload_field("nhl", "model") or {}
+    sim = payload_field("nhl", "sim") or {}
     out = []
     for g in games or []:
         if g.get("game_type") == "preseason" or g.get("status") == "final":
             continue
         out.append({"label": f"{g.get('away_abbr')} @ {g.get('home_abbr')}  "
                              f"{g.get('time_et') or ''}".strip(),
-                    "g": g, "model": model})
+                    "g": g, "model": model, "periods": sim.get("periods")})
     return out
+
+
+def _p1_group(item, sog_disp):
+    """Skaters — 1st period (10-22, engines/nhl_periods): his game means at
+    the MEASURED period shares. Only the markets that beat his own
+    1st-period rate on unseen games are offered (no false STRONG)."""
+    from engines import availability as av
+    from engines import nhl_periods as npd
+    per = item.get("periods") or {}
+    tv = per.get("test") or {}
+    mk = npd.offered(tv)
+    if not mk:
+        return None
+    g, rows = item["g"], []
+    for side in ("away", "home"):
+        abbr = g.get(f"{side}_abbr") or g.get(side)
+        for p in g.get(f"{side}_props") or []:
+            if not av.is_out(p.get("status")):
+                rows.append({"_name": f"{p.get('name')} ({abbr})",
+                             "_pmfs": npd.p1_pmfs(p.get("mu"), per.get("shares"), sog_disp)})
+    stats = tuple((s_, lab, tuple(n - 0.5 for _k, _l, st_, n in mk if st_ == s_))
+                  for s_, lab, _ln in npd.P1_STATS if any(m[2] == s_ for m in mk))
+    return {"label": "Skaters — 1st period", "rows": rows, "stats": stats, "markets": mk,
+            "cal": mv.calibration_map(tv, mk)}
 
 
 def _nhl_groups(item):
@@ -95,6 +120,9 @@ def _nhl_groups(item):
                        "markets": nm.SAVE_MARKETS,
                        "cal": mv.calibration_map(model.get("saves_validation") or {},
                                                  nm.SAVE_MARKETS)})
+    p1 = _p1_group(item, sog_disp)
+    if p1 and p1["rows"]:
+        groups.append(p1)
     away, home = g.get("away_abbr") or g.get("away"), g.get("home_abbr") or g.get("home")
     return groups, bf.game_line_items(g.get("model"), g.get("odds"), away, home)
 

@@ -53,7 +53,8 @@ VALIDATION_DAYS = 30
 
 # Columns this builder needs beyond the engine set. precompute keeps
 # them in the season frame and drops them before per-player files.
-EXTRA_COLS = ["inning_topbot"]
+EXTRA_COLS = ["inning_topbot", "inning", "outs_when_up", "on_1b", "on_2b", "on_3b"]
+STATE_COLS = ("inning", "outs_when_up", "on_1b", "on_2b", "on_3b")
 
 
 def plate_appearances(season_df):
@@ -67,7 +68,8 @@ def plate_appearances(season_df):
     # are ENGINE_COLS): their difference on the PA-ending pitch is the
     # runs that scored on the play — the RBI markets. Absent -> no RBI
     # column, and those markets are left out, never zero-filled.
-    extra = [c for c in ("bat_score", "post_bat_score", "home_team") if c in season_df.columns]
+    extra = [c for c in ("bat_score", "post_bat_score", "home_team") + STATE_COLS
+             if c in season_df.columns]
     df = season_df[season_df["events"].notna()][list(need) + extra].copy()
     df = df.drop_duplicates(subset=["game_pk", "at_bat_number"])
     if "bat_score" in extra and "post_bat_score" in extra:
@@ -348,6 +350,12 @@ def build_prop_model(season_df, out_dir, validation_days=VALIDATION_DAYS, prior=
         print(f"::warning::MLB matchup tables failed: {type(exc).__name__}: {exc}")
     model["validation"] = validate(pa, model, validation_days)
     model["pitcher_validation"] = validate_pitchers(pa, model, validation_days)
+    # THE GAME SIMULATOR: own try — costs the simulator, never the props
+    try:
+        model["sim"] = build_sim(pa, model, validation_days)
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::MLB simulator failed: {type(exc).__name__}: {exc}")
+        model["sim"] = {"note": f"failed: {type(exc).__name__}"}
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -361,6 +369,21 @@ def build_prop_model(season_df, out_dir, validation_days=VALIDATION_DAYS, prior=
             print(f"  [verify] {label:18s} n={v.get('n')} model Brier {v.get('model_brier')} "
                   f"vs his-own-rate {v.get('baseline_brier')} -> "
                   f"{(v.get('verdict') or {}).get('verdict')}")
+    _sim = model.get("sim") or {}
+    if _sim.get("note"):
+        print(f"  [verify] MLB simulator: {_sim['note']}")
+    else:
+        print(f"  [verify] MLB simulator: base-out transitions from "
+              f"{(_sim.get('transitions') or {}).get('n')} plate appearances; runs per team "
+              f"simulated {(_sim.get('runs_check') or {}).get('sim')} vs actual "
+              f"{(_sim.get('runs_check') or {}).get('actual')}; SGPs graded on "
+              f"{_sim.get('n_games')} games from {_sim.get('from')}")
+        for _k, _x in (_sim.get("combos") or {}).items():
+            _v = _x.get("verdict") or {}
+            print(f"  [verify] MLB SGP {_k:5s} n={_x['n']} lift {_x['avg_lift']} sim "
+                  f"{_x['sim_brier']} vs multiplied {_x['independent_brier']} -> "
+                  f"{_v.get('verdict')} (z={_v.get('z')}); predicted {_x['predicted_sim']} "
+                  f"(multiplied {_x['predicted_ind']}) vs actual {_x['actual']}")
     print(f"  [verify] RBI table measured: {'yes' if rbi_given else 'NO (no score columns)'}"
           + (f"; slot 4 HR drives in 1/2/3/4: {rbi_given.get('4', {}).get('HR', [])[1:]}"
              if rbi_given else ""))
@@ -525,3 +548,216 @@ def validate_pitchers(pa, model, validation_days):
             preds[k].append((proj["probs"][k], y))
             base[k].append((sum(1 for a in past if a[stat] >= n) / len(past), y))
     return _score(preds, base, mp.PITCHER_MARKETS, cut, dates[-1], validation_days)
+
+
+# ----------------------------------------------------------------------
+# THE GAME SIMULATOR (10-22, engines/mlb_sim): base-running measured on
+# the season's plate appearances; same-game parlays graded on the last
+# VALIDATION_DAYS walked forward exactly like the props test above.
+# Look-ahead stated: the transition table is league-level and measured
+# on the whole season (like the priors); every PLAYER number in the test
+# uses only earlier dates.
+# ----------------------------------------------------------------------
+SIM_TEST_N = 3000
+
+
+def _final_scores(pa):
+    """{(game_pk, side): runs} — the batting side's last post_bat_score."""
+    if "post_bat_score" not in pa.columns:
+        return {}
+    s = pd.to_numeric(pa["post_bat_score"], errors="coerce")
+    return {(int(g), side): float(v) for (g, side), v in
+            s.groupby([pa["game_pk"], pa["side"]]).max().items() if v == v}
+
+
+def _cal(model, key, raw, pitcher=False):
+    from engines import top_plays_board as tpb
+    bins = ((model.get("pitcher_validation" if pitcher else "validation") or {}).get(key)
+            or {}).get("calibration")
+    c = tpb.calibrate(raw, bins) if (bins and raw is not None) else None
+    return c if c is not None else raw
+
+
+def sim_games(pa, model, validation_days):
+    """[{"gpk", "game": mlb_sim game spec, "bat": {side: [(pid, slot, probs,
+    actual)]}, "sp": {side: (pid, k_line, k_prob, k_actual)}, "final":
+    {side: runs}}] for every game in the window with both lineups and
+    both starters — each number from earlier dates only."""
+    dates = sorted(pa["game_date"].unique())
+    if len(dates) < validation_days + 14:
+        return []
+    cut = dates[-validation_days]
+    bcum, pcum = _cum_before(pa, "batter"), _cum_before(pa, "pitcher")
+    lines = _game_lines(pa)
+    starts = starts_table(pa)
+    start_of = {(gpk, side): (sp, d) for gpk, side, sp, d, _bf in starts}
+    sp_starts = defaultdict(list)
+    for _g, _s, sp, d, bf in starts:
+        sp_starts[sp].append((d, bf))
+    lus = lineups(pa)
+    finals = _final_scores(pa)
+    k_by = pa[pa["outcome"] == "K"].groupby(["game_pk", "pitcher"]).size().to_dict()
+    league = model["league_rates"]
+    other = {"home": "away", "away": "home"}
+    out = []
+    for gpk in sorted({g for g, _s in lus}):
+        if (gpk, "home") not in lus or (gpk, "away") not in lus:
+            continue
+        if (gpk, "home") not in start_of or (gpk, "away") not in start_of:
+            continue
+        d = start_of[(gpk, "home")][1]
+        if d < cut or (gpk, "home") not in finals or (gpk, "away") not in finals:
+            continue
+        game, bat, sps, ok = {}, {}, {}, True
+        for side in ("home", "away"):
+            # the starter this side FACES is the other team's; its own
+            # starter is the one the other side faces
+            opp_sp = start_of[(gpk, side)][0]
+            p_counts = mp.player_counts(model, opp_sp, _counts_at(pcum, opp_sp, d), "pitcher")
+            bf_opp = mp.starter_bf_dist([bf for dd, bf in sp_starts[opp_sp] if dd < d], model,
+                                        (model.get("prior_bf") or {}).get(str(opp_sp)))
+            p_rates = mp.shrunk_rates(p_counts, model["pitcher_priors"]) \
+                if p_counts and p_counts.get("PA") else None
+            vs_sp, vs_pen, rows = [], [], []
+            for slot, b in enumerate(lus[(gpk, side)], start=1):
+                bc = mp.player_counts(model, b, _counts_at(bcum, b, d), "batter")
+                br = mp.shrunk_rates(bc, model["batter_priors"])
+                if not br:
+                    ok = False
+                    break
+                vs_sp.append(mp.combine(br, p_rates, league))
+                vs_pen.append(br)
+                proj = mp.project_batter(slot, bc, p_counts, model, bf_opp) \
+                    if bc.get("PA") else None
+                rows.append((str(b), slot, (proj or {}).get("probs") or {},
+                             lines.get((b, gpk)) or {}))
+            if not ok:
+                break
+            own_sp = start_of[(gpk, other[side])][0]
+            bf_own = mp.starter_bf_dist([bf for dd, bf in sp_starts[own_sp] if dd < d], model,
+                                        (model.get("prior_bf") or {}).get(str(own_sp)))
+            game[side] = {"pids": [r[0] for r in rows], "vs_sp": vs_sp, "vs_pen": vs_pen,
+                          "bf": bf_own or {}, "sp": str(own_sp)}
+            bat[side] = rows
+        if not ok:
+            continue
+        for side in ("home", "away"):
+            own_sp = start_of[(gpk, other[side])][0]
+            pc_ = mp.player_counts(model, own_sp, _counts_at(pcum, own_sp, d), "pitcher")
+            order = [mp.player_counts(model, b, _counts_at(bcum, b, d), "batter")
+                     for b in lus[(gpk, other[side])]]
+            pp = mp.project_pitcher(order, pc_, model, game[side]["bf"]) \
+                if pc_ and pc_.get("PA") and game[side]["bf"] else None
+            if pp and pp.get("pmfs", {}).get("k"):
+                line = int(pp["exp"]["k"]) + 0.5
+                raw = mm.prob_at_least(pp["pmfs"]["k"], int(line) + 1)
+                sps[side] = (own_sp, line, _cal(model, f"pk{int(line) + 1}", raw, True),
+                             int(k_by.get((gpk, own_sp), 0)))
+        out.append({"gpk": int(gpk), "game": game, "bat": bat, "sp": sps,
+                    "final": {"home": finals[(gpk, "home")], "away": finals[(gpk, "away")]}})
+    return out
+
+
+def _sim_combos(g, model):
+    """(kind, legs, marginals, hit) for the parlays people build."""
+    out = []
+    hw = g["final"]["home"] > g["final"]["away"]
+
+    def top(side, key, n):
+        xs = [r for r in g["bat"][side] if key in r[2]]
+        return sorted(xs, key=lambda r: -r[2][key])[:n]
+
+    def ov(r, stat, at):
+        v = (r[3] or {}).get(stat)
+        return v is not None and v >= at
+    for side in ("home", "away"):
+        win = hw if side == "home" else not hw
+        W = {"pid": "_game", "stat": f"{side}_win", "line": 0.5, "side": "Over"}
+        hh = top(side, "h1", 3)
+        tt = top(side, "tb2", 2)
+        hr = top(side, "hr1", 1)
+
+        def leg(r, st, ln):
+            return {"pid": r[0], "stat": st, "line": ln, "side": "Over"}
+        if len(hh) >= 2:
+            out.append(("HH", [leg(r, "h", .5) for r in hh[:2]],
+                        [_cal(model, "h1", r[2]["h1"]) for r in hh[:2]],
+                        all(ov(r, "h", 1) for r in hh[:2])))
+        if len(hh) == 3:
+            out.append(("HHH", [leg(r, "h", .5) for r in hh], [_cal(model, "h1", r[2]["h1"])
+                                                                for r in hh],
+                        all(ov(r, "h", 1) for r in hh)))
+        if len(tt) == 2:
+            out.append(("TT", [leg(r, "tb", 1.5) for r in tt],
+                        [_cal(model, "tb2", r[2]["tb2"]) for r in tt],
+                        all(ov(r, "tb", 2) for r in tt)))
+        if hh:
+            out.append(("HW", [leg(hh[0], "h", .5), W], [_cal(model, "h1", hh[0][2]["h1"]),
+                                                         None], ov(hh[0], "h", 1) and win))
+        if hr:
+            out.append(("RW", [leg(hr[0], "hr", .5), W], [_cal(model, "hr1", hr[0][2]["hr1"]),
+                                                          None], ov(hr[0], "hr", 1) and win))
+        sp = g["sp"].get(side)
+        if sp:
+            out.append(("KW", [{"pid": f"_sp_{side}", "stat": "k", "line": sp[1],
+                                "side": "Over"}, W], [sp[2], None], sp[3] > sp[1] and win))
+    H, A = g["bat"]["home"], g["bat"]["away"]
+    th, ta = sorted([r for r in H if "h1" in r[2]], key=lambda r: -r[2]["h1"])[:1], \
+        sorted([r for r in A if "h1" in r[2]], key=lambda r: -r[2]["h1"])[:1]
+    if th and ta:
+        out.append(("HHopp", [{"pid": th[0][0], "stat": "h", "line": .5, "side": "Over"},
+                              {"pid": ta[0][0], "stat": "h", "line": .5, "side": "Over"}],
+                    [_cal(model, "h1", th[0][2]["h1"]), _cal(model, "h1", ta[0][2]["h1"])],
+                    ov(th[0], "h", 1) and ov(ta[0], "h", 1)))
+    return out
+
+
+SIM_MIN_STATES = 20000      # a full season carries ~190,000
+
+
+def build_sim(pa, model, validation_days=VALIDATION_DAYS, n=SIM_TEST_N, min_states=None):
+    """{"transitions", "combos", "n_games", "from", "n_states"} or {"note"}."""
+    from engines import mlb_sim as ms
+    rows = ms.state_rows(pa)
+    if len(rows) < (SIM_MIN_STATES if min_states is None else min_states):
+        return {"note": f"only {len(rows)} plate appearances carry a base-out state — the "
+                        f"season frame needs inning / outs_when_up / on_1b-3b"}
+    trans = ms.measure_transitions(rows)
+    tab = ms.tables(trans)
+    games = sim_games(pa, model, validation_days)
+    acc = {}
+    for k, g in enumerate(games):
+        sim = ms.simulate(g["game"], tab, n=n, seed=101 + k)
+        for kind, legs, marg, hit in _sim_combos(g, model):
+            j = ms.joint(sim, legs)
+            marg = [m if m is not None else j["each"][i] for i, m in enumerate(marg)]
+            if not j["lift"] or None in marg:
+                continue
+            ind = 1.0
+            for q in marg:
+                ind *= q
+            sp_ = min(1.0, ind * j["lift"])
+            acc.setdefault(kind, []).append((j["lift"], ind, sp_, 1 if hit else 0))
+    combos = {}
+    for kind, xs in sorted(acc.items()):
+        m_, b_ = mm.score_predictions([(x[2], x[3]) for x in xs]), \
+            mm.score_predictions([(x[1], x[3]) for x in xs])
+        combos[kind] = {"n": len(xs), "sim_brier": m_["brier"], "independent_brier": b_["brier"],
+                        "verdict": mm.paired_verdict([(x[2] - x[3]) ** 2 for x in xs],
+                                                     [(x[1] - x[3]) ** 2 for x in xs]),
+                        "avg_lift": round(sum(x[0] for x in xs) / len(xs), 3),
+                        "predicted_ind": round(sum(x[1] for x in xs) / len(xs), 4),
+                        "predicted_sim": round(sum(x[2] for x in xs) / len(xs), 4),
+                        "actual": round(sum(x[3] for x in xs) / len(xs), 4)}
+    # the simulator's own check: runs per team-game against the season's
+    runs_sim = []
+    for k, g in enumerate(games[:40]):
+        s = ms.simulate(g["game"], tab, n=1000, seed=7 + k)
+        runs_sim.append(float((s["home"].mean() + s["away"].mean()) / 2))
+    act = [v for g in games for v in g["final"].values()]
+    return {"transitions": trans, "combos": combos, "n_games": len(games),
+            "from": (sorted(pa["game_date"].unique())[-validation_days]
+                     if len(games) else None),
+            "runs_check": {"sim": round(sum(runs_sim) / len(runs_sim), 2) if runs_sim else None,
+                           "actual": round(sum(act) / len(act), 2) if act else None,
+                           "games": min(40, len(games))}}

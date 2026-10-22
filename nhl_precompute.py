@@ -577,7 +577,10 @@ def goalie_probe(slate, _get=None):
         print(f"  [verify] NHL goalie probe NHL API failed: {type(exc).__name__}: {exc}")
 
 
-def nhl_sim_block(prior, model_block, skaters, id_of, regular_ids, rows):
+PRIOR_PERIODS = ROOT / "data" / "nhl" / "prior_periods.json"
+
+
+def nhl_sim_block(prior, model_block, skaters, id_of, regular_ids, rows, cur_periods=None):
     """The simulator's links and its graded same-game parlays (last
     season's final 60 days + this season), with [verify] lines."""
     import time as _t
@@ -585,10 +588,32 @@ def nhl_sim_block(prior, model_block, skaters, id_of, regular_ids, rows):
     t0 = _t.time()
     pool = nhl_model.pool_skaters(prior.get("skaters"), skaters, id_of,
                                   {str(x) for x in regular_ids})
-    blk = nhl_sim.build(prior, model_block, pool, rows)
+    periods = {}
+    if PRIOR_PERIODS.exists():
+        periods.update((json.loads(PRIOR_PERIODS.read_text()) or {}).get("games") or {})
+    else:
+        print("::warning::NHL periods: data/nhl/prior_periods.json missing - run the "
+              "'NHL prior periods' workflow once. No 1st-period lines or props tonight.")
+    n_prior = len(periods)
+    periods.update(cur_periods or {})
+    blk = nhl_sim.build(prior, model_block, pool, rows, periods=periods or None)
     if not blk:
         print("::warning::NHL simulator not built (no last-season file or model)")
         return None
+    per = blk.get("periods") or {}
+    if per:
+        sh = per["shares"]
+        print(f"  [verify] NHL periods: {n_prior} last-season + {len(cur_periods or {})} this-"
+              f"season games; shares fitted on {sh.get('n')} games before the test window: "
+              f"goals {sh['goals']}, shots {sh['sog']}")
+        from engines import nhl_periods as _npd
+        for k, lab, *_r in tuple(_npd.P1_MARKETS) + tuple(_npd.GAME_MARKETS):
+            x = per["test"].get(k) or {}
+            v = x.get("verdict") or {}
+            print(f"  [verify] NHL {lab:22s} n={x.get('n')} model {x.get('model_brier')} vs "
+                  f"{'his own last-20 rate' if k in dict((m[0], 1) for m in _npd.P1_MARKETS) else 'league rate'} "
+                  f"{x.get('baseline_brier')} -> {v.get('verdict')} (z={v.get('z')}); predicted "
+                  f"{x.get('predicted')} vs actual {x.get('actual')}")
     L = blk["links"]
     print(f"  [verify] NHL simulator links ({_t.time() - t0:.0f}s): shot environment variance "
           f"{L['shot_var']}, home/away {L['shot_rho']}; goals rise x shots ^ {L['e_goals']}; "
@@ -632,6 +657,7 @@ def main(today=None):
     finals, skaters, goalies = [], {}, {}
     id_of = {}
     regular_ids, team_games = set(), {}
+    cur_periods = {}
     seen = parsed = pre_parsed = 0
     first = True
     d = PRESEASON_START
@@ -666,6 +692,16 @@ def main(today=None):
                 continue
             parsed += 1
             regular_ids.add(g["event_id"])
+            # the periods (10-22, engines/nhl_periods): this season's 1st-
+            # period lines and player props are graded on them. Never costs
+            # the final.
+            try:
+                from engines import nhl_periods as _npd
+                cur_periods[str(g["event_id"])] = dict(
+                    _npd.parse(summ, goalie_ids=goalies.keys()), date=d.isoformat(),
+                    home=str(g.get("home_id")), away=str(g.get("away_id")))
+            except Exception as exc:  # noqa: BLE001
+                print(f"  periods {g['event_id']} failed: {type(exc).__name__}: {exc}")
             for side in ("away", "home"):
                 team_games.setdefault(g[side], []).append(g["event_id"])
             finals.append({"date": d.isoformat(), "away": g["away"], "home": g["home"],
@@ -873,7 +909,8 @@ def main(today=None):
             # season, same-game parlays graded. Own try: costs the
             # simulator, never the model or the slate.
             try:
-                sim_block = nhl_sim_block(prior, model_block, skaters, id_of, regular_ids, rows)
+                sim_block = nhl_sim_block(prior, model_block, skaters, id_of, regular_ids, rows,
+                                          cur_periods)
             except Exception as exc:  # noqa: BLE001
                 print(f"::warning::NHL simulator failed: {type(exc).__name__}: {exc}")
     except Exception as exc:  # noqa: BLE001

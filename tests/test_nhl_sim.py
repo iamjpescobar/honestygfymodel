@@ -21,6 +21,17 @@ Negative controls, confirmed red by exit code when written (rule 4):
     -> "a kind that has not beaten stays THIN" fails
   - combo_kind accepting a win leg for the OTHER team
     -> "a goal + the OTHER team's win is not the graded kind" fails
+Periods (10-22, engines/nhl_periods), each confirmed red:
+  - simulate splitting every game in equal thirds (shares ignored)
+    -> "the 1st period holds its measured share" fails
+  - simulate with no per-skater night (U = 1)
+    -> "his game shots keep the boards' spread" fails
+  - a p1_ leg reading the final score
+    -> "a 1st-period leg reads the 1st period" fails
+  - shares() ignoring hi (fitting on the test window)
+    -> "the shares are fitted before the test window" fails
+  - offered() passing a market that did not beat
+    -> "only 1st-period markets that beat are offered" fails
 """
 import random
 import sys
@@ -176,14 +187,71 @@ check("the test grades each kind (n, verdict, lift, predicted vs actual)",
 # --- 5. wiring ------------------------------------------------------------------------------
 pc = (ROOT / "nhl_precompute.py").read_text(encoding="utf-8")
 check("the nightly builds the simulator block and ships it",
-      "sim_block = nhl_sim_block(prior, model_block, skaters, id_of, regular_ids, rows)" in pc
-      and '"sim": sim_block,' in pc and "nhl_sim.build(prior, model_block, pool, rows)" in pc)
+      "sim_block = nhl_sim_block(prior, model_block, skaters, id_of, regular_ids, rows," in pc
+      and '"sim": sim_block,' in pc
+      and "nhl_sim.build(prior, model_block, pool, rows, periods=periods or None)" in pc)
+check("the nightly reads this season's periods from the finals it parses and last season's "
+      "from the committed file",
+      "cur_periods[str(g[\"event_id\"])] = dict(" in pc and "PRIOR_PERIODS.read_text()" in pc
+      and "rows,\n                                          cur_periods)" in pc)
 app = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
 check("the Simulator is in the NHL nav", '("Simulator", "views/NHL_Sim.py")' in app)
 pg = (ROOT / "app" / "views" / "NHL_Sim.py").read_text(encoding="utf-8")
 check("the page prices SGPs with the graded guard and logs / slips them",
       "hs.sgp_support(combos, legs, side_of)" in pg and "hs.sgp_guard(" in pg
       and "_blu.log_button(\"NHL\"" in pg and "pl.add_leg(" in pg)
+
+# --- 6. the periods --------------------------------------------------------------------------
+from engines import nhl_periods as npd  # noqa: E402
+SH = {"goals": [0.25, 0.35, 0.40], "sog": [0.30, 0.37, 0.33]}
+simp = hs.simulate(GAME, sk, dict(LK, shares=SH), 8.0, n=40000, seed=5)
+per_h = simp["per"]["home"]
+sh_g = per_h.mean(axis=0) / per_h.mean(axis=0).sum()
+p1s = sum(simp["stats"][p["pid"]]["p1sog"].mean() for p in sk if p["side"] == "home")
+gms = sum(simp["stats"][p["pid"]]["sog"].mean() for p in sk if p["side"] == "home")
+print(f"     period goal shares {np.round(sh_g, 3)}; 1st-period share of listed shots "
+      f"{p1s / gms:.3f}")
+check("the 1st period holds its measured share of goals and shots",
+      abs(sh_g[0] - 0.25) < 0.012 and abs(sh_g[2] - 0.40) < 0.012 and abs(p1s / gms - 0.30) < 0.01)
+check("the regulation goals are the three periods (and the game model's still)",
+      (per_h.sum(axis=1) == simp["home_reg"]).all() and abs(simp["home_reg"].mean() - 3.3) < 0.08)
+x0 = simp["stats"]["h0"]["sog"].astype(float)
+want = 3.0 + 3.0 ** 2 / 8.0
+print(f"     h0 shots: mean {x0.mean():.3f} var {x0.var():.3f} (boards' NB: 3.0 / {want:.3f})")
+check("his game shots keep the boards' spread (mean m, variance m + m^2/size)",
+      abs(x0.mean() - 3.0) < 0.05 and abs(x0.var() - want) < 0.25)
+check("1st-period stats are part of his game (never more)",
+      all((simp["stats"][p["pid"]]["p1sog"] <= simp["stats"][p["pid"]]["sog"]).all()
+          and (simp["stats"][p["pid"]]["p1pts"] <= simp["stats"][p["pid"]]["pts"]).all()
+          for p in sk))
+lg = hs.leg_hits(simp, {"pid": "_game", "stat": "p1_total", "line": 1.5})
+lw = hs.leg_hits(simp, {"pid": "_game", "stat": "p1_home_win", "line": 0.5})
+check("a 1st-period leg reads the 1st period",
+      (lg == (per_h[:, 0] + simp["per"]["away"][:, 0] >= 2)).all()
+      and (lw == (per_h[:, 0] > simp["per"]["away"][:, 0])).all())
+pg_ = {}
+for k in range(300):
+    d = f"2025-{10 + k // 100:02d}-{k % 100:03d}"      # sorts in k's order
+    early = k < 150
+    pg_[str(k)] = {"date": d, "home": "1", "away": "2",
+                   "lines": {"1": [1, 1, 1] if early else [3, 0, 0], "2": [1, 1, 1]},
+                   "sog": {"1": [10, 10, 10], "2": [10, 10, 10]}, "players": {}}
+cut = sorted(g_["date"] for g_ in pg_.values())[150]
+shf = npd.shares(pg_, hi=cut)
+check("the shares are fitted before the test window (thirds there, not the late games' skew)",
+      abs(shf["goals"][0] - 1 / 3) < 0.01 and shf["n"] == 150)
+tb = {"p1pt": {"verdict": {"verdict": "beats"}}, "p1g": {"verdict": {"verdict": "fails"}},
+      "p1sog1": {"verdict": {"verdict": "thin"}}}
+check("only 1st-period markets that beat are offered (Bet Finder)",
+      [m[0] for m in npd.offered(tb)] == ["p1pt"] and npd.offered({}) == ())
+pm = npd.p1_pmfs({"g": 0.4, "a": 0.6, "sog": 3.0}, SH, 8.0)
+check("a 1st-period prop is his game mean at the 1st's share",
+      abs(sum(i * q for i, q in enumerate(pm["p1pts"])) - 0.25) < 0.01
+      and abs(sum(i * q for i, q in enumerate(pm["p1sog"])) - 0.90) < 0.02)
+bfp = (ROOT / "app" / "views" / "Bet_Finder.py").read_text(encoding="utf-8")
+check("the Bet Finder and the page carry the 1st period",
+      "npd.offered(tv)" in bfp and '"Skaters — 1st period"' in bfp
+      and 'with card("nhs_p1")' in pg and '"p1_total"' in pg)
 
 if failures:
     print(f"\n{len(failures)} FAILED")

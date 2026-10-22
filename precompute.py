@@ -85,7 +85,11 @@ ID_COLS = ["batter", "pitcher"]
 # Season-frame-only columns for mlb_prop_precompute. NOT engine columns:
 # they never reach a per-player parquet, so ENGINE_COLS and
 # statcast_engine._KEEP_COLS stay identical (tests/test_trim_fast_path).
-MODEL_COLS = ["inning_topbot"]
+MODEL_COLS = ["inning_topbot",
+              # the base-out state of every PA (10-22): the MLB simulator's
+              # base-running is MEASURED from how real plate appearances
+              # moved runners and outs (engines/mlb_sim.measure_transitions)
+              "inning", "outs_when_up", "on_1b", "on_2b", "on_3b"]
 CATEGORY_COLS = ["type", "events", "description", "bb_type", "stand"]
 
 OUT_ROOT = Path("build_data")

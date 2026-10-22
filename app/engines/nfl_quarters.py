@@ -68,13 +68,14 @@ def roster(summary):
 
 def forms(name):
     """The ways play text writes a player: 'Amon-Ra St. Brown' ->
-    'A.St. Brown', 'Am.St. Brown', ...; suffixes dropped too."""
+    'A.St. Brown', 'Am.St. Brown', ...; suffixes dropped too; and his full
+    name (scoring plays: 'Deebo Samuel 10 Yd pass from Jayden Daniels')."""
     parts = str(name or "").strip().split()
     if len(parts) < 2:
         return set()
     first, last = parts[0], " ".join(parts[1:])
     lasts = {last, SUFFIX.sub("", last)}
-    out = set()
+    out = {f"{first} {ln}" for ln in lasts}
     for ln in lasts:
         for k in range(1, min(len(first), 4) + 1):
             out.add(f"{first[:k]}.{ln}")
@@ -87,33 +88,61 @@ class Names:
 
     def __init__(self, ros):
         self.by_form = {}
+        self.team = {pid: str(t) for pid, (t, _nm) in (ros or {}).items()}
+        self.teams = set(self.team.values())
+        self.whole = {}               # form -> ids whose WHOLE first name it spells
         for pid, (_t, nm) in (ros or {}).items():
             for f in forms(nm):
                 self.by_form.setdefault(f, set()).add(pid)
+            parts = str(nm or "").split()
+            if len(parts) >= 2:
+                for f in forms(nm):
+                    if f.split(".")[0] == parts[0] or f.startswith(parts[0] + " "):
+                        self.whole.setdefault(f, set()).add(pid)
         # longest forms first: 'Am.St. Brown' before 'A.St. Brown'
         keys = sorted(self.by_form, key=len, reverse=True)
         self.rx = re.compile("|".join(r"(?<![A-Za-z.])" + re.escape(k) + r"(?![a-z])"
                                       for k in keys)) if keys else None
 
-    def find(self, text):
-        """[(position, pid)] of the unambiguous names in the text."""
+    def find(self, text, team=None):
+        """[(position, pid)] of the unambiguous names in the text. With the
+        OFFENSE's team id, only its players count: 'C.Williams' is the
+        Bears' quarterback, not the defender of the same initials, and a
+        tackler in parentheses is never taken for the receiver."""
         if not self.rx:
             return []
+        team = str(team) if team is not None and str(team) in self.teams else None
         out = []
         for m in self.rx.finditer(text or ""):
-            ids = self.by_form.get(m.group(0))
-            if ids and len(ids) == 1:
+            ids = self.by_form.get(m.group(0)) or set()
+            if team:
+                ids = {i for i in ids if self.team.get(i) == team}
+            if len(ids) > 1:
+                # 'Ty.Johnson' is Ty Johnson before Tyler Johnson
+                w = ids & self.whole.get(m.group(0), set())
+                ids = w if len(w) == 1 else ids
+            if len(ids) == 1:
                 out.append((m.start(), next(iter(ids))))
         return out
 
 
 def _plays(summary):
+    return [p for p, _t in _plays_with_offense(summary)]
+
+
+def _plays_with_offense(summary):
+    """[(play, offense team id or None)] — the drive's team has the ball."""
     d = (summary or {}).get("drives") or {}
     out = []
     for dr in (d.get("previous") or []) + ([d["current"]] if isinstance(d.get("current"),
                                                                        dict) else []):
-        out += [p for p in dr.get("plays") or [] if isinstance(p, dict)]
+        tm = (dr.get("team") or {}).get("id") if isinstance(dr.get("team"), dict) else None
+        out += [(p, tm) for p in dr.get("plays") or [] if isinstance(p, dict)]
     return out
+
+
+PAT = re.compile(r"\([^()]*(two-point|two point|kick|conversion)[^()]*\)", re.I)
+SCORING = re.compile(r"\d+\s+yd\s+(pass from|run)\b", re.I)
 
 
 def _period(play):
@@ -129,13 +158,15 @@ def parse(summary):
         rec = out["players"].setdefault(pid, {s: [0] * SLOTS for s in STATS})
         rec[stat][q] += v
     seen = set()
-    for pl in _plays(summary):
+    for pl, off in _plays_with_offense(summary):
         pid_ = pl.get("id")
         if pid_ is not None:
             if pid_ in seen:
                 continue
             seen.add(pid_)
-        txt = pl.get("text") or ""
+        # the try after a touchdown, written in parentheses on the scoring
+        # play, is not the play (the touchdown itself still counts)
+        txt = PAT.sub("", pl.get("text") or "")
         low = txt.lower()
         typ = (((pl.get("type") or {}).get("text")) or "").lower()
         per = _period(pl)
@@ -150,12 +181,27 @@ def parse(summary):
         if not (is_pass or is_rush):
             continue
         out["plays"] += 1
-        found = names.find(txt)
+        found = names.find(txt, off)
         if not found:
             continue
         out["named"] += 1
         yds = _num(pl.get("statYardage")) or 0.0
         td = "touchdown" in typ or "touchdown" in low
+        sc = SCORING.search(txt)
+        if sc and is_pass and "from" in sc.group(1).lower():
+            # 'Deebo Samuel 10 Yd pass from Jayden Daniels': receiver first
+            at = sc.end()
+            passer = next((p for pos, p in found if pos >= at), None)
+            rcv = next((p for pos, p in found if pos < sc.start()), None)
+            if passer and rcv:
+                for who, st in ((passer, "pass_att"), (passer, "pass_cmp"), (rcv, "targets"),
+                                (rcv, "rec")):
+                    add(who, st, q, 1)
+                add(passer, "pass_yds", q, yds)
+                add(rcv, "rec_yds", q, yds)
+                add(passer, "pass_td", q, 1)
+                add(rcv, "td", q, 1)
+            continue
         if is_rush:
             r = found[0][1]
             add(r, "carries", q, 1)

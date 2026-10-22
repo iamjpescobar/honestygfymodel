@@ -163,26 +163,24 @@ def simulate(game, skaters, links=None, sog_size=None, n=10000, seed=7):
     out = {"stats": {}, "shots": {}}
     goals = {}
     by_side = {s: [p for p in skaters or [] if p.get("side") == s] for s in ("home", "away")}
+    shares = L.get("shares") or {"goals": [0.292, 0.348, 0.360], "sog": [0.325, 0.352, 0.323]}
+    sg, ss = np.asarray(shares["goals"], float), np.asarray(shares["sog"], float)
+    sg, ss = sg / sg.sum(), ss / ss.sum()
+    out["per"] = {}
     for side in ("home", "away"):
         mu_g = float(game[f"mu_{side}"])
         mu_s = float(game.get(f"shots_{side}") or 0.0)
         z = Z[side]
         pl = by_side[side]
         k = len(pl)
-        sog = np.zeros((n, k), dtype=np.int32)
-        for i, p in enumerate(pl):
-            m = float((p.get("mu") or {}).get("sog") or 0.0)
-            if m <= 0:
-                continue
-            v_target = m + (m * m / sog_size if sog_size else 0.0)
-            extra = max(0.0, v_target - m - m * m * sv)
-            sog[:, i] = _nb(rng, m * z, extra)
-        listed_s = sum(float((p.get("mu") or {}).get("sog") or 0.0) for p in pl)
-        other_s = rng.poisson(np.clip(max(0.0, mu_s - listed_s) * z, 0, None)) if mu_s else 0
-        out["shots"][side] = sog.sum(axis=1) + other_s
-        # his goals from HIS shots: each converts at his own goals-per-shot,
-        # scaled so the team's goals rise Z ^ E_GOALS with its shots (the
-        # measured elasticity), not one-for-one
+        m = np.array([float((p.get("mu") or {}).get("sog") or 0.0) for p in pl])
+        # one game: each skater's own night U (shared by his three periods)
+        # on top of the team's shot environment Z — together exactly the
+        # board's spread (Var = m + m^2 / size); each period then gets the
+        # MEASURED share of his shots (engines/nhl_periods.shares)
+        var_u = max(0.0, (1.0 / sog_size if sog_size else 0.0) - sv)
+        U = (rng.gamma(1.0 / var_u, var_u, size=(n, k)) if var_u > 1e-9 else np.ones((n, k)))
+        listed_s = float(m.sum())
         sh = np.array([((p.get("mu") or {}).get("g") or 0.0) / max(
             (p.get("mu") or {}).get("sog") or 0.0, 1e-6) for p in pl])
         listed_g = sum(float((p.get("mu") or {}).get("g") or 0.0) for p in pl)
@@ -190,41 +188,69 @@ def simulate(game, skaters, links=None, sog_size=None, n=10000, seed=7):
         # own projections add to more (18 dressed, rates per game played),
         # every one is scaled down to fit
         fit_g = min(1.0, mu_g / listed_g) if listed_g > 0 else 1.0
-        conv = np.clip(sh[None, :] * fit_g * (z ** (L["e_goals"] - 1.0))[:, None], 0.0, 0.95)
-        g_cnt = rng.binomial(sog, conv) if k else np.zeros((n, 0), dtype=np.int64)
-        other_g = rng.poisson(np.clip(max(0.0, mu_g - listed_g) * z ** L["e_goals"], 0, None))
-        G = g_cnt.sum(axis=1) + other_g
-        goals[side] = G
-        # assists: 0 / 1 / 2 per goal, from teammates other than the scorer,
-        # weighted by their assist rates ("someone else" for the unlisted)
+        sog = np.zeros((n, k), dtype=np.int64)
+        g_cnt = np.zeros((n, k), dtype=np.int64)
         a_cnt = np.zeros((n, k), dtype=np.int64)
-        cols = np.concatenate([g_cnt, other_g[:, None]], axis=1) if k else other_g[:, None]
-        rows_i, cols_i = np.nonzero(cols)
-        if len(rows_i):
-            reps = cols[rows_i, cols_i]
-            gs = np.repeat(rows_i, reps)           # one entry per goal: its sim
-            gc = np.repeat(cols_i, reps)           # ... and its scorer's column (k = other)
-            T = len(gs)
-            amu = np.array([float((p.get("mu") or {}).get("a") or 0.0) for p in pl])
-            pa = L["assists"]
-            m_ast = pa[1] + 2 * pa[2]
-            base = np.concatenate([amu, [max(0.0, m_ast * mu_g - amu.sum())]])
-            u = rng.random(T)
-            n_ast = (u > pa[0]).astype(int) + (u > pa[0] + pa[1]).astype(int)
-            W = np.repeat(base[None, :], T, axis=0)
-            W[np.arange(T), gc] = np.where(gc < k, 0.0, W[np.arange(T), gc])
-            a1 = _draw(rng, W)
-            W2 = W.copy()
-            W2[np.arange(T), a1] = np.where(a1 < k, 0.0, W2[np.arange(T), a1])
-            a2 = _draw(rng, W2)
-            for col, on in ((a1, n_ast >= 1), (a2, n_ast >= 2)):
-                hit = on & (col < k)
-                np.add.at(a_cnt, (gs[hit], col[hit]), 1)
+        p1 = {}
+        per_goals = np.zeros((n, 3), dtype=np.int64)
+        shots_tot = np.zeros(n, dtype=np.int64)
+        amu = np.array([float((p.get("mu") or {}).get("a") or 0.0) for p in pl])
+        pa = L["assists"]
+        m_ast = pa[1] + 2 * pa[2]
+        base_a = np.concatenate([amu, [max(0.0, m_ast * mu_g - amu.sum())]])
+        for per in range(3):
+            sp_ = rng.poisson(m[None, :] * ss[per] * z[:, None] * U) if k else \
+                np.zeros((n, 0), dtype=np.int64)
+            other_s = rng.poisson(np.clip(max(0.0, mu_s - listed_s) * ss[per] * z, 0, None)) \
+                if mu_s else 0
+            shots_tot += sp_.sum(axis=1) + other_s
+            # his goals from HIS shots: each converts at his own goals-per-
+            # shot (a period's share of goals over its share of shots: fewer
+            # go in early, more late), scaled so the team's goals rise
+            # Z ^ E_GOALS with its shots, not one-for-one
+            conv = np.clip(sh[None, :] * fit_g * (sg[per] / ss[per])
+                           * (z ** (L["e_goals"] - 1.0))[:, None], 0.0, 0.95)
+            gp = rng.binomial(sp_, conv) if k else np.zeros((n, 0), dtype=np.int64)
+            other_g = rng.poisson(np.clip(max(0.0, mu_g - listed_g) * sg[per]
+                                          * z ** L["e_goals"], 0, None))
+            per_goals[:, per] = gp.sum(axis=1) + other_g
+            # assists: 0 / 1 / 2 per goal, from teammates other than the
+            # scorer, weighted by their assist rates ("someone else" too)
+            ap = np.zeros((n, k), dtype=np.int64)
+            cols = np.concatenate([gp, other_g[:, None]], axis=1) if k else other_g[:, None]
+            rows_i, cols_i = np.nonzero(cols)
+            if len(rows_i):
+                reps = cols[rows_i, cols_i]
+                gs = np.repeat(rows_i, reps)
+                gc = np.repeat(cols_i, reps)
+                T = len(gs)
+                u = rng.random(T)
+                n_ast = (u > pa[0]).astype(int) + (u > pa[0] + pa[1]).astype(int)
+                W = np.repeat(base_a[None, :], T, axis=0)
+                W[np.arange(T), gc] = np.where(gc < k, 0.0, W[np.arange(T), gc])
+                a1 = _draw(rng, W)
+                W2 = W.copy()
+                W2[np.arange(T), a1] = np.where(a1 < k, 0.0, W2[np.arange(T), a1])
+                a2 = _draw(rng, W2)
+                for col, on in ((a1, n_ast >= 1), (a2, n_ast >= 2)):
+                    hit = on & (col < k)
+                    np.add.at(ap, (gs[hit], col[hit]), 1)
+            sog += sp_
+            g_cnt += gp
+            a_cnt += ap
+            if per == 0:
+                p1 = {"p1sog": sp_, "p1g": gp, "p1a": ap}
+        goals[side] = per_goals.sum(axis=1)
+        out["per"][side] = per_goals
+        out["shots"][side] = shots_tot
         for i, p in enumerate(pl):
             out["stats"][str(p["pid"])] = {
                 "sog": sog[:, i].astype(np.int16), "g": g_cnt[:, i].astype(np.int16),
                 "a": a_cnt[:, i].astype(np.int16),
-                "pts": (g_cnt[:, i] + a_cnt[:, i]).astype(np.int16)}
+                "pts": (g_cnt[:, i] + a_cnt[:, i]).astype(np.int16),
+                "p1sog": p1["p1sog"][:, i].astype(np.int16),
+                "p1g": p1["p1g"][:, i].astype(np.int16),
+                "p1pts": (p1["p1g"][:, i] + p1["p1a"][:, i]).astype(np.int16)}
     h, a = goals["home"], goals["away"]
     tie = h == a
     home_ot = rng.random(n) < L["tie_home_win"]
@@ -250,6 +276,9 @@ def leg_hits(sim, leg):
     if pid == "_game":
         h, a = sim["home"], sim["away"]
         st = leg["stat"]
+        if st.startswith("p1_"):                     # the 1st period
+            h, a = sim["per"]["home"][:, 0], sim["per"]["away"][:, 0]
+            st = st[3:]
         if st == "home_win":
             return h > a
         if st == "away_win":
@@ -524,13 +553,17 @@ def test_combos(rows, links, sog_size, cal, n=COMBO_SIMS, seed=23):
     return out
 
 
-def build(prior, model_block, pool, cur_rows=None, days=TEST_DAYS):
+def build(prior, model_block, pool, cur_rows=None, days=TEST_DAYS, periods=None):
     """{"links", "combos", "test_from", "n_games", "this_season_games"} —
     links on last season; the combos test on last season's final `days`
     days plus every game of this season so far. prior: data/nhl/
     prior_season.json; model_block: nhl_model.build()'s; pool: the
     skater pool (last season + this one, nhl_model.pool_skaters);
-    cur_rows: this season's finals in the goal_rows shape (+ home_sog)."""
+    cur_rows: this season's finals in the goal_rows shape (+ home_sog);
+    periods: {event_id: engines/nhl_periods.parse + date/home/away} —
+    last season's (data/nhl/prior_periods.json) and this season's. The
+    period shares are fitted BEFORE the test window and the 1st-period
+    markets graded inside it (nhl_periods.test)."""
     from engines import game_model as gm
     from engines import nhl_model as hm
     pf = list(prior.get("finals") or [])
@@ -566,8 +599,15 @@ def build(prior, model_block, pool, cur_rows=None, days=TEST_DAYS):
                      model_block.get("toi"), lo)
     cal = {k: (v or {}).get("calibration") for k, v in
            (model_block.get("props_validation") or {}).items() if isinstance(v, dict)}
+    per = None
+    if periods:
+        from engines import nhl_periods as npd
+        sh = npd.shares(periods, hi=lo)
+        links["shares"] = {"goals": sh["goals"], "sog": sh["sog"]}
+        per = {"shares": sh, "test": npd.test(rows, periods, pool, sh, sog_size, lo),
+               "games": len(periods)}
     combos = test_combos(rows, links, sog_size, cal)
     last_prior = dates[-1]
     return {"links": links, "combos": combos, "test_from": lo, "n_games": len(rows),
             "this_season_games": sum(1 for k in rows if k[0] > last_prior),
-            "sog_size": sog_size}
+            "sog_size": sog_size, "periods": per}

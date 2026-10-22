@@ -10,6 +10,133 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — Points model fixed (stars no longer shrunk to average); the Simulator passes; the Bet Log. 2026-10-20 (4)
+
+**Suite 146, FAILING: none.** New tests/test_bet_log.py (4 controls, red
+by exit code: minus price read like a plus price, open bets counted as
+losses, a missing close scored 0, the save without [skip render] — the
+last one first stayed GREEN because the replace hit the docstring's copy
+of the words; redone on the code line). test_nba +1 control (project
+ignoring k_long). test_nba_sim +1 control (sgp_support letting a beating
+test be in range). Headless: Simulator -> log SGP -> Bet Log -> grade,
+in session mode and against a fake GitHub store; slip logs a parlay and
+a single.
+
+WHY THE SIM WAS THIN (measured on the FIT window, then confirmed): not
+the link. Real teammate points correlation 0.02; real "both over" lift
+1.025 (fit) / 1.039 (test), +/- 0.07; the sim said 1.06. The gap was the
+LEGS: a team's top-2 projected scorers went over their line 49-50% of
+the time against 45% delivered — one-level shrinkage pulled every
+scorer's per-minute rate toward his position group's.
+
+THE FIX (engines/nba_model): two levels — recent rate (HL) shrunk by K
+min toward HIS OWN long-run rate (HL_LONG), which is shrunk by K_LONG
+min toward the league. Grid FIT_HL (2,3,5,10) x FIT_K (100,300,600,1200)
+x FIT_HL_LONG (30,60,120) x FIT_K_LONG (100,300,1000), fit window only;
+~63 s in the nightly. Real 2025-26: HL 3, K 600, HL_LONG 120, K_LONG 300.
+Test window (unseen): Points THIN z0.8 -> BEATS z4.45; 3PM THIN -> BEATS
+z2.06; PRA / P+R / P+A THIN -> BEATS (z 5.5-6.1); Reb 7.67, Ast 6.74,
+R+A 8.3. Minutes MAE 5.11 vs 5.87 (was 5.39). walk / Running / project_now
+take the two levels; params carry hl_long / k_long (absent = one level,
+so an old payload still projects).
+
+STILL OPEN: top-2 scorers still under-projected on the test window
+(18.6 vs 20.0) — partly a test artifact (top-2 among players who PLAYED:
+when a star sits, the next man is "top-2" and his usage jumps). Measure
+a usage-share adjustment on the fit window before touching it.
+
+SIMULATOR on the new model: links e pts 0.987 reb -0.276 ast 1.115 3PM
+1.082; test 1,065 pairs, 0.1955 vs 0.1963, z 2.93 -> BEATS. sgp_support:
+beats -> measured but in_range False -> at most VALUE (only two-man
+points pairs were graded; STRONG on an SGP would claim more than that).
+nba_sim.SGP_GUARD holds the page's two cap sentences.
+
+BET LOG (engines/bet_log, engines/bet_log_ui, views/Bet_Log.py; in every
+nav after Bet Finder; on Home): bets {id, placed, sport, kind single /
+parlay / sgp, desc, legs, chance, price, stake, tier, result, close}.
+Summary: record / profit / ROI; expected wins vs won; MODEL VS BOOK —
+the same bets scored on squared error, our chance vs the break-even of
+the price paid (mm.paired_verdict, shown from 30 graded bets); CLOSING
+LINE in points of chance when a close is typed (missing = left out).
+Logged from the parlay slip (parlay / sgp when all legs share a game /
+single) and the Simulator. STORAGE: Render's disk is wiped per deploy,
+so the log is data/bets/<user>.json written through GitHub's contents
+API — env BETLOG_TOKEN (fine-grained token, this repo, Contents
+read/write), optional BETLOG_REPO (a private repo, if this one is
+public). Commit message "[skip render] [skip ci]". Stale sha -> reload,
+merge, retry once. No token -> session only + download / upload.
+
+SIMULATOR PAGE, READABILITY (Izzy's iPad screenshot): the "Typical
+score" metric truncated to "BOS 108 – D..." and the book's total printed
+as "<b>47%</b>" (st.caption shows tags as text). Now two team boxes (big
+score, win %, scoring range; the favourite outlined), a "Typical result /
+Total" line, the margin table shaded by share; players read Line /
+Typical / Most nights / Over / Under / Lean (a side at 55%+, else
+toss-up), <1% / >99% at the ends. test_nba_sim: no HTML in a caption
+(control red).
+
+FILES: app/engines/nba_model.py, app/engines/nba_sim.py,
+app/engines/bet_log.py (new), app/engines/bet_log_ui.py (new),
+app/views/Bet_Log.py (new), app/views/NBA_Sim.py, app/views/Bet_Finder.py,
+app/views/Home.py, app/app.py, nba_precompute.py, tests/test_nba.py,
+tests/test_nba_sim.py, tests/test_bet_log.py (new), HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
+---
+
+## PICK UP HERE — NBA Game Simulator: 10,000 games, same-game parlays priced together. 2026-10-20 (3)
+
+**Suite 145, FAILING: none.** New tests/test_nba_sim.py with four negative
+controls, each red by exit code: plain-Poisson draws (marginals), score
+link removed (teammate lift), blowout minutes share removed (starters
+sit), sgp_support treating every test as beating (the THIN cap). The
+page rendered headless on the synthetic slate; SGP added to the slip.
+
+Izzy: "Can we add a simulator?" ENGINE engines/nba_sim: each run draws a
+margin and total from the game model (its fitted SDs), then every
+player's stats: mean = his projection x minutes share for the game
+script (close / comfortable / blowout, |margin| 10 / 20) x (1 + e x
+shock) — points ride his team's score, the rest ride pace. The NB draw
+is sized so each player ON HIS OWN keeps the props model's distribution
+(test: worst gap 0.4 pts). The minutes share is normalised to average 1
+over the simulated games: unnormalised, last season's bench bias (1.02-
+1.05) moved bench means +3% and the sim no longer priced legs like the
+props board. joint(): share of games where every leg hit; lift = joint /
+product.
+
+MEASURED ON 2025-26 (fit window, then the 45-day test window): e pts
+0.969, reb -0.286, ast 1.11, 3PM 1.037; minutes share starter 1.037 /
+0.967 / 0.877, bench 1.049 / 1.019 / 1.017. TEST: 1,065 same-game pairs
+of top scorers (teammates and opponents), each leg's DELIVERED chance
+(the points calibration curve), joint = product x sim lift vs plain
+product: Brier 0.1929 vs 0.1934, z 1.86 -> THIN. Teammates: product
+20.4%, sim 21.5%, actual 25.8% — right direction, under-corrected.
+Opponents: 20.0 / 20.6 / 27.6. (On RAW legs it beat at z 4.9 — but the
+raw points model is overconfident at the ends, 0.84 predicted vs 0.57
+actual, so that was the curve's win, not the sim's.)
+
+PAGE app/views/NBA_Sim.py (NBA nav: "Simulator"): pick a game -> win %,
+typical score, total's middle 80%, margin buckets, P(over the book's
+total) with the not-tested-against-the-book note; every player's 10th /
+50th / 90th percentile for a stat, Over % coloured; SGP builder, 2-4
+legs, each leg = nv.chance (delivered), joint = product x lift, fair
+price, your price -> bf.judge with nba_sim.sgp_support(test): UNTESTED
+-> capped at THIN until the test BEATS. Out players are not simulated.
+Cached 15 min per game; seed from crc32 of the game, so stable.
+
+NEXT: the sim under-corrects teammates (21.5 vs 25.8). Candidates to
+measure, not guess: a shared player-level "hot night" shock, usage
+redistribution when a teammate goes cold. Never tune it on the test
+window.
+
+FILES: app/engines/nba_sim.py (new), app/views/NBA_Sim.py (new),
+nba_precompute.py, app/app.py, tests/test_nba_sim.py (new), HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NBA game model; colour on every measured NBA number. 2026-10-20 (2)
 
 **Suite 144, FAILING: none.** test_nba gains a fourth negative control

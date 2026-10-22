@@ -154,6 +154,127 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — NHL 1st period: player props (point / SOG / goal) and period lines on the Simulator and Bet Finder; NFL quarter names fixed. 2026-10-22 (7)
+
+**Suite 156, FAILING: none.** tests/test_nhl_sim.py +9 checks (5 new
+controls, each red by exit code: equal thirds, no per-skater night, a
+p1_ leg reading the final, shares() fitted on the test window, offered()
+passing a THIN market); tests/test_period_backfills.py +2 checks (4
+controls red: no offense-team filter, no whole-first-name tie-break, the
+receiver-first scoring text read passer-first, the try in parentheses
+left in). NHL_Sim and Bet Finder headless on the archived slate + a
+real build. Ships WITH the MLB simulator (6) — mlb_sim.zip was never
+pushed; this zip carries it. Izzy: "Do nhl and nfl make sure player
+props are included".
+
+MEASURED (last season, prior_periods.json, test = final 60 days,
+17,102 skater-games; shares fitted on the 828 games before): goals by
+period 0.294 / 0.349 / 0.357, shots 0.325 / 0.353 / 0.322. A 1st-period
+prop = his game mean x the 1st's share (points / goals Poisson, SOG the
+boards' NB) vs his OWN last-20 1st-period rate: point z 11.3, 1+ SOG
+z 13.0, 2+ SOG z 12.1, goal z 11.9 — all BEAT, calibrated (point
+predicted 12.7% vs 12.2%). Blending his own 1st-period history in made
+it worse at every weight -> not in the number. Team lines (1st-period
+O1.5, home leads after 1) vs the league's own rate: FAIL (z -0.1, n 484)
+— shown on the page labelled, never offered on the Bet Finder.
+
+SIMULATOR (engines/nhl_sim.simulate): now period by period. Per game the
+team's shot environment Z, per skater his night U (gamma, var = 1/size -
+shot_var so his game shots keep the boards' NB spread exactly), per
+period his shots Poisson(m x share x Z x U), goals Binomial from those
+shots at conv x (goal share / shot share), assists inside the period.
+New outputs per skater p1sog / p1g / p1pts, per team sim["per"] (n x 3
+regulation goals). leg_hits: "_game" stats prefixed p1_ read the 1st
+period (p1_total, p1_home_win, p1_away_win, p1_home_margin). Re-graded
+SGP kinds on real data: unchanged (PP z 3.3, PPP 3.9, PW 3.0 beat; GW,
+PPPP thin; GG, PPopp fail; SS lift 1.026 z -0.2 now "fails" vs +0.3
+"thin" before — noise around zero, same lift).
+
+PAGES: NHL_Sim "The 1st period" card (team 1st-period goals, O1.5, who
+leads after one with the test's label; every skater's 1st-period point /
+goal / 1+ / 2+ SOG through the test's curves); SGP legs gain 1st-period
+points / SOG / goals and 1st-period total / leads after the 1st. Bet
+Finder NHL: "Skaters — 1st period" — only markets that BEAT
+(nhl_periods.offered).
+
+NIGHTLY: nhl_precompute parses this season's periods from the finals it
+already reads (cur_periods, own try per game), adds last season's
+data/nhl/prior_periods.json; nhl_sim.build(..., periods=) fits shares
+before the test window, grades; games.json "sim" gains "periods"
+{shares, test, games}. VERIFY LINES: "NHL periods: N last-season + M
+this-season games; shares ...", one "NHL 1st-period <market>" line each.
+
+NFL QUARTERS (engines/nfl_quarters): names now found ONLY on the team
+with the ball (drive.team.id) — 'C.Williams' the Bears' QB, not a
+defender, and a tackler in parentheses is never the receiver; a shared
+form on one team goes to the player whose whole first name it spells
+(Ty.Johnson before Tyler); scoring plays written 'X 22 Yd pass from Y'
+read receiver-first; the try in parentheses is cut before the play is
+read (it used to drop the whole touchdown as a two-point play). NEXT:
+Izzy reruns the "NFL prior quarters" workflow; expect pass_yds well
+above 74.2% (rush 88.4 / rec 91.7 up too). Then the 1Q / 1H props.
+
+FILES: app/engines/nhl_periods.py (period model, shares, test, offered),
+app/engines/nhl_sim.py, app/views/NHL_Sim.py, app/views/Bet_Finder.py,
+nhl_precompute.py, app/engines/nfl_quarters.py, tests/test_nhl_sim.py,
+tests/test_period_backfills.py; plus everything in (6).
+
+---
+
+## PICK UP HERE — MLB Game Simulator: plate appearance by plate appearance, base-running measured; SGPs graded by kind. 2026-10-22 (6)
+
+**Suite 156, FAILING: none.** New tests/test_mlb_sim.py (5 controls, red
+by exit code) — a synthetic season played by known base-running rules,
+in Statcast's PA shape. MLB_Sim page headless on it. Izzy: "for mlb i
+only want the simulator with the player stats".
+
+NEEDS ONE NIGHTLY: precompute.MODEL_COLS now carries inning,
+outs_when_up, on_1b / on_2b / on_3b (season frame only, dropped before
+the per-player files, like inning_topbot). Until a nightly has run with
+them the page says the simulator appears after the next nightly.
+
+ONE GAME (engines/mlb_sim.simulate, numpy, 10k in ~0.9 s): each PA = the
+batter vs the other side's starter (mlb_props.combine on the props
+model's shrunk rates) until the starter's DRAWN batters-faced (his
+starter_bf_dist) runs out, then a league-average pen; outcome 1B..OUT;
+then the base-out transition DRAWN from the season's real PAs in that
+state (state_rows / measure_transitions: 24 states x 7 outcomes ->
+(after bases, runs, outs added); sparse cells borrow the same bases +
+outcome over all outs). Runners keep order (_move: lead runners score
+first; on an out the batter is out first). Runs credited to whoever
+scores, RBI = runs on his PA (the site's RBI). No bottom 9th when home
+leads, walk-offs, extras with the runner on 2nd, to 15, then a coin.
+Gives: batters h / tb / hr / rbi / r / hrr / k / bb / s / d; starters k
+/ outs / h / bb / er (runs while he's in); runs by inning (F5).
+
+THE TEST (mlb_prop_precompute.build_sim, in build_prop_model's own try):
+the last 30 days, walked forward exactly like the props test (counts
+before the date; lineups and starters from the PAs): HH, HHH, TT (2+ TB),
+HW, RW (HR + win), KW (starter Ks at floor(his expected)+0.5 + win),
+HHopp. Marginals: the props boards' delivered chances (validation /
+pitcher_validation curves); the win leg the simulator's own. Also a
+runs check: simulated runs a team vs actual on 40 games — the
+[verify] line prints both; on the synthetic season 4.43 / 4.62 vs 4.46.
+
+PAGE (views/MLB_Sim.py, MLB nav after Model): confirmed lineup else last
+game's (both nine needed), the game (runs, win %, total vs the posted
+line, run line, first five), box score (hit / 2+ TB / HR / RBI / run
+chances, H+R+RBI, K; starters' K, innings, runs), every batter over /
+under (board's delivered chance; runs and H+R+RBI the simulator's own,
+untested), the SGP builder (batters, starters' K / outs / hits / runs,
+win, total, run line, F5 total and line), Bet Log, slip.
+
+NIGHTLY VERIFY LINES: "MLB simulator: base-out transitions from N plate
+appearances; runs per team simulated X vs actual Y; SGPs graded on N
+games", "MLB SGP <kind> ...". ~2 minutes.
+
+FILES: app/engines/mlb_sim.py, app/views/MLB_Sim.py,
+tests/test_mlb_sim.py (NEW); mlb_prop_precompute.py, precompute.py,
+app/app.py, app/views/Home.py (an Explore card — test_home wants a route),
+HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NHL periods / NFL quarters, step 1: the one-time play-by-play backfills. 2026-10-22 (5)
 
 **Suite 155, FAILING: none.** New tests/test_period_backfills.py (4
@@ -732,130 +853,5 @@ gap (entry (4)).
 
 FILES: app/engines/nba_sim.py, app/views/NBA_Sim.py, tests/test_nba_sim.py,
 HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — Points model fixed (stars no longer shrunk to average); the Simulator passes; the Bet Log. 2026-10-20 (4)
-
-**Suite 146, FAILING: none.** New tests/test_bet_log.py (4 controls, red
-by exit code: minus price read like a plus price, open bets counted as
-losses, a missing close scored 0, the save without [skip render] — the
-last one first stayed GREEN because the replace hit the docstring's copy
-of the words; redone on the code line). test_nba +1 control (project
-ignoring k_long). test_nba_sim +1 control (sgp_support letting a beating
-test be in range). Headless: Simulator -> log SGP -> Bet Log -> grade,
-in session mode and against a fake GitHub store; slip logs a parlay and
-a single.
-
-WHY THE SIM WAS THIN (measured on the FIT window, then confirmed): not
-the link. Real teammate points correlation 0.02; real "both over" lift
-1.025 (fit) / 1.039 (test), +/- 0.07; the sim said 1.06. The gap was the
-LEGS: a team's top-2 projected scorers went over their line 49-50% of
-the time against 45% delivered — one-level shrinkage pulled every
-scorer's per-minute rate toward his position group's.
-
-THE FIX (engines/nba_model): two levels — recent rate (HL) shrunk by K
-min toward HIS OWN long-run rate (HL_LONG), which is shrunk by K_LONG
-min toward the league. Grid FIT_HL (2,3,5,10) x FIT_K (100,300,600,1200)
-x FIT_HL_LONG (30,60,120) x FIT_K_LONG (100,300,1000), fit window only;
-~63 s in the nightly. Real 2025-26: HL 3, K 600, HL_LONG 120, K_LONG 300.
-Test window (unseen): Points THIN z0.8 -> BEATS z4.45; 3PM THIN -> BEATS
-z2.06; PRA / P+R / P+A THIN -> BEATS (z 5.5-6.1); Reb 7.67, Ast 6.74,
-R+A 8.3. Minutes MAE 5.11 vs 5.87 (was 5.39). walk / Running / project_now
-take the two levels; params carry hl_long / k_long (absent = one level,
-so an old payload still projects).
-
-STILL OPEN: top-2 scorers still under-projected on the test window
-(18.6 vs 20.0) — partly a test artifact (top-2 among players who PLAYED:
-when a star sits, the next man is "top-2" and his usage jumps). Measure
-a usage-share adjustment on the fit window before touching it.
-
-SIMULATOR on the new model: links e pts 0.987 reb -0.276 ast 1.115 3PM
-1.082; test 1,065 pairs, 0.1955 vs 0.1963, z 2.93 -> BEATS. sgp_support:
-beats -> measured but in_range False -> at most VALUE (only two-man
-points pairs were graded; STRONG on an SGP would claim more than that).
-nba_sim.SGP_GUARD holds the page's two cap sentences.
-
-BET LOG (engines/bet_log, engines/bet_log_ui, views/Bet_Log.py; in every
-nav after Bet Finder; on Home): bets {id, placed, sport, kind single /
-parlay / sgp, desc, legs, chance, price, stake, tier, result, close}.
-Summary: record / profit / ROI; expected wins vs won; MODEL VS BOOK —
-the same bets scored on squared error, our chance vs the break-even of
-the price paid (mm.paired_verdict, shown from 30 graded bets); CLOSING
-LINE in points of chance when a close is typed (missing = left out).
-Logged from the parlay slip (parlay / sgp when all legs share a game /
-single) and the Simulator. STORAGE: Render's disk is wiped per deploy,
-so the log is data/bets/<user>.json written through GitHub's contents
-API — env BETLOG_TOKEN (fine-grained token, this repo, Contents
-read/write), optional BETLOG_REPO (a private repo, if this one is
-public). Commit message "[skip render] [skip ci]". Stale sha -> reload,
-merge, retry once. No token -> session only + download / upload.
-
-SIMULATOR PAGE, READABILITY (Izzy's iPad screenshot): the "Typical
-score" metric truncated to "BOS 108 – D..." and the book's total printed
-as "<b>47%</b>" (st.caption shows tags as text). Now two team boxes (big
-score, win %, scoring range; the favourite outlined), a "Typical result /
-Total" line, the margin table shaded by share; players read Line /
-Typical / Most nights / Over / Under / Lean (a side at 55%+, else
-toss-up), <1% / >99% at the ends. test_nba_sim: no HTML in a caption
-(control red).
-
-FILES: app/engines/nba_model.py, app/engines/nba_sim.py,
-app/engines/bet_log.py (new), app/engines/bet_log_ui.py (new),
-app/views/Bet_Log.py (new), app/views/NBA_Sim.py, app/views/Bet_Finder.py,
-app/views/Home.py, app/app.py, nba_precompute.py, tests/test_nba.py,
-tests/test_nba_sim.py, tests/test_bet_log.py (new), HANDOFF.md,
-HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — NBA Game Simulator: 10,000 games, same-game parlays priced together. 2026-10-20 (3)
-
-**Suite 145, FAILING: none.** New tests/test_nba_sim.py with four negative
-controls, each red by exit code: plain-Poisson draws (marginals), score
-link removed (teammate lift), blowout minutes share removed (starters
-sit), sgp_support treating every test as beating (the THIN cap). The
-page rendered headless on the synthetic slate; SGP added to the slip.
-
-Izzy: "Can we add a simulator?" ENGINE engines/nba_sim: each run draws a
-margin and total from the game model (its fitted SDs), then every
-player's stats: mean = his projection x minutes share for the game
-script (close / comfortable / blowout, |margin| 10 / 20) x (1 + e x
-shock) — points ride his team's score, the rest ride pace. The NB draw
-is sized so each player ON HIS OWN keeps the props model's distribution
-(test: worst gap 0.4 pts). The minutes share is normalised to average 1
-over the simulated games: unnormalised, last season's bench bias (1.02-
-1.05) moved bench means +3% and the sim no longer priced legs like the
-props board. joint(): share of games where every leg hit; lift = joint /
-product.
-
-MEASURED ON 2025-26 (fit window, then the 45-day test window): e pts
-0.969, reb -0.286, ast 1.11, 3PM 1.037; minutes share starter 1.037 /
-0.967 / 0.877, bench 1.049 / 1.019 / 1.017. TEST: 1,065 same-game pairs
-of top scorers (teammates and opponents), each leg's DELIVERED chance
-(the points calibration curve), joint = product x sim lift vs plain
-product: Brier 0.1929 vs 0.1934, z 1.86 -> THIN. Teammates: product
-20.4%, sim 21.5%, actual 25.8% — right direction, under-corrected.
-Opponents: 20.0 / 20.6 / 27.6. (On RAW legs it beat at z 4.9 — but the
-raw points model is overconfident at the ends, 0.84 predicted vs 0.57
-actual, so that was the curve's win, not the sim's.)
-
-PAGE app/views/NBA_Sim.py (NBA nav: "Simulator"): pick a game -> win %,
-typical score, total's middle 80%, margin buckets, P(over the book's
-total) with the not-tested-against-the-book note; every player's 10th /
-50th / 90th percentile for a stat, Over % coloured; SGP builder, 2-4
-legs, each leg = nv.chance (delivered), joint = product x lift, fair
-price, your price -> bf.judge with nba_sim.sgp_support(test): UNTESTED
--> capped at THIN until the test BEATS. Out players are not simulated.
-Cached 15 min per game; seed from crc32 of the game, so stable.
-
-NEXT: the sim under-corrects teammates (21.5 vs 25.8). Candidates to
-measure, not guess: a shared player-level "hot night" shock, usage
-redistribution when a teammate goes cold. Never tune it on the test
-window.
-
-FILES: app/engines/nba_sim.py (new), app/views/NBA_Sim.py (new),
-nba_precompute.py, app/app.py, tests/test_nba_sim.py (new), HANDOFF.md,
-HANDOFF_ARCHIVE.md
 
 ---

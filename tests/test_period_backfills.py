@@ -17,6 +17,10 @@ Negative controls, confirmed red by exit code when written (rule 4):
     -> "the catch goes to the receiver after ' to '" fails
   - nfl_quarters reading a 'No Play' (penalty) as a play
     -> "a play wiped out by a penalty counts for nobody" fails
+  - Names.find ignoring the offense's team (10-22 fix)
+    -> "a shared short name goes to the team with the ball" fails
+  - nfl_quarters reading 'X 10 Yd pass from Y' passer-first
+    -> "a scoring play written receiver-first" fails
 """
 import sys
 from pathlib import Path
@@ -148,6 +152,36 @@ check("two-point tries stay out; overtime is the fifth slot; a repeated play id 
 ck = nq.check(Q, {"r1": {"rec": 2, "rec_yds": 21}, "b1": {"rush_yds": 7, "carries": 2}})
 check("the box check counts players whose quarters add up",
       ck["rec"] == 1 and ck["rec_yds"] == 1 and ck["rush_yds"] == 1 and ck["carries"] == 1)
+
+# the 10-22 fixes: shared short names, scoring-play text, the try in parentheses
+ros2 = {"30": [("cw", "Caleb Williams"), ("dm", "DJ Moore"), ("dw", "D'Andre Swift")],
+        "40": [("cw2", "Cody Williams"), ("jj", "Justin Jefferson"), ("tj", "Ty Johnson"),
+               ("tyj", "Tyler Johnson"), ("sd", "Sam Darnold")]}
+box2 = {"players": [{"team": {"id": t}, "statistics": [
+    {"name": "passing", "athletes": [{"athlete": {"id": i, "displayName": n}} for i, n in ps]}]}
+    for t, ps in ros2.items()]}
+nfl2 = {"header": header("30", "40", [7, 0, 0, 0], [0, 7, 0, 0]), "boxscore": box2, "drives": {
+    "previous": [
+        {"team": {"id": "30"}, "plays": [
+            play(1, "Pass Reception", "(Shotgun) C.Williams pass short left to D.Moore to MIN 30 "
+                 "for 8 yards (C.Williams).", 8, 21),
+            play(1, "Passing Touchdown", "DJ Moore 22 Yd pass from Caleb Williams (Cairo Santos "
+                 "Kick)", 22, 22)]},
+        {"team": {"id": "40"}, "plays": [
+            play(2, "Rush", "Ty.Johnson left end to CHI 42 for 3 yards (C.Williams).", 3, 23),
+            play(2, "Passing Touchdown", "Justin Jefferson 15 Yd pass from Sam Darnold (Sam "
+                 "Darnold Pass to Ty Johnson for Two-Point Conversion)", 15, 24)]}]}}
+Q2 = nq.parse(nfl2)
+G = Q2["players"]
+check("a shared short name goes to the team with the ball (the QB, not the defender; "
+      "Ty.Johnson the back, not Tyler)",
+      v("cw", "pass_cmp", 0) == 2 and v("cw2", "pass_att", 0) == 0 and v("dm", "rec", 0) == 2
+      and v("tj", "carries", 1) == 1 and v("tyj", "carries", 1) == 0)
+check("a scoring play written receiver-first: 'X 22 Yd pass from Y' (the try in parentheses "
+      "is not the play)",
+      v("cw", "pass_yds", 0) == 30 and v("cw", "pass_td", 0) == 1 and v("dm", "td", 0) == 1
+      and v("dm", "rec_yds", 0) == 30 and v("sd", "pass_td", 1) == 1
+      and v("jj", "rec_yds", 1) == 15 and v("tj", "rec", 1) == 0)
 
 # --- the backfills ----------------------------------------------------------------------
 for script, out, wf in (("nhl_periods_prior.py", "data/nhl/prior_periods.json",

@@ -231,6 +231,7 @@ def build_mlb_pages(include_admin: bool):
         # The game model + props, slate-wide. Fitted nightly and shown
         # beside its walk-forward record (mlb_model_precompute.py).
         ("Model", "views/MLB_Model.py"),
+        ("Simulator", "views/MLB_Sim.py"),
         # The most likely proven plays across every sport, with their
         # graded record (engines/top_plays_board).
         ("Top Plays", "views/Top_Plays.py"),
