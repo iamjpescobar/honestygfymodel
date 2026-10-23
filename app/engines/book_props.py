@@ -205,3 +205,169 @@ def merge_snapshot(old, event_rows, now):
         out[eid] = {"first": prev.get("first") or now, "last": now, "types": types,
                     "rows": rows_c}
     return out
+
+
+# ----------------------------------------------------------------------
+# READING THE RECORD ON THE PAGES (10-23, step 2)
+# ----------------------------------------------------------------------
+# Which member of a pair is the over — MEASURED on the first real run
+# (10-23 nightly, side_check against the milestones): NHL 100 of 103,
+# NBA 604 of 615, MLB 83 of 83 pairs priced the FIRST item like the
+# over (the stray ~2% are alt-ladder prices a few cents apart). NFL's
+# main totals carry a line and no price.
+FIRST_IS_OVER = True
+
+# our stat key -> (the book's total, the book's ladder "N or more"), by
+# league; names compared after norm() (lower case, "(incl. overtime)"
+# dropped). Several spellings where the feed has shown more than one.
+MARKETS = {
+    "nhl": {"sog": (("total shots on goal",), ("shots on goal milestones",)),
+            "pts": (("total points",), ("points milestones",)),
+            "a": (("total assists",), ("assists milestones",)),
+            "g": ((), ("goals milestones",)),
+            "sv": (("total saves",), ("goalkeeper saves milestones",))},
+    "nba": {"pts": (("total points",), ("points milestones",)),
+            "reb": (("total rebounds",), ("rebounds milestones",)),
+            "ast": (("total assists",), ("assists milestones",)),
+            "tpm": (("total 3-point field goals",), ("3-point field goals milestones",)),
+            "pra": (("total points, rebounds, and assists",),
+                    ("points + assists + rebounds milestones",)),
+            "pr": (("total points and rebounds",), ("points + rebounds milestones",)),
+            "pa": (("total points and assists",), ("points + assists milestones",)),
+            "ra": (("total assists and rebounds",), ("rebounds + assists milestones",)),
+            "q1pts": (("1st quarter total points",), ("points milestones - 1st quarter",))},
+    "nfl": {"pass_yds": (("total passing yards",), ("passing yards milestones",)),
+            "pass_att": (("total passing attempts", "total pass attempts"),
+                         ("passing attempts milestones",)),
+            "pass_cmp": (("total pass completions", "total passing completions",
+                          "total completions"),
+                         ("passing completions milestones",)),
+            "rush_yds": (("total rushing yards",), ("rushing yards milestones",)),
+            "carries": (("total carries", "total rushing attempts"),
+                        ("rushing attempts milestones",)),
+            "rec_yds": (("total receiving yards",), ("receiving yards milestones",)),
+            "rec": (("total receptions",), ("receptions milestones",)),
+            "pass_td": (("total passing touchdowns",), ("passing touchdown milestones",)),
+            "pass_int": (("total passing interceptions",), ("interceptions thrown milestones",)),
+            "scrim_yds": (("total rushing + receiving yards", "total rushing plus receiving yards"),
+                          ("rushing + receiving yards milestones",)),
+            "q1_rec_yds": (("1st quarter total receiving yards",),
+                           ("receiving yards milestones - 1st quarter",)),
+            "h1_rec_yds": (("1st half total receiving yards",),
+                           ("receiving yards milestones - 1st half",)),
+            "q1_rush_yds": (("1st quarter total rushing yards",),
+                            ("rushing yards milestones - 1st quarter",)),
+            "h1_rush_yds": (("1st half total rushing yards",),
+                            ("rushing yards milestones - 1st half",)),
+            "q1_pass_yds": (("1st quarter total passing yards",),
+                            ("passing yards milestones - 1st quarter",)),
+            "h1_pass_yds": (("1st half total passing yards",),
+                            ("passing yards milestones - 1st half",))},
+}
+# one-sided "yes" markets: the price IS the over at this line
+YES = {"nhl": {"g": (("anytime goalscorer", 0.5), ("to score 2+ goals", 1.5),
+                     ("to score 3+ goals", 2.5))},
+       "nfl": {"td": (("anytime touchdown scorer", 0.5),
+                      ("player to score 2 or more touchdowns", 1.5))}}
+
+
+def norm(type_name):
+    return re.sub(r"\s*\(incl\. overtime\)", "", str(type_name or "")).strip().lower()
+
+
+def board(day_files):
+    """{pid: {norm type: {"lines": {line: {"over", "under"}}, "first":
+    {line: {"over", "under"}}}}} from the day files' latest rows (one or
+    more {event_id: entry} dicts)."""
+    out = {}
+    for f in day_files or []:
+        for _eid, entry in (f or {}).items():
+            for r in expand(entry):
+                if not r["pid"] or r["line"] is None or r["k"] not in (0, 1):
+                    continue
+                t = norm(r["type"])
+                ladder = t.endswith("milestones") or "milestones -" in t
+                slot = out.setdefault(str(r["pid"]), {}).setdefault(t, {"lines": {}, "first": {}})
+                if ladder:
+                    ln, side = float(r["line"]) - 0.5, "over"
+                elif r["k"] == 0:
+                    ln, side = float(r["line"]), "over" if FIRST_IS_OVER else "under"
+                else:
+                    ln, side = float(r["line"]), "under" if FIRST_IS_OVER else "over"
+                slot["lines"].setdefault(ln, {})[side] = r["price"]
+                slot["first"].setdefault(ln, {})[side] = r.get("first_price")
+                if r["price"] is None:
+                    slot["lines"][ln].setdefault("no_price", True)
+    return out
+
+
+def lookup(bd, league, pid, stat):
+    """{"line": the book's main line, "over", "under", "ladder": {line:
+    over price}} for one player and stat, or None. The main line is the
+    total's (two-sided); a one-sided market gives its own line."""
+    p = (bd or {}).get(str(pid))
+    if not p:
+        return None
+    tot, lad = (MARKETS.get(league) or {}).get(stat, ((), ()))
+    out = {"line": None, "over": None, "under": None, "ladder": {}}
+    for t in tot:
+        x = p.get(t)
+        if x and x["lines"]:
+            ln = sorted(x["lines"], key=lambda k: (x["lines"][k].get("over") is None, k))[0]
+            out.update(line=ln, over=x["lines"][ln].get("over"),
+                       under=x["lines"][ln].get("under"))
+            break
+    for t in lad:
+        for ln, v in ((p.get(t) or {}).get("lines") or {}).items():
+            if v.get("over") is not None:
+                out["ladder"][ln] = v["over"]
+    for t, ln in ((YES.get(league) or {}).get(stat) or ()):
+        x = (p.get(t) or {}).get("lines") or {}
+        v = x.get(ln) or next(iter(x.values()), None) if x else None
+        if v and v.get("over") is not None:
+            out["ladder"].setdefault(ln, v["over"])
+    if out["line"] is None and out["ladder"]:
+        # no total: the ladder rung nearest even money stands in as the line
+        ln = min(out["ladder"], key=lambda k: abs(implied(out["ladder"][k]) - 0.5))
+        out.update(line=ln, over=out["ladder"][ln])
+    if out["line"] is None:
+        return None
+    if out["over"] is None and out["line"] in out["ladder"]:
+        out["over"] = out["ladder"][out["line"]]
+    return out
+
+
+def price_at(bk, line, side):
+    """The book's price for this side at this line (main line or a ladder
+    rung for the over), or None."""
+    if not bk or line is None:
+        return None
+    if bk.get("line") is not None and abs(float(line) - float(bk["line"])) < 1e-9:
+        return bk.get("over" if side == "Over" else "under")
+    if side == "Over":
+        return (bk.get("ladder") or {}).get(float(line))
+    return None
+
+
+def load_board(league, roots, today_iso):
+    """(board, as_of) from data/props/<league>/<today>.json and the next
+    day's under any of `roots` (the published data and the repo's)."""
+    from datetime import date, timedelta
+    from pathlib import Path
+    import json
+    d0 = date.fromisoformat(today_iso)
+    files, as_of = [], None
+    for k in range(0, 3 if league == "nfl" else 2):
+        name = f"{(d0 + timedelta(days=k)).isoformat()}.json"
+        for root in roots:
+            p = Path(root) / "props" / league / name
+            if p.exists():
+                try:
+                    js = json.loads(p.read_text())
+                except Exception:  # noqa: BLE001
+                    continue
+                files.append(js)
+                for e in js.values():
+                    as_of = max(as_of or "", e.get("last") or "")
+                break
+    return board(files), as_of

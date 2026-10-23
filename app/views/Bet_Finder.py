@@ -108,11 +108,12 @@ def _nhl_groups(item):
             _f = av.flag(p)
             sk.append({"_name": f"{p.get('name')} ({abbr})" + (f" ⚠ {_f}" if _f else ""),
                        "_why": p.get("why"),
-                       "_pmfs": nm.skater_pmfs(p.get("mu"), sog_disp)})
+                       "_pmfs": nm.skater_pmfs(p.get("mu"), sog_disp), "_pid": p.get("pid")})
         for gp in g.get(f"{side}_goalie_props") or []:
             pm = nm.saves_pmf(gp.get("exp_sa"), shot_disp, gp.get("sv_pct"))
             if pm:
-                gk.append({"_name": f"{gp.get('name')} ({abbr})", "_pmfs": {"sv": pm}})
+                gk.append({"_name": f"{gp.get('name')} ({abbr})", "_pmfs": {"sv": pm},
+                           "_pid": gp.get("pid")})
     groups = [{"label": "Skaters", "rows": sk, "stats": nm.STATS, "markets": nm.MARKETS,
                "cal": mv.calibration_map(pv, nm.MARKETS)}]
     if gk:
@@ -179,7 +180,7 @@ def _nfl_quarter_group(rows, qmeta):
             if x:
                 pm[k] = x
         if pm:
-            out.append({"_name": r["_name"], "_pmfs": pm})
+            out.append({"_name": r["_name"], "_pmfs": pm, "_pid": r.get("_pid")})
     if not out:
         return None
     cal = {f"@{k}": (qmeta["test"][k] or {}).get("calibration") for k in keys
@@ -263,13 +264,39 @@ def _nba_groups(item):
             rows.append({"_name": f"{r['name']} ({abbr})" + (f" \u26a0 {lab}" if lab else "")
                          + nv.tags(r),
                          "_why": r.get("why"), "_untested": bool(r.get("new")),
-                         "_pmfs": nm.player_pmfs(r.get("mu"), model.get("sizes"))})
+                         "_pmfs": nm.player_pmfs(r.get("mu"), model.get("sizes")),
+                         "_pid": r.get("pid")})
     stats = tuple((s, lab, (0.5,)) for s, lab in nm.PAGE_STATS
                   if s != "q1pts" or ((model.get("test") or {}).get("q1pts")))
     away, home = g.get("away_abbr"), g.get("home_abbr")
     return ([{"label": "Players", "rows": rows, "stats": stats, "markets": (),
               "cal": nv.calibration(model), "per_player_line": True}],
             bf.game_line_items(g.get("model"), g.get("odds"), away, home))
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _book_board(league, day):
+    """DraftKings' lines and prices for the league's upcoming games, from
+    the nightly's record (engines/book_props: data/props/<league>/)."""
+    from engines import book_props as bp
+    from engines import slate_guard as sg
+    return bp.load_board(league, [sg._PUBLISHED, sg._REPO], day)
+
+
+def _attach_book(groups, league):
+    """Each row's "_bk": {stat: the book's line / prices} (book_props.lookup);
+    returns the record's as-of time (None when there is none)."""
+    from engines import book_props as bp
+    bd, as_of = _book_board(league, datetime.now(EASTERN).date().isoformat())
+    if not bd:
+        return None
+    for gr in groups:
+        for r in gr["rows"]:
+            if r.get("_pid") is None:
+                continue
+            bk = {s: bp.lookup(bd, league, r["_pid"], s) for s, _l, _x in gr["stats"]}
+            r["_bk"] = {k: v for k, v in bk.items() if v}
+    return as_of
 
 
 SOURCES = {"NHL": (_nhl_games, _nhl_groups), "MLB": (_mlb_games, _mlb_groups),
@@ -374,6 +401,12 @@ else:
         st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">'
                     f'Player props</div>', unsafe_allow_html=True)
         groups = [gr for gr in groups if gr["rows"]]
+        book_asof = None
+        if sport in ("NHL", "NBA", "NFL"):
+            try:
+                book_asof = _attach_book(groups, sport.lower())
+            except Exception as exc:  # noqa: BLE001 — costs the book's lines, never the page
+                st.caption(f"DraftKings' lines unavailable right now ({type(exc).__name__}).")
         if not groups:
             st.caption("No player numbers for this game yet (lineups or the nightly build "
                        "may still be pending).")
@@ -391,10 +424,23 @@ else:
                             key=f"bf_side_{sport}_{gi}_{gname}")
             per_player = grp.get("per_player_line")
             default_lines = next(l for s, _lab, l in grp["stats"] if s == stat)
+            # THE BOOK'S LINE (10-23): rows open on DraftKings' own line and
+            # price where the nightly's record has them (engines/book_props)
+            from engines import book_props as _bp
+            has_book = any(((r.get("_bk") or {}).get(stat)) for r in grp["rows"])
+            other = "Under" if side == "Over" else "Over"
+            if has_book:
+                per_player = True
             if per_player:
                 line = None
-                st.caption("Lines differ by player for this stat — each row starts at the "
-                           "line nearest a coin flip for him. Change it to your book's line.")
+                st.caption(
+                    ("Each row opens on DraftKings' line with its price filled in"
+                     + (f" (as of {book_asof.replace('T', ' ').replace('Z', ' UTC')})"
+                        if book_asof else "") + "; players without one start at the line "
+                     "nearest a coin flip for him. Change a line or a price to your book's.")
+                    if has_book else
+                    "Lines differ by player for this stat — each row starts at the line "
+                    "nearest a coin flip for him. Change it to your book's line.")
             else:
                 line = st.selectbox("Line (as your book lists it)",
                                     sorted(set(default_lines) | {x + 0.5 for x in range(0, 12)}),
@@ -408,17 +454,36 @@ else:
             # typing down the column follows the book down its list.
             players.sort(key=lambda r: -(mv._pmf_mean((r.get("_pmfs") or {}).get(stat)) or 0))
 
+            def _bk(r):
+                return (r.get("_bk") or {}).get(stat)
+
             def _start_line(r):
                 if line is not None:
                     return line
+                if _bk(r):
+                    return float(_bk(r)["line"])
                 return float(mv.balanced_line((r.get("_pmfs") or {}).get(stat)))
 
-            base = pd.DataFrame([{"Player": r["_name"], "Line": _start_line(r),
-                                  "Your price": None, "Other side": None} for r in players])
+            def _dk(r):
+                b = _bk(r)
+                if not b:
+                    return "—"
+                o, u = b.get("over"), b.get("under")
+                return (f"{b['line']:g}: O {_amer(o) if o is not None else '—'} · "
+                        f"U {_amer(u) if u is not None else '—'}")
+
+            starts = [_start_line(r) for r in players]
+            prefill = [(_bp.price_at(_bk(r), starts[i], side),
+                        _bp.price_at(_bk(r), starts[i], other)) for i, r in enumerate(players)]
+            base = pd.DataFrame([{"Player": r["_name"], "Line": starts[i],
+                                  "Your price": prefill[i][0], "Other side": prefill[i][1]}
+                                 for i, r in enumerate(players)])
+            if has_book:
+                base.insert(1, "DraftKings", [_dk(r) for r in players])
             ed_key = f"bf_ed_{sport}_{gi}_{gname}_{stat}_{side}_{line}"
             edited = st.data_editor(
                 base, key=ed_key, hide_index=True, width="stretch",
-                disabled=["Player"] + ([] if per_player else ["Line"]),
+                disabled=["Player", "DraftKings"] + ([] if per_player else ["Line"]),
                 column_config={
                     "Line": st.column_config.NumberColumn(step=0.5, format="%.1f"),
                     "Your price": st.column_config.NumberColumn(
@@ -434,6 +499,15 @@ else:
             res, ref = [], []
             for i, r in enumerate(players):
                 ln = float(edited.at[i, "Line"]) if per_player else line
+                _yp, _os = edited.at[i, "Your price"], edited.at[i, "Other side"]
+                if ln != starts[i] and _bk(r):
+                    # the line was moved: a prefilled price was for the book's
+                    # line, so it is swapped for the book's price at the new
+                    # line (a ladder rung) or cleared — never priced at the wrong line
+                    if _yp == prefill[i][0]:
+                        _yp = _bp.price_at(_bk(r), ln, side)
+                    if _os == prefill[i][1]:
+                        _os = _bp.price_at(_bk(r), ln, other)
                 ch, raw, basis = bf.chance_at(r, stat, ln, side, grp["markets"], grp["cal"])
                 if ch is None or not 0 < ch < 1:
                     continue
@@ -442,11 +516,9 @@ else:
                        "line_label": f"{side[0]}{ln:g}"}
                 ref.append(row)
                 _sup = bf.support_at(r, stat, ln, grp["markets"], grp["cal"])
-                j = bf.judge(ch, edited.at[i, "Your price"], _stk, edited.at[i, "Other side"],
-                             _sup)
+                j = bf.judge(ch, _yp, _stk, _os, _sup)
                 if j:
-                    res.append(dict(row, price=bf.valid_price(edited.at[i, "Your price"]),
-                                    support=_sup, **j))
+                    res.append(dict(row, price=bf.valid_price(_yp), support=_sup, **j))
             res.sort(key=lambda x: (bf.CALL_ORDER[x["tier"]], -x["edge"]))
 
             if res:

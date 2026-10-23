@@ -154,6 +154,58 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Step 2: the Bet Finder opens every player on DraftKings' own line and price (NHL, NBA, NFL). 2026-10-23 (4)
+
+**Suite 162, FAILING: none.** tests/test_book_props.py +6 checks (2 new
+controls red: board() taking the second of a pair as the over;
+price_at giving the main line's price at a moved line). Bet Finder
+headless (NHL, a real 10-23 DK board mapped onto an archived slate's
+players): every row opened on DK's line, both prices filled, Book says
+(de-vigged) and CHECK flags computed with no typing. This zip also
+carries (3), the simulator counts (simcount.zip), so either install
+order ends the same.
+
+THE FIRST REAL RUN (10-23 2 PM nightly): side_check — the FIRST of a
+pair is the over: NHL 100 / 103, NBA 604 / 615, MLB 83 / 83 (the rest
+are ladder prices a few cents off the total's). NFL: 0 pairs — DK's NFL
+totals carry a line and NO price; prices are on the "N+" ladders.
+Saved: 14 NHL, 12 NBA, 13 NFL, 1 MLB game. MLB simulator on real data:
+196,192 PAs, runs per team simulated 4.43 vs actual 4.17 (6% high —
+look at it); SGP kinds all thin / fail.
+
+READING THE RECORD (engines/book_props): FIRST_IS_OVER (measured, the
+note beside it); MARKETS maps our stat keys to DK's total and its ladder
+per league (NHL sog / pts / a / g / sv; NBA pts / reb / ast / tpm / pra /
+pr / pa / ra / q1pts; NFL pass / rush / rec yards, receptions, carries,
+attempts, completions, TDs, ints, rush+rec, 1Q / 1H rec / rush / pass
+yards); YES = one-sided markets (anytime goal / TD, 2+). board() reads
+the day files (latest + first prices), lookup() gives {line, over, under,
+ladder}: the total's line, else the ladder rung nearest even money;
+price_at() gives the price at a line — the main line's two sides, a
+ladder rung's over, else None. load_board() reads data/props/<league>/
+today (+1; NFL +2) from the published data or the repo, with the as-of.
+Unmapped and not priced by the site: NHL PP points; NBA steals / blocks /
+1Q assists; NFL kicking.
+
+BET FINDER: _attach_book puts "_bk" on each row by ESPN id (rows now
+carry "_pid"; the NFL 1Q / 1H group too); a stat with any book line goes
+per-player; each row opens on DK's line with "Your price" and "Other
+side" prefilled; a "DraftKings" column shows "2.5: O +115 · U -155"; a
+moved line gets DK's ladder price there or none — never the main line's
+price at the wrong line; the caption says the as-of. MLB not yet (ESPN
+athlete ids vs MLBAM — needs a name map).
+
+NEXT (step 3): the grader — after the games, every saved DK price vs the
+site's chance at that line: per market, does the site beat DK's de-vigged
+chance (Brier, paired)? Markets that don't -> "no edge proven", their
+VALUE / BET calls capped. Then the same DK line on the Model pages and
+Simulators (they still open on the model's line).
+
+FILES: app/engines/book_props.py, app/views/Bet_Finder.py,
+tests/test_book_props.py; + (3)'s files; HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — Simulator game views: 10,000 -> 50,000 games (MLB 25,000). 2026-10-23 (3)
 
 **Suite 162, FAILING: none.** New tests/test_sim_counts.py (control red:
@@ -813,44 +865,5 @@ nba_view.py, nfl_game_model.py, bet_finder.py; app/views/NBA.py,
 NBA_Props.py, Bet_Finder.py, Results.py + the 18 pages with the new
 button; tests/test_nba_upgrades.py, tests/test_refresh_buttons.py (NEW),
 tests/test_nba.py; HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — NBA newcomers (rookies, back from a lost season) on the site; the 10-21 slate graded. 2026-10-22
-
-**Suite 150, FAILING: none.** test_nba +3 checks, control (side_props
-without newcomer_rows — the bug) red by exit code. Dry run of the
-nightly; Tonight and Props headless.
-
-THE BUG (Izzy, 10-22: "players that came back from injury or got drafted
-weren't on the roster"): side_props walked only the POOL (last season's
-regular-season players + this season's), so a rookie, or a man who
-missed all of 2025-26, did not exist on the site until his first
-regular-season game — role_watch hid them too (sorted by minutes change,
-None last, cut at 40). newcomer_rows: tonight's roster players missing
-from the pool (no roster: this preseason's team) — 2+ preseason games ->
-projected from them (nm.project_now on the preseason box scores), row
-"new": True, the why says so; fewer -> g["<side>_no_data"], listed by
-name under the team on Tonight. A NEW row is UNTESTED everywhere:
-nv.chance forces it, bet_finder.support_at honours "_untested", Long
-Shots skips it, the Bet Finder name carries "· NEW". Once he plays a
-regular-season game he joins the pool and the tested model.
-
-THE 10-21 SLATE, GRADED BY HAND (the nightly archive is public:
-github.com/.../releases/download/nightly-data/statcast_data.tar.gz has
-data/nba/games.json): 8 finals — model winners 4 of 7 (one 50/50), the
-book's 6 of 8; margin MAE model 14.9 vs book 13.6 (last season's model
-11.5); total MAE model 10.9 vs book 9.5; 2 of 8 finals outside the
-model's 80% range (expected ~1.6). The weak point: team ratings carry
-last season at 0.956 and know no offseason moves. NEXT NBA BUILD: team
-projections from the sum of tonight's player projections (roster-aware,
-context-adjusted) — test on last season vs the team-rating model first.
-
-THE REPO IS PUBLIC (checked 10-22): the Bet Log must write to a PRIVATE
-repo (BETLOG_REPO), never this one. Izzy told.
-
-FILES: nba_precompute.py, app/engines/nba_view.py, app/engines/bet_finder.py,
-app/views/Bet_Finder.py, app/views/NBA.py, tests/test_nba.py, HANDOFF.md,
-HANDOFF_ARCHIVE.md
 
 ---

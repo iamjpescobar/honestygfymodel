@@ -10,6 +10,47 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — NBA newcomers (rookies, back from a lost season) on the site; the 10-21 slate graded. 2026-10-22
+
+**Suite 150, FAILING: none.** test_nba +3 checks, control (side_props
+without newcomer_rows — the bug) red by exit code. Dry run of the
+nightly; Tonight and Props headless.
+
+THE BUG (Izzy, 10-22: "players that came back from injury or got drafted
+weren't on the roster"): side_props walked only the POOL (last season's
+regular-season players + this season's), so a rookie, or a man who
+missed all of 2025-26, did not exist on the site until his first
+regular-season game — role_watch hid them too (sorted by minutes change,
+None last, cut at 40). newcomer_rows: tonight's roster players missing
+from the pool (no roster: this preseason's team) — 2+ preseason games ->
+projected from them (nm.project_now on the preseason box scores), row
+"new": True, the why says so; fewer -> g["<side>_no_data"], listed by
+name under the team on Tonight. A NEW row is UNTESTED everywhere:
+nv.chance forces it, bet_finder.support_at honours "_untested", Long
+Shots skips it, the Bet Finder name carries "· NEW". Once he plays a
+regular-season game he joins the pool and the tested model.
+
+THE 10-21 SLATE, GRADED BY HAND (the nightly archive is public:
+github.com/.../releases/download/nightly-data/statcast_data.tar.gz has
+data/nba/games.json): 8 finals — model winners 4 of 7 (one 50/50), the
+book's 6 of 8; margin MAE model 14.9 vs book 13.6 (last season's model
+11.5); total MAE model 10.9 vs book 9.5; 2 of 8 finals outside the
+model's 80% range (expected ~1.6). The weak point: team ratings carry
+last season at 0.956 and know no offseason moves. NEXT NBA BUILD: team
+projections from the sum of tonight's player projections (roster-aware,
+context-adjusted) — test on last season vs the team-rating model first.
+
+THE REPO IS PUBLIC (checked 10-22): the Bet Log must write to a PRIVATE
+repo (BETLOG_REPO), never this one. Izzy told.
+
+FILES: nba_precompute.py, app/engines/nba_view.py, app/engines/bet_finder.py,
+app/views/Bet_Finder.py, app/views/NBA.py, tests/test_nba.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
+---
+
 ## PICK UP HERE — NBA finished for now: 1Q player points, Live tested, tests grow nightly, model vs book. 2026-10-21 (3)
 
 **Suite 150, FAILING: none.** New tests/test_nba_quarters.py (4

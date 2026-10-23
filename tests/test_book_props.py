@@ -18,6 +18,11 @@ Negative controls, confirmed red by exit code when written (rule 4):
     -> "the first price seen is kept beside the latest" fails
   - fetch_event reading page 1 only
     -> "every page of an event is read" fails
+Step 2 (10-23, the pages read the record), each red:
+  - board() taking the SECOND member of a pair as the over
+    -> "the measured order: the first of a pair is the over" fails
+  - price_at giving the main line's price at a moved line
+    -> "a moved line gets the ladder's price or none" fails
 """
 import json
 import sys
@@ -128,6 +133,45 @@ wf = (ROOT / ".github" / "workflows" / "nightly-data.yml").read_text(encoding="u
 check("the nightly snapshots and commits the record in its own steps",
       "python book_props_snapshot.py ||" in wf and "git add data/props" in wf
       and wf.index("python book_props_snapshot.py") < wf.index("Fetch and package real Statcast"))
+
+# --- step 2: the pages read the record -------------------------------------------------------
+# the real feed lists the OVER first (measured 10-23: NHL 100 / 103, NBA 604 / 615, MLB 83 / 83)
+REAL = [item(5, "4", "Total Shots on Goal", 2.5, "+115"), item(5, "4", "Total Shots on Goal",
+                                                               2.5, "-155"),
+        item(5, "5", "Shots on Goal Milestones", 2, "-240"),
+        item(5, "5", "Shots on Goal Milestones", 3, "+115"),
+        item(5, "5", "Shots on Goal Milestones", 4, "+285"),
+        item(5, "7", "Anytime Goalscorer", 0.5, "+210"),
+        {"type": {"id": "8", "name": "Total Receiving Yards (incl. overtime)"},
+         "athlete": {"$ref": ".../athletes/6?x"}, "current": {"target": {"value": 64.5}}},
+        item(6, "9", "Receiving Yards Milestones", 75, "+180")]
+snap = bp.merge_snapshot({}, {"e": bp.parse(REAL)}, "2026-10-23T22:00Z")
+BD = bp.board([snap])
+k5 = bp.lookup(BD, "nhl", "5", "sog")
+check("the measured order: the first of a pair is the over",
+      bp.FIRST_IS_OVER and k5["line"] == 2.5 and k5["over"] == 115 and k5["under"] == -155)
+check("the ladder: 3+ shots is the over at 2.5, 4+ at 3.5; a yes-market at its own line",
+      k5["ladder"] == {1.5: -240, 2.5: 115, 3.5: 285}
+      and bp.lookup(BD, "nhl", "5", "g") == {"line": 0.5, "over": 210, "under": None,
+                                              "ladder": {0.5: 210}})
+k6 = bp.lookup(BD, "nfl", "6", "rec_yds")
+check("an NFL total with no price keeps the line, prices come only from the ladder",
+      k6["line"] == 64.5 and k6["over"] is None and k6["ladder"] == {74.5: 180})
+check("a moved line gets the ladder's price or none (never the main line's price)",
+      bp.price_at(k5, 2.5, "Over") == 115 and bp.price_at(k5, 2.5, "Under") == -155
+      and bp.price_at(k5, 3.5, "Over") == 285 and bp.price_at(k5, 3.5, "Under") is None
+      and bp.price_at(k5, 9.5, "Over") is None)
+with tempfile.TemporaryDirectory() as td:
+    (Path(td) / "props" / "nhl").mkdir(parents=True)
+    (Path(td) / "props" / "nhl" / "2026-10-23.json").write_text(json.dumps(snap))
+    lb, asof = bp.load_board("nhl", [Path(td) / "nope", td], "2026-10-23")
+check("the page loads today's record from whichever data root has it, with its time",
+      asof == "2026-10-23T22:00Z" and bp.lookup(lb, "nhl", "5", "sog")["line"] == 2.5)
+bfp = (ROOT / "app" / "views" / "Bet_Finder.py").read_text(encoding="utf-8")
+check("the Bet Finder opens each row on DraftKings' line and price, and re-prices a moved line",
+      "_attach_book(groups, sport.lower())" in bfp and '"DraftKings"' in bfp
+      and "return float(_bk(r)[\"line\"])" in bfp
+      and "_yp = _bp.price_at(_bk(r), ln, side)" in bfp and "j = bf.judge(ch, _yp, _stk, _os," in bfp)
 
 if failures:
     print(f"\n{len(failures)} FAILED")
