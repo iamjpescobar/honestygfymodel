@@ -290,11 +290,19 @@ def _attach_book(groups, league):
     bd, as_of = _book_board(league, datetime.now(EASTERN).date().isoformat())
     if not bd:
         return None
+    names = bd.get("_names") or {}
     for gr in groups:
+        lg = league
+        if league == "mlb" and "pitcher" in str(gr.get("label")).lower():
+            lg = "mlb_p"
         for r in gr["rows"]:
-            if r.get("_pid") is None:
+            pid = r.get("_pid")
+            if league == "mlb":
+                # MLB: ESPN ids are not MLBAM's — matched by name
+                pid = names.get(bp.name_key(r.get("Batter") or r.get("Pitcher")))
+            if pid is None:
                 continue
-            bk = {s: bp.lookup(bd, league, r["_pid"], s) for s, _l, _x in gr["stats"]}
+            bk = {s: bp.lookup(bd, lg, pid, s) for s, _l, _x in gr["stats"]}
             r["_bk"] = {k: v for k, v in bk.items() if v}
     return as_of
 
@@ -402,7 +410,7 @@ else:
                     f'Player props</div>', unsafe_allow_html=True)
         groups = [gr for gr in groups if gr["rows"]]
         book_asof = None
-        if sport in ("NHL", "NBA", "NFL"):
+        if sport in ("NHL", "NBA", "NFL", "MLB"):
             try:
                 book_asof = _attach_book(groups, sport.lower())
             except Exception as exc:  # noqa: BLE001 — costs the book's lines, never the page

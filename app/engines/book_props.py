@@ -82,7 +82,8 @@ def parse(items):
         key = (m.group(1) if m else None, str(typ.get("id")), line)
         k = seen.get(key, 0)
         seen[key] = k + 1
-        rows.append({"pid": key[0], "type_id": key[1], "type": typ.get("name"), "line": line,
+        rows.append({"ref": (it.get("athlete") or {}).get("$ref"),
+                     "pid": key[0], "type_id": key[1], "type": typ.get("name"), "line": line,
                      "price": american(am.get("value")), "open_price": american(am.get("open")),
                      "open_line": _num(((it.get("open") or {}).get("target") or {}).get("value")),
                      "updated": it.get("lastUpdated"), "k": k})
@@ -184,7 +185,7 @@ def expand(entry):
             for x in entry.get("rows") or []]
 
 
-def merge_snapshot(old, event_rows, now):
+def merge_snapshot(old, event_rows, now, names=None):
     """The day's file: {event_id: {"first": iso, "last": iso, "types": {id:
     name}, "rows": [compact rows]}}
     — the FIRST prices seen are kept (open of our record) beside the
@@ -204,6 +205,10 @@ def merge_snapshot(old, event_rows, now):
         types, rows_c = compact(new)
         out[eid] = {"first": prev.get("first") or now, "last": now, "types": types,
                     "rows": rows_c}
+        nm = dict(prev.get("names") or {})
+        nm.update((names or {}).get(eid) or {})
+        if nm:
+            out[eid]["names"] = nm
     return out
 
 
@@ -264,6 +269,19 @@ MARKETS = {
             "h1_pass_yds": (("1st half total passing yards",),
                             ("passing yards milestones - 1st half",))},
 }
+# MLB (10-23): batters and starters share stat keys (k, h ...) but not
+# the book's markets, so the starters have their own map. Walks are left
+# OUT on purpose: the site's walks include hit-by-pitch, the book's do
+# not — not the same bet, so no line is shown for them.
+MARKETS["mlb"] = {"h": (("total hits",), ("hits milestones",)),
+                  "tb": (("total bases",), ("total bases milestones",)),
+                  "hr": ((), ("home runs milestones",)),
+                  "k": ((), ("strikeouts (batter) milestones",)),
+                  "s": (("total singles hit",), ("singles milestones",)),
+                  "d": (("total doubles hit",), ("doubles milestones",)),
+                  "rbi": (("total rbis",), ("rbis milestones",))}
+MARKETS["mlb_p"] = {"k": (("total strikeouts",), ("strikeouts thrown milestones",)),
+                    "h": (("total hits allowed",), ("hits allowed milestones",))}
 # one-sided "yes" markets: the price IS the over at this line
 YES = {"nhl": {"g": (("anytime goalscorer", 0.5), ("to score 2+ goals", 1.5),
                      ("to score 3+ goals", 2.5))},
@@ -273,6 +291,14 @@ YES = {"nhl": {"g": (("anytime goalscorer", 0.5), ("to score 2+ goals", 1.5),
 
 def norm(type_name):
     return re.sub(r"\s*\(incl\. overtime\)", "", str(type_name or "")).strip().lower()
+
+
+def name_key(name):
+    """'Vladimir Guerrero Jr.' -> 'vladimir guerrero'; accents dropped."""
+    import unicodedata
+    n = unicodedata.normalize("NFKD", str(name or "")).encode("ascii", "ignore").decode()
+    n = re.sub(r"[^a-z ]", "", n.lower().replace("-", " ").replace(".", " "))
+    return re.sub(r"\s+(jr|sr|ii|iii|iv)$", "", re.sub(r"\s+", " ", n).strip())
 
 
 def board(day_files):
@@ -295,9 +321,31 @@ def board(day_files):
                 else:
                     ln, side = float(r["line"]), "under" if FIRST_IS_OVER else "over"
                 slot["lines"].setdefault(ln, {})[side] = r["price"]
+                nm = (entry.get("names") or {}).get(str(r["pid"]))
+                if nm:
+                    out.setdefault("_names", {})[name_key(nm)] = str(r["pid"])
                 slot["first"].setdefault(ln, {})[side] = r.get("first_price")
                 if r["price"] is None:
                     slot["lines"][ln].setdefault("no_price", True)
+    return out
+
+
+def athlete_names(get, rows, known=None):
+    """{pid: name} for the rows' players not already in `known`, read from
+    the feed's athlete records (MLB: ESPN's ids are not MLBAM's, so the
+    pages match MLB players by NAME)."""
+    out = {}
+    for r in rows:
+        pid = r.get("pid")
+        if not pid or pid in out or pid in (known or {}):
+            continue
+        try:
+            a = get(r["ref"]) if r.get("ref") else None
+        except Exception:  # noqa: BLE001
+            a = None
+        nm = (a or {}).get("displayName") or (a or {}).get("fullName")
+        if nm:
+            out[pid] = nm
     return out
 
 

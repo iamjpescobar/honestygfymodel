@@ -23,6 +23,11 @@ Step 2 (10-23, the pages read the record), each red:
     -> "the measured order: the first of a pair is the over" fails
   - price_at giving the main line's price at a moved line
     -> "a moved line gets the ladder's price or none" fails
+MLB by name (10-23), each red:
+  - name_key keeping "Jr."
+    -> "MLB players are matched by name across the two id systems" fails
+  - walks mapped for MLB (the site's include HBP, the book's do not)
+    -> "MLB walks get no book line (not the same bet)" fails
 """
 import json
 import sys
@@ -172,6 +177,47 @@ check("the Bet Finder opens each row on DraftKings' line and price, and re-price
       "_attach_book(groups, sport.lower())" in bfp and '"DraftKings"' in bfp
       and "return float(_bk(r)[\"line\"])" in bfp
       and "_yp = _bp.price_at(_bk(r), ln, side)" in bfp and "j = bf.judge(ch, _yp, _stk, _os," in bfp)
+
+# --- MLB: matched by name ------------------------------------------------------------------
+def mitem(pid, tid, name, line, price):
+    x = item(pid, tid, name, line, price)
+    x["athlete"]["$ref"] = f"http://x/v2/sports/baseball/leagues/mlb/seasons/2026/athletes/{pid}?a"
+    return x
+
+
+MI = [mitem(33372, "46", "Total Strikeouts", 5.5, "+129"), mitem(33372, "46", "Total Strikeouts",
+                                                                 5.5, "-165"),
+      mitem(901, "1", "Total Hits", 0.5, "-200"), mitem(901, "1", "Total Hits", 0.5, "+150"),
+      mitem(901, "2", "Total Walks (Batter)", 0.5, "+180"),
+      mitem(901, "2", "Total Walks (Batter)", 0.5, "-240")]
+mrows = bp.parse(MI)
+looked = []
+
+
+def aget(url):
+    looked.append(url)
+    return {"displayName": {"33372": "Freddy Peralta", "901": "Vladimir Guerrero Jr."}[
+        url.split("athletes/")[1].split("?")[0]]}
+
+
+nm = bp.athlete_names(aget, mrows)
+msnap = bp.merge_snapshot({}, {"g": mrows}, "T", {"g": nm})
+MB = bp.board([msnap])
+vg = MB["_names"].get(bp.name_key("Vladimir Guerrero"))
+check("MLB players are matched by name across the two id systems (one athlete call each)",
+      len(looked) == 2 and vg == "901" and MB["_names"][bp.name_key("Freddy Peralta")] == "33372"
+      and bp.lookup(MB, "mlb", vg, "h")["over"] == -200
+      and bp.lookup(MB, "mlb_p", "33372", "k") == {"line": 5.5, "over": 129, "under": -165,
+                                                  "ladder": {}})
+check("MLB walks get no book line (not the same bet: the site's include hit-by-pitch)",
+      "bb" not in bp.MARKETS["mlb"] and "bb" not in bp.MARKETS["mlb_p"]
+      and bp.lookup(MB, "mlb", vg, "bb") is None)
+check("a second run keeps the names it already has (no repeat calls)",
+      bp.athlete_names(aget, mrows, known=nm) == {} and len(looked) == 2
+      and bp.merge_snapshot(msnap, {"g": mrows}, "T2")["g"]["names"] == nm)
+check("the Bet Finder matches MLB rows by name, starters on their own markets",
+      "names.get(bp.name_key(r.get(\"Batter\") or r.get(\"Pitcher\")))" in bfp
+      and 'lg = "mlb_p"' in bfp and '("NHL", "NBA", "NFL", "MLB")' in bfp)
 
 if failures:
     print(f"\n{len(failures)} FAILED")

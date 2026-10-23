@@ -55,6 +55,7 @@ def run_league(league, today, get, fetch_scoreboard, sport_lg, out_dir=OUT, now=
     sport, lg = sport_lg
     evs = upcoming(league, today, LEAGUES.get(league, 2), fetch_scoreboard)
     by_date, types, n_items = {}, Counter(), 0
+    ev_names = {}
     all_rows = []
     for eid, (d, _lab) in evs.items():
         try:
@@ -63,6 +64,13 @@ def run_league(league, today, get, fetch_scoreboard, sport_lg, out_dir=OUT, now=
             print(f"  {league}: props for {eid} failed: {type(exc).__name__}: {exc}")
             continue
         rows = bp.parse(items)
+        if league == "mlb":
+            # ESPN's MLB ids are not MLBAM's: keep each player's NAME with the
+            # record so the pages can match him (one athlete call each, once)
+            path = Path(out_dir) / league / f"{d}.json"
+            known = ((json.loads(path.read_text()).get(eid) or {}).get("names")
+                     if path.exists() else None) or {}
+            ev_names[eid] = dict(known, **bp.athlete_names(get, rows, known))
         n_items += len(rows)
         types.update(r["type"] for r in rows)
         all_rows += rows
@@ -75,9 +83,13 @@ def run_league(league, today, get, fetch_scoreboard, sport_lg, out_dir=OUT, now=
         path = Path(out_dir) / league / f"{d}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         old = json.loads(path.read_text()) if path.exists() else {}
-        path.write_text(json.dumps(bp.merge_snapshot(old, ev_rows, now), separators=(",", ":")))
+        path.write_text(json.dumps(bp.merge_snapshot(old, ev_rows, now, ev_names),
+                                   separators=(",", ":")))
         written.append(path.name)
     n_saved = sum(len(v) for v in by_date.values())
+    if ev_names:
+        print(f"  [verify] BOOK PROPS {league}: player names kept for "
+              f"{sum(len(v) for v in ev_names.values())} players (pages match MLB by name)")
     print(f"  [verify] BOOK PROPS {league}: {len(evs)} upcoming events, {n_saved} with props "
           f"saved; {n_items} prop items -> {written}")
     print(f"  [verify] BOOK PROPS {league}: which of a pair is the over, measured against the "

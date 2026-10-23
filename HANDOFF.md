@@ -154,6 +154,32 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — MLB on the Bet Finder opens on DraftKings' line too (players matched by name). 2026-10-23 (5)
+
+**Suite 162, FAILING: none.** tests/test_book_props.py +4 checks (2
+controls red: name_key keeping "Jr."; walks mapped for MLB).
+
+Izzy 6:28 PM (screenshot, TB @ MIL, Batters / Hits): "The lines aren't
+showing for mlb". Cause: ESPN's MLB athlete ids are not MLBAM's (the
+MLB pages' ids), so (4) left MLB out. Now: book_props_snapshot keeps
+each MLB player's NAME in the day file (bp.athlete_names: one call to
+the athlete $ref per new player, names already saved are reused;
+merge_snapshot carries "names"); board() builds "_names" {name_key:
+ESPN id}; the Bet Finder matches MLB rows by "Batter" / "Pitcher" name.
+Starters use MARKETS["mlb_p"] (k: Total Strikeouts / Strikeouts Thrown
+Milestones; h: Total Hits Allowed / Hits Allowed Milestones); batters
+MARKETS["mlb"] (h, tb, hr ladder, k ladder, singles, doubles, rbi).
+WALKS DELIBERATELY UNMAPPED: the site's walks include HBP, DK's do not —
+not the same bet. The record saved before this push has no names: MLB
+lines appear after the next nightly run (a manual run before first pitch
+covers tonight's game).
+
+FILES: app/engines/book_props.py, book_props_snapshot.py,
+app/views/Bet_Finder.py, tests/test_book_props.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — Step 2: the Bet Finder opens every player on DraftKings' own line and price (NHL, NBA, NFL). 2026-10-23 (4)
 
 **Suite 162, FAILING: none.** tests/test_book_props.py +6 checks (2 new
@@ -801,69 +827,5 @@ Runtime ~100 s (the walk-forward skater rows).
 FILES: app/engines/nhl_sim.py, app/views/NHL_Sim.py,
 tests/test_nhl_sim.py (NEW); nhl_precompute.py, app/app.py, HANDOFF.md,
 HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — NBA learns this season: minutes pull, team minutes add to 240, ROLE / NEW TEAM flags, roster margin, nightly re-tune; a refresh on every page. 2026-10-22 (2)
-
-**Suite 152, FAILING: none.** New tests/test_nba_upgrades.py (7 controls,
-red by exit code, listed in the test) and tests/test_refresh_buttons.py
-(1 control, red). Dry run of the nightly; Tonight, Props, Simulator,
-First Basket, Trends, Next Man Up and the Bet Finder headless, plus 8
-non-NBA pages with the new button. Ships with the 10-22 newcomers batch
-below (Izzy uploaded nba_newcomers.zip but never unpacked it).
-
-WHY (Izzy): "none of the teams will operate like last season ... the
-site needs to recognize stuff like that and adapt." Every piece below
-was measured on 2025-26 before it moved a number:
-
-1. OLD-TEAM GAMES — NOT DISCOUNTED. 129 team changes last season (107 at
-   the deadline). Cutting the old team's games in the long-run tracker or
-   the shrink made it worse; cutting the 2-game window was thin (fit
-   window fails, test z 2.3, pooled z 0.2). The 2-game half-life already
-   moves his minutes within ~3 games. NEW TEAM is a flag, not a number.
-2. THE MINUTES PULL (nm.DOWN_PULL, fitted 0.3): a drop below his
-   long-run minutes is pulled 30% back (a rise is not). Drops held only
-   ~40% over the next 10 games, rises ~52% (nm.role_check). Paired vs no
-   pull on the unseen window: beats z 4.25; on traded players alone, z
-   2.5. Scored on the SAME player-games (the pull lifts rows over 10 min).
-3. TEAM MINUTES ADD UP (nc, piece 3): rotation (projected 10+, who
-   plays) scaled by (220 / their sum)^0.5. Their sum ran 237 +/- 30. vs
-   without, unseen: beats z 6.8. All 8 props tests improved (points Brier
-   0.2364 -> 0.2338, PRA 0.2351 -> 0.2310). Tonight: why line says
-   "team minutes ... scaled -6%". Backtest "who plays" = who played.
-4. ROSTER MARGIN (engines/nba_roster): sum of tonight's projections,
-   minutes to 240. Fit-window margin MAE 11.84 -> 11.45 at w 0.3; the
-   unseen window THIN (z 0.4) -> weight 0, shown on Tonight as
-   information ("Tonight's rosters say ..."). Totals did not help. The
-   test window includes this season, so it is re-judged nightly; at
-   "beats" the margin blends in (ngm.project mu=) and the Simulator
-   follows.
-5. ROLE ↑ / ↓: this season's minutes vs his opening-night projection,
-   3+ minutes and 2 SE (sd 6.5 min/game), 3+ games. Flag only.
-6. NIGHTLY RE-TUNE: champion = data/nba/settings.json (committed by the
-   nightly, in the "Commit NFL projection log" step); challenger = the
-   same grid on the 45 game-days before the newest 14; replaces only on
-   "beats" there. Starts once this season has 21 game-days and 1,500
-   player-games in the newest 14. Log: "[verify] NBA settings ...
-   held / REPLACED"; Tonight shows "settings in use since ...". On last
-   season's March as a fake season it replaced (k 600 -> 300, z 2.1).
-   Leak, said here: a replaced set is fitted on days the props test also
-   grades.
-
-REFRESH: "⟳ Sync latest" under the header on every nav page except Live
-(own Refresh), Bet Log, Home and the admin pages.
-
-NIGHTLY VERIFY LINES TO READ: "NBA minutes pull 0.3 ... beats", "NBA
-settings ...", "NBA role changes on 2025-26", "NBA team minutes add up:
-... in the number: yes", "NBA roster margin: ... in the margin: weight",
-"NBA rosters: N games with a roster margin; M players flagged".
-
-FILES: nba_precompute.py, .github/workflows/nightly-data.yml,
-app/engines/nba_model.py, nba_context.py, nba_roster.py (NEW),
-nba_view.py, nfl_game_model.py, bet_finder.py; app/views/NBA.py,
-NBA_Props.py, Bet_Finder.py, Results.py + the 18 pages with the new
-button; tests/test_nba_upgrades.py, tests/test_refresh_buttons.py (NEW),
-tests/test_nba.py; HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---
