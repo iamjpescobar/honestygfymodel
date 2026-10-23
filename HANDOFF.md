@@ -154,6 +154,59 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — The book's prop lines exist (DraftKings via ESPN's free core feed); every nightly run now saves them. Step 1 of 3 toward "does the site beat the book?". 2026-10-23 (2)
+
+**Suite 161, FAILING: none.** New tests/test_book_props.py (4 controls,
+red by exit code: the over taken as the member FARTHER from the
+milestone, keep() keeping everything, merge overwriting the first price,
+page 1 only). NOTE when writing controls: edit + re-run within the same
+second can load a STALE .pyc (the first side-check control ran green that
+way); a manual re-run showed it red.
+
+IZZY 10-23: "worth it at" for MacKinnon's goal +100, book -135, skipped,
+he scored; "the whole site feels off". MEASURED (last season's final 60
+days, 17,102 NHL skater-games): projections by band match outcomes —
+goals 0.087/0.085, 0.279/0.283, 0.475/0.480; top 1% 0.544 projected vs
+0.477 actual (slightly HIGH, not low); shots and points the same. Stars
+are not under-rated. The real gap: every props test compares the model
+with HIS OWN RATE, never with the BOOK. Calibrated is not sharper than
+the book; the props have no record against the people he bets against.
+
+THE PROBE (10-23, prop-lines-probe log): ESPN's core API carries
+DraftKings (provider 100) player props for NFL (1,460 items an event),
+NHL (522), NBA (1,221), MLB (1,046): totals with line + both prices +
+the open, and "Milestones" (N or more). Items have NO side field — a
+total is two items (same player / type / line); a milestone is one-
+sided. NFL samples sometimes carry no "odds" (line only).
+
+BUILT: engines/book_props (fetch all pages, parse, side_check — the
+member of a pair priced like the milestone at line + 0.5 is the over —
+sides(), compact record, merge keeping the FIRST price beside the
+latest); book_props_snapshot.py run every nightly (6 AM / 4 AM / 6 PM ET
+— the 6 PM one is closest to puck drop) for games in the next 2 days
+(NFL: 7), into data/props/<league>/<date>.json, committed by its own
+step ("Commit the book's prop lines"). Not kept: first / last scorer,
+team totals, exact, longest, period / game lines, double / triple
+double. VERIFY LINES: "BOOK PROPS <lg>: events, items", "which of a pair
+is the over ... {pairs, first_is_over, second_is_over}", types.
+MLB: ESPN athlete ids, not MLBAM — a name map is needed before MLB props
+can be matched.
+
+NEXT, step 2: once a run shows which member is the over (the side check
+must be one-sided — if it splits, stop and read samples), put the book's
+line and price on every board row (Bet Finder, Model pages, Simulators,
+1Q / 1H, 1st period): open on the BOOK's line, price filled, the model's
+own line beside it. Step 3: the grader — after the games, every row the
+site and the book disagreed on: who was right, per market; a market that
+does not beat the book's de-vigged chance is labelled "no edge proven"
+and its "worth it at" stops calling skips / bets on its own.
+
+FILES: app/engines/book_props.py (NEW), book_props_snapshot.py (NEW),
+tests/test_book_props.py (NEW), .github/workflows/nightly-data.yml,
+HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — Prop lines probe: does ESPN's free core feed carry the books' player-prop lines and prices? 2026-10-23
 
 **Suite 160, FAILING: none.** New tests/test_prop_lines_probe.py
@@ -824,61 +877,5 @@ app/engines/nba_context.py, app/engines/nba_model.py,
 app/views/Bet_Finder.py, app/views/Live.py, app/views/NBA.py,
 app/views/NBA_Props.py, nba_precompute.py, tests/test_nba_context.py,
 tests/test_nba_quarters.py (new), HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — NBA First Basket; first half / first quarter on the Simulator. 2026-10-21 (2)
-
-**Suite 149, FAILING: none.** New tests/test_nba_first.py (3 controls,
-red by exit code: pricing a game after adding it to the book; starters
-ignoring the offseason gap; the first-team bet measured while its test
-is thin). test_nba_sim +5 checks, control (half share of the predicted
-total) red. Dry run of the nightly offline; First Basket and the
-Simulator's half / quarter card headless on its payload.
-
-THE BACKFILL RAN (nba-pbp-prior, 10-21): 1,235 of 1,235 games; quarter
-lines, first field goal, first point, starters, quarter points in all;
-tip in 1,233; 0 quarter lines off the final. First FG by a starter
-100.0%; tip winner scored first 62.9%. Leaders: Queta / Murray / Edwards
-15. data/nba/prior_pbp.json (1 MB) committed.
-
-FIRST BASKET (engines/nba_first; views/NBA_First_Basket.py; NBA nav).
-Walk-forward Book: tip records, who jumps for each team, last RECENT=5
-starting fives, first FGs and starts per player. Five = most-started
-in the last five games among tonight's available, filled by projected
-minutes; across a 60-day gap the projected-minutes five (MEASURED: last
-game's five picked April rest lineups — OKC without SGA / Holmgren;
-recent-5 lifted the player test z 2.98 -> 3.88). Tip = jumper records
-shrunk K_TIP to 50% (Bradley-Terry); team = tip x C + (1-tip)(1-C);
-player = team x RHO x share (proj pts ^ G, blended LAMBDA with his own
-first-basket rate shrunk K_HIST). Fitted on the fit window by log loss:
-K_TIP 2 (grid edge), C 0.618, RHO 0.863, G 1.0, LAMBDA 0.5, K_HIST 60.
-TEST (348 unseen games): player call 2.351 vs every-projected-starter-
-equal 2.410 -> BEATS z 3.88; tip BEATS z 2.7; first team THIN z 0.9
-(page caps it at THIN); scorer in our ten 91%. Calibration bins EDGES
--> delivered chance + support. Nightly: prices g["first_basket"] per
-game; this season's play-by-play parsed from the summaries it already
-fetches (cur_pbp) feeds the book.
-
-HALVES / QUARTERS (nba_sim.quarter_links / periods / test_quarters):
-measured on the fit window. WHO LEADS: the simulated game margin scaled
-— P(leads at the half) = the game's own win chance. Two richer tries
-LOST to that on unseen games (random per-team half share z -1.97;
-fitted line + noise z -1.55). THE TOTAL: projected game total x the
-share of the ACTUAL final scored in it (half 0.504, Q1 0.253) + measured
-noise; fitting the share on the PREDICTED total (fit-window totals ran
-4.6 high) sent halves 60% over on the test — fixed, now 51.6% / 53.1%
-over at their middle lines (n 345). Simulator card: typical score, who
-leads, total + range, over/under for a typed book total. Research, not
-calls (the game model is untested against the book).
-
-NEXT (Izzy's list): NHL periods / NFL quarters / MLB first five — each
-its own backfill + test; then NHL / NFL simulators (links measured and
-tested like NBA's).
-
-FILES: app/engines/nba_first.py (new), app/views/NBA_First_Basket.py
-(new), app/engines/nba_sim.py, app/views/NBA_Sim.py, app/app.py,
-nba_precompute.py, tests/test_nba_first.py (new), tests/test_nba_sim.py,
-HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

@@ -203,6 +203,32 @@ jobs:
       - name: Fetch NBA slate (real ESPN data)
         run: python nba_precompute.py || echo "NBA fetch failed - continuing without it"
 
+      # THE BOOK'S PROP LINES (10-23, book_props_snapshot.py): the
+      # sportsbook's player-prop lines and prices from ESPN's free core
+      # feed, saved every run to data/props/<league>/<date>.json (first
+      # price seen kept beside the latest). A RECORD, so committed right
+      # away: the boards will open on the book's line, and every
+      # disagreement between the site and the book gets graded.
+      - name: Snapshot the book's prop lines (ESPN core feed)
+        run: python book_props_snapshot.py || echo "::warning::book prop lines snapshot failed - continuing without it"
+      - name: Commit the book's prop lines
+        run: |
+          if [ -z "$(git status --porcelain -- data/props)" ]; then
+            echo "No new prop lines to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/props
+          git commit -m "chore: book prop lines snapshot [skip ci]"
+          # retry: a push that lands while another run (or a manual push) moved
+          # main is turned away ("cannot lock ref") - pull again and retry
+          for _try in 1 2 3 4 5; do
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && break
+            if [ "$_try" = 5 ]; then echo "::error::push failed 5 times"; exit 1; fi
+            sleep $((_try * 15))
+          done
+
       # Who actually starts, from MLB's own posted lineups. Feeds the
       # projected-lineup caption on the Game Card, which is what a
       # morning read has instead of a real lineup.

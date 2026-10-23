@@ -10,6 +10,64 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — NBA First Basket; first half / first quarter on the Simulator. 2026-10-21 (2)
+
+**Suite 149, FAILING: none.** New tests/test_nba_first.py (3 controls,
+red by exit code: pricing a game after adding it to the book; starters
+ignoring the offseason gap; the first-team bet measured while its test
+is thin). test_nba_sim +5 checks, control (half share of the predicted
+total) red. Dry run of the nightly offline; First Basket and the
+Simulator's half / quarter card headless on its payload.
+
+THE BACKFILL RAN (nba-pbp-prior, 10-21): 1,235 of 1,235 games; quarter
+lines, first field goal, first point, starters, quarter points in all;
+tip in 1,233; 0 quarter lines off the final. First FG by a starter
+100.0%; tip winner scored first 62.9%. Leaders: Queta / Murray / Edwards
+15. data/nba/prior_pbp.json (1 MB) committed.
+
+FIRST BASKET (engines/nba_first; views/NBA_First_Basket.py; NBA nav).
+Walk-forward Book: tip records, who jumps for each team, last RECENT=5
+starting fives, first FGs and starts per player. Five = most-started
+in the last five games among tonight's available, filled by projected
+minutes; across a 60-day gap the projected-minutes five (MEASURED: last
+game's five picked April rest lineups — OKC without SGA / Holmgren;
+recent-5 lifted the player test z 2.98 -> 3.88). Tip = jumper records
+shrunk K_TIP to 50% (Bradley-Terry); team = tip x C + (1-tip)(1-C);
+player = team x RHO x share (proj pts ^ G, blended LAMBDA with his own
+first-basket rate shrunk K_HIST). Fitted on the fit window by log loss:
+K_TIP 2 (grid edge), C 0.618, RHO 0.863, G 1.0, LAMBDA 0.5, K_HIST 60.
+TEST (348 unseen games): player call 2.351 vs every-projected-starter-
+equal 2.410 -> BEATS z 3.88; tip BEATS z 2.7; first team THIN z 0.9
+(page caps it at THIN); scorer in our ten 91%. Calibration bins EDGES
+-> delivered chance + support. Nightly: prices g["first_basket"] per
+game; this season's play-by-play parsed from the summaries it already
+fetches (cur_pbp) feeds the book.
+
+HALVES / QUARTERS (nba_sim.quarter_links / periods / test_quarters):
+measured on the fit window. WHO LEADS: the simulated game margin scaled
+— P(leads at the half) = the game's own win chance. Two richer tries
+LOST to that on unseen games (random per-team half share z -1.97;
+fitted line + noise z -1.55). THE TOTAL: projected game total x the
+share of the ACTUAL final scored in it (half 0.504, Q1 0.253) + measured
+noise; fitting the share on the PREDICTED total (fit-window totals ran
+4.6 high) sent halves 60% over on the test — fixed, now 51.6% / 53.1%
+over at their middle lines (n 345). Simulator card: typical score, who
+leads, total + range, over/under for a typed book total. Research, not
+calls (the game model is untested against the book).
+
+NEXT (Izzy's list): NHL periods / NFL quarters / MLB first five — each
+its own backfill + test; then NHL / NFL simulators (links measured and
+tested like NBA's).
+
+FILES: app/engines/nba_first.py (new), app/views/NBA_First_Basket.py
+(new), app/engines/nba_sim.py, app/views/NBA_Sim.py, app/app.py,
+nba_precompute.py, tests/test_nba_first.py (new), tests/test_nba_sim.py,
+HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
+---
+
 ## PICK UP HERE — Simulator box score; NBA play-by-play backfill (first basket + quarters, step 1). 2026-10-21
 
 **Suite 148, FAILING: none.** New tests/test_nba_pbp.py (3 controls, red
