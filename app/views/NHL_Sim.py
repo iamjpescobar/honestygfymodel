@@ -1,4 +1,4 @@
-"""NHL Game Simulator (10-22) — play tonight's game 10,000 times.
+"""NHL Game Simulator (10-22) — play tonight's game 50,000 times.
 
 Every simulated game draws each team's shot environment, every skater's
 shots, his goals from his own shots, assists from the teammates on the
@@ -26,8 +26,8 @@ from engines import nhl_sim as hs
 from engines.slate_guard import payload_field, today_for
 from engines.live_sync import sync_latest_button
 
-N_SIMS = 10000
-page_header("NHL Simulator", "Play tonight's game 10,000 times", eyebrow="NHL", align="left")
+N_SIMS = 50_000   # 10-23: 10,000 -> 50,000 (simulator noise on a 50% chance ±0.5 -> ±0.22 pts); ~1-2 s
+page_header("NHL Simulator", f"Play tonight's game {N_SIMS:,} times", eyebrow="NHL", align="left")
 sync_latest_button(key="sync_nhl_sim", include_data_package=True)
 
 
@@ -112,7 +112,7 @@ if not players:
     st.stop()
 
 
-@st.cache_data(ttl=900, show_spinner=False, max_entries=8)
+@st.cache_data(ttl=900, show_spinner=False, max_entries=4)   # a run is ~5x the 10k one's memory
 def _run(key, game_js, plist, links_js, sog_size):
     import zlib
     return hs.simulate(_json.loads(game_js), _json.loads(plist), _json.loads(links_js),
@@ -129,7 +129,7 @@ def _legs_run(key, game_js, plist, links_js, sog_size, legs):
 _plist = _json.dumps([{k: p[k] for k in ("pid", "side", "mu")} for p in players])
 _gjs = _json.dumps(game_in)
 _ljs = _json.dumps(links, default=float)
-with st.spinner("Simulating 10,000 games…"):
+with st.spinner(f"Simulating {N_SIMS:,} games…"):
     sim = _run(f"{g.get('event_id')}|{len(players)}", _gjs, _plist, _ljs, sog_disp)
 home, away = sim["home"], sim["away"]
 

@@ -154,6 +154,30 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Simulator game views: 10,000 -> 50,000 games (MLB 25,000). 2026-10-23 (3)
+
+**Suite 162, FAILING: none.** New tests/test_sim_counts.py (control red:
+a page header put back to a literal "10,000 times").
+
+Izzy: "We need to change that 10000 isn't it common". Measured before
+changing (single game, this container): NHL 10k 0.23 s / 50k 0.97 s /
+100k 1.9 s; NFL 50k 0.2 s; NBA 50k 0.1 s; MLB 10k 0.9 s / 50k 3.7 s.
+Result memory ~0.6 MB per 1,000 games for a full NHL / NBA / NFL roster
+(int16 arrays). So: NHL / NBA / NFL 50,000, MLB 25,000 — the
+simulator's own noise on a 50% chance ±0.5 -> ±0.22 points (MLB ±0.32);
+the game-run cache max_entries 8 -> 4 (a run is ~5x the memory; a
+re-simulated game costs ~1 s). Headers, spinners, docstrings read
+N_SIMS; Home's MLB card says 25,000. Parlay runs unchanged (NBA 500k,
+NHL / NFL 200k, MLB 50k). NHL_Sim headless 4.6 s whole page, NFL 2.6 s.
+Told Izzy plainly: this tightens the simulator's own noise, it is NOT
+what makes numbers feel off — that is the book comparison (steps 2-3 of
+the prop-lines work).
+
+FILES: app/views/{NHL,NBA,NFL,MLB}_Sim.py, app/views/Home.py,
+tests/test_sim_counts.py (NEW), HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — The book's prop lines exist (DraftKings via ESPN's free core feed); every nightly run now saves them. Step 1 of 3 toward "does the site beat the book?". 2026-10-23 (2)
 
 **Suite 161, FAILING: none.** New tests/test_book_props.py (4 controls,
@@ -828,54 +852,5 @@ repo (BETLOG_REPO), never this one. Izzy told.
 FILES: nba_precompute.py, app/engines/nba_view.py, app/engines/bet_finder.py,
 app/views/Bet_Finder.py, app/views/NBA.py, tests/test_nba.py, HANDOFF.md,
 HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — NBA finished for now: 1Q player points, Live tested, tests grow nightly, model vs book. 2026-10-21 (3)
-
-**Suite 150, FAILING: none.** New tests/test_nba_quarters.py (4
-controls, red by exit code: a game with no play-by-play read as 0; mu
-ignoring his own first quarters; vs_book counting pushes; tested_nba
-trusting every stat). test_nba_context wiring updated (season_data).
-Dry run of the nightly offline; Props (1Q points), Bet Finder, Live (NBA,
-halftime) and Tonight headless on its payload.
-
-TESTS GROW NIGHTLY: nba_precompute builds season_data = last season's
-players + this season's (merge_pool) and both seasons' finals. nc.fit(
-season_data, model): fit window last season's, TEST window last season's
-final 45 days + every game this season (n_this_season printed) — the
-props verdicts, ladder and calibration curves now learn from this
-season. First basket fit / book: prior + this season's play-by-play.
-
-1Q PLAYER POINTS (engines/nba_quarters; stat "q1pts"; nm.PAGE_STATS):
-mu = (1-W) x mu_pts x (C0 + C1 x min/36) + W x his last N first quarters.
-MEASURED: share alone THIN (z 0.33); with W 0.4 of his last 20 BEATS his
-own rate (z 2.47). C0 .22, C1 .05, size 2.84. Raw calls run overconfident
-above 60% (0.74 called, 0.48 hit) — the delivered curve corrects it.
-Joins model sizes / test ("@q1pts" curve); Props and Bet Finder offer it
-only when fitted; trend games carry q1pts (his line).
-
-LIVE, TESTED (nq.live_check -> model["live_check"]; lp.tested_nba):
-points at the end of Q1 / Q2 / Q3 of every test game, the Live page's
-chance of going over his line vs a naive read (his average x time left,
-Poisson): 16,578 calls, BEATS z 6.4. Raw is badly overconfident at the
-ends (97% called, 80% hit; 3% -> 13% — garbage-time rest and hot hands)
-— the delivered curve is what the page prints. Points only (play-by-play
-has points per quarter); rebounds / assists stay THIN; the page says so.
-
-GAME MODEL VS BOOK (nba_precompute.vs_book -> game_model["vs_book"]):
-this season's finished games with a recorded line, the model's P(over
-the book's total) / P(home covers its spread; ESPN's spread is the
-home side's) vs the book's 50/50, paired; pushes out. Tonight shows chips
-from 30 games. Model weight stays 0 until it beats.
-
-STILL TO WATCH (no build): offseason minutes (unmeasured), leaders'
-overs, 2-leg points SGPs (z 1.95), first-team-to-score (thin).
-
-FILES: app/engines/nba_quarters.py (new), app/engines/live_props.py,
-app/engines/nba_context.py, app/engines/nba_model.py,
-app/views/Bet_Finder.py, app/views/Live.py, app/views/NBA.py,
-app/views/NBA_Props.py, nba_precompute.py, tests/test_nba_context.py,
-tests/test_nba_quarters.py (new), HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

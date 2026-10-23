@@ -125,7 +125,7 @@ EXPLORE = [
      "team totals and alt lines, and batter and starter props at any line "
      "\u2014 shown beside its record on games it had not seen."),
     ("Simulator", "MLB",
-     "Today's game played 10,000 times, plate appearance by plate appearance "
+     "Today's game played 25,000 times, plate appearance by plate appearance "
      "\u2014 every batter's and both starters' lines together, the first five "
      "innings, and a same-game parlay priced on how its legs really move."),
     ("Bet Finder", "MLB",

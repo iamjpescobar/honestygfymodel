@@ -1,4 +1,4 @@
-"""NBA Game Simulator (10-20) — play tonight's game 10,000 times.
+"""NBA Game Simulator (10-20) — play tonight's game 50,000 times.
 
 Every simulated game draws a score from the game model, shapes each
 player's minutes and stats to it (blowouts sit starters, a high-scoring
@@ -22,8 +22,8 @@ from engines import nba_sim as ns
 from engines import nba_view as nv
 from engines.live_sync import sync_latest_button
 
-N_SIMS = 10000
-page_header("NBA Simulator", "Play tonight's game 10,000 times", eyebrow="NBA", align="left")
+N_SIMS = 50_000   # 10-23: 10,000 -> 50,000 (simulator noise on a 50% chance ±0.5 -> ±0.22 pts); ~1-2 s
+page_header("NBA Simulator", f"Play tonight's game {N_SIMS:,} times", eyebrow="NBA", align="left")
 sync_latest_button(key="sync_nba_sim", include_data_package=True)
 games, model, pget = nv.load()
 _li.render_note("nba")
@@ -78,7 +78,7 @@ if not players:
     st.stop()
 
 
-@st.cache_data(ttl=900, show_spinner=False, max_entries=8)
+@st.cache_data(ttl=900, show_spinner=False, max_entries=4)   # a run is ~5x the 10k one's memory
 def _run(key, mu_h, mu_a, sd_m, sd_t, plist, sizes, links):
     import json
     import zlib
@@ -98,7 +98,7 @@ def _legs_run(key, mu_h, mu_a, sd_m, sd_t, plist, sizes, links, legs):
 
 
 import json as _json  # noqa: E402
-with st.spinner("Simulating 10,000 games…"):
+with st.spinner(f"Simulating {N_SIMS:,} games…"):
     sim = _run(f"{g.get('event_id')}|{len(players)}", pj["mu_home"], pj["mu_away"], sd_m, sd_t,
                _json.dumps([{k: p[k] for k in ("pid", "side", "min", "mu")} for p in players]),
                _json.dumps(model.get("sizes") or {}), _json.dumps(links))

@@ -1,4 +1,4 @@
-"""MLB Game Simulator (10-22) — play today's game 10,000 times, plate
+"""MLB Game Simulator (10-22) — play today's game 25,000 times, plate
 appearance by plate appearance.
 
 Every PA is the batter against the starter (the props model's own
@@ -33,8 +33,8 @@ from engines.weather_engine import get_todays_games_with_weather
 from engines.live_sync import sync_latest_button
 
 EASTERN = ZoneInfo("America/New_York")
-N_SIMS = 10000
-page_header("MLB Simulator", "Play today's game 10,000 times, pitch to pitch outcomes",
+N_SIMS = 25_000   # 10-23: 10,000 -> 25,000 (simulator noise on a 50% chance ±0.5 -> ±0.32 pts); ~1-2 s
+page_header("MLB Simulator", f"Play today's game {N_SIMS:,} times, pitch to pitch outcomes",
             eyebrow="MLB", align="left")
 sync_latest_button(key="sync_mlb_sim", include_data_package=True)
 
@@ -172,7 +172,7 @@ for side in ("home", "away"):
     sp_pmfs[side] = pp
 
 
-@st.cache_data(ttl=900, show_spinner=False, max_entries=8)
+@st.cache_data(ttl=900, show_spinner=False, max_entries=4)   # a run is ~5x the 10k one's memory
 def _run(key, game_js):
     import zlib
     return ms.simulate(_json.loads(game_js), _tab(f"{pm.get('through')}|"
@@ -189,7 +189,7 @@ def _legs_run(key, game_js, legs):
 
 
 _gjs = _json.dumps({s: {k: v for k, v in sides[s].items() if k != "src"} for s in sides})
-with st.spinner("Simulating 10,000 games…"):
+with st.spinner(f"Simulating {N_SIMS:,} games…"):
     sim = _run(f"{g.get('game_pk')}|{_gjs[:200]}|{len(_gjs)}", _gjs)
 home, away = sim["home"], sim["away"]
 

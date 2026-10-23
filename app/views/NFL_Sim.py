@@ -1,4 +1,4 @@
-"""NFL Game Simulator (10-22) — play this week's game 10,000 times.
+"""NFL Game Simulator (10-22) — play this week's game 50,000 times.
 
 Every simulated game draws a score from the game model, shapes every
 player's line to it (a team that scores more throws for more; a team
@@ -28,8 +28,8 @@ from engines import nfl_quarters as nq
 from engines import nfl_sim as fs
 from engines.live_sync import sync_latest_button
 
-N_SIMS = 10000
-page_header("NFL Simulator", "Play this week's game 10,000 times", eyebrow="NFL", align="left")
+N_SIMS = 50_000   # 10-23: 10,000 -> 50,000 (simulator noise on a 50% chance ±0.5 -> ±0.22 pts); ~1-2 s
+page_header("NFL Simulator", f"Play this week's game {N_SIMS:,} times", eyebrow="NFL", align="left")
 sync_latest_button(key="sync_nfl_sim", include_data_package=True)
 
 
@@ -111,7 +111,7 @@ game_in = {"mu_home": pj["mu_home"], "mu_away": pj["mu_away"], "sd_margin": _sds
            "sd_total": _sds[1]}
 
 
-@st.cache_data(ttl=900, show_spinner=False, max_entries=8)
+@st.cache_data(ttl=900, show_spinner=False, max_entries=4)   # a run is ~5x the 10k one's memory
 def _run(key, game_js, plist, sp_js, links_js):
     import zlib
     return fs.simulate(_json.loads(game_js), _json.loads(plist), _json.loads(sp_js),
@@ -128,7 +128,7 @@ def _legs_run(key, game_js, plist, sp_js, links_js, legs):
 
 _plist = _json.dumps([{k: p[k] for k in ("pid", "side", "role", "proj")} for p in players])
 _gjs, _spjs, _ljs = _json.dumps(game_in), _json.dumps(spreads), _json.dumps(links)
-with st.spinner("Simulating 10,000 games…"):
+with st.spinner(f"Simulating {N_SIMS:,} games…"):
     sim = _run(f"{g.get('event_id')}|{len(players)}", _gjs, _plist, _spjs, _ljs)
 home, away = sim["home"], sim["away"]
 
