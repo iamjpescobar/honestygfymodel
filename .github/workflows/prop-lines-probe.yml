@@ -1,0 +1,29 @@
+name: Prop lines probe
+
+# Manual only (10-23). Does ESPN's free core feed carry the sportsbooks'
+# PLAYER PROP lines and prices? One upcoming event per league (NFL, NHL,
+# NBA, MLB): the odds providers, the number of prop items, their types,
+# and two raw samples (prop_lines_probe.py). If they are there, the boards
+# can open on the book's own line and price instead of the model's guess.
+#
+# Touches nothing: no commit, no release, no deploy hook.
+on:
+  workflow_dispatch:
+    inputs:
+      day:
+        description: "Date to look from (YYYY-MM-DD, blank = today)"
+        required: false
+        default: ""
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: pip install -c requirements.txt requests
+      - name: Probe player prop lines
+        run: python prop_lines_probe.py "${{ inputs.day }}"

@@ -10,6 +10,51 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — Simulator box score; NBA play-by-play backfill (first basket + quarters, step 1). 2026-10-21
+
+**Suite 148, FAILING: none.** New tests/test_nba_pbp.py (3 controls, red
+by exit code: a free throw as the first field goal; the tip team read
+from the jump ball; the backfill writing on a shape change). test_nba_sim
++2 checks (box score; int16 stats).
+
+Izzy's list (10-21): (1) the Simulator should show player stats; (2)
+per-quarter stats in every eligible league; (3) a simulator where there
+isn't one; (4) a First Basket page. Plan agreed in chat: (1) now; (4) and
+NBA quarters/halves need data we don't have — the tip, the first field
+goal and quarter scores live in play-by-play, last season's file has
+none — so step 1 is a one-time backfill; NHL periods / NFL quarters / MLB
+first 5 and simulators for NHL / NFL come after, each measured.
+
+(1) NBA_Sim "The box score": per team, every player's typical (median)
+and 10th-90th range for Pts / Reb / Ast / 3PM / PRA, team's top three per
+stat bold, the players' sum beside the team's simulated score. 10,000
+games stays: medians and ranges are steady to well under a point there
+(the parlay already runs 500,000). Stats now int16 (a 10,000-game slate
+4 MB, not 17), sim cache 16 -> 8 entries.
+
+(4/2 step 1) engines/nba_pbp.parse: quarter lines per team (header
+linescores), the tip (jumpers + the team of the first play after the
+jump ball that names one), first FIELD GOAL (books settle "first basket"
+on a field goal; a free throw is not one) and first point, starters
+(nba_box), per-player points per quarter (OT left out). check(): quarter
+lines add up to the final. nba_pbp_prior.py + nba-pbp-prior.yml (manual,
+once): every 2025-26 final's summary -> data/nba/prior_pbp.json; refuses
+to write under 80% parsed. SHAPE NOT YET SEEN FROM ESPN — the fixture is
+the documented shape; the [verify] lines on the first run are the check.
+
+NEXT: read the backfill's log; then First Basket (P(team scores first) =
+tip x measured conversion; P(player | team) = his share, fitted on the
+fit window, graded on the test window) and NBA 1Q / 1H team lines.
+
+FILES: app/engines/nba_pbp.py (new), nba_pbp_prior.py (new),
+.github/workflows/nba-pbp-prior.yml (new), app/engines/nba_sim.py,
+app/views/NBA_Sim.py, tests/test_nba_pbp.py (new), tests/test_nba_sim.py,
+HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
+---
+
 ## PICK UP HERE — NBA Long Shots: the ladder (30+ pts, 10+ reb, 5+ threes) graded on unseen games. 2026-10-20 (8)
 
 **Suite 147, FAILING: none.** test_nba +2 controls (long_shots listing a
