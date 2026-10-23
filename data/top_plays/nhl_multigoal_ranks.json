@@ -8376,6 +8376,506 @@
     "ANA"
    ]
   },
+  "scorers": [
+   {
+    "chance2": 0.0368,
+    "g": 2.0,
+    "name": "Connor McDavid",
+    "pid": "3895074",
+    "rank": 4
+   },
+   {
+    "chance2": 0.0349,
+    "g": 2.0,
+    "name": "Leon Draisaitl",
+    "pid": "3114727",
+    "rank": 9
+   },
+   {
+    "chance2": 0.0266,
+    "g": 2.0,
+    "name": "David Pastrnak",
+    "pid": "3114778",
+    "rank": 33
+   },
+   {
+    "chance2": 0.0257,
+    "g": 2.0,
+    "name": "Lucas Raymond",
+    "pid": "4697385",
+    "rank": 41
+   },
+   {
+    "chance2": 0.0254,
+    "g": 2.0,
+    "name": "Logan Cooley",
+    "pid": "5080143",
+    "rank": 42
+   },
+   {
+    "chance2": 0.0232,
+    "g": 2.0,
+    "name": "Artemi Panarin",
+    "pid": "3891952",
+    "rank": 58
+   },
+   {
+    "chance2": 0.0231,
+    "g": 2.0,
+    "name": "Dylan Holloway",
+    "pid": "4697397",
+    "rank": 59
+   },
+   {
+    "chance2": 0.0217,
+    "g": 2.0,
+    "name": "Roope Hintz",
+    "pid": "3904183",
+    "rank": 70
+   },
+   {
+    "chance2": null,
+    "g": 2.0,
+    "name": "Nick Robertson",
+    "pid": "4565275",
+    "rank": null
+   }
+  ]
+ },
+ "2026-10-23": {
+  "games": [
+   "401892564",
+   "401892565"
+  ],
+  "n": 71,
+  "ranks": {
+   "2300": [
+    47,
+    0.0045,
+    "Brent Burns",
+    "COL"
+   ],
+   "2562602": [
+    46,
+    0.0046,
+    "Phillip Danault",
+    "MTL"
+   ],
+   "2562609": [
+    18,
+    0.0184,
+    "Gabriel Landeskog",
+    "COL"
+   ],
+   "2563060": [
+    5,
+    0.0272,
+    "Nikita Kucherov",
+    "TB"
+   ],
+   "2590829": [
+    57,
+    0.0016,
+    "Josh Manson",
+    "COL"
+   ],
+   "2592095": [
+    29,
+    0.0153,
+    "Teuvo Teravainen",
+    "CHI"
+   ],
+   "2968829": [
+    44,
+    0.0051,
+    "Zemgus Girgensons",
+    "TB"
+   ],
+   "2976851": [
+    50,
+    0.0034,
+    "Mike Matheson",
+    "MTL"
+   ],
+   "3041969": [
+    2,
+    0.0401,
+    "Nathan MacKinnon",
+    "COL"
+   ],
+   "3042050": [
+    10,
+    0.0234,
+    "Artturi Lehkonen",
+    "COL"
+   ],
+   "3042056": [
+    7,
+    0.0258,
+    "Tyler Bertuzzi",
+    "CHI"
+   ],
+   "3042083": [
+    11,
+    0.0226,
+    "Jake Guentzel",
+    "TB"
+   ],
+   "3068665": [
+    71,
+    0.0005,
+    "Brett Kulak",
+    "COL"
+   ],
+   "3069687": [
+    17,
+    0.0187,
+    "Josh Anderson",
+    "MTL"
+   ],
+   "3096249": [
+    56,
+    0.0019,
+    "Devon Toews",
+    "COL"
+   ],
+   "3151187": [
+    28,
+    0.0167,
+    "Brayden Point",
+    "TB"
+   ],
+   "3735": [
+    16,
+    0.0189,
+    "Patrick Kane",
+    "CHI"
+   ],
+   "3900260": [
+    49,
+    0.0035,
+    "Jordan Greenway",
+    "CHI"
+   ],
+   "3900504": [
+    70,
+    0.0005,
+    "Noah Juulsen",
+    "COL"
+   ],
+   "3904178": [
+    66,
+    0.0008,
+    "Erik Cernak",
+    "TB"
+   ],
+   "3941973": [
+    21,
+    0.018,
+    "Anthony Cirelli",
+    "TB"
+   ],
+   "3942064": [
+    45,
+    0.0049,
+    "Alexandre Carrier",
+    "MTL"
+   ],
+   "4065019": [
+    6,
+    0.0269,
+    "Brandon Hagel",
+    "TB"
+   ],
+   "4197130": [
+    35,
+    0.0093,
+    "Cole Smith",
+    "CHI"
+   ],
+   "4233563": [
+    26,
+    0.017,
+    "Cale Makar",
+    "COL"
+   ],
+   "4233586": [
+    3,
+    0.0286,
+    "Martin Necas",
+    "COL"
+   ],
+   "4233880": [
+    30,
+    0.0131,
+    "Alexandre Texier",
+    "MTL"
+   ],
+   "4352732": [
+    43,
+    0.0064,
+    "Noah Dobson",
+    "MTL"
+   ],
+   "4392309": [
+    19,
+    0.018,
+    "Parker Kelly",
+    "COL"
+   ],
+   "4393049": [
+    32,
+    0.0105,
+    "Jake Evans",
+    "MTL"
+   ],
+   "4422415": [
+    31,
+    0.0118,
+    "Ilya Mikheyev",
+    "TB"
+   ],
+   "4565224": [
+    33,
+    0.0105,
+    "Kirby Dach",
+    "MTL"
+   ],
+   "4565225": [
+    41,
+    0.0074,
+    "Bowen Byram",
+    "CHI"
+   ],
+   "4565236": [
+    1,
+    0.0555,
+    "Cole Caufield",
+    "MTL"
+   ],
+   "4565237": [
+    12,
+    0.0212,
+    "Alex Newhook",
+    "MTL"
+   ],
+   "4565266": [
+    68,
+    0.0006,
+    "Alex Vlasic",
+    "CHI"
+   ],
+   "4588175": [
+    59,
+    0.0015,
+    "Charle-Edouard D'Astous",
+    "TB"
+   ],
+   "4588205": [
+    36,
+    0.0089,
+    "Pontus Holmberg",
+    "TB"
+   ],
+   "4697399": [
+    54,
+    0.002,
+    "Kaiden Guhle",
+    "MTL"
+   ],
+   "4697470": [
+    39,
+    0.0079,
+    "Gage Goncalves",
+    "TB"
+   ],
+   "4697717": [
+    53,
+    0.0025,
+    "Wyatt Kaiser",
+    "CHI"
+   ],
+   "4874734": [
+    24,
+    0.0173,
+    "Zack Bolduc",
+    "MTL"
+   ],
+   "4874736": [
+    48,
+    0.0039,
+    "Fedor Svechkov",
+    "COL"
+   ],
+   "4874929": [
+    58,
+    0.0015,
+    "J.J. Moser",
+    "TB"
+   ],
+   "4874943": [
+    20,
+    0.018,
+    "Oliver Kapanen",
+    "MTL"
+   ],
+   "4893969": [
+    69,
+    0.0006,
+    "Arber Xhekaj",
+    "MTL"
+   ],
+   "4894726": [
+    62,
+    0.0011,
+    "Ethan Del Mastro",
+    "CHI"
+   ],
+   "4915349": [
+    9,
+    0.0249,
+    "Juraj Slafkovsky",
+    "MTL"
+   ],
+   "4954": [
+    55,
+    0.0019,
+    "Ryan McDonagh",
+    "TB"
+   ],
+   "4991": [
+    65,
+    0.0009,
+    "Ian Cole",
+    "CHI"
+   ],
+   "4997033": [
+    37,
+    0.0088,
+    "Dominic James",
+    "TB"
+   ],
+   "5080157": [
+    14,
+    0.0195,
+    "Frank Nazar",
+    "CHI"
+   ],
+   "5080173": [
+    51,
+    0.0031,
+    "Sam Rinzel",
+    "CHI"
+   ],
+   "5080227": [
+    40,
+    0.0079,
+    "Ryan Greene",
+    "CHI"
+   ],
+   "5080230": [
+    34,
+    0.0099,
+    "Lane Hutson",
+    "MTL"
+   ],
+   "5104716": [
+    67,
+    0.0007,
+    "Maxwell Crozier",
+    "TB"
+   ],
+   "5118": [
+    42,
+    0.0067,
+    "John Carlson",
+    "TB"
+   ],
+   "5136616": [
+    27,
+    0.0167,
+    "T.J. Hughes",
+    "COL"
+   ],
+   "5136735": [
+    52,
+    0.0027,
+    "Sam Malinski",
+    "COL"
+   ],
+   "5146599": [
+    61,
+    0.0011,
+    "Emil Lilleberg",
+    "TB"
+   ],
+   "5149125": [
+    4,
+    0.0281,
+    "Connor Bedard",
+    "CHI"
+   ],
+   "5149194": [
+    38,
+    0.0083,
+    "Oliver Moore",
+    "CHI"
+   ],
+   "5149231": [
+    13,
+    0.0207,
+    "Roman Kantserov",
+    "CHI"
+   ],
+   "5157": [
+    63,
+    0.0011,
+    "Victor Hedman",
+    "TB"
+   ],
+   "5188450": [
+    64,
+    0.0009,
+    "Adam Engstrom",
+    "MTL"
+   ],
+   "5206648": [
+    60,
+    0.0014,
+    "Artyom Levshunov",
+    "CHI"
+   ],
+   "5291935": [
+    23,
+    0.0175,
+    "Anton Frondell",
+    "CHI"
+   ],
+   "5349": [
+    25,
+    0.017,
+    "Nazem Kadri",
+    "COL"
+   ],
+   "5798": [
+    8,
+    0.0249,
+    "Brock Nelson",
+    "COL"
+   ],
+   "5833": [
+    15,
+    0.0195,
+    "Chris Kreider",
+    "MTL"
+   ],
+   "5835": [
+    22,
+    0.0175,
+    "Jaden Schwartz",
+    "COL"
+   ]
+  },
   "scorers": null
  }
 }
