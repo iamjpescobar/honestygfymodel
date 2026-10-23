@@ -9192,8 +9192,88 @@
     "2026-10-23": {
       "picks": [
         {
+          "id": "661388",
+          "name": "William Contreras",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641343",
+          "name": "Jake Bauers",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "668930",
+          "name": "Brice Turang",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "694192",
+          "name": "Jackson Chourio",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "592885",
+          "name": "Christian Yelich",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "669003",
+          "name": "Garrett Mitchell",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666152",
+          "name": "David Hamilton",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "806198",
+          "name": "Cooper Pratt",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
           "id": "650490",
           "name": "Yandy D\u00edaz",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "686217",
+          "name": "Sal Frelick",
+          "team": "MIL",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "802415",
+          "name": "Chandler Simpson",
           "team": "TB",
           "stat": null,
           "line": null,
@@ -9208,56 +9288,8 @@
           "result": null
         },
         {
-          "id": "802415",
-          "name": "Chandler Simpson",
-          "team": "TB",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "680700",
-          "name": "Richie Palacios",
-          "team": "TB",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
           "id": "666018",
           "name": "Jonathan Aranda",
-          "team": "TB",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "689414",
-          "name": "Liam Hicks",
-          "team": "TB",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "676356",
-          "name": "Jonny DeLuca",
-          "team": "TB",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "670764",
-          "name": "Taylor Walls",
-          "team": "TB",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "683748",
-          "name": "Victor Mesa Jr.",
           "team": "TB",
           "stat": null,
           "line": null,
@@ -14227,6 +14259,52 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-23": {
+      "picks": [
+        {
+          "id": "661388",
+          "name": "William Contreras",
+          "team": "Milwaukee Brewers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "694192",
+          "name": "Jackson Chourio",
+          "team": "Milwaukee Brewers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "641343",
+          "name": "Jake Bauers",
+          "team": "Milwaukee Brewers",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "666018",
+          "name": "Jonathan Aranda",
+          "team": "Tampa Bay Rays",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "Tampa Bay Rays",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },

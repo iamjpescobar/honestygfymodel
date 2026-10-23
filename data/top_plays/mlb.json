@@ -3148,6 +3148,27 @@
    "stat": "k",
    "team": "Milwaukee Brewers",
    "why": "4.2 expected PA from slot 5 vs Nick Martinez, then a league-average pen"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-23",
+   "fair": -215,
+   "game": "Tampa Bay Rays @ Milwaukee Brewers",
+   "game_id": "849805",
+   "label": "K O0.5",
+   "logged_at": "2026-10-23T20:19:26+00:00",
+   "market": "k1",
+   "matchup": "Soft matchup \u2014 Jacob Misiorowski allows the 1st-most of 419 strikeouts to batters (0.348 per plate appearance vs 0.222 league, +56%; ranked on this season + last, blended).",
+   "matchup_tier": "soft",
+   "p": 0.6829,
+   "p_cal": 0.682,
+   "player": "Ben Williamson",
+   "player_id": "810938",
+   "result": null,
+   "start": "2026-10-24T00:00:00Z",
+   "stat": "k",
+   "team": "Tampa Bay Rays",
+   "why": "3.9 expected PA from slot 8 vs Jacob Misiorowski, then a league-average pen"
   }
  ]
 }
