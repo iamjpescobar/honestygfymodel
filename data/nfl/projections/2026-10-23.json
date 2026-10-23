@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-23 18:40",
+  "generated_at_et": "2026-10-23 19:35",
   "week": 7,
   "league": {
     "team_games": 188,
@@ -1121,15 +1121,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Kenneth Walker III",
-        "team": "KC",
-        "opp": "SEA",
-        "pos": "RB",
-        "gp": 5,
-        "proj": 52,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Ashton Jeanty",
         "team": "LV",
         "opp": "LAR",
@@ -1137,6 +1128,15 @@
         "gp": 6,
         "proj": 51,
         "window": "Sunday Late"
+      },
+      {
+        "player": "Kenneth Walker III",
+        "team": "KC",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 51,
+        "window": "Sunday Night"
       },
       {
         "player": "Chase Brown",
@@ -1400,20 +1400,20 @@
         "window": "Sunday Early"
       },
       {
+        "player": "Emanuel Wilson",
+        "team": "SEA",
+        "opp": "KC",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 34,
+        "window": "Sunday Night"
+      },
+      {
         "player": "George Kittle",
         "team": "SF",
         "opp": "ATL",
         "pos": "TE",
         "gp": 6,
-        "proj": 33,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Justin Jefferson",
-        "team": "MIN",
-        "opp": "IND",
-        "pos": "WR",
-        "gp": 4,
         "proj": 33,
         "window": "Sunday Early"
       }
@@ -5290,7 +5290,7 @@
         "opp": "SEA",
         "pos": "RB",
         "gp": 5,
-        "proj": 16.5,
+        "proj": 16.2,
         "window": "Sunday Night"
       },
       {
@@ -5362,7 +5362,7 @@
         "opp": "KC",
         "pos": "WR",
         "gp": 6,
-        "proj": 12.8,
+        "proj": 13.0,
         "window": "Sunday Night"
       },
       {
@@ -5555,6 +5555,15 @@
         "window": "Sunday Early"
       },
       {
+        "player": "Emanuel Wilson",
+        "team": "SEA",
+        "opp": "KC",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 6.5,
+        "window": "Sunday Night"
+      },
+      {
         "player": "Garrett Wilson",
         "team": "NYJ",
         "opp": "MIA",
@@ -5569,15 +5578,6 @@
         "opp": "ATL",
         "pos": "TE",
         "gp": 6,
-        "proj": 6.3,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Justin Jefferson",
-        "team": "MIN",
-        "opp": "IND",
-        "pos": "WR",
-        "gp": 4,
         "proj": 6.3,
         "window": "Sunday Early"
       }
