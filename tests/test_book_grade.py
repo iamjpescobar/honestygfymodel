@@ -18,6 +18,10 @@ Negative controls, confirmed red by exit code when written (rule 4):
     -> "a final game is graded once" fails
   - a ladder-only price graded with the cut left in
     -> "a one-sided price is graded apart, at the measured cut" fails
+  - market_status giving a verdict under MIN_GRADED lines
+    -> "no verdict before 300 graded lines" fails
+  - the Bet Finder not capping a no-edge market
+    -> "a market with no edge proven is capped at THIN" fails
 """
 import json
 import sys
@@ -121,6 +125,28 @@ check("the snapshot saves the site's chances beside the lines; the nightly grade
       and wf.index("python book_props_grade.py") < wf.index("git add data/props"))
 m = bp.merge_snapshot({"e1": entry}, {"e1": bp.parse(ITEMS)}, "T2")
 check("a later snapshot keeps the captured chances", m["e1"].get("ours") == entry["ours"])
+
+# --- what the pages say -----------------------------------------------------------------------
+def _sc(n, verdict):
+    return {"n": n, "verdict": {"verdict": verdict, "z": 2.5}}
+
+
+CARD = {"leagues": {"nba": {"pts": _sc(400, "beats"), "reb": _sc(400, "thin"),
+                            "ast": _sc(120, "beats")}, "nfl": {"rec_yds*": _sc(350, "fails")}}}
+check("no verdict before 300 graded lines; then beats or no edge proven",
+      bg.market_status(CARD, "nba", "ast")["status"] == "grading"
+      and bg.market_status(CARD, "nba", "pts")["status"] == "beats"
+      and bg.market_status(CARD, "nba", "reb")["status"] == "no_edge"
+      and bg.market_status(CARD, "nfl", "rec_yds") == {"status": "no_edge", "n": 350, "z": 2.5,
+                                                       "key": "rec_yds*"}
+      and bg.market_status(None, "nhl", "sog")["status"] == "grading" and bg.MIN_GRADED == 300)
+bfp = (ROOT / "app" / "views" / "Bet_Finder.py").read_text(encoding="utf-8")
+check("a market with no edge proven is capped at THIN on the Bet Finder, and labelled",
+      'if _mk["status"] == "no_edge":' in bfp and "_sup = dict(_sup or {}, untested=True)" in bfp
+      and "NO EDGE PROVEN vs DraftKings" in bfp and "BEATS DRAFTKINGS" in bfp)
+app_ = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
+check("the Site vs DraftKings page is in every sport's nav",
+      app_.count('("Site vs DraftKings", "views/Site_vs_Book.py")') == 4)
 
 if failures:
     print(f"\n{len(failures)} FAILED")

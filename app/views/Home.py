@@ -159,6 +159,9 @@ EXPLORE = [
      "from their own last fifteen games."),
     ("Defense Matchup", "WNBA",
      "Which defences are soft to a position, and who draws them tonight."),
+    ("Site vs DraftKings", "MLB",
+     "The site's player-prop chances graded against DraftKings' own, every night, market by "
+     "market: which markets the site beats the book on, and which have no edge proven."),
 ]
 
 STAT_LABEL = {"strikeOuts": "K", "pts": "PTS", "reb": "REB", "ast": "AST",

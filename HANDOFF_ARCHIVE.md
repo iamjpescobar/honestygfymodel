@@ -10,6 +10,58 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — NFL Game Simulator: score, game script, QB-receiver yards together, TDs from points; SGPs graded by kind. 2026-10-22 (4)
+
+**Suite 154, FAILING: none.** New tests/test_nfl_sim.py (6 controls, red
+by exit code, listed in the test). NFL Simulator page headless on the
+week-7 payload with the real sim block. Ships WITH the NHL simulator
+(this zip carries every NHL file too; nhl_sim.py no longer imports
+model_view, which pulls in streamlit). NEXT: NHL periods, NFL quarters,
+MLB first 5.
+
+ONE GAME (engines/nfl_sim.simulate): margin / total normal from the game
+model -> team points; per team x = points / projected - 1 and script m =
+(margin - projected) / sd. Each line = projection x (1 + e_score x +
+e_script m), e MEASURED per stat on 2025 weeks 2-9 (volume-weighted least
+squares): pass yds +0.53 / -0.15, rec yds +0.44 / -0.11, rush yds +0.10 /
++0.10 (ahead -> run). Yards: one residual per line, correlated by type at
+the MEASURED residual correlations after the score: QB-receiver +0.27,
+receiver-receiver 0.00, QB-rush -0.14, receiver-rush -0.04, back-back
++0.08 (Cholesky; shrunk if not positive definite); spread = the board's
+cv less what the shocks gave; floored at 0 like the board. Counts NB with
+the shocks. TDs: Poisson(team points x TDs per point), each passing at
+QB pass_td / team expected TDs, handed out by td_exp split receiving /
+rushing by targets vs carries; QB pass TDs = the passing ones.
+
+FIRST TRY DROPPED (measured): the QB's yards as the SUM of his receivers'
+— QB + top receiver priced x1.42 where real games ran ~x1.03 (a
+receiver's 0.29 residual correlation, not the arithmetic of the sum).
+
+THE TEST (2025 weeks 10-18, 137 games, + this season — grows nightly):
+BEATS: a back's rushing yards + his team wins (z 2.7), a TD + his team
+wins (z 2.2). THIN: QB + two receivers (z 0.7). FAILS: QB + top receiver,
+both QBs over, QB + receiver TD, two teammates to score (n 120-270 each;
+small — this season adds ~14 games a week). TDs in the test: anchored to
+the market's implied points when 2025 has a line (95 of 272), else the
+game model's projected points.
+
+PAGE (views/NFL_Sim.py, NFL nav after Model): the game (score, win %,
+total and spread vs the book's), box score by QB / backs / receivers,
+every player over / under (the Prop Lab's delivered chance), the SGP
+builder (players, team to win, totals, spreads), Bet Log, parlay slip.
+
+NIGHTLY VERIFY LINES: "NFL simulator links", "NFL same-game parlays
+graded on N games", "NFL SGP <kind> ...". ~20 s.
+
+FILES: app/engines/nfl_sim.py, app/views/NFL_Sim.py,
+tests/test_nfl_sim.py (NEW); nfl_precompute.py, app/app.py,
+app/engines/nhl_sim.py, app/views/NHL_Sim.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md (+ the NHL simulator files)
+
+---
+
+---
+
 ## PICK UP HERE — NHL Game Simulator: shots, goals from shots, assists, OT; same-game parlays graded by kind. 2026-10-22 (3)
 
 **Suite 153, FAILING: none.** New tests/test_nhl_sim.py (6 controls, red

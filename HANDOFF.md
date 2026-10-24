@@ -154,6 +154,49 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — "Site vs DraftKings" page; Bet Finder labels each market and caps no-edge markets at THIN; UFC probe. 2026-10-24 (2)
+
+**Suite 164, FAILING: none.** tests/test_book_grade.py +3 checks (2 new
+controls red: a verdict under MIN_GRADED; the Bet Finder not capping a
+no-edge market); new tests/test_ufc_probe.py (control red: card_info
+reading the last event). Site_vs_Book headless (scorecard, empty state);
+Bet Finder headless with a no-edge NHL SOG scorecard: label shown, every
+call THIN.
+
+THE BAR, set BEFORE any grade existed (book_grade.MIN_GRADED = 300): a
+market gets no verdict until 300 graded lines; then "beats" = the paired
+verdict says the site's chances beat DraftKings' de-vigged ones; else
+"no edge proven". market_status(card, league, stat) falls back to the
+one-sided "stat*" grade (NFL). load_scorecard reads data/props/
+scorecard.json from the published data or the repo.
+
+PAGE views/Site_vs_Book.py ("Site vs DraftKings", after Bet Log in all
+four navs — test_bet_log wants Bet Log right after Bet Finder; a Home
+Explore card): per league, per market: graded, the site's Brier vs the
+book's, verdict (BEATS DRAFTKINGS / NO EDGE PROVEN / BEING GRADED n of
+300), flagged plays, hit %, units, ROI at DK's prices; the * caption.
+
+BET FINDER: above each stat a line "<stat>: BEATS DRAFTKINGS (z, n)" /
+"NO EDGE PROVEN vs DraftKings — calls capped at THIN" / "BEING GRADED
+vs DraftKings (n of 300) — not proven yet"; a no-edge market's support
+is marked untested, so guarded_tier caps every call at THIN.
+
+UFC PROBE (ufc_probe.py, manual workflow ufc-probe.yml, print only):
+next card on ESPN's MMA scoreboard (site.web.api then site.api), fights
+= competitions, each fight's core odds providers + DraftKings propBets
+types / samples (first 3 fights), the core 2025 event list size, a
+finished card's fight keys + one fighter's statistics record, and
+whether ufcstats.com answers from Actions. NEXT: read it, then the
+backfill + fighter ratings (tested vs DK's moneylines), method / rounds.
+
+FILES: app/views/Site_vs_Book.py (NEW), ufc_probe.py (NEW),
+.github/workflows/ufc-probe.yml (NEW), tests/test_ufc_probe.py (NEW),
+app/engines/book_grade.py, app/views/Bet_Finder.py, app/app.py,
+app/views/Home.py, tests/test_book_grade.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — Step 3: the site graded against DraftKings every run (capture the site's chance beside the book's, grade on the box score, scorecard). 2026-10-24
 
 **Suite 163, FAILING: none.** New tests/test_book_grade.py (4 controls,
@@ -780,55 +823,5 @@ FILES: app/engines/nhl_periods.py, app/engines/nfl_quarters.py,
 nhl_periods_prior.py, nfl_quarters_prior.py,
 .github/workflows/nhl-periods-prior.yml, nfl-quarters-prior.yml,
 tests/test_period_backfills.py (NEW); HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — NFL Game Simulator: score, game script, QB-receiver yards together, TDs from points; SGPs graded by kind. 2026-10-22 (4)
-
-**Suite 154, FAILING: none.** New tests/test_nfl_sim.py (6 controls, red
-by exit code, listed in the test). NFL Simulator page headless on the
-week-7 payload with the real sim block. Ships WITH the NHL simulator
-(this zip carries every NHL file too; nhl_sim.py no longer imports
-model_view, which pulls in streamlit). NEXT: NHL periods, NFL quarters,
-MLB first 5.
-
-ONE GAME (engines/nfl_sim.simulate): margin / total normal from the game
-model -> team points; per team x = points / projected - 1 and script m =
-(margin - projected) / sd. Each line = projection x (1 + e_score x +
-e_script m), e MEASURED per stat on 2025 weeks 2-9 (volume-weighted least
-squares): pass yds +0.53 / -0.15, rec yds +0.44 / -0.11, rush yds +0.10 /
-+0.10 (ahead -> run). Yards: one residual per line, correlated by type at
-the MEASURED residual correlations after the score: QB-receiver +0.27,
-receiver-receiver 0.00, QB-rush -0.14, receiver-rush -0.04, back-back
-+0.08 (Cholesky; shrunk if not positive definite); spread = the board's
-cv less what the shocks gave; floored at 0 like the board. Counts NB with
-the shocks. TDs: Poisson(team points x TDs per point), each passing at
-QB pass_td / team expected TDs, handed out by td_exp split receiving /
-rushing by targets vs carries; QB pass TDs = the passing ones.
-
-FIRST TRY DROPPED (measured): the QB's yards as the SUM of his receivers'
-— QB + top receiver priced x1.42 where real games ran ~x1.03 (a
-receiver's 0.29 residual correlation, not the arithmetic of the sum).
-
-THE TEST (2025 weeks 10-18, 137 games, + this season — grows nightly):
-BEATS: a back's rushing yards + his team wins (z 2.7), a TD + his team
-wins (z 2.2). THIN: QB + two receivers (z 0.7). FAILS: QB + top receiver,
-both QBs over, QB + receiver TD, two teammates to score (n 120-270 each;
-small — this season adds ~14 games a week). TDs in the test: anchored to
-the market's implied points when 2025 has a line (95 of 272), else the
-game model's projected points.
-
-PAGE (views/NFL_Sim.py, NFL nav after Model): the game (score, win %,
-total and spread vs the book's), box score by QB / backs / receivers,
-every player over / under (the Prop Lab's delivered chance), the SGP
-builder (players, team to win, totals, spreads), Bet Log, parlay slip.
-
-NIGHTLY VERIFY LINES: "NFL simulator links", "NFL same-game parlays
-graded on N games", "NFL SGP <kind> ...". ~20 s.
-
-FILES: app/engines/nfl_sim.py, app/views/NFL_Sim.py,
-tests/test_nfl_sim.py (NEW); nfl_precompute.py, app/app.py,
-app/engines/nhl_sim.py, app/views/NHL_Sim.py, HANDOFF.md,
-HANDOFF_ARCHIVE.md (+ the NHL simulator files)
 
 ---

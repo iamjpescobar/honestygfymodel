@@ -292,3 +292,42 @@ def scorecard(graded):
                                                 [(q - y) ** 2 for q, y in b]),
                    "flagged": fl}
     return out
+
+
+# ----------------------------------------------------------------------
+# 4. what the pages say (decided BEFORE any grade was seen, 10-24): a
+# market needs MIN_GRADED graded lines before it gets a verdict; then
+# "beats" = the paired verdict says the site's chances beat the book's
+# de-vigged ones; anything else = "no edge proven", and the Bet Finder
+# caps that market's calls at THIN.
+# ----------------------------------------------------------------------
+MIN_GRADED = 300
+
+
+def load_scorecard(roots):
+    import json
+    from pathlib import Path
+    for root in roots:
+        p = Path(root) / "props" / "scorecard.json"
+        if p.exists():
+            try:
+                return json.loads(p.read_text())
+            except Exception:  # noqa: BLE001
+                continue
+    return None
+
+
+def market_status(card, league, stat):
+    """{"status": "beats" | "no_edge" | "grading", "n", "z", "key"} for one
+    league / stat (the two-sided grade, else the one-sided "stat*")."""
+    sc = ((card or {}).get("leagues") or {}).get(league) or {}
+    key = stat if stat in sc else (stat + "*" if stat + "*" in sc else None)
+    x = sc.get(key) if key else None
+    if not x:
+        return {"status": "grading", "n": 0, "z": None, "key": stat}
+    v = (x.get("verdict") or {})
+    if (x.get("n") or 0) < MIN_GRADED:
+        st = "grading"
+    else:
+        st = "beats" if v.get("verdict") == "beats" else "no_edge"
+    return {"status": st, "n": x.get("n") or 0, "z": v.get("z"), "key": key}

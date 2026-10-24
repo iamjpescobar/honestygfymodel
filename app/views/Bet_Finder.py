@@ -439,6 +439,27 @@ else:
             other = "Under" if side == "Over" else "Over"
             if has_book:
                 per_player = True
+            # SITE vs DRAFTKINGS (10-24, engines/book_grade): this market's
+            # graded record against the book decides how far its calls may go
+            _mk = {"status": "grading", "n": 0, "z": None}
+            from engines import book_grade as _bg
+            if sport in ("NHL", "NBA", "NFL"):
+                try:
+                    from engines import slate_guard as _sg
+                    _mk = _bg.market_status(_bg.load_scorecard([_sg._PUBLISHED, _sg._REPO]),
+                                            sport.lower(), stat)
+                except Exception:  # noqa: BLE001
+                    pass
+                _lab = {"beats": ("BEATS DRAFTKINGS", COLOR["stat_high"]),
+                        "no_edge": ("NO EDGE PROVEN vs DraftKings — calls capped at THIN",
+                                    COLOR["warn"]),
+                        "grading": (f"BEING GRADED vs DraftKings ({_mk['n']} of "
+                                    f"{_bg.MIN_GRADED} lines) — not proven yet",
+                                    COLOR["text_muted"])}[_mk["status"]]
+                st.markdown(f'<div style="font-size:var(--lc-text-small); font-weight:800; '
+                            f'color:{_lab[1]};">{labels[stat]}: {_lab[0]}'
+                            + (f' (z={_mk["z"]}, n={_mk["n"]})' if _mk["status"] != "grading"
+                               else "") + '</div>', unsafe_allow_html=True)
             if per_player:
                 line = None
                 st.caption(
@@ -524,6 +545,9 @@ else:
                        "line_label": f"{side[0]}{ln:g}"}
                 ref.append(row)
                 _sup = bf.support_at(r, stat, ln, grp["markets"], grp["cal"])
+                if _mk["status"] == "no_edge":
+                    # graded against DraftKings and did not beat it: THIN at most
+                    _sup = dict(_sup or {}, untested=True)
                 j = bf.judge(ch, _yp, _stk, _os, _sup)
                 if j:
                     res.append(dict(row, price=bf.valid_price(_yp), support=_sup, **j))

@@ -1,0 +1,23 @@
+name: UFC probe
+
+# Manual only (10-24). What can the site build for UFC from free feeds?
+# The next UFC card on ESPN's MMA scoreboard, its fights' odds providers
+# and DraftKings' prop types, ESPN's past-card list and fighter stats,
+# and whether ufcstats.com answers from Actions (ufc_probe.py).
+#
+# Touches nothing: no commit, no release, no deploy hook.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: pip install -c requirements.txt requests
+      - name: Probe UFC feeds
+        run: python ufc_probe.py
