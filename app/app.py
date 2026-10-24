@@ -239,6 +239,7 @@ def build_mlb_pages(include_admin: bool):
         ("Bet Finder", "views/Bet_Finder.py"),
         ("Bet Log", "views/Bet_Log.py"),
         ("Site vs DraftKings", "views/Site_vs_Book.py"),
+        ("UFC", "views/UFC.py"),
         # +300 to +2000, well-measured only, with the price each is worth (10-11).
         ("Long Shots", "views/Long_Shots.py"),
         # Who is close to a round career / season number tonight (10-14).
@@ -324,6 +325,7 @@ SPORT_SUBPAGES = {
         ("Bet Finder", "views/Bet_Finder.py"),
         ("Bet Log", "views/Bet_Log.py"),
         ("Site vs DraftKings", "views/Site_vs_Book.py"),
+        ("UFC", "views/UFC.py"),
         ("Long Shots", "views/Long_Shots.py"),
         ("Milestone Watch", "views/Milestones.py"),
         # Props over the rest of a game in progress (10-18, live_props).
@@ -341,6 +343,7 @@ SPORT_SUBPAGES = {
         ("Bet Finder", "views/Bet_Finder.py"),
         ("Bet Log", "views/Bet_Log.py"),
         ("Site vs DraftKings", "views/Site_vs_Book.py"),
+        ("UFC", "views/UFC.py"),
         ("Long Shots", "views/Long_Shots.py"),
         ("Live", "views/Live.py"),
         ("Milestone Watch", "views/Milestones.py"),
@@ -363,6 +366,7 @@ SPORT_SUBPAGES = {
         ("Bet Finder", "views/Bet_Finder.py"),
         ("Bet Log", "views/Bet_Log.py"),
         ("Site vs DraftKings", "views/Site_vs_Book.py"),
+        ("UFC", "views/UFC.py"),
         ("Long Shots", "views/Long_Shots.py"),
         ("Milestone Watch", "views/Milestones.py"),
         ("Live", "views/Live.py"),

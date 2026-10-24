@@ -154,6 +154,48 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — UFC page: the next card with DraftKings' chances (cut removed) for every fight — the BOOK's numbers, the site's model not yet built. 2026-10-24 (3)
+
+**Suite 165, FAILING: none.** New tests/test_ufc.py (3 controls red:
+no_vig leaving the cut in; pair() never swapping sides; the distance
+prices read in feed order without the check). UFC page headless on a
+fake feed in the probe's shapes.
+
+Izzy 10-24: "make ufc work if possible" (not live betting). THE UFC
+PROBE (10-24, UFC 333 Volkanovski vs Evloev, 14 fights): ESPN MMA
+scoreboard via site.web.api; core odds per fight: DraftKings (100) +
+"DraftKings - Live Odds" (200); each fighter's moneyLine, overUnder 2.5
+with overOdds / underOdds, the round spread, victoryMethod (koTkoDq /
+submission / points) under open / close per fighter; propBets ONLY
+"Fight To Go The Distance" (two prices, no side field). ufcstats.com:
+HTTP 200 but a 2,994-byte stub, 0 event links — blocked from Actions.
+Core season event list returned count 0; the scoreboard by date
+(?dates=20251018) returns finished cards — the backfill's route.
+
+BUILT (engines/ufc, views/UFC.py — "UFC" in all four navs after Site vs
+DraftKings, a Home Explore card, a refresh button): read LIVE at page
+time (cache 10 min — fight night needs no nightly). Per fight: win %
+(moneylines de-vigged), the six method outcomes de-vigged together,
+over / under rounds, goes the distance, "ends inside the distance" from
+the method market. Sides: away = first competitor on the 10-24 card;
+pair() reads "details" ("D. Santos -115") to confirm the favourite and
+swaps when it disagrees. Distance order: the YES is the one agreeing
+with the method market's decision share, else P(distance) <= P(over the
+round line). The page says in words these are DraftKings' numbers and
+the site's model is not here yet.
+
+NEXT: ufc backfill from the scoreboard by date (cards, winners, method,
+round, closing odds if the core feed keeps them for finished fights) ->
+fighter ratings tested against the de-vigged moneylines -> method /
+rounds; and a nightly snapshot of the UFC odds into data/props/ufc for
+the Site vs DraftKings grading.
+
+FILES: app/engines/ufc.py (NEW), app/views/UFC.py (NEW),
+tests/test_ufc.py (NEW), app/app.py, app/views/Home.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — "Site vs DraftKings" page; Bet Finder labels each market and caps no-edge markets at THIN; UFC probe. 2026-10-24 (2)
 
 **Suite 164, FAILING: none.** tests/test_book_grade.py +3 checks (2 new
@@ -785,43 +827,5 @@ FILES: app/engines/mlb_sim.py, app/views/MLB_Sim.py,
 tests/test_mlb_sim.py (NEW); mlb_prop_precompute.py, precompute.py,
 app/app.py, app/views/Home.py (an Explore card — test_home wants a route),
 HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — NHL periods / NFL quarters, step 1: the one-time play-by-play backfills. 2026-10-22 (5)
-
-**Suite 155, FAILING: none.** New tests/test_period_backfills.py (4
-controls, red by exit code). Izzy (10-22): NHL and NFL period / quarter
-lines WITH player props; MLB: the simulator with player stats.
-
-TWO MANUAL WORKFLOWS, RUN ONCE EACH, then send the logs:
-- "NHL prior periods" (nhl-periods-prior.yml -> nhl_periods_prior.py ->
-  data/nhl/prior_periods.json): every 2025-26 regular-season summary ->
-  engines/nhl_periods.parse: goals per period per team, team shots by
-  period, each skater's [goals, assists, SOG] in P1 / P2 / P3 (OT out),
-  the first goal. Goalies are dropped from a goal's participants (ESPN
-  lists them). Refuses to write under 80% period lines or under 90% of
-  skaters whose periods add up to their box-score goals.
-- "NFL prior quarters" (nfl-quarters-prior.yml -> nfl_quarters_prior.py
-  -> data/nfl/prior_quarters.json): every 2025 game's drives ->
-  engines/nfl_quarters.parse. ESPN's NFL plays name players ONLY in the
-  text, so box-score athletes are turned into the text's forms
-  ('Amon-Ra St. Brown' -> 'A.St. Brown', 'Ja.Chase', suffix dropped) and
-  found: pass -> passer first name, receiver first name after " to ";
-  rush -> first name; TD on the play; No Play / two-point / sacks
-  skipped; Q1-Q4 + OT slot. Each player's quarters CHECKED against his
-  box line from the same summary; refuses under 80% rushing / receiving
-  yards adding up. Logs print the play types and texts no name was found
-  in — if it refuses, those lines say why.
-
-NEXT: with those files, the NHL period / NFL quarter lines and per-period
-player props (fit + test on last season, like NBA's 1Q points), and this
-season's periods parsed nightly from the summaries the nightlies already
-fetch. MLB simulator meanwhile (no backfill needed).
-
-FILES: app/engines/nhl_periods.py, app/engines/nfl_quarters.py,
-nhl_periods_prior.py, nfl_quarters_prior.py,
-.github/workflows/nhl-periods-prior.yml, nfl-quarters-prior.yml,
-tests/test_period_backfills.py (NEW); HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

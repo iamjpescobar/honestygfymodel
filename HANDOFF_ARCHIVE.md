@@ -10,6 +10,46 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — NHL periods / NFL quarters, step 1: the one-time play-by-play backfills. 2026-10-22 (5)
+
+**Suite 155, FAILING: none.** New tests/test_period_backfills.py (4
+controls, red by exit code). Izzy (10-22): NHL and NFL period / quarter
+lines WITH player props; MLB: the simulator with player stats.
+
+TWO MANUAL WORKFLOWS, RUN ONCE EACH, then send the logs:
+- "NHL prior periods" (nhl-periods-prior.yml -> nhl_periods_prior.py ->
+  data/nhl/prior_periods.json): every 2025-26 regular-season summary ->
+  engines/nhl_periods.parse: goals per period per team, team shots by
+  period, each skater's [goals, assists, SOG] in P1 / P2 / P3 (OT out),
+  the first goal. Goalies are dropped from a goal's participants (ESPN
+  lists them). Refuses to write under 80% period lines or under 90% of
+  skaters whose periods add up to their box-score goals.
+- "NFL prior quarters" (nfl-quarters-prior.yml -> nfl_quarters_prior.py
+  -> data/nfl/prior_quarters.json): every 2025 game's drives ->
+  engines/nfl_quarters.parse. ESPN's NFL plays name players ONLY in the
+  text, so box-score athletes are turned into the text's forms
+  ('Amon-Ra St. Brown' -> 'A.St. Brown', 'Ja.Chase', suffix dropped) and
+  found: pass -> passer first name, receiver first name after " to ";
+  rush -> first name; TD on the play; No Play / two-point / sacks
+  skipped; Q1-Q4 + OT slot. Each player's quarters CHECKED against his
+  box line from the same summary; refuses under 80% rushing / receiving
+  yards adding up. Logs print the play types and texts no name was found
+  in — if it refuses, those lines say why.
+
+NEXT: with those files, the NHL period / NFL quarter lines and per-period
+player props (fit + test on last season, like NBA's 1Q points), and this
+season's periods parsed nightly from the summaries the nightlies already
+fetch. MLB simulator meanwhile (no backfill needed).
+
+FILES: app/engines/nhl_periods.py, app/engines/nfl_quarters.py,
+nhl_periods_prior.py, nfl_quarters_prior.py,
+.github/workflows/nhl-periods-prior.yml, nfl-quarters-prior.yml,
+tests/test_period_backfills.py (NEW); HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
+---
+
 ## PICK UP HERE — NFL Game Simulator: score, game script, QB-receiver yards together, TDs from points; SGPs graded by kind. 2026-10-22 (4)
 
 **Suite 154, FAILING: none.** New tests/test_nfl_sim.py (6 controls, red
