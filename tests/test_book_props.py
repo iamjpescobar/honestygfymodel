@@ -28,6 +28,9 @@ MLB by name (10-23), each red:
     -> "MLB players are matched by name across the two id systems" fails
   - walks mapped for MLB (the site's include HBP, the book's do not)
     -> "MLB walks get no book line (not the same bet)" fails
+Anytime goal (10-24, Izzy's screenshot: Goals opened at 1.5 = 2+ goals):
+  - board() dropping a yes market that has no target in the feed
+    -> "anytime goalscorer (no line in the feed) is the goals line, at 0.5" fails
 """
 import json
 import sys
@@ -218,6 +221,20 @@ check("a second run keeps the names it already has (no repeat calls)",
 check("the Bet Finder matches MLB rows by name, starters on their own markets",
       "names.get(bp.name_key(r.get(\"Batter\") or r.get(\"Pitcher\")))" in bfp
       and 'lg = "mlb_p"' in bfp and '("NHL", "NBA", "NFL", "MLB")' in bfp)
+
+# --- anytime goalscorer: no target in the feed (all 431 NHL items 10-24) ---------------------
+def noline(pid, tid, name, price):
+    x = item(pid, tid, name, 0.5, price)
+    x["current"] = {}
+    return x
+
+
+AG = [noline(31, "60", "Anytime Goalscorer", "+150"), noline(31, "61", "To Score 2+ Goals", "+900"),
+      item(31, "62", "Goals Milestones", 2, "+900")]
+gb = bp.board([bp.merge_snapshot({}, {"e": bp.parse(AG)}, "T")])
+g31 = bp.lookup(gb, "nhl", "31", "g")
+check("anytime goalscorer (no line in the feed) is the goals line, at 0.5; 2+ goals is a rung",
+      g31 == {"line": 0.5, "over": 150, "under": None, "ladder": {0.5: 150, 1.5: 900}})
 
 if failures:
     print(f"\n{len(failures)} FAILED")

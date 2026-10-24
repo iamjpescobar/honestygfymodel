@@ -85,7 +85,8 @@ def _p1_group(item, sog_disp):
         for p in g.get(f"{side}_props") or []:
             if not av.is_out(p.get("status")):
                 rows.append({"_name": f"{p.get('name')} ({abbr})",
-                             "_pmfs": npd.p1_pmfs(p.get("mu"), per.get("shares"), sog_disp)})
+                             "_pmfs": npd.p1_pmfs(p.get("mu"), per.get("shares"), sog_disp),
+                             "_pid": p.get("pid"), "_why": p.get("why")})
     stats = tuple((s_, lab, tuple(n - 0.5 for _k, _l, st_, n in mk if st_ == s_))
                   for s_, lab, _ln in npd.P1_STATS if any(m[2] == s_ for m in mk))
     return {"label": "Skaters — 1st period", "rows": rows, "stats": stats, "markets": mk,
@@ -180,7 +181,8 @@ def _nfl_quarter_group(rows, qmeta):
             if x:
                 pm[k] = x
         if pm:
-            out.append({"_name": r["_name"], "_pmfs": pm, "_pid": r.get("_pid")})
+            out.append({"_name": r["_name"], "_pmfs": pm, "_pid": r.get("_pid"),
+                        "_why": r.get("_why")})
     if not out:
         return None
     cal = {f"@{k}": (qmeta["test"][k] or {}).get("calibration") for k in keys
@@ -360,6 +362,26 @@ def _notes(res):
         st.markdown(f'<div style="font-size:var(--lc-text-small); line-height:1.6; '
                     f'color:{COLOR["warn"]};">' + "<br>".join(lines) + "</div>",
                     unsafe_allow_html=True)
+
+
+def _why_lines(judged, players, stat):
+    """["<b>Name</b> (line, call) — why · this stat's matchup note"] for
+    the judged / reference rows, in their order. The why is the board's
+    own (the nightly's projection inputs); missing -> no line."""
+    by_name = {r["_name"]: r for r in players}
+    out = []
+    for x in judged or []:
+        r = by_name.get(x["name"]) or {}
+        why = r.get("_why")
+        note = (r.get("_notice") or {}).get(stat) if isinstance(r.get("_notice"), dict) else None
+        if not why and not note:
+            continue
+        call = bf.TIER_LABEL.get(x.get("tier")) if x.get("tier") else None
+        out.append(f"<b>{x['name']}</b> ({x.get('line_label')}"
+                   + (f", {call}" if call else "") + f", our chance {_pct(x.get('chance'))})"
+                   + (f" — {why}" if why else "")
+                   + (f' <span style="color:{COLOR["warn"]};">· {note}</span>' if note else ""))
+    return out
 
 
 def _add_to_card(res, sport, game, what):
@@ -587,6 +609,19 @@ else:
                        "not seen (the same number every board prints). Worth it at = the price "
                        "that breaks even; your book must pay MORE to be a bet. Needs = the hit "
                        "rate your price requires.")
+            # WHY (10-24): the model's own inputs behind each player's number
+            # — his rate, minutes / ice time, tonight's opponent and defense,
+            # teammates out — said plainly, and which of them are IN the
+            # number vs shown as context. Bets first, then the rest.
+            _why_rows = _why_lines(res or ref, players, stat)
+            if _why_rows:
+                with st.expander(f"Why these numbers ({len(_why_rows)} players)",
+                                 expanded=bool(res)):
+                    st.markdown("".join(
+                        f'<div style="font-size:var(--lc-text-small); line-height:1.6; '
+                        f'margin-bottom:10px; padding-left:10px; border-left:2px solid '
+                        f'{COLOR["border"]};">{w}</div>' for w in _why_rows),
+                        unsafe_allow_html=True)
 
     # ---------------- game lines ----------------
     with card("bf_lines"):

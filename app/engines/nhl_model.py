@@ -902,11 +902,13 @@ def why_line(name, pos, r, env, toi, opp_abbr, dvp_card_sog, exp_sog, exp_pts):
                     f"{toi['base']:.1f} on his rate {state}")
     if env:
         bits.append(f"{opp_abbr} matchup sets tonight's shot volume x{env.get('shot_ratio', 1):.2f}"
-                    f" and scoring x{env.get('goal_ratio', 1):.2f}")
+                    f" and scoring x{env.get('goal_ratio', 1):.2f} (in the number)")
     if dvp_card_sog and dvp_card_sog.get("rank"):
         bits.append(f"{opp_abbr} allows the {dm.rank_text(dvp_card_sog)} shots to "
                     f"{DVP_GROUP_LABELS[dvp_card_sog['group']]} "
-                    f"({dvp_card_sog['per_game']:.1f} a game vs {dvp_card_sog['league']:.1f})")
+                    f"({dvp_card_sog['per_game']:.1f} a game vs {dvp_card_sog['league']:.1f}; "
+                    f"context, not in the number — the position split did not beat the "
+                    f"team-level matchup on unseen games)")
     bits.append(f"→ {exp_sog:.2f} expected shots, {exp_pts:.2f} expected points")
     return " · ".join(bits)
 

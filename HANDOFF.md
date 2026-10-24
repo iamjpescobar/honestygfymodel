@@ -154,6 +154,42 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Bet Finder says WHY under every row; NHL goals open on ANYTIME goalscorer (was 2+ goals). 2026-10-24 (5)
+
+**Suite 167, FAILING: none.** New tests/test_bet_finder_why.py (2
+controls red: the stat's matchup note dropped; the NHL why no longer
+marking the position split as context); tests/test_book_props.py +1
+(control red: board() dropping a yes market with no target).
+
+WHY (Izzy 4:33 PM: "the bet finder doesn't attack defense or nothing"):
+it did — the Bet Finder prices the model's whole projection — but never
+said so. _why_lines(): under the table, "Why these numbers (n players)"
+(open when prices are typed), each player: line, call, our chance, the
+board's own "why" (NHL: rate, ice time, the opponent's team-level shot /
+goal environment, DvP; NBA: minutes, season / last season, team minutes,
+opponent; NFL / MLB: theirs) + this stat's matchup note. The 1st-period
+and 1Q / 1H rows carry the why too. nhl_model.why_line now marks the
+team-level matchup "(in the number)" and defence-vs-position "context,
+not in the number — the position split did not beat the team-level
+matchup on unseen games" (its docstring always claimed this marking).
+
+ANYTIME GOAL (Izzy 4:42 PM, screenshot: Goals rows opened at 1.5 at
++1100 / +2000 — "i am researching for anytime goal scorer"): MEASURED in
+the 10-24 record — all 431 NHL "Anytime Goalscorer" items (and 2+ / 3+,
+and NFL anytime TD) carry NO target, so board() dropped them and lookup
+fell back to the ladder ("Goals Milestones" starts at 2+). Now a yes
+market with no target sits at its own line (YES_LINE: anytime 0.5, 2+
+1.5, 3+ 2.5) and, with no total, IS the main line. Real board: 399 NHL
+players open on anytime at 0.5. NFL anytime TD items carry no price in
+this feed — none shown (honest blank). The grader captures anytime goal
+from tonight (one-sided -> graded as "g*").
+
+FILES: app/engines/book_props.py, app/engines/nhl_model.py,
+app/views/Bet_Finder.py, tests/test_bet_finder_why.py (NEW),
+tests/test_book_props.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — UFC is its own sport in the switcher; a sport's page nav is one wrapped bar of pills. 2026-10-24 (4)
 
 **Suite 166, FAILING: none.** New tests/test_sport_nav.py (2 controls
@@ -741,72 +777,5 @@ FILES: app/engines/nfl_quarters.py, app/engines/nfl_sim.py,
 app/views/NFL_Sim.py, app/views/Bet_Finder.py, nfl_precompute.py,
 nfl_quarters_prior.py, tests/test_nfl_quarter_props.py (NEW),
 tests/test_period_backfills.py, HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — NHL 1st period: player props (point / SOG / goal) and period lines on the Simulator and Bet Finder; NFL quarter names fixed. 2026-10-22 (7)
-
-**Suite 156, FAILING: none.** tests/test_nhl_sim.py +9 checks (5 new
-controls, each red by exit code: equal thirds, no per-skater night, a
-p1_ leg reading the final, shares() fitted on the test window, offered()
-passing a THIN market); tests/test_period_backfills.py +2 checks (4
-controls red: no offense-team filter, no whole-first-name tie-break, the
-receiver-first scoring text read passer-first, the try in parentheses
-left in). NHL_Sim and Bet Finder headless on the archived slate + a
-real build. Ships WITH the MLB simulator (6) — mlb_sim.zip was never
-pushed; this zip carries it. Izzy: "Do nhl and nfl make sure player
-props are included".
-
-MEASURED (last season, prior_periods.json, test = final 60 days,
-17,102 skater-games; shares fitted on the 828 games before): goals by
-period 0.294 / 0.349 / 0.357, shots 0.325 / 0.353 / 0.322. A 1st-period
-prop = his game mean x the 1st's share (points / goals Poisson, SOG the
-boards' NB) vs his OWN last-20 1st-period rate: point z 11.3, 1+ SOG
-z 13.0, 2+ SOG z 12.1, goal z 11.9 — all BEAT, calibrated (point
-predicted 12.7% vs 12.2%). Blending his own 1st-period history in made
-it worse at every weight -> not in the number. Team lines (1st-period
-O1.5, home leads after 1) vs the league's own rate: FAIL (z -0.1, n 484)
-— shown on the page labelled, never offered on the Bet Finder.
-
-SIMULATOR (engines/nhl_sim.simulate): now period by period. Per game the
-team's shot environment Z, per skater his night U (gamma, var = 1/size -
-shot_var so his game shots keep the boards' NB spread exactly), per
-period his shots Poisson(m x share x Z x U), goals Binomial from those
-shots at conv x (goal share / shot share), assists inside the period.
-New outputs per skater p1sog / p1g / p1pts, per team sim["per"] (n x 3
-regulation goals). leg_hits: "_game" stats prefixed p1_ read the 1st
-period (p1_total, p1_home_win, p1_away_win, p1_home_margin). Re-graded
-SGP kinds on real data: unchanged (PP z 3.3, PPP 3.9, PW 3.0 beat; GW,
-PPPP thin; GG, PPopp fail; SS lift 1.026 z -0.2 now "fails" vs +0.3
-"thin" before — noise around zero, same lift).
-
-PAGES: NHL_Sim "The 1st period" card (team 1st-period goals, O1.5, who
-leads after one with the test's label; every skater's 1st-period point /
-goal / 1+ / 2+ SOG through the test's curves); SGP legs gain 1st-period
-points / SOG / goals and 1st-period total / leads after the 1st. Bet
-Finder NHL: "Skaters — 1st period" — only markets that BEAT
-(nhl_periods.offered).
-
-NIGHTLY: nhl_precompute parses this season's periods from the finals it
-already reads (cur_periods, own try per game), adds last season's
-data/nhl/prior_periods.json; nhl_sim.build(..., periods=) fits shares
-before the test window, grades; games.json "sim" gains "periods"
-{shares, test, games}. VERIFY LINES: "NHL periods: N last-season + M
-this-season games; shares ...", one "NHL 1st-period <market>" line each.
-
-NFL QUARTERS (engines/nfl_quarters): names now found ONLY on the team
-with the ball (drive.team.id) — 'C.Williams' the Bears' QB, not a
-defender, and a tackler in parentheses is never the receiver; a shared
-form on one team goes to the player whose whole first name it spells
-(Ty.Johnson before Tyler); scoring plays written 'X 22 Yd pass from Y'
-read receiver-first; the try in parentheses is cut before the play is
-read (it used to drop the whole touchdown as a two-point play). NEXT:
-Izzy reruns the "NFL prior quarters" workflow; expect pass_yds well
-above 74.2% (rush 88.4 / rec 91.7 up too). Then the 1Q / 1H props.
-
-FILES: app/engines/nhl_periods.py (period model, shares, test, offered),
-app/engines/nhl_sim.py, app/views/NHL_Sim.py, app/views/Bet_Finder.py,
-nhl_precompute.py, app/engines/nfl_quarters.py, tests/test_nhl_sim.py,
-tests/test_period_backfills.py; plus everything in (6).
 
 ---

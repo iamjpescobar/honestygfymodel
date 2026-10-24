@@ -292,6 +292,12 @@ YES = {"nhl": {"g": (("anytime goalscorer", 0.5), ("to score 2+ goals", 1.5),
                       ("player to score 2 or more touchdowns", 1.5))}}
 
 
+def _yes_lines():
+    """{norm type: the line its yes sits at, minus 0.5} — board() adds the
+    0.5 back when the market is read as a ladder rung."""
+    return {t: ln - 0.5 for m in YES.values() for v in m.values() for t, ln in v}
+
+
 def norm(type_name):
     return re.sub(r"\s*\(incl\. overtime\)", "", str(type_name or "")).strip().lower()
 
@@ -304,18 +310,29 @@ def name_key(name):
     return re.sub(r"\s+(jr|sr|ii|iii|iv)$", "", re.sub(r"\s+", " ", n).strip())
 
 
+YES_LINE = None
+
+
 def board(day_files):
     """{pid: {norm type: {"lines": {line: {"over", "under"}}, "first":
     {line: {"over", "under"}}}}} from the day files' latest rows (one or
     more {event_id: entry} dicts)."""
+    global YES_LINE
+    if YES_LINE is None:
+        YES_LINE = _yes_lines()
     out = {}
     for f in day_files or []:
         for _eid, entry in (f or {}).items():
             for r in expand(entry):
+                t = norm(r["type"])
+                if r["line"] is None and t in YES_LINE and r["k"] == 0:
+                    # a one-sided yes market ("Anytime Goalscorer") comes with NO
+                    # target in the feed (measured 10-24: all 431 NHL anytime-goal
+                    # items line None) — it sits at its own line (0.5, 1.5 ...)
+                    r = dict(r, line=YES_LINE[t] + 0.5)
                 if not r["pid"] or r["line"] is None or r["k"] not in (0, 1):
                     continue
-                t = norm(r["type"])
-                ladder = t.endswith("milestones") or "milestones -" in t
+                ladder = t.endswith("milestones") or "milestones -" in t or t in YES_LINE
                 slot = out.setdefault(str(r["pid"]), {}).setdefault(t, {"lines": {}, "first": {}})
                 if ladder:
                     ln, side = float(r["line"]) - 0.5, "over"
@@ -377,6 +394,13 @@ def lookup(bd, league, pid, stat):
         v = x.get(ln) or next(iter(x.values()), None) if x else None
         if v and v.get("over") is not None:
             out["ladder"].setdefault(ln, v["over"])
+    yes_lines = [ln for t, ln in ((YES.get(league) or {}).get(stat) or ())
+                 if ((p.get(t) or {}).get("lines") or {}).get(ln, {}).get("over") is not None]
+    if out["line"] is None and yes_lines:
+        # a yes market ("Anytime Goalscorer", "Anytime Touchdown Scorer") is the
+        # bet people research for this stat: it is the main line (10-24)
+        ln = min(yes_lines)
+        out.update(line=ln, over=out["ladder"].get(ln))
     if out["line"] is None and out["ladder"]:
         # no total: the ladder rung nearest even money stands in as the line
         ln = min(out["ladder"], key=lambda k: abs(implied(out["ladder"][k]) - 0.5))
