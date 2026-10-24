@@ -154,6 +154,41 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — UFC is its own sport in the switcher; a sport's page nav is one wrapped bar of pills. 2026-10-24 (4)
+
+**Suite 166, FAILING: none.** New tests/test_sport_nav.py (2 controls
+red: the nav back to a column per page; the wrap rule on the outer
+group). tests/test_ufc.py's wiring check now wants UFC in the switcher
+and SPORT_PAGES, not in the four navs.
+
+Izzy 12:46 PM: "UFC is not showing on its own instead it's implemented
+as an option on all of the league pages", and a screenshot of NHL's page
+nav: 16 st.columns, each label wrapped a letter per line into tall
+slivers — "this format here bother me make it beautiful".
+
+UFC: removed from the four navs; SPORT_PAGES["UFC"] = views/UFC.py (a
+one-page sport loads straight through); kc_theme.sport_switcher lists
+"UFC" and its caption says so; Home's Explore card is ("UFC", "UFC",
+...) so it shows as a jump to the UFC sport.
+
+PAGE NAV (app.py, sports with SPORT_SUBPAGES): st.pills(selection_mode
+"single", default = the active page, key lc_sub_<sport>_pills_<active>
+so a jump from Home that writes lc_sub_<sport> shows selected); a pick
+writes lc_sub_<sport> and reruns. Theme: MEASURED in headless Chromium —
+the pills sit in an INNER flex row Streamlit makes a one-line scroller
+(display flex, nowrap, overflow-x auto; the page scrolled to the
+selected pill and hid the first ones). The theme wraps THAT row
+(div[class*="st-key-lc_sub_"] [data-testid="stButtonGroup"] div:has(>
+button)): centred, wrapped, one soft rounded panel, labels nowrap, 40px
+targets (test_control_language's floor). Screens checked at 1180 and
+820 px: 2 and 3 tidy rows.
+
+FILES: app/app.py, app/styles/kc_theme.py, app/views/Home.py,
+tests/test_ufc.py, tests/test_sport_nav.py (NEW), HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — UFC page: the next card with DraftKings' chances (cut removed) for every fight — the BOOK's numbers, the site's model not yet built. 2026-10-24 (3)
 
 **Suite 165, FAILING: none.** New tests/test_ufc.py (3 controls red:
@@ -773,59 +808,5 @@ FILES: app/engines/nhl_periods.py (period model, shares, test, offered),
 app/engines/nhl_sim.py, app/views/NHL_Sim.py, app/views/Bet_Finder.py,
 nhl_precompute.py, app/engines/nfl_quarters.py, tests/test_nhl_sim.py,
 tests/test_period_backfills.py; plus everything in (6).
-
----
-
-## PICK UP HERE — MLB Game Simulator: plate appearance by plate appearance, base-running measured; SGPs graded by kind. 2026-10-22 (6)
-
-**Suite 156, FAILING: none.** New tests/test_mlb_sim.py (5 controls, red
-by exit code) — a synthetic season played by known base-running rules,
-in Statcast's PA shape. MLB_Sim page headless on it. Izzy: "for mlb i
-only want the simulator with the player stats".
-
-NEEDS ONE NIGHTLY: precompute.MODEL_COLS now carries inning,
-outs_when_up, on_1b / on_2b / on_3b (season frame only, dropped before
-the per-player files, like inning_topbot). Until a nightly has run with
-them the page says the simulator appears after the next nightly.
-
-ONE GAME (engines/mlb_sim.simulate, numpy, 10k in ~0.9 s): each PA = the
-batter vs the other side's starter (mlb_props.combine on the props
-model's shrunk rates) until the starter's DRAWN batters-faced (his
-starter_bf_dist) runs out, then a league-average pen; outcome 1B..OUT;
-then the base-out transition DRAWN from the season's real PAs in that
-state (state_rows / measure_transitions: 24 states x 7 outcomes ->
-(after bases, runs, outs added); sparse cells borrow the same bases +
-outcome over all outs). Runners keep order (_move: lead runners score
-first; on an out the batter is out first). Runs credited to whoever
-scores, RBI = runs on his PA (the site's RBI). No bottom 9th when home
-leads, walk-offs, extras with the runner on 2nd, to 15, then a coin.
-Gives: batters h / tb / hr / rbi / r / hrr / k / bb / s / d; starters k
-/ outs / h / bb / er (runs while he's in); runs by inning (F5).
-
-THE TEST (mlb_prop_precompute.build_sim, in build_prop_model's own try):
-the last 30 days, walked forward exactly like the props test (counts
-before the date; lineups and starters from the PAs): HH, HHH, TT (2+ TB),
-HW, RW (HR + win), KW (starter Ks at floor(his expected)+0.5 + win),
-HHopp. Marginals: the props boards' delivered chances (validation /
-pitcher_validation curves); the win leg the simulator's own. Also a
-runs check: simulated runs a team vs actual on 40 games — the
-[verify] line prints both; on the synthetic season 4.43 / 4.62 vs 4.46.
-
-PAGE (views/MLB_Sim.py, MLB nav after Model): confirmed lineup else last
-game's (both nine needed), the game (runs, win %, total vs the posted
-line, run line, first five), box score (hit / 2+ TB / HR / RBI / run
-chances, H+R+RBI, K; starters' K, innings, runs), every batter over /
-under (board's delivered chance; runs and H+R+RBI the simulator's own,
-untested), the SGP builder (batters, starters' K / outs / hits / runs,
-win, total, run line, F5 total and line), Bet Log, slip.
-
-NIGHTLY VERIFY LINES: "MLB simulator: base-out transitions from N plate
-appearances; runs per team simulated X vs actual Y; SGPs graded on N
-games", "MLB SGP <kind> ...". ~2 minutes.
-
-FILES: app/engines/mlb_sim.py, app/views/MLB_Sim.py,
-tests/test_mlb_sim.py (NEW); mlb_prop_precompute.py, precompute.py,
-app/app.py, app/views/Home.py (an Explore card — test_home wants a route),
-HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

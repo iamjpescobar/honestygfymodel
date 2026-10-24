@@ -101,8 +101,11 @@ check("the page's build: every fight with its DraftKings chances",
 pg = (ROOT / "app" / "views" / "UFC.py").read_text(encoding="utf-8")
 app_ = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
 home = (ROOT / "app" / "views" / "Home.py").read_text(encoding="utf-8")
-check("the UFC page is in every nav and on Home, and says these are the book's numbers",
-      app_.count('("UFC", "views/UFC.py")') == 4 and '("UFC", "MLB",' in home
+theme = (ROOT / "app" / "styles" / "kc_theme.py").read_text(encoding="utf-8")
+check("UFC is its own sport (the switcher, its own page) and on Home, and says these are the "
+      "book's numbers",
+      '"UFC": "views/UFC.py"' in app_ and '("UFC", "views/UFC.py")' not in app_
+      and '"NFL", "UFC"]' in theme and '("UFC", "UFC",' in home
       and "The site&rsquo;s model is not here" in pg and "ufc.build(ef.get_json)" in pg)
 
 if failures:

@@ -10,6 +10,62 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — MLB Game Simulator: plate appearance by plate appearance, base-running measured; SGPs graded by kind. 2026-10-22 (6)
+
+**Suite 156, FAILING: none.** New tests/test_mlb_sim.py (5 controls, red
+by exit code) — a synthetic season played by known base-running rules,
+in Statcast's PA shape. MLB_Sim page headless on it. Izzy: "for mlb i
+only want the simulator with the player stats".
+
+NEEDS ONE NIGHTLY: precompute.MODEL_COLS now carries inning,
+outs_when_up, on_1b / on_2b / on_3b (season frame only, dropped before
+the per-player files, like inning_topbot). Until a nightly has run with
+them the page says the simulator appears after the next nightly.
+
+ONE GAME (engines/mlb_sim.simulate, numpy, 10k in ~0.9 s): each PA = the
+batter vs the other side's starter (mlb_props.combine on the props
+model's shrunk rates) until the starter's DRAWN batters-faced (his
+starter_bf_dist) runs out, then a league-average pen; outcome 1B..OUT;
+then the base-out transition DRAWN from the season's real PAs in that
+state (state_rows / measure_transitions: 24 states x 7 outcomes ->
+(after bases, runs, outs added); sparse cells borrow the same bases +
+outcome over all outs). Runners keep order (_move: lead runners score
+first; on an out the batter is out first). Runs credited to whoever
+scores, RBI = runs on his PA (the site's RBI). No bottom 9th when home
+leads, walk-offs, extras with the runner on 2nd, to 15, then a coin.
+Gives: batters h / tb / hr / rbi / r / hrr / k / bb / s / d; starters k
+/ outs / h / bb / er (runs while he's in); runs by inning (F5).
+
+THE TEST (mlb_prop_precompute.build_sim, in build_prop_model's own try):
+the last 30 days, walked forward exactly like the props test (counts
+before the date; lineups and starters from the PAs): HH, HHH, TT (2+ TB),
+HW, RW (HR + win), KW (starter Ks at floor(his expected)+0.5 + win),
+HHopp. Marginals: the props boards' delivered chances (validation /
+pitcher_validation curves); the win leg the simulator's own. Also a
+runs check: simulated runs a team vs actual on 40 games — the
+[verify] line prints both; on the synthetic season 4.43 / 4.62 vs 4.46.
+
+PAGE (views/MLB_Sim.py, MLB nav after Model): confirmed lineup else last
+game's (both nine needed), the game (runs, win %, total vs the posted
+line, run line, first five), box score (hit / 2+ TB / HR / RBI / run
+chances, H+R+RBI, K; starters' K, innings, runs), every batter over /
+under (board's delivered chance; runs and H+R+RBI the simulator's own,
+untested), the SGP builder (batters, starters' K / outs / hits / runs,
+win, total, run line, F5 total and line), Bet Log, slip.
+
+NIGHTLY VERIFY LINES: "MLB simulator: base-out transitions from N plate
+appearances; runs per team simulated X vs actual Y; SGPs graded on N
+games", "MLB SGP <kind> ...". ~2 minutes.
+
+FILES: app/engines/mlb_sim.py, app/views/MLB_Sim.py,
+tests/test_mlb_sim.py (NEW); mlb_prop_precompute.py, precompute.py,
+app/app.py, app/views/Home.py (an Explore card — test_home wants a route),
+HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
+---
+
 ## PICK UP HERE — NHL periods / NFL quarters, step 1: the one-time play-by-play backfills. 2026-10-22 (5)
 
 **Suite 155, FAILING: none.** New tests/test_period_backfills.py (4

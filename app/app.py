@@ -239,7 +239,6 @@ def build_mlb_pages(include_admin: bool):
         ("Bet Finder", "views/Bet_Finder.py"),
         ("Bet Log", "views/Bet_Log.py"),
         ("Site vs DraftKings", "views/Site_vs_Book.py"),
-        ("UFC", "views/UFC.py"),
         # +300 to +2000, well-measured only, with the price each is worth (10-11).
         ("Long Shots", "views/Long_Shots.py"),
         # Who is close to a round career / season number tonight (10-14).
@@ -289,6 +288,9 @@ SPORT_PAGES = {
     "NFL": "views/NFL.py",
     "NBA": "views/NBA.py",
     "NHL": "views/NHL.py",
+    # UFC (10-24): its own sport, one page — the card with DraftKings'
+    # chances (engines/ufc), read live at page time.
+    "UFC": "views/UFC.py",
 }
 
 # Sports with more than one page get their own nav. WNBA's boards used
@@ -325,7 +327,6 @@ SPORT_SUBPAGES = {
         ("Bet Finder", "views/Bet_Finder.py"),
         ("Bet Log", "views/Bet_Log.py"),
         ("Site vs DraftKings", "views/Site_vs_Book.py"),
-        ("UFC", "views/UFC.py"),
         ("Long Shots", "views/Long_Shots.py"),
         ("Milestone Watch", "views/Milestones.py"),
         # Props over the rest of a game in progress (10-18, live_props).
@@ -343,7 +344,6 @@ SPORT_SUBPAGES = {
         ("Bet Finder", "views/Bet_Finder.py"),
         ("Bet Log", "views/Bet_Log.py"),
         ("Site vs DraftKings", "views/Site_vs_Book.py"),
-        ("UFC", "views/UFC.py"),
         ("Long Shots", "views/Long_Shots.py"),
         ("Live", "views/Live.py"),
         ("Milestone Watch", "views/Milestones.py"),
@@ -366,7 +366,6 @@ SPORT_SUBPAGES = {
         ("Bet Finder", "views/Bet_Finder.py"),
         ("Bet Log", "views/Bet_Log.py"),
         ("Site vs DraftKings", "views/Site_vs_Book.py"),
-        ("UFC", "views/UFC.py"),
         ("Long Shots", "views/Long_Shots.py"),
         ("Milestone Watch", "views/Milestones.py"),
         ("Live", "views/Live.py"),
@@ -787,26 +786,17 @@ else:
             if _active not in _titles:
                 _active = _titles[0]
 
-            # Buttons, matching the main nav — see the long note in
-            # render_right_sidebar. A horizontal st.radio drew the same
-            # unstyled circles here, so the two navs on the site were
-            # inconsistent AND both looked unfinished.
-            _cols = st.columns(len(_titles))
-            for _c, _t in zip(_cols, _titles):
-                with _c:
-                    if _t == _active:
-                        st.markdown(
-                            f'<div style="padding:var(--lc-space-sm) var(--lc-space-md); '
-                            f'text-align:center; border-bottom:2px solid '
-                            f'{COLOR["stat_high"]}; color:{COLOR["stat_high"]}; '
-                            f'font-weight:600; font-size:var(--lc-text-caption);">'
-                            f'{_t}</div>',
-                            unsafe_allow_html=True,
-                        )
-                    elif st.button(_t, key=f"{_key}_btn_{_t}",
-                                   type="tertiary", width="stretch"):
-                        st.session_state[_key] = _t
-                        st.rerun()
+            # PILLS (10-24): one button per page in st.columns(n) squeezed
+            # every label into a sliver once a sport had 16 pages — the
+            # words wrapped a letter per line into tall columns (Izzy's
+            # screenshot). st.pills wraps onto as many rows as it needs and
+            # keeps each label on one line. Keyed on the active page so a
+            # jump from Home (which writes lc_sub_<sport>) shows selected.
+            _pick = st.pills("Pages", _titles, selection_mode="single", default=_active,
+                             key=f"{_key}_pills_{_active}", label_visibility="collapsed")
+            if _pick and _pick != _active:
+                st.session_state[_key] = _pick
+                st.rerun()
 
             _path = dict(_subpages).get(_active, _subpages[0][1])
             load_page_module(_path)

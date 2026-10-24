@@ -159,7 +159,7 @@ EXPLORE = [
      "from their own last fifteen games."),
     ("Defense Matchup", "WNBA",
      "Which defences are soft to a position, and who draws them tonight."),
-    ("UFC", "MLB",
+    ("UFC", "UFC",
      "The next UFC card, every fight, and DraftKings' chances with the cut removed: who "
      "wins, by KO, submission or decision, total rounds and going the distance."),
     ("Site vs DraftKings", "MLB",

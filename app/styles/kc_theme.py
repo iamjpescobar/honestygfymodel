@@ -737,6 +737,32 @@ def _theme_css() -> str:
             letter-spacing: 0.06em !important;
         }}
 
+        /* THE PAGE NAV of a sport with many pages (10-24): the sport's
+           pages as one wrapped bar of pills under the league strip — a
+           soft panel, centred, each label on ONE line (it used to be a
+           column per page, which crushed 16 labels into letter-per-line
+           slivers on an iPad). */
+        /* the pills sit in an inner flex row that Streamlit makes a
+           one-line horizontal scroller (measured: display flex, nowrap,
+           overflow-x auto) — that row is the one told to wrap */
+        div[class*="st-key-lc_sub_"] div[data-testid="stButtonGroup"] div:has(> button) {{
+            justify-content: center !important;
+            flex-wrap: wrap !important;
+            overflow: visible !important;
+            gap: 6px !important;
+            padding: 8px 10px !important;
+            border: 1px solid {COLOR["border"]} !important;
+            border-radius: 18px !important;
+            background: {COLOR["text"]}06 !important;
+        }}
+        div[class*="st-key-lc_sub_"] div[data-testid="stButtonGroup"] button {{
+            white-space: nowrap !important;
+            min-height: 40px !important;
+            padding: 6px 16px !important;
+            font-size: var(--lc-text-caption) !important;
+            letter-spacing: 0.03em !important;
+        }}
+
         /* Game picker specifically: force a single scrollable row instead
            of wrapping into a cluttered grid when there are many games. */
         .st-key-game_picker div[data-testid="stButtonGroup"] {{
@@ -1078,7 +1104,7 @@ def sport_switcher(active: str = "MLB"):
     """
     import streamlit as st
 
-    sports = ["MLB", "KBO", "NPB", "WNBA", "NBA", "NHL", "NFL"]
+    sports = ["MLB", "KBO", "NPB", "WNBA", "NBA", "NHL", "NFL", "UFC"]
     st.session_state.setdefault("lc_sport", "MLB")
 
     choice = st.segmented_control(
@@ -1092,7 +1118,7 @@ def sport_switcher(active: str = "MLB"):
         f'<div style="text-align:center; font-size:var(--lc-text-micro); font-weight:700; '
         f'letter-spacing:0.14em; color:{COLOR["text_faint"]}; opacity:0.75; '
         f'margin-top:var(--lc-space-hair); text-transform:uppercase;">'
-        f'MLB · KBO · NPB · WNBA · NFL · NHL · NBA live</div>',
+        f'MLB · KBO · NPB · WNBA · NFL · NHL · NBA · UFC live</div>',
         unsafe_allow_html=True,
     )
 
