@@ -10,6 +10,59 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — NHL Game Simulator: shots, goals from shots, assists, OT; same-game parlays graded by kind. 2026-10-22 (3)
+
+**Suite 153, FAILING: none.** New tests/test_nhl_sim.py (6 controls, red
+by exit code, listed in the test). Simulator page headless on the 10-22
+NHL slate (archive payload + the real sim block). NEXT: the NFL
+simulator (Izzy: "start with the simulators first"), then NHL periods /
+NFL quarters / MLB first 5.
+
+ONE GAME (engines/nhl_sim.simulate, numpy, 10k in 0.12 s): each team's
+shot environment Z (lognormal, variance 0.011 and home/away corr -0.14,
+MEASURED on last season's team shots past the Poisson part); each
+skater's SOG negative binomial at the board's size around mu x Z; HIS
+goals Binomial(his shots, his goals-per-shot x Z^(e-1)), e = 0.32
+measured (goals rise with shots, not one-for-one), scaled so the team
+averages the GAME MODEL's goals (18 dressed skaters' rates add to more);
+"someone else" for the rest; assists 0/1/2 per goal at 6/18/76%
+(measured from team-game goal and assist totals: mean AND variance per
+goal), from teammates other than the scorer by assist rate; tie -> OT,
+home wins at the model's measured 0.686; saves = other side's shots -
+its regulation goals.
+
+FIRST TRY DROPPED (measured): a fixed team total shared among shooters
+made two teammates' goals pull apart (lift 0.96 where real ones go
+together) — it failed its test. Goals from his own shots: lift 1.00.
+
+THE TEST (last season's final 60 days, 484 games, + this season — grows
+nightly): the delivered chances multiplied vs x the lift. BEATS: 2
+teammates with a point (z 3.4, lift 1.11), 3 with a point (z 4.0), a
+point + his team wins (z 3.0). THIN: goal + his team wins (z 1.8), 4
+point legs, 2 teammates over their shots lines. FAILS (no real link):
+2 teammates to score, a point-getter from each side. sgp_support: a
+beaten kind with 100+ graded can reach STRONG; anything else (unders,
+totals, saves, 2+ points) stays THIN, and the page says why.
+
+PAGE (views/NHL_Sim.py, NHL nav after Model): the game (average goals,
+win %, OT %, puck line, total vs the book's), the box score (SOG range,
+goal / point / 2+ / assist chances, starter's saves), every skater over
+or under (delivered like the boards), the SGP builder (skaters, team to
+win at the model's market-anchored chance, totals and puck lines at the
+simulator's own, goalie saves), Bet Log and parlay slip.
+
+NIGHTLY VERIFY LINES: "NHL simulator links", "NHL same-game parlays
+graded on N games", "NHL SGP <kind> ... -> beats / thin / fails".
+Runtime ~100 s (the walk-forward skater rows).
+
+FILES: app/engines/nhl_sim.py, app/views/NHL_Sim.py,
+tests/test_nhl_sim.py (NEW); nhl_precompute.py, app/app.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
+---
+
 ## PICK UP HERE — NBA learns this season: minutes pull, team minutes add to 240, ROLE / NEW TEAM flags, roster margin, nightly re-tune; a refresh on every page. 2026-10-22 (2)
 
 **Suite 152, FAILING: none.** New tests/test_nba_upgrades.py (7 controls,

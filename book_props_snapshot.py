@@ -27,9 +27,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "app"))
+from engines import book_grade as bg  # noqa: E402
 from engines import book_props as bp  # noqa: E402
 
 OUT = ROOT / "data" / "props"
+PAYLOADS = ROOT / "build_data" / "data"          # tonight's games.json per league
 LEAGUES = {"nhl": 2, "nba": 2, "mlb": 2, "nfl": 7}     # days ahead to look
 
 
@@ -51,7 +53,7 @@ def upcoming(league, today, days, fetch_scoreboard):
 
 
 def run_league(league, today, get, fetch_scoreboard, sport_lg, out_dir=OUT, now=None,
-               sleep=0.1):
+               sleep=0.1, payload_dir=None):
     sport, lg = sport_lg
     evs = upcoming(league, today, LEAGUES.get(league, 2), fetch_scoreboard)
     by_date, types, n_items = {}, Counter(), 0
@@ -86,6 +88,28 @@ def run_league(league, today, get, fetch_scoreboard, sport_lg, out_dir=OUT, now=
         path.write_text(json.dumps(bp.merge_snapshot(old, ev_rows, now, ev_names),
                                    separators=(",", ":")))
         written.append(path.name)
+    # THE SITE'S CHANCES at those same lines, saved beside them (book_grade
+    # step 1) — tonight's payload, built by this run's league step
+    n_ours = 0
+    if league in bg.ROWS and payload_dir is not None:
+        try:
+            pl = json.loads((Path(payload_dir) / league / "games.json").read_text())
+            files = [json.loads((Path(out_dir) / league / f"{d}.json").read_text())
+                     for d in by_date]
+            ours = bg.capture(league, pl, bp.board(files))
+            for d in by_date:
+                path = Path(out_dir) / league / f"{d}.json"
+                js = json.loads(path.read_text())
+                for eid in js:
+                    if eid in ours and eid in evs:
+                        js[eid]["ours"], js[eid]["ours_at"] = ours[eid], now
+                        n_ours += len(ours[eid])
+                path.write_text(json.dumps(js, separators=(",", ":")))
+        except Exception as exc:  # noqa: BLE001 — costs the capture, never the lines
+            print(f"::warning::book props {league}: the site's chances not saved: "
+                  f"{type(exc).__name__}: {exc}")
+        print(f"  [verify] BOOK PROPS {league}: the site's chance saved at {n_ours} book lines "
+              f"(graded after the games)")
     n_saved = sum(len(v) for v in by_date.values())
     if ev_names:
         print(f"  [verify] BOOK PROPS {league}: player names kept for "
@@ -104,7 +128,8 @@ def main():
     today = datetime.now(ZoneInfo("America/New_York")).date()
     for lg in LEAGUES:
         try:
-            run_league(lg, today, ef.get_json, ef.fetch_scoreboard, ef.LEAGUES[lg])
+            run_league(lg, today, ef.get_json, ef.fetch_scoreboard, ef.LEAGUES[lg],
+                       payload_dir=PAYLOADS)
         except Exception as exc:  # noqa: BLE001
             print(f"::warning::book props {lg} failed: {type(exc).__name__}: {exc}")
     return 0

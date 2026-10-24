@@ -205,6 +205,9 @@ def merge_snapshot(old, event_rows, now, names=None):
         types, rows_c = compact(new)
         out[eid] = {"first": prev.get("first") or now, "last": now, "types": types,
                     "rows": rows_c}
+        for keep_ in ("ours", "ours_at"):         # the site's captured chances (book_grade)
+            if prev.get(keep_) is not None:
+                out[eid][keep_] = prev[keep_]
         nm = dict(prev.get("names") or {})
         nm.update((names or {}).get(eid) or {})
         if nm:

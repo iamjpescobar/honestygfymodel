@@ -154,6 +154,60 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Step 3: the site graded against DraftKings every run (capture the site's chance beside the book's, grade on the box score, scorecard). 2026-10-24
+
+**Suite 163, FAILING: none.** New tests/test_book_grade.py (4 controls,
+red by exit code: devig leaving the cut in; a DNP graded as a zero; an
+event graded twice; a ladder price graded with the cut left in).
+
+10-24 morning run read: MLB names for 20 players (WS game) and 72 / 72
+over-first; NHL 548 / 564, NBA 257 / 265; NFL Sunday's 13 games saved.
+
+WHY THE CAPTURE: grading "who was right" needs the SITE's chance at the
+book's line as of the same moment; the pages compute chances on the fly
+and never kept them. Every un-captured night is lost for good.
+
+1. CAPTURE (book_props_snapshot, after the league steps): book_grade.
+   capture(league, build_data/data/<lg>/games.json, the board just saved)
+   -> for every player / stat the book lines (main + up to 6 ladder
+   rungs nearest it): [pid, stat, line, raw over, DELIVERED over] —
+   bet_finder.chance_at on the Bet Finder's own pmfs and curves (NHL
+   skaters + goalie saves, NBA, NFL + its 1Q / 1H keys) — stored as
+   entry["ours"] / "ours_at" in the day file; merge_snapshot keeps them.
+   Measured on archived payloads + the real 10-24 board: NHL 1,624 lines
+   in 6 s, NBA 807, NFL 821. MLB not captured (its props are built at
+   page time from lineups) — later.
+2. GRADE (book_props_grade.py, a nightly step before the props commit):
+   every day file <= today with "ours" and no "graded" -> ESPN summary;
+   when final: actuals (NHL nhl_precompute.parse_summary; NBA nba_box
+   + combos; NFL parse_summary_final + game_values, quarter keys only
+   where his quarters add up) -> grade_event: y = actual > line; book =
+   de-vigged from both prices at that line. ONE-SIDED (ladder only, i.e.
+   NFL, whose totals carry no price): implied / LADDER_OVERROUND 1.07 —
+   MEASURED 10-23/24: a rung at a total's line carries exactly the
+   total's overround, NHL 1.072 (IQR 1.067-1.077, n 1,281), NBA 1.068
+   (1.063-1.072, n 1,756) — only rungs priced 15-85%, graded under
+   "<stat>*", never mixed with the clean grade. Rows appended to
+   data/props/graded/<league>.json; the event marked graded.
+3. SCORECARD (data/props/scorecard.json + [verify] "SITE vs DRAFTKINGS
+   <lg> <stat>" lines): n, the site's Brier vs the book's, paired verdict,
+   flagged plays (site 3+ points from the book: the side it liked) with
+   hits and units at the book's own price.
+
+FIRST GRADES: tonight's games (captured by the 6 PM run) are graded by
+the 4 AM / 6 AM runs. NEXT: (a) a "Site vs DraftKings" page reading
+scorecard.json; (b) the Bet Finder labels each row's market "beats
+DraftKings" / "no edge proven" once n is large enough (decide the bar
+before looking: n >= 300 and the paired verdict); (c) MLB capture; (d)
+the UFC probe (Izzy asked 10-24: "What can we do with ufc?").
+
+FILES: app/engines/book_grade.py (NEW), book_props_grade.py (NEW),
+tests/test_book_grade.py (NEW), app/engines/book_props.py,
+book_props_snapshot.py, .github/workflows/nightly-data.yml, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — MLB on the Bet Finder opens on DraftKings' line too (players matched by name). 2026-10-23 (5)
 
 **Suite 162, FAILING: none.** tests/test_book_props.py +4 checks (2
@@ -776,56 +830,5 @@ FILES: app/engines/nfl_sim.py, app/views/NFL_Sim.py,
 tests/test_nfl_sim.py (NEW); nfl_precompute.py, app/app.py,
 app/engines/nhl_sim.py, app/views/NHL_Sim.py, HANDOFF.md,
 HANDOFF_ARCHIVE.md (+ the NHL simulator files)
-
----
-
-## PICK UP HERE — NHL Game Simulator: shots, goals from shots, assists, OT; same-game parlays graded by kind. 2026-10-22 (3)
-
-**Suite 153, FAILING: none.** New tests/test_nhl_sim.py (6 controls, red
-by exit code, listed in the test). Simulator page headless on the 10-22
-NHL slate (archive payload + the real sim block). NEXT: the NFL
-simulator (Izzy: "start with the simulators first"), then NHL periods /
-NFL quarters / MLB first 5.
-
-ONE GAME (engines/nhl_sim.simulate, numpy, 10k in 0.12 s): each team's
-shot environment Z (lognormal, variance 0.011 and home/away corr -0.14,
-MEASURED on last season's team shots past the Poisson part); each
-skater's SOG negative binomial at the board's size around mu x Z; HIS
-goals Binomial(his shots, his goals-per-shot x Z^(e-1)), e = 0.32
-measured (goals rise with shots, not one-for-one), scaled so the team
-averages the GAME MODEL's goals (18 dressed skaters' rates add to more);
-"someone else" for the rest; assists 0/1/2 per goal at 6/18/76%
-(measured from team-game goal and assist totals: mean AND variance per
-goal), from teammates other than the scorer by assist rate; tie -> OT,
-home wins at the model's measured 0.686; saves = other side's shots -
-its regulation goals.
-
-FIRST TRY DROPPED (measured): a fixed team total shared among shooters
-made two teammates' goals pull apart (lift 0.96 where real ones go
-together) — it failed its test. Goals from his own shots: lift 1.00.
-
-THE TEST (last season's final 60 days, 484 games, + this season — grows
-nightly): the delivered chances multiplied vs x the lift. BEATS: 2
-teammates with a point (z 3.4, lift 1.11), 3 with a point (z 4.0), a
-point + his team wins (z 3.0). THIN: goal + his team wins (z 1.8), 4
-point legs, 2 teammates over their shots lines. FAILS (no real link):
-2 teammates to score, a point-getter from each side. sgp_support: a
-beaten kind with 100+ graded can reach STRONG; anything else (unders,
-totals, saves, 2+ points) stays THIN, and the page says why.
-
-PAGE (views/NHL_Sim.py, NHL nav after Model): the game (average goals,
-win %, OT %, puck line, total vs the book's), the box score (SOG range,
-goal / point / 2+ / assist chances, starter's saves), every skater over
-or under (delivered like the boards), the SGP builder (skaters, team to
-win at the model's market-anchored chance, totals and puck lines at the
-simulator's own, goalie saves), Bet Log and parlay slip.
-
-NIGHTLY VERIFY LINES: "NHL simulator links", "NHL same-game parlays
-graded on N games", "NHL SGP <kind> ... -> beats / thin / fails".
-Runtime ~100 s (the walk-forward skater rows).
-
-FILES: app/engines/nhl_sim.py, app/views/NHL_Sim.py,
-tests/test_nhl_sim.py (NEW); nhl_precompute.py, app/app.py, HANDOFF.md,
-HANDOFF_ARCHIVE.md
 
 ---

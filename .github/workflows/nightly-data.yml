@@ -211,6 +211,12 @@ jobs:
       # disagreement between the site and the book gets graded.
       - name: Snapshot the book's prop lines (ESPN core feed)
         run: python book_props_snapshot.py || echo "::warning::book prop lines snapshot failed - continuing without it"
+      # SITE vs DRAFTKINGS (10-24, book_props_grade.py): every saved line
+      # whose game is final is graded — the site's chance (captured by the
+      # snapshot) against the book's, both against the box score — and the
+      # scorecard written to data/props/scorecard.json (committed below).
+      - name: Grade the site against DraftKings
+        run: python book_props_grade.py || echo "::warning::site vs DraftKings grading failed - continuing without it"
       - name: Commit the book's prop lines
         run: |
           if [ -z "$(git status --porcelain -- data/props)" ]; then
