@@ -708,7 +708,8 @@ def main(today=None):
                   f"{F['tip']['verdict']['verdict']} (z={F['tip']['verdict']['z']}); CONFIRMED five "
                   f"n={F['confirmed']['n']} log loss {F['confirmed']['loss']} vs projected five "
                   f"-> {F['confirmed']['verdict']['verdict']} (z={F['confirmed']['verdict']['z']}), "
-                  f"starter scored first {F['confirmed']['rho']}; scorer in "
+                  f"starter scored first {F['confirmed']['rho']}, real starters with no projection "
+                  f"{F['confirmed'].get('unprojected')}; scorer in "
                   f"our five {F['scorer_in_five']}; this season's play-by-play {len(cur_pbp)} "
                   f"games")
         elif not prior_pbp:

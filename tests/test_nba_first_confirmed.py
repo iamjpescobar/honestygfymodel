@@ -16,6 +16,9 @@ Negative controls, confirmed red by exit code when written (rule 4):
     -> "rho_confirmed is measured on the fit side only" fails
   - pregame_starters accepting four starters
     -> "four starters is not a lineup" fails
+  - shares pricing a starter with no projection as a 0.1-point player
+    (what the 10-25 nightly did: confirmed test thin, z 0.63)
+    -> "a starter with no projection gets his teammates' lowest" fails
 """
 import random
 import sys
@@ -86,6 +89,18 @@ R4 = nf.reprice(F, prm, {"H": ["h2", "h3", "h4", "h6", "h7"]}, {"H"})
 check("the jumper follows the five (c1 sits -> someone in the five jumps)",
       R4["jumpers"]["H"]["pid"] in ["h2", "h3", "h4", "h6", "h7"])
 
+sh = nf.shares(nf.Book(), ["a", "b", "c", "d", "new"], {"a": 20, "b": 15, "c": 10, "d": 8},
+               1.0, 0.0, 20)
+check("a starter with no projection gets his teammates' lowest, not nothing",
+      abs(sh["new"] - sh["d"]) < 1e-12 and sh["new"] > 0.1)
+R5 = nf.reprice(F, prm, {"H": ["c1", "h2", "h3", "h4", "zz"]}, {"H"}, {"zz": "Call Up"})
+z5 = [x for x in R5["players"] if x["pid"] == "zz"]
+check("ESPN's call-up starter (not in the pool) is priced by name and the five stays confirmed",
+      z5 and z5[0]["name"] == "Call Up" and z5[0]["p"] > 0.01 and R5["sure"] == ["H"])
+check("pregame_names reads names from the box",
+      nf.pregame_names({"boxscore": {"players": [{"team": {"id": "H"}, "statistics": [
+          {"athletes": [{"athlete": {"id": "9", "displayName": "Nine"}}]}]}]}}) == {"9": "Nine"})
+
 # --- ESPN's lineup ----------------------------------------------------------------
 def box(n):
     return {"boxscore": {"players": [{"team": {"id": "H"}, "statistics": [{"athletes": [
@@ -141,6 +156,8 @@ check("the fit tests the confirmed five on the unseen games and it beats the pro
       C["n"] == fit["n_test"] and C["verdict"]["verdict"] == "beats" and C["loss"] < fit["test_loss"])
 check("confirmed calls get their own calibration curve", C["calibration"]
       and all("predicted" in x for x in C["calibration"]))
+check("the confirmed test reports how many real starters had no projection",
+      C.get("unprojected") is not None and 0 <= C["unprojected"] <= 1)
 check("rho_confirmed is shipped with the params", 0.95 < fit["params"]["rho_confirmed"] < 1)
 Gb, Rb = world(bench_late=True)
 fb_ = nf.fit(Gb, Rb, [ds[10], ds[100]], [ds[100], ds[-1]])
@@ -149,8 +166,9 @@ check("rho_confirmed is measured on the fit side only",
 
 # --- the page ----------------------------------------------------------------------
 page = (ROOT / "app" / "views" / "NBA_First_Basket.py").read_text(encoding="utf-8")
-check("the page re-prices with the engine's own function", "nf.reprice(F, prm, fives, sure)" in page)
-check("the page reads ESPN's lineup", "nf.pregame_starters(ef.fetch_summary(" in page)
+check("the page re-prices with the engine's own function (with ESPN's names)",
+      "nf.reprice(F, prm, fives, sure, names)" in page and "nf.pregame_names(summ)" in page)
+check("the page reads ESPN's lineup", "nf.pregame_starters(summ)" in page)
 check("you can set the five and confirm it", "st.multiselect(" in page
       and "Lineup is out" in page and "max_selections=5" in page)
 check("tonight's board sits above the game picker",

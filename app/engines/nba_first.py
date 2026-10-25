@@ -143,7 +143,14 @@ def p_home_tip(book, jh, ja, k):
 
 def shares(book, five, proj_pts, g_pow, lam, k_hist):
     """{pid: share of his team's first baskets among its five}."""
-    w = {p: max(proj_pts.get(p, 0.0), 0.1) ** g_pow for p in five}
+    # 10-25: a starter with no projection (a call-up, a player the props
+    # model has no rows for) is NOT a 0.1-point player — the 10-25 nightly
+    # priced real fives that way and the confirmed test fell to thin
+    # (z 0.63). He gets the lowest projection among his four teammates.
+    known = [proj_pts[p] for p in five if proj_pts.get(p) is not None]
+    floor = min(known) if known else 1.0
+    w = {p: max(proj_pts[p] if proj_pts.get(p) is not None else floor, 0.1) ** g_pow
+         for p in five}
     tot = sum(w.values()) or 1.0
     use = {p: w[p] / tot for p in five}
     if not lam:
@@ -220,6 +227,7 @@ def _walk(games, rows_by_game, prm, lo, hi, confirmed=False):
                 pg = price_game(book, g["home"], g["away"], avail, pmin, ppts, preb, prm,
                                 g["date"], five=five)
                 pg["key"] = (g["date"], g["home"])
+                pg["_proj"] = set(ppts)
                 out.append((pg, g["first_fg"]["pid"], g["first_fg"]["team"],
                             (g.get("tip") or {}).get("team"), g["home"]))
         book.add(g)
@@ -288,6 +296,8 @@ def fit(games, rows_by_game, fit_window, test_window):
     proj_loss = {pg["key"]: v for (pg, *_r), v in zip(test, lm)}
     pairs = [(v, proj_loss[pg["key"]]) for (pg, *_r), v in zip(conf, lc)
              if pg["key"] in proj_loss]
+    unproj = [p for pg, *_r in conf for t, f in pg["five"].items() for p in f
+              if p not in pg.get("_proj", ())]
     conf_calls = [(v, 1 if p == pid else 0) for pg, pid, *_r in conf
                   for p, (_t, v) in pg["players"].items()]
     return {"params": prm, "n_test": len(test), "fit_loss": round(best[0], 4),
@@ -304,6 +314,7 @@ def fit(games, rows_by_game, fit_window, test_window):
                                                  [(0.5 - y) ** 2 for _p, y in tips])},
             "confirmed": {"n": len(conf), "loss": round(sum(lc) / max(1, len(lc)), 4),
                           "rho": prm["rho_confirmed"],
+                          "unprojected": round(len(unproj) / max(1, 10 * len(conf)), 4),
                           "verdict": mm.paired_verdict([a for a, _b in pairs],
                                                        [b for _a, b in pairs]),
                           "calibration": mm.calibration_bins(conf_calls, EDGES)},
@@ -324,14 +335,24 @@ def pool_row(book, pid, team, name, pmin, pts, reb):
             "jumps": (book.jumper.get(team) or {}).get(pid, 0)}
 
 
-def reprice(game, prm, fives=None, sure=None):
+def reprice(game, prm, fives=None, sure=None, names=None):
     """One game's first-basket prices from its shipped pool. `game` =
     {"home", "away", "pool": [pool_row], "five": {team: projected five}};
     `fives` = {team: [5 pids]} to use instead (only pids in the pool);
-    `sure` = teams whose five is CONFIRMED. Returns the payload shape:
+    `sure` = teams whose five is CONFIRMED; `names` = {pid: name} for
+    starters ESPN posts who are not in the pool (a call-up) — they are
+    priced at the lowest projection among their four teammates, not
+    dropped. Returns the payload shape:
     {"tip_home", "team", "jumpers", "players", "other", "five", "sure"}."""
     home, away = str(game["home"]), str(game["away"])
     pool = {str(r["pid"]): r for r in game.get("pool") or []}
+    for t in (home, away):
+        for p in ((fives or {}).get(t) or []):
+            p = str(p)
+            if p not in pool and (names or {}).get(p):
+                pool[p] = {"pid": p, "team": t, "name": names[p], "min": 0, "pts": None,
+                           "reb": 0, "fb": 0, "starts": 0, "tip": [0, 0], "jumps": 0,
+                           "stub": True}
     b = Book()
     for p, r in pool.items():
         b.tip[p] = list(r.get("tip") or [0, 0])
@@ -348,9 +369,10 @@ def reprice(game, prm, fives=None, sure=None):
         else:
             use[t] = [str(p) for p in (game.get("five") or {}).get(t) or []]
     sure = {t for t in (sure or ()) if t in mine}      # only a five that was really used
-    avail = {t: {p for p, r in pool.items() if str(r["team"]) == t} for t in (home, away)}
+    avail = {t: {p for p, r in pool.items() if str(r["team"]) == t and not r.get("stub")}
+             for t in (home, away)}
     g_ = {p: r.get("min", 0) for p, r in pool.items()}
-    pts = {p: r.get("pts", 0) for p, r in pool.items()}
+    pts = {p: r.get("pts") for p, r in pool.items() if r.get("pts") is not None}
     reb = {p: r.get("reb", 0) for p, r in pool.items()}
     pg = price_game(b, home, away, avail, g_, pts, reb, prm, five=use, sure=sure)
     jump = {}
@@ -388,6 +410,23 @@ def pregame_starters(summary):
                if e.get("starter") and (e.get("athlete") or {}).get("id")]
         if t and t not in out and len(ids) == 5:
             out[t] = ids
+    return out
+
+
+def pregame_names(summary):
+    """{pid: name} for every athlete ESPN's summary lists (box / rosters)."""
+    out = {}
+    for b in (((summary or {}).get("boxscore") or {}).get("players") or []):
+        for grp in b.get("statistics") or []:
+            for ent in grp.get("athletes") or []:
+                a = ent.get("athlete") or {}
+                if a.get("id"):
+                    out[str(a["id"])] = a.get("displayName") or a.get("shortName") or str(a["id"])
+    for r in (summary or {}).get("rosters") or []:
+        for e in r.get("roster") or []:
+            a = e.get("athlete") or {}
+            if a.get("id"):
+                out.setdefault(str(a["id"]), a.get("displayName") or str(a["id"]))
     return out
 
 

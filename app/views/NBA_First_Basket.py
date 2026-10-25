@@ -61,7 +61,8 @@ CAN_CONFIRM = all(g["first_basket"].get("pool") for g in games) and bool(prm) an
 def _espn_five(event_id, _bucket):
     from engines import espn_feed as ef
     try:
-        return nf.pregame_starters(ef.fetch_summary("nba", event_id))
+        summ = ef.fetch_summary("nba", event_id)
+        return {"fives": nf.pregame_starters(summ), "names": nf.pregame_names(summ)}
     except Exception:  # noqa: BLE001
         return {}
 
@@ -91,7 +92,8 @@ def _priced(g):
     if not CAN_CONFIRM:
         return F, set()
     eid = str(g.get("event_id") or "")
-    espn = _espn_five(eid, int(_time.time() // 300)) if eid else {}
+    got = _espn_five(eid, int(_time.time() // 300)) if eid else {}
+    espn, names = (got or {}).get("fives") or {}, (got or {}).get("names") or {}
     fives, sure = {}, set()
     for t, five in (espn or {}).items():
         fives[t] = five
@@ -102,7 +104,7 @@ def _priced(g):
             fives[t] = five
             if t in (mine.get("sure") or ()):
                 sure.add(t)
-    return nf.reprice(F, prm, fives, sure), set(espn or {})
+    return nf.reprice(F, prm, fives, sure, names), set(espn or {})
 
 
 # ---------------- what changed, in one paragraph ----------------
@@ -150,7 +152,8 @@ if CAN_CONFIRM:
                     st.markdown(f'**{ab[t]}** &nbsp;<span style="color:{COLOR["stat_high"]}; '
                                 f'font-weight:800;">✓ CONFIRMED by ESPN</span>',
                                 unsafe_allow_html=True)
-                    st.markdown("<br>".join(pool[p]["name"] for p in F0["five"][t] if p in pool),
+                    _nm = {x["pid"]: x["name"] for x in F0["players"]}
+                    st.markdown("<br>".join(_nm.get(p, p) for p in F0["five"][t]),
                                 unsafe_allow_html=True)
                     continue
                 k = f"fb5_{eid}_{t}"

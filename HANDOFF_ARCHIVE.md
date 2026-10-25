@@ -10,6 +10,57 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — NHL shots measured (context only, both thin); every workflow push retries; NFL spikes are incompletions. 2026-10-22 (10)
+
+**Suite 159, FAILING: none.** New tests/test_push_retry.py (control red:
+one workflow put back to a single pull + push); tests/test_period_backfills
+.py +1 (control red: a spike read as a completion).
+
+WHY THE RETRIES: 10-22 the nightly and "NFL prior quarters" both died at
+their commit step — "[remote rejected] ... cannot lock ref" — main moved
+under them (Izzy's push + another run in the same minute). The nightly
+stopped at its FIRST commit step, so nothing after it published. All 16
+pull + push pairs across 11 workflows are now a 5-try loop (pull
+--rebase, push, sleep 15 / 30 / 45 / 60 s), then ::error:: and exit 1.
+
+NHL PRIOR SHOTS (the (9) backfill, committed e83b99f): 1,312 games, 0
+failed, skater-games matched to ESPN 100.0%, iSF == ESPN SOG 99.9% of
+43,037. Spot on the ice for 73.3% of attempts = exactly the unblocked
+ones (blocked attempts carry no spot — they count in iCF only anyway).
+Per skater-game iCF 3.55, iFF 2.60, iSF 1.70, iSCF 1.21, iHDCF 0.72.
+Goals per attempt: high-danger 0.130, other chances 0.092, the rest
+0.034 (the slot box is generous; NOT re-tuned after seeing the test).
+
+THE TEST (run locally on that file through fit_toi, the nightly's path —
+the nightly prints the same): coverage 97.5% of fit rows.
+  attempts -> SOG:  fitted strength 0.36; props window n 69,372, Brier
+                    0.1173 vs 0.1172 -> THIN (z 0.2) -> context only
+  chances -> goals: fitted strength 0.61; n 34,686, Brier 0.0694 vs
+                    0.0695, log loss 0.2380 vs 0.2384 -> THIN (z 1.7)
+                    -> context only
+So neither beats the current number by enough: the shrunk SOG and goal
+rates x ice time already carry what attempts and chances add. Att/G,
+HD/G, xG/G stay on the NHL Model page as information with the note
+saying so. Ice time itself re-confirmed: SOG z 7.9, points z 6.3. NEXT
+for chances: they may still help where the current model is weakest —
+2+ goals (Multi-Goal Watch) or a regression flag (goals far above xG) —
+each needs its own test before it moves a number.
+
+NFL QUARTERS RERUN (after (8)): pass_yds 78.8% (was 72.9), rush 90.1,
+rec 94.2. 324 completions with no catcher found; the samples showed
+SPIKES ("D.Prescott spiked the ball to stop the clock") read as
+completions — the box counts a spike as an incomplete attempt. Fixed
+(nfl_quarters: "spiked" -> not caught). A rerun of "NFL prior quarters"
+picks it up; the nightly refits on the file itself.
+
+FILES: .github/workflows/{market-history, nba-pbp-prior, nba-prior-season,
+nfl-quarters-prior, nhl-live-check, nhl-periods-prior, nhl-prior-pp,
+nhl-prior-season, nhl-shots-prior, nightly-data, slate-picks}.yml,
+app/engines/nfl_quarters.py, tests/test_period_backfills.py,
+tests/test_push_retry.py (NEW), HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NHL shot attempts (iCF / iFF) and scoring chances (iSCF / iHDCF) from the NHL feed: on the Model page, tested as factors on SOG and goals. 2026-10-22 (9)
 
 **Suite 158, FAILING: none.** New tests/test_nhl_shots.py (5 controls,
