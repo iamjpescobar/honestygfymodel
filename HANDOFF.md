@@ -154,6 +154,68 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — First Basket rebuilt on the CONFIRMED starting five; NBA Trends picks a team first; every game model follows today's scoring when it is measured to help. 2026-10-25 (2)
+
+**Suite 170, FAILING: none.** New: tests/test_nba_first_confirmed.py,
+tests/test_nba_trends_picker.py, tests/test_environment.py;
+test_nba_first.py and test_bet_finder_why.py updated. Controls red
+(exit 1): reprice ignoring `sure`; rho_confirmed counted over the test
+window; four starters taken as a lineup; team_players keeping Out rows;
+slate_teams listing a team twice; environment applied on the prior test
+alone; _ewma_errors scoring a game after adding it; build() ignoring an
+applied environment; the NFL no-price note removed.
+
+FIRST BASKET (Izzy: "not set up the right way ... Surprise me").
+MEASURED on last season's play-by-play (offline proxy reproduced the
+nightly's 2.35 vs 2.40): every first field goal, 1,235 of 1,235, came
+from one of the ten STARTERS, but the projected five missed a starter
+in ~9% of games, so the model kept ~10% for "someone else". Priced on
+the REAL five: 2.27 vs 2.35 log loss per game (paired z 16.9, 592
+games), calibrated 4%-19%. Team scoring strength for the first-team call:
+nothing (z 0.07) — not built; first team stays THIN.
+  engine: price_game(five=, sure=), _walk(confirmed=), fit() returns
+  "confirmed" {n, loss, rho, verdict, calibration} and
+  params.rho_confirmed (fit side only); pool_row, reprice (the page's
+  re-price, identical to the nightly's price when nothing is confirmed),
+  pregame_starters (ESPN box / rosters, exactly five).
+  nightly: first_basket_game ships "pool", "five", "home", "away"; the
+  verify line adds "CONFIRMED five ... vs projected five".
+  page: tonight's board on top (best 3 per game, Confirmed / Projected);
+  per game, ESPN's posted five auto-confirms (cached 5 min), otherwise
+  pick the five and flip "Lineup is out"; confirmed calls go through
+  the confirmed curve. Until the next nightly ships "pool" the page says
+  lineup confirming is coming and shows the projected prices.
+UNKNOWN: whether ESPN's summary marks starters BEFORE tip (pregame shape
+never probed). If it never does, the manual switch is the path.
+
+NBA TRENDS: Team first (tonight's teams, game-time order), then
+"Player (available tonight)" — ruled-out players dropped and named
+under the picker, most projected minutes first, doubt tags shown.
+
+ADAPTIVE ("today's game style", all four sports). Player form is
+already recency-weighted where it was measured to help (NBA half-lives,
+NHL TOI windows). The gap: every game model's league scoring rate was
+LAST season's average until 150 games this season. MEASURED on last
+season's finals: the NBA drifted ~10 points in-season (Oct 235, Feb 225,
+Apr 236) and a recency-weighted rate beat flat (hl 100, z 2.04); NHL,
+MLB, NFL no (z <= 0.9). game_model.environment tests it per sport every
+night, twice (half-life vs flat on last season; then on this season's
+games, each priced before it, vs the rate in use) and uses it only when
+both beat; game_model.build and nfl_game_model.build apply it
+(league "from" ends "+environment"). The sims ride the game models.
+NEXT: read "[verify] <SPORT> scoring environment" in the nightly.
+
+Bet Finder NFL rows now say DraftKings' free feed posts the line but no
+price (probe 10-25: 0 of 744 / 664 items priced in every variant).
+
+FILES: app/engines/nba_first.py, app/views/NBA_First_Basket.py,
+nba_precompute.py, app/engines/nba_view.py, app/views/NBA_Trends.py,
+app/engines/game_model.py, app/engines/nfl_game_model.py,
+app/engines/nhl_model.py, nfl_precompute.py, mlb_model_precompute.py,
+app/views/Bet_Finder.py, tests (above), HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NFL props carry NO prices in the saved record; the probe now looks for where they are. 2026-10-25
 
 **Suite 167, FAILING: none.** tests/test_prop_lines_probe.py +1 check
@@ -667,80 +729,5 @@ nfl-quarters-prior, nhl-live-check, nhl-periods-prior, nhl-prior-pp,
 nhl-prior-season, nhl-shots-prior, nightly-data, slate-picks}.yml,
 app/engines/nfl_quarters.py, tests/test_period_backfills.py,
 tests/test_push_retry.py (NEW), HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — NHL shot attempts (iCF / iFF) and scoring chances (iSCF / iHDCF) from the NHL feed: on the Model page, tested as factors on SOG and goals. 2026-10-22 (9)
-
-**Suite 158, FAILING: none.** New tests/test_nhl_shots.py (5 controls,
-red by exit code: blocked counted as unblocked, shootout read, the net
-always at +89, last-name match without the first initial, shot_scales
-applying a fit that was not adopted). NHL_Model headless on the archived
-slate (columns "—" until the backfill). Izzy sent Natural Stat Trick's
-definitions list: "implement the missing stats ... to take the positive
-effect in the nhl page". TOI, G, iSF were already in; iCF, iFF, iSCF,
-iHDCF were missing.
-
-STEP 1 OF 2 — NEEDS THE BACKFILL: Izzy runs "NHL prior shots" once
-(nhl-shots-prior.yml -> nhl_shots_prior.py -> data/nhl/prior_shots.json).
-Until then the factors print "too few games carry shot attempts" and the
-page says context only. Then the nightly fits and tests them by itself.
-
-DATA (engines/nhl_shots): ESPN's plays don't reliably carry the spot, so
-the NHL's own play-by-play (api-web.nhle.com/v1/gamecenter/{id}/play-by-
-play — the same host the goalie probe already reaches): typeDescKey goal
-/ shot-on-goal / missed-shot / blocked-shot, details.shootingPlayerId
-(scoringPlayerId on goals), xCoord / yCoord, zoneCode; shootout dropped.
-The attacked net from homeTeamDefendingSide (else the zone code). Chances
-by SPOT only (NOT Natural Stat Trick's exact polygons, no rebounds /
-rush): high danger = inner slot (goal line to 25 ft, |y| <= 9); chance =
-that + home plate (to 35 ft, inside posts->dots, |y| <= 22). Blocked
-attempts count in iCF only (their spot is the block's). Row per skater-
-game [icf, iff, isf, g, iscf, ihdcf, g_sc, g_hd]. NHL ids -> ESPN ids by
-name inside the game (full name; else last name + first initial, unique);
-the ESPN game = most names in common (no abbreviation tables). Backfill
-refuses under 85% of skater-games matched or 90% of iSF == ESPN SOG.
-UNVERIFIED until the first run: the feed's field names above (from the
-public API as known in 2025) — the log prints kinds seen and % with a
-spot; if it refuses, read those lines.
-
-MODEL (nhl_model "SHOT ATTEMPTS AND SCORING CHANCES", fitted inside
-fit_toi on its train / test split, after ice time):
-  sog: mu x (iFF/game x his on-net share shrunk 150 attempts to the
-       league's  /  his SOG rate) ^ a
-  g:   mu x (chance-implied goals/game — HD, other chances, the rest at
-       the league's goals per attempt from each, measured before the test
-       — / his goal rate) ^ b     (assists untouched; points via goals)
-Ratios clipped [0.5, 2]; < 5 games of attempt data -> 1.0. Strength
-fitted (golden search, log loss) on train, TESTED on the props window vs
-strength 0; adopted only on "beats" (rule 1). shot_scales() applies the
-adopted ones in validate_props (so the props verdicts test the page's
-model), tonight's slate, and nhl_sim.test_rows (simulator / 1st-period
-tests). Synthetic check: where chances decide goals it fits 1.0 and
-beats z 3.7.
-
-NIGHTLY: load_prior_shots (prior skaters' "shots"); current_shots: this
-season's finals from the NHL feed every night (one schedule call a week
-+ one play-by-play per game — ~1,300 calls by April; a cache file is the
-fix if it gets slow) laid on the lines as line["shots"]; pool_skaters
-merges both. VERIFY LINES: "NHL last-season shot attempts / chances: N
-skaters", "NHL shots this season: ...matched ...% ; shots on goal equal
-to ESPN's box ...%", "NHL shot attempts / chances: coverage, league",
-"NHL attempts -> SOG: ... IN THE NUMBER / context only", "NHL chances ->
-goals: ...".
-
-PAGE (NHL_Model, skater props): Att/G (iCF), HD/G (iHDCF), xG/G (goals
-his attempts are worth) + nm.shots_note(): what is in the number.
-
-APPLIES TO (if adopted): every SOG prop (incl. 1st-period SOG, the
-Simulator's shots), goal / point props, Player of the Day, Multi-Goal
-Watch (they read the props' mu). NEXT: after the backfill + a nightly,
-read the two verdict lines; if goals adopt, consider HD/G on the Goal
-Edge board.
-
-FILES: app/engines/nhl_shots.py (NEW), nhl_shots_prior.py (NEW),
-.github/workflows/nhl-shots-prior.yml (NEW), tests/test_nhl_shots.py
-(NEW), app/engines/nhl_model.py, app/engines/nhl_sim.py,
-app/views/NHL_Model.py, nhl_precompute.py, HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

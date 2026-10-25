@@ -346,7 +346,9 @@ def newcomer_rows(team_id, pool, pre, params, roster, feed, team_abbr, cur_from,
 
 def first_basket_game(g, book, prm, pool):
     """One slate game's first-basket prices from its projected rows (Out
-    players are already not in them)."""
+    players are already not in them). 10-25: also ships the whole pool of
+    available players and the projected five, so the page re-prices on
+    the CONFIRMED starting five (engines/nba_first.reprice)."""
     avail, pmin, ppts, preb, names = {}, {}, {}, {}, {}
     for side in ("home", "away"):
         t = str(g[f"{side}_id"])
@@ -371,7 +373,10 @@ def first_basket_game(g, book, prm, pool):
             "players": sorted([{"pid": p, "name": nm_(p), "team": t, "p": round(v, 5),
                                 "starts": book.starts.get(p, 0), "fb": book.fb.get(p, 0)}
                                for p, (t, v) in pg["players"].items()], key=lambda x: -x["p"]),
-            "other": round(max(0.0, 1 - sum(v for _t, v in pg["players"].values())), 4)}
+            "other": round(max(0.0, 1 - sum(v for _t, v in pg["players"].values())), 4),
+            "home": home, "away": away, "five": pg["five"],
+            "pool": [nf.pool_row(book, p, t, nm_(p), pmin.get(p), ppts.get(p), preb.get(p))
+                     for t in (home, away) for p in sorted(avail[t])]}
 
 
 def next_man_up_boards(pool, team_id, held_pids, since):
@@ -700,7 +705,10 @@ def main(today=None):
                   f"every projected starter equal {F['naive_loss']} -> "
                   f"{F['verdict']['verdict']} (z={F['verdict']['z']}); first team "
                   f"{F['team']['verdict']['verdict']} (z={F['team']['verdict']['z']}); tip "
-                  f"{F['tip']['verdict']['verdict']} (z={F['tip']['verdict']['z']}); scorer in "
+                  f"{F['tip']['verdict']['verdict']} (z={F['tip']['verdict']['z']}); CONFIRMED five "
+                  f"n={F['confirmed']['n']} log loss {F['confirmed']['loss']} vs projected five "
+                  f"-> {F['confirmed']['verdict']['verdict']} (z={F['confirmed']['verdict']['z']}), "
+                  f"starter scored first {F['confirmed']['rho']}; scorer in "
                   f"our five {F['scorer_in_five']}; this season's play-by-play {len(cur_pbp)} "
                   f"games")
         elif not prior_pbp:
@@ -896,6 +904,8 @@ def nba_game_model(prior_finals, cur_finals, slate):
         print("::warning::NBA game model not built (no finals)")
         return None
     pr, v = block["params"], block["validation"]
+    from engines import game_model as _gm
+    print(_gm.env_line("NBA", block.get("environment")))
     print(f"  [verify] NBA game model fit on {pr['fit_on']} season: k={pr['shrink_k']} "
           f"carryover={pr.get('carryover')} sd_margin={pr['sd_margin']} sd_total={pr['sd_total']} "
           f"home_mult={block['league'].get('home_mult')}")

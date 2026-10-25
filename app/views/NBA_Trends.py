@@ -23,14 +23,24 @@ if not rows:
     footer()
     st.stop()
 
-rows.sort(key=lambda r: r["name"] or "")
-c1, c2, c3 = st.columns([2, 1, 1])
-pi = c1.selectbox("Player", range(len(rows)),
-                  format_func=lambda i: f"{rows[i]['name']} ({rows[i]['team']} vs "
-                                        f"{rows[i]['opp']})", key="nbat_p")
+# 10-25 (Izzy): pick the TEAM first, then one of its players who can play
+# tonight — ruled-out players are left out of the list and named under it.
+teams = nv.slate_teams(rows)
+c0, c1 = st.columns([1, 2])
+ti = c0.selectbox("Team", range(len(teams)), format_func=lambda i: teams[i][1], key="nbat_t")
+avail, ruled_out = nv.team_players(rows, teams[ti][0])
+if not avail:
+    st.info(f"No {teams[ti][0]} player is cleared to play tonight on the injury report.")
+    footer()
+    st.stop()
+pi = c1.selectbox("Player (available tonight)", range(len(avail)),
+                  format_func=lambda i: nv.player_label(avail[i]), key=f"nbat_p_{teams[ti][0]}")
+if ruled_out:
+    st.caption(f"Ruled out tonight, not listed: {', '.join(ruled_out)}.")
+c2, c3 = st.columns([1, 1])
 win = c2.selectbox("Window", ["L5", "L10", "L25", "Season"], index=1, key="nbat_w")
 pre = c3.toggle("Show preseason", value=True, key="nbat_pre")
-r = rows[pi]
+r = avail[pi]
 
 with card("nbat_head"):
     st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">{r["name"]} · '

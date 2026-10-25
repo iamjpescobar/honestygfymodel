@@ -178,6 +178,10 @@ def build(current_finals, prior_finals=None, prior_lines=None):
     params["fit_on"] = season
     consts = gm.league_constants(fit_on)
     consts["from"] = season
+    env = gm.environment(prior, cur)          # 10-25: today's scoring, tested
+    if env.get("applied"):
+        consts["league_rate"] = env["rate"]
+        consts["from"] += "+environment"
     lg = consts["league_rate"]
     targets = gm.prior_targets(prior_totals, prior_league, lg, carry)
     rates = gm.team_rates(gm.team_totals(cur), lg, params["shrink_k"], targets)
@@ -197,6 +201,7 @@ def build(current_finals, prior_finals=None, prior_lines=None):
                   for t, (o, d) in rates.items()},
         "validation": report,
         "current_finals": len(cur), "prior_finals": len(prior),
+        "environment": env,
     }
 
 

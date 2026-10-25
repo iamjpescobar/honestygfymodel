@@ -118,7 +118,9 @@ page = (ROOT / "app" / "views" / "NBA_First_Basket.py").read_text(encoding="utf-
 check("an untested first-team call is capped at THIN (measured only when its test beats)",
       'if tv == "beats" else UNTESTED' in page and "bf.judge(F[\"team\"][t]" in page)
 check("player calls are delivered through the test's curve and judged by the guard",
-      "tpb.calibrate(p, cal)" in page and "mv.curve_support(x[\"p\"], cal)" in page)
+      "tpb.calibrate(p, cal_c if sure else cal_p)" in page
+      and "mv.curve_support(p, cal_c if sure else cal_p)" in page
+      and "bf.judge(x[\"chance\"], edited.at[i, \"Your price\"], _stk, None, x[\"sup\"])" in page)
 app = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
 check("First Basket is in the NBA nav", '("First Basket", "views/NBA_First_Basket.py")' in app)
 

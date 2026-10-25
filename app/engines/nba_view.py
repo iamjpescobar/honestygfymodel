@@ -193,6 +193,39 @@ def all_props(games):
     return out
 
 
+def slate_teams(rows):
+    """Tonight's teams in game-time order, each once: [(team, label)]
+    with the label "BOS vs NYK · 7:30 PM" (10-25: Trends picks a team
+    first, then one of his teammates who can play)."""
+    seen, out = set(), []
+    for r in rows or []:
+        t = r.get("team")
+        if not t or t in seen:
+            continue
+        seen.add(t)
+        out.append((t, f"{t} vs {r.get('opp') or '?'}" + (f" · {r['time']}" if r.get("time") else "")))
+    return out
+
+
+def team_players(rows, team):
+    """(available, ruled_out) for one team. Available = not ruled out on
+    the live injury check, most projected minutes first (starters at the
+    top); ruled_out = names only, said under the picker so a missing
+    player is explained, not silently dropped."""
+    from engines import availability as av
+    mine = [r for r in rows or [] if r.get("team") == team]
+    ok = [r for r in mine if not av.is_out(r.get("status"))]
+    ok.sort(key=lambda r: (-(r.get("min") or 0), r.get("name") or ""))
+    out = sorted(r.get("name") or "?" for r in mine if av.is_out(r.get("status")))
+    return ok, out
+
+
+def player_label(r):
+    from engines import availability as av
+    m = av.maybe_label(r.get("status"))
+    return f"{r.get('name')} · ~{(r.get('min') or 0):.0f} min" + (f" · {m}" if m else "")
+
+
 # ----------------------------------------------------------------------
 # Trend chart (10-20): last season, this season and the preseason, each
 # game labelled; preseason marked PRE and left out of every hit rate.

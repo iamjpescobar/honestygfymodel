@@ -58,6 +58,9 @@ w = nm.why_line("X", "C", {"sog": 2.0, "g": 0.3, "a": 0.4, "gp": 50},
 check("the NHL why says what is in the number and what is context",
       "(in the number)" in w and "context, not in the number" in w)
 
+check("NFL rows say DraftKings' feed posts the line but no price (probe 10-25)",
+      "posts the LINE but no price" in src and 'if sport == "NFL" else ""' in src)
+
 if failures:
     print(f"\n{len(failures)} FAILED")
     sys.exit(1)

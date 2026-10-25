@@ -10,6 +10,81 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — NHL shot attempts (iCF / iFF) and scoring chances (iSCF / iHDCF) from the NHL feed: on the Model page, tested as factors on SOG and goals. 2026-10-22 (9)
+
+**Suite 158, FAILING: none.** New tests/test_nhl_shots.py (5 controls,
+red by exit code: blocked counted as unblocked, shootout read, the net
+always at +89, last-name match without the first initial, shot_scales
+applying a fit that was not adopted). NHL_Model headless on the archived
+slate (columns "—" until the backfill). Izzy sent Natural Stat Trick's
+definitions list: "implement the missing stats ... to take the positive
+effect in the nhl page". TOI, G, iSF were already in; iCF, iFF, iSCF,
+iHDCF were missing.
+
+STEP 1 OF 2 — NEEDS THE BACKFILL: Izzy runs "NHL prior shots" once
+(nhl-shots-prior.yml -> nhl_shots_prior.py -> data/nhl/prior_shots.json).
+Until then the factors print "too few games carry shot attempts" and the
+page says context only. Then the nightly fits and tests them by itself.
+
+DATA (engines/nhl_shots): ESPN's plays don't reliably carry the spot, so
+the NHL's own play-by-play (api-web.nhle.com/v1/gamecenter/{id}/play-by-
+play — the same host the goalie probe already reaches): typeDescKey goal
+/ shot-on-goal / missed-shot / blocked-shot, details.shootingPlayerId
+(scoringPlayerId on goals), xCoord / yCoord, zoneCode; shootout dropped.
+The attacked net from homeTeamDefendingSide (else the zone code). Chances
+by SPOT only (NOT Natural Stat Trick's exact polygons, no rebounds /
+rush): high danger = inner slot (goal line to 25 ft, |y| <= 9); chance =
+that + home plate (to 35 ft, inside posts->dots, |y| <= 22). Blocked
+attempts count in iCF only (their spot is the block's). Row per skater-
+game [icf, iff, isf, g, iscf, ihdcf, g_sc, g_hd]. NHL ids -> ESPN ids by
+name inside the game (full name; else last name + first initial, unique);
+the ESPN game = most names in common (no abbreviation tables). Backfill
+refuses under 85% of skater-games matched or 90% of iSF == ESPN SOG.
+UNVERIFIED until the first run: the feed's field names above (from the
+public API as known in 2025) — the log prints kinds seen and % with a
+spot; if it refuses, read those lines.
+
+MODEL (nhl_model "SHOT ATTEMPTS AND SCORING CHANCES", fitted inside
+fit_toi on its train / test split, after ice time):
+  sog: mu x (iFF/game x his on-net share shrunk 150 attempts to the
+       league's  /  his SOG rate) ^ a
+  g:   mu x (chance-implied goals/game — HD, other chances, the rest at
+       the league's goals per attempt from each, measured before the test
+       — / his goal rate) ^ b     (assists untouched; points via goals)
+Ratios clipped [0.5, 2]; < 5 games of attempt data -> 1.0. Strength
+fitted (golden search, log loss) on train, TESTED on the props window vs
+strength 0; adopted only on "beats" (rule 1). shot_scales() applies the
+adopted ones in validate_props (so the props verdicts test the page's
+model), tonight's slate, and nhl_sim.test_rows (simulator / 1st-period
+tests). Synthetic check: where chances decide goals it fits 1.0 and
+beats z 3.7.
+
+NIGHTLY: load_prior_shots (prior skaters' "shots"); current_shots: this
+season's finals from the NHL feed every night (one schedule call a week
++ one play-by-play per game — ~1,300 calls by April; a cache file is the
+fix if it gets slow) laid on the lines as line["shots"]; pool_skaters
+merges both. VERIFY LINES: "NHL last-season shot attempts / chances: N
+skaters", "NHL shots this season: ...matched ...% ; shots on goal equal
+to ESPN's box ...%", "NHL shot attempts / chances: coverage, league",
+"NHL attempts -> SOG: ... IN THE NUMBER / context only", "NHL chances ->
+goals: ...".
+
+PAGE (NHL_Model, skater props): Att/G (iCF), HD/G (iHDCF), xG/G (goals
+his attempts are worth) + nm.shots_note(): what is in the number.
+
+APPLIES TO (if adopted): every SOG prop (incl. 1st-period SOG, the
+Simulator's shots), goal / point props, Player of the Day, Multi-Goal
+Watch (they read the props' mu). NEXT: after the backfill + a nightly,
+read the two verdict lines; if goals adopt, consider HD/G on the Goal
+Edge board.
+
+FILES: app/engines/nhl_shots.py (NEW), nhl_shots_prior.py (NEW),
+.github/workflows/nhl-shots-prior.yml (NEW), tests/test_nhl_shots.py
+(NEW), app/engines/nhl_model.py, app/engines/nhl_sim.py,
+app/views/NHL_Model.py, nhl_precompute.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NFL 1st quarter / 1st half: player props on the Simulator and Bet Finder, half / quarter leader; quarters parser fixed again. 2026-10-22 (8)
 
 **Suite 157, FAILING: none.** New tests/test_nfl_quarter_props.py (5

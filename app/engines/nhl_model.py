@@ -1066,6 +1066,7 @@ def build(current_finals, prior, current_skaters=None, current_id_of=None, slate
     goal = gm.build(goal_rows(current_finals), goal_rows(pf) if pf else None)
     if goal is None:
         return None
+    print(gm.env_line("NHL", goal.get("environment")))
     shots = gm.fit_volume(shot_rows(current_finals), shot_rows(pf) if pf else None)
 
     rids = {str(x) for x in regular_ids} if regular_ids is not None else None

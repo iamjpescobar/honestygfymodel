@@ -411,6 +411,7 @@ def main(today=None, _get_json=_get):
     if model is None:
         print("MLB model: fit failed.")
         return 1
+    print(gm.env_line("MLB", model.get("environment")))
     _pt = _pl = None
     if prior_finals:
         _pf = gm.clean_finals(prior_finals)

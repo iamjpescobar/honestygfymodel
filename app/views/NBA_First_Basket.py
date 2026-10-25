@@ -1,8 +1,26 @@
-"""NBA First Basket (10-21) — who scores each game's first field goal,
-and which team does. The nightly prices it (engines/nba_first, fitted and
-tested on last season's play-by-play); this page shows it, delivers each
-call through what calls like it hit on unseen games, and judges your
-book's price with the site's one guard. Fits nothing."""
+"""NBA First Basket (10-21, revamped 10-25) — who scores each game's first
+field goal, and which team does.
+
+THE 10-25 REVAMP, measured on last season's unseen games (engines/
+nba_first.fit, "confirmed"): every first field goal last season (1,235 of
+1,235) was scored by one of the ten STARTERS. The old page priced a
+projected five and kept ~10% for "someone else" because the projected five
+missed a starter one game in ten. Priced on the real five, the log loss
+fell from 2.35 to 2.27 per game (paired z ~17) and the calls stay on the
+diagonal. So the page now:
+  1. reads ESPN's lineup for each game at page time (cached 5 minutes) —
+     when it lists five starters, that team's five is CONFIRMED;
+  2. lets you set the five yourself the moment lineups are announced;
+  3. re-prices instantly (engines/nba_first.reprice — the same functions
+     the test ran) and delivers each call through the curve measured for
+     its kind (confirmed five or projected five);
+  4. opens on tonight's board: the best first-basket chances across every
+     game, each marked Confirmed or Projected.
+The first-TEAM call stays at THIN: the tip is the only thing that moved
+it (team scoring strength measured 10-25: no gain, z 0.07).
+"""
+import time as _time
+
 import pandas as pd
 import streamlit as st
 
@@ -11,6 +29,7 @@ from engines import bet_finder as bf
 from engines import live_injuries as _li
 from engines import model_math as mm
 from engines import model_view as mv
+from engines import nba_first as nf
 from engines import nba_view as nv
 from engines import top_plays_board as tpb
 from engines.live_sync import sync_latest_button
@@ -27,38 +46,136 @@ if not fb or not games:
     footer()
     st.stop()
 
-cal = fb.get("calibration") or []
+prm = fb.get("params") or {}
+cal_p = fb.get("calibration") or []
+conf = fb.get("confirmed") or {}
+cal_c = conf.get("calibration") or []
 pv = (fb.get("verdict") or {}).get("verdict")
+cv = (conf.get("verdict") or {}).get("verdict")
 tv = ((fb.get("team") or {}).get("verdict") or {}).get("verdict")
 UNTESTED = {"measured": False, "in_range": False, "n": 0, "untested": True}
+CAN_CONFIRM = all(g["first_basket"].get("pool") for g in games) and bool(prm) and bool(cal_c)
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _espn_five(event_id, _bucket):
+    from engines import espn_feed as ef
+    try:
+        return nf.pregame_starters(ef.fetch_summary("nba", event_id))
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def _deliver(p, sure):
+    c = tpb.calibrate(p, cal_c if sure else cal_p) if (cal_c if sure else cal_p) else None
+    return c if c is not None else p
+
+
+def _support(p, sure):
+    if pv != "beats" or (sure and cv != "beats"):
+        return UNTESTED
+    return mv.curve_support(p, cal_c if sure else cal_p)
+
+
+def _abbr(g):
+    return {str(g["home_id"]): g.get("home_abbr"), str(g["away_id"]): g.get("away_abbr")}
+
+
+saved = st.session_state.setdefault("fb_saved", {})   # event -> {"fives", "sure"}
+
+
+def _priced(g):
+    """(prices, espn teams) for one game: ESPN's five where it is out, the
+    five you set where you set one, the projected five otherwise."""
+    F = g["first_basket"]
+    if not CAN_CONFIRM:
+        return F, set()
+    eid = str(g.get("event_id") or "")
+    espn = _espn_five(eid, int(_time.time() // 300)) if eid else {}
+    fives, sure = {}, set()
+    for t, five in (espn or {}).items():
+        fives[t] = five
+        sure.add(t)
+    mine = saved.get(eid) or {}
+    for t, five in (mine.get("fives") or {}).items():
+        if t not in espn and len(five) == 5:
+            fives[t] = five
+            if t in (mine.get("sure") or ()):
+                sure.add(t)
+    return nf.reprice(F, prm, fives, sure), set(espn or {})
+
+
+# ---------------- what changed, in one paragraph ----------------
 st.markdown(
     f'<div style="font-size:var(--lc-text-body); line-height:1.6; color:{COLOR["text"]};">'
-    f'The first <b>field goal</b> of the game (most books settle first basket on a field goal, '
-    f'not a free throw). Each team&rsquo;s chance comes from the <b>tip</b> &mdash; its jumper&rsquo;s '
-    f'record &mdash; and how often the tip winner scores first; each player&rsquo;s from that, his '
-    f'share of his team&rsquo;s scoring and his own first-basket record as a starter.<br>'
-    f'<span style="color:{COLOR["text_muted"]};">Tested on {fb.get("n_test", 0)} games last season '
-    f'the model had not seen: the player call {mv.trust_label(pv)} against pricing every '
-    f'projected starter the same; the first-team call {mv.trust_label(tv)} against a coin'
-    + (" &mdash; so a first-team bet here stays at THIN" if tv != "beats" else "")
-    + f'. The scorer was one of the ten projected starters '
-      f'{100 * (fb.get("scorer_in_five") or 0):.0f}% of the time; the rest is &ldquo;someone '
-      f'else&rdquo;.</span></div>', unsafe_allow_html=True)
+    f'The first <b>field goal</b> of the game (how most books settle first basket). '
+    f'<b>Last season every first basket was scored by one of the ten starters</b> &mdash; so the '
+    f'number that matters most is <i>who starts</i>. When the lineups are out (about 30 minutes '
+    f'before tip) the page prices the <b>real five</b>: from ESPN when it posts them, or set them '
+    f'yourself below. On {conf.get("n", 0)} games it never saw, pricing the real five beat '
+    f'pricing a projected five ({mv.trust_label(cv)}).<br>'
+    f'<span style="color:{COLOR["text_muted"]};">The player call {mv.trust_label(pv)} against '
+    f'every starter equal; the first-team call {mv.trust_label(tv)} against a coin'
+    + (" &mdash; a first-team bet stays at THIN" if tv != "beats" else "")
+    + '.</span></div>', unsafe_allow_html=True)
+if not CAN_CONFIRM:
+    st.caption("Lineup confirming arrives with the next nightly build — until then these are "
+               "priced on the projected five.")
 
+board_box = st.container()
 _stk = mv.staking_controls("first_basket")
+
 labels = [f"{g.get('away_abbr')} @ {g.get('home_abbr')}  {g.get('time_et') or ''}".strip()
           for g in games]
 gi = st.selectbox("Game", range(len(games)), format_func=lambda i: labels[i], key="fb_game")
 g = games[gi]
-F = g["first_basket"]
+eid = str(g.get("event_id") or gi)
 home, away = str(g["home_id"]), str(g["away_id"])
-ab = {home: g.get("home_abbr"), away: g.get("away_abbr")}
+ab = _abbr(g)
 
-
-def deliver(p):
-    c = tpb.calibrate(p, cal) if cal else None
-    return c if c is not None else p
-
+# ---------------- the starting fives ----------------
+if CAN_CONFIRM:
+    F0, espn_t = _priced(g)
+    pool = {str(r["pid"]): r for r in g["first_basket"]["pool"]}
+    with card("fb_five"):
+        st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Starting fives'
+                    f'</div>', unsafe_allow_html=True)
+        cols = st.columns(2)
+        mine = saved.setdefault(eid, {"fives": {}, "sure": []})
+        for col, t in zip(cols, (away, home)):
+            with col:
+                opts = sorted((p for p, r in pool.items() if str(r["team"]) == t),
+                              key=lambda p: -pool[p].get("min", 0))
+                if t in espn_t:
+                    st.markdown(f'**{ab[t]}** &nbsp;<span style="color:{COLOR["stat_high"]}; '
+                                f'font-weight:800;">✓ CONFIRMED by ESPN</span>',
+                                unsafe_allow_html=True)
+                    st.markdown("<br>".join(pool[p]["name"] for p in F0["five"][t] if p in pool),
+                                unsafe_allow_html=True)
+                    continue
+                k = f"fb5_{eid}_{t}"
+                if k not in st.session_state:
+                    st.session_state[k] = [p for p in F0["five"][t] if p in opts]
+                pick = st.multiselect(f"{ab[t]} starters", opts, key=k, max_selections=5,
+                                      format_func=lambda p: f"{pool[p]['name']} · "
+                                                            f"~{pool[p].get('min', 0):.0f} min")
+                ks = f"fbs_{eid}_{t}"
+                if ks not in st.session_state:
+                    st.session_state[ks] = t in (mine.get("sure") or [])
+                ok = st.toggle("Lineup is out — these are the real five", key=ks,
+                               disabled=len(pick) != 5)
+                mine["fives"][t] = list(pick)
+                mine["sure"] = sorted((set(mine["sure"]) - {t}) | ({t} if ok and len(pick) == 5
+                                                                    else set()))
+                if len(pick) != 5:
+                    st.caption("Pick five to re-price.")
+        st.caption("Projected = who started most of his team's last five games and is playing "
+                   "tonight, filled by projected minutes. Flip the switch once the team "
+                   "announces its starters: a confirmed five is priced on the curve measured "
+                   "for confirmed fives (no 'someone else' share — last season it never "
+                   "happened).")
+F, _espn_t = _priced(g)
+sure = set(F.get("sure") or [])
 
 # ---------------- the tip and the first team ----------------
 with card("fb_tip"):
@@ -75,7 +192,9 @@ with card("fb_tip"):
     st.markdown(f'<div style="font-size:var(--lc-text-body); line-height:1.8;">'
                 f'{jline(ja, ab[away])} &nbsp;vs&nbsp; {jline(jh, ab[home])}<br>'
                 f'Wins the tip: <b>{ab[home] if th >= 0.5 else ab[away]} '
-                f'{100 * max(th, 1 - th):.0f}%</b></div>', unsafe_allow_html=True)
+                f'{100 * max(th, 1 - th):.0f}%</b> · the tip winner scored first '
+                f'{100 * prm.get("c", 0.63):.0f}% of the time last season</div>',
+                unsafe_allow_html=True)
     trow = [{"Team": ab[t], "Scores first": f"{100 * F['team'][t]:.0f}%",
              "Worth it at": mm.fmt_american(mm.fair_american(F["team"][t])), "Your price": None}
             for t in (away, home)]
@@ -95,29 +214,37 @@ with card("fb_tip"):
                         f'{100 * j["edge"]:+.1f} pts' + (f' · {j["guard"]}' if j.get("guard")
                                                         else ""), unsafe_allow_html=True)
 
+
+def _rows(F_, sure_):
+    out = []
+    for x in F_["players"]:
+        s_ = str(x["team"]) in sure_
+        out.append(dict(x, chance=_deliver(x["p"], s_), sup=_support(x["p"], s_), sure=s_))
+    out.sort(key=lambda x: -x["chance"])
+    return out
+
+
 # ---------------- the players ----------------
 with card("fb_players"):
     st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Who scores the first '
                 f'basket</div>', unsafe_allow_html=True)
-    pl = []
-    for x in F["players"]:
-        ch = deliver(x["p"])
-        sup = mv.curve_support(x["p"], cal) if pv == "beats" else UNTESTED
-        pl.append(dict(x, chance=ch, sup=sup))
-    pl.sort(key=lambda x: -x["chance"])
+    pl = _rows(F, sure)
     tabs = st.tabs(["Both teams", ab[away], ab[home]])
     for tab, which in zip(tabs, (None, away, home)):
         with tab:
-            show = [x for x in pl if which is None or x["team"] == which]
+            show = [x for x in pl if which is None or str(x["team"]) == which]
             base = pd.DataFrame([{
-                "Player": f"{x['name']} ({ab[x['team']]})", "Chance": f"{100 * x['chance']:.1f}%",
+                "Player": f"{x['name']} ({ab[str(x['team'])]})",
+                "Chance": f"{100 * x['chance']:.1f}%",
                 "Worth it at": mm.fmt_american(mm.fair_american(x["chance"])),
                 "Your price": None,
+                "Lineup": "✓ Confirmed" if x["sure"] else "Projected",
                 "His record": (f"{x['fb']} first baskets in {x['starts']} starts"
                                if x.get("starts") else "no starts on record")} for x in show])
             ek = f"fb_pl_{gi}_{which or 'all'}"
             edited = st.data_editor(base, hide_index=True, width="stretch", key=ek,
-                                    disabled=["Player", "Chance", "Worth it at", "His record"],
+                                    disabled=["Player", "Chance", "Worth it at", "Lineup",
+                                              "His record"],
                                     column_config={"Your price": st.column_config.NumberColumn(
                                         help="Your book's first-basket price, e.g. +600.",
                                         step=5, format="%d")})
@@ -149,9 +276,33 @@ with card("fb_players"):
                     st.markdown(f'<div style="font-size:var(--lc-text-small); color:'
                                 f'{COLOR["warn"]};">' + "<br>".join(notes) + "</div>",
                                 unsafe_allow_html=True)
-    st.caption(f"Someone other than these ten: {100 * F.get('other', 0):.0f}%. Chance = what "
-               f"calls like it hit on last season's unseen games. The five per team are last "
-               f"game's starters who are playing, filled by projected minutes — a late lineup "
-               f"change moves these, so check the starting five before you bet.")
+    other = F.get("other", 0)
+    st.caption(f"Someone other than these ten: {100 * other:.1f}%. Chance = what calls like it "
+               f"hit on last season's unseen games — confirmed fives on their own curve. "
+               f"Projected fives are wrong about one game in ten; check the lineup before you "
+               f"bet, or confirm it above.")
+
+# ---------------- tonight's board (top of the page) ----------------
+with board_box:
+    with card("fb_board"):
+        st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Tonight&rsquo;s '
+                    f'board</div><div class="pf-card-subtitle">The best first-basket chances in '
+                    f'every game</div>', unsafe_allow_html=True)
+        allr = []
+        for i, g_ in enumerate(games):
+            F_, _e = _priced(g_)
+            a_ = _abbr(g_)
+            for x in _rows(F_, set(F_.get("sure") or []))[:3]:
+                allr.append({"Player": x["name"], "Team": a_.get(str(x["team"])),
+                             "Game": labels[i], "Chance": x["chance"],
+                             "Worth it at": mm.fmt_american(mm.fair_american(x["chance"])),
+                             "Lineup": "✓ Confirmed" if x["sure"] else "Projected"})
+        allr.sort(key=lambda r: -r["Chance"])
+        bd = pd.DataFrame(allr[:15])
+        if not bd.empty:
+            bd["Chance"] = bd["Chance"].map(lambda v: f"{100 * v:.1f}%")
+            st.dataframe(bd, hide_index=True, width="stretch", key="fb_board_tab")
+        st.caption("Top three per game. A first basket at 15% needs about +570 to be worth it — "
+                   "compare with your book, then open the game below to judge your price.")
 
 footer()

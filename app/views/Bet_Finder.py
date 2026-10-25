@@ -488,7 +488,11 @@ else:
                     ("Each row opens on DraftKings' line with its price filled in"
                      + (f" (as of {book_asof.replace('T', ' ').replace('Z', ' UTC')})"
                         if book_asof else "") + "; players without one start at the line "
-                     "nearest a coin flip for him. Change a line or a price to your book's.")
+                     "nearest a coin flip for him. Change a line or a price to your book's."
+                     # 10-25 probe: 0 of 744 / 664 NFL items carried a price in any
+                     # query variant — DraftKings' free feed gives NFL LINES only
+                     + (" NFL: DraftKings' free feed posts the LINE but no price "
+                        "(measured 10-25), so type your price in." if sport == "NFL" else ""))
                     if has_book else
                     "Lines differ by player for this stat — each row starts at the line "
                     "nearest a coin flip for him. Change it to your book's line.")

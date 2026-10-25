@@ -1405,6 +1405,8 @@ def main(today=None):
         from engines import market_blend as mb
         model_block = ngm.build(finals, prior_finals, prior_lines=mb.load_lines("nfl_2025"))
         if model_block:
+            from engines import game_model as _gm
+            print(_gm.env_line("NFL", model_block.get("environment")))
             for _m in mb.MARKETS:
                 print(f"  [verify] NFL {mb.describe(model_block.get('blend'), _m)}")
             print(f"  [verify] NFL market coverage {(model_block.get('blend') or {}).get('coverage')}")

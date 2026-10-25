@@ -117,6 +117,119 @@ def league_constants(finals):
     }
 
 
+# ----------------------------------------------------------------------
+# TODAY'S SCORING ENVIRONMENT (10-25). Izzy: "make sure simulators and
+# model are adaptive to today's game style". The league rate every
+# projection is scaled by was LAST season's full-season average until a
+# sport had 150 games this season, then this season's flat average.
+# Measured 10-25 on last season's finals (walk-forward, squared error of
+# each game's total): the NBA's scoring moved ~10 points inside the season
+# (235 in October, 225 in February, 236 in April) and a league rate
+# weighted toward the most recent games beat the flat one (half-life 100
+# games, z 2.04); NHL, MLB and NFL showed no drift worth following
+# (z <= 0.9). So the environment is tested per sport, twice, and used
+# only where it wins both:
+#   1. the half-life, chosen on the PRIOR season's own walk-forward, must
+#      beat that season's flat to-date average;
+#   2. on THIS season's games so far, each priced before it is played,
+#      the recency-weighted rate (prior season's games, then this
+#      season's, one stream) must beat the rate the model used until now.
+# ----------------------------------------------------------------------
+ENV_HALF_LIVES = (50, 100, 200, 400)
+ENV_SWITCH = 150             # build(): this season's own constants from 150 games
+
+
+def _game_totals(finals):
+    return [(f["date"], f["hs"] + f["as"]) for f in finals]
+
+
+def _ewma_errors(totals, hl, burn):
+    """Squared error of each game's total against 2 x the recency-weighted
+    league rate of the games BEFORE it (half-life hl games; None = flat)."""
+    dec = 0.5 ** (1.0 / hl) if hl else 1.0
+    w = s = 0.0
+    out = []
+    for i, (_d, t) in enumerate(totals):
+        if i >= burn and w:
+            out.append((t - s / w) ** 2)
+        w = w * dec + 1.0
+        s = s * dec + t
+    return out
+
+
+def _ewma_rate(totals, hl):
+    dec = 0.5 ** (1.0 / hl)
+    w = s = 0.0
+    for _d, t in totals:
+        w = w * dec + 1.0
+        s = s * dec + t
+    return s / w / 2.0 if w else None
+
+
+def environment(prior, current, switch=ENV_SWITCH):
+    """{"half_life", "prior_test", "test", "applied", "rate", "used_rate",
+    "prior_rate", "season_rate", "n_current"} — clean finals in, the
+    scoring environment to scale the league by out. `rate` is what the
+    projections should use: the recency-weighted rate when both tests
+    beat, else the rate the model already used (`used_rate`)."""
+    from engines import model_math as mm
+    prior, current = prior or [], current or []
+    pt, ct = _game_totals(prior), _game_totals(current)
+    used = league_constants(current if len(current) >= switch or not prior else prior)
+    out = {"half_life": None, "prior_test": None, "test": None, "applied": False,
+           "used_rate": used["league_rate"] if used else None,
+           "prior_rate": league_constants(prior)["league_rate"] if prior else None,
+           "season_rate": league_constants(current)["league_rate"] if current else None,
+           "n_current": len(current)}
+    out["rate"] = out["used_rate"]
+    if len(pt) < 200:
+        return out
+    burn = len(pt) // 6
+    flat = _ewma_errors(pt, None, burn)
+    best = min(ENV_HALF_LIVES, key=lambda h: sum(_ewma_errors(pt, h, burn)))
+    v1 = mm.paired_verdict(_ewma_errors(pt, best, burn), flat)
+    out["half_life"], out["prior_test"] = best, v1
+    if v1.get("verdict") != "beats" or len(ct) < 20:
+        return out
+    # this season, each game priced before it: the environment vs what the
+    # model used (last season's average until `switch` games, then this
+    # season's to date)
+    stream = pt + ct
+    dec = 0.5 ** (1.0 / best)
+    w = s = 0.0
+    env_e, used_e = [], []
+    for i, (_d, t) in enumerate(stream):
+        k = i - len(pt)
+        if k >= 0 and w:
+            seen = ct[:k]
+            base = (sum(x for _d2, x in seen) / len(seen) if len(seen) >= switch
+                    else sum(x for _d2, x in pt) / len(pt))
+            env_e.append((t - s / w) ** 2)
+            used_e.append((t - base) ** 2)
+        w = w * dec + 1.0
+        s = s * dec + t
+    v2 = mm.paired_verdict(env_e, used_e)
+    out["test"] = v2
+    if v2.get("verdict") == "beats":
+        out["applied"] = True
+        out["rate"] = round(_ewma_rate(stream, best), 4)
+    return out
+
+
+def env_line(sport, env):
+    """One [verify] line for the nightly log."""
+    if not env:
+        return f"  [verify] {sport} scoring environment: not measured"
+    t1, t2 = env.get("prior_test") or {}, env.get("test") or {}
+    return (f"  [verify] {sport} scoring environment: this season {env.get('season_rate')} "
+            f"per team-game over {env.get('n_current')} games vs last season "
+            f"{env.get('prior_rate')}; half-life {env.get('half_life')} games "
+            f"(last season vs flat: {t1.get('verdict')} z={t1.get('z')}; this season vs the "
+            f"rate in use: {t2.get('verdict')} z={t2.get('z')}) -> "
+            + (f"USING {env['rate']} (was {env['used_rate']})" if env.get("applied")
+               else f"kept {env.get('used_rate')}"))
+
+
 def team_totals(finals):
     """{team: {"gf", "ga", "gp"}} over a set of finals."""
     t = defaultdict(lambda: {"gf": 0, "ga": 0, "gp": 0})
@@ -388,6 +501,10 @@ def build(finals, prior_finals=None, fit_carryover=True):
     else:
         consts = league_constants(finals)
         consts["from"] = "current"
+    env = environment(clean_finals(prior_finals) if prior_finals else [], finals)
+    if env.get("applied"):
+        consts["league_rate"] = env["rate"]
+        consts["from"] += "+environment"
     lg = consts["league_rate"]
     targets = prior_targets(prior_totals, prior_league, lg, params.get("carryover"))
     rates = team_rates(team_totals(finals), lg, params["shrink_k"], targets)
@@ -403,6 +520,7 @@ def build(finals, prior_finals=None, fit_carryover=True):
                       "gp": (team_totals(finals).get(t) or {}).get("gp", 0)}
                   for t, (o, d) in rates.items()},
         "validation": report,
+        "environment": env,
     }
 
 

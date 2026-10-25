@@ -24,6 +24,13 @@ unseen window against the naive price (each of the ten projected
 starters equally likely), paired per game. Calibration bins per player
 call -> the delivered chance and the guard's support on the page.
 
+THE CONFIRMED FIVE (10-25): every first field goal last season (1,235 of
+1,235) came from one of the ten starters. fit() also prices the unseen
+games on their REAL fives (rho_confirmed, measured on the fit side) and
+pairs that against the projected five: 2.27 vs 2.35 log loss per game,
+z ~17 on the 593-game test, on its own calibration curve. reprice() is
+what the page runs when ESPN posts a lineup or the user sets one.
+
 Pure — no streamlit, no requests.
 """
 import itertools
@@ -150,10 +157,18 @@ def shares(book, five, proj_pts, g_pow, lam, k_hist):
     return {p: (1 - lam) * use[p] + lam * hist[p] for p in five}
 
 
-def price_game(book, home, away, avail, proj_min, proj_pts, proj_reb, prm, day=None):
+def price_game(book, home, away, avail, proj_min, proj_pts, proj_reb, prm, day=None,
+               five=None, sure=None):
     """{"tip": P(home wins tip), "team": {home: P, away: P}, "jumpers":
-    {team: pid}, "players": {pid: (team, P first FG)}, "five": {team: [...]}}."""
-    five = {t: starters(book, t, avail.get(t, set()), proj_min, day) for t in (home, away)}
+    {team: pid}, "players": {pid: (team, P first FG)}, "five": {team: [...]}}.
+    `five` = {team: [5 pids]} CONFIRMED starters (10-25): priced with
+    prm["rho_confirmed"] instead of rho — last season every first field
+    goal was scored by one of the ten starters. `sure` = the teams whose
+    given five is confirmed (default: every team given one)."""
+    given = five or {}
+    sure = set(t for t in given if len(given[t] or ()) >= 5) if sure is None else set(sure)
+    five = {t: (list(given[t])[:5] if len(given.get(t) or ()) >= 5 else
+                starters(book, t, avail.get(t, set()), proj_min, day)) for t in (home, away)}
     jh = jumper(book, home, five[home], proj_reb)
     ja = jumper(book, away, five[away], proj_reb)
     tip = p_home_tip(book, jh, ja, prm["k_tip"]) if jh and ja else 0.5
@@ -162,9 +177,10 @@ def price_game(book, home, away, avail, proj_min, proj_pts, proj_reb, prm, day=N
     team = {home: ph, away: 1 - ph}
     players = {}
     for t in (home, away):
+        rho = prm.get("rho_confirmed", 0.99) if t in sure else prm["rho"]
         sh = shares(book, five[t], proj_pts, prm["g"], prm["lam"], prm["k_hist"])
         for p, s in sh.items():
-            players[p] = (t, team[t] * prm["rho"] * s)
+            players[p] = (t, team[t] * rho * s)
     return {"tip": tip, "team": team, "jumpers": {home: jh, away: ja}, "players": players,
             "five": five}
 
@@ -182,17 +198,28 @@ def _game_inputs(rows_by_game, g):
     return avail, pmin, ppts, preb
 
 
-def _walk(games, rows_by_game, prm, lo, hi):
+def _walk(games, rows_by_game, prm, lo, hi, confirmed=False):
     """[(priced game, actual first-FG pid, actual team, tip winner)] for
-    games in [lo, hi), each priced before it is added to the book."""
+    games in [lo, hi), each priced before it is added to the book.
+    confirmed=True prices each game on its REAL starting fives (what the
+    page does once lineups are out) — the five is known before the tip,
+    nothing after it is used."""
     book = Book()
     out = []
     for g in games:
         if lo <= g["date"] < hi and g.get("first_fg"):
             avail, pmin, ppts, preb = _game_inputs(rows_by_game, g)
             if all(len(avail.get(t, ())) >= 5 for t in (g["home"], g["away"])):
+                five = None
+                if confirmed:
+                    five = {t: list((g.get("starters") or {}).get(t) or [])
+                            for t in (g["home"], g["away"])}
+                    if not all(len(v) >= 5 for v in five.values()):
+                        book.add(g)
+                        continue
                 pg = price_game(book, g["home"], g["away"], avail, pmin, ppts, preb, prm,
-                                g["date"])
+                                g["date"], five=five)
+                pg["key"] = (g["date"], g["home"])
                 out.append((pg, g["first_fg"]["pid"], g["first_fg"]["team"],
                             (g.get("tip") or {}).get("team"), g["home"]))
         book.add(g)
@@ -220,6 +247,14 @@ def fit(games, rows_by_game, fit_window, test_window):
     both = [(pg, t, tip) for pg, _p, t, tip, _h in pre if tip]
     c = sum(1 for _pg, t, tip in both if t == tip) / max(1, len(both))
     rho = sum(1 for pg, pid, *_r in pre if pid in pg["players"]) / max(1, len(pre))
+    # 10-25: how often the first field goal came from one of the REAL ten
+    # starters (fit side only), shrunk one game toward "not"
+    fit_g = [g for g in games if g["date"] < tw[0] and g.get("first_fg")
+             and len(g.get("starters") or {}) == 2]
+    rho_c = (sum(1 for g in fit_g if any(g["first_fg"]["pid"] in v
+                                         for v in g["starters"].values())) / (len(fit_g) + 1.0)
+             if fit_g else 0.95)
+    base["rho_confirmed"] = round(rho_c, 4)
     best = None
     for k, gp, lam, kh in itertools.product(K_TIP, G_POW, LAMBDA, K_HIST):
         if not lam and kh != K_HIST[0]:
@@ -246,6 +281,15 @@ def fit(games, rows_by_game, fit_window, test_window):
              pg["players"].items()]
     team_calls = [(pg["team"][h], 1 if t == h else 0) for pg, _p, t, _tip, h in test]
     tips = [(pg["tip"], 1 if tip == h else 0) for pg, _p, _t, tip, h in test if tip]
+    # 10-25: the same unseen games priced on their CONFIRMED fives, paired
+    # with the projected-five price of the same game
+    conf = _walk(games, rows_by_game, prm, tw[0], "9999", confirmed=True)
+    lc = per_game(conf)
+    proj_loss = {pg["key"]: v for (pg, *_r), v in zip(test, lm)}
+    pairs = [(v, proj_loss[pg["key"]]) for (pg, *_r), v in zip(conf, lc)
+             if pg["key"] in proj_loss]
+    conf_calls = [(v, 1 if p == pid else 0) for pg, pid, *_r in conf
+                  for p, (_t, v) in pg["players"].items()]
     return {"params": prm, "n_test": len(test), "fit_loss": round(best[0], 4),
             "test_loss": round(sum(lm) / max(1, len(lm)), 4),
             "naive_loss": round(sum(ln) / max(1, len(ln)), 4),
@@ -258,8 +302,93 @@ def fit(games, rows_by_game, fit_window, test_window):
             "tip": {"brier": mm.score_predictions(tips)["brier"],
                     "verdict": mm.paired_verdict([(p - y) ** 2 for p, y in tips],
                                                  [(0.5 - y) ** 2 for _p, y in tips])},
+            "confirmed": {"n": len(conf), "loss": round(sum(lc) / max(1, len(lc)), 4),
+                          "rho": prm["rho_confirmed"],
+                          "verdict": mm.paired_verdict([a for a, _b in pairs],
+                                                       [b for _a, b in pairs]),
+                          "calibration": mm.calibration_bins(conf_calls, EDGES)},
             "scorer_in_five": round(sum(1 for pg, pid, *_r in test if pid in pg["players"])
                                     / max(1, len(test)), 3)}
+
+
+# ----------------------------------------------------------------------
+# The page's re-price (10-25): the nightly ships each game's whole pool of
+# available players with what pricing needs; the page re-prices on the
+# five the user (or ESPN) confirms. Same functions as the test.
+# ----------------------------------------------------------------------
+def pool_row(book, pid, team, name, pmin, pts, reb):
+    return {"pid": pid, "team": team, "name": name, "min": round(pmin or 0, 1),
+            "pts": round(pts or 0, 2), "reb": round(reb or 0, 2),
+            "fb": book.fb.get(pid, 0), "starts": book.starts.get(pid, 0),
+            "tip": list(book.tip.get(pid) or [0, 0]),
+            "jumps": (book.jumper.get(team) or {}).get(pid, 0)}
+
+
+def reprice(game, prm, fives=None, sure=None):
+    """One game's first-basket prices from its shipped pool. `game` =
+    {"home", "away", "pool": [pool_row], "five": {team: projected five}};
+    `fives` = {team: [5 pids]} to use instead (only pids in the pool);
+    `sure` = teams whose five is CONFIRMED. Returns the payload shape:
+    {"tip_home", "team", "jumpers", "players", "other", "five", "sure"}."""
+    home, away = str(game["home"]), str(game["away"])
+    pool = {str(r["pid"]): r for r in game.get("pool") or []}
+    b = Book()
+    for p, r in pool.items():
+        b.tip[p] = list(r.get("tip") or [0, 0])
+        b.fb[p] = r.get("fb", 0)
+        b.starts[p] = r.get("starts", 0)
+        if r.get("jumps"):
+            b.jumper.setdefault(str(r["team"]), {})[p] = r["jumps"]
+    use, mine = {}, set()
+    for t in (home, away):
+        f = [str(p) for p in ((fives or {}).get(t) or []) if str(p) in pool]
+        if len(f) >= 5:
+            use[t] = f[:5]
+            mine.add(t)
+        else:
+            use[t] = [str(p) for p in (game.get("five") or {}).get(t) or []]
+    sure = {t for t in (sure or ()) if t in mine}      # only a five that was really used
+    avail = {t: {p for p, r in pool.items() if str(r["team"]) == t} for t in (home, away)}
+    g_ = {p: r.get("min", 0) for p, r in pool.items()}
+    pts = {p: r.get("pts", 0) for p, r in pool.items()}
+    reb = {p: r.get("reb", 0) for p, r in pool.items()}
+    pg = price_game(b, home, away, avail, g_, pts, reb, prm, five=use, sure=sure)
+    jump = {}
+    for t, p in pg["jumpers"].items():
+        w, n = b.tip.get(p) or [0, 0]
+        jump[t] = {"pid": p, "name": (pool.get(p) or {}).get("name"), "wins": w, "jumps": n}
+    return {"tip_home": pg["tip"], "team": pg["team"], "jumpers": jump,
+            "players": sorted([{"pid": p, "name": (pool.get(p) or {}).get("name") or p,
+                                "team": t, "p": v, "starts": b.starts.get(p, 0),
+                                "fb": b.fb.get(p, 0)} for p, (t, v) in pg["players"].items()],
+                              key=lambda x: -x["p"]),
+            "other": max(0.0, 1 - sum(v for _t, v in pg["players"].values())),
+            "five": pg["five"], "sure": sorted(sure)}
+
+
+def pregame_starters(summary):
+    """{team id: [5 pids]} from an ESPN summary when it marks exactly five
+    starters for a team (box score or rosters block) — the lineup is out.
+    {} when it does not (most of the day before tip)."""
+    out = {}
+    blocks = (((summary or {}).get("boxscore") or {}).get("players") or [])
+    for b in blocks:
+        t = str(((b.get("team") or {}).get("id")) or "")
+        ids = []
+        for grp in b.get("statistics") or []:
+            for ent in grp.get("athletes") or []:
+                a = (ent.get("athlete") or {}).get("id")
+                if ent.get("starter") and a and str(a) not in ids:
+                    ids.append(str(a))
+        if t and len(ids) == 5:
+            out[t] = ids
+    for r in (summary or {}).get("rosters") or []:
+        t = str(((r.get("team") or {}).get("id")) or "")
+        ids = [str((e.get("athlete") or {}).get("id")) for e in r.get("roster") or []
+               if e.get("starter") and (e.get("athlete") or {}).get("id")]
+        if t and t not in out and len(ids) == 5:
+            out[t] = ids
+    return out
 
 
 def book_from(games):
