@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-25 10:16",
+  "generated_at_et": "2026-10-25 11:40",
   "week": 7,
   "league": {
     "team_games": 188,
@@ -1072,7 +1072,7 @@
         "opp": "ATL",
         "pos": "RB",
         "gp": 6,
-        "proj": 68,
+        "proj": 67,
         "window": "Sunday Early"
       },
       {
@@ -1081,7 +1081,7 @@
         "opp": "SF",
         "pos": "RB",
         "gp": 6,
-        "proj": 62,
+        "proj": 61,
         "window": "Sunday Early"
       },
       {
@@ -1256,6 +1256,15 @@
         "window": "Sunday Late"
       },
       {
+        "player": "Quinshon Judkins",
+        "team": "CLE",
+        "opp": "TEN",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 40,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Jordan Mason",
         "team": "MIN",
         "opp": "IND",
@@ -1281,15 +1290,6 @@
         "gp": 6,
         "proj": 38,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Drake London",
-        "team": "ATL",
-        "opp": "SF",
-        "pos": "WR",
-        "gp": 6,
-        "proj": 37,
-        "window": "Sunday Early"
       },
       {
         "player": "Cam Skattebo",
@@ -1319,6 +1319,24 @@
         "window": "Sunday Late"
       },
       {
+        "player": "Drake London",
+        "team": "ATL",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 36,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tony Pollard",
+        "team": "TEN",
+        "opp": "CLE",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 36,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Brock Bowers",
         "team": "LV",
         "opp": "LAR",
@@ -1326,15 +1344,6 @@
         "gp": 4,
         "proj": 36,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Quinshon Judkins",
-        "team": "CLE",
-        "opp": "TEN",
-        "pos": "RB",
-        "gp": 5,
-        "proj": 35,
-        "window": "Sunday Early"
       },
       {
         "player": "Tetairoa McMillan",
@@ -1353,15 +1362,6 @@
         "gp": 6,
         "proj": 35,
         "window": "Sunday Late"
-      },
-      {
-        "player": "George Kittle",
-        "team": "SF",
-        "opp": "ATL",
-        "pos": "TE",
-        "gp": 6,
-        "proj": 34,
-        "window": "Sunday Early"
       },
       {
         "player": "Braelon Allen",
@@ -1409,10 +1409,10 @@
         "window": "Sunday Night"
       },
       {
-        "player": "Garrett Wilson",
-        "team": "NYJ",
-        "opp": "MIA",
-        "pos": "WR",
+        "player": "George Kittle",
+        "team": "SF",
+        "opp": "ATL",
+        "pos": "TE",
         "gp": 6,
         "proj": 33,
         "window": "Sunday Early"
@@ -1735,15 +1735,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Audric Estime",
-        "team": "CLE",
-        "opp": "TEN",
-        "pos": "RB",
-        "gp": 1,
-        "proj": 23.8,
-        "window": "Sunday Early"
-      },
-      {
         "player": "J.J. McCarthy",
         "team": "NYG",
         "opp": "HOU",
@@ -1778,6 +1769,15 @@
         "gp": 6,
         "proj": 20.3,
         "window": "Sunday Late"
+      },
+      {
+        "player": "Tyler Huntley",
+        "team": "BAL",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 20.2,
+        "window": "Sunday Early"
       }
     ],
     "Carries": [
@@ -1989,15 +1989,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Audric Estime",
-        "team": "CLE",
-        "opp": "TEN",
-        "pos": "RB",
-        "gp": 1,
-        "proj": 8.8,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Bam Knight",
         "team": "ARI",
         "opp": "DEN",
@@ -2140,6 +2131,15 @@
         "gp": 5,
         "proj": 3.7,
         "window": "Sunday Late"
+      },
+      {
+        "player": "Emari Demercado",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 3.6,
+        "window": "Monday Night"
       }
     ],
     "Receiving yards": [
@@ -5056,16 +5056,7 @@
         "opp": "ATL",
         "pos": "RB",
         "gp": 6,
-        "proj": 31.2,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Bijan Robinson",
-        "team": "ATL",
-        "opp": "SF",
-        "pos": "RB",
-        "gp": 6,
-        "proj": 24.9,
+        "proj": 30.5,
         "window": "Sunday Early"
       },
       {
@@ -5075,6 +5066,15 @@
         "pos": "RB",
         "gp": 6,
         "proj": 24.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Bijan Robinson",
+        "team": "ATL",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 24.1,
         "window": "Sunday Early"
       },
       {
@@ -5240,6 +5240,15 @@
         "window": "Sunday Early"
       },
       {
+        "player": "Quinshon Judkins",
+        "team": "CLE",
+        "opp": "TEN",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 9.6,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Jonah Coleman",
         "team": "DEN",
         "opp": "ARI",
@@ -5294,12 +5303,21 @@
         "window": "Sunday Late"
       },
       {
+        "player": "Tony Pollard",
+        "team": "TEN",
+        "opp": "CLE",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 7.6,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Drake London",
         "team": "ATL",
         "opp": "SF",
         "pos": "WR",
         "gp": 6,
-        "proj": 7.8,
+        "proj": 7.5,
         "window": "Sunday Early"
       },
       {
@@ -5310,15 +5328,6 @@
         "gp": 4,
         "proj": 7.3,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Quinshon Judkins",
-        "team": "CLE",
-        "opp": "TEN",
-        "pos": "RB",
-        "gp": 5,
-        "proj": 7.1,
-        "window": "Sunday Early"
       },
       {
         "player": "Tetairoa McMillan",
@@ -5345,15 +5354,6 @@
         "pos": "RB",
         "gp": 6,
         "proj": 6.7,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "George Kittle",
-        "team": "SF",
-        "opp": "ATL",
-        "pos": "TE",
-        "gp": 6,
-        "proj": 6.6,
         "window": "Sunday Early"
       },
       {
@@ -5393,12 +5393,12 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Garrett Wilson",
-        "team": "NYJ",
-        "opp": "MIA",
-        "pos": "WR",
+        "player": "George Kittle",
+        "team": "SF",
+        "opp": "ATL",
+        "pos": "TE",
         "gp": 6,
-        "proj": 6.2,
+        "proj": 6.3,
         "window": "Sunday Early"
       }
     ]
