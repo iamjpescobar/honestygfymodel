@@ -331,6 +331,7 @@
    "why": "4.30 shots and 1.48 points a game over 90 games (this season + last, pulled toward the forward average) \u00b7 ice time 22.8 min over his last 5 vs 22.2 on his rate \u2192 shots x1.01 \u00b7 TB matchup sets tonight's shot volume x0.95 and scoring x0.94 \u00b7 TB allows the 2nd-fewest of 32 shots to centres (8.8 a game vs 9.6) \u00b7 \u2192 4.16 expected shots, 1.42 expected points \u00b7 PP1 by minutes (3.9 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 2.0,
    "at_least": 1,
    "date": "2026-10-24",
    "fair": -598,
@@ -345,11 +346,32 @@
    "p_cal": 0.8567,
    "player": "Connor McDavid",
    "player_id": "3895074",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-24T19:00:00-04:00",
    "stat": "pts",
    "team": "Edmonton Oilers",
    "why": "3.54 shots and 1.71 points a game over 92 games (this season + last, pulled toward the forward average) \u00b7 ice time 23.6 min over his last 5 vs 23.1 on his rate \u2192 shots x1.01 \u00b7 TOR matchup sets tonight's shot volume x1.15 and scoring x1.21 \u00b7 TOR allows the 1st-most of 32 shots to centres (10.8 a game vs 9.6) \u00b7 \u2192 4.12 expected shots, 2.10 expected points \u00b7 PP1 by minutes (2.9 PP min a game over his last 5; context, not in the number)"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-25",
+   "fair": -265,
+   "game": "Colorado Avalanche @ Nashville Predators",
+   "game_id": "401892580",
+   "label": "Pts O0.5",
+   "logged_at": "2026-10-25T13:12:12+00:00",
+   "market": "pt1",
+   "matchup": null,
+   "matchup_tier": null,
+   "p": 0.7826,
+   "p_cal": 0.7259,
+   "player": "Nathan MacKinnon",
+   "player_id": "3041969",
+   "result": null,
+   "start": "2026-10-25T20:00:00-04:00",
+   "stat": "pts",
+   "team": "Colorado Avalanche",
+   "why": "4.29 shots and 1.50 points a game over 91 games (this season + last, pulled toward the forward average) \u00b7 ice time 22.4 min over his last 5 vs 22.1 on his rate \u2192 shots x1.01 \u00b7 NSH matchup sets tonight's shot volume x1.04 and scoring x1.01 (in the number) \u00b7 NSH allows the 2nd-most of 32 shots to centres (10.4 a game vs 9.6; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 4.51 expected shots, 1.53 expected points \u00b7 PP1 by minutes (3.9 PP min a game over his last 5; context, not in the number)"
   }
  ]
 }
