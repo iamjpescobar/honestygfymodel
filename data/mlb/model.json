@@ -71,7 +71,24 @@
    "w_used": 0.0
   }
  },
- "generated_at_et": "2026-10-25 10:30",
+ "environment": {
+  "applied": false,
+  "half_life": 200,
+  "n_current": 2430,
+  "prior_rate": 4.4466,
+  "prior_test": {
+   "diff": 0.01909,
+   "n": 2029,
+   "se": 0.0465,
+   "verdict": "thin",
+   "z": 0.41
+  },
+  "rate": 4.4811,
+  "season_rate": 4.4811,
+  "test": null,
+  "used_rate": 4.4811
+ },
+ "generated_at_et": "2026-10-25 11:58",
  "league": {
   "avg_total": 8.962,
   "away_mult": 0.9945,
