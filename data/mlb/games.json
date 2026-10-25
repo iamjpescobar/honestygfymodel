@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-24 19:06",
+  "generated_at_et": "2026-10-24 20:53",
   "slate_date_et": "2026-10-24",
   "source": "statsapi.mlb.com schedule + this app's own engines",
   "games": [
@@ -12,8 +12,8 @@
       "venue": "American Family Field",
       "game_time": "2026-10-25T00:00:00Z",
       "weather_condition": "Roof Closed",
-      "weather_temp": "70",
-      "weather_wind": "1 mph, R To L",
+      "weather_temp": "71",
+      "weather_wind": "0 mph, None",
       "park_factor": 97,
       "park_verified": true,
       "away_pitcher_id": 656876,
@@ -35,10 +35,10 @@
         "spread": 1.5,
         "home_ml": -116,
         "away_ml": 104,
-        "over_price": -108,
-        "under_price": -111,
-        "home_spread_price": -220,
-        "away_spread_price": 179
+        "over_price": -109,
+        "under_price": -110,
+        "home_spread_price": -217,
+        "away_spread_price": 177
       },
       "model": {
         "home_score": 3.8,
@@ -68,8 +68,8 @@
         },
         "p_home_mkt": 0.5228,
         "p_home_final": 0.5228,
-        "p_over_mkt": 0.4967,
-        "p_over_final": 0.4967,
+        "p_over_mkt": 0.4989,
+        "p_over_final": 0.4989,
         "total_priced": true,
         "starters_used": true,
         "home_starter": {
