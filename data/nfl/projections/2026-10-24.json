@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-24 17:54",
+  "generated_at_et": "2026-10-24 20:15",
   "week": 7,
   "league": {
     "team_games": 188,
@@ -1063,7 +1063,7 @@
         "opp": "GB",
         "pos": "RB",
         "gp": 5,
-        "proj": 70,
+        "proj": 71,
         "window": "Sunday Late"
       },
       {
@@ -1072,22 +1072,22 @@
         "opp": "ATL",
         "pos": "RB",
         "gp": 6,
-        "proj": 67,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Derrick Henry",
-        "team": "BAL",
-        "opp": "CIN",
-        "pos": "RB",
-        "gp": 6,
-        "proj": 62,
+        "proj": 68,
         "window": "Sunday Early"
       },
       {
         "player": "Bijan Robinson",
         "team": "ATL",
         "opp": "SF",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 62,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "CIN",
         "pos": "RB",
         "gp": 6,
         "proj": 61,
@@ -1166,15 +1166,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Jaylen Warren",
-        "team": "PIT",
-        "opp": "NO",
-        "pos": "RB",
-        "gp": 6,
-        "proj": 47,
-        "window": "Sunday Morning"
-      },
-      {
         "player": "Amon-Ra St. Brown",
         "team": "DET",
         "opp": "GB",
@@ -1182,6 +1173,15 @@
         "gp": 5,
         "proj": 47,
         "window": "Sunday Late"
+      },
+      {
+        "player": "Jaylen Warren",
+        "team": "PIT",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 46,
+        "window": "Sunday Morning"
       },
       {
         "player": "Jaxon Smith-Njigba",
@@ -1211,15 +1211,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Rico Dowdle",
-        "team": "PIT",
-        "opp": "NO",
-        "pos": "RB",
-        "gp": 3,
-        "proj": 43,
-        "window": "Sunday Morning"
-      },
-      {
         "player": "Aaron Jones Sr.",
         "team": "MIN",
         "opp": "IND",
@@ -1227,6 +1218,15 @@
         "gp": 5,
         "proj": 43,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Rico Dowdle",
+        "team": "PIT",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 42,
+        "window": "Sunday Morning"
       },
       {
         "player": "Breece Hall",
@@ -1261,17 +1261,8 @@
         "opp": "BAL",
         "pos": "WR",
         "gp": 5,
-        "proj": 40,
+        "proj": 41,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Jonah Coleman",
-        "team": "DEN",
-        "opp": "ARI",
-        "pos": "RB",
-        "gp": 1,
-        "proj": 40,
-        "window": "Sunday Late"
       },
       {
         "player": "Pierre Strong Jr.",
@@ -1279,6 +1270,15 @@
         "opp": "DET",
         "pos": "RB",
         "gp": 2,
+        "proj": 41,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Jonah Coleman",
+        "team": "DEN",
+        "opp": "ARI",
+        "pos": "RB",
+        "gp": 1,
         "proj": 40,
         "window": "Sunday Late"
       },
@@ -1319,6 +1319,15 @@
         "window": "Sunday Late"
       },
       {
+        "player": "Drake London",
+        "team": "ATL",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 37,
+        "window": "Sunday Early"
+      },
+      {
         "player": "MarShawn Lloyd",
         "team": "GB",
         "opp": "DET",
@@ -1326,15 +1335,6 @@
         "gp": 6,
         "proj": 37,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Drake London",
-        "team": "ATL",
-        "opp": "SF",
-        "pos": "WR",
-        "gp": 6,
-        "proj": 36,
-        "window": "Sunday Early"
       },
       {
         "player": "Trey McBride",
@@ -1382,22 +1382,13 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Alvin Kamara",
-        "team": "NO",
-        "opp": "PIT",
-        "pos": "RB",
-        "gp": 5,
-        "proj": 34,
-        "window": "Sunday Morning"
-      },
-      {
-        "player": "Chris Olave",
-        "team": "NO",
-        "opp": "PIT",
-        "pos": "WR",
+        "player": "George Kittle",
+        "team": "SF",
+        "opp": "ATL",
+        "pos": "TE",
         "gp": 6,
         "proj": 34,
-        "window": "Sunday Morning"
+        "window": "Sunday Early"
       },
       {
         "player": "Garrett Wilson",
@@ -1409,13 +1400,22 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Emanuel Wilson",
-        "team": "SEA",
-        "opp": "KC",
-        "pos": "RB",
+        "player": "Tee Higgins",
+        "team": "CIN",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 34,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Christian Watson",
+        "team": "GB",
+        "opp": "DET",
+        "pos": "WR",
         "gp": 6,
         "proj": 34,
-        "window": "Sunday Night"
+        "window": "Sunday Late"
       }
     ],
     "Rushing yards": [
@@ -5182,7 +5182,7 @@
         "opp": "GB",
         "pos": "RB",
         "gp": 5,
-        "proj": 34.4,
+        "proj": 35.6,
         "window": "Sunday Late"
       },
       {
@@ -5191,16 +5191,7 @@
         "opp": "ATL",
         "pos": "RB",
         "gp": 6,
-        "proj": 30.5,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Derrick Henry",
-        "team": "BAL",
-        "opp": "CIN",
-        "pos": "RB",
-        "gp": 6,
-        "proj": 25.0,
+        "proj": 31.2,
         "window": "Sunday Early"
       },
       {
@@ -5209,7 +5200,16 @@
         "opp": "SF",
         "pos": "RB",
         "gp": 6,
-        "proj": 24.1,
+        "proj": 24.9,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 24.7,
         "window": "Sunday Early"
       },
       {
@@ -5227,7 +5227,7 @@
         "opp": "PHI",
         "pos": "RB",
         "gp": 6,
-        "proj": 21.9,
+        "proj": 21.2,
         "window": "Monday Night"
       },
       {
@@ -5263,7 +5263,7 @@
         "opp": "BAL",
         "pos": "RB",
         "gp": 5,
-        "proj": 14.5,
+        "proj": 14.8,
         "window": "Sunday Early"
       },
       {
@@ -5285,21 +5285,12 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Jaylen Warren",
-        "team": "PIT",
-        "opp": "NO",
-        "pos": "RB",
-        "gp": 6,
-        "proj": 13.2,
-        "window": "Sunday Morning"
-      },
-      {
         "player": "Amon-Ra St. Brown",
         "team": "DET",
         "opp": "GB",
         "pos": "WR",
         "gp": 5,
-        "proj": 13.1,
+        "proj": 13.7,
         "window": "Sunday Late"
       },
       {
@@ -5310,6 +5301,15 @@
         "gp": 6,
         "proj": 13.0,
         "window": "Sunday Night"
+      },
+      {
+        "player": "Jaylen Warren",
+        "team": "PIT",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 12.7,
+        "window": "Sunday Morning"
       },
       {
         "player": "Puka Nacua",
@@ -5330,15 +5330,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Rico Dowdle",
-        "team": "PIT",
-        "opp": "NO",
-        "pos": "RB",
-        "gp": 3,
-        "proj": 10.9,
-        "window": "Sunday Morning"
-      },
-      {
         "player": "Aaron Jones Sr.",
         "team": "MIN",
         "opp": "IND",
@@ -5357,13 +5348,13 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Saquon Barkley",
-        "team": "PHI",
-        "opp": "DAL",
+        "player": "Rico Dowdle",
+        "team": "PIT",
+        "opp": "NO",
         "pos": "RB",
-        "gp": 4,
-        "proj": 10.6,
-        "window": "Monday Night"
+        "gp": 3,
+        "proj": 10.5,
+        "window": "Sunday Morning"
       },
       {
         "player": "Breece Hall",
@@ -5375,12 +5366,21 @@
         "window": "Sunday Early"
       },
       {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 10.2,
+        "window": "Monday Night"
+      },
+      {
         "player": "Ja'Marr Chase",
         "team": "CIN",
         "opp": "BAL",
         "pos": "WR",
         "gp": 5,
-        "proj": 9.5,
+        "proj": 9.7,
         "window": "Sunday Early"
       },
       {
@@ -5389,7 +5389,7 @@
         "opp": "DET",
         "pos": "RB",
         "gp": 2,
-        "proj": 9.5,
+        "proj": 9.7,
         "window": "Sunday Late"
       },
       {
@@ -5438,22 +5438,22 @@
         "window": "Sunday Early"
       },
       {
-        "player": "MarShawn Lloyd",
-        "team": "GB",
-        "opp": "DET",
-        "pos": "RB",
-        "gp": 6,
-        "proj": 7.7,
-        "window": "Sunday Late"
-      },
-      {
         "player": "Drake London",
         "team": "ATL",
         "opp": "SF",
         "pos": "WR",
         "gp": 6,
-        "proj": 7.5,
+        "proj": 7.8,
         "window": "Sunday Early"
+      },
+      {
+        "player": "MarShawn Lloyd",
+        "team": "GB",
+        "opp": "DET",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 7.8,
+        "window": "Sunday Late"
       },
       {
         "player": "Brock Bowers",
@@ -5501,22 +5501,13 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Chris Olave",
-        "team": "NO",
-        "opp": "PIT",
-        "pos": "WR",
+        "player": "George Kittle",
+        "team": "SF",
+        "opp": "ATL",
+        "pos": "TE",
         "gp": 6,
-        "proj": 6.7,
-        "window": "Sunday Morning"
-      },
-      {
-        "player": "Alvin Kamara",
-        "team": "NO",
-        "opp": "PIT",
-        "pos": "RB",
-        "gp": 5,
-        "proj": 6.5,
-        "window": "Sunday Morning"
+        "proj": 6.6,
+        "window": "Sunday Early"
       },
       {
         "player": "Emanuel Wilson",
@@ -5533,6 +5524,15 @@
         "opp": "MIA",
         "pos": "WR",
         "gp": 6,
+        "proj": 6.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tee Higgins",
+        "team": "CIN",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 5,
         "proj": 6.4,
         "window": "Sunday Early"
       }
