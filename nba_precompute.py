@@ -557,6 +557,11 @@ def main(today=None):
                                                         "vol_test")}
                 print(f"  [verify] NBA props test: {ctx['n_test']} player-games ("
                       f"{ctx['n_this_season']} from this season)")
+                for _sea, _by in (ctx.get("bias") or {}).items():
+                    for _m, _st in _by.items():
+                        print(f"  [verify] NBA projection bias {_sea} ({_m}): " + "; ".join(
+                            f"{k} {v['pred']} -> {v['actual']} (x{v['ratio']}, n{v['n']})"
+                            for k, v in _st.items()))
                 print(f"  [verify] NBA context ({time.time() - t0:.0f}s): opponent {ctx['opp']}; "
                       f"teammate out {ctx['out']}")
                 print(f"  [verify] NBA team minutes add up: {ctx['vol_tried']} vs without on "

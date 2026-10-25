@@ -10,6 +10,47 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — MLB simulator survives Statcast's NA; the 10-22 4 PM nightly read (NHL periods / shots / SGP, NFL 1Q / 1H). 2026-10-22 (11)
+
+**Suite 159, FAILING: none.** tests/test_mlb_sim.py +1 check (control
+red: _na() that only knows float NaN -> "Statcast's nullable columns ...
+read exactly like plain ones" fails).
+
+THE BUG: the real nightly's MLB simulator died — "TypeError: boolean
+value of NA is ambiguous". Statcast's frame carries on_1b / on_2b /
+on_3b (and friends) as pandas nullable integers; an empty base is pd.NA
+and `x == x` / `x != x` on it raises inside `if`. The synthetic season
+used float NaN, so the test never saw it. Fix: mlb_sim.state_rows turns
+every missing value (None, NaN, pd.NA — mlb_sim._na) into None before
+any comparison; mlb_prop_precompute._final_scores uses pd.notna. The
+test now runs state_rows and _final_scores on the synthetic PAs recast
+to Int64 with NA. The MLB simulator's real verdicts arrive with the
+next nightly.
+
+THE 4 PM NIGHTLY (read 10-22):
+NHL — this season's shots from the NHL feed: 153 games, 100% matched,
+SOG == ESPN 99.9%. Attempts -> SOG thin z 0.1, chances -> goals thin
+z 1.7: context only (as measured in (10)). Ice time SOG z 7.9, pts 6.3.
+1st period (now with this season): point z 14.1, 1+ SOG 15.7, 2+ SOG
+13.6, goal 13.9 — all beat, calibrated; team lines thin (O1.5 z 0.3,
+home leads z 0.9). SGP: PP 4.2, PPP 4.6, PW 3.6 beat; GG 2.0, GW 1.9,
+PPPP 1.6, SS 0.5 thin; PPopp fails. Multi-goal watch: 19 of 61 two-goal
+scorers in its top 25 (random 25 -> 5.3).
+NFL — 1Q / 1H on 11,490 clean player-game stats: receptions 1Q z 6.2 /
+1H 7.3, receiving yds 5.5 / 5.6, rushing yds 3.2 / 3.0, carries 2.2 /
+2.8, 1Q completions 3.0 — beat. QB 1H (yds, completions, attempts)
+fail; 1Q yds / attempts thin. QB props OVER-predict throughout
+(predicted 0.48-0.54 vs actual 0.37-0.45, n ~150-170) — the next NFL
+quarters item: the QB clean set is small and biased (games whose
+quarters add up skew to simpler games?) or the QB ratio bands need
+their own split. Not offered on the Bet Finder (offered() = beats only),
+so no false bet meanwhile. SGP: UW beats z 2.7, TW thin 1.6; rest fail.
+
+FILES: app/engines/mlb_sim.py, mlb_prop_precompute.py,
+tests/test_mlb_sim.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NHL shots measured (context only, both thin); every workflow push retries; NFL spikes are incompletions. 2026-10-22 (10)
 
 **Suite 159, FAILING: none.** New tests/test_push_retry.py (control red:

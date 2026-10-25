@@ -154,6 +154,54 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — First Site-vs-DraftKings read: the NBA model's over chances run ~11 points under the book's; a nightly bias line now measures whether the model under-projects this season. 2026-10-25 (4)
+
+**Suite 170, FAILING: none.** tests/test_nba_context.py +2 checks
+(control red: the ratio inverted); tests/test_nba_pbp.py +6 (control red:
+9:00 exactly left out).
+
+READ (scorecard 10-25 4 PM; graded nights: NBA 10-24 only, 7 games, 637
+main lines). Brier site vs book: every NBA market worse (0.27-0.30 vs
+0.24-0.25; pa / pr / pra fail at z -2.5 to -2.9); flagged plays -6% to
+-30% ROI. Direction, measured from data/props/graded/nba.json: site mean
+P(over) 0.38, book 0.49, actual 0.58. The site leaned UNDER by 5+ points
+on 448 of 637 lines and those went over 58%. Not the calibration curve
+(raw 0.36, delivered 0.34 on all captured rows incl. ladders), not the
+league environment (115.08 vs 115.36). So the projections themselves sat
+below DraftKings' lines. One night of correlated games — not a verdict
+yet — but too one-sided to wait on blind.
+NHL: site ~= book on every market (Brier within 0.01), still grading.
+
+NEW DIAGNOSTIC: nba_context.fit returns "bias" — mean projected vs
+actual per stat on unseen player-games, this season vs last season's
+test window, all and 20+ projected minutes; nightly prints "[verify] NBA
+projection bias ...". NEXT: if this season's ratio sits clearly above 1
+(e.g. 1.05+) while last season's is ~1.00, the fix is a this-season
+level correction fitted walk-forward and tested (adopt only if it
+beats); if both ~1.00, look at minutes (team minutes target 220,
+beta 0.5) and at capture time (12:39Z, before lineup news).
+
+FIRST 3 MINUTES (Izzy: "I need players to score in the first 3 minutes
+... a market I like to bet on"). Step 1, the data: nba_pbp.parse now
+records "early" {pid: [points, made FGs]} for period 1 with 9:00 or
+more left (exactly 9:00 counts), "early_team" {team: points}, and
+"team_first_fg" {team: first FG record} (team first basket market).
+This season's games get it from the nightly's play-by-play; last
+season's needs ONE re-run of "NBA prior play-by-play" (nba-pbp-prior.yml,
+30-60 min), which now prints "[verify] first 3 minutes: ... a starter
+scored in the first 3 minutes X%". DraftKings' feed has no such market
+(10-24 type list) — price typed in. NEXT: the model, fitted and tested
+on that data (his early points rate per start, shrunk toward his share
+of team scoring x the team's early points), then a section on First
+Basket.
+
+FILES: app/engines/nba_context.py, nba_precompute.py,
+tests/test_nba_context.py, app/engines/nba_pbp.py, nba_pbp_prior.py,
+.github/workflows/nba-pbp-prior.yml, tests/test_nba_pbp.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — First Basket: a real starter with no projection is priced, not zeroed (the 10-25 nightly's confirmed test was thin because of it). 2026-10-25 (3)
 
 **Suite 170, FAILING: none.** tests/test_nba_first_confirmed.py +4 checks
@@ -665,46 +713,5 @@ look at other free sources before anything else.
 
 FILES: prop_lines_probe.py (NEW), .github/workflows/prop-lines-probe.yml
 (NEW), tests/test_prop_lines_probe.py (NEW), HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — MLB simulator survives Statcast's NA; the 10-22 4 PM nightly read (NHL periods / shots / SGP, NFL 1Q / 1H). 2026-10-22 (11)
-
-**Suite 159, FAILING: none.** tests/test_mlb_sim.py +1 check (control
-red: _na() that only knows float NaN -> "Statcast's nullable columns ...
-read exactly like plain ones" fails).
-
-THE BUG: the real nightly's MLB simulator died — "TypeError: boolean
-value of NA is ambiguous". Statcast's frame carries on_1b / on_2b /
-on_3b (and friends) as pandas nullable integers; an empty base is pd.NA
-and `x == x` / `x != x` on it raises inside `if`. The synthetic season
-used float NaN, so the test never saw it. Fix: mlb_sim.state_rows turns
-every missing value (None, NaN, pd.NA — mlb_sim._na) into None before
-any comparison; mlb_prop_precompute._final_scores uses pd.notna. The
-test now runs state_rows and _final_scores on the synthetic PAs recast
-to Int64 with NA. The MLB simulator's real verdicts arrive with the
-next nightly.
-
-THE 4 PM NIGHTLY (read 10-22):
-NHL — this season's shots from the NHL feed: 153 games, 100% matched,
-SOG == ESPN 99.9%. Attempts -> SOG thin z 0.1, chances -> goals thin
-z 1.7: context only (as measured in (10)). Ice time SOG z 7.9, pts 6.3.
-1st period (now with this season): point z 14.1, 1+ SOG 15.7, 2+ SOG
-13.6, goal 13.9 — all beat, calibrated; team lines thin (O1.5 z 0.3,
-home leads z 0.9). SGP: PP 4.2, PPP 4.6, PW 3.6 beat; GG 2.0, GW 1.9,
-PPPP 1.6, SS 0.5 thin; PPopp fails. Multi-goal watch: 19 of 61 two-goal
-scorers in its top 25 (random 25 -> 5.3).
-NFL — 1Q / 1H on 11,490 clean player-game stats: receptions 1Q z 6.2 /
-1H 7.3, receiving yds 5.5 / 5.6, rushing yds 3.2 / 3.0, carries 2.2 /
-2.8, 1Q completions 3.0 — beat. QB 1H (yds, completions, attempts)
-fail; 1Q yds / attempts thin. QB props OVER-predict throughout
-(predicted 0.48-0.54 vs actual 0.37-0.45, n ~150-170) — the next NFL
-quarters item: the QB clean set is small and biased (games whose
-quarters add up skew to simpler games?) or the QB ratio bands need
-their own split. Not offered on the Bet Finder (offered() = beats only),
-so no false bet meanwhile. SGP: UW beats z 2.7, TW thin 1.6; rest fail.
-
-FILES: app/engines/mlb_sim.py, mlb_prop_precompute.py,
-tests/test_mlb_sim.py, HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

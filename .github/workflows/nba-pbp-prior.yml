@@ -1,6 +1,8 @@
 name: NBA prior play-by-play
 
-# Manual, run ONCE (10-21). Every 2025-26 NBA game's play-by-play from
+# Manual. Run once 10-21; RUN AGAIN 10-25 to add each player's points in the
+# first 3 minutes and each team's first field goal (the first-3-minutes and
+# team-first-basket markets). Every 2025-26 NBA game's play-by-play from
 # ESPN -> data/nba/prior_pbp.json: the tip, the first field goal, each
 # quarter's score, starters, each player's points per quarter. The First
 # Basket page and the quarter / half lines are fitted and tested on it

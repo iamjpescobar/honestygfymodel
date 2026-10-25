@@ -95,6 +95,23 @@ check("points per quarter, overtime left out",
       r["qpts"]["11"] == [3, 0, 0, 0] and r["qpts"]["21"] == [0, 3, 0, 0])
 check("a final that matches its quarters passes the self-check",
       pb.check(r, 110, 103, "1", "2") == [] and pb.check(r, 111, 103, "1", "2") != [])
+# --- 10-25: the first three minutes ---------------------------------------------
+check("the clock reads to seconds left", pb.clock_seconds("11:26") == 686
+      and pb.clock_seconds("9:00") == 540 and pb.clock_seconds("45.2") == 45.2
+      and pb.clock_seconds(None) is None and pb.clock_seconds("x") is None)
+check("first 3 minutes: Wing D's free throw and jumper count, [points, field goals]",
+      r["early"].get("11") == [3, 1])
+check("a 2nd-period 9:00 basket is NOT the first 3 minutes", "21" not in r["early"])
+E = pb.parse({"plays": [
+    play("Jump Shot", "A makes", 1, "9:00", team="1", pids=("31",), scoring=True, value=2),
+    play("Jump Shot", "B makes", 1, "8:59", team="2", pids=("41",), scoring=True, value=2),
+    play("Layup", "C makes", 1, "8:10", team="1", pids=("32",), scoring=True, value=2)]})
+check("exactly 9:00 left is inside the first 3 minutes, 8:59 is not",
+      E["early"] == {"31": [2, 1]} and E["early_team"] == {"1": 2})
+check("each team's first field goal is kept (team first basket)",
+      E["team_first_fg"]["1"]["pid"] == "31" and E["team_first_fg"]["2"]["pid"] == "41")
+check("the backfill reports first-3-minute coverage", "first 3 minutes:" in
+      (ROOT / "nba_pbp_prior.py").read_text(encoding="utf-8"))
 check("missing is never zero: a summary with no plays leaves the fields empty",
       pb.parse({"header": {}})["first_fg"] is None and pb.parse({})["tip"] is None)
 

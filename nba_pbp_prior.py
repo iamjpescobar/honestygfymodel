@@ -53,14 +53,24 @@ def collect(finals, summary_fn, sleep=0.06):
 def summary(games, n_finals):
     n = len(games) or 1
     has = {k: sum(1 for g in games.values() if g.get(k)) for k in
-           ("lines", "tip", "first_fg", "first_score", "starters", "qpts")}
+           ("lines", "tip", "first_fg", "first_score", "starters", "qpts", "early",
+            "team_first_fg")}
     tip_team = sum(1 for g in games.values() if (g.get("tip") or {}).get("team"))
     fg_starter = sum(1 for g in games.values() if g.get("first_fg") and g["first_fg"]["pid"]
                      in sum((g.get("starters") or {}).values(), []))
     tip_first = sum(1 for g in games.values() if (g.get("tip") or {}).get("team")
                     and g.get("first_fg") and g["tip"]["team"] == g["first_fg"]["team"])
     both = sum(1 for g in games.values() if (g.get("tip") or {}).get("team") and g.get("first_fg"))
+    # 10-25: the first three minutes — how often a starter scores in them
+    st_n = st_hit = 0
+    for g in games.values():
+        early = g.get("early") or {}
+        for ps in (g.get("starters") or {}).values():
+            for p_ in ps:
+                st_n += 1
+                st_hit += 1 if (early.get(p_) or [0])[0] > 0 else 0
     return {"games": len(games), "finals": n_finals, "has": has, "tip_team": tip_team,
+            "starter_scores_early": st_hit / max(1, st_n),
             "first_fg_by_starter": fg_starter / max(1, has["first_fg"]),
             "tip_team_scores_first": tip_first / max(1, both),
             "ok": all(has[k] >= MIN_SHARE * n for k in ("lines", "first_fg", "starters"))}
@@ -79,6 +89,9 @@ def main():
     print(f"  [verify] first field goal by a starter: {100 * s['first_fg_by_starter']:.1f}%; "
           f"the team that won the tip scored the first field goal: "
           f"{100 * s['tip_team_scores_first']:.1f}%")
+    print(f"  [verify] first 3 minutes: read in {s['has']['early']} games, each team's first "
+          f"field goal in {s['has']['team_first_fg']}; a starter scored in the first 3 minutes "
+          f"{100 * s['starter_scores_early']:.1f}% of the time")
     print(f"  [verify] quarter lines that don't add up to the final: {len(bad)}"
           + (f" (first: {bad[:3]})" if bad else ""))
     fg = {}

@@ -189,6 +189,13 @@ pc = (ROOT / "nba_precompute.py").read_text(encoding="utf-8")
 check("the nightly fits the context and prices with it (sizes / test replaced)",
       "nc.fit(season_data, model)" in pc and 'model["sizes"], model["test"] = ctx["sizes"], ctx["test"]'
       in pc and "nc.apply_tonight(" in pc and "nc.book_now(" in pc)
+# 10-25: the projection-bias diagnostic (Site vs DraftKings' first NBA night)
+B = (ctx.get("bias") or {}).get("last_season", {}).get("all", {})
+print(f"     synthetic bias pts: {B.get('pts')}")
+check("the bias diagnostic reports projected vs actual per stat on unseen games",
+      B.get("pts") and B["pts"]["n"] > 50 and B["pts"]["ratio"] is not None
+      and abs(B["pts"]["ratio"] - B["pts"]["actual"] / B["pts"]["pred"]) < 0.01)
+check("...and the nightly prints it", "NBA projection bias" in pc)
 sim = (ROOT / "app" / "engines" / "nba_sim.py").read_text(encoding="utf-8")
 check("the simulator's links and test read the same numbers", "nc.context_rows(" in sim)
 

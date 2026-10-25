@@ -75,10 +75,29 @@ def _is_jump(play):
     return "jump" in txt.lower() and "ball" in txt.lower()
 
 
+EARLY_SECONDS = 180        # 10-25: "score in the first 3 minutes" (Izzy bets it)
+QUARTER_SECONDS = 720
+
+
+def clock_seconds(clock):
+    """Seconds LEFT in the period from ESPN's display clock ("11:26",
+    "9:00", "45.2"), or None."""
+    if clock is None:
+        return None
+    c = str(clock).strip()
+    try:
+        if ":" in c:
+            m, sec = c.split(":", 1)
+            return int(m) * 60 + float(sec)
+        return float(c)
+    except ValueError:
+        return None
+
+
 def parse(summary):
     plays = [p for p in (summary or {}).get("plays") or [] if isinstance(p, dict)]
     out = {"lines": lines(summary), "tip": None, "first_fg": None, "first_score": None,
-           "starters": {}, "qpts": {}}
+           "starters": {}, "qpts": {}, "early": {}, "early_team": {}, "team_first_fg": {}}
     # the tip: the first jump ball, and the first team named after it
     for i, p in enumerate(plays[:12]):
         if _is_jump(p):
@@ -100,6 +119,19 @@ def parse(summary):
             out["first_fg"] = rec
         per = _period(p)
         pid = rec["pid"]
+        # 10-25: the first three minutes (period 1, 9:00 or more left) —
+        # each player's [points, made field goals] and each team's points;
+        # and each TEAM's first field goal (the team first-basket market)
+        left = clock_seconds(rec["clock"])
+        if per == 1 and left is not None and left >= QUARTER_SECONDS - EARLY_SECONDS and v:
+            if pid:
+                e = out["early"].setdefault(pid, [0, 0])
+                e[0] += int(v)
+                e[1] += 0 if _is_ft(p) else 1
+            if rec["team"]:
+                out["early_team"][rec["team"]] = out["early_team"].get(rec["team"], 0) + int(v)
+        if rec["team"] and rec["team"] not in out["team_first_fg"] and not _is_ft(p) and v >= 2:
+            out["team_first_fg"][rec["team"]] = rec
         if pid and isinstance(per, int) and 1 <= per <= 4 and v:
             out["qpts"].setdefault(pid, [0, 0, 0, 0])[per - 1] += int(v)
     for pid, ln in (nb.parse(summary) or {}).items():

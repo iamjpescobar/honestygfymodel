@@ -398,7 +398,33 @@ def fit(prior, model):
     last_prior = max((f["date"] for f in prior.get("finals") or [] if f["date"] <= "2026-06-30"),
                      default="")
     n_this = sum(1 for i in test_idx if rows[i][1][0] > last_prior)
-    return {"n_this_season": n_this,
+    # 10-25 (Site vs DraftKings, first night graded: the site's over chance
+    # ran ~11 points under DraftKings' on 448 of 637 NBA lines and overs
+    # hit 58%): does the model under-project THIS season? Mean projected
+    # vs actual on unseen player-games, this season vs last season's test
+    # window, all and 20+ projected minutes. Diagnostic only.
+    bias = {}
+    for lab, keep in (("this_season", lambda i: rows[i][1][0] > last_prior),
+                      ("last_season", lambda i: rows[i][1][0] <= last_prior)):
+        for mlab, mmin in (("all", 0), ("20min", 20)):
+            for st, _l in nm.STATS:
+                pr_ = ac_ = 0.0
+                n_ = 0
+                for i in test_idx:
+                    if not keep(i):
+                        continue
+                    mu_ = (adj[i][2].get("mu") or {}).get(st)
+                    y = nm.val(rows[i][1], st)
+                    if mu_ is None or y is None or (adj[i][2].get("min") or 0) < mmin:
+                        continue
+                    pr_ += mu_
+                    ac_ += y
+                    n_ += 1
+                if n_:
+                    bias.setdefault(lab, {}).setdefault(mlab, {})[st] = {
+                        "n": n_, "pred": round(pr_ / n_, 2), "actual": round(ac_ / n_, 2),
+                        "ratio": round(ac_ / pr_, 3) if pr_ else None}
+    return {"n_this_season": n_this, "bias": bias,
             "opp": opp, "mean": {k: round(v, 4) for k, v in mean.items()}, "out": out_cfg,
             "vol": ctx["vol"], "vol_tried": bestv[0], "vol_test": vol_test,
             "sizes": sizes, "test": test, "ladder": ladder, "vs_base": vs_base,
