@@ -10,6 +10,8 @@ shape ({"items": [{"provider": {"id", "name"}}]}, propBets {"count",
 Negative control, confirmed red by exit code when written (rule 4):
   - upcoming_event taking a FINAL game
     -> "the probe asks about a game that has not been played" fails
+  - the probe no longer counting which items carry prices (10-25)
+    -> "it counts the items that carry a price, per provider" fails
 """
 import io
 import sys
@@ -64,6 +66,8 @@ check("providers and each provider's prop items are counted by type, with raw sa
 check("the core feed's paths: event / competition / odds / provider / propBets",
       any("/events/2/competitions/2/odds/58/propBets" in u for u in urls)
       and all("sports.core.api.espn.com/v2/sports/hockey/leagues/nhl" in u for u in urls))
+check("it counts the items that carry a price, per provider, and prints one item per type",
+      "1 of 3 items carry an odds block" in txt and "full item (Anytime Goal)" in txt)
 wf = (ROOT / ".github" / "workflows" / "prop-lines-probe.yml").read_text(encoding="utf-8")
 check("its workflow is manual and touches nothing",
       "workflow_dispatch" in wf and "python prop_lines_probe.py" in wf

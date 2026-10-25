@@ -154,6 +154,30 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — NFL props carry NO prices in the saved record; the probe now looks for where they are. 2026-10-25
+
+**Suite 167, FAILING: none.** tests/test_prop_lines_probe.py +1 check
+(control red: the probe no longer counting priced items).
+
+MEASURED 10-25 5 AM (data/props/nfl/2026-10-25.json, 12 games, "ours"
+captured on all 12): 0 of 16,883 NFL items carry a price — totals,
+"N+" ladders, anytime TD, 1Q / 1H, all lines only. (NHL / NBA / MLB
+items carry odds.american.) So the NFL Bet Finder opens on DraftKings'
+LINE with the price to type, and NFL cannot be graded against the book
+until prices are found. The ladder never sits at the total's own line
+(0 of 400 NFL players), so it cannot stand in for the main price.
+
+prop_lines_probe.py now prints, per provider, how many items carry an
+odds block, ONE FULL ITEM of each of the first 6 types, and four query
+variants (none, region=us, region=nj, page 2) with their priced counts.
+NEXT: run "Prop lines probe"; if a variant or another field carries NFL
+prices, parse it in book_props.parse; if none, say so on the NFL rows.
+
+FILES: prop_lines_probe.py, tests/test_prop_lines_probe.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — Bet Finder says WHY under every row; NHL goals open on ANYTIME goalscorer (was 2+ goals). 2026-10-24 (5)
 
 **Suite 167, FAILING: none.** New tests/test_bet_finder_why.py (2
@@ -718,64 +742,5 @@ FILES: app/engines/nhl_shots.py (NEW), nhl_shots_prior.py (NEW),
 .github/workflows/nhl-shots-prior.yml (NEW), tests/test_nhl_shots.py
 (NEW), app/engines/nhl_model.py, app/engines/nhl_sim.py,
 app/views/NHL_Model.py, nhl_precompute.py, HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — NFL 1st quarter / 1st half: player props on the Simulator and Bet Finder, half / quarter leader; quarters parser fixed again. 2026-10-22 (8)
-
-**Suite 157, FAILING: none.** New tests/test_nfl_quarter_props.py (5
-controls, red by exit code: quarters that miss the box kept, fit on every
-week, no projection band, offered() passing THIN, no tie band);
-tests/test_period_backfills.py +2 checks (controls red: statYardage
-instead of the text's gain, passer dropped when the catcher isn't
-found). NFL_Sim and Bet Finder headless on the archived week + a real
-build. Izzy: "Do nhl and nfl make sure player props are included". This
-zip supersedes qfix.zip (same parser files) if that was not pushed.
-
-PARSER (engines/nfl_quarters): the 10-22 rerun after (7) read receiving
-yards 93.1%, rushing 89.3% but QB passing yards only 72.9%. From 2025's
-box scores: QBs with the right attempts but short yards (completions
-dropped when the catcher's name wasn't found; a penalty enforced after
-the play riding statYardage — Dak wk1 +15). Now the gain is read from
-the text ('for 12 yards', 'for no gain', '22 Yd pass from', '4 yard
-rush'; statYardage only when the text has none) and the passer gets the
-completion and yards with or without a named catcher. The backfill log
-now prints completions with no catcher found and the first QBs whose
-quarters still miss (event, id, box yds, quarters yds, att). NEXT: Izzy
-reruns "NFL prior quarters"; the nightly refits on the new file itself.
-
-MODEL (nfl_quarters.fit / pmf / test, run inside nfl_sim.build on its
-own split: fit weeks < 10, test 10-18 of 2025): a player's 1Q / 1H stat =
-his GAME projection (the Prop Lab's) x the measured distribution of
-(1Q value / game projection) for players in his projection band (three
-bands per stat — a small role blanks the 1st quarter far more often).
-Only player-games whose quarters add up to his box (missing != zero).
-Test: vs his own last-8 1Q / 1H hit rate at a line next to his own
-1Q / 1H average. On the file before this fix (z): 1Q rec 6.2, rec yds
-5.3, rush yds 2.8, carries 2.2, completions 2.5 (n 161, over-predicts —
-the curve fixes delivery); 1H rec 7.3, rec yds 5.9, rush yds 3.1,
-carries 2.8 — BEAT. QB yards / attempts 1Q and 1H, 1H completions:
-thin or fail (n ~150 — the clean QB set is small until the rerun).
-Team: points share 1Q 0.195, 1H 0.491; margin sd 6.2 / 10.4. Leading
-after the 1Q fails vs the league rate (z -0.2), after the 1H thin
-(1.7) — on the page labelled, never on the Bet Finder.
-
-PAGES: NFL_Sim "1st quarter / 1st half" card (span toggle; points in the
-span, who leads / tie; every player's line nearest a coin flip with the
-test's delivered over / under, graded label). Bet Finder NFL: "Players —
-1st quarter / 1st half", ONLY the span x stat keys that beat
-(nfl_quarters.offered), per-player lines, the test's curves ("@q1_rec").
-Not in SGP legs yet (the simulator draws whole games).
-
-NIGHTLY: nfl_precompute loads data/nfl/prior_quarters.json -> nfl_sim
-.build(..., quarters=) -> payload "sim" gains "quarters" {model, test,
-team, team_test, cut_week, clean_rows}. VERIFY LINES: "NFL 1Q / 1H: N
-player-game stats whose quarters add up ...", one per span x stat, and
-"NFL q1_lead_home / h1_lead_home". SGP verdicts unchanged (UW, TW beat).
-
-FILES: app/engines/nfl_quarters.py, app/engines/nfl_sim.py,
-app/views/NFL_Sim.py, app/views/Bet_Finder.py, nfl_precompute.py,
-nfl_quarters_prior.py, tests/test_nfl_quarter_props.py (NEW),
-tests/test_period_backfills.py, HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

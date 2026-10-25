@@ -92,6 +92,28 @@ def probe(league, eid, get, sport_lg):
               f"(count {(pb or {}).get('count')}); types {dict(types.most_common(25))}")
         for x in its[:2]:
             print(f"  [verify] PROPS {league} sample: {json.dumps(_shape(x), default=str)[:1500]}")
+        # 10-25: the saved NFL record had a LINE but NO price on every one of
+        # 16,883 items. Where are NFL prices, if anywhere? Per type: how many
+        # items carry an odds block, and one item of each type in full.
+        priced = sum(1 for x in its if (x or {}).get("odds"))
+        print(f"  [verify] PROPS {league} provider {pid}: {priced} of {len(its)} items carry "
+              f"an odds block")
+        seen = set()
+        for x in its:
+            t = str(((x or {}).get("type") or {}).get("name"))
+            if t in seen or len(seen) >= 6:
+                continue
+            seen.add(t)
+            print(f"  [verify] PROPS {league} full item ({t}): "
+                  f"{json.dumps(x, default=str)[:1200]}")
+        for q in ("", "?region=us", "?lang=en&region=nj&limit=50", "?limit=50&page=2"):
+            try:
+                alt = get(f"{base}/odds/{pid}/propBets{q}") or {}
+                ai = alt.get("items") or []
+                print(f"  [verify] PROPS {league} variant '{q or '(none)'}': {len(ai)} items, "
+                      f"{sum(1 for x in ai if (x or {}).get('odds'))} with odds")
+            except Exception as exc:  # noqa: BLE001
+                print(f"  [verify] PROPS {league} variant '{q}' failed: {type(exc).__name__}")
     return out
 
 
