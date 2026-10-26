@@ -4,8 +4,10 @@ change that 10000". The game view went 10,000 -> 50,000 (NHL, NBA,
 NFL) and 25,000 (MLB: each game is played plate appearance by plate
 appearance, ~4x slower); the simulator's own noise on a 50% chance goes
 ±0.5 -> ±0.22 points (MLB ±0.32), each page ~1-2 s. Parlays already ran
-more (NBA 500k, NHL / NFL 200k, MLB 50k) and are unchanged. The page's
-game cache holds 4 runs, not 8: a 50,000-game run is ~5x the memory.
+more (NBA 500k, NHL / NFL 200k, MLB 50k) and are unchanged.
+10-26: the numbers now live in engines/sim_settings, one entry per sport
+(each page reads its own), and the run cache is st.cache_resource kept
+at that sport's "keep" (tests/test_sim_settings.py has the memory).
 
 Plain script — exits non-zero on failure. Reads the page sources only.
 
@@ -27,19 +29,25 @@ def check(name, ok):
         failures.append(name)
 
 
+sys.path.insert(0, str(ROOT / "app"))
+from engines import sim_settings as ss  # noqa: E402
+
 WANT = {"NHL": 50_000, "NBA": 50_000, "NFL": 50_000, "MLB": 25_000}
 for lg, n in WANT.items():
     src = (ROOT / "app" / "views" / f"{lg}_Sim.py").read_text(encoding="utf-8")
-    m = re.search(r"^N_SIMS = ([\d_]+)", src, re.M)
-    got = int(m.group(1).replace("_", "")) if m else None
-    check(f"{lg}: the game view plays {n:,} games", got == n)
+    check(f"{lg}: the game view plays {n:,} games, from its OWN settings",
+          ss.SIMS[lg.lower()]["games"] == n and f'SIM = _ss.settings("{lg.lower()}")' in src
+          and 'N_SIMS = SIM["games"]' in src)
     body = src.split('"""', 2)[-1]
     lits = [ln for ln in body.splitlines() if "10,000" in ln and not ln.lstrip().startswith("#")
             and "N_SIMS =" not in ln]
     check(f"{lg}: every page says the number it plays (no literal 10,000) {lits[:1]}",
           not lits and "{N_SIMS:,}" in src)
-    caches = re.findall(r"max_entries=(\d+)\)\s*(?:#[^\n]*)?\ndef _run\(", src)
-    check(f"{lg}: the game-run cache holds 4 runs (memory)", caches == ["4"])
+    check(f"{lg}: the game run is cached once (cache_resource, its sport's keep), in pieces",
+          re.search(r'@st.cache_resource\(ttl=900, show_spinner=False, max_entries=SIM\["keep"\]\)'
+                    r'[^\n]*\ndef _run\(', src) is not None
+          and f'_ss.run("{lg.lower()}", ' in src
+          and 'n=SIM["sgp"]' in src and 'chunk=SIM["sgp_chunk"]' in src)
 
 if failures:
     print(f"\n{len(failures)} FAILED")

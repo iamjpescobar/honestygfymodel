@@ -388,6 +388,26 @@ def reprice(game, prm, fives=None, sure=None, names=None):
             "five": pg["five"], "sure": sorted(sure)}
 
 
+LINEUP_WINDOW_HOURS = 2.5     # NBA teams announce starters ~30 min before tip
+
+
+def lineup_window(start_iso, now=None):
+    """True from LINEUP_WINDOW_HOURS before tip on (10-26): the page asks
+    ESPN for a game's lineup only then — before that ESPN has none, and
+    asking for every game on the slate on every load cost one network
+    call per game (33 s for 9 games where ESPN was slow)."""
+    from datetime import datetime, timedelta, timezone
+    try:
+        t = datetime.fromisoformat(str(start_iso).replace("Z", "+00:00"))
+        if t.tzinfo is None:
+            from zoneinfo import ZoneInfo
+            t = t.replace(tzinfo=ZoneInfo("America/New_York"))
+    except Exception:  # noqa: BLE001
+        return False
+    now = now or datetime.now(timezone.utc)
+    return now >= t - timedelta(hours=LINEUP_WINDOW_HOURS)
+
+
 def pregame_starters(summary):
     """{team id: [5 pids]} from an ESPN summary when it marks exactly five
     starters for a team (box score or rosters block) — the lineup is out.

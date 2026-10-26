@@ -121,9 +121,30 @@ _JP_STATS = ("https://npb.jp/bis/{yr}/stats/pit_c.html",
              "https://npb.jp/bis/{yr}/stats/pit_p.html")
 
 
+# npb.jp DOES NOT ANSWER FROM GITHUB'S RUNNERS (10-26 log: every request
+# a ConnectTimeout). Each of ~14 requests waited out a 25-second timeout,
+# 5.1 minutes of a nightly for nothing, three times a day. Now: connect
+# timeout 8 s, and the first connection failure marks the host down for
+# the rest of the run — later requests fail at once, exactly as they did
+# before, just without the wait. A read timeout (the host answered, slowly)
+# does not trip it.
+_NPB_DOWN = {"down": False}
+
+
+def _npb_get(url):
+    if _NPB_DOWN["down"]:
+        raise requests.ConnectionError("npb.jp marked unreachable earlier this run")
+    try:
+        return requests.get(url, headers=UA, timeout=(8, 25))
+    except (requests.ConnectionError, requests.ConnectTimeout):
+        _NPB_DOWN["down"] = True
+        print("  npb.jp unreachable from here - the rest of this run skips it")
+        raise
+
+
 def _get_html(url):
     """Fetch a page as text. Raises on failure so callers can log it."""
-    r = requests.get(url, headers=UA, timeout=25)
+    r = _npb_get(url)
     r.raise_for_status()
     r.encoding = r.apparent_encoding or "utf-8"
     return r.text
@@ -235,7 +256,7 @@ def _strip(html: str) -> str:
 def fetch_month(year: int, month: int):
     url = f"https://npb.jp/games/{year}/schedule_{month:02d}_detail.html"
     try:
-        r = requests.get(url, headers=UA, timeout=25)
+        r = _npb_get(url)
         if r.status_code != 200:
             return None
         return r.content.decode("utf-8", errors="replace")
@@ -268,7 +289,7 @@ def fetch_pitcher_stats() -> dict:
     for url in (f"https://npb.jp/bis/{SEASON_YEAR}/stats/pit_c.html",
                 f"https://npb.jp/bis/{SEASON_YEAR}/stats/pit_p.html"):
         try:
-            r = requests.get(url, headers=UA, timeout=25)
+            r = _npb_get(url)
             html = r.content.decode("utf-8", errors="replace") if r.status_code == 200 else None
         except Exception:
             html = None

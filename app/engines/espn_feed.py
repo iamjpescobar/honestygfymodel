@@ -146,9 +146,72 @@ def fetch_scoreboard(league, yyyymmdd, require_events=False, _get=None):
                        f"failed -> " + " | ".join(errors))
 
 
-def fetch_summary(league, event_id, _get=None):
+# ----------------------------------------------------------------------
+# FINISHED GAMES ARE FETCHED ONCE (10-26). Every nightly re-downloaded the
+# summary of EVERY final of the season: the NHL step took 9.1 minutes on
+# 10-26 with ~250 finals and grows with every game (~1,400 by April). A
+# final's box score does not change after ESPN's stat corrections settle,
+# so when ESPN_SUMMARY_CACHE names a folder (the nightly sets it, and
+# actions/cache carries the folder from run to run — nothing is committed),
+# a FINAL fetched 36+ hours after its start is kept and reused. Anything
+# else — not final, fetched too soon, unreadable cache — is fetched live.
+# Pages never set the variable, so nothing changes for them.
+# ----------------------------------------------------------------------
+SUMMARY_SETTLE_HOURS = 36
+_REAL_GET = get_json          # the cache only ever holds what the real fetcher returned
+
+
+def _summary_final(js):
+    try:
+        c = ((js.get("header") or {}).get("competitions") or [{}])[0]
+        t = ((c.get("status") or {}).get("type") or {})
+        return bool(t.get("completed")) or t.get("state") == "post", c.get("date")
+    except Exception:  # noqa: BLE001
+        return False, None
+
+
+def _settled(start, fetched):
+    from datetime import timedelta
+    try:
+        a = datetime.fromisoformat(str(start).replace("Z", "+00:00"))
+        b = datetime.fromisoformat(str(fetched).replace("Z", "+00:00"))
+        return b - a >= timedelta(hours=SUMMARY_SETTLE_HOURS)
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def fetch_summary(league, event_id, _get=None, _cache=None, _now=None):
+    import gzip
+    import json as _json
+    import os
+    from datetime import timezone
+    from pathlib import Path
     get = _get or get_json
-    return get(f"{base(league)}/summary?event={event_id}")
+    # the environment's folder only for the REAL fetcher: a test that swaps
+    # get_json for a fake must never leave fake box scores in the cache
+    folder = _cache if _cache is not None else (
+        os.environ.get("ESPN_SUMMARY_CACHE") if (_get is None and get is _REAL_GET) else None)
+    path = Path(folder) / league / f"{event_id}.json.gz" if folder else None
+    if path is not None and path.exists():
+        try:
+            rec = _json.loads(gzip.decompress(path.read_bytes()))
+            fin, start = _summary_final(rec.get("data") or {})
+            if fin and _settled(start, rec.get("fetched")):
+                return rec["data"]
+        except Exception:  # noqa: BLE001 — a bad cache file is just a miss
+            pass
+    js = get(f"{base(league)}/summary?event={event_id}")
+    if path is not None:
+        fin, _start = _summary_final(js or {})
+        if fin:
+            try:
+                now = (_now or datetime.now(timezone.utc)).isoformat()
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(gzip.compress(_json.dumps({"fetched": now, "data": js})
+                                               .encode("utf-8")))
+            except Exception:  # noqa: BLE001 — the cache never costs a fetch
+                pass
+    return js
 
 
 def fetch_injury_list(league, _get=None):

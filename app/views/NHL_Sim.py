@@ -26,7 +26,9 @@ from engines import nhl_sim as hs
 from engines.slate_guard import payload_field, today_for
 from engines.live_sync import sync_latest_button
 
-N_SIMS = 50_000   # 10-23: 10,000 -> 50,000 (simulator noise on a 50% chance ±0.5 -> ±0.22 pts); ~1-2 s
+from engines import sim_settings as _ss  # noqa: E402
+SIM = _ss.settings("nhl")   # 10-26: hockey's own settings (engines/sim_settings)
+N_SIMS = SIM["games"]
 page_header("NHL Simulator", f"Play tonight's game {N_SIMS:,} times", eyebrow="NHL", align="left")
 sync_latest_button(key="sync_nhl_sim", include_data_package=True)
 
@@ -112,18 +114,19 @@ if not players:
     st.stop()
 
 
-@st.cache_data(ttl=900, show_spinner=False, max_entries=4)   # a run is ~5x the 10k one's memory
+@st.cache_resource(ttl=900, show_spinner=False, max_entries=SIM["keep"])   # one shared copy
 def _run(key, game_js, plist, links_js, sog_size):
     import zlib
-    return hs.simulate(_json.loads(game_js), _json.loads(plist), _json.loads(links_js),
-                       sog_size, n=N_SIMS, seed=zlib.crc32(key.encode()))
+    return _ss.run("nhl", hs.simulate, _json.loads(game_js), _json.loads(plist),
+                   _json.loads(links_js), sog_size, seed=zlib.crc32(key.encode()))
 
 
 @st.cache_data(ttl=900, show_spinner=False, max_entries=64)
 def _legs_run(key, game_js, plist, links_js, sog_size, legs):
     import zlib
     return hs.joint_precise(_json.loads(game_js), _json.loads(plist), _json.loads(links_js),
-                            sog_size, _json.loads(legs), seed=zlib.crc32(key.encode()))
+                            sog_size, _json.loads(legs), n=SIM["sgp"], chunk=SIM["sgp_chunk"],
+                            seed=zlib.crc32(key.encode()))
 
 
 _plist = _json.dumps([{k: p[k] for k in ("pid", "side", "mu")} for p in players])

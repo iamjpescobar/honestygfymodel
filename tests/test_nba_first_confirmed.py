@@ -116,6 +116,14 @@ check("the rosters block counts too", nf.pregame_starters({"rosters": [{"team": 
 check("nothing posted -> {}", nf.pregame_starters({}) == {} and nf.pregame_starters(None) == {})
 
 
+# --- 10-26: ESPN is asked only near tip ------------------------------------------------
+from datetime import datetime, timezone  # noqa: E402
+_now = datetime(2026, 10, 25, 22, 0, tzinfo=timezone.utc)            # 6 PM ET
+check("the lineup is asked for from 2.5 hours before tip (a 7:30 PM ET game at 6 PM ET: yes)",
+      nf.lineup_window("2026-10-25T19:30:00", _now)
+      and not nf.lineup_window("2026-10-25T22:30:00", _now)
+      and nf.lineup_window("2026-10-25T23:30:00Z", _now) and not nf.lineup_window(None, _now))
+
 # --- the fit's confirmed test ------------------------------------------------------
 def world(seed=5, days=150, bench_late=False):
     r = random.Random(seed)
@@ -168,7 +176,9 @@ check("rho_confirmed is measured on the fit side only",
 page = (ROOT / "app" / "views" / "NBA_First_Basket.py").read_text(encoding="utf-8")
 check("the page re-prices with the engine's own function (with ESPN's names)",
       "nf.reprice(F, prm, fives, sure, names)" in page and "nf.pregame_names(summ)" in page)
-check("the page reads ESPN's lineup", "nf.pregame_starters(summ)" in page)
+check("the page reads ESPN's lineup, only for games in their window, side by side",
+      "nf.pregame_starters(summ)" in page and "nf.lineup_window(g.get(\"start_et\"))" in page
+      and "ThreadPoolExecutor" in page)
 check("you can set the five and confirm it", "st.multiselect(" in page
       and "Lineup is out" in page and "max_selections=5" in page)
 check("tonight's board sits above the game picker",
@@ -200,7 +210,7 @@ FB = json.loads(%r); GAME = json.loads(%r); F3 = json.loads(%r)
 nv.load = lambda: ([GAME], {}, lambda k, d=None: FB if k == "first_basket" else (F3 if k == "first3" else d))
 li.render_note = lambda *a, **k: None
 live_sync.sync_latest_button = lambda *a, **k: None
-ef.fetch_summary = lambda lg, eid: {"boxscore": {"players": [{"team": {"id": "H"},
+ef.fetch_summary = lambda lg, eid, **k: {"boxscore": {"players": [{"team": {"id": "H"},
     "statistics": [{"athletes": [{"athlete": {"id": p}, "starter": True}
                                  for p in ("c1", "h2", "h3", "h4", "h6")]}]}]}}
 runpy.run_path(%r, run_name="__main__")

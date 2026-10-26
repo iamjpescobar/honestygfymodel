@@ -59,13 +59,30 @@ CAN_CONFIRM = all(g["first_basket"].get("pool") for g in games) and bool(prm) an
 
 
 @st.cache_data(ttl=300, show_spinner=False)
-def _espn_five(event_id, _bucket):
+def _espn_fives(event_ids, _bucket):
+    """{event id: {"fives", "names"}} for the games in their lineup window,
+    asked of ESPN together (one short call each, side by side) — 10-26:
+    one game after another, every game, cost up to half a minute."""
+    import requests
+    from concurrent.futures import ThreadPoolExecutor
     from engines import espn_feed as ef
-    try:
-        summ = ef.fetch_summary("nba", event_id)
-        return {"fives": nf.pregame_starters(summ), "names": nf.pregame_names(summ)}
-    except Exception:  # noqa: BLE001
+
+    def one(eid):
+        try:
+            summ = ef.fetch_summary("nba", eid, _get=lambda u: requests.get(
+                u, headers=ef.UA, timeout=6).json())
+            return eid, {"fives": nf.pregame_starters(summ), "names": nf.pregame_names(summ)}
+        except Exception:  # noqa: BLE001
+            return eid, {}
+    if not event_ids:
         return {}
+    with ThreadPoolExecutor(max_workers=min(8, len(event_ids))) as ex:
+        return dict(ex.map(one, event_ids))
+
+
+_due = tuple(sorted(str(g.get("event_id")) for g in games
+                    if g.get("event_id") and nf.lineup_window(g.get("start_et"))))
+_LINEUPS = _espn_fives(_due, int(_time.time() // 300)) if CAN_CONFIRM else {}
 
 
 def _deliver(p, sure):
@@ -93,7 +110,7 @@ def _priced(g):
     if not CAN_CONFIRM:
         return F, set()
     eid = str(g.get("event_id") or "")
-    got = _espn_five(eid, int(_time.time() // 300)) if eid else {}
+    got = _LINEUPS.get(eid) or {}
     espn, names = (got or {}).get("fives") or {}, (got or {}).get("names") or {}
     fives, sure = {}, set()
     for t, five in (espn or {}).items():

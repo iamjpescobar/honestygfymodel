@@ -33,7 +33,9 @@ from engines.weather_engine import get_todays_games_with_weather
 from engines.live_sync import sync_latest_button
 
 EASTERN = ZoneInfo("America/New_York")
-N_SIMS = 25_000   # 10-23: 10,000 -> 25,000 (simulator noise on a 50% chance ±0.5 -> ±0.32 pts); ~1-2 s
+from engines import sim_settings as _ss  # noqa: E402
+SIM = _ss.settings("mlb")   # 10-26: baseball's own settings (engines/sim_settings)
+N_SIMS = SIM["games"]
 page_header("MLB Simulator", f"Play today's game {N_SIMS:,} times, pitch to pitch outcomes",
             eyebrow="MLB", align="left")
 sync_latest_button(key="sync_mlb_sim", include_data_package=True)
@@ -172,12 +174,12 @@ for side in ("home", "away"):
     sp_pmfs[side] = pp
 
 
-@st.cache_data(ttl=900, show_spinner=False, max_entries=4)   # a run is ~5x the 10k one's memory
+@st.cache_resource(ttl=900, show_spinner=False, max_entries=SIM["keep"])   # one shared copy
 def _run(key, game_js):
     import zlib
-    return ms.simulate(_json.loads(game_js), _tab(f"{pm.get('through')}|"
-                                                  f"{(simblk.get('transitions') or {}).get('n')}"),
-                       n=N_SIMS, seed=zlib.crc32(key.encode()))
+    return _ss.run("mlb", ms.simulate, _json.loads(game_js),
+                   _tab(f"{pm.get('through')}|{(simblk.get('transitions') or {}).get('n')}"),
+                   seed=zlib.crc32(key.encode()))
 
 
 @st.cache_data(ttl=900, show_spinner=False, max_entries=64)
@@ -185,7 +187,8 @@ def _legs_run(key, game_js, legs):
     import zlib
     return ms.joint_precise(_json.loads(game_js),
                             _tab(f"{pm.get('through')}|{(simblk.get('transitions') or {}).get('n')}"),
-                            _json.loads(legs), seed=zlib.crc32(key.encode()))
+                            _json.loads(legs), n=SIM["sgp"], chunk=SIM["sgp_chunk"],
+                            seed=zlib.crc32(key.encode()))
 
 
 _gjs = _json.dumps({s: {k: v for k, v in sides[s].items() if k != "src"} for s in sides})

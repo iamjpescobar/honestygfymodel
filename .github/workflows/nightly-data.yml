@@ -38,8 +38,28 @@ jobs:
   build-data:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    # 10-26: PYTHONUNBUFFERED so each step's lines arrive with their real
+    # time stamps (the NHL step printed nothing for 9 minutes, then
+    # everything at once, so its slow part could not be seen).
+    # ESPN_SUMMARY_CACHE: finished games' box scores are fetched once and
+    # kept between runs (engines/espn_feed.fetch_summary; the folder is
+    # carried by the cache step below, never committed).
+    env:
+      PYTHONUNBUFFERED: "1"
+      ESPN_SUMMARY_CACHE: .cache/espn-summaries
     steps:
       - uses: actions/checkout@v7
+
+      # A cache miss or an unavailable cache action only costs speed:
+      # every summary is then fetched live, exactly as before.
+      - name: Restore finished-game box scores
+        uses: actions/cache@v4
+        continue-on-error: true
+        with:
+          path: .cache/espn-summaries
+          key: espn-summaries-${{ github.run_id }}
+          restore-keys: |
+            espn-summaries-
 
       - uses: actions/setup-python@v7
         with:

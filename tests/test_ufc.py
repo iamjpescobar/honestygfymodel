@@ -108,6 +108,32 @@ check("UFC is its own sport (the switcher, its own page) and on Home, and says t
       and '"NFL", "UFC"]' in theme and '("UFC", "UFC",' in home
       and "The site&rsquo;s model is not here" in pg and "ufc.build(ef.get_json)" in pg)
 
+# --- 10-26: the card's odds are fetched side by side -------------------------------------
+import time as _t  # noqa: E402
+
+
+def _slow_get(url):
+    _t.sleep(0.15)
+    if "scoreboard" in url:
+        return {"events": [{"id": "E", "name": "Card", "competitions": [
+            {"id": str(i), "competitors": [{"athlete": {"id": f"a{i}", "displayName": f"A{i} X"}},
+                                           {"athlete": {"id": f"b{i}", "displayName": f"B{i} Y"}}],
+             "status": {"type": {"state": "pre"}}} for i in range(8)]}]}
+    if url.endswith("propBets?lang=en&region=us&limit=200"):
+        return {"items": []}
+    fid = url.split("/competitions/")[1].split("/")[0]
+    return {"items": [{"provider": {"id": "100"}, "details": f"A{fid} -150",
+                       "awayAthleteOdds": {"moneyLine": -150, "favorite": True},
+                       "homeAthleteOdds": {"moneyLine": 130}}]}
+
+
+_t0 = _t.time()
+_card = ufc.build(_slow_get)
+_el = _t.time() - _t0
+check(f"8 fights' odds fetched side by side ({_el:.2f}s; one after another ~2.6s)",
+      _el < 1.3 and all(f["odds"] and f["odds"]["ml"]["a"] == -150 for f in _card["fights"])
+      and [f["id"] for f in _card["fights"]] == [str(i) for i in range(8)])
+
 if failures:
     print(f"\n{len(failures)} FAILED")
     sys.exit(1)

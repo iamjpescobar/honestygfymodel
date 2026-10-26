@@ -122,6 +122,44 @@ def run_league(league, today, get, fetch_scoreboard, sport_lg, out_dir=OUT, now=
     return {"events": len(evs), "items": n_items, "side": sc, "files": written}
 
 
+# 10-26: the day files grow ~1.5 MB a day across the leagues and every run
+# rewrites today's; the grade keeps what it needs in data/props/graded
+# (one compact row per line, with our chance, the book's and the result).
+# A day file is dropped once it is KEEP_DAYS old and nothing in it is still
+# waiting to be graded, and at HARD_DAYS old whatever it holds (a game
+# that never finished). Pages read only today's and the coming days'.
+KEEP_DAYS = 14
+HARD_DAYS = 30
+
+
+def prune(out_dir, today, keep_days=KEEP_DAYS, hard_days=HARD_DAYS):
+    """[paths removed] — day files past their keep."""
+    gone = []
+    for lg_dir in sorted(Path(out_dir).iterdir()) if Path(out_dir).exists() else []:
+        if not lg_dir.is_dir() or lg_dir.name == "graded":
+            continue
+        for f in sorted(lg_dir.glob("*.json")):
+            try:
+                d = datetime.strptime(f.stem, "%Y-%m-%d").date()
+            except ValueError:
+                continue
+            age = (today - d).days
+            if age < keep_days:
+                continue
+            if age < hard_days:
+                try:
+                    js = json.loads(f.read_text())
+                except Exception:  # noqa: BLE001
+                    continue
+                waiting = [e for e in js.values() if isinstance(e, dict) and e.get("ours")
+                           and e.get("graded") is None]
+                if waiting:
+                    continue
+            f.unlink()
+            gone.append(f"{lg_dir.name}/{f.name}")
+    return gone
+
+
 def main():
     from engines import espn_feed as ef
     from zoneinfo import ZoneInfo
@@ -132,6 +170,9 @@ def main():
                        payload_dir=PAYLOADS)
         except Exception as exc:  # noqa: BLE001
             print(f"::warning::book props {lg} failed: {type(exc).__name__}: {exc}")
+    gone = prune(OUT, today)
+    print(f"  [verify] BOOK PROPS: {len(gone)} day files past {KEEP_DAYS} days removed "
+          f"(graded rows stay in data/props/graded) {gone[:6]}")
     return 0
 
 

@@ -207,10 +207,18 @@ def build(get, day=None):
     c = card(js)
     if not c:
         return None
-    for f in c["fights"]:
+    # 10-26: the fights' odds side by side (two calls a fight, ~13 fights:
+    # one after another they were ~26 waits on every fresh page load)
+    from concurrent.futures import ThreadPoolExecutor
+
+    def one(f):
         try:
-            item, dist = fetch_fight_odds(get, c["event_id"], f["id"])
+            return fetch_fight_odds(get, c["event_id"], f["id"])
         except Exception:  # noqa: BLE001
-            item, dist = None, None
-        f["odds"] = fight_odds(f, item, dist) if item else None
+            return None, None
+    if c["fights"]:
+        with ThreadPoolExecutor(max_workers=min(8, len(c["fights"]))) as ex:
+            got = list(ex.map(one, c["fights"]))
+        for f, (item, dist) in zip(c["fights"], got):
+            f["odds"] = fight_odds(f, item, dist) if item else None
     return c

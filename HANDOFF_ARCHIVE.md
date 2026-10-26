@@ -10,6 +10,84 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — MLB on the Bet Finder opens on DraftKings' line too (players matched by name). 2026-10-23 (5)
+
+**Suite 162, FAILING: none.** tests/test_book_props.py +4 checks (2
+controls red: name_key keeping "Jr."; walks mapped for MLB).
+
+Izzy 6:28 PM (screenshot, TB @ MIL, Batters / Hits): "The lines aren't
+showing for mlb". Cause: ESPN's MLB athlete ids are not MLBAM's (the
+MLB pages' ids), so (4) left MLB out. Now: book_props_snapshot keeps
+each MLB player's NAME in the day file (bp.athlete_names: one call to
+the athlete $ref per new player, names already saved are reused;
+merge_snapshot carries "names"); board() builds "_names" {name_key:
+ESPN id}; the Bet Finder matches MLB rows by "Batter" / "Pitcher" name.
+Starters use MARKETS["mlb_p"] (k: Total Strikeouts / Strikeouts Thrown
+Milestones; h: Total Hits Allowed / Hits Allowed Milestones); batters
+MARKETS["mlb"] (h, tb, hr ladder, k ladder, singles, doubles, rbi).
+WALKS DELIBERATELY UNMAPPED: the site's walks include HBP, DK's do not —
+not the same bet. The record saved before this push has no names: MLB
+lines appear after the next nightly run (a manual run before first pitch
+covers tonight's game).
+
+FILES: app/engines/book_props.py, book_props_snapshot.py,
+app/views/Bet_Finder.py, tests/test_book_props.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
+## PICK UP HERE — Step 2: the Bet Finder opens every player on DraftKings' own line and price (NHL, NBA, NFL). 2026-10-23 (4)
+
+**Suite 162, FAILING: none.** tests/test_book_props.py +6 checks (2 new
+controls red: board() taking the second of a pair as the over;
+price_at giving the main line's price at a moved line). Bet Finder
+headless (NHL, a real 10-23 DK board mapped onto an archived slate's
+players): every row opened on DK's line, both prices filled, Book says
+(de-vigged) and CHECK flags computed with no typing. This zip also
+carries (3), the simulator counts (simcount.zip), so either install
+order ends the same.
+
+THE FIRST REAL RUN (10-23 2 PM nightly): side_check — the FIRST of a
+pair is the over: NHL 100 / 103, NBA 604 / 615, MLB 83 / 83 (the rest
+are ladder prices a few cents off the total's). NFL: 0 pairs — DK's NFL
+totals carry a line and NO price; prices are on the "N+" ladders.
+Saved: 14 NHL, 12 NBA, 13 NFL, 1 MLB game. MLB simulator on real data:
+196,192 PAs, runs per team simulated 4.43 vs actual 4.17 (6% high —
+look at it); SGP kinds all thin / fail.
+
+READING THE RECORD (engines/book_props): FIRST_IS_OVER (measured, the
+note beside it); MARKETS maps our stat keys to DK's total and its ladder
+per league (NHL sog / pts / a / g / sv; NBA pts / reb / ast / tpm / pra /
+pr / pa / ra / q1pts; NFL pass / rush / rec yards, receptions, carries,
+attempts, completions, TDs, ints, rush+rec, 1Q / 1H rec / rush / pass
+yards); YES = one-sided markets (anytime goal / TD, 2+). board() reads
+the day files (latest + first prices), lookup() gives {line, over, under,
+ladder}: the total's line, else the ladder rung nearest even money;
+price_at() gives the price at a line — the main line's two sides, a
+ladder rung's over, else None. load_board() reads data/props/<league>/
+today (+1; NFL +2) from the published data or the repo, with the as-of.
+Unmapped and not priced by the site: NHL PP points; NBA steals / blocks /
+1Q assists; NFL kicking.
+
+BET FINDER: _attach_book puts "_bk" on each row by ESPN id (rows now
+carry "_pid"; the NFL 1Q / 1H group too); a stat with any book line goes
+per-player; each row opens on DK's line with "Your price" and "Other
+side" prefilled; a "DraftKings" column shows "2.5: O +115 · U -155"; a
+moved line gets DK's ladder price there or none — never the main line's
+price at the wrong line; the caption says the as-of. MLB not yet (ESPN
+athlete ids vs MLBAM — needs a name map).
+
+NEXT (step 3): the grader — after the games, every saved DK price vs the
+site's chance at that line: per market, does the site beat DK's de-vigged
+chance (Brier, paired)? Markets that don't -> "no edge proven", their
+VALUE / BET calls capped. Then the same DK line on the Model pages and
+Simulators (they still open on the model's line).
+
+FILES: app/engines/book_props.py, app/views/Bet_Finder.py,
+tests/test_book_props.py; + (3)'s files; HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — Simulator game views: 10,000 -> 50,000 games (MLB 25,000). 2026-10-23 (3)
 
 **Suite 162, FAILING: none.** New tests/test_sim_counts.py (control red:

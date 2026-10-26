@@ -154,6 +154,100 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Speed and space audit: finished games fetched once, NPB fails fast, prop day files kept 14 days, First Basket / UFC stop waiting on the network one call at a time. 2026-10-26 (4)
+
+**Suite 174, FAILING: none.** New tests/test_summary_cache.py (controls
+red: a final served 2 h after it started; a game in progress kept; a
+20-day file still waiting to be graded dropped). tests/test_ufc.py +1
+(control red: one worker). tests/test_nba_first_confirmed.py +2 (control
+red: lineup window always open).
+
+MEASURED 10-26:
+  Repo: 40 MB tracked, .git pack 10 MB. Biggest: hr_research ndjson
+  (13 MB, ~6 MB a month while MLB plays), prior-season files (1-2 MB each,
+  fixed), data/props day files 3.5 MB and ~1.5 MB more a day (each run
+  rewrites today's). Two stale uploads tracked at the root:
+  loscappers-full-batch.zip, loscappers-prop-colours.zip (*.zip is in
+  .gitignore; they came in through "Add files via upload").
+  Published archive: 45 MB gz / 104 MB (95 MB = 2,603 Statcast parquet
+  files; payload JSONs 1-2 MB each). Left alone (MLB pages read it).
+  Nightly 10 AM: 35 min. NHL 9.1 (every final of the season re-fetched
+  every run), NPB 5.1 (npb.jp ConnectTimeout x ~14 at 25 s), tests 7.7,
+  MLB statcast 4.3, NBA 3.1.
+  Every page rendered on the real archive (AppTest, 41 views), no
+  exception. Slow only where the page calls the network as you wait:
+  First Basket 33.8 s (one ESPN summary per slate game, every game), UFC
+  7.7 s (~26 calls one after another); NHL / NFL Tonight ~5 s (live
+  injury feed; this sandbox has no network, so those are upper bounds).
+
+CHANGES:
+  espn_feed.fetch_summary: with ESPN_SUMMARY_CACHE set (nightly only), a
+  FINAL fetched 36+ h after its start is kept gzipped and reused; anything
+  else fetched live; only for the real fetcher (a test's fake never
+  writes it). nightly-data.yml: env PYTHONUNBUFFERED=1 +
+  ESPN_SUMMARY_CACHE, an actions/cache@v4 step (continue-on-error) for
+  .cache/espn-summaries; .gitignore .cache/.
+  npb_precompute._npb_get: connect timeout 8 s; the first connection
+  failure marks npb.jp down for the run.
+  book_props_snapshot.prune: day files dropped at 14 days when nothing
+  in them waits to be graded, at 30 days regardless (graded rows stay in
+  data/props/graded); prints "[verify] BOOK PROPS: N day files ... removed".
+  First Basket: ESPN asked only for games within 2.5 h of tip
+  (nba_first.lineup_window), all at once (8 threads, 6 s timeout, one try).
+  ufc.build: fight odds fetched side by side (8 threads).
+NEXT: read the first nightly after this: the NHL / NBA / NFL steps should
+drop to minutes once the cache is warm (the first run after it still
+fetches everything); NPB ~10 s. With PYTHONUNBUFFERED, the NHL step's
+own slow parts become visible if it is still long.
+
+FILES: app/engines/espn_feed.py, npb_precompute.py, book_props_snapshot.py,
+.github/workflows/nightly-data.yml, .gitignore, app/engines/nba_first.py,
+app/views/NBA_First_Basket.py, app/engines/ufc.py,
+tests/test_summary_cache.py (NEW), tests/test_ufc.py,
+tests/test_nba_first_confirmed.py, HANDOFF.md, HANDOFF_ARCHIVE.md;
+removed: loscappers-full-batch.zip, loscappers-prop-colours.zip
+
+---
+
+## PICK UP HERE — Each simulator has its own settings (engines/sim_settings); runs are made in pieces and kept once, so the NHL simulator stops eating the server's memory. 2026-10-26 (3)
+
+**Suite 173, FAILING: none.** New tests/test_sim_settings.py (controls
+red: merge keeping the first piece; run ignoring the chunk; every piece
+on the same seed); tests/test_sim_counts.py reads the per-sport settings.
+
+Izzy: "NHL simulator be crashing on me ... maybe all of them need their
+own settings, I think all of them are sharing settings and logic". They
+were: every *_Sim page copied one block (st.cache_data, 4 runs kept, the
+whole game in one numpy pass).
+
+MEASURED 10-26 (the sims' own test games, one run): NHL 50,000 +147 MB
+while running, 31 MB kept; MLB 50,000 +81 MB / 25 MB; NBA +14 / 4; NFL
++26 / 5. st.cache_data pickles: every click unpickled a fresh 31 MB copy,
+and 4 runs were kept per page; the NHL parlay ran 50,000-game chunks
+on top. That is the crash.
+
+CHANGE: engines/sim_settings.SIMS, one entry per sport — games (as
+before: NHL / NBA / NFL 50,000, MLB 25,000), chunk (NHL 10,000, NBA /
+NFL 25,000, MLB 5,000), keep 2, sgp + sgp_chunk (NHL 200,000 / 10,000,
+NBA 500,000 / 100,000, NFL 200,000 / 50,000, MLB 50,000 / 5,000).
+sim_settings.run plays the run in pieces (seed + 7919 k each) and joins
+them (merge: arrays along axis 0, dicts key by key). Each page: SIM =
+_ss.settings("<sport>"), N_SIMS = SIM["games"], _run under
+st.cache_resource(ttl=900, max_entries=SIM["keep"]) (one shared copy,
+the pages never write into a sim), joint_precise(n=SIM["sgp"],
+chunk=SIM["sgp_chunk"]). NHL 50,000: peak 141 MB -> 62 MB (tracemalloc);
+means and a skater's point chance match one big run within noise; every
+sim's joined output has the same keys, shapes and dtypes as one run.
+NEXT if it still drops: lower NHL keep to 1 or its chunk to 5,000 —
+both are one number in SIMS.
+
+FILES: app/engines/sim_settings.py (NEW), app/views/NHL_Sim.py,
+app/views/NBA_Sim.py, app/views/NFL_Sim.py, app/views/MLB_Sim.py,
+tests/test_sim_settings.py (NEW), tests/test_sim_counts.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — Markets clearly BEHIND DraftKings are capped at THIN now (not after 300 lines); every captured line keeps the projection we offered, so the next grade measures our projections against the box score. 2026-10-26 (2)
 
 **Suite 172, FAILING: none.** tests/test_book_grade.py +5 checks
@@ -659,83 +753,5 @@ FILES: app/engines/book_grade.py (NEW), book_props_grade.py (NEW),
 tests/test_book_grade.py (NEW), app/engines/book_props.py,
 book_props_snapshot.py, .github/workflows/nightly-data.yml, HANDOFF.md,
 HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — MLB on the Bet Finder opens on DraftKings' line too (players matched by name). 2026-10-23 (5)
-
-**Suite 162, FAILING: none.** tests/test_book_props.py +4 checks (2
-controls red: name_key keeping "Jr."; walks mapped for MLB).
-
-Izzy 6:28 PM (screenshot, TB @ MIL, Batters / Hits): "The lines aren't
-showing for mlb". Cause: ESPN's MLB athlete ids are not MLBAM's (the
-MLB pages' ids), so (4) left MLB out. Now: book_props_snapshot keeps
-each MLB player's NAME in the day file (bp.athlete_names: one call to
-the athlete $ref per new player, names already saved are reused;
-merge_snapshot carries "names"); board() builds "_names" {name_key:
-ESPN id}; the Bet Finder matches MLB rows by "Batter" / "Pitcher" name.
-Starters use MARKETS["mlb_p"] (k: Total Strikeouts / Strikeouts Thrown
-Milestones; h: Total Hits Allowed / Hits Allowed Milestones); batters
-MARKETS["mlb"] (h, tb, hr ladder, k ladder, singles, doubles, rbi).
-WALKS DELIBERATELY UNMAPPED: the site's walks include HBP, DK's do not —
-not the same bet. The record saved before this push has no names: MLB
-lines appear after the next nightly run (a manual run before first pitch
-covers tonight's game).
-
-FILES: app/engines/book_props.py, book_props_snapshot.py,
-app/views/Bet_Finder.py, tests/test_book_props.py, HANDOFF.md,
-HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — Step 2: the Bet Finder opens every player on DraftKings' own line and price (NHL, NBA, NFL). 2026-10-23 (4)
-
-**Suite 162, FAILING: none.** tests/test_book_props.py +6 checks (2 new
-controls red: board() taking the second of a pair as the over;
-price_at giving the main line's price at a moved line). Bet Finder
-headless (NHL, a real 10-23 DK board mapped onto an archived slate's
-players): every row opened on DK's line, both prices filled, Book says
-(de-vigged) and CHECK flags computed with no typing. This zip also
-carries (3), the simulator counts (simcount.zip), so either install
-order ends the same.
-
-THE FIRST REAL RUN (10-23 2 PM nightly): side_check — the FIRST of a
-pair is the over: NHL 100 / 103, NBA 604 / 615, MLB 83 / 83 (the rest
-are ladder prices a few cents off the total's). NFL: 0 pairs — DK's NFL
-totals carry a line and NO price; prices are on the "N+" ladders.
-Saved: 14 NHL, 12 NBA, 13 NFL, 1 MLB game. MLB simulator on real data:
-196,192 PAs, runs per team simulated 4.43 vs actual 4.17 (6% high —
-look at it); SGP kinds all thin / fail.
-
-READING THE RECORD (engines/book_props): FIRST_IS_OVER (measured, the
-note beside it); MARKETS maps our stat keys to DK's total and its ladder
-per league (NHL sog / pts / a / g / sv; NBA pts / reb / ast / tpm / pra /
-pr / pa / ra / q1pts; NFL pass / rush / rec yards, receptions, carries,
-attempts, completions, TDs, ints, rush+rec, 1Q / 1H rec / rush / pass
-yards); YES = one-sided markets (anytime goal / TD, 2+). board() reads
-the day files (latest + first prices), lookup() gives {line, over, under,
-ladder}: the total's line, else the ladder rung nearest even money;
-price_at() gives the price at a line — the main line's two sides, a
-ladder rung's over, else None. load_board() reads data/props/<league>/
-today (+1; NFL +2) from the published data or the repo, with the as-of.
-Unmapped and not priced by the site: NHL PP points; NBA steals / blocks /
-1Q assists; NFL kicking.
-
-BET FINDER: _attach_book puts "_bk" on each row by ESPN id (rows now
-carry "_pid"; the NFL 1Q / 1H group too); a stat with any book line goes
-per-player; each row opens on DK's line with "Your price" and "Other
-side" prefilled; a "DraftKings" column shows "2.5: O +115 · U -155"; a
-moved line gets DK's ladder price there or none — never the main line's
-price at the wrong line; the caption says the as-of. MLB not yet (ESPN
-athlete ids vs MLBAM — needs a name map).
-
-NEXT (step 3): the grader — after the games, every saved DK price vs the
-site's chance at that line: per market, does the site beat DK's de-vigged
-chance (Brier, paired)? Markets that don't -> "no edge proven", their
-VALUE / BET calls capped. Then the same DK line on the Model pages and
-Simulators (they still open on the model's line).
-
-FILES: app/engines/book_props.py, app/views/Bet_Finder.py,
-tests/test_book_props.py; + (3)'s files; HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

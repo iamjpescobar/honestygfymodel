@@ -22,7 +22,9 @@ from engines import nba_sim as ns
 from engines import nba_view as nv
 from engines.live_sync import sync_latest_button
 
-N_SIMS = 50_000   # 10-23: 10,000 -> 50,000 (simulator noise on a 50% chance ±0.5 -> ±0.22 pts); ~1-2 s
+from engines import sim_settings as _ss  # noqa: E402
+SIM = _ss.settings("nba")   # 10-26: basketball's own settings (engines/sim_settings)
+N_SIMS = SIM["games"]
 page_header("NBA Simulator", f"Play tonight's game {N_SIMS:,} times", eyebrow="NBA", align="left")
 sync_latest_button(key="sync_nba_sim", include_data_package=True)
 games, model, pget = nv.load()
@@ -78,13 +80,12 @@ if not players:
     st.stop()
 
 
-@st.cache_data(ttl=900, show_spinner=False, max_entries=4)   # a run is ~5x the 10k one's memory
+@st.cache_resource(ttl=900, show_spinner=False, max_entries=SIM["keep"])   # one shared copy
 def _run(key, mu_h, mu_a, sd_m, sd_t, plist, sizes, links):
     import json
     import zlib
-    sim = ns.simulate(mu_h, mu_a, sd_m, sd_t, json.loads(plist), json.loads(sizes),
-                      json.loads(links), n=N_SIMS, seed=zlib.crc32(key.encode()))
-    return sim
+    return _ss.run("nba", ns.simulate, mu_h, mu_a, sd_m, sd_t, json.loads(plist),
+                   json.loads(sizes), json.loads(links), seed=zlib.crc32(key.encode()))
 
 
 @st.cache_data(ttl=900, show_spinner=False, max_entries=64)
@@ -94,7 +95,8 @@ def _legs_run(key, mu_h, mu_a, sd_m, sd_t, plist, sizes, links, legs):
     import json
     import zlib
     return ns.joint_precise(mu_h, mu_a, sd_m, sd_t, json.loads(plist), json.loads(sizes),
-                            json.loads(links), json.loads(legs), seed=zlib.crc32(key.encode()))
+                            json.loads(links), json.loads(legs), n=SIM["sgp"],
+                            chunk=SIM["sgp_chunk"], seed=zlib.crc32(key.encode()))
 
 
 import json as _json  # noqa: E402

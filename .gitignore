@@ -10,3 +10,6 @@ venv/
 app/auth_config.yaml
 app/data/
 *.zip
+
+# finished-game box scores the nightly keeps between runs (actions/cache)
+.cache/
