@@ -154,6 +154,53 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Markets clearly BEHIND DraftKings are capped at THIN now (not after 300 lines); every captured line keeps the projection we offered, so the next grade measures our projections against the box score. 2026-10-26 (2)
+
+**Suite 172, FAILING: none.** tests/test_book_grade.py +5 checks
+(controls red: "behind" on any fails without the z; ladder rungs counted
+twice in the projection check); test_matchup_grade.py follows the new
+graded-row shape.
+
+READ 10-26 10 AM nightly:
+  First 3 minutes on real projections: any point beats the league rate
+  (z 6.18) and his own record (z 2.74); a made FG beats both too (z 5.33
+  / 2.72). Not capped.
+  First Basket confirmed five: beats (z 2.84).
+  NBA projection bias (walk-forward test rows): last season x1.00 on
+  every stat (control clean); THIS season actual / projected x0.87 pts,
+  x0.93 reb, x0.86 ast (all rows), x0.88 pts (20+ min) — the walk-forward
+  OVER-projects returning players this season (~43 games in).
+  Site vs DraftKings, two NBA nights (10-24, 10-25): site mean over
+  chance 0.38 both nights vs DK 0.49 / 0.50, overs hit 0.58 / 0.51.
+  Implied from the captured chances at DK's main points line: our mean
+  ~0.9-1.1 points under DK's line (13.95 vs 14.83; 13.5 vs 14.63), plus
+  the negative-binomial skew (an even mean prices the over ~0.45). NBA
+  pts / pr / pa / pra / tpm fail at z -2.2 to -3.1 on 130-180 lines.
+  NHL: pts fails (z -2.96, n 304), g* fails (z -2.33), a / sog thin-ish;
+  site 0.40 vs DK 0.42 vs hit 0.43-0.44.
+  THE TWO NBA READS DISAGREE (walk-forward says too HIGH, tonight's
+  offered chances sit LOW vs DK and the box): the offered pipeline
+  (project_now, minutes, team-minutes 220 / beta 0.5, injuries) is not
+  the walk-forward pipeline. Not guessed at: measured next.
+
+CHANGES. book_grade.market_status: "behind" when n >= 100 and z <= -2
+(BEHIND_MIN / BEHIND_Z) — the Bet Finder caps it at THIN and labels it
+"BEHIND DraftKings so far"; Site vs DraftKings shows BEHIND DRAFTKINGS.
+Only ever a cap ("beats" still needs 300). capture saves our offered
+projection (the pmf mean) as element 7; grade_event appends [letter,
+our projection, what he did]; projection_bias -> nightly "[verify]
+OFFERED PROJECTION vs BOX <lg>: <stat> ours vs actual (x ratio, DK line,
+n)" and scorecard "bias". NEXT: two nights of that line; if NBA ours /
+actual sits clearly under 1 while DK's line ~ actual, fix the offered
+pipeline at the source (minutes first), test, adopt only if it beats.
+
+FILES: app/engines/book_grade.py, book_props_grade.py,
+app/views/Bet_Finder.py, app/views/Site_vs_Book.py,
+tests/test_book_grade.py, tests/test_matchup_grade.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — Matchup grade A-F on every prop (Bet Finder, NBA Props / Trends, every "Defense vs pos" board), and a check of whether the letter knows more than the chance. 2026-10-26
 
 **Suite 172, FAILING: none.** New tests/test_matchup_grade.py (controls
@@ -690,29 +737,5 @@ Simulators (they still open on the model's line).
 
 FILES: app/engines/book_props.py, app/views/Bet_Finder.py,
 tests/test_book_props.py; + (3)'s files; HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — Simulator game views: 10,000 -> 50,000 games (MLB 25,000). 2026-10-23 (3)
-
-**Suite 162, FAILING: none.** New tests/test_sim_counts.py (control red:
-a page header put back to a literal "10,000 times").
-
-Izzy: "We need to change that 10000 isn't it common". Measured before
-changing (single game, this container): NHL 10k 0.23 s / 50k 0.97 s /
-100k 1.9 s; NFL 50k 0.2 s; NBA 50k 0.1 s; MLB 10k 0.9 s / 50k 3.7 s.
-Result memory ~0.6 MB per 1,000 games for a full NHL / NBA / NFL roster
-(int16 arrays). So: NHL / NBA / NFL 50,000, MLB 25,000 — the
-simulator's own noise on a 50% chance ±0.5 -> ±0.22 points (MLB ±0.32);
-the game-run cache max_entries 8 -> 4 (a run is ~5x the memory; a
-re-simulated game costs ~1 s). Headers, spinners, docstrings read
-N_SIMS; Home's MLB card says 25,000. Parlay runs unchanged (NBA 500k,
-NHL / NFL 200k, MLB 50k). NHL_Sim headless 4.6 s whole page, NFL 2.6 s.
-Told Izzy plainly: this tightens the simulator's own noise, it is NOT
-what makes numbers feel off — that is the book comparison (steps 2-3 of
-the prop-lines work).
-
-FILES: app/views/{NHL,NBA,NFL,MLB}_Sim.py, app/views/Home.py,
-tests/test_sim_counts.py (NEW), HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

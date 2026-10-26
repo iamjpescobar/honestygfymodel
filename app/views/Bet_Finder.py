@@ -501,6 +501,8 @@ else:
                 _lab = {"beats": ("BEATS DRAFTKINGS", COLOR["stat_high"]),
                         "no_edge": ("NO EDGE PROVEN vs DraftKings — calls capped at THIN",
                                     COLOR["warn"]),
+                        "behind": ("BEHIND DraftKings so far — calls capped at THIN",
+                                   COLOR["error"]),
                         "grading": (f"BEING GRADED vs DraftKings ({_mk['n']} of "
                                     f"{_bg.MIN_GRADED} lines) — not proven yet",
                                     COLOR["text_muted"])}[_mk["status"]]
@@ -604,7 +606,7 @@ else:
                        "line_label": f"{side[0]}{ln:g}"}
                 ref.append(row)
                 _sup = bf.support_at(r, stat, ln, grp["markets"], grp["cal"])
-                if _mk["status"] == "no_edge":
+                if _mk["status"] in ("no_edge", "behind"):
                     # graded against DraftKings and did not beat it: THIN at most
                     _sup = dict(_sup or {}, untested=True)
                 j = bf.judge(ch, _yp, _stk, _os, _sup)

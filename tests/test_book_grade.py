@@ -141,12 +141,39 @@ check("no verdict before 300 graded lines; then beats or no edge proven",
                                                        "key": "rec_yds*"}
       and bg.market_status(None, "nhl", "sog")["status"] == "grading" and bg.MIN_GRADED == 300)
 bfp = (ROOT / "app" / "views" / "Bet_Finder.py").read_text(encoding="utf-8")
-check("a market with no edge proven is capped at THIN on the Bet Finder, and labelled",
-      'if _mk["status"] == "no_edge":' in bfp and "_sup = dict(_sup or {}, untested=True)" in bfp
+check("a market with no edge proven (or behind the book) is capped at THIN, and labelled",
+      'if _mk["status"] in ("no_edge", "behind"):' in bfp and "BEHIND DraftKings" in bfp and "_sup = dict(_sup or {}, untested=True)" in bfp
       and "NO EDGE PROVEN vs DraftKings" in bfp and "BEATS DRAFTKINGS" in bfp)
 app_ = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
 check("the Site vs DraftKings page is in every sport's nav",
       app_.count('("Site vs DraftKings", "views/Site_vs_Book.py")') == 4)
+
+# --- 10-26: BEHIND the book is capped early; our offered projection is kept --------
+def _card(n, z, v):
+    return {"leagues": {"nba": {"pts": {"n": n, "verdict": {"verdict": v, "z": z}}}}}
+
+
+check("a market clearly BEHIND DraftKings on 100+ lines is capped (status 'behind')",
+      bg.market_status(_card(180, -3.1, "fails"), "nba", "pts")["status"] == "behind"
+      and bg.market_status(_card(180, -1.5, "fails"), "nba", "pts")["status"] == "grading"
+      and bg.market_status(_card(90, -3.5, "fails"), "nba", "pts")["status"] == "grading"
+      and bg.market_status(_card(350, 2.5, "beats"), "nba", "pts")["status"] == "beats")
+check("the capture keeps the projection we offered (the pmf's mean) beside the chance",
+      all(len(r) == 7 for r in ours["e1"])
+      and abs(next(r[6] for r in ours["e1"] if r[0] == "11") - 26.0) < 0.05)
+Gm = bg.grade_event(entry, {"11": {"pts": 31}, "12": {"pts": 9}})
+check("a graded row ends [letter, our projection, what he did]",
+      next(r for r in Gm if r[0] == "11")[-2:][1] == 31
+      and abs(next(r for r in Gm if r[0] == "11")[-2] - 26.0) < 0.05)
+_g11 = next(r for r in Gm if r[0] == "11")
+_rung = list(_g11)
+_rung[2] = 29.5                                   # a ladder rung of the same player-game
+PB = bg.projection_bias([["d", "e1"] + r for r in Gm] + [["d", "e1"] + _rung])
+check("projection vs box: once per player-game (ladder rungs not double counted)",
+      PB["pts"]["n"] == 2 and abs(PB["pts"]["actual"] - 20.0) < 1e-9
+      and PB["pts"]["ratio"] == round(40.0 / (26.0 + 8.0), 3))
+check("rows graded before 10-26 (no projection) are skipped, not zeros",
+      bg.projection_bias([["d", "e", "p", "pts", 9.5, 0.5, 0.5, 1, -110, -110]]) == {})
 
 if failures:
     print(f"\n{len(failures)} FAILED")

@@ -142,6 +142,13 @@ def capture(league, payload, bd):
         for stat in row["_pmfs"]:
             letter = (row.get("_grade") or {}).get(stat) or mg.from_card(
                 (row.get("_dvp") or {}).get(stat))
+            # 10-26: the projection we offered (the pmf's mean), so the
+            # grade can measure our projections against the box score
+            try:
+                pm = row["_pmfs"][stat]
+                mu = round(sum(i * p for i, p in enumerate(pm)), 3)
+            except Exception:  # noqa: BLE001
+                mu = None
             bk = bp.lookup(bd, lg, pid, stat)
             if not bk:
                 continue
@@ -156,7 +163,7 @@ def capture(league, payload, bd):
                 if ch is None:
                     continue
                 out.setdefault(eid, []).append([str(pid), stat, float(ln), round(raw, 4),
-                                                round(ch, 4), letter])
+                                                round(ch, 4), letter, mu])
     return out
 
 
@@ -236,6 +243,7 @@ def grade_event(entry, actual):
     for x in entry["ours"]:
         pid, stat, line, _raw, ours = x[:5]
         letter = x[5] if len(x) > 5 else None
+        mu = x[6] if len(x) > 6 else None
         a = (actual.get(str(pid)) or {}).get(stat)
         if a is None:
             continue
@@ -257,7 +265,7 @@ def grade_event(entry, actual):
         if book is None:
             continue
         out.append([str(pid), key, line, ours, round(book, 4), 1 if a > line else 0, o, u,
-                    letter])
+                    letter, mu, a])
     return out
 
 
@@ -311,6 +319,40 @@ def scorecard(graded):
 # caps that market's calls at THIN.
 # ----------------------------------------------------------------------
 MIN_GRADED = 300
+# 10-26: the DOWNWARD side may be called earlier. Two nights in, the
+# site's NBA points / pts+reb / pts+ast chances were WORSE than
+# DraftKings' at z -3 on 130-180 lines while the rule above still said
+# "being graded" — and the Bet Finder could still call STRONG on them.
+# A market significantly BEHIND the book (z <= BEHIND_Z on BEHIND_MIN+
+# lines) is capped at THIN now. Only ever a cap: "beats" still needs
+# MIN_GRADED (no false STRONG, rule 7).
+BEHIND_MIN = 100
+BEHIND_Z = -2.0
+
+
+def projection_bias(graded):
+    """{stat: {"n", "ours", "actual", "ratio", "line"}} — the projection
+    we OFFERED (captured beside the chance) against what the player did,
+    one per player-game-stat (ladder rungs share it), two-sided stats
+    only; with DraftKings' main line's mean beside it. Rows graded before
+    10-26 carry no projection and are skipped (missing is never zero)."""
+    seen, acc = set(), {}
+    for r in graded or []:
+        if len(r) < 13 or r[11] is None or r[12] is None or str(r[3]).endswith("*"):
+            continue
+        k = (r[1], r[2], r[3])
+        if k in seen:
+            continue
+        seen.add(k)
+        a = acc.setdefault(r[3], [0, 0.0, 0.0, 0.0])
+        a[0] += 1
+        a[1] += r[11]
+        a[2] += r[12]
+        a[3] += r[4]
+    return {st: {"n": a[0], "ours": round(a[1] / a[0], 2), "actual": round(a[2] / a[0], 2),
+                 "line": round(a[3] / a[0], 2),
+                 "ratio": round(a[2] / a[1], 3) if a[1] else None}
+            for st, a in sorted(acc.items())}
 
 
 def load_scorecard(roots):
@@ -327,7 +369,7 @@ def load_scorecard(roots):
 
 
 def market_status(card, league, stat):
-    """{"status": "beats" | "no_edge" | "grading", "n", "z", "key"} for one
+    """{"status": "beats" | "no_edge" | "behind" | "grading", "n", "z", "key"} for one
     league / stat (the two-sided grade, else the one-sided "stat*")."""
     sc = ((card or {}).get("leagues") or {}).get(league) or {}
     key = stat if stat in sc else (stat + "*" if stat + "*" in sc else None)
@@ -335,7 +377,9 @@ def market_status(card, league, stat):
     if not x:
         return {"status": "grading", "n": 0, "z": None, "key": stat}
     v = (x.get("verdict") or {})
-    if (x.get("n") or 0) < MIN_GRADED:
+    if (x.get("n") or 0) >= BEHIND_MIN and v.get("z") is not None and v["z"] <= BEHIND_Z:
+        st = "behind"
+    elif (x.get("n") or 0) < MIN_GRADED:
         st = "grading"
     else:
         st = "beats" if v.get("verdict") == "beats" else "no_edge"

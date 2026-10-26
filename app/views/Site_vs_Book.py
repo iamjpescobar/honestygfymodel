@@ -62,6 +62,7 @@ if not card_ or not any((card_.get("leagues") or {}).values()):
 
 st.caption(f"Graded through {card_.get('as_of')}.")
 STATUS = {"beats": ("BEATS DRAFTKINGS", "strong"), "no_edge": ("NO EDGE PROVEN", "fails"),
+          "behind": ("BEHIND DRAFTKINGS", "fails"),
           "grading": ("BEING GRADED", None)}
 for lg, sc in (card_.get("leagues") or {}).items():
     if not sc:
@@ -73,7 +74,10 @@ for lg, sc in (card_.get("leagues") or {}).items():
         for key, x in sorted(sc.items(), key=lambda kv: -(kv[1].get("n") or 0)):
             ms = bg.market_status(card_, lg, key.rstrip("*"))
             if key.endswith("*") and ms.get("key") != key:
-                ms = dict(ms, status="grading" if (x.get("n") or 0) < bg.MIN_GRADED else (
+                _z = (x.get("verdict") or {}).get("z")
+                ms = dict(ms, status="behind" if ((x.get("n") or 0) >= bg.BEHIND_MIN and _z is not None
+                                                  and _z <= bg.BEHIND_Z) else
+                          "grading" if (x.get("n") or 0) < bg.MIN_GRADED else (
                     "beats" if ((x.get("verdict") or {}).get("verdict") == "beats")
                     else "no_edge"))
             f = x.get("flagged") or {}

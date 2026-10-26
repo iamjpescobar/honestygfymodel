@@ -75,7 +75,7 @@ def main():
     from engines import espn_feed as ef
     today = datetime.now(ZoneInfo("America/New_York")).date().isoformat()
     from engines import matchup_grade as mg
-    card, grades = {}, {}
+    card, grades, bias = {}, {}, {}
     for lg in LEAGUES:
         try:
             new, done, waiting = grade_league(lg, ef.fetch_summary, today)
@@ -89,6 +89,11 @@ def main():
         # 10-26: the matchup letter check — per letter, the site's chance,
         # the book's and how often the over really hit (two-sided lines)
         grades[lg] = mg.by_grade([r for r in rows if not str(r[3]).endswith("*")])
+        bias[lg] = bg.projection_bias(rows)
+        if bias[lg]:
+            print(f"  [verify] OFFERED PROJECTION vs BOX {lg}: " + "; ".join(
+                f"{s} ours {x['ours']} vs actual {x['actual']} (x{x['ratio']}, DK line "
+                f"{x['line']}, n{x['n']})" for s, x in bias[lg].items()))
         if grades[lg]:
             print(f"  [verify] MATCHUP GRADE {lg}: " + "; ".join(
                 f"{g} n={x['n']} site {x['site']:.3f} book {x['book']:.3f} hit {x['actual']:.3f}"
@@ -99,7 +104,8 @@ def main():
                   f"vs book {x['brier_book']} -> {v.get('verdict')} (z={v.get('z')}); flagged "
                   f"{f['n']} plays, {f['hits']} hit, {f['units']:+} units (roi {f['roi']})")
     PROPS.mkdir(parents=True, exist_ok=True)
-    (PROPS / "scorecard.json").write_text(json.dumps({"as_of": today, "leagues": card, "grades": grades},
+    (PROPS / "scorecard.json").write_text(json.dumps({"as_of": today, "leagues": card, "grades": grades,
+                                                      "bias": bias},
                                                      indent=1, default=str))
     return 0
 

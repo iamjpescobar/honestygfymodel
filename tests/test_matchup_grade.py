@@ -107,10 +107,10 @@ snap = bp.merge_snapshot({}, {"e1": bp.parse([
      "odds": {"american": {"value": "-110"}}, "current": {"target": {"value": 24.5}}}])}, "T")
 G = bg.grade_event(dict(snap["e1"], ours=[["11", "pts", 24.5, 0.5, 0.52, "B"]]),
                    {"11": {"pts": 30}})
-check("the graded row carries its letter", G and G[0][-1] == "B")
+check("the graded row carries its letter", G and G[0][8] == "B")
 G_old = bg.grade_event(dict(snap["e1"], ours=[["11", "pts", 24.5, 0.5, 0.52]]),
                        {"11": {"pts": 30}})
-check("lines captured before 10-26 (no letter) still grade", G_old and G_old[0][-1] is None)
+check("lines captured before 10-26 (no letter) still grade", G_old and G_old[0][8] is None)
 rows_g = ([["d", "e", "p", "pts", 1, 0.5, 0.5, 1, -110, -110, "A"]] * 3
           + [["d", "e", "p", "pts", 1, 0.5, 0.5, 0, -110, -110, "F"]] * 2
           + [["d", "e", "p", "pts", 1, 0.5, 0.5, 1, -110, -110, None]])
@@ -132,7 +132,7 @@ check("the Bet Finder shows a Matchup column for the side picked (an Under flips
 check("NBA Props and Trends show the letter", 'nv.grade(r, stat, side)' in
       src["app/views/NBA_Props.py"] and 'nv.grade(r, st_)' in src["app/views/NBA_Trends.py"])
 check("the capture saves the letter beside the chance; the grader reports per letter",
-      "round(ch, 4), letter])" in src["app/engines/book_grade.py"]
+      "round(ch, 4), letter, mu])" in src["app/engines/book_grade.py"]
       and "mg.by_grade(" in src["book_props_grade.py"] and "MATCHUP GRADE" in
       src["book_props_grade.py"] and "Matchup grade " in src["app/views/Site_vs_Book.py"])
 check("the boards colour by letter", 'GRADE_STYLE = {' in src["app/engines/model_view.py"])
