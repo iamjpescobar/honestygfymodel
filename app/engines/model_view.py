@@ -605,8 +605,19 @@ def chance_css(p):
             f"color: {COLOR['bg'] if strong else COLOR['text']}; font-weight: {700 if strong else 600};")
 
 
+GRADE_STYLE = {
+    "A": ("A", COLOR["accent"], COLOR["accent_dim"]),
+    "B": ("B", COLOR["accent"], None),
+    "C": ("C", COLOR["text_muted"], None),
+    "D": ("D", COLOR["error"], None),
+    "F": ("F", COLOR["error"], COLOR["error_dim"]),
+}
+
+
 def matchup_css(tier_name):
-    lab, fg, bg = MATCHUP_STYLE.get(tier_name, ("", COLOR["text_faint"], None))
+    """Colour for a matchup cell: an A-F letter (10-26) or the old tier."""
+    lab, fg, bg = (GRADE_STYLE.get(tier_name) or
+                   MATCHUP_STYLE.get(tier_name, ("", COLOR["text_faint"], None)))
     return (f"color: {fg}; font-weight: 700;" + (f" background-color: {bg};" if bg else ""))
 
 
@@ -711,7 +722,7 @@ def render_prop_board(rows, stats, markets, verdicts, key, staking, info_cols,
             row["Defense vs pos"] = dm.badge(c)
         table.append(row)
         chances.append(cmap)
-        tiers.append((c or {}).get("tier"))
+        tiers.append((c or {}).get("grade") or (c or {}).get("tier"))
     df = pd.DataFrame(table)
     df = df[prop_board_order(df.columns, list(chances[0]) if chances else [])]
 
@@ -1535,7 +1546,7 @@ def render_nfl_props(g, league, key, staking, dvp=None):
             row["Status"] = (row["Status"] + " · " if row["Status"] else "") + f"new team (was {r['_moved']})"
         table.append(row)
         chances.append(cm)
-        tiers.append((c or {}).get("tier"))
+        tiers.append((c or {}).get("grade") or (c or {}).get("tier"))
     order = sorted(range(len(table)), key=lambda i: -(table[i]["Proj"] or 0))
     table = [table[i] for i in order]
     chances = [chances[i] for i in order]

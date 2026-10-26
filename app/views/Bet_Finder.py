@@ -108,7 +108,7 @@ def _nhl_groups(item):
                 continue
             _f = av.flag(p)
             sk.append({"_name": f"{p.get('name')} ({abbr})" + (f" ⚠ {_f}" if _f else ""),
-                       "_why": p.get("why"),
+                       "_why": p.get("why"), "_dvp": p.get("dvp") or {},
                        "_pmfs": nm.skater_pmfs(p.get("mu"), sog_disp), "_pid": p.get("pid")})
         for gp in g.get(f"{side}_goalie_props") or []:
             pm = nm.saves_pmf(gp.get("exp_sa"), shot_disp, gp.get("sv_pct"))
@@ -266,6 +266,7 @@ def _nba_groups(item):
             rows.append({"_name": f"{r['name']} ({abbr})" + (f" \u26a0 {lab}" if lab else "")
                          + nv.tags(r),
                          "_why": r.get("why"), "_untested": bool(r.get("new")),
+                         "_grade": r.get("grade") or {},
                          "_pmfs": nm.player_pmfs(r.get("mu"), model.get("sizes")),
                          "_pid": r.get("pid")})
     stats = tuple((s, lab, (0.5,)) for s, lab in nm.PAGE_STATS
@@ -333,6 +334,29 @@ def _call_css(tier):
     return f"color: {fg}; font-weight: 800;" + (f" background-color: {bg};" if bg else "")
 
 
+MATCHUP_IN_NUMBER = {
+    "NBA": "The matchup is already IN our chance (the opponent factor, tested).",
+    "NFL": "The matchup is already IN our chance (the defense multiplier).",
+    "MLB": "The matchup is already IN our chance (batter vs tonight's starter).",
+    "NHL": "The position split is context, not in our chance (tested, did not beat); the "
+           "team's goals and shots allowed are.",
+}
+
+
+def _grade_of(r, stat, side="Over"):
+    """The A-F matchup letter for this row's stat, for the SIDE picked
+    (10-26, engines/matchup_grade): the letter is about the over, so an
+    Under flips it (an F defense is an A spot for the under). '—' when
+    the sport has no matchup number for this stat."""
+    from engines import matchup_grade as mg
+    g = (r.get("_grade") or {}).get(stat)
+    if not g:
+        g = mg.from_card((r.get("_dvp") or {}).get(stat))
+    if not g:
+        return "—"
+    return mg.LETTERS[4 - mg.LETTERS.index(g)] if side == "Under" else g
+
+
 def _results_table(res, key, line_col=True):
     """The judged list: every typed price, BETs first."""
     if not res:
@@ -340,6 +364,7 @@ def _results_table(res, key, line_col=True):
     df = pd.DataFrame([{
         "Call": bf.TIER_LABEL[r["tier"]], "Player": r["name"],
         **({"Line": r.get("line_label")} if line_col else {}),
+        "Matchup": r.get("grade") or "—",
         "Your price": _amer(r["price"]), "Our chance": _pct(r["chance"]),
         "Book says": _pct(r.get("book")),
         "Worth it at": _amer(r["worth"]), "Edge": f"{100 * r['edge']:+.1f} pts",
@@ -351,6 +376,7 @@ def _results_table(res, key, line_col=True):
         for i in frame.index:
             out.at[i, "Call"] = _call_css(res[i]["tier"])
             out.at[i, "Our chance"] = mv.chance_css(res[i]["chance"])
+            out.at[i, "Matchup"] = mv.matchup_css(res[i].get("grade"))
         return out
     st.dataframe(mv.painted(df, _paint), hide_index=True, width="stretch", key=key)
 
@@ -535,10 +561,11 @@ else:
                                  for i, r in enumerate(players)])
             if has_book:
                 base.insert(1, "DraftKings", [_dk(r) for r in players])
+            base.insert(1, "Matchup", [_grade_of(r, stat, side) for r in players])
             ed_key = f"bf_ed_{sport}_{gi}_{gname}_{stat}_{side}_{line}"
             edited = st.data_editor(
                 base, key=ed_key, hide_index=True, width="stretch",
-                disabled=["Player", "DraftKings"] + ([] if per_player else ["Line"]),
+                disabled=["Player", "DraftKings", "Matchup"] + ([] if per_player else ["Line"]),
                 column_config={
                     "Line": st.column_config.NumberColumn(step=0.5, format="%.1f"),
                     "Your price": st.column_config.NumberColumn(
@@ -551,6 +578,11 @@ else:
                         step=5, format="%d"),
                 })
 
+            if any(_grade_of(r, stat, side) != "—" for r in players):
+                st.caption("**Matchup** = A (great spot) to F (very tough) for the side you "
+                           "picked: tonight's opponent ranked on what it gives up on this stat "
+                           "to his kind of player, in fifths of the league. "
+                           + MATCHUP_IN_NUMBER.get(sport, ""))
             res, ref = [], []
             for i, r in enumerate(players):
                 ln = float(edited.at[i, "Line"]) if per_player else line
@@ -567,6 +599,7 @@ else:
                 if ch is None or not 0 < ch < 1:
                     continue
                 row = {"name": r["_name"], "chance": ch, "raw": raw, "basis": basis,
+                       "grade": _grade_of(r, stat, side),
                        "worth": mm.fair_american(ch), "line": ln, "side": side,
                        "line_label": f"{side[0]}{ln:g}"}
                 ref.append(row)

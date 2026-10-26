@@ -102,6 +102,34 @@ for lg, sc in (card_.get("leagues") or {}).items():
             return o_
         st.dataframe(mv.painted(pd.DataFrame(rows), _paint), hide_index=True, width="stretch",
                      key=f"svb_tab_{lg}")
+# 10-26: does the A-F MATCHUP letter know something our chance doesn't?
+_gr = {lg: x for lg, x in (card_.get("grades") or {}).items() if x}
+with card("svb_grades"):
+    st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Matchup grade '
+                f'check</div><div class="pf-card-subtitle">Does an A spot go over more than we '
+                f'said?</div>', unsafe_allow_html=True)
+    if not _gr:
+        st.caption("Lines carry their matchup letter from 10-26 on; this fills in as those "
+                   "games are graded.")
+    for lg, x in _gr.items():
+        df_ = pd.DataFrame([{"Grade": g, "Lines": v["n"], "Our chance": f"{100 * v['site']:.0f}%",
+                             "DraftKings": f"{100 * v['book']:.0f}%",
+                             "Went over": f"{100 * v['actual']:.0f}%",
+                             "Over vs us": f"{100 * (v['actual'] - v['site']):+.0f} pts"}
+                            for g, v in x.items()])
+
+        def _pg(frame, x=x):
+            o_ = pd.DataFrame("", index=frame.index, columns=frame.columns)
+            for k_ in frame.index:
+                o_.at[k_, "Grade"] = mv.matchup_css(frame.at[k_, "Grade"])
+            return o_
+        st.markdown(f"**{LEAGUE.get(lg, lg.upper())}**")
+        st.dataframe(mv.painted(df_, _pg), hide_index=True, width="stretch",
+                     key=f"svb_gr_{lg}")
+    st.caption("If A spots keep going over MORE than our chance said and F spots LESS, the "
+               "letter knows something the chance is missing and earns a place in the number. "
+               "If the 'Over vs us' column is flat across the letters, the matchup is already "
+               "priced in. A few nights swing — read it once each letter has 300+ lines.")
 st.caption("* = DraftKings posted only the over at that line (their NFL main lines come with "
            "no price), so its cut is estimated at the 7% measured on their two-sided NHL / NBA "
            "markets; graded apart from the rest. A small sample swings: wait for the verdict "

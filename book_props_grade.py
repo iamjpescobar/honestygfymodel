@@ -74,7 +74,8 @@ def main():
     from zoneinfo import ZoneInfo
     from engines import espn_feed as ef
     today = datetime.now(ZoneInfo("America/New_York")).date().isoformat()
-    card = {}
+    from engines import matchup_grade as mg
+    card, grades = {}, {}
     for lg in LEAGUES:
         try:
             new, done, waiting = grade_league(lg, ef.fetch_summary, today)
@@ -85,13 +86,20 @@ def main():
         gpath = PROPS / "graded" / f"{lg}.json"
         rows = json.loads(gpath.read_text()) if gpath.exists() else []
         card[lg] = bg.scorecard(rows)
+        # 10-26: the matchup letter check — per letter, the site's chance,
+        # the book's and how often the over really hit (two-sided lines)
+        grades[lg] = mg.by_grade([r for r in rows if not str(r[3]).endswith("*")])
+        if grades[lg]:
+            print(f"  [verify] MATCHUP GRADE {lg}: " + "; ".join(
+                f"{g} n={x['n']} site {x['site']:.3f} book {x['book']:.3f} hit {x['actual']:.3f}"
+                for g, x in grades[lg].items()))
         for st, x in card[lg].items():
             v, f = x["verdict"] or {}, x["flagged"]
             print(f"  [verify] SITE vs DRAFTKINGS {lg} {st:12s} n={x['n']} site {x['brier_site']} "
                   f"vs book {x['brier_book']} -> {v.get('verdict')} (z={v.get('z')}); flagged "
                   f"{f['n']} plays, {f['hits']} hit, {f['units']:+} units (roi {f['roi']})")
     PROPS.mkdir(parents=True, exist_ok=True)
-    (PROPS / "scorecard.json").write_text(json.dumps({"as_of": today, "leagues": card},
+    (PROPS / "scorecard.json").write_text(json.dumps({"as_of": today, "leagues": card, "grades": grades},
                                                      indent=1, default=str))
     return 0
 

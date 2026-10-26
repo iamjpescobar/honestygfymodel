@@ -97,7 +97,8 @@ with card("td_board"):
         out = pd.DataFrame("", index=frame.index, columns=frame.columns)
         for i in frame.index:
             out.at[i, "TD %"] = mv.chance_css(show[i]["chance"])
-            out.at[i, "Def vs pos"] = mv.matchup_css((show[i]["card_td"] or {}).get("tier"))
+            _c = show[i]["card_td"] or {}
+            out.at[i, "Def vs pos"] = mv.matchup_css(_c.get("grade") or _c.get("tier"))
         return out
 
     st.dataframe(mv.painted(df, _paint), hide_index=True, width="stretch", key="td_tab")

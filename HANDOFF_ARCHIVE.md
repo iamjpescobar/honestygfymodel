@@ -10,6 +10,59 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — The book's prop lines exist (DraftKings via ESPN's free core feed); every nightly run now saves them. Step 1 of 3 toward "does the site beat the book?". 2026-10-23 (2)
+
+**Suite 161, FAILING: none.** New tests/test_book_props.py (4 controls,
+red by exit code: the over taken as the member FARTHER from the
+milestone, keep() keeping everything, merge overwriting the first price,
+page 1 only). NOTE when writing controls: edit + re-run within the same
+second can load a STALE .pyc (the first side-check control ran green that
+way); a manual re-run showed it red.
+
+IZZY 10-23: "worth it at" for MacKinnon's goal +100, book -135, skipped,
+he scored; "the whole site feels off". MEASURED (last season's final 60
+days, 17,102 NHL skater-games): projections by band match outcomes —
+goals 0.087/0.085, 0.279/0.283, 0.475/0.480; top 1% 0.544 projected vs
+0.477 actual (slightly HIGH, not low); shots and points the same. Stars
+are not under-rated. The real gap: every props test compares the model
+with HIS OWN RATE, never with the BOOK. Calibrated is not sharper than
+the book; the props have no record against the people he bets against.
+
+THE PROBE (10-23, prop-lines-probe log): ESPN's core API carries
+DraftKings (provider 100) player props for NFL (1,460 items an event),
+NHL (522), NBA (1,221), MLB (1,046): totals with line + both prices +
+the open, and "Milestones" (N or more). Items have NO side field — a
+total is two items (same player / type / line); a milestone is one-
+sided. NFL samples sometimes carry no "odds" (line only).
+
+BUILT: engines/book_props (fetch all pages, parse, side_check — the
+member of a pair priced like the milestone at line + 0.5 is the over —
+sides(), compact record, merge keeping the FIRST price beside the
+latest); book_props_snapshot.py run every nightly (6 AM / 4 AM / 6 PM ET
+— the 6 PM one is closest to puck drop) for games in the next 2 days
+(NFL: 7), into data/props/<league>/<date>.json, committed by its own
+step ("Commit the book's prop lines"). Not kept: first / last scorer,
+team totals, exact, longest, period / game lines, double / triple
+double. VERIFY LINES: "BOOK PROPS <lg>: events, items", "which of a pair
+is the over ... {pairs, first_is_over, second_is_over}", types.
+MLB: ESPN athlete ids, not MLBAM — a name map is needed before MLB props
+can be matched.
+
+NEXT, step 2: once a run shows which member is the over (the side check
+must be one-sided — if it splits, stop and read samples), put the book's
+line and price on every board row (Bet Finder, Model pages, Simulators,
+1Q / 1H, 1st period): open on the BOOK's line, price filled, the model's
+own line beside it. Step 3: the grader — after the games, every row the
+site and the book disagreed on: who was right, per market; a market that
+does not beat the book's de-vigged chance is labelled "no edge proven"
+and its "worth it at" stops calling skips / bets on its own.
+
+FILES: app/engines/book_props.py (NEW), book_props_snapshot.py (NEW),
+tests/test_book_props.py (NEW), .github/workflows/nightly-data.yml,
+HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — Prop lines probe: does ESPN's free core feed carry the books' player-prop lines and prices? 2026-10-23
 
 **Suite 160, FAILING: none.** New tests/test_prop_lines_probe.py

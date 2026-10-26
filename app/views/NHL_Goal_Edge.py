@@ -164,7 +164,8 @@ with card("ge_board"):
         out = pd.DataFrame("", index=frame.index, columns=frame.columns)
         for i in frame.index:
             out.at[i, "Goal %"] = mv.chance_css(show[i]["chance"])
-            out.at[i, "Def vs pos"] = mv.matchup_css((show[i]["card_g"] or {}).get("tier"))
+            _c = show[i]["card_g"] or {}
+            out.at[i, "Def vs pos"] = mv.matchup_css(_c.get("grade") or _c.get("tier"))
             if show[i].get("pp_unit") == "PP1":
                 out.at[i, "PP"] = f"color: {COLOR['accent']}; font-weight: 700;"
             if show[i].get("flag"):

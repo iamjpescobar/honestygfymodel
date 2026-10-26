@@ -53,10 +53,11 @@ with card("nbap_board"):
     base = pd.DataFrame([{
         "Player": r["name"] + (f" ⚠ {r['status']}" if av.maybe_label(r.get("status")) else "")
         + nv.tags(r),
-        "Team": r["team"], "Min": round(r["min"]), "Proj": round(r["mu"][stat], 1),
+        "Team": r["team"], "Matchup": nv.grade(r, stat, side), "Min": round(r["min"]),
+        "Proj": round(r["mu"][stat], 1),
         "Line": nv.his_line(r, stat), "Your price": None} for r in rows])
     ed = st.data_editor(base, key=f"nbap_ed_{gsel}_{stat}", hide_index=True, width="stretch",
-                        disabled=["Player", "Team", "Min", "Proj"],
+                        disabled=["Player", "Team", "Matchup", "Min", "Proj"],
                         column_config={
                             "Line": st.column_config.NumberColumn(
                                 help="Starts at his last-10 average set at the half point (how "
@@ -80,7 +81,7 @@ with card("nbap_board"):
     if out:
         show = pd.DataFrame([{
             "Player": x["name"], "Bet": f"{side} {x['line']:g}",
-            "Chance": f"{100 * x['chance']:.0f}%",
+            "Chance": f"{100 * x['chance']:.0f}%", "Matchup": nv.grade(x, stat, side),
             "Worth it at": mm.fmt_american(mm.fair_american(x["chance"]))
             if 0 < x["chance"] < 1 else "—",
             "Proj": round(x["mu"][stat], 1), "Min": round(x["min"]), "Game": x["game"]}
@@ -90,6 +91,7 @@ with card("nbap_board"):
             o = pd.DataFrame("", index=frame.index, columns=frame.columns)
             for k in frame.index:
                 o.at[k, "Chance"] = mv.chance_css(out[k]["chance"])
+                o.at[k, "Matchup"] = mv.matchup_css(frame.at[k, "Matchup"])
             return o
         st.dataframe(mv.painted(show, _paint), hide_index=True, width="stretch",
                      key=f"nbap_ch_{gsel}_{stat}")

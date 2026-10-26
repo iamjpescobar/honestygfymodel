@@ -193,6 +193,16 @@ def all_props(games):
     return out
 
 
+def grade(row, stat, side="Over"):
+    """The A-F matchup letter (10-26, engines/matchup_grade) for one row's
+    stat, for the side picked (an Under flips it), or '—'."""
+    from engines import matchup_grade as mg
+    g = (row.get("grade") or {}).get(stat)
+    if g not in mg.LETTERS:
+        return "—"
+    return mg.LETTERS[4 - mg.LETTERS.index(g)] if side == "Under" else g
+
+
 def slate_teams(rows):
     """Tonight's teams in game-time order, each once: [(team, label)]
     with the label "BOS vs NYK · 7:30 PM" (10-25: Trends picks a team

@@ -154,6 +154,57 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Matchup grade A-F on every prop (Bet Finder, NBA Props / Trends, every "Defense vs pos" board), and a check of whether the letter knows more than the chance. 2026-10-26
+
+**Suite 172, FAILING: none.** New tests/test_matchup_grade.py (controls
+red: the letter upside down; grade_event dropping the letter; the NBA
+opponent ranked against itself only). Ships in the same zip as the
+first-3-minutes batch (not pushed before this one was built).
+
+Izzy: "DeBrincat anytime goal prop would be graded a B ... I want that to
+be a factor on the whole site and anything prop related".
+
+THE LETTER (engines/matchup_grade): tonight's opponent RANKED on what it
+gives up on this stat to his kind of player, cut in fifths (32 teams:
+7 A / 6 B / 6 C / 6 D / 7 F; 30: 6 each). Nothing new measured — each
+sport's own matchup number: NHL / NFL defense vs position cards, MLB
+starter (batters) and lineup (pitchers) cards — all now carry "grade" —
+and the NBA opponent factor the props model already uses, ranked over
+every team for his position group (nba_context.apply_tonight sets
+row["grade"] and ctx.grade; combos rank the league-mean-weighted factor).
+The letter is about the OVER; the Bet Finder and NBA Props flip it for
+an Under (an F defense is an A spot for the under).
+
+IN THE CHANCE? NOT ADDED AGAIN. NBA / NFL / MLB matchups are already in
+the projection; the NHL position split is context (validate_dvp did not
+beat). Stacking the letter on top would count the matchup twice. Instead
+every captured line now carries its letter (book_grade.capture 6th
+element; graded rows get it as element 10; old 5-element captures still
+grade), and the nightly prints "[verify] MATCHUP GRADE <lg>: A n= site
+book hit ..." with scorecard.json "grades"; Site vs DraftKings shows
+"Matchup grade check" (per letter: our chance, DK's, went over, over vs
+us). NEXT: once each letter has ~300 lines, if A rows go over clearly
+more than the site said and F rows less, fit a letter adjustment and
+test it walk-forward (adopt only if it beats); if flat, the matchup is
+priced in and the letter stays a read.
+
+WHERE IT SHOWS: dm.badge -> "A · 3rd-most" (every Defense vs pos column:
+NHL / NFL / MLB boards, NHL Goal Edge, NFL TD Edge), colours by letter
+(model_view.GRADE_STYLE); dm.notice -> "Matchup grade A — ..."; Bet
+Finder: a Matchup column in the editor and the judged table, with a
+caption saying per sport whether the matchup is in the chance; NBA Props
+(editor + chances), NBA Trends (per stat).
+
+FILES: app/engines/matchup_grade.py (NEW), app/engines/defense_matchup.py,
+app/engines/model_view.py, app/engines/nba_context.py,
+app/engines/nba_view.py, app/engines/book_grade.py, book_props_grade.py,
+app/views/Bet_Finder.py, app/views/NBA_Props.py, app/views/NBA_Trends.py,
+app/views/Site_vs_Book.py, app/views/NHL_Goal_Edge.py,
+app/views/NFL_TD_Edge.py, tests/test_matchup_grade.py (NEW), HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NBA "scores in the first 3 minutes": fitted, tested, priced on the First Basket page; confirmed-five First Basket now BEATS. 2026-10-25 (5)
 
 **Suite 171, FAILING: none.** New tests/test_nba_early.py (controls red:
@@ -663,58 +714,5 @@ the prop-lines work).
 
 FILES: app/views/{NHL,NBA,NFL,MLB}_Sim.py, app/views/Home.py,
 tests/test_sim_counts.py (NEW), HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — The book's prop lines exist (DraftKings via ESPN's free core feed); every nightly run now saves them. Step 1 of 3 toward "does the site beat the book?". 2026-10-23 (2)
-
-**Suite 161, FAILING: none.** New tests/test_book_props.py (4 controls,
-red by exit code: the over taken as the member FARTHER from the
-milestone, keep() keeping everything, merge overwriting the first price,
-page 1 only). NOTE when writing controls: edit + re-run within the same
-second can load a STALE .pyc (the first side-check control ran green that
-way); a manual re-run showed it red.
-
-IZZY 10-23: "worth it at" for MacKinnon's goal +100, book -135, skipped,
-he scored; "the whole site feels off". MEASURED (last season's final 60
-days, 17,102 NHL skater-games): projections by band match outcomes —
-goals 0.087/0.085, 0.279/0.283, 0.475/0.480; top 1% 0.544 projected vs
-0.477 actual (slightly HIGH, not low); shots and points the same. Stars
-are not under-rated. The real gap: every props test compares the model
-with HIS OWN RATE, never with the BOOK. Calibrated is not sharper than
-the book; the props have no record against the people he bets against.
-
-THE PROBE (10-23, prop-lines-probe log): ESPN's core API carries
-DraftKings (provider 100) player props for NFL (1,460 items an event),
-NHL (522), NBA (1,221), MLB (1,046): totals with line + both prices +
-the open, and "Milestones" (N or more). Items have NO side field — a
-total is two items (same player / type / line); a milestone is one-
-sided. NFL samples sometimes carry no "odds" (line only).
-
-BUILT: engines/book_props (fetch all pages, parse, side_check — the
-member of a pair priced like the milestone at line + 0.5 is the over —
-sides(), compact record, merge keeping the FIRST price beside the
-latest); book_props_snapshot.py run every nightly (6 AM / 4 AM / 6 PM ET
-— the 6 PM one is closest to puck drop) for games in the next 2 days
-(NFL: 7), into data/props/<league>/<date>.json, committed by its own
-step ("Commit the book's prop lines"). Not kept: first / last scorer,
-team totals, exact, longest, period / game lines, double / triple
-double. VERIFY LINES: "BOOK PROPS <lg>: events, items", "which of a pair
-is the over ... {pairs, first_is_over, second_is_over}", types.
-MLB: ESPN athlete ids, not MLBAM — a name map is needed before MLB props
-can be matched.
-
-NEXT, step 2: once a run shows which member is the over (the side check
-must be one-sided — if it splits, stop and read samples), put the book's
-line and price on every board row (Bet Finder, Model pages, Simulators,
-1Q / 1H, 1st period): open on the BOOK's line, price filled, the model's
-own line beside it. Step 3: the grader — after the games, every row the
-site and the book disagreed on: who was right, per market; a market that
-does not beat the book's de-vigged chance is labelled "no edge proven"
-and its "worth it at" stops calling skips / bets on its own.
-
-FILES: app/engines/book_props.py (NEW), book_props_snapshot.py (NEW),
-tests/test_book_props.py (NEW), .github/workflows/nightly-data.yml,
-HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

@@ -490,6 +490,7 @@ def apply_tonight(rows, opp_id, opp_abbr, book, outs, out_names, ctx, day):
     """One team's rows for tonight with the context applied in place:
     each row's mu, plus row["ctx"] = {"opp": {stat: f}, "bump": {stat: b}}
     and the reason appended to row["why"]."""
+    teams = sorted({k[0] for k in book.acc}) if book else []
     present = {st: sum(r["mu"][st] for r in rows) for st in nm.BASE}
     b = bump(outs, present, (ctx or {}).get("out") or {})
     tot = sum(r["min"] for r in rows if (r.get("min") or 0) >= nm.MIN_PROJ_MIN)
@@ -501,6 +502,14 @@ def apply_tonight(rows, opp_id, opp_abbr, book, outs, out_names, ctx, day):
         r["ctx"] = {"opp": {k: round(v, 3) for k, v in f.items()},
                     "bump": {k: round(v, 3) for k, v in b.items()},
                     "vol": round(vf, 3), "team_min": round(tot)}
+        if book:
+            # 10-26: the A-F matchup letter — this opponent's factor ranked
+            # over every team for his position group (engines/matchup_grade)
+            from engines import matchup_grade as mg
+            gr = mg.nba_grades(book, opp_id, nm.group(r.get("pos")), day, teams, nm.COMBOS,
+                               book.mean)
+            r["ctx"]["grade"] = gr
+            r["grade"] = {k: v["grade"] for k, v in gr.items()}
         w = why(f, b, opp_abbr, out_names, vf, tot)
         if w:
             r["why"] = (r.get("why") + " · " if r.get("why") else "") + w

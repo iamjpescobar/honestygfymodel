@@ -294,6 +294,12 @@ def tier(rank, of):
     return "neutral"
 
 
+def _grade(rank, of):
+    """The A-F matchup letter (engines/matchup_grade, 10-26)."""
+    from engines import matchup_grade as mg
+    return mg.grade(rank, of)
+
+
 def card(table, defense, group, stat):
     """Everything the page needs about one defense against one position
     group on one stat, or None when the table does not cover it.
@@ -321,7 +327,7 @@ def card(table, defense, group, stat):
     return {
         "group": group, "stat": stat, "basis": basis,
         "per_game": value, "league": league, "vs_league_pct": vs,
-        "rank": rank, "of": of, "tier": tier(rank, of),
+        "rank": rank, "of": of, "tier": tier(rank, of), "grade": _grade(rank, of),
         "cur": row.get("cur"), "n_cur": row.get("n_cur"), "rank_cur": row.get("rank_cur"),
         "of_cur": g["ranked"]["cur"],
         "prior": row.get("prior"), "n_prior": row.get("n_prior"),
@@ -379,8 +385,10 @@ def notice(c, stat_label, group_label, defense_label, fmt="{:.1f}"):
     if not c:
         return None
     fmt = c.get("fmt") or fmt
-    head = {"soft": "Soft matchup", "tough": "Tough matchup",
-            "neutral": "Neutral matchup"}.get(c.get("tier"), "Matchup")
+    g = c.get("grade") or _grade(c.get("rank"), c.get("of"))
+    head = (f"Matchup grade {g}" if g else
+            {"soft": "Soft matchup", "tough": "Tough matchup",
+             "neutral": "Neutral matchup"}.get(c.get("tier"), "Matchup"))
     pg = fmt.format(c["per_game"]) if c.get("per_game") is not None else "—"
     lg = fmt.format(c["league"]) if c.get("league") is not None else "—"
     vs = f", {c['vs_league_pct']:+.0f}%" if c.get("vs_league_pct") is not None else ""
@@ -400,13 +408,13 @@ def notice(c, stat_label, group_label, defense_label, fmt="{:.1f}"):
 
 
 def badge(c):
-    """Short cell text: 'SOFT · 3rd-most' / 'TOUGH · 2nd-fewest' / '14th-most'
-    (a neutral defense is just its rank) / '—'."""
+    """Short cell text with the A-F matchup letter first (10-26):
+    'A · 3rd-most' / 'F · 2nd-fewest' / 'C · 14th-most' / '—'."""
     if not c or not c.get("rank"):
         return "—"
     short = rank_text(c).rsplit(" of ", 1)[0]
-    t = c.get("tier")
-    return f"{t.upper()} · {short}" if t in ("soft", "tough") else short
+    g = c.get("grade") or _grade(c.get("rank"), c.get("of"))
+    return f"{g} · {short}" if g else short
 
 
 # ----------------------------------------------------------------------
@@ -496,6 +504,7 @@ def mlb_starter_card(table, pid, stat):
             "per_game": x["blend"], "unit": "per plate appearance", "league": league,
             "vs_league_pct": round(100.0 * (x["blend"] / league - 1.0), 1) if league else None,
             "rank": x.get("rank"), "of": of, "tier": tier(x.get("rank"), of),
+            "grade": _grade(x.get("rank"), of),
             "cur": x.get("cur"), "n_cur": row["pa_cur"], "prior": x.get("prior"),
             "n_prior": row["pa_prior"], "fmt": "{:.3f}"}
 
@@ -514,4 +523,5 @@ def mlb_lineup_card(team_table, lineup_rate, stat):
     return {"group": "tonight's lineup", "stat": stat, "basis": "cur",
             "per_game": round(lineup_rate, 4), "unit": "per plate appearance", "league": league,
             "vs_league_pct": round(100.0 * (lineup_rate / league - 1.0), 1) if league else None,
-            "rank": rank, "of": of, "tier": tier(rank, of), "fmt": "{:.3f}"}
+            "rank": rank, "of": of, "tier": tier(rank, of), "grade": _grade(rank, of),
+            "fmt": "{:.3f}"}

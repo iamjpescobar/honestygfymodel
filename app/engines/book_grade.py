@@ -62,7 +62,7 @@ def rows_nhl(payload):
         eid = str(g.get("event_id"))
         for side in ("away", "home"):
             for p in g.get(f"{side}_props") or []:
-                out.append((eid, {"_pid": p.get("pid"),
+                out.append((eid, {"_pid": p.get("pid"), "_dvp": p.get("dvp") or {},
                                   "_pmfs": nm.skater_pmfs(p.get("mu"), sog_disp)},
                             nm.MARKETS, cal, "nhl"))
             for gp in g.get(f"{side}_goalie_props") or []:
@@ -84,7 +84,7 @@ def rows_nba(payload):
         for side in ("away", "home"):
             for r in g.get(f"{side}_props") or []:
                 out.append((str(g.get("event_id")),
-                            {"_pid": r.get("pid"),
+                            {"_pid": r.get("pid"), "_grade": r.get("grade") or {},
                              "_pmfs": nm.player_pmfs(r.get("mu"), model.get("sizes"))},
                             (), cal, "nba"))
     return out
@@ -106,7 +106,8 @@ def rows_nfl(payload):
         for r in mv.nfl_game_prop_rows(g, league, (payload or {}).get("dvp")):
             if not r.get("_pmfs"):
                 continue
-            out.append((eid, {"_pid": r.get("_pid"), "_pmfs": r["_pmfs"]}, (), cal, "nfl"))
+            out.append((eid, {"_pid": r.get("_pid"), "_pmfs": r["_pmfs"],
+                              "_dvp": r.get("_dvp") or {}}, (), cal, "nfl"))
             if q.get("model"):
                 pm = {}
                 for per, _l, _i in nq.PERIODS:
@@ -124,9 +125,12 @@ ROWS = {"nhl": rows_nhl, "nba": rows_nba, "nfl": rows_nfl}
 
 
 def capture(league, payload, bd):
-    """{event_id: [[pid, stat, line, raw over, delivered over], ...]} for
-    every line the book has (its main line + up to MAX_RUNGS ladder rungs)."""
+    """{event_id: [[pid, stat, line, raw over, delivered over, matchup
+    letter], ...]} for every line the book has (its main line + up to
+    MAX_RUNGS ladder rungs). The letter (10-26, engines/matchup_grade) is
+    the A-F matchup for the over, or None."""
     from engines import bet_finder as bf
+    from engines import matchup_grade as mg
     fn = ROWS.get(league)
     if not fn or not bd:
         return {}
@@ -136,6 +140,8 @@ def capture(league, payload, bd):
         if pid is None:
             continue
         for stat in row["_pmfs"]:
+            letter = (row.get("_grade") or {}).get(stat) or mg.from_card(
+                (row.get("_dvp") or {}).get(stat))
             bk = bp.lookup(bd, lg, pid, stat)
             if not bk:
                 continue
@@ -150,7 +156,7 @@ def capture(league, payload, bd):
                 if ch is None:
                     continue
                 out.setdefault(eid, []).append([str(pid), stat, float(ln), round(raw, 4),
-                                                round(ch, 4)])
+                                                round(ch, 4), letter])
     return out
 
 
@@ -227,7 +233,9 @@ def grade_event(entry, actual):
         return []
     bd = bp.board([{"x": entry}])
     out = []
-    for pid, stat, line, _raw, ours in entry["ours"]:
+    for x in entry["ours"]:
+        pid, stat, line, _raw, ours = x[:5]
+        letter = x[5] if len(x) > 5 else None
         a = (actual.get(str(pid)) or {}).get(stat)
         if a is None:
             continue
@@ -248,7 +256,8 @@ def grade_event(entry, actual):
                 book, key = io / LADDER_OVERROUND, stat + "*"
         if book is None:
             continue
-        out.append([str(pid), key, line, ours, round(book, 4), 1 if a > line else 0, o, u])
+        out.append([str(pid), key, line, ours, round(book, 4), 1 if a > line else 0, o, u,
+                    letter])
     return out
 
 
