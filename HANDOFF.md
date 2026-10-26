@@ -154,6 +154,44 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — NBA "scores in the first 3 minutes": fitted, tested, priced on the First Basket page; confirmed-five First Basket now BEATS. 2026-10-25 (5)
+
+**Suite 171, FAILING: none.** New tests/test_nba_early.py (controls red:
+_walk adding the game before pricing; an unprojected starter at 0.1
+points; "beats" on the league rate alone). test_nba_first_confirmed.py:
+the page render now includes the first-3-minutes card (control red: the
+card's data withheld).
+
+READ 10-25 3 PM nightly (included first_basket_fix): CONFIRMED five
+log loss 2.2915 vs projected 2.3411 -> BEATS (z 2.92), real starters
+with no projection 1.7%. Confirmed First Basket calls are no longer
+capped. The projection-bias line (pushed 5 PM) is not in that run.
+"NBA prior play-by-play" re-run: 1,235 / 1,235 games with first-3-minute
+scoring and each team's first FG; a starter scored in the first 3
+minutes 46.6% of the time.
+
+FIRST 3 MINUTES — engines/nba_early. MEASURED offline on that file
+(proxy projections, test from 2026-01-20, 5,920 starter-games): any
+point: Brier 0.2419 vs league rate 0.2487 (z 7.7) vs his own shrunk
+record 0.2435 (z 2.7) -> beats both, calibrated 30-65%. A made FG: beats
+the league rate, thin vs his own record. Team / opponent early pace:
+fitted weight 0 -> not in the number. The number: share of his five's
+projected points -> 1 - exp(-C (5 share)^G), blended LAM with his own
+record shrunk K starts to the league rate. Nightly: ne.fit on the same
+rows / windows as First Basket, "[verify] NBA first 3 minutes (pts|fg)",
+payload "first3", per game first_basket.early = game_block (starts, pts
+hits, fg hits per pool player). Page: card under the players, market
+"Any point" / "A made field goal", the five in use (ESPN / yours /
+projected), delivered through the curve, judged by bf.judge; THIN cap
+unless its verdict beats both baselines. DraftKings' feed has no such
+market — price typed.
+
+FILES: app/engines/nba_early.py (NEW), nba_precompute.py,
+app/views/NBA_First_Basket.py, tests/test_nba_early.py (NEW),
+tests/test_nba_first_confirmed.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — First Site-vs-DraftKings read: the NBA model's over chances run ~11 points under the book's; a nightly bias line now measures whether the model under-projects this season. 2026-10-25 (4)
 
 **Suite 170, FAILING: none.** tests/test_nba_context.py +2 checks
@@ -678,40 +716,5 @@ and its "worth it at" stops calling skips / bets on its own.
 FILES: app/engines/book_props.py (NEW), book_props_snapshot.py (NEW),
 tests/test_book_props.py (NEW), .github/workflows/nightly-data.yml,
 HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — Prop lines probe: does ESPN's free core feed carry the books' player-prop lines and prices? 2026-10-23
-
-**Suite 160, FAILING: none.** New tests/test_prop_lines_probe.py
-(control red: upcoming_event taking a final game).
-
-WHY: Izzy, 10-23: "a lot of times i have to manually insert the line
-and the price and most of the time it be off by 2 and up i want it to
-make sense". Every board opens a player on a line the MODEL picks (NHL
-SOG: the half-line under his projection; NFL / NBA / 1Q-1H: the line
-nearest a coin flip; points / goals 0.5) and leaves the price blank,
-because no prop lines were ever loaded — the public scoreboard and
-summary carry GAME odds only (archive, NFL step 6: "Do not invent lines
-to fill that column"). So the default line is a model number, often a
-line or two from the book's, and the price is always typed.
-
-THE PROBE (prop_lines_probe.py, manual workflow prop-lines-probe.yml,
-print only, no commit): one upcoming event per league (NFL, NHL, NBA,
-MLB) on ESPN's core API (sports.core.api.espn.com/v2/sports/{sport}/
-leagues/{lg}/events/{id}/competitions/{id}/odds -> providers; .../odds/
-{provider}/propBets?limit=1000 -> props): providers, item counts, prop
-types, two raw samples (5 levels deep). Free; the same company's feed
-the site already reads; rule "no paid odds API" holds.
-
-NEXT: read its log. If props are there -> a parser to the real shape,
-a nightly step that saves tonight's lines + prices per player, and every
-board (Bet Finder, Model pages, Simulators, 1Q / 1H, 1st period) opens
-on the BOOK's line with the book's price filled in, the edge computed
-against it, the model's own line shown beside it. If not -> say so, and
-look at other free sources before anything else.
-
-FILES: prop_lines_probe.py (NEW), .github/workflows/prop-lines-probe.yml
-(NEW), tests/test_prop_lines_probe.py (NEW), HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

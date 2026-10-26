@@ -32,6 +32,7 @@ from engines import availability as av  # noqa: E402
 from engines import espn_feed as ef  # noqa: E402
 from engines import nba_box as nb  # noqa: E402
 from engines import nba_context as nc  # noqa: E402
+from engines import nba_early as ne  # noqa: E402
 from engines import nba_first as nf  # noqa: E402
 from engines import nba_pbp as pbp  # noqa: E402
 from engines import nba_quarters as nq  # noqa: E402
@@ -670,6 +671,7 @@ def main(today=None):
     # FIRST BASKET (10-21, engines/nba_first): fitted and tested on last
     # season's play-by-play (data/nba/prior_pbp.json, a one-time backfill)
     first_block, first_book = None, None
+    early_block, early_book = None, None
     try:
         prior_pbp = json.loads(PBP_PATH.read_text()).get("games") if PBP_PATH.exists() else None
         if model and prior_pbp:
@@ -717,6 +719,25 @@ def main(today=None):
                   f"{F['confirmed'].get('unprojected')}; scorer in "
                   f"our five {F['scorer_in_five']}; this season's play-by-play {len(cur_pbp)} "
                   f"games")
+            # FIRST 3 MINUTES (10-25, engines/nba_early): same rows, same windows
+            try:
+                _all = list(prior_pbp.values()) + list(cur_pbp.values())
+                if sum(1 for x in _all if x.get("early")) >= 0.8 * len(_all):
+                    early_block = ne.fit(_all, byg, model["fit_window"], model["test_window"])
+                    early_book = ne.book_from(_all)
+                    for _t, E in early_block.items():
+                        print(f"  [verify] NBA first 3 minutes ({_t}): params {E['params']}; "
+                              f"test n={E['n_test']} starter-games, base {E['base']}; Brier "
+                              f"{E['brier']} vs league rate {E['league_brier']} "
+                              f"({E['vs_league'].get('verdict')} z={E['vs_league'].get('z')}) "
+                              f"vs his own record {E['own_brier']} "
+                              f"({E['vs_own'].get('verdict')} z={E['vs_own'].get('z')}) -> "
+                              f"{E['verdict']['verdict']}")
+                else:
+                    print("::warning::NBA first 3 minutes: play-by-play has no 'early' "
+                          "field - re-run the 'NBA prior play-by-play' workflow")
+            except Exception as exc:  # noqa: BLE001
+                print(f"::warning::NBA first 3 minutes failed: {type(exc).__name__}: {exc}")
         elif not prior_pbp:
             print("::warning::NBA first basket: data/nba/prior_pbp.json missing - run the "
                   "'NBA prior play-by-play' workflow once.")
@@ -824,6 +845,9 @@ def main(today=None):
                 continue
             try:
                 g["first_basket"] = first_basket_game(g, first_book, first_block["params"], pool)
+                if early_book:
+                    g["first_basket"]["early"] = ne.game_block(
+                        early_book, [r["pid"] for r in g["first_basket"]["pool"]])
                 n_fb += 1
             except Exception as exc:  # noqa: BLE001
                 print(f"::warning::NBA first basket for {g.get('event_id')} failed: "
@@ -889,6 +913,7 @@ def main(today=None):
                        if game_model else None),
         "sim": sim_block,
         "first_basket": ({k: v for k, v in first_block.items()} if first_block else None),
+        "first3": early_block,
         "teams": {tid: {"abbr": a, "logo": team_logo.get(tid)} for tid, a in team_abbr.items()},
         "role_watch": watch,
         "milestones_happened": happened,

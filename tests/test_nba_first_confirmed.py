@@ -173,28 +173,38 @@ check("you can set the five and confirm it", "st.multiselect(" in page
       and "Lineup is out" in page and "max_selections=5" in page)
 check("tonight's board sits above the game picker",
       page.index("board_box = st.container()") < page.index('st.selectbox("Game"'))
-check("every row says Confirmed or Projected", page.count('"✓ Confirmed" if x["sure"] else "Projected"') == 2)
+check("every row says Confirmed or Projected", page.count('"✓ Confirmed" if x["sure"] else "Projected"') == 3)
 
 # --- the page, rendered (AppTest) ---------------------------------------------------
 import json as _json  # noqa: E402
 FBLOCK = {"params": prm, "calibration": fit["calibration"], "verdict": fit["verdict"],
           "team": fit["team"], "n_test": fit["n_test"],
           "confirmed": dict(C, verdict={"verdict": "beats", "z": 17})}
+from engines import nba_early as _ne  # noqa: E402
+_eb = _ne.Book()
+_eb.add({"starters": {"H": ["c1", "h2", "h3", "h4", "h5"], "A": ["c2", "a2", "a3", "a4", "a5"]},
+         "early": {"h2": [2, 1]}})
+F = dict(F, early=_ne.game_block(_eb, [r["pid"] for r in F["pool"]]))
+F3 = {t: {"params": {"c": 0.6, "g": 0.8, "lam": 0.5, "k": 30}, "n_test": 5920, "base": 0.466,
+          "verdict": {"verdict": "beats", "z": 2.7},
+          "calibration": [{"band": "40-49%", "n": 2880, "predicted": 0.45, "actual": 0.445},
+                          {"band": "50-59%", "n": 1767, "predicted": 0.54, "actual": 0.55}]}
+      for t in ("pts", "fg")}
 GAME = dict(g, event_id="E1", status="pre", home_abbr="HOU", away_abbr="ATL", time_et="7:30 PM",
             first_basket=F)
 SCRIPT = """
 import sys, json, runpy
 sys.path.insert(0, %r)
 from engines import nba_view as nv, live_injuries as li, espn_feed as ef, live_sync
-FB = json.loads(%r); GAME = json.loads(%r)
-nv.load = lambda: ([GAME], {}, lambda k, d=None: FB if k == "first_basket" else d)
+FB = json.loads(%r); GAME = json.loads(%r); F3 = json.loads(%r)
+nv.load = lambda: ([GAME], {}, lambda k, d=None: FB if k == "first_basket" else (F3 if k == "first3" else d))
 li.render_note = lambda *a, **k: None
 live_sync.sync_latest_button = lambda *a, **k: None
 ef.fetch_summary = lambda lg, eid: {"boxscore": {"players": [{"team": {"id": "H"},
     "statistics": [{"athletes": [{"athlete": {"id": p}, "starter": True}
                                  for p in ("c1", "h2", "h3", "h4", "h6")]}]}]}}
 runpy.run_path(%r, run_name="__main__")
-""" % (str(ROOT / "app"), _json.dumps(FBLOCK), _json.dumps(GAME, default=str),
+""" % (str(ROOT / "app"), _json.dumps(FBLOCK), _json.dumps(GAME, default=str), _json.dumps(F3),
        str(ROOT / "app" / "views" / "NBA_First_Basket.py"))
 try:
     from streamlit.testing.v1 import AppTest
@@ -212,6 +222,10 @@ try:
     allp = " ".join(ed)
     check("HOU's confirmed five is priced: H6 in, H5 out, rows marked Confirmed",
           "H6 (HOU)" in allp and "H5 (HOU)" not in allp and "Confirmed" in allp)
+    f3 = [d.value for d in at.get("arrow_data_frame")]
+    check("the first-3-minutes card lists the ten starters with their record",
+          any("His record" in str(getattr(x, "columns", "")) and "of 1 starts" in str(x)
+              for x in f3 + [d.value for d in at.dataframe]) or "of 1 starts" in str(f3))
     ms = [w for w in at.multiselect]
     check("the away five (not posted) is yours to set", len(ms) == 1 and len(ms[0].value) == 5)
     tg = [t for t in at.toggle if "real five" in str(t.label)]

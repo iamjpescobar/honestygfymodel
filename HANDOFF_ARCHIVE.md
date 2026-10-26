@@ -10,6 +10,41 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — Prop lines probe: does ESPN's free core feed carry the books' player-prop lines and prices? 2026-10-23
+
+**Suite 160, FAILING: none.** New tests/test_prop_lines_probe.py
+(control red: upcoming_event taking a final game).
+
+WHY: Izzy, 10-23: "a lot of times i have to manually insert the line
+and the price and most of the time it be off by 2 and up i want it to
+make sense". Every board opens a player on a line the MODEL picks (NHL
+SOG: the half-line under his projection; NFL / NBA / 1Q-1H: the line
+nearest a coin flip; points / goals 0.5) and leaves the price blank,
+because no prop lines were ever loaded — the public scoreboard and
+summary carry GAME odds only (archive, NFL step 6: "Do not invent lines
+to fill that column"). So the default line is a model number, often a
+line or two from the book's, and the price is always typed.
+
+THE PROBE (prop_lines_probe.py, manual workflow prop-lines-probe.yml,
+print only, no commit): one upcoming event per league (NFL, NHL, NBA,
+MLB) on ESPN's core API (sports.core.api.espn.com/v2/sports/{sport}/
+leagues/{lg}/events/{id}/competitions/{id}/odds -> providers; .../odds/
+{provider}/propBets?limit=1000 -> props): providers, item counts, prop
+types, two raw samples (5 levels deep). Free; the same company's feed
+the site already reads; rule "no paid odds API" holds.
+
+NEXT: read its log. If props are there -> a parser to the real shape,
+a nightly step that saves tonight's lines + prices per player, and every
+board (Bet Finder, Model pages, Simulators, 1Q / 1H, 1st period) opens
+on the BOOK's line with the book's price filled in, the edge computed
+against it, the model's own line shown beside it. If not -> say so, and
+look at other free sources before anything else.
+
+FILES: prop_lines_probe.py (NEW), .github/workflows/prop-lines-probe.yml
+(NEW), tests/test_prop_lines_probe.py (NEW), HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — MLB simulator survives Statcast's NA; the 10-22 4 PM nightly read (NHL periods / shots / SGP, NFL 1Q / 1H). 2026-10-22 (11)
 
 **Suite 159, FAILING: none.** tests/test_mlb_sim.py +1 check (control

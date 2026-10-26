@@ -29,6 +29,7 @@ from engines import bet_finder as bf
 from engines import live_injuries as _li
 from engines import model_math as mm
 from engines import model_view as mv
+from engines import nba_early as ne
 from engines import nba_first as nf
 from engines import nba_view as nv
 from engines import top_plays_board as tpb
@@ -284,6 +285,68 @@ with card("fb_players"):
                f"hit on last season's unseen games — confirmed fives on their own curve. "
                f"Projected fives are wrong about one game in ten; check the lineup before you "
                f"bet, or confirm it above.")
+
+# ---------------- the first 3 minutes (10-25) ----------------
+F3 = pget("first3") or {}
+E3 = (g["first_basket"] or {}).get("early")
+with card("fb_first3"):
+    st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Scores in the first '
+                f'3 minutes</div><div class="pf-card-subtitle">Each starter, the opening 3:00 of '
+                f'the 1st quarter</div>', unsafe_allow_html=True)
+    if not F3 or not E3:
+        st.info("First-3-minute prices arrive with the next nightly build (it needs the "
+                "re-run 'NBA prior play-by-play').")
+    else:
+        kind = st.segmented_control("Market", ["Any point", "A made field goal"],
+                                    default="Any point", key=f"fb3_kind_{gi}") or "Any point"
+        tgt = "pts" if kind == "Any point" else "fg"
+        X3 = F3.get(tgt) or {}
+        v3 = (X3.get("verdict") or {}).get("verdict")
+        pool3 = {str(r["pid"]): r for r in g["first_basket"].get("pool") or []}
+        names3 = {x["pid"]: x["name"] for x in F["players"]}
+        rows3 = []
+        for t in (away, home):
+            five = [str(p) for p in (F.get("five") or {}).get(t) or []]
+            pts = {p: pool3[p]["pts"] for p in five
+                   if p in pool3 and pool3[p].get("pts") is not None}
+            raw = ne.page_price(E3, F3, five, pts, tgt)
+            rec = E3.get("rec") or {}
+            j = 1 if tgt == "pts" else 2
+            for p in five:
+                ch = tpb.calibrate(raw[p], X3.get("calibration") or []) or raw[p]
+                sup = (mv.curve_support(raw[p], X3.get("calibration"))
+                       if v3 == "beats" else UNTESTED)
+                r_ = rec.get(p) or [0, 0, 0]
+                rows3.append({"pid": p, "name": names3.get(p) or (pool3.get(p) or {}).get("name")
+                              or p, "team": t, "chance": ch, "sup": sup,
+                              "sure": t in sure, "rec": r_, "j": j})
+        rows3.sort(key=lambda x: -x["chance"])
+        base3 = pd.DataFrame([{
+            "Player": f"{x['name']} ({ab[x['team']]})", "Chance": f"{100 * x['chance']:.0f}%",
+            "Worth it at": mm.fmt_american(mm.fair_american(x["chance"])), "Your price": None,
+            "Lineup": "✓ Confirmed" if x["sure"] else "Projected",
+            "His record": (f"{x['rec'][x['j']]} of {x['rec'][0]} starts" if x["rec"][0]
+                           else "no starts on record")} for x in rows3])
+        ek3 = f"fb3_{gi}_{tgt}"
+        ed3 = st.data_editor(base3, hide_index=True, width="stretch", key=ek3,
+                             disabled=["Player", "Chance", "Worth it at", "Lineup", "His record"],
+                             column_config={"Your price": st.column_config.NumberColumn(
+                                 help="Your book's price, e.g. +120.", step=5, format="%d")})
+        for i, x in enumerate(rows3):
+            j_ = bf.judge(x["chance"], ed3.at[i, "Your price"], _stk, None, x["sup"])
+            if j_:
+                lab, fg, _bg = mv.TIER_STYLE[j_["tier"]]
+                st.markdown(f'{x["name"]}: <b style="color:'
+                            f'{fg if j_["tier"] != "none" else COLOR["error"]};">'
+                            f'{"SKIP" if j_["tier"] == "none" else lab}</b> · edge '
+                            f'{100 * j_["edge"]:+.1f} pts'
+                            + (f' · {j_["guard"]}' if j_.get("guard") else ""),
+                            unsafe_allow_html=True)
+        st.caption(f"Starters scored in the first 3 minutes {100 * (X3.get('base') or 0):.0f}% "
+                   f"of the time last season. Tested on {X3.get('n_test', 0)} starter-games it "
+                   f"never saw: {mv.trust_label(v3)} against both the league rate and each "
+                   f"player's own record. A projected starter who comes off the bench almost "
+                   f"never scores this early — confirm the lineup above.")
 
 # ---------------- tonight's board (top of the page) ----------------
 with board_box:
