@@ -1,0 +1,2202 @@
+{
+  "generated_at_et": "2026-10-26 09:02",
+  "week": 7,
+  "league": {
+    "team_games": 212,
+    "td_per_point": 0.1077,
+    "points_pg": 23.0,
+    "td_pg": 2.47,
+    "ypc": 4.17,
+    "yards_per_target": 7.39,
+    "catch_rate": 0.673,
+    "carries_pg": 26.6,
+    "targets_pg": 31.9,
+    "td_per_opportunity": 0.04226,
+    "prior_strength": 461.3,
+    "prior_a": 19.4976,
+    "prior_b": 441.8218,
+    "players_fitted": 487,
+    "touches_fitted": 12398,
+    "qb_priors": {
+      "cmp": [
+        0.64139,
+        704.66
+      ],
+      "td": [
+        0.0456,
+        8103.08
+      ],
+      "int": [
+        0.02047,
+        1527.63
+      ]
+    },
+    "prop_spreads": {
+      "Rushing yards": {
+        "kind": "yards",
+        "cv": 0.9665,
+        "players": 172,
+        "games": 770
+      },
+      "Carries": {
+        "kind": "count",
+        "size": 28.753,
+        "players": 175,
+        "games": 777
+      },
+      "Receiving yards": {
+        "kind": "yards",
+        "cv": 0.8605,
+        "players": 348,
+        "games": 1641
+      },
+      "Receptions": {
+        "kind": "count",
+        "size": null,
+        "players": 348,
+        "games": 1641
+      },
+      "Targets": {
+        "kind": "count",
+        "size": null,
+        "players": 350,
+        "games": 1645
+      },
+      "Passing yards": {
+        "kind": "yards",
+        "cv": 0.3316,
+        "players": 43,
+        "games": 222
+      },
+      "Pass attempts": {
+        "kind": "count",
+        "size": 31.01,
+        "players": 43,
+        "games": 222
+      },
+      "Rush + rec yards": {
+        "kind": "yards",
+        "cv": 0.8529,
+        "players": 405,
+        "games": 1969
+      },
+      "Completions": {
+        "kind": "count",
+        "size": 46.185,
+        "players": 43,
+        "games": 222
+      },
+      "Passing TDs": {
+        "kind": "count",
+        "size": null,
+        "players": 41,
+        "games": 217
+      },
+      "Interceptions": {
+        "kind": "count",
+        "size": null,
+        "players": 36,
+        "games": 201
+      }
+    },
+    "prior_weights": {
+      "share": 0.7238,
+      "catch": 1.0,
+      "ypc": 0.59,
+      "ypt": 0.0078,
+      "td": 1.0,
+      "qb_rate": 0.8211,
+      "ypa": 0.007
+    },
+    "prior_weight_report": {
+      "share": {
+        "weight": 0.7238,
+        "n_players": 784,
+        "loglik_gain": 7837.99
+      },
+      "catch": {
+        "weight": 1.0,
+        "n_players": 328,
+        "loglik_gain": 49.4
+      },
+      "ypc": {
+        "weight": 0.59,
+        "n_players": 183,
+        "loglik_gain": 20.66
+      },
+      "ypt": {
+        "weight": 0.0078,
+        "n_players": 328,
+        "loglik_gain": 276.66
+      },
+      "td": {
+        "weight": 1.0,
+        "n_players": 388,
+        "loglik_gain": 7.94
+      },
+      "qb_rate": {
+        "weight": 0.8211,
+        "n_players": 135,
+        "loglik_gain": 1.34
+      },
+      "ypa": {
+        "weight": 0.007,
+        "n_players": 45,
+        "loglik_gain": 61.16
+      }
+    },
+    "prop_validation": {
+      "n": 29869,
+      "pass_yds": {
+        "n": 683,
+        "model_brier": 0.2497,
+        "baseline_brier": 0.3026,
+        "verdict": {
+          "n": 683,
+          "diff": 0.05295,
+          "se": 0.01024,
+          "z": 5.17,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "10-19%",
+            "n": 2,
+            "predicted": 0.186,
+            "actual": 1.0
+          },
+          {
+            "band": "20-29%",
+            "n": 9,
+            "predicted": 0.266,
+            "actual": 0.333
+          },
+          {
+            "band": "30-39%",
+            "n": 46,
+            "predicted": 0.364,
+            "actual": 0.5
+          },
+          {
+            "band": "40-49%",
+            "n": 411,
+            "predicted": 0.457,
+            "actual": 0.491
+          },
+          {
+            "band": "50-59%",
+            "n": 96,
+            "predicted": 0.536,
+            "actual": 0.552
+          },
+          {
+            "band": "60-69%",
+            "n": 48,
+            "predicted": 0.646,
+            "actual": 0.604
+          },
+          {
+            "band": "70-79%",
+            "n": 24,
+            "predicted": 0.754,
+            "actual": 0.667
+          },
+          {
+            "band": "80-89%",
+            "n": 24,
+            "predicted": 0.851,
+            "actual": 0.667
+          },
+          {
+            "band": "90-99%",
+            "n": 23,
+            "predicted": 0.942,
+            "actual": 0.739
+          }
+        ]
+      },
+      "pass_cmp": {
+        "n": 683,
+        "model_brier": 0.2413,
+        "baseline_brier": 0.2834,
+        "verdict": {
+          "n": 683,
+          "diff": 0.0421,
+          "se": 0.01044,
+          "z": 4.03,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 1,
+            "predicted": 0.079,
+            "actual": 0.0
+          },
+          {
+            "band": "10-19%",
+            "n": 13,
+            "predicted": 0.164,
+            "actual": 0.385
+          },
+          {
+            "band": "20-29%",
+            "n": 48,
+            "predicted": 0.268,
+            "actual": 0.271
+          },
+          {
+            "band": "30-39%",
+            "n": 178,
+            "predicted": 0.357,
+            "actual": 0.466
+          },
+          {
+            "band": "40-49%",
+            "n": 232,
+            "predicted": 0.443,
+            "actual": 0.431
+          },
+          {
+            "band": "50-59%",
+            "n": 77,
+            "predicted": 0.544,
+            "actual": 0.506
+          },
+          {
+            "band": "60-69%",
+            "n": 43,
+            "predicted": 0.655,
+            "actual": 0.628
+          },
+          {
+            "band": "70-79%",
+            "n": 32,
+            "predicted": 0.751,
+            "actual": 0.625
+          },
+          {
+            "band": "80-89%",
+            "n": 18,
+            "predicted": 0.862,
+            "actual": 0.889
+          },
+          {
+            "band": "90-99%",
+            "n": 41,
+            "predicted": 0.961,
+            "actual": 0.756
+          }
+        ]
+      },
+      "pass_att": {
+        "n": 683,
+        "model_brier": 0.2515,
+        "baseline_brier": 0.2983,
+        "verdict": {
+          "n": 683,
+          "diff": 0.0468,
+          "se": 0.01055,
+          "z": 4.44,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "10-19%",
+            "n": 5,
+            "predicted": 0.138,
+            "actual": 0.6
+          },
+          {
+            "band": "20-29%",
+            "n": 25,
+            "predicted": 0.255,
+            "actual": 0.4
+          },
+          {
+            "band": "30-39%",
+            "n": 173,
+            "predicted": 0.367,
+            "actual": 0.457
+          },
+          {
+            "band": "40-49%",
+            "n": 311,
+            "predicted": 0.441,
+            "actual": 0.463
+          },
+          {
+            "band": "50-59%",
+            "n": 53,
+            "predicted": 0.546,
+            "actual": 0.491
+          },
+          {
+            "band": "60-69%",
+            "n": 38,
+            "predicted": 0.655,
+            "actual": 0.526
+          },
+          {
+            "band": "70-79%",
+            "n": 18,
+            "predicted": 0.745,
+            "actual": 0.722
+          },
+          {
+            "band": "80-89%",
+            "n": 19,
+            "predicted": 0.846,
+            "actual": 0.632
+          },
+          {
+            "band": "90-99%",
+            "n": 41,
+            "predicted": 0.963,
+            "actual": 0.78
+          }
+        ]
+      },
+      "pass_td": {
+        "n": 683,
+        "model_brier": 0.2247,
+        "baseline_brier": 0.2905,
+        "verdict": {
+          "n": 683,
+          "diff": 0.0658,
+          "se": 0.01051,
+          "z": 6.26,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 22,
+            "predicted": 0.051,
+            "actual": 0.045
+          },
+          {
+            "band": "10-19%",
+            "n": 55,
+            "predicted": 0.164,
+            "actual": 0.2
+          },
+          {
+            "band": "20-29%",
+            "n": 81,
+            "predicted": 0.246,
+            "actual": 0.272
+          },
+          {
+            "band": "30-39%",
+            "n": 121,
+            "predicted": 0.366,
+            "actual": 0.446
+          },
+          {
+            "band": "40-49%",
+            "n": 231,
+            "predicted": 0.443,
+            "actual": 0.416
+          },
+          {
+            "band": "50-59%",
+            "n": 53,
+            "predicted": 0.53,
+            "actual": 0.604
+          },
+          {
+            "band": "60-69%",
+            "n": 17,
+            "predicted": 0.669,
+            "actual": 0.765
+          },
+          {
+            "band": "70-79%",
+            "n": 94,
+            "predicted": 0.752,
+            "actual": 0.638
+          },
+          {
+            "band": "80-89%",
+            "n": 9,
+            "predicted": 0.818,
+            "actual": 0.889
+          }
+        ]
+      },
+      "pass_int": {
+        "n": 683,
+        "model_brier": 0.2237,
+        "baseline_brier": 0.2711,
+        "verdict": {
+          "n": 683,
+          "diff": 0.0474,
+          "se": 0.00805,
+          "z": 5.89,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 26,
+            "predicted": 0.055,
+            "actual": 0.154
+          },
+          {
+            "band": "10-19%",
+            "n": 106,
+            "predicted": 0.16,
+            "actual": 0.151
+          },
+          {
+            "band": "20-29%",
+            "n": 37,
+            "predicted": 0.237,
+            "actual": 0.135
+          },
+          {
+            "band": "30-39%",
+            "n": 87,
+            "predicted": 0.365,
+            "actual": 0.494
+          },
+          {
+            "band": "40-49%",
+            "n": 321,
+            "predicted": 0.455,
+            "actual": 0.464
+          },
+          {
+            "band": "50-59%",
+            "n": 106,
+            "predicted": 0.525,
+            "actual": 0.472
+          }
+        ]
+      },
+      "rush_yds": {
+        "n": 1779,
+        "model_brier": 0.2494,
+        "baseline_brier": 0.2869,
+        "verdict": {
+          "n": 1779,
+          "diff": 0.03749,
+          "se": 0.00591,
+          "z": 6.34,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 30,
+            "predicted": 0.047,
+            "actual": 0.4
+          },
+          {
+            "band": "10-19%",
+            "n": 29,
+            "predicted": 0.154,
+            "actual": 0.345
+          },
+          {
+            "band": "20-29%",
+            "n": 56,
+            "predicted": 0.252,
+            "actual": 0.357
+          },
+          {
+            "band": "30-39%",
+            "n": 137,
+            "predicted": 0.362,
+            "actual": 0.372
+          },
+          {
+            "band": "40-49%",
+            "n": 767,
+            "predicted": 0.479,
+            "actual": 0.443
+          },
+          {
+            "band": "50-59%",
+            "n": 650,
+            "predicted": 0.514,
+            "actual": 0.437
+          },
+          {
+            "band": "60-69%",
+            "n": 62,
+            "predicted": 0.648,
+            "actual": 0.597
+          },
+          {
+            "band": "70-79%",
+            "n": 31,
+            "predicted": 0.75,
+            "actual": 0.742
+          },
+          {
+            "band": "80-89%",
+            "n": 8,
+            "predicted": 0.817,
+            "actual": 0.75
+          },
+          {
+            "band": "90-99%",
+            "n": 9,
+            "predicted": 1.0,
+            "actual": 0.889
+          }
+        ]
+      },
+      "carries": {
+        "n": 1217,
+        "model_brier": 0.2563,
+        "baseline_brier": 0.2875,
+        "verdict": {
+          "n": 1217,
+          "diff": 0.03121,
+          "se": 0.00696,
+          "z": 4.48,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 46,
+            "predicted": 0.052,
+            "actual": 0.348
+          },
+          {
+            "band": "10-19%",
+            "n": 50,
+            "predicted": 0.152,
+            "actual": 0.38
+          },
+          {
+            "band": "20-29%",
+            "n": 86,
+            "predicted": 0.254,
+            "actual": 0.302
+          },
+          {
+            "band": "30-39%",
+            "n": 166,
+            "predicted": 0.354,
+            "actual": 0.44
+          },
+          {
+            "band": "40-49%",
+            "n": 654,
+            "predicted": 0.455,
+            "actual": 0.469
+          },
+          {
+            "band": "50-59%",
+            "n": 147,
+            "predicted": 0.525,
+            "actual": 0.51
+          },
+          {
+            "band": "60-69%",
+            "n": 27,
+            "predicted": 0.642,
+            "actual": 0.444
+          },
+          {
+            "band": "70-79%",
+            "n": 22,
+            "predicted": 0.747,
+            "actual": 0.545
+          },
+          {
+            "band": "80-89%",
+            "n": 7,
+            "predicted": 0.84,
+            "actual": 0.429
+          },
+          {
+            "band": "90-99%",
+            "n": 12,
+            "predicted": 0.954,
+            "actual": 0.667
+          }
+        ]
+      },
+      "targets": {
+        "n": 5057,
+        "model_brier": 0.2427,
+        "baseline_brier": 0.2859,
+        "verdict": {
+          "n": 5057,
+          "diff": 0.0432,
+          "se": 0.00307,
+          "z": 14.08,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 170,
+            "predicted": 0.055,
+            "actual": 0.212
+          },
+          {
+            "band": "10-19%",
+            "n": 300,
+            "predicted": 0.157,
+            "actual": 0.337
+          },
+          {
+            "band": "20-29%",
+            "n": 549,
+            "predicted": 0.256,
+            "actual": 0.37
+          },
+          {
+            "band": "30-39%",
+            "n": 1220,
+            "predicted": 0.355,
+            "actual": 0.402
+          },
+          {
+            "band": "40-49%",
+            "n": 1692,
+            "predicted": 0.443,
+            "actual": 0.419
+          },
+          {
+            "band": "50-59%",
+            "n": 844,
+            "predicted": 0.528,
+            "actual": 0.525
+          },
+          {
+            "band": "60-69%",
+            "n": 145,
+            "predicted": 0.646,
+            "actual": 0.552
+          },
+          {
+            "band": "70-79%",
+            "n": 71,
+            "predicted": 0.747,
+            "actual": 0.718
+          },
+          {
+            "band": "80-89%",
+            "n": 42,
+            "predicted": 0.842,
+            "actual": 0.81
+          },
+          {
+            "band": "90-99%",
+            "n": 24,
+            "predicted": 0.929,
+            "actual": 0.75
+          }
+        ]
+      },
+      "scrim_yds": {
+        "n": 5474,
+        "model_brier": 0.2505,
+        "baseline_brier": 0.2894,
+        "verdict": {
+          "n": 5474,
+          "diff": 0.03886,
+          "se": 0.00332,
+          "z": 11.69,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 30,
+            "predicted": 0.043,
+            "actual": 0.533
+          },
+          {
+            "band": "10-19%",
+            "n": 37,
+            "predicted": 0.157,
+            "actual": 0.351
+          },
+          {
+            "band": "20-29%",
+            "n": 104,
+            "predicted": 0.261,
+            "actual": 0.423
+          },
+          {
+            "band": "30-39%",
+            "n": 248,
+            "predicted": 0.36,
+            "actual": 0.444
+          },
+          {
+            "band": "40-49%",
+            "n": 2615,
+            "predicted": 0.48,
+            "actual": 0.435
+          },
+          {
+            "band": "50-59%",
+            "n": 2095,
+            "predicted": 0.517,
+            "actual": 0.454
+          },
+          {
+            "band": "60-69%",
+            "n": 194,
+            "predicted": 0.642,
+            "actual": 0.582
+          },
+          {
+            "band": "70-79%",
+            "n": 104,
+            "predicted": 0.746,
+            "actual": 0.615
+          },
+          {
+            "band": "80-89%",
+            "n": 43,
+            "predicted": 0.836,
+            "actual": 0.86
+          },
+          {
+            "band": "90-99%",
+            "n": 4,
+            "predicted": 1.0,
+            "actual": 1.0
+          }
+        ]
+      },
+      "rec_yds": {
+        "n": 4937,
+        "model_brier": 0.2559,
+        "baseline_brier": 0.2857,
+        "verdict": {
+          "n": 4937,
+          "diff": 0.02974,
+          "se": 0.00345,
+          "z": 8.63,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 102,
+            "predicted": 0.036,
+            "actual": 0.549
+          },
+          {
+            "band": "10-19%",
+            "n": 115,
+            "predicted": 0.151,
+            "actual": 0.4
+          },
+          {
+            "band": "20-29%",
+            "n": 190,
+            "predicted": 0.256,
+            "actual": 0.442
+          },
+          {
+            "band": "30-39%",
+            "n": 386,
+            "predicted": 0.358,
+            "actual": 0.407
+          },
+          {
+            "band": "40-49%",
+            "n": 2309,
+            "predicted": 0.475,
+            "actual": 0.415
+          },
+          {
+            "band": "50-59%",
+            "n": 1572,
+            "predicted": 0.519,
+            "actual": 0.464
+          },
+          {
+            "band": "60-69%",
+            "n": 160,
+            "predicted": 0.645,
+            "actual": 0.525
+          },
+          {
+            "band": "70-79%",
+            "n": 73,
+            "predicted": 0.741,
+            "actual": 0.603
+          },
+          {
+            "band": "80-89%",
+            "n": 28,
+            "predicted": 0.838,
+            "actual": 0.929
+          },
+          {
+            "band": "90-99%",
+            "n": 2,
+            "predicted": 1.0,
+            "actual": 1.0
+          }
+        ]
+      },
+      "rec": {
+        "n": 4987,
+        "model_brier": 0.2386,
+        "baseline_brier": 0.2686,
+        "verdict": {
+          "n": 4987,
+          "diff": 0.03002,
+          "se": 0.00296,
+          "z": 10.13,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 172,
+            "predicted": 0.059,
+            "actual": 0.192
+          },
+          {
+            "band": "10-19%",
+            "n": 280,
+            "predicted": 0.164,
+            "actual": 0.282
+          },
+          {
+            "band": "20-29%",
+            "n": 640,
+            "predicted": 0.254,
+            "actual": 0.366
+          },
+          {
+            "band": "30-39%",
+            "n": 1332,
+            "predicted": 0.354,
+            "actual": 0.39
+          },
+          {
+            "band": "40-49%",
+            "n": 1474,
+            "predicted": 0.445,
+            "actual": 0.442
+          },
+          {
+            "band": "50-59%",
+            "n": 885,
+            "predicted": 0.533,
+            "actual": 0.531
+          },
+          {
+            "band": "60-69%",
+            "n": 104,
+            "predicted": 0.646,
+            "actual": 0.606
+          },
+          {
+            "band": "70-79%",
+            "n": 62,
+            "predicted": 0.754,
+            "actual": 0.71
+          },
+          {
+            "band": "80-89%",
+            "n": 19,
+            "predicted": 0.842,
+            "actual": 0.842
+          },
+          {
+            "band": "90-99%",
+            "n": 19,
+            "predicted": 0.936,
+            "actual": 0.947
+          }
+        ]
+      },
+      "td": {
+        "n": 3003,
+        "model_brier": 0.1585,
+        "baseline_brier": 0.1989,
+        "verdict": {
+          "n": 3003,
+          "diff": 0.04035,
+          "se": 0.00378,
+          "z": 10.66,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 1000,
+            "predicted": 0.064,
+            "actual": 0.111
+          },
+          {
+            "band": "10-19%",
+            "n": 1051,
+            "predicted": 0.146,
+            "actual": 0.194
+          },
+          {
+            "band": "20-29%",
+            "n": 508,
+            "predicted": 0.243,
+            "actual": 0.307
+          },
+          {
+            "band": "30-39%",
+            "n": 266,
+            "predicted": 0.342,
+            "actual": 0.35
+          },
+          {
+            "band": "40-49%",
+            "n": 104,
+            "predicted": 0.451,
+            "actual": 0.423
+          },
+          {
+            "band": "50-59%",
+            "n": 52,
+            "predicted": 0.538,
+            "actual": 0.519
+          },
+          {
+            "band": "60-69%",
+            "n": 20,
+            "predicted": 0.638,
+            "actual": 0.75
+          },
+          {
+            "band": "70-79%",
+            "n": 2,
+            "predicted": 0.715,
+            "actual": 0.5
+          }
+        ]
+      },
+      "matchup": {
+        "rush": {
+          "strength": 0.0,
+          "fitted": 0.5,
+          "n_train": 584,
+          "n": 1195,
+          "verdict": {
+            "n": 1195,
+            "diff": -0.00019,
+            "se": 0.0027,
+            "z": -0.07,
+            "verdict": "fails"
+          },
+          "in_number": false
+        },
+        "rec": {
+          "strength": 0.0,
+          "fitted": 0.5,
+          "n_train": 3255,
+          "n": 6669,
+          "verdict": {
+            "n": 6669,
+            "diff": 0.00046,
+            "se": 0.00084,
+            "z": 0.55,
+            "verdict": "thin"
+          },
+          "in_number": false
+        },
+        "pass": {
+          "strength": 0.0,
+          "fitted": 0.0,
+          "n_train": 231,
+          "n": 0,
+          "verdict": {
+            "verdict": null
+          },
+          "in_number": false
+        }
+      },
+      "matchup_in_number": {
+        "rush": false,
+        "rec": false,
+        "pass": false
+      },
+      "matchup_strength": {
+        "rush": 0.0,
+        "rec": 0.0,
+        "pass": 0.0
+      },
+      "weeks": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "seasons": {
+        "prior_rows": 21599,
+        "current_rows": 8270
+      }
+    },
+    "matchup_in_number": {
+      "rush": false,
+      "rec": false,
+      "pass": false
+    },
+    "matchup_strength": {
+      "rush": 0.0,
+      "rec": 0.0,
+      "pass": 0.0
+    }
+  },
+  "markets": {
+    "Anytime TD": [
+      {
+        "player": "Javonte Williams",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 57,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 43,
+        "window": "Monday Night"
+      },
+      {
+        "player": "CeeDee Lamb",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 33,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Pickens",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 31,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dameon Pierce",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 29,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jake Ferguson",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 6,
+        "proj": 25,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dallas Goedert",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 25,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ryan Flournoy",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 20,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Emari Demercado",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 18,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Zach Ertz",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 18,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Hollywood Brown",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 17,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Makai Lemon",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 16,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Darius Cooper",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 12,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Elijah Moore",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jonathan Mingo",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brevyn Spann-Ford",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Johnny Mundt",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 6,
+        "window": "Monday Night"
+      }
+    ],
+    "Rushing yards": [
+      {
+        "player": "Javonte Williams",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 54.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 51.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Emari Demercado",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 23.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dameon Pierce",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 18.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dak Prescott",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 9.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tanner McKee",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 1.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Hollywood Brown",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 0.6,
+        "window": "Monday Night"
+      }
+    ],
+    "Carries": [
+      {
+        "player": "Javonte Williams",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 12.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 12.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dameon Pierce",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 8.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Emari Demercado",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 3.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Hollywood Brown",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 0.1,
+        "window": "Monday Night"
+      }
+    ],
+    "Receiving yards": [
+      {
+        "player": "CeeDee Lamb",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 89.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Pickens",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 73.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dallas Goedert",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 43.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ryan Flournoy",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 35.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Hollywood Brown",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 32.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jake Ferguson",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 6,
+        "proj": 28.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Darius Cooper",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 26.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Makai Lemon",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 21.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Javonte Williams",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 16.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Zach Ertz",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 16.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brevyn Spann-Ford",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 10.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Emari Demercado",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 8.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jonathan Mingo",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 7.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 4.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Elijah Moore",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 4.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Johnny Mundt",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 4.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dameon Pierce",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 3.0,
+        "window": "Monday Night"
+      }
+    ],
+    "Receptions": [
+      {
+        "player": "CeeDee Lamb",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 7.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Pickens",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 5.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jake Ferguson",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 6,
+        "proj": 4.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dallas Goedert",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 4.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ryan Flournoy",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 3.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Zach Ertz",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 3.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Makai Lemon",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 3.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Javonte Williams",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 2.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Hollywood Brown",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 2.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 2.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Darius Cooper",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 1.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dameon Pierce",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 1.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brevyn Spann-Ford",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 1.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Emari Demercado",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 1.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Elijah Moore",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 1.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Johnny Mundt",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 0.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jonathan Mingo",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 0.6,
+        "window": "Monday Night"
+      }
+    ],
+    "Targets": [
+      {
+        "player": "CeeDee Lamb",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 10.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Pickens",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 8.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dallas Goedert",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 6.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jake Ferguson",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 6,
+        "proj": 5.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ryan Flournoy",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 5.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Zach Ertz",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 5.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Makai Lemon",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 4.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Hollywood Brown",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 4.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Javonte Williams",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 3.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 3.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Darius Cooper",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 2.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dameon Pierce",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 2.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Elijah Moore",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 1.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jonathan Mingo",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 1.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brevyn Spann-Ford",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 1.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Emari Demercado",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 1.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Johnny Mundt",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 1.6,
+        "window": "Monday Night"
+      }
+    ],
+    "Passing yards": [
+      {
+        "player": "Dak Prescott",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 267.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tanner McKee",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 149.9,
+        "window": "Monday Night"
+      }
+    ],
+    "Pass attempts": [
+      {
+        "player": "Dak Prescott",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 40.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tanner McKee",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 31.3,
+        "window": "Monday Night"
+      }
+    ],
+    "Rush + rec yards": [
+      {
+        "player": "CeeDee Lamb",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 89.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Pickens",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 73.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Javonte Williams",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 71.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 56.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dallas Goedert",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 43.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ryan Flournoy",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 36.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Hollywood Brown",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 33.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Emari Demercado",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 31.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jake Ferguson",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 6,
+        "proj": 28.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Darius Cooper",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 26.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dameon Pierce",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 21.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Makai Lemon",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 20.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Zach Ertz",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 16.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brevyn Spann-Ford",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 10.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jonathan Mingo",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 7.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Elijah Moore",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 6.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Johnny Mundt",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 4.4,
+        "window": "Monday Night"
+      }
+    ],
+    "Completions": [
+      {
+        "player": "Dak Prescott",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 26.24,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tanner McKee",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 19.84,
+        "window": "Monday Night"
+      }
+    ],
+    "Passing TDs": [
+      {
+        "player": "Dak Prescott",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 1.83,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tanner McKee",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 1.42,
+        "window": "Monday Night"
+      }
+    ],
+    "Interceptions": [
+      {
+        "player": "Dak Prescott",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 0.79,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tanner McKee",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 0.62,
+        "window": "Monday Night"
+      }
+    ],
+    "2+ TDs": [
+      {
+        "player": "Javonte Williams",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 21.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 11.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "CeeDee Lamb",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 6.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Pickens",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 5.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dameon Pierce",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 4.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dallas Goedert",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 3.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jake Ferguson",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 6,
+        "proj": 3.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ryan Flournoy",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 2.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Emari Demercado",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 1.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Zach Ertz",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 1.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Hollywood Brown",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 1.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Makai Lemon",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 1.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Darius Cooper",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 0.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Elijah Moore",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 0.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jonathan Mingo",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 0.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brevyn Spann-Ford",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 0.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Johnny Mundt",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 0.2,
+        "window": "Monday Night"
+      }
+    ]
+  }
+}
