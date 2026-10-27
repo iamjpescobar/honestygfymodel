@@ -71,12 +71,27 @@ def nb_pmf(mu, r, max_k=MAX_SCORE):
     if mu == 0:
         return [1.0] + [0.0] * max_k
     p = r / (r + mu)                 # success probability
-    out = []
-    for k in range(max_k + 1):
-        lp = (lgamma(k + r) - lgamma(r) - lgamma(k + 1)
-              + r * log(p) + k * log(1 - p))
-        out.append(exp(lp))
-    return out
+    head = _nb_head(r, max_k)
+    rlp, lq = r * log(p), log(1 - p)
+    return [exp(head[k] + rlp + k * lq) for k in range(max_k + 1)]
+
+
+_NB_HEAD = {}
+
+
+def _nb_head(r, max_k):
+    """lgamma(k + r) - lgamma(r) - lgamma(k + 1) for k = 0..max_k, kept per
+    (r, max_k) (10-27, NHL nightly speed): the shots size is one number all
+    night, and these were recomputed for every skater on every pass of
+    every fit. The same expression, the same order — the same floats."""
+    key = (r, max_k)
+    h = _NB_HEAD.get(key)
+    if h is None:
+        h = [lgamma(k + r) - lgamma(r) - lgamma(k + 1) for k in range(max_k + 1)]
+        if len(_NB_HEAD) > 256:
+            _NB_HEAD.clear()
+        _NB_HEAD[key] = h
+    return h
 
 
 def score_pmf(mu, dispersion=None, max_k=MAX_SCORE):

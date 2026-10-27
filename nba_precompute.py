@@ -197,6 +197,43 @@ def why_line(name, proj, last, cur):
     return " · ".join(bits)
 
 
+# the team-minutes fix (10-27) moved every NBA projection; the level learns
+# only from nights graded after it (engines/offered_level)
+LEVEL_SINCE = "2026-10-27"
+
+
+def apply_offered_level(rows_lists, league, stats, combos=None, refresh=None, graded=None,
+                        since=None):
+    """10-27 (engines/offered_level): the projection level learned from
+    the graded DraftKings lines, used only where it beat on later nights.
+    Scales each row's base stats in place, re-sums combos, and returns the
+    fitted block (printed and shipped)."""
+    import json as _j
+    from engines import offered_level as ol
+    if graded is None:
+        p = ROOT / "data" / "props" / "graded" / f"{league}.json"
+        try:
+            graded = _j.loads(p.read_text()) if p.exists() else []
+        except Exception:  # noqa: BLE001
+            graded = []
+    fitted = ol.fit(graded, stats, since)
+    print(ol.line(league.upper(), fitted))
+    used = {st: x["used"] for st, x in fitted.items() if x["used"] != 1.0}
+    if used:
+        for rows in rows_lists:
+            for r in rows or []:
+                mu = r.get("mu") or {}
+                for st, f in used.items():
+                    if mu.get(st) is not None:
+                        mu[st] = round(mu[st] * f, 3)
+                for c, parts in (combos or {}).items():
+                    if all(mu.get(x) is not None for x in parts):
+                        mu[c] = round(sum(mu[x] for x in parts), 3)
+                if refresh:
+                    refresh(r)
+    return fitted
+
+
 def side_props(team_id, pool, pre, params, roster, feed, team_abbr, cur_from, no_data=None,
                low=None):
     """(rows, held_out) for one team tonight. Players with no NBA games on
@@ -839,6 +876,18 @@ def main(today=None):
         except Exception as exc:  # noqa: BLE001
             print(f"::warning::NBA first-quarter points tonight failed: "
                   f"{type(exc).__name__}: {exc}")
+    # the projection level learned from the graded DraftKings lines (10-27):
+    # used only where it beat on later nights; before First Basket, the
+    # sims and the boards read tonight's numbers
+    level_block = None
+    if model:
+        try:
+            level_block = apply_offered_level(
+                [g.get(f"{s_}_props") for g in slate for s_ in ("away", "home")], "nba",
+                nm.BASE, nm.COMBOS, since=LEVEL_SINCE)
+            model["offered_level"] = level_block
+        except Exception as exc:  # noqa: BLE001
+            print(f"::warning::NBA offered level failed: {type(exc).__name__}: {exc}")
     n_fb = 0
     if first_block and first_book:
         for g in slate:

@@ -154,6 +154,51 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Four follow-ups: the projection level learns from the graded DraftKings lines (gated); NHL saves checked; the MLB runs check made same-sample; NHL fitting 2.2x faster with identical output. 2026-10-27 (2)
+
+Izzy, after the team-minutes fix: "Let's finish all of them".
+
+**1. Offered projection level (engines/offered_level).** Graded rows carry
+our offered projection and what the player did (since 10-26). Per base stat:
+factor = 1 + (sum actual / sum ours - 1) x n/(n+150), clipped 0.85-1.20;
+tested walk-forward by night (each night scaled by the factor from the
+nights BEFORE it, squared error vs unscaled, paired verdict); USED only on
+"beats" with 150+ test lines. NBA (pts reb ast tpm; combos re-summed) learns
+only from 2026-10-27 on (`LEVEL_SINCE`): the team-minutes fix already moved
+every NBA projection ~6%, and learning from the earlier nights would
+correct it twice. NHL (sog, a; points follow) re-prices each skater's
+stored chances and expected shots / points from the scaled means
+(`nhl_refresh`, same distributions as nhl_model.probs). Nightly prints
+`[verify] OFFERED LEVEL NBA/NHL ... -> USED / not used`. On the record as
+of 10-27 nothing is used (one night graded; NBA none since the fix). Until it
+switches on, NBA rebounds / assists still lean a little low vs DraftKings.
+tests/test_offered_level.py.
+
+**2. NHL saves:** graded record site Brier 0.2247 vs book 0.2441 (n=26). No
+change.
+
+**3. MLB "simulator 6% high" (4.43 vs 4.17) was the check, not the
+simulator:** it set the first 40 games' simulation beside EVERY game's runs
+(two samples) with no error bar; 40 games carry about +-0.35 runs.
+`runs_check` now compares the same games and prints se, z, verdict ("in
+line" under 2 se). On the test season: 4.5 vs 5.05 +- 0.31 -> in line. The
+simulator is unchanged. Season over; read the line in spring before
+touching run levels. tests/test_mlb_sim.py.
+
+**4. NHL nightly speed:** ~8 of the NHL step's ~9 minutes were the fits
+(ice time, PP weight, shot factors) calling nhl_model.probs millions of
+times. model_math.nb_pmf now keeps the lgamma table per (size, length), and
+probs(only=...) builds only the family a fit reads. Build on last season's
+file: 228 s -> 103 s, output byte-identical (compared JSON).
+tests/test_nhl_fit_speed.py checks equality float for float.
+
+Negative controls (all red by exit code): factor reading the same night;
+gate ignoring MIN_TEST; combos not re-summed; runs check reading every
+game's actual; nb table keyed on size alone; only= building points from
+goals alone.
+
+---
+
 ## PICK UP HERE — Found why the offered NBA projections ran low: the team-minutes scale counted the whole roster tonight but only who played when it was tested. Fixed to the tested definition. 2026-10-27
 
 **Suite 174, FAILING: none.** tests/test_nba_context.py +2 checks
@@ -692,49 +737,6 @@ the Site vs DraftKings grading.
 
 FILES: app/engines/ufc.py (NEW), app/views/UFC.py (NEW),
 tests/test_ufc.py (NEW), app/app.py, app/views/Home.py, HANDOFF.md,
-HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — "Site vs DraftKings" page; Bet Finder labels each market and caps no-edge markets at THIN; UFC probe. 2026-10-24 (2)
-
-**Suite 164, FAILING: none.** tests/test_book_grade.py +3 checks (2 new
-controls red: a verdict under MIN_GRADED; the Bet Finder not capping a
-no-edge market); new tests/test_ufc_probe.py (control red: card_info
-reading the last event). Site_vs_Book headless (scorecard, empty state);
-Bet Finder headless with a no-edge NHL SOG scorecard: label shown, every
-call THIN.
-
-THE BAR, set BEFORE any grade existed (book_grade.MIN_GRADED = 300): a
-market gets no verdict until 300 graded lines; then "beats" = the paired
-verdict says the site's chances beat DraftKings' de-vigged ones; else
-"no edge proven". market_status(card, league, stat) falls back to the
-one-sided "stat*" grade (NFL). load_scorecard reads data/props/
-scorecard.json from the published data or the repo.
-
-PAGE views/Site_vs_Book.py ("Site vs DraftKings", after Bet Log in all
-four navs — test_bet_log wants Bet Log right after Bet Finder; a Home
-Explore card): per league, per market: graded, the site's Brier vs the
-book's, verdict (BEATS DRAFTKINGS / NO EDGE PROVEN / BEING GRADED n of
-300), flagged plays, hit %, units, ROI at DK's prices; the * caption.
-
-BET FINDER: above each stat a line "<stat>: BEATS DRAFTKINGS (z, n)" /
-"NO EDGE PROVEN vs DraftKings — calls capped at THIN" / "BEING GRADED
-vs DraftKings (n of 300) — not proven yet"; a no-edge market's support
-is marked untested, so guarded_tier caps every call at THIN.
-
-UFC PROBE (ufc_probe.py, manual workflow ufc-probe.yml, print only):
-next card on ESPN's MMA scoreboard (site.web.api then site.api), fights
-= competitions, each fight's core odds providers + DraftKings propBets
-types / samples (first 3 fights), the core 2025 event list size, a
-finished card's fight keys + one fighter's statistics record, and
-whether ufcstats.com answers from Actions. NEXT: read it, then the
-backfill + fighter ratings (tested vs DK's moneylines), method / rounds.
-
-FILES: app/views/Site_vs_Book.py (NEW), ufc_probe.py (NEW),
-.github/workflows/ufc-probe.yml (NEW), tests/test_ufc_probe.py (NEW),
-app/engines/book_grade.py, app/views/Bet_Finder.py, app/app.py,
-app/views/Home.py, tests/test_book_grade.py, HANDOFF.md,
 HANDOFF_ARCHIVE.md
 
 ---

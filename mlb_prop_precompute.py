@@ -375,8 +375,11 @@ def build_prop_model(season_df, out_dir, validation_days=VALIDATION_DAYS, prior=
     else:
         print(f"  [verify] MLB simulator: base-out transitions from "
               f"{(_sim.get('transitions') or {}).get('n')} plate appearances; runs per team "
-              f"simulated {(_sim.get('runs_check') or {}).get('sim')} vs actual "
-              f"{(_sim.get('runs_check') or {}).get('actual')}; SGPs graded on "
+              f"simulated {(_sim.get('runs_check') or {}).get('sim')} vs "
+              f"{(_sim.get('runs_check') or {}).get('actual')} +- "
+              f"{(_sim.get('runs_check') or {}).get('se')} on the same "
+              f"{(_sim.get('runs_check') or {}).get('games')} games -> "
+              f"{(_sim.get('runs_check') or {}).get('verdict')}; SGPs graded on "
               f"{_sim.get('n_games')} games from {_sim.get('from')}")
         for _k, _x in (_sim.get("combos") or {}).items():
             _v = _x.get("verdict") or {}
@@ -749,15 +752,41 @@ def build_sim(pa, model, validation_days=VALIDATION_DAYS, n=SIM_TEST_N, min_stat
                         "predicted_ind": round(sum(x[1] for x in xs) / len(xs), 4),
                         "predicted_sim": round(sum(x[2] for x in xs) / len(xs), 4),
                         "actual": round(sum(x[3] for x in xs) / len(xs), 4)}
-    # the simulator's own check: runs per team-game against the season's
-    runs_sim = []
-    for k, g in enumerate(games[:40]):
-        s = ms.simulate(g["game"], tab, n=1000, seed=7 + k)
-        runs_sim.append(float((s["home"].mean() + s["away"].mean()) / 2))
-    act = [v for g in games for v in g["final"].values()]
+    # the simulator's own check: runs per team-game, simulated vs what
+    # those SAME games scored (10-27: it used to set the first 40 games'
+    # simulation beside every game's runs — two different samples — and
+    # printed no error bar; 40 games are 80 team-games, about +-0.35 runs)
     return {"transitions": trans, "combos": combos, "n_games": len(games),
             "from": (sorted(pa["game_date"].unique())[-validation_days]
                      if len(games) else None),
-            "runs_check": {"sim": round(sum(runs_sim) / len(runs_sim), 2) if runs_sim else None,
-                           "actual": round(sum(act) / len(act), 2) if act else None,
-                           "games": min(40, len(games))}}
+            "runs_check": runs_check(games, tab)}
+
+
+RUNS_CHECK_GAMES = 40
+
+
+def runs_check(games, tab, n_games=RUNS_CHECK_GAMES, n=1000):
+    """{"sim", "actual", "games", "se", "gap_z", "verdict"}: the simulator's
+    mean runs per team-game on the first n_games graded games against the
+    runs those same games scored. verdict "in line" unless the gap is two
+    standard errors (of the actual mean) or more — then "high" / "low"."""
+    from engines import mlb_sim as ms
+    sims, acts = [], []
+    for k, g in enumerate(games[:n_games]):
+        fin = [v for v in (g.get("final") or {}).values() if v is not None]
+        if len(fin) != 2:
+            continue
+        s = ms.simulate(g["game"], tab, n=n, seed=7 + k)
+        sims.append(float((s["home"].mean() + s["away"].mean()) / 2))
+        acts += [float(v) for v in fin]
+    if not sims or len(acts) < 2:
+        return {"sim": None, "actual": None, "games": 0, "se": None, "gap_z": None,
+                "verdict": None}
+    sim, act = sum(sims) / len(sims), sum(acts) / len(acts)
+    sd = (sum((x - act) ** 2 for x in acts) / (len(acts) - 1)) ** 0.5
+    se = sd / len(acts) ** 0.5
+    z = (sim - act) / se if se > 0 else None
+    verdict = ("in line" if z is None or abs(z) < 2 else ("high" if z > 0 else "low"))
+    return {"sim": round(sim, 2), "actual": round(act, 2), "games": len(sims),
+            "se": round(se, 2), "gap_z": round(z, 2) if z is not None else None,
+            "verdict": verdict}

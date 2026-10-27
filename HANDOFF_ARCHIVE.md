@@ -10,6 +10,51 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — "Site vs DraftKings" page; Bet Finder labels each market and caps no-edge markets at THIN; UFC probe. 2026-10-24 (2)
+
+**Suite 164, FAILING: none.** tests/test_book_grade.py +3 checks (2 new
+controls red: a verdict under MIN_GRADED; the Bet Finder not capping a
+no-edge market); new tests/test_ufc_probe.py (control red: card_info
+reading the last event). Site_vs_Book headless (scorecard, empty state);
+Bet Finder headless with a no-edge NHL SOG scorecard: label shown, every
+call THIN.
+
+THE BAR, set BEFORE any grade existed (book_grade.MIN_GRADED = 300): a
+market gets no verdict until 300 graded lines; then "beats" = the paired
+verdict says the site's chances beat DraftKings' de-vigged ones; else
+"no edge proven". market_status(card, league, stat) falls back to the
+one-sided "stat*" grade (NFL). load_scorecard reads data/props/
+scorecard.json from the published data or the repo.
+
+PAGE views/Site_vs_Book.py ("Site vs DraftKings", after Bet Log in all
+four navs — test_bet_log wants Bet Log right after Bet Finder; a Home
+Explore card): per league, per market: graded, the site's Brier vs the
+book's, verdict (BEATS DRAFTKINGS / NO EDGE PROVEN / BEING GRADED n of
+300), flagged plays, hit %, units, ROI at DK's prices; the * caption.
+
+BET FINDER: above each stat a line "<stat>: BEATS DRAFTKINGS (z, n)" /
+"NO EDGE PROVEN vs DraftKings — calls capped at THIN" / "BEING GRADED
+vs DraftKings (n of 300) — not proven yet"; a no-edge market's support
+is marked untested, so guarded_tier caps every call at THIN.
+
+UFC PROBE (ufc_probe.py, manual workflow ufc-probe.yml, print only):
+next card on ESPN's MMA scoreboard (site.web.api then site.api), fights
+= competitions, each fight's core odds providers + DraftKings propBets
+types / samples (first 3 fights), the core 2025 event list size, a
+finished card's fight keys + one fighter's statistics record, and
+whether ufcstats.com answers from Actions. NEXT: read it, then the
+backfill + fighter ratings (tested vs DK's moneylines), method / rounds.
+
+FILES: app/views/Site_vs_Book.py (NEW), ufc_probe.py (NEW),
+.github/workflows/ufc-probe.yml (NEW), tests/test_ufc_probe.py (NEW),
+app/engines/book_grade.py, app/views/Bet_Finder.py, app/app.py,
+app/views/Home.py, tests/test_book_grade.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
+---
+
 ## PICK UP HERE — Step 3: the site graded against DraftKings every run (capture the site's chance beside the book's, grade on the box score, scorecard). 2026-10-24
 
 **Suite 163, FAILING: none.** New tests/test_book_grade.py (4 controls,

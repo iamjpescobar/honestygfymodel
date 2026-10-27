@@ -10,6 +10,9 @@ batter, pitcher, game_date, inning, inning_topbot, outs_when_up, on_1b /
 on_2b / on_3b, bat_score, post_bat_score) played by known rules (rule 5).
 No network.
 
+Negative controls (runs check, 10-27): actual read from every game instead
+  of the checked ones -> "the check's actual comes from the checked games
+  only" fails.
 Negative controls, confirmed red by exit code when written (rule 4):
   - state_rows comparing pandas' NA directly (no _na) -> "Statcast's
     nullable columns ... read exactly like plain ones" fails (10-22)
@@ -262,6 +265,20 @@ check("the nightly measures the transitions and grades every kind on the window"
       (blk.get("transitions") or {}).get("n", 0) > 5000 and blk.get("n_games", 0) >= 40
       and {"HH", "HHH", "TT", "HW", "RW", "KW", "HHopp"} <= set(blk.get("combos") or {})
       and abs(blk["runs_check"]["sim"] / blk["runs_check"]["actual"] - 1) < 0.12)
+rc = blk["runs_check"]
+check("runs check: simulated vs the SAME games' runs, with its error bar and a verdict",
+      rc["games"] >= 40 and rc["se"] and rc["verdict"] in ("in line", "high", "low"))
+# the same-sample rule (10-27): actual is read from the checked games only.
+# Fake games: the first 40 score 2 a side, the rest 20 — mixing them in
+# would read ~11.
+_g0 = sim_games_ = mpp.sim_games(PA, model, 20)
+_fake = [dict(g, final={"home": 1, "away": 3}) for g in _g0[:40]] + \
+        [dict(g, final={"home": 20, "away": 20}) for g in _g0[40:]]
+_tab = ms.tables(ms.measure_transitions(ms.state_rows(PA)))
+_rc = mpp.runs_check(_fake, _tab, n=200)
+check("the check's actual comes from the checked games only (2.0, not the later 20s)",
+      _rc["actual"] == 2.0 and len(_g0) > 40)
+check("a simulator far above 2 runs a side reads 'high'", _rc["verdict"] == "high")
 small = mpp.build_sim(PA.head(3000), model, 20)
 check("too few plate appearances with a state: a note, not a simulator", "note" in small)
 

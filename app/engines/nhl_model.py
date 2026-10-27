@@ -244,16 +244,31 @@ def rates(player, priors, before=None):
 
 
 def probs(r, shot_ratio=1.0, goal_ratio=1.0, sog_disp=None, toi_sog=1.0, toi_pts=1.0,
-          att_sog=1.0, chance_g=1.0):
+          att_sog=1.0, chance_g=1.0, only=None):
     """{market: p} for one skater tonight. toi_sog / toi_pts are the
     fitted ice-time scales; att_sog / chance_g the shot-attempt and
     scoring-chance scales (shot_scales) — each 1.0 when its factor did
-    not earn its way in."""
+    not earn its way in. `only` (a set of stats, 10-27): the fits that
+    score one family call this millions of times and read only that
+    family's markets — the others are skipped, the ones given are the
+    same numbers."""
     if not r:
         return None
     sog_mu = r["sog"] * (shot_ratio or 1.0) * (toi_sog or 1.0) * (att_sog or 1.0)
     gs = (goal_ratio or 1.0) * (toi_pts or 1.0)
     g_mu, a_mu = r["g"] * gs * (chance_g or 1.0), r["a"] * gs
+    if only is not None:
+        pm = {}
+        if "sog" in only:
+            pm["sog"] = mm.nb_pmf(sog_mu, sog_disp, 20)
+        if "g" in only:
+            pm["g"] = mm.poisson_pmf(g_mu, 10)
+        if "a" in only:
+            pm["a"] = mm.poisson_pmf(a_mu, 10)
+        if "pts" in only:
+            pm["pts"] = mm.poisson_pmf(g_mu + a_mu, 10)
+        return {k: round(mm.prob_at_least(pm[stat], n), 4) for k, _l, stat, n in MARKETS
+                if stat in pm}
     pm = {"sog": mm.nb_pmf(sog_mu, sog_disp, 20), "g": mm.poisson_pmf(g_mu, 10),
           "a": mm.poisson_pmf(a_mu, 10), "pts": mm.poisson_pmf(g_mu + a_mu, 10)}
     out = {k: round(mm.prob_at_least(pm[stat], n), 4) for k, _l, stat, n in MARKETS}
@@ -546,7 +561,7 @@ def _family_losses(rows, fam, window, alpha, disp, pp_w=None, pp_alpha=None):
             if wr:
                 sc = wr ** pp_alpha
         pr = probs(r, sr, gr, disp, toi_sog=sc if fam == "sog" else 1.0,
-                   toi_pts=sc if fam == "pts" else 1.0)
+                   toi_pts=sc if fam == "pts" else 1.0, only=stats)
         for k, _l, stat, n in MARKETS:
             if stat not in stats or actual[stat] is None:
                 continue
@@ -701,7 +716,8 @@ def _shot_losses(rows, fam, toi, disp, lr, strength):
         f = (x ** strength) if x else 1.0
         pr = probs(r, sr, gr, disp, toi_sog=_toi_sc(ratios, "sog", toi),
                    toi_pts=_toi_sc(ratios, "pts", toi),
-                   att_sog=f if fam == "sog" else 1.0, chance_g=f if fam == "g" else 1.0)
+                   att_sog=f if fam == "sog" else 1.0, chance_g=f if fam == "g" else 1.0,
+                   only=SHOT_FAMS[fam])
         for k, _l, stat, n in MARKETS:
             if stat not in SHOT_FAMS[fam] or actual[stat] is None:
                 continue

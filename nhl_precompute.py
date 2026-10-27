@@ -45,6 +45,57 @@ PRIOR_PATH = ROOT / "data" / "nhl" / "prior_season.json"
 PRIOR_PP_NAME = "prior_pp.json"
 
 
+
+def apply_offered_level(rows_lists, league, stats, combos=None, refresh=None, graded=None,
+                        since=None):
+    """10-27 (engines/offered_level): the projection level learned from
+    the graded DraftKings lines, used only where it beat on later nights.
+    Scales each row's base stats in place, re-sums combos, and returns the
+    fitted block (printed and shipped)."""
+    import json as _j
+    from engines import offered_level as ol
+    if graded is None:
+        p = ROOT / "data" / "props" / "graded" / f"{league}.json"
+        try:
+            graded = _j.loads(p.read_text()) if p.exists() else []
+        except Exception:  # noqa: BLE001
+            graded = []
+    fitted = ol.fit(graded, stats, since)
+    print(ol.line(league.upper(), fitted))
+    used = {st: x["used"] for st, x in fitted.items() if x["used"] != 1.0}
+    if used:
+        for rows in rows_lists:
+            for r in rows or []:
+                mu = r.get("mu") or {}
+                for st, f in used.items():
+                    if mu.get(st) is not None:
+                        mu[st] = round(mu[st] * f, 3)
+                for c, parts in (combos or {}).items():
+                    if all(mu.get(x) is not None for x in parts):
+                        mu[c] = round(sum(mu[x] for x in parts), 3)
+                if refresh:
+                    refresh(r)
+    return fitted
+
+def nhl_refresh(sog_disp):
+    """After the level scales a skater's means, his stored chances and
+    expected shots / points are re-read from them (the same distributions
+    nhl_model.probs uses), so every page agrees with the scaled numbers."""
+    from engines import model_math as _mm
+    from engines import nhl_model as _nm
+
+    def _f(r):
+        mu = r.get("mu")
+        if not mu:
+            return
+        pm = _nm.skater_pmfs(mu, sog_disp)
+        r["probs"] = {k: round(_mm.prob_at_least(pm[stat], n), 4)
+                      for k, _l, stat, n in _nm.MARKETS}
+        r["exp_sog"] = round(mu.get("sog") or 0.0, 2)
+        r["exp_pts"] = round((mu.get("g") or 0.0) + (mu.get("a") or 0.0), 2)
+    return _f
+
+
 def load_prior_pp(prior, prior_path=None):
     """Lay last season's PP minutes over its skaters as "pp" (in place).
     Returns how many skaters got them; 0 when the file is not there."""
@@ -873,6 +924,16 @@ def main(today=None):
         model_block = nhl_model.build(rows, prior, skaters, id_of,
                                       [g for g in slate if g.get("game_type") != "preseason"],
                                       regular_ids=regular_ids)
+        if model_block:
+            # the projection level learned from the graded DraftKings lines
+            # (10-27); shots and assists (points = goals + assists follows)
+            try:
+                model_block["offered_level"] = apply_offered_level(
+                    [g.get(f"{s_}_props") for g in slate for s_ in ("away", "home")], "nhl",
+                    ("sog", "a"), refresh=nhl_refresh(
+                        (model_block.get("skater_priors") or {}).get("sog_dispersion")))
+            except Exception as exc:  # noqa: BLE001
+                print(f"::warning::NHL offered level failed: {type(exc).__name__}: {exc}")
         if model_block:
             v = model_block["validation"]
             print(f"  [verify] NHL model fit on {model_block['params'].get('fit_on')} season: "
