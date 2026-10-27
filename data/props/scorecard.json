@@ -149,32 +149,32 @@
   },
   "nba": {
    "ast": {
-    "n": 129,
-    "brier_site": 0.2564,
-    "brier_book": 0.2444,
+    "n": 138,
+    "brier_site": 0.254,
+    "brier_book": 0.2429,
     "verdict": {
-     "n": 129,
-     "diff": -0.01206,
-     "se": 0.01251,
-     "z": -0.96,
+     "n": 138,
+     "diff": -0.01103,
+     "se": 0.01207,
+     "z": -0.91,
      "verdict": "fails"
     },
     "flagged": {
-     "n": 110,
-     "hits": 58,
-     "units": -2.38,
-     "roi": -0.022
+     "n": 116,
+     "hits": 62,
+     "units": -0.95,
+     "roi": -0.008
     }
    },
    "ast*": {
-    "n": 49,
-    "brier_site": 0.2407,
-    "brier_book": 0.2244,
+    "n": 59,
+    "brier_site": 0.2287,
+    "brier_book": 0.2137,
     "verdict": {
-     "n": 49,
-     "diff": -0.01627,
-     "se": 0.01744,
-     "z": -0.93,
+     "n": 59,
+     "diff": -0.01492,
+     "se": 0.01454,
+     "z": -1.03,
      "verdict": "fails"
     },
     "flagged": {
@@ -185,32 +185,32 @@
     }
    },
    "pa": {
-    "n": 130,
-    "brier_site": 0.2906,
-    "brier_book": 0.2504,
+    "n": 139,
+    "brier_site": 0.2919,
+    "brier_book": 0.2502,
     "verdict": {
-     "n": 130,
-     "diff": -0.0402,
-     "se": 0.01358,
-     "z": -2.96,
+     "n": 139,
+     "diff": -0.04169,
+     "se": 0.01318,
+     "z": -3.16,
      "verdict": "fails"
     },
     "flagged": {
-     "n": 113,
-     "hits": 49,
-     "units": -21.16,
-     "roi": -0.187
+     "n": 120,
+     "hits": 52,
+     "units": -22.5,
+     "roi": -0.188
     }
    },
    "pa*": {
-    "n": 63,
-    "brier_site": 0.1723,
-    "brier_book": 0.1907,
+    "n": 75,
+    "brier_site": 0.1752,
+    "brier_book": 0.1914,
     "verdict": {
-     "n": 63,
-     "diff": 0.01846,
-     "se": 0.01947,
-     "z": 0.95,
+     "n": 75,
+     "diff": 0.01618,
+     "se": 0.0165,
+     "z": 0.98,
      "verdict": "thin"
     },
     "flagged": {
@@ -221,32 +221,32 @@
     }
    },
    "pr": {
-    "n": 161,
-    "brier_site": 0.2869,
-    "brier_book": 0.2485,
+    "n": 174,
+    "brier_site": 0.2901,
+    "brier_book": 0.2489,
     "verdict": {
-     "n": 161,
-     "diff": -0.0384,
-     "se": 0.01256,
-     "z": -3.06,
+     "n": 174,
+     "diff": -0.0412,
+     "se": 0.01198,
+     "z": -3.44,
      "verdict": "fails"
     },
     "flagged": {
-     "n": 141,
-     "hits": 57,
-     "units": -34.81,
-     "roi": -0.247
+     "n": 152,
+     "hits": 60,
+     "units": -40.14,
+     "roi": -0.264
     }
    },
    "pr*": {
-    "n": 29,
-    "brier_site": 0.2175,
-    "brier_book": 0.2351,
+    "n": 33,
+    "brier_site": 0.2045,
+    "brier_book": 0.2227,
     "verdict": {
-     "n": 29,
-     "diff": 0.0176,
-     "se": 0.03339,
-     "z": 0.53,
+     "n": 33,
+     "diff": 0.01823,
+     "se": 0.02943,
+     "z": 0.62,
      "verdict": "thin"
     },
     "flagged": {
@@ -257,32 +257,32 @@
     }
    },
    "pra": {
-    "n": 134,
-    "brier_site": 0.2826,
+    "n": 143,
+    "brier_site": 0.2858,
     "brier_book": 0.25,
     "verdict": {
-     "n": 134,
-     "diff": -0.03258,
-     "se": 0.01455,
-     "z": -2.24,
+     "n": 143,
+     "diff": -0.03579,
+     "se": 0.01409,
+     "z": -2.54,
      "verdict": "fails"
     },
     "flagged": {
-     "n": 115,
-     "hits": 53,
-     "units": -15.56,
-     "roi": -0.135
+     "n": 123,
+     "hits": 56,
+     "units": -17.9,
+     "roi": -0.146
     }
    },
    "pra*": {
-    "n": 58,
-    "brier_site": 0.1955,
-    "brier_book": 0.1939,
+    "n": 71,
+    "brier_site": 0.2057,
+    "brier_book": 0.2052,
     "verdict": {
-     "n": 58,
-     "diff": -0.00168,
-     "se": 0.02458,
-     "z": -0.07,
+     "n": 71,
+     "diff": -0.00049,
+     "se": 0.02054,
+     "z": -0.02,
      "verdict": "fails"
     },
     "flagged": {
@@ -293,32 +293,32 @@
     }
    },
    "pts": {
-    "n": 180,
-    "brier_site": 0.284,
-    "brier_book": 0.252,
+    "n": 193,
+    "brier_site": 0.2831,
+    "brier_book": 0.2519,
     "verdict": {
-     "n": 180,
-     "diff": -0.03207,
-     "se": 0.01031,
-     "z": -3.11,
+     "n": 193,
+     "diff": -0.03129,
+     "se": 0.00987,
+     "z": -3.17,
      "verdict": "fails"
     },
     "flagged": {
-     "n": 156,
-     "hits": 65,
-     "units": -32.92,
-     "roi": -0.211
+     "n": 166,
+     "hits": 71,
+     "units": -31.59,
+     "roi": -0.19
     }
    },
    "pts*": {
-    "n": 16,
-    "brier_site": 0.228,
-    "brier_book": 0.1717,
+    "n": 20,
+    "brier_site": 0.2586,
+    "brier_book": 0.1855,
     "verdict": {
-     "n": 16,
-     "diff": -0.05628,
-     "se": 0.02483,
-     "z": -2.27,
+     "n": 20,
+     "diff": -0.07306,
+     "se": 0.02126,
+     "z": -3.44,
      "verdict": "fails"
     },
     "flagged": {
@@ -329,32 +329,32 @@
     }
    },
    "ra": {
-    "n": 125,
-    "brier_site": 0.2667,
-    "brier_book": 0.2482,
+    "n": 134,
+    "brier_site": 0.2634,
+    "brier_book": 0.2474,
     "verdict": {
-     "n": 125,
-     "diff": -0.01856,
-     "se": 0.01553,
-     "z": -1.19,
+     "n": 134,
+     "diff": -0.016,
+     "se": 0.01483,
+     "z": -1.08,
      "verdict": "fails"
     },
     "flagged": {
-     "n": 117,
-     "hits": 61,
-     "units": -1.86,
-     "roi": -0.016
+     "n": 124,
+     "hits": 66,
+     "units": 0.37,
+     "roi": 0.003
     }
    },
    "ra*": {
-    "n": 47,
-    "brier_site": 0.2206,
-    "brier_book": 0.214,
+    "n": 55,
+    "brier_site": 0.2446,
+    "brier_book": 0.2243,
     "verdict": {
-     "n": 47,
-     "diff": -0.0066,
-     "se": 0.03344,
-     "z": -0.2,
+     "n": 55,
+     "diff": -0.02025,
+     "se": 0.02954,
+     "z": -0.69,
      "verdict": "fails"
     },
     "flagged": {
@@ -365,21 +365,21 @@
     }
    },
    "reb": {
-    "n": 162,
-    "brier_site": 0.2703,
-    "brier_book": 0.248,
+    "n": 175,
+    "brier_site": 0.2695,
+    "brier_book": 0.2484,
     "verdict": {
-     "n": 162,
-     "diff": -0.0223,
-     "se": 0.01219,
+     "n": 175,
+     "diff": -0.0211,
+     "se": 0.01153,
      "z": -1.83,
      "verdict": "fails"
     },
     "flagged": {
-     "n": 150,
-     "hits": 72,
-     "units": -17.74,
-     "roi": -0.118
+     "n": 161,
+     "hits": 78,
+     "units": -17.32,
+     "roi": -0.108
     }
    },
    "reb*": {
@@ -401,33 +401,33 @@
     }
    },
    "tpm": {
-    "n": 140,
-    "brier_site": 0.2719,
-    "brier_book": 0.2481,
+    "n": 149,
+    "brier_site": 0.2687,
+    "brier_book": 0.2498,
     "verdict": {
-     "n": 140,
-     "diff": -0.02381,
-     "se": 0.00967,
-     "z": -2.46,
+     "n": 149,
+     "diff": -0.0189,
+     "se": 0.00949,
+     "z": -1.99,
      "verdict": "fails"
     },
     "flagged": {
-     "n": 120,
-     "hits": 56,
-     "units": -16.86,
-     "roi": -0.14
+     "n": 129,
+     "hits": 63,
+     "units": -11.52,
+     "roi": -0.089
     }
    },
    "tpm*": {
-    "n": 28,
-    "brier_site": 0.2185,
-    "brier_book": 0.2169,
+    "n": 34,
+    "brier_site": 0.2316,
+    "brier_book": 0.233,
     "verdict": {
-     "n": 28,
-     "diff": -0.00159,
-     "se": 0.01829,
-     "z": -0.09,
-     "verdict": "fails"
+     "n": 34,
+     "diff": 0.00139,
+     "se": 0.01701,
+     "z": 0.08,
+     "verdict": "thin"
     },
     "flagged": {
      "n": 1,
@@ -441,12 +441,100 @@
  },
  "grades": {
   "nhl": {},
-  "nba": {},
+  "nba": {
+   "A": {
+    "n": 24,
+    "site": 0.4227,
+    "book": 0.5066,
+    "actual": 0.3333
+   },
+   "B": {
+    "n": 2,
+    "site": 0.3866,
+    "book": 0.513,
+    "actual": 1.0
+   },
+   "C": {
+    "n": 12,
+    "site": 0.4033,
+    "book": 0.4994,
+    "actual": 0.3333
+   },
+   "D": {
+    "n": 43,
+    "site": 0.3788,
+    "book": 0.4953,
+    "actual": 0.4419
+   },
+   "F": {
+    "n": 3,
+    "site": 0.4398,
+    "book": 0.5599,
+    "actual": 0.0
+   }
+  },
   "nfl": {}
  },
  "bias": {
   "nhl": {},
-  "nba": {},
+  "nba": {
+   "ast": {
+    "n": 9,
+    "ours": 3.63,
+    "actual": 2.67,
+    "line": 4.06,
+    "ratio": 0.734
+   },
+   "pa": {
+    "n": 9,
+    "ours": 18.43,
+    "actual": 21.33,
+    "line": 20.61,
+    "ratio": 1.157
+   },
+   "pr": {
+    "n": 13,
+    "ours": 17.81,
+    "actual": 20.62,
+    "line": 19.35,
+    "ratio": 1.157
+   },
+   "pra": {
+    "n": 9,
+    "ours": 23.2,
+    "actual": 26.89,
+    "line": 26.06,
+    "ratio": 1.159
+   },
+   "pts": {
+    "n": 13,
+    "ours": 12.03,
+    "actual": 12.15,
+    "line": 12.65,
+    "ratio": 1.01
+   },
+   "ra": {
+    "n": 9,
+    "ours": 8.4,
+    "actual": 8.22,
+    "line": 9.39,
+    "ratio": 0.978
+   },
+   "reb": {
+    "n": 13,
+    "ours": 4.97,
+    "actual": 6.0,
+    "line": 5.27,
+    "ratio": 1.208
+   },
+   "tpm": {
+    "n": 9,
+    "ours": 1.82,
+    "actual": 1.56,
+    "line": 1.94,
+    "ratio": 0.855
+   }
+  },
   "nfl": {}
  }
 }
