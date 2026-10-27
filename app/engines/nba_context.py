@@ -228,6 +228,43 @@ def rotation_minutes(players, model):
     return out
 
 
+ROT_N_DEFAULT = 10      # measured 10-27 on 2025-26: median players projected 10+ min who played
+
+
+def rotation_size(players, model):
+    """The median number of players projected MIN_PROJ_MIN+ who PLAYED a
+    team-game (2025-26: 10). The team-minutes test summed exactly those;
+    tonight's sum must count as many (rotation_total)."""
+    import statistics
+    cnt = {}
+    lr = model.get("league") or {}
+    for p in (players or {}).values():
+        run = nm.Running(model["hl"], model.get("hl_long"))
+        lrg = lr.get(nm.group(p.get("pos"))) or {}
+        for g in sorted(p.get("games") or [], key=lambda x: x[0]):
+            if nm.val(g, "min") and run.n >= 1:
+                pr = run.project(model["k"], lrg, model.get("k_long"),
+                                 model.get("down_pull") or 0.0)
+                if pr and pr["min"] >= nm.MIN_PROJ_MIN:
+                    key = (str(g[1]), g[0])
+                    cnt[key] = cnt.get(key, 0) + 1
+            run.add(g)
+    return int(round(statistics.median(cnt.values()))) if cnt else ROT_N_DEFAULT
+
+
+def rotation_total(rows, rot_n=None):
+    """Tonight's team-minutes total, defined as the test defined it (10-27).
+    The test summed the projected minutes of the players who PLAYED (about
+    10 a game, median 235 min); tonight's rows hold the whole roster, 11-15
+    players projected 10+ min (234-321 min on 10-27), so every player was
+    scaled down 3-17% (11% on average) and the offered NBA projections ran
+    6-17% under the box score (OFFERED PROJECTION vs BOX, 10-26 games).
+    Now: the rot_n biggest projected minutes only."""
+    mins = sorted((r["min"] for r in rows if (r.get("min") or 0) >= nm.MIN_PROJ_MIN),
+                  reverse=True)
+    return sum(mins[:rot_n or ROT_N_DEFAULT])
+
+
 def vol_factor(total, cfg):
     """The team-minutes scale for a rotation whose projections add to
     `total`; 1 when the piece is off."""
@@ -427,6 +464,7 @@ def fit(prior, model):
     return {"n_this_season": n_this, "bias": bias,
             "opp": opp, "mean": {k: round(v, 4) for k, v in mean.items()}, "out": out_cfg,
             "vol": ctx["vol"], "vol_tried": bestv[0], "vol_test": vol_test,
+            "rot_n": rotation_size(players, model),
             "sizes": sizes, "test": test, "ladder": ladder, "vs_base": vs_base,
             "n_fit": len(fit_idx),
             "n_test": len(test_idx), "minutes": nm.minutes_check(test_rows)}
@@ -493,7 +531,7 @@ def apply_tonight(rows, opp_id, opp_abbr, book, outs, out_names, ctx, day):
     teams = sorted({k[0] for k in book.acc}) if book else []
     present = {st: sum(r["mu"][st] for r in rows) for st in nm.BASE}
     b = bump(outs, present, (ctx or {}).get("out") or {})
-    tot = sum(r["min"] for r in rows if (r.get("min") or 0) >= nm.MIN_PROJ_MIN)
+    tot = rotation_total(rows, (ctx or {}).get("rot_n"))
     vf = vol_factor(tot, (ctx or {}).get("vol"))
     for r in rows:
         f = book.factor(opp_id, nm.group(r.get("pos")), day) if book else \

@@ -555,7 +555,7 @@ def main(today=None):
                 model["sizes"], model["test"] = ctx["sizes"], ctx["test"]
                 model["ladder"] = ctx["ladder"]
                 model["context"] = {k: ctx[k] for k in ("opp", "mean", "out", "vs_base", "vol",
-                                                        "vol_test")}
+                                                        "vol_test", "rot_n")}
                 print(f"  [verify] NBA props test: {ctx['n_test']} player-games ("
                       f"{ctx['n_this_season']} from this season)")
                 for _sea, _by in (ctx.get("bias") or {}).items():
@@ -565,6 +565,8 @@ def main(today=None):
                             for k, v in _st.items()))
                 print(f"  [verify] NBA context ({time.time() - t0:.0f}s): opponent {ctx['opp']}; "
                       f"teammate out {ctx['out']}")
+                print(f"  [verify] NBA team minutes counted over the top {ctx.get('rot_n')} "
+                      f"projected players (the test's rotation size)")
                 print(f"  [verify] NBA team minutes add up: {ctx['vol_tried']} vs without on "
                       f"unseen games -> {(ctx.get('vol_test') or {}).get('verdict')} "
                       f"(z={(ctx.get('vol_test') or {}).get('z')}); in the number: "

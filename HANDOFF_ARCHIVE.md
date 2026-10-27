@@ -10,6 +10,60 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — Step 3: the site graded against DraftKings every run (capture the site's chance beside the book's, grade on the box score, scorecard). 2026-10-24
+
+**Suite 163, FAILING: none.** New tests/test_book_grade.py (4 controls,
+red by exit code: devig leaving the cut in; a DNP graded as a zero; an
+event graded twice; a ladder price graded with the cut left in).
+
+10-24 morning run read: MLB names for 20 players (WS game) and 72 / 72
+over-first; NHL 548 / 564, NBA 257 / 265; NFL Sunday's 13 games saved.
+
+WHY THE CAPTURE: grading "who was right" needs the SITE's chance at the
+book's line as of the same moment; the pages compute chances on the fly
+and never kept them. Every un-captured night is lost for good.
+
+1. CAPTURE (book_props_snapshot, after the league steps): book_grade.
+   capture(league, build_data/data/<lg>/games.json, the board just saved)
+   -> for every player / stat the book lines (main + up to 6 ladder
+   rungs nearest it): [pid, stat, line, raw over, DELIVERED over] —
+   bet_finder.chance_at on the Bet Finder's own pmfs and curves (NHL
+   skaters + goalie saves, NBA, NFL + its 1Q / 1H keys) — stored as
+   entry["ours"] / "ours_at" in the day file; merge_snapshot keeps them.
+   Measured on archived payloads + the real 10-24 board: NHL 1,624 lines
+   in 6 s, NBA 807, NFL 821. MLB not captured (its props are built at
+   page time from lineups) — later.
+2. GRADE (book_props_grade.py, a nightly step before the props commit):
+   every day file <= today with "ours" and no "graded" -> ESPN summary;
+   when final: actuals (NHL nhl_precompute.parse_summary; NBA nba_box
+   + combos; NFL parse_summary_final + game_values, quarter keys only
+   where his quarters add up) -> grade_event: y = actual > line; book =
+   de-vigged from both prices at that line. ONE-SIDED (ladder only, i.e.
+   NFL, whose totals carry no price): implied / LADDER_OVERROUND 1.07 —
+   MEASURED 10-23/24: a rung at a total's line carries exactly the
+   total's overround, NHL 1.072 (IQR 1.067-1.077, n 1,281), NBA 1.068
+   (1.063-1.072, n 1,756) — only rungs priced 15-85%, graded under
+   "<stat>*", never mixed with the clean grade. Rows appended to
+   data/props/graded/<league>.json; the event marked graded.
+3. SCORECARD (data/props/scorecard.json + [verify] "SITE vs DRAFTKINGS
+   <lg> <stat>" lines): n, the site's Brier vs the book's, paired verdict,
+   flagged plays (site 3+ points from the book: the side it liked) with
+   hits and units at the book's own price.
+
+FIRST GRADES: tonight's games (captured by the 6 PM run) are graded by
+the 4 AM / 6 AM runs. NEXT: (a) a "Site vs DraftKings" page reading
+scorecard.json; (b) the Bet Finder labels each row's market "beats
+DraftKings" / "no edge proven" once n is large enough (decide the bar
+before looking: n >= 300 and the paired verdict); (c) MLB capture; (d)
+the UFC probe (Izzy asked 10-24: "What can we do with ufc?").
+
+FILES: app/engines/book_grade.py (NEW), book_props_grade.py (NEW),
+tests/test_book_grade.py (NEW), app/engines/book_props.py,
+book_props_snapshot.py, .github/workflows/nightly-data.yml, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — MLB on the Bet Finder opens on DraftKings' line too (players matched by name). 2026-10-23 (5)
 
 **Suite 162, FAILING: none.** tests/test_book_props.py +4 checks (2

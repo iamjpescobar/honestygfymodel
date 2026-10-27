@@ -154,6 +154,43 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Found why the offered NBA projections ran low: the team-minutes scale counted the whole roster tonight but only who played when it was tested. Fixed to the tested definition. 2026-10-27
+
+**Suite 174, FAILING: none.** tests/test_nba_context.py +2 checks
+(control red: rotation_total summing the whole roster).
+
+READ 10-27 nightly (13:43 UTC):
+  OFFERED PROJECTION vs BOX (10-26 games, first night with the projection
+  captured), actual / ours: NBA pts x1.063 (DK line 14.54 vs ours 13.3),
+  reb x1.172, ast x1.108, pr x1.116, pa x1.099, pra x1.093, ra x1.086
+  (n 71-110); NHL a x1.234, pts x1.132 (n 65), sog x0.966, sv x1.023.
+  MATCHUP GRADE nba (n ~140 a letter): over hit A 0.43, B 0.49, C 0.49,
+  D 0.49, F 0.53 vs site ~0.38 each — no letter effect yet; nhl too small.
+  Timing: 35.0 -> 30.5 min. NPB ~0 (fail-fast works). Summary cache:
+  restored 19 MB, saved. NHL still 8.9 min: the season fetch is ~1 min
+  now; the rest is FITTING (5 min in the game model + props validation
+  after the environment line, 3 min in periods) — CPU, not network.
+CAUSE (measured on the published 10-27 games.json): every NBA row's
+ctx.vol was 0.83-0.97 (mean 0.887). nba_context.vol_factor scales by
+(220 / team total)^0.5, the total TESTED as the projected minutes of the
+players who PLAYED (2025-26: median 10 players, 235 min) but SERVED as
+every roster player projected 10+ (10-27: 11-15 players, 234-321 min).
+Doncic 27.3 projected vs 34.3 season. FIX: ctx.rot_n = rotation_size()
+(median count projected 10+ who played, measured on the fit; 10), and
+apply_tonight's total = rotation_total(rows, rot_n) = the rot_n biggest
+projected minutes. On 10-27 that moves the scale from ~0.89 to ~0.94
+(about +6% on every NBA projection, the size of the pts gap). Printed:
+"[verify] NBA team minutes counted over the top N projected players".
+NEXT: the OFFERED PROJECTION line over the next nights — NBA pts should
+sit near x1.00; reb ran x1.17, more than this explains (look at the reb
+rate / opponent factor next if it stays high). NHL assists / points
+x1.13-1.23 on one night: watch before touching.
+
+FILES: app/engines/nba_context.py, nba_precompute.py,
+tests/test_nba_context.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — Speed and space audit: finished games fetched once, NPB fails fast, prop day files kept 14 days, First Basket / UFC stop waiting on the network one call at a time. 2026-10-26 (4)
 
 **Suite 174, FAILING: none.** New tests/test_summary_cache.py (controls
@@ -698,60 +735,6 @@ FILES: app/views/Site_vs_Book.py (NEW), ufc_probe.py (NEW),
 .github/workflows/ufc-probe.yml (NEW), tests/test_ufc_probe.py (NEW),
 app/engines/book_grade.py, app/views/Bet_Finder.py, app/app.py,
 app/views/Home.py, tests/test_book_grade.py, HANDOFF.md,
-HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — Step 3: the site graded against DraftKings every run (capture the site's chance beside the book's, grade on the box score, scorecard). 2026-10-24
-
-**Suite 163, FAILING: none.** New tests/test_book_grade.py (4 controls,
-red by exit code: devig leaving the cut in; a DNP graded as a zero; an
-event graded twice; a ladder price graded with the cut left in).
-
-10-24 morning run read: MLB names for 20 players (WS game) and 72 / 72
-over-first; NHL 548 / 564, NBA 257 / 265; NFL Sunday's 13 games saved.
-
-WHY THE CAPTURE: grading "who was right" needs the SITE's chance at the
-book's line as of the same moment; the pages compute chances on the fly
-and never kept them. Every un-captured night is lost for good.
-
-1. CAPTURE (book_props_snapshot, after the league steps): book_grade.
-   capture(league, build_data/data/<lg>/games.json, the board just saved)
-   -> for every player / stat the book lines (main + up to 6 ladder
-   rungs nearest it): [pid, stat, line, raw over, DELIVERED over] —
-   bet_finder.chance_at on the Bet Finder's own pmfs and curves (NHL
-   skaters + goalie saves, NBA, NFL + its 1Q / 1H keys) — stored as
-   entry["ours"] / "ours_at" in the day file; merge_snapshot keeps them.
-   Measured on archived payloads + the real 10-24 board: NHL 1,624 lines
-   in 6 s, NBA 807, NFL 821. MLB not captured (its props are built at
-   page time from lineups) — later.
-2. GRADE (book_props_grade.py, a nightly step before the props commit):
-   every day file <= today with "ours" and no "graded" -> ESPN summary;
-   when final: actuals (NHL nhl_precompute.parse_summary; NBA nba_box
-   + combos; NFL parse_summary_final + game_values, quarter keys only
-   where his quarters add up) -> grade_event: y = actual > line; book =
-   de-vigged from both prices at that line. ONE-SIDED (ladder only, i.e.
-   NFL, whose totals carry no price): implied / LADDER_OVERROUND 1.07 —
-   MEASURED 10-23/24: a rung at a total's line carries exactly the
-   total's overround, NHL 1.072 (IQR 1.067-1.077, n 1,281), NBA 1.068
-   (1.063-1.072, n 1,756) — only rungs priced 15-85%, graded under
-   "<stat>*", never mixed with the clean grade. Rows appended to
-   data/props/graded/<league>.json; the event marked graded.
-3. SCORECARD (data/props/scorecard.json + [verify] "SITE vs DRAFTKINGS
-   <lg> <stat>" lines): n, the site's Brier vs the book's, paired verdict,
-   flagged plays (site 3+ points from the book: the side it liked) with
-   hits and units at the book's own price.
-
-FIRST GRADES: tonight's games (captured by the 6 PM run) are graded by
-the 4 AM / 6 AM runs. NEXT: (a) a "Site vs DraftKings" page reading
-scorecard.json; (b) the Bet Finder labels each row's market "beats
-DraftKings" / "no edge proven" once n is large enough (decide the bar
-before looking: n >= 300 and the paired verdict); (c) MLB capture; (d)
-the UFC probe (Izzy asked 10-24: "What can we do with ufc?").
-
-FILES: app/engines/book_grade.py (NEW), book_props_grade.py (NEW),
-tests/test_book_grade.py (NEW), app/engines/book_props.py,
-book_props_snapshot.py, .github/workflows/nightly-data.yml, HANDOFF.md,
 HANDOFF_ARCHIVE.md
 
 ---

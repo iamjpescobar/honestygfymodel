@@ -196,6 +196,14 @@ check("the bias diagnostic reports projected vs actual per stat on unseen games"
       B.get("pts") and B["pts"]["n"] > 50 and B["pts"]["ratio"] is not None
       and abs(B["pts"]["ratio"] - B["pts"]["actual"] / B["pts"]["pred"]) < 0.01)
 check("...and the nightly prints it", "NBA projection bias" in pc)
+# 10-27: tonight's team-minutes total counts the test's rotation size, not
+# the whole roster (11-15 players on 10-27 scaled everyone down ~11%)
+roster = [{"min": m} for m in (33, 30, 30, 29, 23, 22, 19, 18, 17, 16, 15, 14, 12)]
+check("tonight's total is the top rot_n projected minutes, as the test summed",
+      nc.rotation_total(roster, 10) == 33 + 30 + 30 + 29 + 23 + 22 + 19 + 18 + 17 + 16
+      and nc.rotation_total(roster, None) == nc.rotation_total(roster, nc.ROT_N_DEFAULT))
+check("the rotation size is measured on the fit and shipped", ctx.get("rot_n") in range(6, 14)
+      and '"vol_test", "rot_n")' in pc)
 sim = (ROOT / "app" / "engines" / "nba_sim.py").read_text(encoding="utf-8")
 check("the simulator's links and test read the same numbers", "nc.context_rows(" in sim)
 
