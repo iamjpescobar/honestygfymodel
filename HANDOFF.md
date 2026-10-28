@@ -154,6 +154,34 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — A-F letters adjusted for how much of a defense's standing is real: no A or F from a ranking that does not repeat. 2026-10-28 (2)
+
+Izzy compared with HOF after the defense-vs-position letters went live
+(14:04 nightly). PHI @ IND points: Siakam / Toppin (F) read "F" here,
+"B-" on HOF. Cause: last season's fitted weight for forwards is 0.0026
+(centres 0.007 — rosters change), so the blend WAS this season's 4 games
+(PHI 25.8 pts/g to forwards, 29th; last season 18th), and a rank cut in
+fifths spreads A-F however noisy the gaps are (points allowed to forwards:
+split-half reliability 0.003 — none).
+
+Now defense_matchup.reliability_grade (used by card(), so NBA, NHL, NFL):
+  p1 = R / (n - (n-1) R)            R split-half, n games a team last season
+  r  = m p1 / (1 + (m-1) p1)        m = n_cur + weight x n_prior
+  z  = sqrt(r) (value - mean) / sd  across defenses on that basis
+  cut at +-0.253 / +-0.842 (normal fifths) = the old rank cut when r = 1.
+_summarise ships "spread" (mean, sd per basis) and "games_full"; the card
+ships "grade_reliability" and "n_eff"; rank stays on the card. MLB starter
+cards (no reliability) keep the rank letter.
+Last season's NBA table: forwards' points / centres' points all C; guards'
+assists (R 0.81) still spread A-F. Early in a season most C / F letters
+read C and spread as this season's games build — by design.
+Expect FEWER A/F than HOF; the by_grade check (Site vs DraftKings) is the
+test of whether letters carry information.
+tests/test_grade_reliability.py (controls: no sqrt(r); n_eff without last
+season; card keeping the rank letter — all red).
+
+---
+
 ## PICK UP HERE — Matchup letters checked league by league: NBA letters now defense vs position (were a rank of near-ties over 33 teams); MLB batter letters by the hitter's hand where that tested better. 2026-10-28
 
 Izzy: "are players getting their grades from what the team allows in
@@ -711,40 +739,5 @@ from tonight (one-sided -> graded as "g*").
 FILES: app/engines/book_props.py, app/engines/nhl_model.py,
 app/views/Bet_Finder.py, tests/test_bet_finder_why.py (NEW),
 tests/test_book_props.py, HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — UFC is its own sport in the switcher; a sport's page nav is one wrapped bar of pills. 2026-10-24 (4)
-
-**Suite 166, FAILING: none.** New tests/test_sport_nav.py (2 controls
-red: the nav back to a column per page; the wrap rule on the outer
-group). tests/test_ufc.py's wiring check now wants UFC in the switcher
-and SPORT_PAGES, not in the four navs.
-
-Izzy 12:46 PM: "UFC is not showing on its own instead it's implemented
-as an option on all of the league pages", and a screenshot of NHL's page
-nav: 16 st.columns, each label wrapped a letter per line into tall
-slivers — "this format here bother me make it beautiful".
-
-UFC: removed from the four navs; SPORT_PAGES["UFC"] = views/UFC.py (a
-one-page sport loads straight through); kc_theme.sport_switcher lists
-"UFC" and its caption says so; Home's Explore card is ("UFC", "UFC",
-...) so it shows as a jump to the UFC sport.
-
-PAGE NAV (app.py, sports with SPORT_SUBPAGES): st.pills(selection_mode
-"single", default = the active page, key lc_sub_<sport>_pills_<active>
-so a jump from Home that writes lc_sub_<sport> shows selected); a pick
-writes lc_sub_<sport> and reruns. Theme: MEASURED in headless Chromium —
-the pills sit in an INNER flex row Streamlit makes a one-line scroller
-(display flex, nowrap, overflow-x auto; the page scrolled to the
-selected pill and hid the first ones). The theme wraps THAT row
-(div[class*="st-key-lc_sub_"] [data-testid="stButtonGroup"] div:has(>
-button)): centred, wrapped, one soft rounded panel, labels nowrap, 40px
-targets (test_control_language's floor). Screens checked at 1180 and
-820 px: 2 and 3 tidy rows.
-
-FILES: app/app.py, app/styles/kc_theme.py, app/views/Home.py,
-tests/test_ufc.py, tests/test_sport_nav.py (NEW), HANDOFF.md,
-HANDOFF_ARCHIVE.md
 
 ---

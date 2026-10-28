@@ -6,6 +6,12 @@ factor on the whole site and anything prop related".
 
 WHAT THE LETTER IS
 ------------------
+(10-28) For defense-vs-position letters (NBA, NHL, NFL) the standing is
+adjusted for how much of it is REAL before it is cut in fifths
+(defense_matchup.reliability_grade): a ranking that does not repeat from
+one half of a season to the other, or rests on a handful of games, reads
+C — however extreme its rank. When the standing is fully reliable this is
+exactly the old cut in fifths:
 The opponent's rank against the league on what it gives up for this
 prop, cut in fifths:
     A  the softest fifth  (allows the most of this stat to his kind of player)

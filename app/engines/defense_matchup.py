@@ -263,6 +263,16 @@ def _summarise(acc, prior_series):
         teams[d] = row
         blend_v[d], cur_v[d], pri_v[d] = row.get("blend"), row["cur"], row["prior"]
     rb, rc, rp = _rank_desc(blend_v), _rank_desc(cur_v), _rank_desc(pri_v)
+
+    def _spread(vals):
+        v = [x for x in vals.values() if x is not None]
+        if len(v) < 3:
+            return None
+        m = sum(v) / len(v)
+        return [round(m, 4), round((sum((x - m) ** 2 for x in v) / (len(v) - 1)) ** 0.5, 4)]
+    spread = {"blend": _spread(blend_v), "cur": _spread(cur_v), "prior": _spread(pri_v)}
+    gpt = [len(v) for v in prior_series.values() if v]
+    games_full = round(sum(gpt) / len(gpt), 1) if gpt else None
     for d, row in teams.items():
         row["rank"], row["rank_cur"], row["rank_prior"] = rb.get(d), rc.get(d), rp.get(d)
     return {
@@ -272,6 +282,7 @@ def _summarise(acc, prior_series):
         "strength_games": round(strength, 2) if strength is not None else None,
         "weight": weight, "weight_report": report,
         "reliability": split_half_reliability(prior_series),
+        "games_full": games_full, "spread": spread,
         "ranked": {"blend": len(rb), "cur": len(rc), "prior": len(rp)},
         "teams": teams,
     }
@@ -300,6 +311,42 @@ def _grade(rank, of):
     return mg.grade(rank, of)
 
 
+# THE LETTER (10-28). It used to be the rank cut in fifths. A rank spreads
+# A-F even when the gaps between defenses are noise: NBA points allowed to
+# forwards repeat from one half of a season to the other at 0.003 (none),
+# and with last season worth ~0 the 10-28 letters were four games of this
+# season (PHI vs forwards: 25.8 a game over 4 -> "F"; last season 18th).
+# Now the letter is the defense's standing ADJUSTED for how much of it is
+# real, by the textbook reliability formulas:
+#   per-game reliability  p1 = R / (n - (n - 1) R)   (R: split-half over a
+#                         season of n games a team, Spearman-Brown)
+#   at this card's games  r  = m p1 / (1 + (m - 1) p1)   m = games this season
+#                         + last season's games x the fitted season weight
+#   standing              z  = sqrt(r) x (value - mean of defenses) / their sd
+# z is cut at the normal fifths (+-0.253, +-0.842) — exactly the old rank
+# cut when r = 1, and toward "C" as r falls: a standing that does not
+# repeat earns no A and no F.
+Z_CUTS = (0.8416, 0.2533, -0.2533, -0.8416)
+
+
+def reliability_grade(value, spread, rel, games_full, n_eff):
+    """(letter, reliability at n_eff) or (None, None) when a piece is
+    missing (the caller then keeps the plain rank letter)."""
+    if value is None or not spread or rel is None or not games_full or not n_eff:
+        return None, None
+    m, sd = spread
+    if not sd or sd <= 0:
+        return "C", 0.0
+    R = min(max(float(rel), 0.0), 0.999)
+    p1 = R / (games_full - (games_full - 1) * R) if games_full > 1 else R
+    r = n_eff * p1 / (1 + (n_eff - 1) * p1) if p1 > 0 else 0.0
+    z = (r ** 0.5) * (value - m) / sd
+    for letter, cut in zip("ABCD", Z_CUTS):
+        if z > cut:
+            return letter, round(r, 3)
+    return "F", round(r, 3)
+
+
 def card(table, defense, group, stat):
     """Everything the page needs about one defense against one position
     group on one stat, or None when the table does not cover it.
@@ -324,10 +371,19 @@ def card(table, defense, group, stat):
     else:
         return None
     vs = round(100.0 * (value / league - 1.0), 1) if league else None
+    n_eff = (row.get("n_cur") or 0) + ((g.get("weight") or 0.0) * (row.get("n_prior") or 0)
+                                       if basis == "blend" else 0.0)
+    if basis == "prior":
+        n_eff = row.get("n_prior") or 0
+    letter, rel_n = reliability_grade(value, (g.get("spread") or {}).get(basis),
+                                      g.get("reliability"), g.get("games_full"), n_eff)
+    if letter is None:
+        letter = _grade(rank, of)
     return {
         "group": group, "stat": stat, "basis": basis,
         "per_game": value, "league": league, "vs_league_pct": vs,
-        "rank": rank, "of": of, "tier": tier(rank, of), "grade": _grade(rank, of),
+        "rank": rank, "of": of, "tier": tier(rank, of), "grade": letter,
+        "grade_reliability": rel_n, "n_eff": round(n_eff, 1),
         "cur": row.get("cur"), "n_cur": row.get("n_cur"), "rank_cur": row.get("rank_cur"),
         "of_cur": g["ranked"]["cur"],
         "prior": row.get("prior"), "n_prior": row.get("n_prior"),

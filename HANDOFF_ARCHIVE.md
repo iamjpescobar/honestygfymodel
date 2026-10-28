@@ -10,6 +10,43 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — UFC is its own sport in the switcher; a sport's page nav is one wrapped bar of pills. 2026-10-24 (4)
+
+**Suite 166, FAILING: none.** New tests/test_sport_nav.py (2 controls
+red: the nav back to a column per page; the wrap rule on the outer
+group). tests/test_ufc.py's wiring check now wants UFC in the switcher
+and SPORT_PAGES, not in the four navs.
+
+Izzy 12:46 PM: "UFC is not showing on its own instead it's implemented
+as an option on all of the league pages", and a screenshot of NHL's page
+nav: 16 st.columns, each label wrapped a letter per line into tall
+slivers — "this format here bother me make it beautiful".
+
+UFC: removed from the four navs; SPORT_PAGES["UFC"] = views/UFC.py (a
+one-page sport loads straight through); kc_theme.sport_switcher lists
+"UFC" and its caption says so; Home's Explore card is ("UFC", "UFC",
+...) so it shows as a jump to the UFC sport.
+
+PAGE NAV (app.py, sports with SPORT_SUBPAGES): st.pills(selection_mode
+"single", default = the active page, key lc_sub_<sport>_pills_<active>
+so a jump from Home that writes lc_sub_<sport> shows selected); a pick
+writes lc_sub_<sport> and reruns. Theme: MEASURED in headless Chromium —
+the pills sit in an INNER flex row Streamlit makes a one-line scroller
+(display flex, nowrap, overflow-x auto; the page scrolled to the
+selected pill and hid the first ones). The theme wraps THAT row
+(div[class*="st-key-lc_sub_"] [data-testid="stButtonGroup"] div:has(>
+button)): centred, wrapped, one soft rounded panel, labels nowrap, 40px
+targets (test_control_language's floor). Screens checked at 1180 and
+820 px: 2 and 3 tidy rows.
+
+FILES: app/app.py, app/styles/kc_theme.py, app/views/Home.py,
+tests/test_ufc.py, tests/test_sport_nav.py (NEW), HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
+---
+
 ## PICK UP HERE — UFC page: the next card with DraftKings' chances (cut removed) for every fight — the BOOK's numbers, the site's model not yet built. 2026-10-24 (3)
 
 **Suite 165, FAILING: none.** New tests/test_ufc.py (3 controls red:
