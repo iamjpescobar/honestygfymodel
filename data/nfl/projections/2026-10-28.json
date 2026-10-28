@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-28 13:57",
+  "generated_at_et": "2026-10-28 15:43",
   "week": 8,
   "league": {
     "team_games": 212,
@@ -1115,21 +1115,21 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Chase Brown",
-        "team": "CIN",
-        "opp": "TEN",
-        "pos": "RB",
-        "gp": 5,
-        "proj": 55,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Jonathan Taylor",
         "team": "IND",
         "opp": "JAX",
         "pos": "RB",
         "gp": 7,
         "proj": 55,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opp": "TEN",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 54,
         "window": "Sunday Early"
       },
       {
@@ -5374,7 +5374,7 @@
         "opp": "JAX",
         "pos": "RB",
         "gp": 7,
-        "proj": 19.3,
+        "proj": 18.9,
         "window": "Sunday Early"
       },
       {
@@ -5383,7 +5383,7 @@
         "opp": "TEN",
         "pos": "RB",
         "gp": 5,
-        "proj": 18.7,
+        "proj": 18.4,
         "window": "Sunday Early"
       },
       {
@@ -5473,7 +5473,7 @@
         "opp": "TEN",
         "pos": "WR",
         "gp": 5,
-        "proj": 12.3,
+        "proj": 12.1,
         "window": "Sunday Early"
       },
       {
@@ -5554,7 +5554,7 @@
         "opp": "IND",
         "pos": "RB",
         "gp": 6,
-        "proj": 9.7,
+        "proj": 9.8,
         "window": "Sunday Early"
       },
       {
@@ -5590,7 +5590,7 @@
         "opp": "CIN",
         "pos": "RB",
         "gp": 7,
-        "proj": 8.7,
+        "proj": 8.8,
         "window": "Sunday Early"
       },
       {
@@ -5626,7 +5626,7 @@
         "opp": "IND",
         "pos": "RB",
         "gp": 6,
-        "proj": 7.7,
+        "proj": 7.8,
         "window": "Sunday Early"
       },
       {
@@ -5636,15 +5636,6 @@
         "pos": "RB",
         "gp": 2,
         "proj": 7.6,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Tee Higgins",
-        "team": "CIN",
-        "opp": "TEN",
-        "pos": "WR",
-        "gp": 5,
-        "proj": 7.4,
         "window": "Sunday Early"
       },
       {
@@ -5664,6 +5655,15 @@
         "gp": 2,
         "proj": 7.2,
         "window": "Thursday Night"
+      },
+      {
+        "player": "Tee Higgins",
+        "team": "CIN",
+        "opp": "TEN",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 7.2,
+        "window": "Sunday Early"
       },
       {
         "player": "J.K. Dobbins",
