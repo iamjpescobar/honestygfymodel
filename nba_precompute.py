@@ -602,6 +602,14 @@ def main(today=None):
                             for k, v in _st.items()))
                 print(f"  [verify] NBA context ({time.time() - t0:.0f}s): opponent {ctx['opp']}; "
                       f"teammate out {ctx['out']}")
+                # 10-28: whether the PROJECTION's opponent factor is by
+                # position (the fit re-tests it every night); the letters
+                # are defense vs position (nba_context.dvp_table)
+                print("  [verify] NBA opponent factor in the projection: " + "; ".join(
+                    f"{st} " + ("by position (G/F/C)" if (ctx["opp"].get(st) or {}).get("by_pos")
+                                else ("team-wide (by position did not predict better)"
+                                      if ctx["opp"].get(st) else "none (opponent not in it)"))
+                    for st in nm.BASE))
                 print(f"  [verify] NBA team minutes counted over the top {ctx.get('rot_n')} "
                       f"projected players (the test's rotation size)")
                 print(f"  [verify] NBA team minutes add up: {ctx['vol_tried']} vs without on "
@@ -795,6 +803,20 @@ def main(today=None):
     tags = sum(1 for r in rosters.values() for x in r.values() if x.get("status"))
     print(f"  [verify] NBA injuries: {tags} roster tags, {len(feed['by_id'])} league-list tags")
 
+    # the A-F matchup letters: what each defense allowed to G / F / C
+    # (10-28, nba_context.dvp_table) — own try, costs the letters only
+    dvp = None
+    try:
+        dvp = nc.dvp_table(pool, cur_from)
+        if dvp:
+            _p = (dvp["stats"].get("pts") or {})
+            print(f"  [verify] NBA matchup letters: defense vs position over {dvp['of']} teams; "
+                  + "; ".join(f"pts to {grp}: league {(_p.get(grp) or {}).get('league')}/g, "
+                              f"last-season weight {(_p.get(grp) or {}).get('weight')}, "
+                              f"split-half reliability {(_p.get(grp) or {}).get('reliability')}"
+                              for grp in ("G", "F", "C")))
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::NBA defense-vs-position table failed: {type(exc).__name__}: {exc}")
     book, team_dates = None, {}
     if model and model.get("context"):
         try:
@@ -840,7 +862,7 @@ def main(today=None):
                                             slate_date.isoformat())]
                     nc.apply_tonight(g[f"{side}_props"], g[f"{opp_side}_id"],
                                      g[f"{opp_side}_abbr"], book, outs, names,
-                                     model["context"], slate_date.isoformat())
+                                     model["context"], slate_date.isoformat(), dvp=dvp)
                     n_ctx += len(g[f"{side}_props"])
                 except Exception as exc:  # noqa: BLE001
                     print(f"::warning::NBA context for {g.get(side + '_abbr')} failed: "

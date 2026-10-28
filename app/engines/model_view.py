@@ -174,20 +174,24 @@ def mlb_calibration(pitcher=False):
 MLB_DVP_STATS = ("h", "tb", "hr", "k", "bb", "s", "d")
 
 
-def _mlb_batter_context(pm, b_counts, proj, opp_pitcher_id, opp_name):
+def _mlb_batter_context(pm, b_counts, proj, opp_pitcher_id, opp_name, batter_id=None):
     """(_dvp, _notice, _why) for one batter row — the starter he faces,
     on each stat, with his allowed rate ranked among this season's
     starters (engines/defense_matchup.mlb_starter_card)."""
     from engines import defense_matchup as dm
     from engines import mlb_props as mp
     table = (pm or {}).get("starter_allowed")
+    # his batting hand (10-28): the starter's letter against HIS side where
+    # the platoon split was adopted (defense_matchup.fit_platoon)
+    bats = ((pm or {}).get("batter_hand") or {}).get(str(batter_id)) if batter_id else None
     cards, notes = {}, {}
     who = opp_name or "Tonight's starter"
     for stat in MLB_DVP_STATS:
-        c = dm.mlb_starter_card(table, opp_pitcher_id, stat) if opp_pitcher_id else None
+        c = dm.mlb_starter_card(table, opp_pitcher_id, stat, bats) if opp_pitcher_id else None
         if c:
             cards[stat] = c
-            notes[stat] = dm.notice(c, dm.MLB_STAT_LABELS[stat], "batters", who)
+            notes[stat] = dm.notice(c, dm.MLB_STAT_LABELS[stat], c.get("group") or "batters",
+                                    who)
     bits = []
     shr = mp.shrunk_rates(b_counts, (pm or {}).get("batter_priors"))
     if shr:
@@ -264,7 +268,8 @@ def mlb_lineup_props(batters, opp_pitcher_id, opp_name=None):
         proj = mp.project_batter(slot, b_counts, p_counts, pm, bf_dist)
         if not proj:
             continue
-        _dvp, _notes, _why = _mlb_batter_context(pm, b_counts, proj, opp_pitcher_id, opp_name)
+        _dvp, _notes, _why = _mlb_batter_context(pm, b_counts, proj, opp_pitcher_id, opp_name,
+                                                   b.get("id"))
         row = {"#": slot, "Batter": b.get("name"),
                "PA": _pa_label(b_counts), "Exp PA": proj["exp_pa"],
                "_name": b.get("name"), "_id": b.get("id"),

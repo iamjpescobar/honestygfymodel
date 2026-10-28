@@ -136,6 +136,10 @@ check("the capture saves the letter beside the chance; the grader reports per le
       and "mg.by_grade(" in src["book_props_grade.py"] and "MATCHUP GRADE" in
       src["book_props_grade.py"] and "Matchup grade " in src["app/views/Site_vs_Book.py"])
 check("the boards colour by letter", 'GRADE_STYLE = {' in src["app/engines/model_view.py"])
+_nbp = (ROOT / "nba_precompute.py").read_text(encoding="utf-8")
+check("the NBA nightly says, per stat, whether its letters are by position (10-28)",
+      'NBA matchup letters: defense vs position' in _nbp
+      and 'dvp=dvp)' in _nbp and 'by position (G/F/C)' in _nbp)
 
 if failures:
     print(f"\n{len(failures)} FAILED")

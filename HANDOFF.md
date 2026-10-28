@@ -154,6 +154,56 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Matchup letters checked league by league: NBA letters now defense vs position (were a rank of near-ties over 33 teams); MLB batter letters by the hitter's hand where that tested better. 2026-10-28
+
+Izzy: "are players getting their grades from what the team allows in
+general or by the position ... I see players with the same exact grades".
+
+**What each league's letter is (and the same position + same opponent =
+the same letter everywhere: it grades the DEFENSE vs that kind of player):**
+- NHL: by position already — centres / wingers / defencemen
+  (nhl_model.dvp_group). LW and RW are one group (W). Correct; no change.
+- NFL: by position already (QB / RB / WR / TE). No change.
+- NBA: WAS WRONG. The letter ranked the projection's opponent factor —
+  team-wide on pts / reb / ast (by position predicted WORSE: z -0.92 pts,
+  -1.63 reb, -0.64 ast, -0.13 3s on last season's final 45 days), and
+  within a percent or two of 1.0 for nearly every team, so a letter was a
+  rank of near-ties (Dean Wade @ IND: x0.999 -> "B"; HOF showed "A") — and
+  it ranked 33 "teams" (ESPN ids 111386 / 132374 / 132375, exhibition
+  clubs). Now nba_context.dvp_table: what each defense ALLOWED to G / F / C
+  a game, this season + last (defense_matchup, same engine as NHL / NFL),
+  preseason left out, a defense needs 20+ games (drops exhibition clubs).
+  The projection's factor is unchanged (tested); the nightly prints both
+  `NBA opponent factor in the projection: ...` and `NBA matchup letters:
+  defense vs position over 30 teams; ... reliability`.
+  Last season: IND allowed forwards 41.16 pts/g vs 41.14 league (11th, B);
+  split-half reliability of pts allowed: G 0.57, C 0.40, F 0.003 — a
+  forward's points letter does not repeat (in any app). ESPN gives only
+  G / F / C. tests/test_nba_dvp.py (controls: no 20-game filter;
+  preseason kept; one group for all — all red).
+- MLB: WAS WRONG for the ask — every hitter facing a starter got that
+  starter's overall letter. Now defense_matchup.fit_platoon tests, per stat,
+  the starter's rate against the hitter's side (same / opposite arm; switch
+  hitters = opposite) vs his overall rate: season in thirds, select on the
+  middle, test on the last, squared error per PA, adopted at z >= 2.
+  On the 2026 season (tested 08-12..10-27): tb own split z 2.38, bb own
+  z 2.90, hr league gap z 2.46, singles league gap z 2.71 -> adopted;
+  hits (z 1.42), strikeouts (z 1.65), doubles (fails) -> overall.
+  The letter ranks the starter among EVERY starter against hitters of that
+  hand (a RHP vs lefties is compared with LHPs vs lefties — ranking by
+  "same side" across both arms would mix lefty and righty hitters).
+  On 2026 data ~2/3 of starters now give lefties and righties different
+  letters on tb / hr / bb / singles. The card says "left-handed batters" /
+  "right-handed batters" / "switch hitters" and basis "platoon".
+  Batter hands ship in prop_model.json "batter_hand" (S = 10%+ from each
+  side). Pitcher-prop letters (tonight's lineup) unchanged.
+  The props' CHANCES do not use the hand split (only the letter); whether
+  they should is a separate test (rule 1).
+tests/test_mlb_platoon.py (controls: rank by side not hand; switch hitter
+as same-side; gate ignoring the test — all red), test_matchup_grade.py.
+
+---
+
 ## PICK UP HERE — Four follow-ups: the projection level learns from the graded DraftKings lines (gated); NHL saves checked; the MLB runs check made same-sample; NHL fitting 2.2x faster with identical output. 2026-10-27 (2)
 
 Izzy, after the team-minutes fix: "Let's finish all of them".
@@ -695,48 +745,6 @@ targets (test_control_language's floor). Screens checked at 1180 and
 
 FILES: app/app.py, app/styles/kc_theme.py, app/views/Home.py,
 tests/test_ufc.py, tests/test_sport_nav.py (NEW), HANDOFF.md,
-HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — UFC page: the next card with DraftKings' chances (cut removed) for every fight — the BOOK's numbers, the site's model not yet built. 2026-10-24 (3)
-
-**Suite 165, FAILING: none.** New tests/test_ufc.py (3 controls red:
-no_vig leaving the cut in; pair() never swapping sides; the distance
-prices read in feed order without the check). UFC page headless on a
-fake feed in the probe's shapes.
-
-Izzy 10-24: "make ufc work if possible" (not live betting). THE UFC
-PROBE (10-24, UFC 333 Volkanovski vs Evloev, 14 fights): ESPN MMA
-scoreboard via site.web.api; core odds per fight: DraftKings (100) +
-"DraftKings - Live Odds" (200); each fighter's moneyLine, overUnder 2.5
-with overOdds / underOdds, the round spread, victoryMethod (koTkoDq /
-submission / points) under open / close per fighter; propBets ONLY
-"Fight To Go The Distance" (two prices, no side field). ufcstats.com:
-HTTP 200 but a 2,994-byte stub, 0 event links — blocked from Actions.
-Core season event list returned count 0; the scoreboard by date
-(?dates=20251018) returns finished cards — the backfill's route.
-
-BUILT (engines/ufc, views/UFC.py — "UFC" in all four navs after Site vs
-DraftKings, a Home Explore card, a refresh button): read LIVE at page
-time (cache 10 min — fight night needs no nightly). Per fight: win %
-(moneylines de-vigged), the six method outcomes de-vigged together,
-over / under rounds, goes the distance, "ends inside the distance" from
-the method market. Sides: away = first competitor on the 10-24 card;
-pair() reads "details" ("D. Santos -115") to confirm the favourite and
-swaps when it disagrees. Distance order: the YES is the one agreeing
-with the method market's decision share, else P(distance) <= P(over the
-round line). The page says in words these are DraftKings' numbers and
-the site's model is not here yet.
-
-NEXT: ufc backfill from the scoreboard by date (cards, winners, method,
-round, closing odds if the core feed keeps them for finished fights) ->
-fighter ratings tested against the de-vigged moneylines -> method /
-rounds; and a nightly snapshot of the UFC odds into data/props/ufc for
-the Site vs DraftKings grading.
-
-FILES: app/engines/ufc.py (NEW), app/views/UFC.py (NEW),
-tests/test_ufc.py (NEW), app/app.py, app/views/Home.py, HANDOFF.md,
 HANDOFF_ARCHIVE.md
 
 ---

@@ -524,7 +524,81 @@ def outs_now(pool, team_id, out_pids, team_dates, model, today):
     return out
 
 
-def apply_tonight(rows, opp_id, opp_abbr, book, outs, out_names, ctx, day):
+# ----------------------------------------------------------------------
+# The A-F matchup letter: defense vs position (10-28)
+# ----------------------------------------------------------------------
+# Izzy compared the letters with another app (HOF): "Dean Wade at a B and
+# on HOF he is an A for points". Ours ranked the PROJECTION's opponent
+# factor — actual over projected, shrunk, team-wide on points / rebounds /
+# assists — which sits within a percent or two of 1.0 for nearly every
+# team (Wade @ IND: x0.999, "B"), so the letter was a rank of near-ties;
+# and three non-NBA exhibition opponents made it "of 33". The letter now
+# reads what each defense ALLOWED to guards / forwards / centres a game
+# (engines/defense_matchup, the same engine as NHL and NFL: this season +
+# last, last season at a fitted weight, split-half reliability printed).
+# The projection keeps its own tested opponent factor; the letter is not
+# put into the chance (that would count the matchup twice).
+DVP_MIN_GAMES = 20     # a defense faced fewer times than this is not an NBA team
+
+
+def dvp_lines(pool, cur_from):
+    """defense_matchup rows from the player pool: one per player-game with
+    minutes, grouped G / F / C. Games between last season's end and the
+    regular season (preseason) are left out."""
+    from engines import defense_matchup as dm
+    stats = list(nm.BASE) + list(nm.COMBOS)
+    dates = [g[0] for p in (pool or {}).values() for g in p.get("games") or []]
+    prior_end = max((d for d in dates if d < (cur_from or "9999")), default=None)
+    pre = sorted(d for d in dates if d < (cur_from or "9999"))
+    # last season's end: the last date before a 60+ day gap ahead of cur_from
+    for a, b in zip(pre, pre[1:]):
+        if nm._days(a, b) >= 60:
+            prior_end = a
+    out = []
+    for p in (pool or {}).values():
+        grp = nm.group(p.get("pos"))
+        for g in p.get("games") or []:
+            if not nm.val(g, "min"):
+                continue
+            d = g[0]
+            if cur_from and d >= cur_from:
+                season = dm.CUR
+            elif prior_end and d <= prior_end:
+                season = dm.PRIOR
+            else:
+                continue
+            out.append({"season": season, "defense": str(g[2]), "game": d, "group": grp,
+                        "stats": {st: nm.val(g, st) for st in stats}})
+    n = {}
+    for ln in out:
+        n[ln["defense"]] = n.get(ln["defense"], 0) + 1
+    games = {}
+    for ln in out:
+        games.setdefault(ln["defense"], set()).add(ln["game"])
+    keep = {d for d, gs in games.items() if len(gs) >= DVP_MIN_GAMES}
+    return [ln for ln in out if ln["defense"] in keep]
+
+
+def dvp_table(pool, cur_from):
+    from engines import defense_matchup as dm
+    lines = dvp_lines(pool, cur_from)
+    if not lines:
+        return None
+    return dm.build_table(lines, list(nm.BASE) + list(nm.COMBOS), ("G", "F", "C"))
+
+
+def dvp_grades(table, opp_id, grp):
+    """{stat: card} for one player tonight, or {}."""
+    from engines import defense_matchup as dm
+    out = {}
+    for st in list(nm.BASE) + list(nm.COMBOS):
+        c = dm.card(table, str(opp_id), grp, st)
+        if c and c.get("grade"):
+            out[st] = c
+    return out
+
+
+def apply_tonight(rows, opp_id, opp_abbr, book, outs, out_names, ctx, day, dvp=None):
     """One team's rows for tonight with the context applied in place:
     each row's mu, plus row["ctx"] = {"opp": {stat: f}, "bump": {stat: b}}
     and the reason appended to row["why"]."""
@@ -540,7 +614,17 @@ def apply_tonight(rows, opp_id, opp_abbr, book, outs, out_names, ctx, day):
         r["ctx"] = {"opp": {k: round(v, 3) for k, v in f.items()},
                     "bump": {k: round(v, 3) for k, v in b.items()},
                     "vol": round(vf, 3), "team_min": round(tot)}
-        if book:
+        cards = dvp_grades(dvp, opp_id, nm.group(r.get("pos"))) if dvp else {}
+        if cards:
+            # 10-28: the letter is what this defense ALLOWED to his position
+            # group a game, ranked over the NBA's 30 (see DVP_MIN_GAMES)
+            r["dvp"] = cards
+            r["grade"] = {k: c["grade"] for k, c in cards.items()}
+            r["ctx"]["grade"] = {k: {"grade": c["grade"], "rank": c["rank"], "of": c["of"],
+                                     "per_game": c["per_game"], "league": c["league"],
+                                     "vs_league_pct": c["vs_league_pct"]}
+                                 for k, c in cards.items()}
+        elif book:
             # 10-26: the A-F matchup letter — this opponent's factor ranked
             # over every team for his position group (engines/matchup_grade)
             from engines import matchup_grade as mg

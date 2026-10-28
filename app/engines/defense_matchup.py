@@ -360,7 +360,8 @@ def reliability_words(rel):
 
 
 BASIS_WORDS = {"blend": "this season + last, blended",
-               "cur": "this season only", "prior": "last season only"}
+               "cur": "this season only", "prior": "last season only",
+               "platoon": "his rate against this side of the plate, tested vs his overall"}
 
 
 def rank_text(c):
@@ -491,14 +492,34 @@ def mlb_starter_table(cur_counts, prior_counts, weight, priors, starters):
     return out
 
 
-def mlb_starter_card(table, pid, stat):
-    """The batter-prop card: tonight's starter on one stat, or None."""
+def mlb_starter_card(table, pid, stat, bats=None):
+    """The batter-prop card: tonight's starter on one stat, or None.
+    bats ("L" / "R" / "S", 10-28): where the platoon split on this stat
+    beat his overall rate on unseen games (fit_platoon), the card is the
+    starter against THIS hitter's hand — his rate against that side of the
+    plate, ranked among every starter against hitters of that hand; otherwise (or with
+    the hand unknown) his overall rate, as before."""
     row = ((table or {}).get("pitchers") or {}).get(str(pid))
     if not row or stat not in row or row[stat].get("blend") is None:
         return None
     x = row[stat]
     league = (table.get("league") or {}).get(stat)
     of = table.get("of")
+    h = str(bats or "").upper()[:1]
+    vs = (x.get("vs") or {}).get(h) if h in ("L", "R", "S") else None
+    if vs and vs.get("rate") is not None and vs.get("rank"):
+        side = vs.get("side")
+        lg = ((table.get("league_vs") or {}).get(stat) or {}).get(side) or league
+        return {"group": HAND_WORDS[h], "side": side, "bats": h, "stat": stat,
+                "basis": "platoon", "per_game": vs["rate"], "unit": "per plate appearance",
+                "league": lg,
+                "vs_league_pct": round(100.0 * (vs["rate"] / lg - 1.0), 1) if lg else None,
+                "rank": vs["rank"], "of": vs.get("of") or of,
+                "tier": tier(vs["rank"], vs.get("of") or of),
+                "grade": _grade(vs["rank"], vs.get("of") or of),
+                "overall": x["blend"], "overall_rank": x.get("rank"),
+                "n_side": vs.get("n"), "cur": x.get("cur"), "n_cur": row["pa_cur"],
+                "prior": x.get("prior"), "n_prior": row["pa_prior"], "fmt": "{:.3f}"}
     return {"group": "batters", "stat": stat, "basis": "blend" if row["pa_prior"] and row["pa_cur"]
             else ("cur" if row["pa_cur"] else "prior"),
             "per_game": x["blend"], "unit": "per plate appearance", "league": league,
@@ -507,6 +528,179 @@ def mlb_starter_card(table, pid, stat):
             "grade": _grade(x.get("rank"), of),
             "cur": x.get("cur"), "n_cur": row["pa_cur"], "prior": x.get("prior"),
             "n_prior": row["pa_prior"], "fmt": "{:.3f}"}
+
+
+# ----------------------------------------------------------------------
+# MLB platoon split (10-28). Izzy: "players with the same exact grades ...
+# we need that graded individually on what the team allows to that
+# specific position". A batter's "position" against a starter is his
+# side: the same hand as the pitcher's arm, or the opposite. Measured on
+# 2026 (Aug-Oct, ~60k PA, log-likelihood vs the starter's overall rate):
+#   strikeouts  the starter's OWN split beats      (z 5.9)
+#   walks       the starter's own split beats      (z 3.9)
+#   home runs   only the league-wide gap helps     (z 2.1) -> same rank
+#   singles     only the league-wide gap helps     (z 2.5) -> same rank
+#   hits, total bases, doubles: no split beats — the starter's overall
+#               rate is the more accurate letter
+# So the nightly FITS it per stat (fit_platoon) and a stat gets the
+# side-specific card only when its split beat the overall rate on games
+# it had not seen. The letter is a RANK among starters against that side.
+# ----------------------------------------------------------------------
+PLATOON_S = (100, 200, 400, 800)     # pseudo-PA of his overall rate behind a side
+PLATOON_MIN_Z = 2.0
+HAND_WORDS = {"L": "left-handed batters", "R": "right-handed batters",
+              "S": "switch hitters"}
+
+
+def platoon_side(bats, throws):
+    """"same" / "opp" for a batter against a pitcher, None when unknown.
+    A switch hitter bats from the opposite side."""
+    b, t = str(bats or "").upper()[:1], str(throws or "").upper()[:1]
+    if t not in ("L", "R") or b not in ("L", "R", "S"):
+        return None
+    if b == "S":
+        return "opp"
+    return "same" if b == t else "opp"
+
+
+def _stat_y(outcome, stat):
+    return MLB_STAT_OUTCOMES[stat].get(outcome, 0)
+
+
+def _side_counts(rows):
+    """{pid: {"all": Counter, "same": Counter, "opp": Counter}} over rows of
+    (pid, side, outcome)."""
+    from collections import Counter
+    out = {}
+    for pid, side, o in rows:
+        d = out.setdefault(pid, {"all": Counter(), "same": Counter(), "opp": Counter()})
+        for k in ("all", side):
+            d[k][o] += 1
+            d[k]["PA"] += 1
+    return out
+
+
+def _side_rate(c, stat):
+    n = c.get("PA", 0)
+    return sum(m * c.get(o, 0) for o, m in MLB_STAT_OUTCOMES[stat].items()) / n if n else None
+
+
+def _league_side(counts, stat):
+    """{side: league rate / overall league rate} from _side_counts."""
+    tot = {"all": [0.0, 0], "same": [0.0, 0], "opp": [0.0, 0]}
+    for d in counts.values():
+        for k in tot:
+            c = d[k]
+            tot[k][0] += sum(m * c.get(o, 0) for o, m in MLB_STAT_OUTCOMES[stat].items())
+            tot[k][1] += c.get("PA", 0)
+    lg = tot["all"][0] / tot["all"][1] if tot["all"][1] else None
+    if not lg:
+        return {"same": 1.0, "opp": 1.0}
+    return {s: ((tot[s][0] / tot[s][1]) / lg if tot[s][1] else 1.0) for s in ("same", "opp")}
+
+
+def side_rate(base, ratio, c_side, stat, mode, s):
+    """A starter's rate against one side: his overall (shrunk) rate `base`
+    x the league's side ratio, then — mode "own" — his own PAs against
+    that side with `s` pseudo-PA of that prior behind them."""
+    prior = base * ratio
+    if mode != "own" or not c_side or not c_side.get("PA"):
+        return prior
+    y = sum(m * c_side.get(o, 0) for o, m in MLB_STAT_OUTCOMES[stat].items())
+    return (y + s * prior) / (c_side["PA"] + s)
+
+
+def fit_platoon(rows, dates, priors, stats=None):
+    """{stat: {"mode", "s", "verdict", "n", ...}} — per stat, the platoon
+    treatment that predicts a starter's next plate appearances best.
+
+    rows: [(date, pitcher id, side, outcome)], every PA with both hands.
+    The season's dates in thirds: counts from the first third SELECT the
+    candidate (league gap / own split at each s) on the second; counts
+    from both then TEST it on the last third against the overall rate
+    (squared error per PA, paired). Adopted ("own" or "league") only when
+    the test beats at z >= PLATOON_MIN_Z; otherwise "overall"."""
+    from engines import model_math as mm
+    stats = stats or tuple(MLB_STAT_OUTCOMES)
+    ds = sorted(set(dates))
+    if len(ds) < 30 or not priors:
+        return {"note": "season too short to test a platoon split"}
+    c1, c2 = ds[len(ds) // 3], ds[2 * len(ds) // 3]
+    A = [(p, sd, o) for d, p, sd, o in rows if d < c1]
+    B = [(p, sd, o) for d, p, sd, o in rows if c1 <= d < c2]
+    AB = [(p, sd, o) for d, p, sd, o in rows if d < c2]
+    C = [(p, sd, o) for d, p, sd, o in rows if d >= c2]
+    cA, cAB = _side_counts(A), _side_counts(AB)
+    cands = [("league", None)] + [("own", s) for s in PLATOON_S]
+
+    def errs(counts, test, st, mode, s):
+        ratio = _league_side(counts, st)
+        memo = {}
+        out = []
+        for p, sd, o in test:
+            q = memo.get((p, sd))
+            if q is None:
+                d = counts.get(p)
+                base = per_pa(d["all"] if d else {}, priors, st)
+                q = base if mode == "overall" else side_rate(base, ratio[sd],
+                                                              (d or {}).get(sd), st, mode, s)
+                memo[(p, sd)] = q
+            out.append((q - _stat_y(o, st)) ** 2)
+        return out
+    out = {}
+    for st in stats:
+        sel = min(cands, key=lambda c: sum(errs(cA, B, st, *c)))
+        w, wo = errs(cAB, C, st, *sel), errs(cAB, C, st, "overall", None)
+        v = mm.paired_verdict(w, wo)
+        ok = v.get("verdict") == "beats" and (v.get("z") or 0) >= PLATOON_MIN_Z
+        out[st] = {"mode": sel[0] if ok else "overall", "s": sel[1] if ok else None,
+                   "tested": {"mode": sel[0], "s": sel[1]}, "verdict": v, "n": len(w),
+                   "ratio": {k: round(x, 4) for k, x in _league_side(cAB, st).items()}}
+    out["windows"] = [ds[0], c1, c2, ds[-1]]
+    return out
+
+
+def add_platoon(table, rows, priors, platoon, throws):
+    """Lay each starter's side rates and ranks into a mlb_starter_table
+    (in place) for the stats whose split was adopted. rows as fit_platoon
+    takes them (this season, every PA); throws {pid: "L"/"R"}."""
+    if not table or not platoon:
+        return table
+    counts = _side_counts([(str(p), sd, o) for _d, p, sd, o in rows])
+    pitchers = table.get("pitchers") or {}
+    for pid, row in pitchers.items():
+        if throws.get(pid):
+            row["throws"] = throws[pid]
+    table["league_vs"] = {}
+    for st, f in platoon.items():
+        if not isinstance(f, dict) or f.get("mode") not in ("own", "league"):
+            continue
+        ratio = _league_side(counts, st)
+        lg = (table.get("league") or {}).get(st)
+        table["league_vs"][st] = {k: round(lg * r, 4) for k, r in ratio.items()} if lg else {}
+        # ranked by the BATTER'S hand: a lefty's letter places tonight's
+        # starter among every starter against lefties (a right-hander's
+        # opposite side, a left-hander's same side) — never "same side"
+        # across both arms, which would mix lefty and righty hitters
+        vals = {"L": {}, "R": {}, "S": {}}
+        for pid, row in pitchers.items():
+            base = (row.get(st) or {}).get("blend")
+            if base is None or row.get("throws") not in ("L", "R"):
+                continue
+            d = counts.get(pid) or {}
+            for h in vals:
+                sd = platoon_side(h, row["throws"])
+                vals[h][pid] = (side_rate(base, ratio[sd], d.get(sd), st, f["mode"], f.get("s")),
+                                sd)
+        for h, by in vals.items():
+            rk = _rank_desc({pid: v for pid, (v, _sd) in by.items()})
+            for pid, (v, sd) in by.items():
+                pitchers[pid][st].setdefault("vs", {})[h] = {
+                    "rate": round(v, 4), "rank": rk.get(pid), "of": len(by), "side": sd,
+                    "n": int(((counts.get(pid) or {}).get(sd) or {}).get("PA", 0))}
+    table["platoon"] = {st: {"mode": f["mode"], "s": f.get("s")} for st, f in platoon.items()
+                        if isinstance(f, dict) and "mode" in f}
+    return table
 
 
 def mlb_lineup_card(team_table, lineup_rate, stat):

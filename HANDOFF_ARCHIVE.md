@@ -10,6 +10,50 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — UFC page: the next card with DraftKings' chances (cut removed) for every fight — the BOOK's numbers, the site's model not yet built. 2026-10-24 (3)
+
+**Suite 165, FAILING: none.** New tests/test_ufc.py (3 controls red:
+no_vig leaving the cut in; pair() never swapping sides; the distance
+prices read in feed order without the check). UFC page headless on a
+fake feed in the probe's shapes.
+
+Izzy 10-24: "make ufc work if possible" (not live betting). THE UFC
+PROBE (10-24, UFC 333 Volkanovski vs Evloev, 14 fights): ESPN MMA
+scoreboard via site.web.api; core odds per fight: DraftKings (100) +
+"DraftKings - Live Odds" (200); each fighter's moneyLine, overUnder 2.5
+with overOdds / underOdds, the round spread, victoryMethod (koTkoDq /
+submission / points) under open / close per fighter; propBets ONLY
+"Fight To Go The Distance" (two prices, no side field). ufcstats.com:
+HTTP 200 but a 2,994-byte stub, 0 event links — blocked from Actions.
+Core season event list returned count 0; the scoreboard by date
+(?dates=20251018) returns finished cards — the backfill's route.
+
+BUILT (engines/ufc, views/UFC.py — "UFC" in all four navs after Site vs
+DraftKings, a Home Explore card, a refresh button): read LIVE at page
+time (cache 10 min — fight night needs no nightly). Per fight: win %
+(moneylines de-vigged), the six method outcomes de-vigged together,
+over / under rounds, goes the distance, "ends inside the distance" from
+the method market. Sides: away = first competitor on the 10-24 card;
+pair() reads "details" ("D. Santos -115") to confirm the favourite and
+swaps when it disagrees. Distance order: the YES is the one agreeing
+with the method market's decision share, else P(distance) <= P(over the
+round line). The page says in words these are DraftKings' numbers and
+the site's model is not here yet.
+
+NEXT: ufc backfill from the scoreboard by date (cards, winners, method,
+round, closing odds if the core feed keeps them for finished fights) ->
+fighter ratings tested against the de-vigged moneylines -> method /
+rounds; and a nightly snapshot of the UFC odds into data/props/ufc for
+the Site vs DraftKings grading.
+
+FILES: app/engines/ufc.py (NEW), app/views/UFC.py (NEW),
+tests/test_ufc.py (NEW), app/app.py, app/views/Home.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
+---
+
 ## PICK UP HERE — "Site vs DraftKings" page; Bet Finder labels each market and caps no-edge markets at THIN; UFC probe. 2026-10-24 (2)
 
 **Suite 164, FAILING: none.** tests/test_book_grade.py +3 checks (2 new

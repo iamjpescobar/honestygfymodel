@@ -68,7 +68,8 @@ def plate_appearances(season_df):
     # are ENGINE_COLS): their difference on the PA-ending pitch is the
     # runs that scored on the play — the RBI markets. Absent -> no RBI
     # column, and those markets are left out, never zero-filled.
-    extra = [c for c in ("bat_score", "post_bat_score", "home_team") + STATE_COLS
+    extra = [c for c in ("bat_score", "post_bat_score", "home_team", "stand", "p_throws")
+             + STATE_COLS
              if c in season_df.columns]
     df = season_df[season_df["events"].notna()][list(need) + extra].copy()
     df = df.drop_duplicates(subset=["game_pk", "at_bat_number"])
@@ -255,6 +256,44 @@ def batting_teams(pa):
     return out
 
 
+def platoon_inputs(pa):
+    """(rows, throws, bats) for engines/defense_matchup's platoon split, or
+    None without both hands: rows [(date, pitcher, "same"/"opp", outcome)];
+    throws {pitcher: "L"/"R"}; bats {batter: "L"/"R"/"S"} — "S" when he
+    batted from each side in 10%+ of his plate appearances."""
+    if not {"stand", "p_throws"}.issubset(pa.columns):
+        return None
+    from engines import defense_matchup as dm
+    df = pa[pa["stand"].isin(["L", "R"]) & pa["p_throws"].isin(["L", "R"])]
+    if df.empty:
+        return None
+    rows = [(d, str(p), dm.platoon_side(b, t), o) for d, p, b, t, o in
+            zip(df["game_date"], df["pitcher"], df["stand"].astype(str),
+                df["p_throws"].astype(str), df["outcome"])]
+    throws = {str(p): str(t) for p, t in
+              df.groupby("pitcher")["p_throws"].agg(lambda x: x.mode().iat[0]).items()}
+    bats = {}
+    for b, x in df.groupby("batter")["stand"]:
+        vc = x.astype(str).value_counts(normalize=True)
+        bats[str(b)] = "S" if len(vc) > 1 and vc.min() >= 0.10 else str(vc.index[0])
+    return rows, throws, bats
+
+
+def platoon_line(pl):
+    if "note" in pl:
+        return f"  [verify] MLB platoon: {pl['note']}"
+    bits = []
+    for st, f in pl.items():
+        if st == "windows":
+            continue
+        v = f.get("verdict") or {}
+        t = f.get("tested") or {}
+        bits.append(f"{st} {t.get('mode')}{'' if t.get('s') is None else ' s=' + str(t.get('s'))}"
+                    f" {v.get('verdict')} z={v.get('z')} -> {f['mode'].upper()}")
+    return (f"  [verify] MLB platoon split (batter letters by side), tested "
+            f"{pl['windows'][2]}..{pl['windows'][3]}: " + "; ".join(bits))
+
+
 def matchup_tables(pa, ptab, model):
     """{"starter_allowed": ..., "team_batting": ...} for the matchup cards."""
     from engines import defense_matchup as dm
@@ -264,6 +303,26 @@ def matchup_tables(pa, ptab, model):
     weight = (model.get("prior_weight") or {}).get("pitcher") or 0.0
     out = {"starter_allowed": dm.mlb_starter_table(
         cur, model.get("prior_pitchers") or {}, weight, model.get("pitcher_priors"), starters)}
+    # the platoon split (10-28, engines/defense_matchup.fit_platoon): a
+    # batter's letter is the starter against HIS side where that beat the
+    # starter's overall rate on games it had not seen. Own try: costs the
+    # split, never the card.
+    try:
+        hands = platoon_inputs(pa)
+        if hands:
+            rows, throws, bats = hands
+            pl = dm.fit_platoon(rows, [r[0] for r in rows], model.get("pitcher_priors"))
+            out["platoon"] = pl
+            out["batter_hand"] = bats
+            if "note" not in pl:
+                dm.add_platoon(out["starter_allowed"], rows, model.get("pitcher_priors"), pl,
+                               throws)
+            print(platoon_line(pl))
+        else:
+            print("  [verify] MLB platoon: the season frame carries no stand / p_throws - "
+                  "batter letters stay on the starter's overall rate")
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::MLB platoon split failed: {type(exc).__name__}: {exc}")
     bt = batting_teams(pa)
     if bt:
         keyed = pa.assign(team=[bt.get((int(g), s)) for g, s in zip(pa["game_pk"], pa["side"])])

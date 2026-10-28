@@ -17,10 +17,24 @@ Each sport's own matchup number is ranked — nothing new is invented:
   NHL  defense vs position (engines/defense_matchup): goals / points /
        assists / shots allowed to centres, wingers or defencemen
   NFL  defense vs position, same engine (QB / RB / WR / TE)
-  MLB  batters: tonight's starter's allowed per-PA rate; pitchers:
-       tonight's lineup's rate (engines/defense_matchup)
-  NBA  the opponent factor the props model uses (engines/nba_context),
-       ranked over every team for his position group
+  MLB  batters: tonight's starter's allowed per-PA rate — against THIS
+       hitter's hand (lefty / righty / switch) on the stats where that
+       split beat the starter's overall rate on unseen games, ranked among
+       every starter against hitters of that hand (10-28, defense_matchup.
+       fit_platoon; re-tested nightly); pitchers: tonight's lineup's rate
+  NBA  what the defense ALLOWED to his position group (G / F / C) a game,
+       this season + last (engines/defense_matchup via nba_context.
+       dvp_table), ranked over the 30 NBA teams (10-28). It used to rank
+       the projection's opponent factor: team-wide and within a percent or
+       two of 1.0 for nearly every team (Dean Wade @ IND x0.999 read "B"),
+       over 33 "teams" (three exhibition clubs). The projection keeps its
+       own tested factor; the letter is context, as in NHL / NFL.
+       Last season's split-half reliability (does a team's rank on half its
+       games repeat on the other half): points to guards 0.57, centres
+       0.40, FORWARDS 0.003 — what a team allows to forwards does not
+       repeat, so a forward's points letter is mostly noise, in any app.
+  Same position + same opponent = the same letter in every sport: the
+  letter grades the DEFENSE against that kind of player, not the player.
 A letter is about the OVER (an A is a good spot for the over, an F a good
 spot for the under).
 

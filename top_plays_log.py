@@ -72,7 +72,9 @@ def mlb_candidates(games, pm, batter_counts, pitcher_counts, lineup_for, date_st
                 sp_name = g.get("home_pitcher") if side == "away" else g.get("away_pitcher")
                 for key, lab, stat, n in mp.MARKETS:
                     if key in pj["probs"]:
-                        card = dm.mlb_starter_card(pm.get("starter_allowed"), opp_pid, stat) \
+                        card = dm.mlb_starter_card(pm.get("starter_allowed"), opp_pid, stat,
+                                                   (pm.get("batter_hand") or {}).get(
+                                                       str(b.get("id")))) \
                             if opp_pid else None
                         out.append({"sport": "mlb", "game_id": pk, "game": label, "start": start,
                                     "date": date_str, "player_id": b.get("id"),
@@ -82,7 +84,8 @@ def mlb_candidates(games, pm, batter_counts, pitcher_counts, lineup_for, date_st
                                     "why": f"{pj['exp_pa']:.1f} expected PA from slot {slot} vs "
                                            f"{sp_name or 'the starter'}, then a league-average pen",
                                     "matchup": dm.notice(card, dm.MLB_STAT_LABELS.get(stat, stat),
-                                                         "batters", sp_name or "Tonight's starter")
+                                                         card.get("group") or "batters",
+                                                         sp_name or "Tonight's starter")
                                     if card else None,
                                     "matchup_tier": (card or {}).get("tier")})
             # the starter facing this lineup
