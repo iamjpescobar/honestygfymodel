@@ -9656,6 +9656,14 @@
           "result": null
         },
         {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
           "id": "592885",
           "name": "Christian Yelich",
           "team": "MIL",
@@ -9672,6 +9680,14 @@
           "result": null
         },
         {
+          "id": "650490",
+          "name": "Yandy D\u00edaz",
+          "team": "TB",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
           "id": "806198",
           "name": "Cooper Pratt",
           "team": "MIL",
@@ -9683,14 +9699,6 @@
           "id": "686217",
           "name": "Sal Frelick",
           "team": "MIL",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "691406",
-          "name": "Junior Caminero",
-          "team": "TB",
           "stat": null,
           "line": null,
           "result": null
@@ -9714,14 +9722,6 @@
         {
           "id": "802415",
           "name": "Chandler Simpson",
-          "team": "TB",
-          "stat": null,
-          "line": null,
-          "result": null
-        },
-        {
-          "id": "650490",
-          "name": "Yandy D\u00edaz",
           "team": "TB",
           "stat": null,
           "line": null,
@@ -14939,6 +14939,36 @@
         }
       ],
       "graded": true,
+      "source": "ci"
+    },
+    "2026-10-28": {
+      "picks": [
+        {
+          "id": "666018",
+          "name": "Jonathan Aranda",
+          "team": "Tampa Bay Rays",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "691406",
+          "name": "Junior Caminero",
+          "team": "Tampa Bay Rays",
+          "stat": null,
+          "line": null,
+          "result": null
+        },
+        {
+          "id": "650490",
+          "name": "Yandy D\u00edaz",
+          "team": "Tampa Bay Rays",
+          "stat": null,
+          "line": null,
+          "result": null
+        }
+      ],
+      "graded": false,
       "source": "ci"
     }
   },
