@@ -9527,7 +9527,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "661388",
@@ -9535,7 +9535,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "691406",
@@ -9543,7 +9543,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "650490",
@@ -9551,7 +9551,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "641343",
@@ -9559,7 +9559,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "802415",
@@ -9567,7 +9567,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "592885",
@@ -9575,7 +9575,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "666018",
@@ -9583,7 +9583,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "668930",
@@ -9591,7 +9591,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "680700",
@@ -9599,7 +9599,7 @@
           "team": "TB",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "669003",
@@ -9607,7 +9607,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "666152",
@@ -9615,7 +9615,7 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         },
         {
           "id": "806198",
@@ -9623,10 +9623,10 @@
           "team": "MIL",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -10842,10 +10842,10 @@
           "team": "Tampa Bay Rays",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -14779,7 +14779,7 @@
           "team": "Milwaukee Brewers",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "694192",
@@ -14787,7 +14787,7 @@
           "team": "Milwaukee Brewers",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "666018",
@@ -14795,7 +14795,7 @@
           "team": "Tampa Bay Rays",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "691406",
@@ -14803,7 +14803,7 @@
           "team": "Tampa Bay Rays",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         },
         {
           "id": "661388",
@@ -14811,10 +14811,10 @@
           "team": "Milwaukee Brewers",
           "stat": null,
           "line": null,
-          "result": null
+          "result": "miss"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
@@ -40507,10 +40507,11 @@
           "team": "Golden State Valkyries",
           "stat": "ast",
           "line": 0.6,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     },
     "2026-10-26": {
@@ -44016,10 +44017,10 @@
           "team": "TB",
           "stat": "strikeOuts",
           "line": 3.3,
-          "result": null
+          "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   }
