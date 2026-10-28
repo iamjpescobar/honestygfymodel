@@ -621,7 +621,8 @@ GRADE_STYLE = {
 
 def matchup_css(tier_name):
     """Colour for a matchup cell: an A-F letter (10-26) or the old tier."""
-    lab, fg, bg = (GRADE_STYLE.get(tier_name) or
+    from engines import matchup_grade as _mg
+    lab, fg, bg = (GRADE_STYLE.get(_mg.base(tier_name) or tier_name) or
                    MATCHUP_STYLE.get(tier_name, ("", COLOR["text_faint"], None)))
     return (f"color: {fg}; font-weight: 700;" + (f" background-color: {bg};" if bg else ""))
 

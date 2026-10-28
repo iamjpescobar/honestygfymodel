@@ -35,16 +35,19 @@ def check(name, ok):
 
 SP = [41.0, 2.0]          # defenses' mean and sd
 g, r = dm.reliability_grade(41.0 + 3 * 2.0, SP, 0.999, 82, 10_000)
-check("fully reliable: the old fifths (3 sd above = A)", g == "A" and r > 0.99)
+check("fully reliable: the old fifths (3 sd above = A+)", g == "A+" and r > 0.99)
 check("fully reliable, 0.5 sd above = B; 0.5 below = D",
-      dm.reliability_grade(42.0, SP, 0.999, 82, 10_000)[0] == "B"
-      and dm.reliability_grade(40.0, SP, 0.999, 82, 10_000)[0] == "D")
+      dm.reliability_grade(42.0, SP, 0.999, 82, 10_000)[0][0] == "B"
+      and dm.reliability_grade(40.0, SP, 0.999, 82, 10_000)[0][0] == "D")
 check("a standing that does not repeat earns a C, however far out",
-      dm.reliability_grade(25.8, SP, 0.003, 82, 4.2)[0] == "C")
+      dm.reliability_grade(25.8, SP, 0.003, 82, 4.2)[0][0] == "C")
+check("but a C still shows its lean: C+ above the pack, C- below",
+      dm.reliability_grade(45.0, SP, 0.3, 82, 3)[0] == "C+"
+      and dm.reliability_grade(37.0, SP, 0.3, 82, 3)[0] == "C-")
 lo = dm.reliability_grade(45.0, SP, 0.57, 82, 4)
 hi = dm.reliability_grade(45.0, SP, 0.57, 82, 60)
 check("more games behind the same number: a stronger letter",
-      hi[1] > lo[1] and "ABCDF".index(hi[0]) <= "ABCDF".index(lo[0]) and hi[0] == "A")
+      hi[1] > lo[1] and "ABCDF".index(hi[0][0]) <= "ABCDF".index(lo[0][0]) and hi[0][0] == "A")
 check("a missing piece: no adjusted letter (the caller keeps the rank)",
       dm.reliability_grade(45.0, SP, None, 82, 10) == (None, None))
 
@@ -72,10 +75,10 @@ def table(weight, rel, cur, prior, n_cur=4, n_prior=82):
 
 c = dm.card(table(0.0026, 0.003, 25.75, 40.61), "X", "F", "pts")
 check("the 10-28 PHI-vs-forwards card reads C, not F (rank stays 31st of 31)",
-      c["grade"] == "C" and c["rank"] == 31 and c["grade_reliability"] < 0.01)
+      c["grade"][0] == "C" and c["rank"] == 31 and c["grade_reliability"] < 0.01)
 c2 = dm.card(table(0.5, 0.57, 36.0, 36.0), "X", "F", "pts")
 check("last season's games count at their fitted weight",
-      abs(c2["n_eff"] - (4 + 0.5 * 82)) < 0.11 and c2["grade"] == "F")
+      abs(c2["n_eff"] - (4 + 0.5 * 82)) < 0.11 and c2["grade"][0] == "F")
 check("the card keeps the rank beside the letter", c2["rank"] == 31 and c2["of"] == 31)
 
 print(f"\n{len(fails)} failed" if fails else "\nall passed")

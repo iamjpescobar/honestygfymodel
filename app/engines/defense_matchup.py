@@ -306,9 +306,10 @@ def tier(rank, of):
 
 
 def _grade(rank, of):
-    """The A-F matchup letter (engines/matchup_grade, 10-26)."""
+    """The A-F matchup letter with its plus / minus (engines/matchup_grade,
+    10-26; plus / minus 10-28)."""
     from engines import matchup_grade as mg
-    return mg.grade(rank, of)
+    return mg.grade_pm(rank, of)
 
 
 # THE LETTER (10-28). It used to be the rank cut in fifths. A rank spreads
@@ -323,9 +324,10 @@ def _grade(rank, of):
 #   at this card's games  r  = m p1 / (1 + (m - 1) p1)   m = games this season
 #                         + last season's games x the fitted season weight
 #   standing              z  = sqrt(r) x (value - mean of defenses) / their sd
-# z is cut at the normal fifths (+-0.253, +-0.842) — exactly the old rank
-# cut when r = 1, and toward "C" as r falls: a standing that does not
-# repeat earns no A and no F.
+# z is cut at the normal fifths (+-0.253, +-0.842), each in thirds for the
+# plus / minus — exactly the old rank cut when r = 1, and toward "C" as r
+# falls: a standing that does not repeat earns no A and no F, but still
+# shows its lean (C+ / C-).
 Z_CUTS = (0.8416, 0.2533, -0.2533, -0.8416)
 
 
@@ -341,10 +343,11 @@ def reliability_grade(value, spread, rel, games_full, n_eff):
     p1 = R / (games_full - (games_full - 1) * R) if games_full > 1 else R
     r = n_eff * p1 / (1 + (n_eff - 1) * p1) if p1 > 0 else 0.0
     z = (r ** 0.5) * (value - m) / sd
-    for letter, cut in zip("ABCD", Z_CUTS):
-        if z > cut:
-            return letter, round(r, 3)
-    return "F", round(r, 3)
+    from statistics import NormalDist
+    from engines import matchup_grade as mg
+    # the normal fifths, each in thirds (A+ .. F-): q = share of a normal
+    # above z, so q in [0, 1/15) is A+ and the old A is q < 1/5
+    return mg.label_from_q(1.0 - NormalDist().cdf(z)), round(r, 3)
 
 
 def card(table, defense, group, stat):

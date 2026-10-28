@@ -80,12 +80,55 @@ def grade(rank, of):
     return LETTERS[min(4, int(q * 5))]
 
 
+# PLUS / MINUS (10-28). Izzy: "don't ignore C grades ... ours [must be]
+# super sharp". Five letters hid which way a C leaned: each letter is now
+# split in thirds (A+ A A- B+ ... F-), fifteen steps, so a C+ is a defense
+# that leans soft for this player without the evidence for a B, and a C-
+# leans tough. The base letter (A-F) still drives colours, the Under flip
+# and the per-letter check; the label carries the direction.
+MODS = ("+", "", "-")
+
+
+def label_from_q(q):
+    """'A+'..'F-' from q in [0, 1] (0 = softest, 1 = toughest), in fifteen
+    equal steps."""
+    q = min(max(float(q), 0.0), 1.0)
+    i = min(14, int(q * 15))
+    return LETTERS[i // 3] + MODS[i % 3]
+
+
+def grade_pm(rank, of):
+    """grade() with its plus / minus, or None."""
+    try:
+        rank, of = int(rank), int(of)
+    except (TypeError, ValueError):
+        return None
+    if rank < 1 or of < 2 or rank > of:
+        return None
+    return label_from_q((rank - 1) / (of - 1))
+
+
+def base(g):
+    """'B+' -> 'B'; None / anything else -> None."""
+    g = str(g or "")
+    return g[0] if g[:1] in LETTERS and len(g) <= 2 and g[1:] in ("", "+", "-") else None
+
+
+def flip(g):
+    """The label for the Under: A+ <-> F-, B- <-> D+, C+ <-> C-."""
+    b = base(g)
+    if not b:
+        return g
+    m = str(g)[1:]
+    return LETTERS[4 - LETTERS.index(b)] + {"+": "-", "-": "+", "": ""}[m]
+
+
 def from_card(card):
     """The letter for a defense_matchup card (its own grade, else from its
     rank), or None."""
     if not card:
         return None
-    return card.get("grade") or grade(card.get("rank"), card.get("of"))
+    return card.get("grade") or grade_pm(card.get("rank"), card.get("of"))
 
 
 def rank_values(values, mine):
@@ -137,7 +180,7 @@ def by_grade(graded, idx=10):
     information the chance is missing."""
     acc = {}
     for r in graded or []:
-        g = r[idx] if len(r) > idx else None
+        g = base(r[idx] if len(r) > idx else None)
         if g not in LETTERS:
             continue
         a = acc.setdefault(g, [0, 0.0, 0.0, 0])

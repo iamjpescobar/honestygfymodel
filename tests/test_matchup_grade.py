@@ -49,7 +49,7 @@ check("no rank, no letter (missing is never a grade)",
       mg.grade(None, 32) is None and mg.grade(5, None) is None and mg.grade(40, 32) is None
       and mg.grade(1, 1) is None)
 check("from_card reads the card's grade, else its rank",
-      mg.from_card({"grade": "B"}) == "B" and mg.from_card({"rank": 1, "of": 30}) == "A"
+      mg.from_card({"grade": "B"}) == "B" and mg.from_card({"rank": 1, "of": 30}) == "A+"
       and mg.from_card(None) is None)
 
 # --- the shared matchup cards and badge ----------------------------------------------------
@@ -58,14 +58,27 @@ tbl = {"stats": {"g": {"W": {"teams": {"1": {"blend": 0.9, "rank": 2},
                              "ranked": {"blend": 32, "cur": 32, "prior": 32},
                              "league": 0.6}}}}
 c1, c2 = dm.card(tbl, "1", "W", "g"), dm.card(tbl, "2", "W", "g")
-check("every defense-vs-position card carries its letter", c1["grade"] == "A" and c2["grade"] == "F")
-check("the badge leads with the letter: 'A · 2nd-most', 'F · 2nd-fewest'",
-      dm.badge(c1) == "A · 2nd-most" and dm.badge(c2) == "F · 2nd-fewest")
+check("every defense-vs-position card carries its letter",
+      mg.base(c1["grade"]) == "A" and mg.base(c2["grade"]) == "F")
+check("the badge leads with the letter: 'A+ · 2nd-most', 'F- · 2nd-fewest'",
+      dm.badge(c1) == f"{c1['grade']} · 2nd-most" and dm.badge(c2) == f"{c2['grade']} · 2nd-fewest")
 check("the notice says the grade", dm.notice(c1, "goals", "wingers", "MTL").startswith(
     "Matchup grade A"))
 check("MLB starter and lineup cards carry it too",
       dm.mlb_lineup_card({"teams": {"a": {"k": 0.2}, "b": {"k": 0.25}, "c": {"k": 0.3}},
-                          "league": {"k": 0.25}}, 0.31, "k")["grade"] == "A")
+                          "league": {"k": 0.25}}, 0.31, "k")["grade"] == "A+")
+
+# --- plus / minus (10-28) ------------------------------------------------------------------
+check("fifteen steps: rank 1 of 30 = A+, 15 = C, 30 = F-",
+      mg.grade_pm(1, 30) == "A+" and mg.grade_pm(15, 30) == "C" and mg.grade_pm(30, 30) == "F-"
+      and mg.grade_pm(13, 30) == "C+" and mg.grade_pm(18, 30) == "C-")
+check("the Under flips the sign too: A+ <-> F-, B- <-> D+, C+ <-> C-, C stays",
+      mg.flip("A+") == "F-" and mg.flip("B-") == "D+" and mg.flip("C+") == "C-"
+      and mg.flip("C") == "C" and mg.flip("—") == "—")
+check("the base letter drives colours and the per-letter check",
+      mg.base("C+") == "C" and mg.base("soft") is None
+      and mg.by_grade([[0, 0, 0, 0, 0, .5, .5, 1, 0, 0, "B+"], [0, 0, 0, 0, 0, .5, .5, 0, 0, 0, "B-"]])
+      ["B"]["n"] == 2)
 
 
 # --- NBA: the opponent factor ranked over every team -------------------------------------

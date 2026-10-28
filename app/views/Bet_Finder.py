@@ -354,7 +354,7 @@ def _grade_of(r, stat, side="Over"):
         g = mg.from_card((r.get("_dvp") or {}).get(stat))
     if not g:
         return "—"
-    return mg.LETTERS[4 - mg.LETTERS.index(g)] if side == "Under" else g
+    return mg.flip(g) if side == "Under" else g
 
 
 def _results_table(res, key, line_col=True):

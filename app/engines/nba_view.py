@@ -198,9 +198,9 @@ def grade(row, stat, side="Over"):
     stat, for the side picked (an Under flips it), or '—'."""
     from engines import matchup_grade as mg
     g = (row.get("grade") or {}).get(stat)
-    if g not in mg.LETTERS:
+    if not mg.base(g):
         return "—"
-    return mg.LETTERS[4 - mg.LETTERS.index(g)] if side == "Under" else g
+    return mg.flip(g) if side == "Under" else g
 
 
 def slate_teams(rows):

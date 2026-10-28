@@ -154,7 +154,7 @@ shuffled last season earns nothing.
 
 ---
 
-## PICK UP HERE — A-F letters adjusted for how much of a defense's standing is real: no A or F from a ranking that does not repeat. 2026-10-28 (2)
+## PICK UP HERE — A-F letters adjusted for how much of a defense's standing is real (no A or F from a ranking that does not repeat), and split into A+ .. F- so a C still shows its lean. 2026-10-28 (2)
 
 Izzy compared with HOF after the defense-vs-position letters went live
 (14:04 nightly). PHI @ IND points: Siakam / Toppin (F) read "F" here,
@@ -179,6 +179,18 @@ Expect FEWER A/F than HOF; the by_grade check (Site vs DraftKings) is the
 test of whether letters carry information.
 tests/test_grade_reliability.py (controls: no sqrt(r); n_eff without last
 season; card keeping the rank letter — all red).
+
+PLUS / MINUS (same batch). Izzy: "don't ignore C grades — I don't use
+anything else than our site ... make sure ours is super sharp". Every letter
+is now one of fifteen (A+ A A- B+ ... F-): matchup_grade.label_from_q /
+grade_pm (rank cards: MLB starter / lineup, rank fallback) and the
+reliability z through the normal (q = 1 - Phi(z)). A C+ leans soft without
+the evidence for a B; C- leans tough. matchup_grade.base() gives the A-F
+letter for colours (model_view.matchup_css), the per-letter check
+(by_grade) and the Under flip; flip() mirrors the sign too (A+ <-> F-,
+C+ <-> C-). Graded rows saved before 10-28 carry plain letters — base()
+reads both. Controls (red): flip keeping the sign; by_grade without base();
+five steps instead of fifteen.
 
 ---
 

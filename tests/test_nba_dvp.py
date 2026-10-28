@@ -70,10 +70,10 @@ check("this season and last are both read", {ln["season"] for ln in lines} == {"
 
 gG, gC = nc.dvp_grades(t, "1", "G"), nc.dvp_grades(t, "1", "C")
 check("guards and centres facing the same team get their own letters",
-      gG["pts"]["grade"] == "A" and gC["pts"]["grade"] == "F")
+      gG["pts"]["grade"][0] == "A" and gC["pts"]["grade"][0] == "F")
 check("and the other way round for team 2",
-      nc.dvp_grades(t, "2", "G")["pts"]["grade"] == "F"
-      and nc.dvp_grades(t, "2", "C")["pts"]["grade"] == "A")
+      nc.dvp_grades(t, "2", "G")["pts"]["grade"][0] == "F"
+      and nc.dvp_grades(t, "2", "C")["pts"]["grade"][0] == "A")
 check("combos are graded too", "pra" in gG and gG["pra"]["grade"])
 check("a card carries the per-game number, the league's and the reliability",
       gG["pts"]["per_game"] > gG["pts"]["league"] and "reliability" in gG["pts"])
@@ -83,7 +83,7 @@ rows = [{"pid": "x", "pos": "G", "mu": {s: 10.0 for s in nm.BASE}, "min": 30},
         {"pid": "y", "pos": "C", "mu": {s: 10.0 for s in nm.BASE}, "min": 30}]
 nc.apply_tonight(rows, "1", "AAA", None, [], [], {}, "2026-11-28", dvp=t)
 check("tonight's guard and centre vs team 1: A and F on points",
-      rows[0]["grade"]["pts"] == "A" and rows[1]["grade"]["pts"] == "F"
+      rows[0]["grade"]["pts"][0] == "A" and rows[1]["grade"]["pts"][0] == "F"
       and rows[0]["dvp"]["pts"]["rank"] == 1)
 rows2 = [{"pid": "x", "pos": "G", "mu": {s: 10.0 for s in nm.BASE}, "min": 30}]
 nc.apply_tonight(rows2, "1", "AAA", None, [], [], {}, "2026-11-28")
