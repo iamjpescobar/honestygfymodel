@@ -1,0 +1,374 @@
+{
+ "markets": {
+  "g1": {
+   "n": 47225,
+   "model_brier": 0.075,
+   "baseline_brier": 0.0753,
+   "verdict": {
+    "n": 47225,
+    "diff": 0.00029,
+    "se": 6e-05,
+    "z": 5.11,
+    "verdict": "beats"
+   },
+   "calibration": [
+    {
+     "band": "0-9%",
+     "n": 33407,
+     "predicted": 0.05,
+     "actual": 0.054
+    },
+    {
+     "band": "10-19%",
+     "n": 11606,
+     "predicted": 0.137,
+     "actual": 0.147
+    },
+    {
+     "band": "20-29%",
+     "n": 2109,
+     "predicted": 0.238,
+     "actual": 0.258
+    },
+    {
+     "band": "30-39%",
+     "n": 103,
+     "predicted": 0.325,
+     "actual": 0.34
+    }
+   ]
+  },
+  "g2": {
+   "n": 50801,
+   "model_brier": 0.0118,
+   "baseline_brier": 0.0118,
+   "verdict": {
+    "n": 50801,
+    "diff": 3e-05,
+    "se": 2e-05,
+    "z": 2.14,
+    "verdict": "beats"
+   },
+   "calibration": [
+    {
+     "band": "0-9%",
+     "n": 49386,
+     "predicted": 0.008,
+     "actual": 0.009
+    },
+    {
+     "band": "10-19%",
+     "n": 1162,
+     "predicted": 0.137,
+     "actual": 0.149
+    },
+    {
+     "band": "20-29%",
+     "n": 240,
+     "predicted": 0.244,
+     "actual": 0.242
+    },
+    {
+     "band": "30-39%",
+     "n": 13,
+     "predicted": 0.326,
+     "actual": 0.308
+    }
+   ]
+  },
+  "pt1": {
+   "n": 41602,
+   "model_brier": 0.1472,
+   "baseline_brier": 0.1476,
+   "verdict": {
+    "n": 41602,
+    "diff": 0.00042,
+    "se": 0.00014,
+    "z": 3.02,
+    "verdict": "beats"
+   },
+   "calibration": [
+    {
+     "band": "0-9%",
+     "n": 7222,
+     "predicted": 0.077,
+     "actual": 0.07
+    },
+    {
+     "band": "10-19%",
+     "n": 17589,
+     "predicted": 0.147,
+     "actual": 0.144
+    },
+    {
+     "band": "20-29%",
+     "n": 10252,
+     "predicted": 0.244,
+     "actual": 0.25
+    },
+    {
+     "band": "30-39%",
+     "n": 4089,
+     "predicted": 0.344,
+     "actual": 0.384
+    },
+    {
+     "band": "40-49%",
+     "n": 1936,
+     "predicted": 0.44,
+     "actual": 0.493
+    },
+    {
+     "band": "50-59%",
+     "n": 415,
+     "predicted": 0.538,
+     "actual": 0.559
+    },
+    {
+     "band": "60-69%",
+     "n": 99,
+     "predicted": 0.641,
+     "actual": 0.636
+    }
+   ]
+  },
+  "pt2": {
+   "n": 49678,
+   "model_brier": 0.053,
+   "baseline_brier": 0.0529,
+   "verdict": {
+    "n": 49678,
+    "diff": -5e-05,
+    "se": 5e-05,
+    "z": -0.86,
+    "verdict": "fails"
+   },
+   "calibration": [
+    {
+     "band": "0-9%",
+     "n": 40513,
+     "predicted": 0.024,
+     "actual": 0.028
+    },
+    {
+     "band": "10-19%",
+     "n": 5127,
+     "predicted": 0.141,
+     "actual": 0.163
+    },
+    {
+     "band": "20-29%",
+     "n": 2411,
+     "predicted": 0.243,
+     "actual": 0.276
+    },
+    {
+     "band": "30-39%",
+     "n": 957,
+     "predicted": 0.345,
+     "actual": 0.402
+    },
+    {
+     "band": "40-49%",
+     "n": 511,
+     "predicted": 0.44,
+     "actual": 0.47
+    },
+    {
+     "band": "50-59%",
+     "n": 120,
+     "predicted": 0.541,
+     "actual": 0.625
+    },
+    {
+     "band": "60-69%",
+     "n": 39,
+     "predicted": 0.636,
+     "actual": 0.564
+    }
+   ]
+  },
+  "a1": {
+   "n": 44752,
+   "model_brier": 0.1116,
+   "baseline_brier": 0.1121,
+   "verdict": {
+    "n": 44752,
+    "diff": 0.00047,
+    "se": 8e-05,
+    "z": 5.8,
+    "verdict": "beats"
+   },
+   "calibration": [
+    {
+     "band": "0-9%",
+     "n": 18817,
+     "predicted": 0.068,
+     "actual": 0.068
+    },
+    {
+     "band": "10-19%",
+     "n": 18499,
+     "predicted": 0.141,
+     "actual": 0.146
+    },
+    {
+     "band": "20-29%",
+     "n": 5716,
+     "predicted": 0.239,
+     "actual": 0.263
+    },
+    {
+     "band": "30-39%",
+     "n": 1355,
+     "predicted": 0.338,
+     "actual": 0.366
+    },
+    {
+     "band": "40-49%",
+     "n": 336,
+     "predicted": 0.435,
+     "actual": 0.446
+    },
+    {
+     "band": "50-59%",
+     "n": 29,
+     "predicted": 0.518,
+     "actual": 0.586
+    }
+   ]
+  }
+ },
+ "by_checkpoint": {
+  "a1@P1": {
+   "n": 23498,
+   "predicted": 0.1705,
+   "actual": 0.1786
+  },
+  "a1@P2": {
+   "n": 21254,
+   "predicted": 0.088,
+   "actual": 0.0918
+  },
+  "g1@P1": {
+   "n": 24301,
+   "predicted": 0.1058,
+   "actual": 0.1121
+  },
+  "g1@P2": {
+   "n": 22924,
+   "predicted": 0.0538,
+   "actual": 0.0588
+  },
+  "g2@P1": {
+   "n": 25470,
+   "predicted": 0.0145,
+   "actual": 0.0156
+  },
+  "g2@P2": {
+   "n": 25331,
+   "predicted": 0.009,
+   "actual": 0.0102
+  },
+  "pt1@P1": {
+   "n": 22397,
+   "predicted": 0.2524,
+   "actual": 0.2594
+  },
+  "pt1@P2": {
+   "n": 19205,
+   "predicted": 0.1324,
+   "actual": 0.1363
+  },
+  "pt2@P1": {
+   "n": 25249,
+   "predicted": 0.0727,
+   "actual": 0.0823
+  },
+  "pt2@P2": {
+   "n": 24429,
+   "predicted": 0.0443,
+   "actual": 0.0515
+  }
+ },
+ "by_state": {
+  "a1:ahead": {
+   "n": 14133,
+   "predicted": 0.1267,
+   "actual": 0.1305
+  },
+  "a1:behind": {
+   "n": 16638,
+   "predicted": 0.1286,
+   "actual": 0.1348
+  },
+  "a1:tied": {
+   "n": 13981,
+   "predicted": 0.1392,
+   "actual": 0.1473
+  },
+  "g1:ahead": {
+   "n": 15541,
+   "predicted": 0.0776,
+   "actual": 0.0861
+  },
+  "g1:behind": {
+   "n": 17103,
+   "predicted": 0.0789,
+   "actual": 0.0824
+  },
+  "g1:tied": {
+   "n": 14581,
+   "predicted": 0.0856,
+   "actual": 0.0908
+  },
+  "g2:ahead": {
+   "n": 17607,
+   "predicted": 0.0159,
+   "actual": 0.0163
+  },
+  "g2:behind": {
+   "n": 17779,
+   "predicted": 0.0084,
+   "actual": 0.0096
+  },
+  "g2:tied": {
+   "n": 15415,
+   "predicted": 0.0108,
+   "actual": 0.0128
+  },
+  "pt1:ahead": {
+   "n": 12375,
+   "predicted": 0.1876,
+   "actual": 0.1914
+  },
+  "pt1:behind": {
+   "n": 16013,
+   "predicted": 0.1941,
+   "actual": 0.1991
+  },
+  "pt1:tied": {
+   "n": 13214,
+   "predicted": 0.2092,
+   "actual": 0.2173
+  },
+  "pt2:ahead": {
+   "n": 16773,
+   "predicted": 0.0759,
+   "actual": 0.0877
+  },
+  "pt2:behind": {
+   "n": 17667,
+   "predicted": 0.0443,
+   "actual": 0.0494
+  },
+  "pt2:tied": {
+   "n": 15238,
+   "predicted": 0.0567,
+   "actual": 0.0652
+  }
+ },
+ "season": "2025-26",
+ "window_from": "2025-12-28",
+ "games_read": 712
+}
