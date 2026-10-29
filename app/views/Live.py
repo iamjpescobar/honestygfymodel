@@ -40,9 +40,11 @@ def _intro(sp_):
         f'game</b>: his pregame projection, cut to the time left, plus what he already has. '
         f'Type your book&rsquo;s <b>live</b> price; bet only when it pays more than <b>Worth it '
         f'at</b>.<br><span style="color:{COLOR["warn"]};">'
-        + (('<b>Points are tested</b> on last season&rsquo;s games (the chance shown is what '
-            'calls like it hit, read at the end of each quarter); rebounds, assists and the '
-            'rest are not yet &mdash; those stay at THIN')
+        + (('<b>Tested on last season&rsquo;s games: ' + ", ".join(
+            {"pts": "points", "reb": "rebounds", "ast": "assists", "tpm": "threes",
+             "pra": "PRA", "pr": "P+R", "pa": "P+A", "ra": "R+A"}.get(x, x)
+            for x in _nba_tested) + '</b> (the chance shown is what calls like it hit, read at '
+            'the end of each quarter); any other stat is not yet &mdash; it stays at THIN')
            if sp_ == "nba" and _nba_live_ok else
            ('<b>Not yet tested on past games</b>'
             + (" (until the NHL live test has run, and then only for the markets that pass it)"
@@ -71,10 +73,14 @@ sport = st.segmented_control("Sport", ["NHL", "NFL", "NBA"], default=_here,
                              key="live_sport") or _here
 sp = sport.lower()
 _nba_live_ok = False
+_nba_tested = []
 if sp == "nba":
     from engines import nba_view as _nv0
-    _lc = ((_nv0.load()[1] or {}).get("live_check") or {}).get("pts") or {}
-    _nba_live_ok = (_lc.get("verdict") or {}).get("verdict") == "beats"
+    _lcs = (_nv0.load()[1] or {}).get("live_check") or {}
+    # 10-29: every stat the play-by-play can vouch for is tested, not just points
+    _nba_tested = [s_ for s_, x in _lcs.items()
+                   if ((x or {}).get("verdict") or {}).get("verdict") == "beats"]
+    _nba_live_ok = bool(_nba_tested)
 _intro(sp)
 
 if sp == "nba":

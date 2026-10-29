@@ -14,6 +14,13 @@ parse(summary) -> {
   "starters": {team_id: [pid, ...]}                the five on the floor
   "qpts":     {pid: [q1, q2, q3, q4]}              each player's points
                                                     per quarter (OT left out)
+  "qstats":   {pid: {"reb"|"ast"|"tpm": [q1, q2, q3, q4, ot]}} (10-29)
+            rebounds (a play whose type says rebound, the first participant),
+            assists (a made field goal's SECOND participant when the text
+            says assist), made threes (a made field goal worth 3)
+  "qstats_ok": the stats whose per-player sums equal the box score for
+            EVERY player in the game — a stat this parser misread for this
+            game's format is left out of every test, never guessed
 }
 Missing is never zero: a shape this parser can't read leaves the field
 None / empty, and the backfill's [verify] lines count how often.
@@ -97,7 +104,8 @@ def clock_seconds(clock):
 def parse(summary):
     plays = [p for p in (summary or {}).get("plays") or [] if isinstance(p, dict)]
     out = {"lines": lines(summary), "tip": None, "first_fg": None, "first_score": None,
-           "starters": {}, "qpts": {}, "early": {}, "early_team": {}, "team_first_fg": {}}
+           "starters": {}, "qpts": {}, "early": {}, "early_team": {}, "team_first_fg": {},
+           "qstats": {}, "qstats_ok": []}
     # the tip: the first jump ball, and the first team named after it
     for i, p in enumerate(plays[:12]):
         if _is_jump(p):
@@ -107,6 +115,7 @@ def parse(summary):
             out["tip"] = {"jumpers": jumpers, "team": team}
             break
     for p in plays:
+        _q_stats(out["qstats"], p)
         if not p.get("scoringPlay"):
             continue
         v = _num(p.get("scoreValue")) or 0
@@ -134,10 +143,59 @@ def parse(summary):
             out["team_first_fg"][rec["team"]] = rec
         if pid and isinstance(per, int) and 1 <= per <= 4 and v:
             out["qpts"].setdefault(pid, [0, 0, 0, 0])[per - 1] += int(v)
-    for pid, ln in (nb.parse(summary) or {}).items():
+    box = nb.parse(summary) or {}
+    for pid, ln in box.items():
         if ln.get("starter"):
             out["starters"].setdefault(str(ln.get("team_id")), []).append(str(pid))
+    out["qstats_ok"] = qstats_ok(out["qstats"], box)
     return out
+
+
+QSTATS = ("reb", "ast", "tpm")
+
+
+def _q_slot(qstats, pid, stat, per):
+    if not pid or not isinstance(per, int) or per < 1:
+        return
+    q = qstats.setdefault(pid, {}).setdefault(stat, [0, 0, 0, 0, 0])
+    q[min(per, 5) - 1] += 1
+
+
+def _q_stats(qstats, p):
+    """Count one play's rebound / assist / made three into qstats."""
+    txt = ((((p.get("type") or {}).get("text")) or "") + " " + (p.get("text") or "")).lower()
+    per = _period(p)
+    if "rebound" in txt and not p.get("scoringPlay"):
+        _q_slot(qstats, _pid(p, 0), "reb", per)
+        return
+    if p.get("scoringPlay") and not _is_ft(p):
+        v = _num(p.get("scoreValue")) or 0
+        if v >= 3:
+            _q_slot(qstats, _pid(p, 0), "tpm", per)
+        if v >= 2 and "assist" in txt:
+            _q_slot(qstats, _pid(p, 1), "ast", per)
+
+
+def qstats_ok(qstats, box):
+    """The stats whose per-player play-by-play sums (OT included) equal the
+    box score for every player who played — [] without a box score."""
+    if not box:
+        return []
+    ok = []
+    for st in QSTATS:
+        good = True
+        for pid, ln in box.items():
+            want = ln.get(st)
+            if want is None:
+                good = False
+                break
+            got = sum(((qstats.get(str(pid)) or {}).get(st)) or [0])
+            if abs(got - float(want)) > 0.5:
+                good = False
+                break
+        if good:
+            ok.append(st)
+    return ok
 
 
 def check(rec, hs=None, as_=None, home=None, away=None):

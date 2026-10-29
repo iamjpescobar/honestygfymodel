@@ -935,6 +935,12 @@ def main(today=None):
             except Exception as exc:  # noqa: BLE001
                 print(f"::warning::NHL offered level failed: {type(exc).__name__}: {exc}")
         if model_block:
+            _fc = (model_block.get("goal") or {}).get("form_check") or model_block.get("form_check")
+            if _fc:
+                print(f"  [verify] NHL goal ratings vs this-season form: fitted k={_fc['fitted_k']} "
+                      f"log loss {_fc['fitted_log_loss']} vs form k={_fc['form_k']} "
+                      f"{_fc['form_log_loss']} on {_fc['n']} games -> fitted "
+                      f"{(_fc['verdict'] or {}).get('verdict')} (z={(_fc['verdict'] or {}).get('z')})")
             v = model_block["validation"]
             print(f"  [verify] NHL model fit on {model_block['params'].get('fit_on')} season: "
                   f"k={model_block['params']['shrink_k']} carryover={model_block['params'].get('carryover')} "

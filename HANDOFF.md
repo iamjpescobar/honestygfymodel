@@ -154,6 +154,48 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Live tested for every NBA stat (play-by-play rebounds / assists / threes), anchored calls that beat DraftKings get past THIN, NHL goal ratings' search un-pinned with a nightly form check. 2026-10-29 (2)
+
+Izzy: "simulators as close as possible to the outcome ... some projections
+seemed a bit low ... Bet Finder and Live — running fully or capped?"
+
+**Measured:** NBA offered projection vs box since 10-27 (2 nights): pts
+x1.025, reb x1.030, ast x1.035, 3PM x1.086 (DK lines sat on the actuals).
+A POOLED level factor (all stats, walk-forward) did NOT help on 10-28
+(z -0.20; 10-28 came in x1.02) — not proven, not forced; offered_level keeps
+testing nightly. NHL runs slightly high (SOG x0.956). The simulators' player
+means ARE the projections, so they follow these numbers.
+Sim inputs (published 10-29): team ratings start from last season x
+carryover and move with this season's games by shrink k — NBA carry 0.956
+k 3.2, NFL 0.404 / 3.7, NHL shots 0.879 / 7.1, NHL goals 1.0 / 400 (ON the
+old search edge).
+
+**Changes:**
+- game_model.K_MAX 400 -> 5000 (a fit pinned to its edge); form_check:
+  fitted k vs k = 20 walk-forward on this season, shipped as model
+  "form_check", printed `NHL goal ratings vs this-season form ...`.
+- nba_pbp: "qstats" {pid: {reb|ast|tpm: [q1..q4, ot]}} — rebound plays
+  (participant 0), assists (made FG, participant 1, text says assist), made
+  threes (scoreValue 3); "qstats_ok" = stats whose per-player sums equal the
+  box score for EVERY player (a misread format is left out, never guessed).
+  nba_quarters.live_check now per stat (pts, reb, ast, tpm, combos from
+  parts); Live lists the tested stats. LAST SEASON'S prior_pbp.json has no
+  qstats until the "NBA prior play-by-play" workflow is re-run; this
+  season's games get them nightly. Log: `NBA play-by-play stat counts that
+  match the box score: reb in N ...`.
+- Bet Finder: a no_edge / behind market's THIN cap is lifted for a call
+  that is ANCHORED and whose market's anchored chances beat DK's own on the
+  walk-forward (market_anchor.beats_book). None qualify yet.
+- NHL Live has never been tested: the one-time "NHL live test" workflow
+  (data/nhl/live_check.json) has not been run — run it.
+
+Tests: test_nba_live_stats, test_form_check, test_market_anchor (+beats_book),
+test_book_grade (cap wiring). Controls red: qstats_ok not checking the box;
+assists to the shooter; live_check ignoring qstats_ok; K_MAX at 400;
+form_check with one k; beats_book ignoring "used".
+
+---
+
 ## PICK UP HERE — Matchup letters rebuilt on what predicts (NBA: beat-their-projection vs the defense; NHL: the matchup in the number), and chances anchored to DraftKings where it has proven to beat them. 2026-10-29
 
 Izzy: "how do we improve the grading ... and matchup grades as well".
@@ -748,29 +790,5 @@ nba_precompute.py, app/engines/nba_view.py, app/views/NBA_Trends.py,
 app/engines/game_model.py, app/engines/nfl_game_model.py,
 app/engines/nhl_model.py, nfl_precompute.py, mlb_model_precompute.py,
 app/views/Bet_Finder.py, tests (above), HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — NFL props carry NO prices in the saved record; the probe now looks for where they are. 2026-10-25
-
-**Suite 167, FAILING: none.** tests/test_prop_lines_probe.py +1 check
-(control red: the probe no longer counting priced items).
-
-MEASURED 10-25 5 AM (data/props/nfl/2026-10-25.json, 12 games, "ours"
-captured on all 12): 0 of 16,883 NFL items carry a price — totals,
-"N+" ladders, anytime TD, 1Q / 1H, all lines only. (NHL / NBA / MLB
-items carry odds.american.) So the NFL Bet Finder opens on DraftKings'
-LINE with the price to type, and NFL cannot be graded against the book
-until prices are found. The ladder never sits at the total's own line
-(0 of 400 NFL players), so it cannot stand in for the main price.
-
-prop_lines_probe.py now prints, per provider, how many items carry an
-odds block, ONE FULL ITEM of each of the first 6 types, and four query
-variants (none, region=us, region=nj, page 2) with their priced counts.
-NEXT: run "Prop lines probe"; if a variant or another field carries NFL
-prices, parse it in book_props.parse; if none, say so on the NFL rows.
-
-FILES: prop_lines_probe.py, tests/test_prop_lines_probe.py, HANDOFF.md,
-HANDOFF_ARCHIVE.md
 
 ---

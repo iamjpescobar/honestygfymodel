@@ -130,57 +130,88 @@ def fit(rows, pbp_games, fit_window, test_window):
 
 
 # ----------------------------------------------------------------------
-# The Live page, tested (10-21): at the end of the 1st, 2nd and 3rd
-# quarter of every test-window game with play-by-play, what would the
-# Live page have said a player's chance was of going over HIS points line
-# (his last-10 average at the half point) — and what happened? Paired
+# The Live page, tested (10-21; every stat 10-29): at the end of the 1st,
+# 2nd and 3rd quarter of every test-window game with play-by-play, what
+# would the Live page have said a player's chance was of going over HIS
+# line (his last-10 average at the half point) — and what happened? Paired
 # against a naive live read: his own average before the game, cut to the
-# time left, plus what he has (Poisson). Points only: the play-by-play
-# carries points per quarter, not rebounds or assists.
+# time left, plus what he has (Poisson). Points from "qpts"; rebounds,
+# assists and threes from "qstats" — only in games whose play-by-play
+# counts matched the box score for every player ("qstats_ok"); the combos
+# from their parts when every part is there.
 # ----------------------------------------------------------------------
 CHECKPOINTS = ((1, 0.75), (2, 0.5), (3, 0.25))
+LIVE_STATS = ("pts", "reb", "ast", "tpm", "pra", "pr", "pa", "ra")
+
+
+def _quarters(g, pid, stat):
+    """[q1, q2, q3, q4] for one player's stat in one parsed game, or None
+    when the play-by-play can't vouch for it."""
+    if stat == "pts":
+        return (g.get("qpts") or {}).get(pid, [0, 0, 0, 0]) if g.get("lines") else None
+    if stat in nm.COMBOS:
+        parts = [_quarters(g, pid, s_) for s_ in nm.COMBOS[stat]]
+        if any(x is None for x in parts):
+            return None
+        return [sum(x[k] for x in parts) for k in range(4)]
+    if stat not in (g.get("qstats_ok") or []):
+        return None
+    return (((g.get("qstats") or {}).get(pid) or {}).get(stat) or [0, 0, 0, 0, 0])[:4]
 
 
 def live_check(rows, pbp_games, sizes, test_lo):
-    """{"pts": {n, model_brier, naive_brier, verdict, calibration,
-    by_checkpoint}} or None."""
+    """{stat: {n, model_brier, naive_brier, verdict, calibration,
+    by_checkpoint}} for every stat with 500+ quarter-end calls, or None."""
     from engines import live_props as lp
-    qq = {}
-    cov = set()
+    byg = {}
     for g in pbp_games or []:
-        if g.get("lines"):
-            for t in (g.get("home"), g.get("away")):
-                cov.add((str(t), g.get("date")))
-        for pid, q in (g.get("qpts") or {}).items():
-            qq[(str(pid), g.get("date"))] = q
-    model, naive, by = [], [], {}
+        for t in (g.get("home"), g.get("away")):
+            byg[(str(t), g.get("date"))] = g
+    acc = {st: ([], [], {}) for st in LIVE_STATS}
     for pid, g, pr, hist in rows:
-        if g[0] < test_lo or (str(g[1]), g[0]) not in cov:
+        if g[0] < test_lo:
             continue
-        y = nm.val(g, "pts")
-        hv = [nm.val(h, "pts") for h in hist if nm.val(h, "min")]
-        hv = [v for v in hv if v is not None]
-        if y is None or len(hv) < nm.MIN_PRIOR_GAMES:
+        pg = byg.get((str(g[1]), g[0]))
+        if not pg:
             continue
-        line = nm.half_line(hv[-10:])
-        q = qq.get((str(pid), g[0]), [0, 0, 0, 0])
-        avg = sum(hv) / len(hv)
-        for k, f in CHECKPOINTS:
-            have = sum(q[:k])
-            ch, nd = lp.nba_chance(pr["mu"]["pts"], (sizes or {}).get("pts"), line, have, f)
-            if ch is None or nd <= 0:
-                continue                       # already over: nothing left to price
-            nv_ = lp.over_chance(mm.poisson_pmf(avg * f, max(30, int(avg * f * 4) + 15)), nd)
-            hit = 1 if y > line else 0
-            model.append((ch, hit))
-            naive.append((nv_, hit))
-            by.setdefault(k, []).append((ch, hit))
-    if len(model) < 500:
-        return None
-    a, b = mm.score_predictions(model), mm.score_predictions(naive)
-    return {"pts": {"n": a["n"], "model_brier": a["brier"], "naive_brier": b["brier"],
-                    "verdict": mm.paired_verdict([(p - y) ** 2 for p, y in model],
-                                                 [(p - y) ** 2 for p, y in naive]),
-                    "calibration": mm.calibration_bins(model),
-                    "by_checkpoint": {f"after Q{k}": mm.score_predictions(v)
-                                      for k, v in sorted(by.items())}}}
+        for st in LIVE_STATS:
+            q = _quarters(pg, str(pid), st)
+            y = nm.val(g, st)
+            if q is None or y is None:
+                continue
+            hv = [nm.val(h, st) for h in hist if nm.val(h, "min")]
+            hv = [v for v in hv if v is not None]
+            if len(hv) < nm.MIN_PRIOR_GAMES:
+                continue
+            line = nm.half_line(hv[-10:])
+            avg = sum(hv) / len(hv)
+            mu_ = pr.get("mu") or {}
+            mu_st = mu_.get(st)
+            if mu_st is None and st in nm.COMBOS:
+                parts = [mu_.get(s_) for s_ in nm.COMBOS[st]]
+                mu_st = None if None in parts else sum(parts)
+            if mu_st is None:
+                continue
+            model, naive, by = acc[st]
+            for k, f in CHECKPOINTS:
+                have = sum(q[:k])
+                ch, nd = lp.nba_chance(mu_st, (sizes or {}).get(st), line, have, f)
+                if ch is None or nd <= 0:
+                    continue                   # already over: nothing left to price
+                nv_ = lp.over_chance(mm.poisson_pmf(avg * f, max(30, int(avg * f * 4) + 15)), nd)
+                hit = 1 if y > line else 0
+                model.append((ch, hit))
+                naive.append((nv_, hit))
+                by.setdefault(k, []).append((ch, hit))
+    out = {}
+    for st, (model, naive, by) in acc.items():
+        if len(model) < 500:
+            continue
+        a, b = mm.score_predictions(model), mm.score_predictions(naive)
+        out[st] = {"n": a["n"], "model_brier": a["brier"], "naive_brier": b["brier"],
+                   "verdict": mm.paired_verdict([(p - y) ** 2 for p, y in model],
+                                                [(p - y) ** 2 for p, y in naive]),
+                   "calibration": mm.calibration_bins(model),
+                   "by_checkpoint": {f"after Q{k}": mm.score_predictions(v)
+                                     for k, v in sorted(by.items())}}
+    return out or None

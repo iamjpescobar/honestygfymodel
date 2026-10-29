@@ -385,6 +385,35 @@ def _wf_logloss(finals, k, dispersion, **kw):
     return sum(mm.log_loss(p["p_home"], p["y"]) for p in preds) / len(preds)
 
 
+# The shrink search's upper end (10-29). It was 400 games, and the NHL
+# goals fit sat ON it (k = 400, carryover 1.0): a fit pinned to its edge
+# may want more than it was allowed. 5,000 is far past any season, so the
+# edge can no longer decide the answer; inside the old range nothing moves.
+K_MAX = 5000.0
+FORM_K = 20.0      # the "this season's form" comparison (form_check)
+
+
+def form_check(finals, params, prior_totals=None, prior_league=None):
+    """Walk-forward on this season's games: the fitted setting against a
+    "current form" one (k = FORM_K — a team's own games take over within
+    about twenty), paired log loss per game. Reported nightly so a model
+    leaning on last season shows whether this season's form would have
+    called the games better; the fit itself already picks what does."""
+    finals = clean_finals(finals)
+    if len(finals) < 20 or not params:
+        return None
+    kw = {"prior_totals": prior_totals, "prior_league": prior_league,
+          "carryover": params.get("carryover")}
+    a = walk_forward(finals, params["shrink_k"], params.get("dispersion"), **kw)
+    b = walk_forward(finals, FORM_K, params.get("dispersion"), **kw)
+    la = [mm.log_loss(p["p_home"], p["y"]) for p in a]
+    lb = [mm.log_loss(p["p_home"], p["y"]) for p in b]
+    return {"n": len(la), "fitted_k": params["shrink_k"], "form_k": FORM_K,
+            "fitted_log_loss": round(sum(la) / len(la), 4) if la else None,
+            "form_log_loss": round(sum(lb) / len(lb), 4) if lb else None,
+            "verdict": mm.paired_verdict(la, lb)}
+
+
 def fit(finals, prior_totals=None, prior_league=None, fit_carryover=False,
         carryover=None):
     """Fit shrink_k (and carryover, if asked) by walk-forward log loss,
@@ -402,7 +431,7 @@ def fit(finals, prior_totals=None, prior_league=None, fit_carryover=False,
 
     def fit_k(disp, carry):
         f = lambda lk: -_wf_logloss(finals, exp(lk), disp, carryover=carry, **kw)
-        return exp(mm.golden_max(f, log(0.5), log(400.0), iters=40))
+        return exp(mm.golden_max(f, log(0.5), log(K_MAX), iters=40))
 
     carry = carryover if carryover is not None else (0.0 if prior_totals else None)
     k = fit_k(None, carry)
@@ -513,8 +542,14 @@ def build(finals, prior_finals=None, fit_carryover=True):
     # labelled with its date range.
     report = validate(fit_on, params) if fit_season == "prior" else validate(
         finals, params, prior_totals, prior_league)
+    try:
+        fc = form_check(finals, params, prior_totals, prior_league) \
+            if fit_season == "current" else None
+    except Exception:  # noqa: BLE001 — a report, never the model
+        fc = None
     return {
         "params": params,
+        "form_check": fc,
         "league": consts,
         "rates": {t: {"off": round(o, 4), "def": round(d, 4),
                       "gp": (team_totals(finals).get(t) or {}).get("gp", 0)}
@@ -632,7 +667,7 @@ def fit_volume(finals, prior_finals=None):
         return -sum((p["mu_h"] - p["hs"]) ** 2 + (p["mu_a"] - p["as"]) ** 2
                     for p in preds) / len(preds)
 
-    k = exp(mm.golden_max(neg_mse, log(0.5), log(400.0), iters=40))
+    k = exp(mm.golden_max(neg_mse, log(0.5), log(K_MAX), iters=40))
     base = finals if finals else fit_on
     consts = league_constants(base)
     prior_totals = prior_league = None

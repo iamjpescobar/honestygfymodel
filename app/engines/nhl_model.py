@@ -1317,6 +1317,7 @@ def build(current_finals, prior, current_skaters=None, current_id_of=None, slate
     return {
         "blend": goal["blend"],
         "params": goal["params"], "league": goal["league"], "validation": goal["validation"],
+        "form_check": goal.get("form_check"),
         "shots": {"params": (shots or {}).get("params"),
                   "league": (shots or {}).get("league"), "dispersion": shot_disp},
         "save_prior": {"mean": save_prior[0], "strength_shots": save_prior[1]},

@@ -15,6 +15,8 @@ Negative controls, confirmed red by exit code when written (rule 4):
   - the gate ignoring MIN_TEST -> "too few test lines: not used" fails
   - anchoring with one price only (book chance with the vig in) -> "no other
     side: the chance is left alone" fails
+  - beats_book ignoring whether the anchor is used -> "past the THIN cap only
+    when the anchor is used AND beat DraftKings' own" fails
 """
 import random
 import sys
@@ -85,6 +87,15 @@ check("the main-line b on DraftKings' line; the alternate fit off it",
       ma.b_for(card, "nba", "pts") == 0.2 and ma.b_for(card, "nba", "pts", main=False) is None
       and ma.b_for(None, "nba", "pts") is None)
 
+card2 = {"anchor": {"nba": {"pts": {"used": 0.2, "vs_book": {"verdict": "beats"}},
+                            "reb": {"used": 0.2, "vs_book": {"verdict": "thin"}},
+                            "ast": {"used": None, "vs_book": {"verdict": "beats"}}}}}
+check("past the THIN cap only when the anchor is used AND beat DraftKings' own",
+      ma.beats_book(card2, "nba", "pts") and not ma.beats_book(card2, "nba", "reb")
+      and not ma.beats_book(card2, "nba", "ast") and not ma.beats_book(None, "nba", "pts"))
+check("the Bet Finder lifts the cap only for anchored calls that earned it",
+      "_anc and _anchor_beats(sport, stat, _main)" in
+      (ROOT / "app" / "views" / "Bet_Finder.py").read_text())
 ch, a = bf.anchor_chance(0.30, -110, -110, 0.0)
 check("both prices in: the chance moves to the book's de-vigged chance",
       a and abs(ch - 0.5) < 1e-6)

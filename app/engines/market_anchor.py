@@ -103,6 +103,16 @@ def b_for(card, league, stat, main=True):
     return (x or {}).get("used")
 
 
+def beats_book(card, league, stat, main=True):
+    """True only when the market's anchor is IN USE and its anchored chances
+    beat DraftKings' own on the walk-forward test — then the market's THIN
+    cap (book_grade.market_status "behind" / "no_edge") no longer applies to
+    anchored calls (10-29)."""
+    fits = (((card or {}).get("anchor") or {}).get(league) or {})
+    x = fits.get(stat if main else stat + "*") or {}
+    return x.get("used") is not None and (x.get("vs_book") or {}).get("verdict") == "beats"
+
+
 def line(league, fitted):
     return (f"  [verify] DRAFTKINGS ANCHOR {league}: " + "; ".join(
         f"{k} b={x['b']} (keeps {100 * (x['b'] or 0):.0f}% of our disagreement; test vs served "

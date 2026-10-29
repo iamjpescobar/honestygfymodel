@@ -142,7 +142,8 @@ check("no verdict before 300 graded lines; then beats or no edge proven",
       and bg.market_status(None, "nhl", "sog")["status"] == "grading" and bg.MIN_GRADED == 300)
 bfp = (ROOT / "app" / "views" / "Bet_Finder.py").read_text(encoding="utf-8")
 check("a market with no edge proven (or behind the book) is capped at THIN, and labelled",
-      'if _mk["status"] in ("no_edge", "behind"):' in bfp and "BEHIND DraftKings" in bfp and "_sup = dict(_sup or {}, untested=True)" in bfp
+      'if _mk["status"] in ("no_edge", "behind") and not (' in bfp
+      and "_anc and _anchor_beats(sport, stat, _main)" in bfp and "BEHIND DraftKings" in bfp and "_sup = dict(_sup or {}, untested=True)" in bfp
       and "NO EDGE PROVEN vs DraftKings" in bfp and "BEATS DRAFTKINGS" in bfp)
 app_ = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
 check("the Site vs DraftKings page is in every sport's nav",

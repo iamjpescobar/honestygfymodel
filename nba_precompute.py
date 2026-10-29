@@ -735,12 +735,17 @@ def main(today=None):
             lc = nq.live_check(ctx_rows, all_pbp, model.get("sizes"), model["test_window"][0])
             if lc:
                 model["live_check"] = lc
-                L_ = lc["pts"]
-                print(f"  [verify] NBA live points test: n={L_['n']} quarter-end calls, model "
-                      f"{L_['model_brier']} vs naive {L_['naive_brier']} -> "
-                      f"{L_['verdict']['verdict']} (z={L_['verdict']['z']}); "
-                      + ", ".join(f"{k} brier {v['brier']}"
-                                  for k, v in L_["by_checkpoint"].items()))
+                for _st, L_ in lc.items():
+                    print(f"  [verify] NBA live {_st} test: n={L_['n']} quarter-end calls, "
+                          f"model {L_['model_brier']} vs naive {L_['naive_brier']} -> "
+                          f"{L_['verdict']['verdict']} (z={L_['verdict']['z']}); "
+                          + ", ".join(f"{k} brier {v['brier']}"
+                                      for k, v in L_["by_checkpoint"].items()))
+            print("  [verify] NBA play-by-play stat counts that match the box score: "
+                  + ", ".join(f"{_s} in {sum(1 for _g in all_pbp if _s in (_g.get('qstats_ok') or []))}"
+                              for _s in ("reb", "ast", "tpm"))
+                  + f" of {len(all_pbp)} games (0 for last season until the 'NBA prior "
+                    f"play-by-play' workflow is re-run)")
             if q1_block:
                 model["q1"] = q1_block["params"]
                 model.setdefault("sizes", {})["q1pts"] = q1_block["size"]

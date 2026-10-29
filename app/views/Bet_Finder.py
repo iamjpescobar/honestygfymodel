@@ -367,6 +367,19 @@ MATCHUP_HOW = {
 }
 
 
+def _anchor_beats(sport, stat, main):
+    """True when this market's anchored chances beat DraftKings' own on the
+    walk-forward test — the market has then earned its way past THIN."""
+    try:
+        from engines import book_grade as _bg
+        from engines import market_anchor as _ma
+        from engines import slate_guard as _sg
+        return _ma.beats_book(_bg.load_scorecard([_sg._PUBLISHED, _sg._REPO]),
+                              sport.lower(), stat, main)
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def _grade_of(r, stat, side="Over"):
     """The A-F matchup letter for this row's stat, for the SIDE picked
     (10-26, engines/matchup_grade): the letter is about the over, so an
@@ -637,8 +650,11 @@ else:
                        "line_label": f"{side[0]}{ln:g}"}
                 ref.append(row)
                 _sup = bf.support_at(r, stat, ln, grp["markets"], grp["cal"])
-                if _mk["status"] in ("no_edge", "behind"):
+                if _mk["status"] in ("no_edge", "behind") and not (
+                        _anc and _anchor_beats(sport, stat, _main)):
                     # graded against DraftKings and did not beat it: THIN at most
+                    # — unless this chance is ANCHORED and the anchored chances
+                    # beat DraftKings' own on their walk-forward test (10-29)
                     _sup = dict(_sup or {}, untested=True)
                 j = bf.judge(ch, _yp, _stk, _os, _sup)
                 if j:

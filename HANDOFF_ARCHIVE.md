@@ -10,6 +10,32 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — NFL props carry NO prices in the saved record; the probe now looks for where they are. 2026-10-25
+
+**Suite 167, FAILING: none.** tests/test_prop_lines_probe.py +1 check
+(control red: the probe no longer counting priced items).
+
+MEASURED 10-25 5 AM (data/props/nfl/2026-10-25.json, 12 games, "ours"
+captured on all 12): 0 of 16,883 NFL items carry a price — totals,
+"N+" ladders, anytime TD, 1Q / 1H, all lines only. (NHL / NBA / MLB
+items carry odds.american.) So the NFL Bet Finder opens on DraftKings'
+LINE with the price to type, and NFL cannot be graded against the book
+until prices are found. The ladder never sits at the total's own line
+(0 of 400 NFL players), so it cannot stand in for the main price.
+
+prop_lines_probe.py now prints, per provider, how many items carry an
+odds block, ONE FULL ITEM of each of the first 6 types, and four query
+variants (none, region=us, region=nj, page 2) with their priced counts.
+NEXT: run "Prop lines probe"; if a variant or another field carries NFL
+prices, parse it in book_props.parse; if none, say so on the NFL rows.
+
+FILES: prop_lines_probe.py, tests/test_prop_lines_probe.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
+---
+
 ## PICK UP HERE — Bet Finder says WHY under every row; NHL goals open on ANYTIME goalscorer (was 2+ goals). 2026-10-24 (5)
 
 **Suite 167, FAILING: none.** New tests/test_bet_finder_why.py (2
