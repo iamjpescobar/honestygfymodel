@@ -5638,6 +5638,27 @@
    "stat": "sog",
    "team": "Boston Bruins",
    "why": "3.33 shots and 1.23 points a game over 90 games (this season + last, pulled toward the forward average) \u00b7 ice time 20.5 min over his last 5 vs 20.5 on his rate \u2192 shots x1.00 \u00b7 STL matchup sets tonight's shot volume x0.97 and scoring x0.97 (in the number) \u00b7 STL allows the 7th-fewest of 32 shots to wingers (10.1 a game vs 10.5; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.21 expected shots, 1.19 expected points \u00b7 PP1 by minutes (4.4 PP min a game over his last 5; context, not in the number)"
+  },
+  {
+   "at_least": 2,
+   "date": "2026-10-29",
+   "fair": -417,
+   "game": "Winnipeg Jets @ Tampa Bay Lightning",
+   "game_id": "401892601",
+   "label": "SOG O1.5",
+   "logged_at": "2026-10-29T16:47:00+00:00",
+   "market": "sog2",
+   "matchup": "Matchup grade D \u2014 WPG allows the 8th-fewest of 32 shots on goal to wingers (10.1 a game vs 10.5 league, -4%; this season 21st of 32 over 12 games, last season 26th of 32; ranked on this season + last, blended). That ranking is a stable trait (split-half 0.70).",
+   "matchup_tier": "tough",
+   "p": 0.8074,
+   "p_cal": 0.8067,
+   "player": "Nikita Kucherov",
+   "player_id": "2563060",
+   "result": null,
+   "start": "2026-10-29T19:00:00-04:00",
+   "stat": "sog",
+   "team": "Tampa Bay Lightning",
+   "why": "2.97 shots and 1.54 points a game over 87 games (this season + last, pulled toward the forward average) \u00b7 ice time 20.4 min over his last 5 vs 20.4 on his rate \u2192 shots x1.00 \u00b7 WPG matchup sets tonight's shot volume x1.07 and scoring x1.05 (in the number) \u00b7 WPG allows the 8th-fewest of 32 shots to wingers (10.1 a game vs 10.5; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.18 expected shots, 1.61 expected points \u00b7 PP1 by minutes (3.9 PP min a game over his last 5; context, not in the number)"
   }
  ]
 }
