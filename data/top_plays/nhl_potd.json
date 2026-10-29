@@ -419,6 +419,7 @@
    "why": "3.50 shots and 1.32 points a game over 92 games (this season + last, pulled toward the forward average) \u00b7 ice time 23.4 min over his last 5 vs 21.5 on his rate \u2192 shots x1.04 \u00b7 BUF matchup sets tonight's shot volume x1.03 and scoring x0.98 (in the number) \u00b7 BUF allows the 16th-fewest of 32 shots to centres (9.5 a game vs 9.6; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.75 expected shots, 1.39 expected points \u00b7 PP1 by minutes (4.7 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 2.0,
    "at_least": 1,
    "date": "2026-10-28",
    "fair": -447,
@@ -433,11 +434,32 @@
    "p_cal": 0.8171,
    "player": "Connor McDavid",
    "player_id": "3895074",
-   "result": null,
+   "result": "hit",
    "start": "2026-10-28T20:30:00-04:00",
    "stat": "pts",
    "team": "Edmonton Oilers",
    "why": "3.52 shots and 1.70 points a game over 94 games (this season + last, pulled toward the forward average) \u00b7 ice time 23.9 min over his last 5 vs 23.1 on his rate \u2192 shots x1.02 \u00b7 CGY matchup sets tonight's shot volume x1.13 and scoring x1.04 (in the number) \u00b7 CGY allows the 6th-most of 32 shots to centres (10.2 a game vs 9.6; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 4.05 expected shots, 1.82 expected points \u00b7 PP1 by minutes (3.8 PP min a game over his last 5; context, not in the number)"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-10-29",
+   "fair": -423,
+   "game": "Vancouver Canucks @ San Jose Sharks",
+   "game_id": "401892610",
+   "label": "Pts O0.5",
+   "logged_at": "2026-10-29T14:57:12+00:00",
+   "market": "pt1",
+   "matchup": null,
+   "matchup_tier": null,
+   "p": 0.8301,
+   "p_cal": 0.8087,
+   "player": "Macklin Celebrini",
+   "player_id": "5206628",
+   "result": null,
+   "start": "2026-10-29T22:00:00-04:00",
+   "stat": "pts",
+   "team": "San Jose Sharks",
+   "why": "3.50 shots and 1.31 points a game over 93 games (this season + last, pulled toward the forward average) \u00b7 ice time 23.0 min over his last 5 vs 21.5 on his rate \u2192 shots x1.03 \u00b7 VAN matchup sets tonight's shot volume x1.20 and scoring x1.29 (in the number) \u00b7 VAN allows the 3rd-most of 32 shots to centres (10.3 a game vs 9.6; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 4.33 expected shots, 1.77 expected points \u00b7 PP1 by minutes (3.8 PP min a game over his last 5; context, not in the number)"
   }
  ]
 }
