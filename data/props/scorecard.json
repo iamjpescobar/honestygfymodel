@@ -149,140 +149,140 @@
   },
   "nba": {
    "ast": {
-    "n": 237,
-    "brier_site": 0.2565,
-    "brier_book": 0.2383,
+    "n": 261,
+    "brier_site": 0.2525,
+    "brier_book": 0.2376,
     "verdict": {
-     "n": 237,
-     "diff": -0.01817,
-     "se": 0.00918,
-     "z": -1.98,
+     "n": 261,
+     "diff": -0.0149,
+     "se": 0.00852,
+     "z": -1.75,
      "verdict": "fails"
     },
     "flagged": {
-     "n": 198,
-     "hits": 101,
-     "units": -12.86,
-     "roi": -0.065
+     "n": 218,
+     "hits": 114,
+     "units": -10.12,
+     "roi": -0.046
     }
    },
    "ast*": {
-    "n": 97,
-    "brier_site": 0.2147,
-    "brier_book": 0.198,
+    "n": 110,
+    "brier_site": 0.209,
+    "brier_book": 0.191,
     "verdict": {
-     "n": 97,
-     "diff": -0.01669,
-     "se": 0.00997,
-     "z": -1.67,
+     "n": 110,
+     "diff": -0.018,
+     "se": 0.00899,
+     "z": -2.0,
      "verdict": "fails"
     },
     "flagged": {
-     "n": 18,
+     "n": 20,
      "hits": 5,
-     "units": -2.6,
-     "roi": -0.144
+     "units": -4.6,
+     "roi": -0.23
     }
    },
    "pa": {
-    "n": 237,
-    "brier_site": 0.2783,
-    "brier_book": 0.2493,
+    "n": 265,
+    "brier_site": 0.2753,
+    "brier_book": 0.2494,
     "verdict": {
-     "n": 237,
-     "diff": -0.02899,
-     "se": 0.01009,
-     "z": -2.87,
+     "n": 265,
+     "diff": -0.02592,
+     "se": 0.00926,
+     "z": -2.8,
      "verdict": "fails"
     },
     "flagged": {
-     "n": 208,
-     "hits": 98,
-     "units": -24.22,
-     "roi": -0.116
+     "n": 231,
+     "hits": 111,
+     "units": -22.9,
+     "roi": -0.099
     }
    },
    "pa*": {
-    "n": 135,
-    "brier_site": 0.1866,
-    "brier_book": 0.1906,
+    "n": 139,
+    "brier_site": 0.1874,
+    "brier_book": 0.1942,
     "verdict": {
-     "n": 135,
-     "diff": 0.00392,
-     "se": 0.00994,
-     "z": 0.39,
+     "n": 139,
+     "diff": 0.00678,
+     "se": 0.00981,
+     "z": 0.69,
      "verdict": "thin"
     },
     "flagged": {
-     "n": 19,
-     "hits": 12,
-     "units": 4.53,
-     "roi": 0.238
+     "n": 21,
+     "hits": 14,
+     "units": 8.75,
+     "roi": 0.417
     }
    },
    "pr": {
-    "n": 308,
-    "brier_site": 0.2827,
+    "n": 346,
+    "brier_site": 0.2761,
     "brier_book": 0.2498,
     "verdict": {
-     "n": 308,
-     "diff": -0.03289,
-     "se": 0.00885,
-     "z": -3.72,
+     "n": 346,
+     "diff": -0.02634,
+     "se": 0.0081,
+     "z": -3.25,
      "verdict": "fails"
     },
     "flagged": {
-     "n": 265,
-     "hits": 115,
-     "units": -50.2,
-     "roi": -0.189
+     "n": 297,
+     "hits": 136,
+     "units": -42.93,
+     "roi": -0.145
     }
    },
    "pr*": {
-    "n": 67,
-    "brier_site": 0.1929,
-    "brier_book": 0.2035,
+    "n": 72,
+    "brier_site": 0.1911,
+    "brier_book": 0.2007,
     "verdict": {
-     "n": 67,
-     "diff": 0.0106,
-     "se": 0.01566,
-     "z": 0.68,
+     "n": 72,
+     "diff": 0.00961,
+     "se": 0.01458,
+     "z": 0.66,
      "verdict": "thin"
     },
     "flagged": {
-     "n": 12,
+     "n": 13,
      "hits": 8,
-     "units": 8.4,
-     "roi": 0.7
+     "units": 7.4,
+     "roi": 0.569
     }
    },
    "pra": {
-    "n": 240,
-    "brier_site": 0.2828,
+    "n": 267,
+    "brier_site": 0.2794,
     "brier_book": 0.2499,
     "verdict": {
-     "n": 240,
-     "diff": -0.03295,
-     "se": 0.01089,
-     "z": -3.03,
+     "n": 267,
+     "diff": -0.02943,
+     "se": 0.01008,
+     "z": -2.92,
      "verdict": "fails"
     },
     "flagged": {
-     "n": 209,
-     "hits": 97,
-     "units": -27.03,
-     "roi": -0.129
+     "n": 231,
+     "hits": 110,
+     "units": -24.71,
+     "roi": -0.107
     }
    },
    "pra*": {
-    "n": 139,
-    "brier_site": 0.1968,
-    "brier_book": 0.2013,
+    "n": 151,
+    "brier_site": 0.1916,
+    "brier_book": 0.198,
     "verdict": {
-     "n": 139,
-     "diff": 0.00447,
-     "se": 0.01168,
-     "z": 0.38,
+     "n": 151,
+     "diff": 0.0064,
+     "se": 0.01082,
+     "z": 0.59,
      "verdict": "thin"
     },
     "flagged": {
@@ -293,32 +293,32 @@
     }
    },
    "pts": {
-    "n": 343,
-    "brier_site": 0.2714,
-    "brier_book": 0.2511,
+    "n": 386,
+    "brier_site": 0.2675,
+    "brier_book": 0.2509,
     "verdict": {
-     "n": 343,
-     "diff": -0.02031,
-     "se": 0.00694,
-     "z": -2.93,
+     "n": 386,
+     "diff": -0.01654,
+     "se": 0.00634,
+     "z": -2.61,
      "verdict": "fails"
     },
     "flagged": {
-     "n": 291,
-     "hits": 136,
-     "units": -34.03,
-     "roi": -0.117
+     "n": 322,
+     "hits": 154,
+     "units": -30.84,
+     "roi": -0.096
     }
    },
    "pts*": {
-    "n": 35,
-    "brier_site": 0.2534,
-    "brier_book": 0.2094,
+    "n": 38,
+    "brier_site": 0.2446,
+    "brier_book": 0.2031,
     "verdict": {
-     "n": 35,
-     "diff": -0.04404,
-     "se": 0.01447,
-     "z": -3.04,
+     "n": 38,
+     "diff": -0.04151,
+     "se": 0.0134,
+     "z": -3.1,
      "verdict": "fails"
     },
     "flagged": {
@@ -329,32 +329,32 @@
     }
    },
    "ra": {
-    "n": 229,
-    "brier_site": 0.2643,
-    "brier_book": 0.2484,
+    "n": 255,
+    "brier_site": 0.2642,
+    "brier_book": 0.2474,
     "verdict": {
-     "n": 229,
-     "diff": -0.01588,
-     "se": 0.0111,
-     "z": -1.43,
+     "n": 255,
+     "diff": -0.0168,
+     "se": 0.01026,
+     "z": -1.64,
      "verdict": "fails"
     },
     "flagged": {
-     "n": 210,
-     "hits": 110,
-     "units": -3.1,
-     "roi": -0.015
+     "n": 233,
+     "hits": 121,
+     "units": -5.62,
+     "roi": -0.024
     }
    },
    "ra*": {
-    "n": 101,
-    "brier_site": 0.2509,
-    "brier_book": 0.2207,
+    "n": 105,
+    "brier_site": 0.245,
+    "brier_book": 0.2164,
     "verdict": {
-     "n": 101,
-     "diff": -0.0302,
-     "se": 0.01831,
-     "z": -1.65,
+     "n": 105,
+     "diff": -0.02867,
+     "se": 0.01764,
+     "z": -1.63,
      "verdict": "fails"
     },
     "flagged": {
@@ -365,32 +365,32 @@
     }
    },
    "reb": {
-    "n": 313,
-    "brier_site": 0.2596,
-    "brier_book": 0.2446,
+    "n": 351,
+    "brier_site": 0.2584,
+    "brier_book": 0.2456,
     "verdict": {
-     "n": 313,
-     "diff": -0.01502,
-     "se": 0.00812,
-     "z": -1.85,
+     "n": 351,
+     "diff": -0.01272,
+     "se": 0.00751,
+     "z": -1.69,
      "verdict": "fails"
     },
     "flagged": {
-     "n": 275,
-     "hits": 138,
-     "units": -21.09,
-     "roi": -0.077
+     "n": 304,
+     "hits": 155,
+     "units": -17.23,
+     "roi": -0.057
     }
    },
    "reb*": {
-    "n": 52,
-    "brier_site": 0.2017,
-    "brier_book": 0.2103,
+    "n": 62,
+    "brier_site": 0.1997,
+    "brier_book": 0.2078,
     "verdict": {
-     "n": 52,
-     "diff": 0.00865,
-     "se": 0.02366,
-     "z": 0.37,
+     "n": 62,
+     "diff": 0.00804,
+     "se": 0.01983,
+     "z": 0.41,
      "verdict": "thin"
     },
     "flagged": {
@@ -401,32 +401,32 @@
     }
    },
    "tpm": {
-    "n": 268,
-    "brier_site": 0.2571,
-    "brier_book": 0.2471,
+    "n": 301,
+    "brier_site": 0.2531,
+    "brier_book": 0.2451,
     "verdict": {
-     "n": 268,
-     "diff": -0.01002,
-     "se": 0.00654,
-     "z": -1.53,
+     "n": 301,
+     "diff": -0.00798,
+     "se": 0.00596,
+     "z": -1.34,
      "verdict": "fails"
     },
     "flagged": {
-     "n": 219,
-     "hits": 114,
-     "units": -6.06,
-     "roi": -0.028
+     "n": 244,
+     "hits": 129,
+     "units": -3.21,
+     "roi": -0.013
     }
    },
    "tpm*": {
-    "n": 65,
-    "brier_site": 0.2206,
-    "brier_book": 0.2178,
+    "n": 74,
+    "brier_site": 0.2216,
+    "brier_book": 0.215,
     "verdict": {
-     "n": 65,
-     "diff": -0.00273,
-     "se": 0.01101,
-     "z": -0.25,
+     "n": 74,
+     "diff": -0.00666,
+     "se": 0.0103,
+     "z": -0.65,
      "verdict": "fails"
     },
     "flagged": {
@@ -474,34 +474,34 @@
   },
   "nba": {
    "A": {
-    "n": 207,
-    "site": 0.4033,
-    "book": 0.493,
-    "actual": 0.4879
+    "n": 232,
+    "site": 0.4038,
+    "book": 0.4919,
+    "actual": 0.4698
    },
    "B": {
-    "n": 181,
-    "site": 0.3838,
-    "book": 0.4961,
-    "actual": 0.4807
+    "n": 212,
+    "site": 0.3867,
+    "book": 0.4936,
+    "actual": 0.4717
    },
    "C": {
-    "n": 209,
-    "site": 0.4124,
-    "book": 0.4964,
-    "actual": 0.5455
+    "n": 349,
+    "site": 0.4215,
+    "book": 0.4968,
+    "actual": 0.49
    },
    "D": {
-    "n": 224,
-    "site": 0.3958,
-    "book": 0.5004,
-    "actual": 0.4598
+    "n": 277,
+    "site": 0.4083,
+    "book": 0.5,
+    "actual": 0.4729
    },
    "F": {
-    "n": 193,
-    "site": 0.3733,
-    "book": 0.4976,
-    "actual": 0.513
+    "n": 201,
+    "site": 0.3766,
+    "book": 0.4982,
+    "actual": 0.5124
    }
   },
   "nfl": {}
@@ -539,60 +539,60 @@
   },
   "nba": {
    "ast": {
-    "n": 108,
-    "ours": 3.78,
-    "actual": 4.21,
-    "line": 4.13,
-    "ratio": 1.115
-   },
-   "pa": {
-    "n": 107,
-    "ours": 19.18,
-    "actual": 21.0,
-    "line": 21.37,
-    "ratio": 1.095
-   },
-   "pr": {
-    "n": 147,
-    "ours": 18.65,
-    "actual": 20.71,
-    "line": 20.34,
+    "n": 132,
+    "ours": 3.84,
+    "actual": 4.27,
+    "line": 4.17,
     "ratio": 1.111
    },
+   "pa": {
+    "n": 135,
+    "ours": 19.27,
+    "actual": 20.69,
+    "line": 21.17,
+    "ratio": 1.074
+   },
+   "pr": {
+    "n": 185,
+    "ours": 18.85,
+    "actual": 20.45,
+    "line": 20.33,
+    "ratio": 1.085
+   },
    "pra": {
-    "n": 106,
-    "ours": 24.15,
-    "actual": 26.42,
-    "line": 26.96,
-    "ratio": 1.094
+    "n": 133,
+    "ours": 24.33,
+    "actual": 26.19,
+    "line": 26.81,
+    "ratio": 1.076
    },
    "pts": {
-    "n": 163,
-    "ours": 13.46,
-    "actual": 14.41,
-    "line": 14.38,
-    "ratio": 1.071
+    "n": 206,
+    "ours": 13.52,
+    "actual": 14.24,
+    "line": 14.28,
+    "ratio": 1.054
    },
    "ra": {
-    "n": 104,
-    "ours": 8.63,
-    "actual": 9.44,
-    "line": 9.57,
-    "ratio": 1.094
+    "n": 130,
+    "ours": 8.76,
+    "actual": 9.54,
+    "line": 9.61,
+    "ratio": 1.089
    },
    "reb": {
-    "n": 151,
-    "ours": 4.96,
-    "actual": 5.54,
-    "line": 5.31,
-    "ratio": 1.117
+    "n": 189,
+    "ours": 5.01,
+    "actual": 5.47,
+    "line": 5.34,
+    "ratio": 1.091
    },
    "tpm": {
-    "n": 128,
+    "n": 161,
     "ours": 1.76,
-    "actual": 1.88,
-    "line": 1.8,
-    "ratio": 1.069
+    "actual": 1.86,
+    "line": 1.79,
+    "ratio": 1.055
    }
   },
   "nfl": {}
