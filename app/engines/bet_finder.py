@@ -66,6 +66,21 @@ def chance_at(row, stat, line, side, markets, calibration):
     return over, raw_over, basis
 
 
+def anchor_chance(chance, price, other, b):
+    """(chance, anchored?) — the chance moved to DraftKings' own (de-vigged
+    from both prices) by the market's learned share b (engines/
+    market_anchor). Unchanged without b or without BOTH prices."""
+    from engines import market_anchor as ma
+    from engines import model_view as mv
+    px, ox = valid_price(price), valid_price(other)
+    if b is None or chance is None or px is None or ox is None:
+        return chance, False
+    book, devig = mv.market_chance(px, ox)
+    if book is None or not devig or not 0 < book < 1:
+        return chance, False
+    return ma.anchored(chance, book, b), True
+
+
 def support_at(row, stat, line, markets, calibration):
     """How well-measured this call is (model_view.support_for) — what the
     guard reads to decide whether the chance may carry STRONG."""

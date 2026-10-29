@@ -154,6 +154,63 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Matchup letters rebuilt on what predicts (NBA: beat-their-projection vs the defense; NHL: the matchup in the number), and chances anchored to DraftKings where it has proven to beat them. 2026-10-29
+
+Izzy: "how do we improve the grading ... and matchup grades as well".
+
+**Measured first (10-29, graded record after 10-28's nightly):**
+- NBA main lines: our over chance averaged 0.397, overs hit 0.503, DK 0.495;
+  calibration slope of our chance 0.31; where our projection disagreed with
+  DK's line the box score followed at 0.08 per unit (3PM 0.91, ast 0.40,
+  pts 0.10, reb 0.02, combos ~0). Widening the NB size did not fix it
+  (Brier 0.2569 -> 0.2554 best). NHL slope 0.92, close to DK.
+- Projection level after the team-minutes fix: 10-28 ours 12.41 vs actual
+  12.64 (x1.02) — near level; OFFERED LEVEL not used (thin).
+
+**1. NBA letters (nba_context.apply_tonight, matchup_grade.nba_grades).**
+Walk-forward on last season (20,333 player-games, residual = actual /
+projection - 1, by letter): ranking the projection's own opponent factor
+(how players did vs their projections against this defense) across the 30
+teams -> pts A +4.7 B +1.8 C -1.3 D -4.3 F -5.1%; reb A +4.8 .. F -8.9; ast
+A +7.4 .. F -7.7; 3PM A +7.3 .. F -9.1. The 10-28 raw "allowed to his
+position a game" letter: pts A +0.4 B +1.6 C -1.4 D -0.9 F -3.3 (weaker, out
+of order). Position split on top of the factor: R2 0.44% -> 0.47% (nothing).
+So the letter is the opponent factor again (as 10-26) but ranked over the
+30 NBA teams (letter_teams: the DvP table's, else ESPN ids 1-30 — 10-26's
+had 33 with exhibition clubs) and A+ .. F-. The G/F/C card stays on the row
+("dvp", context); a stat the factor is not in takes the card's letter.
+NOTE: the 10-28 switch to raw DvP was a step backwards — this undoes it.
+
+**2. NHL letters (nhl_model.letter_cuts / matchup_letter / letter_cards).**
+Walk-forward last season (36,887 skater-games from mid-Nov, vs his baseline
+rate): the team matchup ratio already in the chance (shot ratio for SOG,
+goal ratio for G / A / PTS) sorted best — SOG A +6.0 .. F -9.4, G A +7.5 ..
+F -7.3, A A +8.7 .. F -8.5, PTS A +8.3 .. F -8.1; raw allowed to C/W/D (the
+old letter) SOG A +5.0 .. F -9.3, G out of order (B -5.1); beat-baseline vs
+the defense (team or C/W/D) no better. Letter = tonight's ratio against the
+season's ratios in fifteen equal steps (model["letter_cuts"]); the C/W/D card
+keeps its rank and "position_grade"; badge reads "B+ · x1.04".
+
+**3. DraftKings anchor (engines/market_anchor; fit in book_props_grade ->
+scorecard "anchor"; Bet Finder via bet_finder.anchor_chance).**
+p = logistic(logit(book) + b (logit(ours) - logit(book))), b on 0..1 per
+league / market ("stat" main, "stat*" alternates), walk-forward by date vs
+the SERVED chance, used on "beats" with 150+ test lines; NBA learns from
+10-27 on (SINCE). Applied only with BOTH of DK's prices in (de-vigged). The
+record still stores the model's own chance (never learned from its output);
+THIN caps (market_status) unchanged. 10-29 run: nothing used yet for NBA
+since 10-27 (one night tested); all-history fit had pr / ra used, most
+markets thin (z 1-1.9) — expect them to switch on over the coming week.
+Nightly prints `[verify] DRAFTKINGS ANCHOR <lg>: ... -> USED / not used`.
+
+Tests: test_nba_letters, test_nhl_letters, test_market_anchor (+ updated
+test_matchup_grade). Controls (all red): card letter first again; exhibition
+clubs kept; NHL cuts read upside down; position letter left in place; SOG on
+the goal ratio; anchor b peeking at the scored night; gate without MIN_TEST;
+anchoring with one price.
+
+---
+
 ## PICK UP HERE — A-F letters adjusted for how much of a defense's standing is real (no A or F from a ranking that does not repeat), and split into A+ .. F- so a C still shows its lean. 2026-10-28 (2)
 
 Izzy compared with HOF after the defense-vs-position letters went live
@@ -715,41 +772,5 @@ prices, parse it in book_props.parse; if none, say so on the NFL rows.
 
 FILES: prop_lines_probe.py, tests/test_prop_lines_probe.py, HANDOFF.md,
 HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — Bet Finder says WHY under every row; NHL goals open on ANYTIME goalscorer (was 2+ goals). 2026-10-24 (5)
-
-**Suite 167, FAILING: none.** New tests/test_bet_finder_why.py (2
-controls red: the stat's matchup note dropped; the NHL why no longer
-marking the position split as context); tests/test_book_props.py +1
-(control red: board() dropping a yes market with no target).
-
-WHY (Izzy 4:33 PM: "the bet finder doesn't attack defense or nothing"):
-it did — the Bet Finder prices the model's whole projection — but never
-said so. _why_lines(): under the table, "Why these numbers (n players)"
-(open when prices are typed), each player: line, call, our chance, the
-board's own "why" (NHL: rate, ice time, the opponent's team-level shot /
-goal environment, DvP; NBA: minutes, season / last season, team minutes,
-opponent; NFL / MLB: theirs) + this stat's matchup note. The 1st-period
-and 1Q / 1H rows carry the why too. nhl_model.why_line now marks the
-team-level matchup "(in the number)" and defence-vs-position "context,
-not in the number — the position split did not beat the team-level
-matchup on unseen games" (its docstring always claimed this marking).
-
-ANYTIME GOAL (Izzy 4:42 PM, screenshot: Goals rows opened at 1.5 at
-+1100 / +2000 — "i am researching for anytime goal scorer"): MEASURED in
-the 10-24 record — all 431 NHL "Anytime Goalscorer" items (and 2+ / 3+,
-and NFL anytime TD) carry NO target, so board() dropped them and lookup
-fell back to the ladder ("Goals Milestones" starts at 2+). Now a yes
-market with no target sits at its own line (YES_LINE: anytime 0.5, 2+
-1.5, 3+ 2.5) and, with no total, IS the main line. Real board: 399 NHL
-players open on anytime at 0.5. NFL anytime TD items carry no price in
-this feed — none shown (honest blank). The grader captures anytime goal
-from tonight (one-sided -> graded as "g*").
-
-FILES: app/engines/book_props.py, app/engines/nhl_model.py,
-app/views/Bet_Finder.py, tests/test_bet_finder_why.py (NEW),
-tests/test_book_props.py, HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

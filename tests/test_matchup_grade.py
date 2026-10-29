@@ -97,12 +97,12 @@ teams = [str(i) for i in range(10)]
 bk = FakeBook({t: 0.9 + 0.02 * int(t) for t in teams})        # team 9 allows the most points
 G9 = mg.nba_grades(bk, "9", "G", "2026-10-26", teams, nm.COMBOS, bk.mean)
 G0 = mg.nba_grades(bk, "0", "G", "2026-10-26", teams, nm.COMBOS, bk.mean)
-check("the NBA opponent is ranked over every team", G9["pts"]["grade"] == "A"
-      and G9["pts"]["rank"] == 1 and G9["pts"]["of"] == 10 and G0["pts"]["grade"] == "F")
-check("assists run the other way for the same opponent", G9["ast"]["grade"] == "F")
+check("the NBA opponent is ranked over every team", G9["pts"]["grade"] == "A+"
+      and G9["pts"]["rank"] == 1 and G9["pts"]["of"] == 10 and G0["pts"]["grade"] == "F-")
+check("assists run the other way for the same opponent", mg.base(G9["ast"]["grade"]) == "F")
 check("a stat whose factor is the same for every team gets no grade", "reb" not in G9)
 check("combos rank the mean-weighted factor of their parts",
-      G9["pr"]["grade"] == "A" and "pra" in G9)
+      mg.base(G9["pr"]["grade"]) == "A" and "pra" in G9)
 rows = [{"pos": "PG", "min": 34, "mu": {"pts": 25.0, "reb": 5.0, "ast": 7.0, "tpm": 3.0,
                                          "pra": 37.0, "pr": 30.0, "pa": 32.0, "ra": 12.0}}]
 ob = nc.OppBook({"pts": {"hl": 30, "k": 10, "by_pos": False}}, {"pts": 1.0})
@@ -110,7 +110,8 @@ for t, y in (("A", 40), ("B", 10), ("C", 20)):
     ob.add(t, "G", "2026-10-20", ["2026-10-20", "X", t, 30, y, 5, 5, 2], {"pts": 20.0})
 nc.apply_tonight(rows, "A", "AAA", ob, [], [], {"opp": ob.cfg}, "2026-10-26")
 check("tonight's NBA rows carry their letters (the softest of three is an A)",
-      rows[0]["grade"].get("pts") == "A" and rows[0]["ctx"]["grade"]["pts"]["of"] == 3)
+      rows[0]["grade"].get("pts") == "A+" and rows[0]["ctx"]["grade"]["pts"]["of"] == 3
+      and rows[0]["ctx"]["grade"]["pts"]["basis"] == "beat-projection")
 
 # --- the check: graded lines carry their letter ----------------------------------------
 snap = bp.merge_snapshot({}, {"e1": bp.parse([
@@ -151,7 +152,7 @@ check("the capture saves the letter beside the chance; the grader reports per le
 check("the boards colour by letter", 'GRADE_STYLE = {' in src["app/engines/model_view.py"])
 _nbp = (ROOT / "nba_precompute.py").read_text(encoding="utf-8")
 check("the NBA nightly says, per stat, whether its letters are by position (10-28)",
-      'NBA matchup letters: defense vs position' in _nbp
+      'NBA position context cards: defense vs position' in _nbp
       and 'dvp=dvp)' in _nbp and 'by position (G/F/C)' in _nbp)
 
 if failures:

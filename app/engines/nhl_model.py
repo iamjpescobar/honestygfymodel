@@ -932,6 +932,77 @@ def why_line(name, pos, r, env, toi, opp_abbr, dvp_card_sog, exp_sog, exp_pts):
 # ----------------------------------------------------------------------
 # Validation
 # ----------------------------------------------------------------------
+# ----------------------------------------------------------------------
+# THE MATCHUP LETTER (10-29)
+# ----------------------------------------------------------------------
+# Walk-forward on last season (36,887 skater-games from mid-November, each
+# day built from earlier days only), a skater's game vs his own baseline
+# rate, by the letter of four candidate measures (A .. F spread):
+#   shots   the team matchup IN the number (shot ratio)  A +6.0 .. F -9.4%
+#           raw shots allowed to C / W / D (10-06 card)  A +5.0 .. F -9.3%
+#   goals   the team matchup in the number (goal ratio)  A +7.5 .. F -7.3%
+#           raw goals allowed to C / W / D               A +6.2, B -5.1 (out
+#                                                        of order) .. F -6.3%
+#   assists in the number A +8.7 .. F -8.5%; raw by position A +5.2 .. F -9.5%
+#   points  in the number A +8.3 .. F -8.1%; raw by position A +6.0 .. F -7.6%
+# (beat-their-baseline vs the defense, team or C/W/D, sorted no better.)
+# So the letter is tonight's matchup ratio — the one the chance already
+# uses — placed against how that ratio ran over last season's games
+# (fifteen equal steps, A+ .. F-). The C / W / D card stays as context.
+LETTER_FAMS = {"sog": "shot", "g": "goal", "a": "goal", "pts": "goal"}
+
+
+def _cuts(vals):
+    v = sorted(x for x in vals if x)
+    if len(v) < 150:
+        return None
+    return [round(v[min(len(v) - 1, int(len(v) * k / 15))], 4) for k in range(1, 15)]
+
+
+def letter_cuts(goal_finals, shot_finals, goal_k=None, shot_k=None):
+    """{"goal": [14 cut points], "shot": [...]} — the season's matchup ratios
+    (team expectation / its neutral rate) in fifteen equal steps."""
+    out = {}
+    for fam, fin, k, so in (("goal", goal_finals, goal_k, False),
+                            ("shot", shot_finals, shot_k, True)):
+        if not fin:
+            continue
+        wf = gm.walk_forward(gm.clean_finals(fin), k or 30.0, score_only=so) if so else \
+            gm.walk_forward(gm.clean_finals(fin), k or 30.0)
+        c = _cuts([mu / off for mu, off in _env_by_opp(wf).values() if off])
+        if c:
+            out[fam] = c
+    return out
+
+
+def matchup_letter(ratio, cuts):
+    """'A+'..'F-' for a matchup ratio against the season's cut points (the
+    softest fifteenth = A+), or None."""
+    if ratio is None or not cuts:
+        return None
+    from engines import matchup_grade as mg
+    above = sum(1 for c in cuts if ratio > c)          # 0 .. 14
+    return mg.label_from_q((14 - above + 0.5) / 15)
+
+
+def letter_cards(cards, sr, gr, cuts):
+    """The row's cards with the matchup letter in place (in place): each
+    stat's card gets "grade" (the letter), "matchup_ratio" and
+    "letter_basis"; a stat with no position card gets a card of its own."""
+    out = dict(cards or {})
+    for st, fam in LETTER_FAMS.items():
+        ratio = sr if fam == "shot" else gr
+        g = matchup_letter(ratio, (cuts or {}).get(fam))
+        if not g:
+            continue
+        c = dict(out.get(st) or {"stat": st})
+        if c.get("grade"):
+            c["position_grade"] = c["grade"]
+        c.update({"grade": g, "matchup_ratio": round(ratio, 3), "letter_basis": "matchup"})
+        out[st] = c
+    return out
+
+
 def _env_by_opp(wf):
     """{(date, opp_team): (team expectation, team neutral rate)} from a
     walk-forward — keyed by OPPONENT because a skater's game line records
@@ -1141,6 +1212,11 @@ def build(current_finals, prior, current_skaters=None, current_id_of=None, slate
         print(f"::warning::NHL saves validation failed: {type(exc).__name__}: {exc}")
         sval = {"note": f"validation failed: {type(exc).__name__}"}
 
+    try:
+        lcuts = letter_cuts(goal_rows(pf), shot_rows(pf), _gk, _sk) if pf else {}
+    except Exception as exc:  # noqa: BLE001 — costs the letters, never the model
+        print(f"::warning::NHL matchup letter cuts failed: {type(exc).__name__}: {exc}")
+        lcuts = {}
     for g in slate or []:
         hid, aid = g.get("home_id"), g.get("away_id")
         o = g.get("odds") or {}
@@ -1178,6 +1254,7 @@ def build(current_finals, prior, current_skaters=None, current_id_of=None, slate
                 opp_abbr = g.get("away_abbr" if side == "home" else "home_abbr") or ""
                 grp = dvp_group(pos)
                 cards = {st: dm.card(dvp, opp_id, grp, st) for st in DVP_STATS} if dvp else {}
+                cards = letter_cards({k: v for k, v in cards.items() if v}, sr, gr, lcuts)
                 env = {"goal_ratio": round(gr, 3), "shot_ratio": round(sr, 3)}
                 rows.append({"pid": sk.get("pid"), "name": sk.get("name") or p.get("name"),
                              "pos": pos, "gp": r["gp"],
@@ -1245,6 +1322,7 @@ def build(current_finals, prior, current_skaters=None, current_id_of=None, slate
         "save_prior": {"mean": save_prior[0], "strength_shots": save_prior[1]},
         "saves_validation": sval,
         "skater_priors": priors,
+        "letter_cuts": lcuts,
         "props_validation": pval,
         "toi": toi,
         "dvp": dvp,

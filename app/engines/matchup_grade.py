@@ -28,17 +28,17 @@ Each sport's own matchup number is ranked — nothing new is invented:
        split beat the starter's overall rate on unseen games, ranked among
        every starter against hitters of that hand (10-28, defense_matchup.
        fit_platoon; re-tested nightly); pitchers: tonight's lineup's rate
-  NBA  what the defense ALLOWED to his position group (G / F / C) a game,
-       this season + last (engines/defense_matchup via nba_context.
-       dvp_table), ranked over the 30 NBA teams (10-28). It used to rank
-       the projection's opponent factor: team-wide and within a percent or
-       two of 1.0 for nearly every team (Dean Wade @ IND x0.999 read "B"),
-       over 33 "teams" (three exhibition clubs). The projection keeps its
-       own tested factor; the letter is context, as in NHL / NFL.
-       Last season's split-half reliability (does a team's rank on half its
-       games repeat on the other half): points to guards 0.57, centres
-       0.40, FORWARDS 0.003 — what a team allows to forwards does not
-       repeat, so a forward's points letter is mostly noise, in any app.
+  NBA  how players did against their OWN projections vs this defense —
+       the props model's opponent factor (nba_context.OppBook; by position
+       only on stats where the nightly fit says that predicts better),
+       ranked over the 30 NBA teams (10-29). Walk-forward on last season
+       (20,333 player-games, each day from earlier days only), points vs
+       the projection by letter: A +4.7% B +1.8 C -1.3 D -4.3 F -5.1%.
+       The raw "points allowed to guards a game" letter (10-28, what other
+       apps show) sorted the same games A +0.4 B +1.6 C -1.4 D -0.9
+       F -3.3% — weaker and out of order; it stays on the row as a
+       context card. Position split on top of the factor: R2 0.44% ->
+       0.47% on points (nothing). The factor is already IN the projection.
   Same position + same opponent = the same letter in every sport: the
   letter grades the DEFENSE against that kind of player, not the player.
 A letter is about the OVER (an A is a good spot for the over, an F a good
@@ -164,7 +164,7 @@ def nba_grades(book, opp_id, grp, day, teams, combos, means):
         if max(by.values(), default=1.0) - min(by.values(), default=1.0) < 1e-9:
             continue
         r, of = rank_values(list(by.values()), my[st])
-        g = grade(r, of)
+        g = grade_pm(r, of)
         if g:
             out[st] = {"grade": g, "rank": r, "of": of, "mult": round(my[st], 3),
                        "vs_league_pct": round(100 * (my[st] - 1), 1)}

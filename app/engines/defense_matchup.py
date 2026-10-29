@@ -470,6 +470,9 @@ def notice(c, stat_label, group_label, defense_label, fmt="{:.1f}"):
 def badge(c):
     """Short cell text with the A-F matchup letter first (10-26):
     'A · 3rd-most' / 'F · 2nd-fewest' / 'C · 14th-most' / '—'."""
+    if c and c.get("matchup_ratio") is not None and c.get("grade"):
+        # NHL (10-29): the letter is tonight's matchup in the number
+        return f"{c['grade']} · x{c['matchup_ratio']:.2f}"
     if not c or not c.get("rank"):
         return "—"
     short = rank_text(c).rsplit(" of ", 1)[0]

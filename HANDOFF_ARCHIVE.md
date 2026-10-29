@@ -10,6 +10,44 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — Bet Finder says WHY under every row; NHL goals open on ANYTIME goalscorer (was 2+ goals). 2026-10-24 (5)
+
+**Suite 167, FAILING: none.** New tests/test_bet_finder_why.py (2
+controls red: the stat's matchup note dropped; the NHL why no longer
+marking the position split as context); tests/test_book_props.py +1
+(control red: board() dropping a yes market with no target).
+
+WHY (Izzy 4:33 PM: "the bet finder doesn't attack defense or nothing"):
+it did — the Bet Finder prices the model's whole projection — but never
+said so. _why_lines(): under the table, "Why these numbers (n players)"
+(open when prices are typed), each player: line, call, our chance, the
+board's own "why" (NHL: rate, ice time, the opponent's team-level shot /
+goal environment, DvP; NBA: minutes, season / last season, team minutes,
+opponent; NFL / MLB: theirs) + this stat's matchup note. The 1st-period
+and 1Q / 1H rows carry the why too. nhl_model.why_line now marks the
+team-level matchup "(in the number)" and defence-vs-position "context,
+not in the number — the position split did not beat the team-level
+matchup on unseen games" (its docstring always claimed this marking).
+
+ANYTIME GOAL (Izzy 4:42 PM, screenshot: Goals rows opened at 1.5 at
++1100 / +2000 — "i am researching for anytime goal scorer"): MEASURED in
+the 10-24 record — all 431 NHL "Anytime Goalscorer" items (and 2+ / 3+,
+and NFL anytime TD) carry NO target, so board() dropped them and lookup
+fell back to the ladder ("Goals Milestones" starts at 2+). Now a yes
+market with no target sits at its own line (YES_LINE: anytime 0.5, 2+
+1.5, 3+ 2.5) and, with no total, IS the main line. Real board: 399 NHL
+players open on anytime at 0.5. NFL anytime TD items carry no price in
+this feed — none shown (honest blank). The grader captures anytime goal
+from tonight (one-sided -> graded as "g*").
+
+FILES: app/engines/book_props.py, app/engines/nhl_model.py,
+app/views/Bet_Finder.py, tests/test_bet_finder_why.py (NEW),
+tests/test_book_props.py, HANDOFF.md, HANDOFF_ARCHIVE.md
+
+---
+
+---
+
 ## PICK UP HERE — UFC is its own sport in the switcher; a sport's page nav is one wrapped bar of pills. 2026-10-24 (4)
 
 **Suite 166, FAILING: none.** New tests/test_sport_nav.py (2 controls

@@ -598,11 +598,21 @@ def dvp_grades(table, opp_id, grp):
     return out
 
 
+def letter_teams(book, dvp=None):
+    """The teams a letter ranks over: the NBA's 30 — the defense-vs-position
+    table's (a defense faced 20+ times, DVP_MIN_GAMES) when there is one,
+    else every opponent in the book with an NBA-sized id (ESPN 1-30)."""
+    if dvp and dvp.get("teams"):
+        return sorted(str(t) for t in dvp["teams"])
+    ids = {str(k[0]) for k in (book.acc if book else {})}
+    nba = sorted(t for t in ids if t.isdigit() and 1 <= int(t) <= 30)
+    return nba or sorted(ids)
+
+
 def apply_tonight(rows, opp_id, opp_abbr, book, outs, out_names, ctx, day, dvp=None):
     """One team's rows for tonight with the context applied in place:
     each row's mu, plus row["ctx"] = {"opp": {stat: f}, "bump": {stat: b}}
     and the reason appended to row["why"]."""
-    teams = sorted({k[0] for k in book.acc}) if book else []
     present = {st: sum(r["mu"][st] for r in rows) for st in nm.BASE}
     b = bump(outs, present, (ctx or {}).get("out") or {})
     tot = rotation_total(rows, (ctx or {}).get("rot_n"))
@@ -614,24 +624,32 @@ def apply_tonight(rows, opp_id, opp_abbr, book, outs, out_names, ctx, day, dvp=N
         r["ctx"] = {"opp": {k: round(v, 3) for k, v in f.items()},
                     "bump": {k: round(v, 3) for k, v in b.items()},
                     "vol": round(vf, 3), "team_min": round(tot)}
+        # THE LETTER (10-29). Walk-forward on last season (20,333 player-
+        # games, each day graded only from earlier days): ranking the
+        # projection's own opponent factor — how players did against their
+        # projections vs this defense — across the 30 teams, in fifths,
+        # sorted games A +4.7% / B +1.8 / C -1.3 / D -4.3 / F -5.1% vs the
+        # projection on points (rebounds A +4.8 .. F -8.9, assists A +7.4 ..
+        # F -7.7, threes A +7.3 .. F -9.1). The raw "allowed to his position
+        # a game" card (10-28) sorted them A +0.4 .. F -3.3: it stays on the
+        # row as context ("dvp"), the letter is the factor's.
         cards = dvp_grades(dvp, opp_id, nm.group(r.get("pos"))) if dvp else {}
         if cards:
-            # 10-28: the letter is what this defense ALLOWED to his position
-            # group a game, ranked over the NBA's 30 (see DVP_MIN_GAMES)
             r["dvp"] = cards
-            r["grade"] = {k: c["grade"] for k, c in cards.items()}
-            r["ctx"]["grade"] = {k: {"grade": c["grade"], "rank": c["rank"], "of": c["of"],
-                                     "per_game": c["per_game"], "league": c["league"],
-                                     "vs_league_pct": c["vs_league_pct"]}
-                                 for k, c in cards.items()}
-        elif book:
-            # 10-26: the A-F matchup letter — this opponent's factor ranked
-            # over every team for his position group (engines/matchup_grade)
+        gr = {}
+        if book:
             from engines import matchup_grade as mg
-            gr = mg.nba_grades(book, opp_id, nm.group(r.get("pos")), day, teams, nm.COMBOS,
-                               book.mean)
-            r["ctx"]["grade"] = gr
-            r["grade"] = {k: v["grade"] for k, v in gr.items()}
+            gr = mg.nba_grades(book, opp_id, nm.group(r.get("pos")), day,
+                               letter_teams(book, dvp), nm.COMBOS, book.mean)
+        grades = {k: v["grade"] for k, v in gr.items()}
+        for k, c in cards.items():
+            # a stat the opponent factor is not in: the position card's letter
+            grades.setdefault(k, c["grade"])
+        if grades:
+            r["grade"] = grades
+            r["ctx"]["grade"] = {k: dict(gr.get(k) or {"grade": grades[k]},
+                                         basis="beat-projection" if k in gr else "allowed")
+                                 for k in grades}
         w = why(f, b, opp_abbr, out_names, vf, tot)
         if w:
             r["why"] = (r.get("why") + " · " if r.get("why") else "") + w

@@ -338,8 +338,32 @@ MATCHUP_IN_NUMBER = {
     "NBA": "The matchup is already IN our chance (the opponent factor, tested).",
     "NFL": "The matchup is already IN our chance (the defense multiplier).",
     "MLB": "The matchup is already IN our chance (batter vs tonight's starter).",
-    "NHL": "The position split is context, not in our chance (tested, did not beat); the "
-           "team's goals and shots allowed are.",
+    "NHL": "That matchup is already IN our chance; the C / W / D split is context only "
+           "(tested, did not beat).",
+}
+
+
+def _anchor_b(sport, stat, main):
+    """The DraftKings-anchor share in use for this market (None = the
+    model's own chance) — from the nightly's scorecard."""
+    if sport not in ("NHL", "NBA", "NFL"):
+        return None
+    try:
+        from engines import book_grade as _bg
+        from engines import market_anchor as _ma
+        from engines import slate_guard as _sg
+        return _ma.b_for(_bg.load_scorecard([_sg._PUBLISHED, _sg._REPO]), sport.lower(), stat,
+                         main)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+MATCHUP_HOW = {
+    "NBA": "How players have done against their own projections vs this defense, ranked "
+           "over the 30 teams (tested on last season: A spots ran +4.7% over projection on "
+           "points, F spots -5.1%).",
+    "NHL": "Tonight's team matchup (shots / goals the game model expects vs this team's "
+           "norm), placed against last season's matchups.",
 }
 
 
@@ -581,9 +605,9 @@ else:
                 })
 
             if any(_grade_of(r, stat, side) != "—" for r in players):
-                st.caption("**Matchup** = A (great spot) to F (very tough) for the side you "
-                           "picked: tonight's opponent ranked on what it gives up on this stat "
-                           "to his kind of player, in fifths of the league. "
+                st.caption("**Matchup** = A+ (great spot) to F- (very tough) for the side you "
+                           "picked. " + MATCHUP_HOW.get(sport, "Tonight's opponent ranked on what "
+                           "it gives up on this stat to his kind of player.") + " "
                            + MATCHUP_IN_NUMBER.get(sport, ""))
             res, ref = [], []
             for i, r in enumerate(players):
@@ -600,6 +624,13 @@ else:
                 ch, raw, basis = bf.chance_at(r, stat, ln, side, grp["markets"], grp["cal"])
                 if ch is None or not 0 < ch < 1:
                     continue
+                # ANCHORED TO DRAFTKINGS (10-29, engines/market_anchor): where
+                # both of the book's prices are in, the chance keeps only the
+                # share of our disagreement with DraftKings that has proven real
+                _main = bool(_bk(r)) and abs(ln - float(_bk(r)["line"])) < 1e-9
+                ch, _anc = bf.anchor_chance(ch, _yp, _os, _anchor_b(sport, stat, _main))
+                if _anc:
+                    basis = "anchored"
                 row = {"name": r["_name"], "chance": ch, "raw": raw, "basis": basis,
                        "grade": _grade_of(r, stat, side),
                        "worth": mm.fair_american(ch), "line": ln, "side": side,
@@ -614,6 +645,11 @@ else:
                     res.append(dict(row, price=bf.valid_price(_yp), support=_sup, **j))
             res.sort(key=lambda x: (bf.CALL_ORDER[x["tier"]], -x["edge"]))
 
+            if any(x.get("basis") == "anchored" for x in ref):
+                st.caption("**Chance anchored to DraftKings** where both of its prices are in: "
+                           "it keeps only the share of our disagreement with the book that has "
+                           "held up on the graded record (Site vs DraftKings), re-learned "
+                           "nightly.")
             if res:
                 n_bet = sum(1 for x in res if x["call"] == "BET")
                 st.markdown(f"**{n_bet} BET{'s' if n_bet != 1 else ''}** out of "

@@ -75,7 +75,7 @@ def main():
     from engines import espn_feed as ef
     today = datetime.now(ZoneInfo("America/New_York")).date().isoformat()
     from engines import matchup_grade as mg
-    card, grades, bias = {}, {}, {}
+    card, grades, bias, anchor = {}, {}, {}, {}
     for lg in LEAGUES:
         try:
             new, done, waiting = grade_league(lg, ef.fetch_summary, today)
@@ -90,6 +90,15 @@ def main():
         # the book's and how often the over really hit (two-sided lines)
         grades[lg] = mg.by_grade([r for r in rows if not str(r[3]).endswith("*")])
         bias[lg] = bg.projection_bias(rows)
+        # 10-29: how much of our disagreement with DraftKings is real, per
+        # market — learned and tested here, used by the Bet Finder
+        try:
+            from engines import market_anchor as ma
+            anchor[lg] = ma.fit(rows, ma.SINCE.get(lg))
+            if anchor[lg]:
+                print(ma.line(lg, anchor[lg]))
+        except Exception as exc:  # noqa: BLE001
+            print(f"::warning::DraftKings anchor {lg} failed: {type(exc).__name__}: {exc}")
         if bias[lg]:
             print(f"  [verify] OFFERED PROJECTION vs BOX {lg}: " + "; ".join(
                 f"{s} ours {x['ours']} vs actual {x['actual']} (x{x['ratio']}, DK line "
@@ -105,7 +114,7 @@ def main():
                   f"{f['n']} plays, {f['hits']} hit, {f['units']:+} units (roi {f['roi']})")
     PROPS.mkdir(parents=True, exist_ok=True)
     (PROPS / "scorecard.json").write_text(json.dumps({"as_of": today, "leagues": card, "grades": grades,
-                                                      "bias": bias},
+                                                      "bias": bias, "anchor": anchor},
                                                      indent=1, default=str))
     return 0
 
