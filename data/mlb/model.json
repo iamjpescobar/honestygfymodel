@@ -88,7 +88,21 @@
   "test": null,
   "used_rate": 4.4811
  },
- "generated_at_et": "2026-10-29 18:04",
+ "form_check": {
+  "fitted_k": 136.886,
+  "fitted_log_loss": 0.6862,
+  "form_k": 20.0,
+  "form_log_loss": 0.689,
+  "n": 2429,
+  "verdict": {
+   "diff": 0.00284,
+   "n": 2429,
+   "se": 0.00141,
+   "verdict": "beats",
+   "z": 2.01
+  }
+ },
+ "generated_at_et": "2026-10-29 19:18",
  "league": {
   "avg_total": 8.962,
   "away_mult": 0.9945,
