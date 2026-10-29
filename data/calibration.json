@@ -34596,6 +34596,412 @@
       ],
       "graded": true,
       "source": "ci"
+    },
+    "2026-10-29": {
+      "picks": [
+        {
+          "id": "3142328",
+          "name": "G. Williams",
+          "team": "Golden State Valkyries",
+          "stat": "pts",
+          "line": 18.0,
+          "result": null
+        },
+        {
+          "id": "1054",
+          "name": "T. Hayes",
+          "team": "Golden State Valkyries",
+          "stat": "pts",
+          "line": 11.5,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 14.0,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 15.5,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 17.5,
+          "result": null
+        },
+        {
+          "id": "2590093",
+          "name": "K. Stokes",
+          "team": "Golden State Valkyries",
+          "stat": "pts",
+          "line": 4.0,
+          "result": null
+        },
+        {
+          "id": "4065780",
+          "name": "K. Charles",
+          "team": "Golden State Valkyries",
+          "stat": "pts",
+          "line": 6.5,
+          "result": null
+        },
+        {
+          "id": "4398935",
+          "name": "V. Burton",
+          "team": "Golden State Valkyries",
+          "stat": "pts",
+          "line": 9.5,
+          "result": null
+        },
+        {
+          "id": "869",
+          "name": "D. Bonner",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 8.5,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "pts",
+          "line": 15.5,
+          "result": null
+        },
+        {
+          "id": "2590093",
+          "name": "K. Stokes",
+          "team": "Golden State Valkyries",
+          "stat": "reb",
+          "line": 10.0,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 4.5,
+          "result": null
+        },
+        {
+          "id": "3142328",
+          "name": "G. Williams",
+          "team": "Golden State Valkyries",
+          "stat": "reb",
+          "line": 4.0,
+          "result": null
+        },
+        {
+          "id": "1054",
+          "name": "T. Hayes",
+          "team": "Golden State Valkyries",
+          "stat": "reb",
+          "line": 3.0,
+          "result": null
+        },
+        {
+          "id": "4398935",
+          "name": "V. Burton",
+          "team": "Golden State Valkyries",
+          "stat": "reb",
+          "line": 4.5,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 10.0,
+          "result": null
+        },
+        {
+          "id": "4398915",
+          "name": "N. Hillmon",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 4.5,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "4065780",
+          "name": "K. Charles",
+          "team": "Golden State Valkyries",
+          "stat": "reb",
+          "line": 5.5,
+          "result": null
+        },
+        {
+          "id": "3142328",
+          "name": "G. Williams",
+          "team": "Golden State Valkyries",
+          "stat": "ast",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 7.5,
+          "result": null
+        },
+        {
+          "id": "2590093",
+          "name": "K. Stokes",
+          "team": "Golden State Valkyries",
+          "stat": "ast",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 3.5,
+          "result": null
+        },
+        {
+          "id": "4257500",
+          "name": "C. Zandalasini",
+          "team": "Golden State Valkyries",
+          "stat": "ast",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "1054",
+          "name": "T. Hayes",
+          "team": "Golden State Valkyries",
+          "stat": "ast",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 2.5,
+          "result": null
+        },
+        {
+          "id": "4065780",
+          "name": "K. Charles",
+          "team": "Golden State Valkyries",
+          "stat": "ast",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "869",
+          "name": "D. Bonner",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "1054",
+          "name": "T. Hayes",
+          "team": "Golden State Valkyries",
+          "stat": "pra",
+          "line": 17.0,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "pra",
+          "line": 25.5,
+          "result": null
+        },
+        {
+          "id": "2590093",
+          "name": "K. Stokes",
+          "team": "Golden State Valkyries",
+          "stat": "pra",
+          "line": 15.5,
+          "result": null
+        },
+        {
+          "id": "3142328",
+          "name": "G. Williams",
+          "team": "Golden State Valkyries",
+          "stat": "pra",
+          "line": 25.5,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "pra",
+          "line": 23.0,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "pra",
+          "line": 30.0,
+          "result": null
+        },
+        {
+          "id": "3058901",
+          "name": "A. Gray",
+          "team": "Atlanta Dream",
+          "stat": "pra",
+          "line": 21.5,
+          "result": null
+        },
+        {
+          "id": "4065780",
+          "name": "K. Charles",
+          "team": "Golden State Valkyries",
+          "stat": "pra",
+          "line": 13.0,
+          "result": null
+        },
+        {
+          "id": "4398935",
+          "name": "V. Burton",
+          "team": "Golden State Valkyries",
+          "stat": "pra",
+          "line": 18.0,
+          "result": null
+        },
+        {
+          "id": "4257500",
+          "name": "C. Zandalasini",
+          "team": "Golden State Valkyries",
+          "stat": "pra",
+          "line": 12.0,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "tpm",
+          "line": 0.5,
+          "result": null
+        },
+        {
+          "id": "3142328",
+          "name": "G. Williams",
+          "team": "Golden State Valkyries",
+          "stat": "tpm",
+          "line": 2.0,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "4065780",
+          "name": "K. Charles",
+          "team": "Golden State Valkyries",
+          "stat": "tpm",
+          "line": 0.5,
+          "result": null
+        },
+        {
+          "id": "1054",
+          "name": "T. Hayes",
+          "team": "Golden State Valkyries",
+          "stat": "tpm",
+          "line": 0.5,
+          "result": null
+        },
+        {
+          "id": "2590093",
+          "name": "K. Stokes",
+          "team": "Golden State Valkyries",
+          "stat": "tpm",
+          "line": 0.5,
+          "result": null
+        },
+        {
+          "id": "4398935",
+          "name": "V. Burton",
+          "team": "Golden State Valkyries",
+          "stat": "tpm",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "2529622",
+          "name": "K. Thornton",
+          "team": "Golden State Valkyries",
+          "stat": "tpm",
+          "line": 1.0,
+          "result": null
+        },
+        {
+          "id": "4257500",
+          "name": "C. Zandalasini",
+          "team": "Golden State Valkyries",
+          "stat": "tpm",
+          "line": 1.5,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "tpm",
+          "line": 2.0,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
     }
   },
   "wnba_defense": {
@@ -40804,6 +41210,132 @@
           "team": "Golden State Valkyries",
           "stat": "ast",
           "line": 0.6,
+          "result": null
+        }
+      ],
+      "graded": false,
+      "source": "ci"
+    },
+    "2026-10-29": {
+      "picks": [
+        {
+          "id": "3142328",
+          "name": "G. Williams",
+          "team": "Golden State Valkyries",
+          "stat": "pts",
+          "line": 19.7,
+          "result": null
+        },
+        {
+          "id": "4257500",
+          "name": "C. Zandalasini",
+          "team": "Golden State Valkyries",
+          "stat": "pts",
+          "line": 7.7,
+          "result": null
+        },
+        {
+          "id": "2529622",
+          "name": "K. Thornton",
+          "team": "Golden State Valkyries",
+          "stat": "pts",
+          "line": 6.3,
+          "result": null
+        },
+        {
+          "id": "1054",
+          "name": "T. Hayes",
+          "team": "Golden State Valkyries",
+          "stat": "pts",
+          "line": 11.5,
+          "result": null
+        },
+        {
+          "id": "4398935",
+          "name": "V. Burton",
+          "team": "Golden State Valkyries",
+          "stat": "pts",
+          "line": 9.2,
+          "result": null
+        },
+        {
+          "id": "4433402",
+          "name": "A. Reese",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 10.6,
+          "result": null
+        },
+        {
+          "id": "2590093",
+          "name": "K. Stokes",
+          "team": "Golden State Valkyries",
+          "stat": "reb",
+          "line": 10.2,
+          "result": null
+        },
+        {
+          "id": "4398915",
+          "name": "N. Hillmon",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 5.0,
+          "result": null
+        },
+        {
+          "id": "869",
+          "name": "D. Bonner",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 4.4,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "reb",
+          "line": 4.7,
+          "result": null
+        },
+        {
+          "id": "3142328",
+          "name": "G. Williams",
+          "team": "Golden State Valkyries",
+          "stat": "ast",
+          "line": 3.6,
+          "result": null
+        },
+        {
+          "id": "3142250",
+          "name": "J. Canada",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 7.8,
+          "result": null
+        },
+        {
+          "id": "2590093",
+          "name": "K. Stokes",
+          "team": "Golden State Valkyries",
+          "stat": "ast",
+          "line": 1.3,
+          "result": null
+        },
+        {
+          "id": "5447776",
+          "name": "A. Gueye",
+          "team": "Golden State Valkyries",
+          "stat": "ast",
+          "line": 0.6,
+          "result": null
+        },
+        {
+          "id": "4398674",
+          "name": "R. Howard",
+          "team": "Atlanta Dream",
+          "stat": "ast",
+          "line": 3.0,
           "result": null
         }
       ],
