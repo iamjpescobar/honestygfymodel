@@ -126,7 +126,9 @@ def with_size(g, pct, side="Over", rank=None):
     if side == "Under":
         g = flip(g)
         pct = -pct if pct is not None else None
-    out = g if pct is None else f"{g} · {pct:+.0f}%"
+    if pct is not None and round(pct) == 0:
+        pct = 0.0
+    out = g if pct is None else (f"{g} · ±0%" if pct == 0 else f"{g} · {pct:+.0f}%")
     return out + (f" ({rank})" if rank else "")
 
 

@@ -391,6 +391,8 @@ def _grade_of(r, stat, side="Over"):
         size = (c or {}).get("effect_pct", (c or {}).get("vs_league_pct"))
         rank = mg.tough_rank(c) if (c or {}).get("letter_basis", "position") == "position" \
             else None
+        if rank and (c or {}).get("games"):
+            rank += f" · {c['games']} g"
     if not g:
         return "—"
     return mg.with_size(g, size, side, rank)

@@ -317,8 +317,10 @@ def _grade(rank, of):
 # forwards repeat from one half of a season to the other at 0.003 (none),
 # and with last season worth ~0 the 10-28 letters were four games of this
 # season (PHI vs forwards: 25.8 a game over 4 -> "F"; last season 18th).
-# Now the letter is the defense's standing ADJUSTED for how much of it is
-# real, by the textbook reliability formulas:
+# (10-30: the card's LETTER is this season's rank again — see card(); this
+# adjusted letter is kept on the card as "blend_grade".)
+# The defense's standing ADJUSTED for how much of it is real, by the
+# textbook reliability formulas:
 #   per-game reliability  p1 = R / (n - (n - 1) R)   (R: split-half over a
 #                         season of n games a team, Spearman-Brown)
 #   at this card's games  r  = m p1 / (1 + (m - 1) p1)   m = games this season
@@ -365,33 +367,44 @@ def card(table, defense, group, stat):
     row = (g.get("teams") or {}).get(str(defense))
     if not row:
         return None
-    if row.get("blend") is not None:
-        basis, value, rank, of, league = "blend", row["blend"], row.get("rank"), g["ranked"]["blend"], g.get("league")
-    elif row.get("cur") is not None:
-        basis, value, rank, of, league = "cur", row["cur"], row.get("rank_cur"), g["ranked"]["cur"], g.get("league_cur")
+    # THE LETTER IS THIS SEASON'S RANK (10-30). Izzy, comparing with HOF:
+    # Anthony Davis read "C · +0% (30th vs PF)" — the rank said the softest
+    # defense in the league against PFs, the letter said average, because the
+    # letter had been shrunk for a thin sample (reliability_grade). A letter
+    # that contradicts the rank printed beside it is no research tool. Now:
+    # the letter, rank and size all come from ONE number — this season's
+    # (last season's only before a game is played) — cut in fifteen steps,
+    # the way HOF and the research apps grade; and the cell shows how many
+    # games it rests on, so a thin sample is visible, not hidden. The
+    # blended / reliability figures stay on the card for anyone who wants
+    # them ("blend_*", "grade_reliability").
+    if row.get("cur") is not None and row.get("n_cur"):
+        basis, value, rank, of, league = ("cur", row["cur"], row.get("rank_cur"),
+                                          g["ranked"]["cur"], g.get("league_cur"))
+        games = row.get("n_cur")
     elif row.get("prior") is not None:
-        basis, value, rank, of, league = "prior", row["prior"], row.get("rank_prior"), g["ranked"]["prior"], g.get("league_prior")
+        basis, value, rank, of, league = ("prior", row["prior"], row.get("rank_prior"),
+                                          g["ranked"]["prior"], g.get("league_prior"))
+        games = row.get("n_prior")
+    elif row.get("blend") is not None:
+        basis, value, rank, of, league = ("blend", row["blend"], row.get("rank"),
+                                          g["ranked"]["blend"], g.get("league"))
+        games = None
     else:
         return None
     vs = round(100.0 * (value / league - 1.0), 1) if league else None
-    n_eff = (row.get("n_cur") or 0) + ((g.get("weight") or 0.0) * (row.get("n_prior") or 0)
-                                       if basis == "blend" else 0.0)
-    if basis == "prior":
-        n_eff = row.get("n_prior") or 0
-    letter, rel_n = reliability_grade(value, (g.get("spread") or {}).get(basis),
-                                      g.get("reliability"), g.get("games_full"), n_eff)
-    if letter is None:
-        letter = _grade(rank, of)
+    n_eff = (row.get("n_cur") or 0) + (g.get("weight") or 0.0) * (row.get("n_prior") or 0)
+    _bl, rel_n = reliability_grade(row.get("blend"), (g.get("spread") or {}).get("blend"),
+                                   g.get("reliability"), g.get("games_full"), n_eff)
+    letter = _grade(rank, of)
     return {
         "group": group, "stat": stat, "basis": basis,
         "per_game": value, "league": league, "vs_league_pct": vs,
         "rank": rank, "of": of, "tier": tier(rank, of), "grade": letter,
+        "games": games, "effect_pct": vs,
         "grade_reliability": rel_n, "n_eff": round(n_eff, 1),
-        # the size shown beside the letter (10-30): the gap to the league,
-        # shrunk by how much of it is real at this many games (Kelley) — a
-        # four-game swing reads small, an established one at full size
-        "effect_pct": (round(rel_n * vs, 1) if (rel_n is not None and vs is not None)
-                       else vs),
+        "blend": row.get("blend"), "blend_rank": row.get("rank"),
+        "blend_grade": _bl,
         "cur": row.get("cur"), "n_cur": row.get("n_cur"), "rank_cur": row.get("rank_cur"),
         "of_cur": g["ranked"]["cur"],
         "prior": row.get("prior"), "n_prior": row.get("n_prior"),

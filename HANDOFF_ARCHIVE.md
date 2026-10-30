@@ -10,6 +10,36 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — First Basket: a real starter with no projection is priced, not zeroed (the 10-25 nightly's confirmed test was thin because of it). 2026-10-25 (3)
+
+**Suite 170, FAILING: none.** tests/test_nba_first_confirmed.py +4 checks
+(control red: shares pricing an unprojected starter at 0.1 points).
+
+READ 10-25 11 AM nightly: the confirmed-five test came out THIN (2.321
+vs 2.341, z 0.63, n 384) where the offline measurement said z ~17.
+Cause, reproduced offline: a real starter missing from the props rows
+(call-up, no context rows) got share from 0.1 projected points, so when
+he scored first the price was ~0 and the log loss exploded. Dropping 8%
+of rows offline: fails z -1.71 before, beats z 5.43 after. Fix: he gets
+the lowest projection among his four teammates (shares). ESPN-posted
+starters outside the pool now come in by name (pregame_names; reprice
+names=) instead of knocking the team back to "projected". The fit
+reports confirmed.unprojected (share of real starters with no
+projection); the verify line prints it. Until the confirmed test beats,
+confirmed calls are capped at THIN on the page (as designed).
+
+ENVIRONMENT, first real read (11 AM): NBA 36 games, last-season gate
+thin (z 1.8) -> kept 115.36; NHL 179 games kept 3.15; NFL 93 games kept
+22.95; MLB kept. No sport switched — none showed a drift worth following.
+
+FILES: app/engines/nba_first.py, app/views/NBA_First_Basket.py,
+nba_precompute.py, tests/test_nba_first_confirmed.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
+---
+
 ## PICK UP HERE — First Basket rebuilt on the CONFIRMED starting five; NBA Trends picks a team first; every game model follows today's scoring when it is measured to help. 2026-10-25 (2)
 
 **Suite 170, FAILING: none.** New: tests/test_nba_first_confirmed.py,

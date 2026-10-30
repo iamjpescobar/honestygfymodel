@@ -128,8 +128,9 @@ check("a full season that CONTRADICTS last season overrules the reference weight
       contrary["stats"]["sog"]["C"]["weight_report"].get("used") == "direct"
       and (contrary["stats"]["sog"]["C"]["weight"] or 0) < 0.05)
 c = dm.card(grown, "T0", "C", "sog")
-check("a card carries both seasons, the blend and its basis",
-      c and c["basis"] == "blend" and c["cur"] is not None and c["prior"] is not None
+check("a card carries both seasons, the blend and its basis (this season's, 10-30)",
+      c and c["basis"] == "cur" and c["cur"] is not None and c["prior"] is not None
+      and c["blend"] is not None and c["games"] == c["n_cur"]
       and c["tier"] in ("soft", "neutral", "tough"))
 note = dm.notice(c, "shots on goal", "centres", "T0")
 check("the notice names the defense, stat, position and how repeatable it is",

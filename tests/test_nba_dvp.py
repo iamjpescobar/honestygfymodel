@@ -91,7 +91,7 @@ check("no table: no letter invented", "grade" not in rows2[0])
 
 src = (ROOT / "nba_precompute.py").read_text()
 check("the nightly builds the table and passes it to tonight's rows",
-      "dvp = nc.dvp_table(pool, cur_from)" in src and "dvp=dvp)" in src)
+      "dvp = nc.dvp_table(pool, cur_from, slots=_slots)" in src and "dvp=dvp)" in src)
 
 print(f"\n{len(fails)} failed" if fails else "\nall passed")
 sys.exit(1 if fails else 0)

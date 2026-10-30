@@ -131,6 +131,22 @@ def fetch_roster(team_id):
 # ----------------------------------------------------------------------
 # Building blocks (pure, tested)
 # ----------------------------------------------------------------------
+def fetch_depth_slots(team_ids):
+    """{pid: "PG".."C"} from every team's ESPN depth chart (10-30) — the
+    five-position labels the matchup letters grade by. {} on any failure:
+    the letters then fall back to positions from how players play."""
+    from engines import nba_context as _nc
+    out = {}
+    for tid in team_ids:
+        try:
+            data = ef.get_json(f"{ef.base(LEAGUE)}/teams/{tid}/depthcharts")
+        except Exception as exc:  # noqa: BLE001
+            print(f"  depth chart {tid} failed: {exc}")
+            continue
+        out.update(_nc.depth_slots(data))
+    return out
+
+
 def merge_pool(prior_players, cur_players):
     """Last season + this season's regular games, per player, date order."""
     pool = {}
@@ -812,13 +828,16 @@ def main(today=None):
     # A+..F- LETTER on each row (10-30) — own try, costs the letters only
     dvp = None
     try:
-        dvp = nc.dvp_table(pool, cur_from)
+        _slots = fetch_depth_slots([str(i) for i in range(1, 31)])
+        dvp = nc.dvp_table(pool, cur_from, slots=_slots)
         if dvp:
             _p = (dvp["stats"].get("pts") or {})
             print(f"  [verify] NBA positions (five, from how they play): "
                   f"{dict(__import__('collections').Counter(dvp['pos_of'].values()))}; "
                   f"PG at {dvp['pos_cuts'].get('pg_ast36')}+ ast/36 among guards, PF at "
-                  f"{dvp['pos_cuts'].get('pf_reb36')}+ reb/36 among forwards")
+                  f"{dvp['pos_cuts'].get('pf_reb36')}+ reb/36 among forwards; "
+                  f"{dvp['pos_cuts'].get('from_depth_chart')} from ESPN depth charts "
+                  f"({len(_slots)} listed)")
             print(f"  [verify] NBA matchup letters: defense vs position over {dvp['of']} teams "
                   f"(10-30: the LETTER is this card; the team factor is context); "
                   + "; ".join(f"pts to {grp}: league {(_p.get(grp) or {}).get('league')}/g, "

@@ -65,8 +65,8 @@ rows = [{"pid": "x", "pos": "G", "min": 30, "mu": {s: 10.0 for s in nm.BASE}}]
 nc.apply_tonight(rows, "1", "ONE", None, [], [], {}, "2026-11-30", dvp=tbl)
 r = rows[0]
 check("the row carries both ranks and the page shows them",
-      r["grade_rank"]["pts"] == "30th vs G" and r["overall_rank"]["pts"]
-      and nv.grade(r, "pts").endswith("(30th vs G)") and nv.overall(r, "pts") == r["overall_rank"]["pts"])
+      r["grade_rank"]["pts"].startswith("30th vs G · ") and r["grade_rank"]["pts"].endswith(" g")
+      and r["overall_rank"]["pts"] and "(30th vs G · " in nv.grade(r, "pts") and nv.overall(r, "pts") == r["overall_rank"]["pts"])
 
 bf = (ROOT / "app" / "views" / "Bet_Finder.py").read_text()
 nhl = (ROOT / "app" / "engines" / "nhl_model.py").read_text()

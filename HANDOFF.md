@@ -154,6 +154,45 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — The matchup letter follows THIS SEASON'S rank vs his position (HOF's way), with the games behind it: "A+ · +17% (30th vs PF · 5 g)"; positions from ESPN depth charts. 2026-10-30 (2)
+
+Izzy (10-30, CHA @ WSH): "On HOF Naz has A+ but ours is a C+ — why can't we
+get them like that?" Two causes, measured on the 01:48 build:
+1. Naz Reid: ESPN's ROSTER lists him C, so he was graded vs C (WAS 9th-most
+   allowed to C); HOF lists him PF (WAS 30th vs PF = softest). FIXED (same
+   batch): nba_precompute.fetch_depth_slots reads all 30 ESPN team DEPTH
+   CHARTS ({base}/teams/{id}/depthcharts) and nba_context.depth_slots maps
+   pid -> PG/SG/SF/PF/C (a player at two slots keeps the higher; athletes
+   by id or by $ref link); positions5(slots) puts the depth slot FIRST, then
+   an ESPN five-position label, then the play-style rule. Log: "... N from
+   ESPN depth charts (M listed)". FORMAT NOT VERIFIED from here (ESPN is
+   blocked in the sandbox): if M is 0 on the next nightly, the depth-chart
+   JSON differs — read the probe, fix depth_slots; until then everything
+   falls back to the play-style positions (no broken letters).
+2. THE REAL BUG: the letter was reliability_grade's (shrunk for thin
+   samples). Anthony Davis read "C · +0% (30th vs PF)" — CHA allowed PFs
+   34.2 pts/g this season, +16.7% vs league, rank softest — because PF
+   split-half reliability is 0.00 and last season's weight 0.0, so the
+   letter AND the size collapsed to C / 0% while the printed rank said
+   softest. A letter contradicting its own rank.
+
+**Now (defense_matchup.card):** basis = this season ("cur") once a game is
+played, else last season, else the blend; letter = grade_pm(rank, of) on
+that basis (fifteen steps); size "effect_pct" = vs_league_pct on that basis;
+"games" = games it rests on. The shrunk letter / reliability stay on the
+card as "blend_grade" / "grade_reliability" / "blend" / "blend_rank".
+Every league's position cards (NBA five positions, NHL C/W/D, NFL) follow.
+Labels: "A+ · +17% (30th vs PF · 5 g)" (nba_context grade_rank, Bet
+Finder); "±0%" instead of "-0%". The by-letter check in the nightly
+(MATCHUP GRADE) keeps measuring whether these letters separate.
+
+Tests: test_defense_matchup / test_grade_reliability / test_overall_rank
+rewritten to the rule; test_nba_depth_positions. Controls red: letter taken
+from the shrunk grade; games count dropped from the label; depth slots
+ignored; a twice-listed player keeping the lower slot.
+
+---
+
 ## PICK UP HERE — Matchup letters are what the defense allows to the player's POSITION in every league (Izzy's call), shown HOF-style: "Def vs pos  D · -4% (9th vs PG)" + "Overall D  1st" (1st = toughest); NBA on FIVE positions. 2026-10-30
 
 Izzy (after MEM @ POR, 10-29: every Memphis player read C- on points and
@@ -766,34 +805,6 @@ Basket.
 FILES: app/engines/nba_context.py, nba_precompute.py,
 tests/test_nba_context.py, app/engines/nba_pbp.py, nba_pbp_prior.py,
 .github/workflows/nba-pbp-prior.yml, tests/test_nba_pbp.py, HANDOFF.md,
-HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — First Basket: a real starter with no projection is priced, not zeroed (the 10-25 nightly's confirmed test was thin because of it). 2026-10-25 (3)
-
-**Suite 170, FAILING: none.** tests/test_nba_first_confirmed.py +4 checks
-(control red: shares pricing an unprojected starter at 0.1 points).
-
-READ 10-25 11 AM nightly: the confirmed-five test came out THIN (2.321
-vs 2.341, z 0.63, n 384) where the offline measurement said z ~17.
-Cause, reproduced offline: a real starter missing from the props rows
-(call-up, no context rows) got share from 0.1 projected points, so when
-he scored first the price was ~0 and the log loss exploded. Dropping 8%
-of rows offline: fails z -1.71 before, beats z 5.43 after. Fix: he gets
-the lowest projection among his four teammates (shares). ESPN-posted
-starters outside the pool now come in by name (pregame_names; reprice
-names=) instead of knocking the team back to "projected". The fit
-reports confirmed.unprojected (share of real starters with no
-projection); the verify line prints it. Until the confirmed test beats,
-confirmed calls are capped at THIN on the page (as designed).
-
-ENVIRONMENT, first real read (11 AM): NBA 36 games, last-season gate
-thin (z 1.8) -> kept 115.36; NHL 179 games kept 3.15; NFL 93 games kept
-22.95; MLB kept. No sport switched — none showed a drift worth following.
-
-FILES: app/engines/nba_first.py, app/views/NBA_First_Basket.py,
-nba_precompute.py, tests/test_nba_first_confirmed.py, HANDOFF.md,
 HANDOFF_ARCHIVE.md
 
 ---

@@ -74,11 +74,13 @@ def table(weight, rel, cur, prior, n_cur=4, n_prior=82):
 
 
 c = dm.card(table(0.0026, 0.003, 25.75, 40.61), "X", "F", "pts")
-check("the 10-28 PHI-vs-forwards card reads C, not F (rank stays 31st of 31)",
-      c["grade"][0] == "C" and c["rank"] == 31 and c["grade_reliability"] < 0.01)
+check("10-30: the LETTER follows this season's rank (31st of 31 -> F-), with its games",
+      c["grade"] == "F-" and c["rank"] == 31 and c["games"] == 4)
+check("and the reliability-adjusted letter stays on the card (C), with its reliability",
+      c["blend_grade"][0] == "C" and c["grade_reliability"] < 0.01)
 c2 = dm.card(table(0.5, 0.57, 36.0, 36.0), "X", "F", "pts")
 check("last season's games count at their fitted weight",
-      abs(c2["n_eff"] - (4 + 0.5 * 82)) < 0.11 and c2["grade"][0] == "F")
+      abs(c2["n_eff"] - (4 + 0.5 * 82)) < 0.11 and c2["blend_grade"][0] == "F")
 check("the card keeps the rank beside the letter", c2["rank"] == 31 and c2["of"] == 31)
 
 print(f"\n{len(fails)} failed" if fails else "\nall passed")

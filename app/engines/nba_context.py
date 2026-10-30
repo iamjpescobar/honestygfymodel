@@ -545,7 +545,8 @@ DVP_MIN_GAMES = 20     # a defense faced fewer times than this is not an NBA tea
 # thing but weak against a SG — grading by 3 positions keeps that away from
 # us." ESPN lists nearly every NBA player as G, F or C (last season: 274 G,
 # 218 F, 87 C, three others), so PG / SG and SF / PF are assigned from how he
-# PLAYS: a guard at or above the guards' median assists per 36 minutes is a
+# PLAYS (10-30: unless a team DEPTH CHART lists him at a slot — that comes
+# first, see depth_slots): a guard at or above the guards' median assists per 36 minutes is a
 # PG, below it an SG; a forward at or above the forwards' median rebounds per
 # 36 is a PF, below it an SF; C stays C; a five-position label ESPN does give
 # is kept. The medians are measured on the pool (players with MIN_POS_MINUTES
@@ -569,8 +570,45 @@ def _per36(p):
     return mins, 36.0 * ast / mins, 36.0 * reb / mins
 
 
-def positions5(pool):
-    """{pid: "PG" | "SG" | "SF" | "PF" | "C"} and the measured cut-offs."""
+def depth_slots(depth_json):
+    """{pid: "PG".."C"} from an ESPN team depth chart (10-30). Walks the JSON
+    for any block that names a five-position slot ("position" with an
+    abbreviation, or a slot key like "pg") and lists athletes; a player
+    listed at more than one slot keeps the one where he sits highest."""
+    out = {}
+
+    def slot_of(key, blk):
+        ab = ((blk.get("position") or {}).get("abbreviation") if isinstance(blk, dict)
+              else None) or key
+        ab = str(ab or "").upper()
+        return ab if ab in POS5 else None
+
+    def walk(o, key=None):
+        if isinstance(o, dict):
+            sl = slot_of(key, o)
+            ath = o.get("athletes")
+            if sl and isinstance(ath, list):
+                for depth, a in enumerate(ath):
+                    a = a.get("athlete", a) if isinstance(a, dict) else {}
+                    pid = str(a.get("id")) if a.get("id") is not None else None
+                    if not pid and isinstance(a.get("$ref"), str) and "/athletes/" in a["$ref"]:
+                        pid = a["$ref"].split("/athletes/", 1)[1].split("?")[0].split("/")[0]
+                    if pid and (pid not in out or depth < out[pid][1]):
+                        out[pid] = (sl, depth)
+                return
+            for k, v in o.items():
+                walk(v, k)
+        elif isinstance(o, list):
+            for v in o:
+                walk(v, key)
+    walk(depth_json)
+    return {pid: sl for pid, (sl, _d) in out.items()}
+
+
+def positions5(pool, slots=None):
+    """{pid: "PG" | "SG" | "SF" | "PF" | "C"} and the measured cut-offs.
+    slots (10-30): the team depth charts' positions (depth_slots) — they
+    come first; then a five-position label ESPN gives; then how he plays."""
     prof = {pid: _per36(p) for pid, p in (pool or {}).items()}
     base = {pid: str((p.get("pos") or "")).upper() for pid, p in (pool or {}).items()}
 
@@ -583,6 +621,9 @@ def positions5(pool):
                  if nm.group(b) == "F" and prof[pid][0] >= MIN_POS_MINUTES])
     out = {}
     for pid, b in base.items():
+        if (slots or {}).get(str(pid)) in POS5:
+            out[pid] = slots[str(pid)]
+            continue
         if b in POS5:
             out[pid] = b
             continue
@@ -638,12 +679,14 @@ def dvp_lines(pool, cur_from, pos_of=None):
     return [ln for ln in out if ln["defense"] in keep]
 
 
-def dvp_table(pool, cur_from, five=True):
+def dvp_table(pool, cur_from, five=True, slots=None):
     """The defense-vs-position table: five positions (positions5) by
     default, G / F / C with five=False. The table carries "pos_of" (pid ->
     position) and "pos_cuts" so tonight's rows use the same assignment."""
     from engines import defense_matchup as dm
-    pos_of, cuts = positions5(pool) if five else ({}, {})
+    pos_of, cuts = positions5(pool, slots) if five else ({}, {})
+    if five:
+        cuts["from_depth_chart"] = sum(1 for pid in pos_of if str(pid) in (slots or {}))
     lines = dvp_lines(pool, cur_from, pos_of)
     if not lines:
         return None
@@ -745,8 +788,9 @@ def apply_tonight(rows, opp_id, opp_abbr, book, outs, out_names, ctx, day, dvp=N
         if dvp:
             from engines import matchup_grade as _mg
             allc = dvp_overall(dvp, opp_id)
-            r["grade_rank"] = {k: (f"{_mg.tough_rank(c)} vs {rp}" if _mg.tough_rank(c)
-                                   else None) for k, c in cards.items()}
+            r["grade_rank"] = {k: (f"{_mg.tough_rank(c)} vs {rp}"
+                                   + (f" · {c['games']} g" if c.get("games") else "")
+                                   if _mg.tough_rank(c) else None) for k, c in cards.items()}
             r["overall_rank"] = {k: _mg.tough_rank(c) for k, c in allc.items()}
         if grades:
             r["grade"] = grades
