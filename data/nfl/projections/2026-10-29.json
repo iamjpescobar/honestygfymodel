@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-10-29 19:04",
+  "generated_at_et": "2026-10-29 21:40",
   "week": 8,
   "league": {
     "team_games": 212,
@@ -1151,15 +1151,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Josh Jacobs",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "RB",
-        "gp": 1,
-        "proj": 50,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Kenneth Walker III",
         "team": "KC",
         "opp": "DEN",
@@ -1185,15 +1176,6 @@
         "gp": 6,
         "proj": 47,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Chuba Hubbard",
-        "team": "CAR",
-        "opp": "GB",
-        "pos": "RB",
-        "gp": 6,
-        "proj": 46,
-        "window": "Thursday Night"
       },
       {
         "player": "Ja'Marr Chase",
@@ -1403,15 +1385,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Pierre Strong Jr.",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "RB",
-        "gp": 2,
-        "proj": 35,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Trey McBride",
         "team": "ARI",
         "opp": "DAL",
@@ -1428,6 +1401,33 @@
         "gp": 3,
         "proj": 35,
         "window": "Sunday Late"
+      },
+      {
+        "player": "J.K. Dobbins",
+        "team": "DEN",
+        "opp": "KC",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 35,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Quinshon Judkins",
+        "team": "CLE",
+        "opp": "PIT",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 34,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 34,
+        "window": "Sunday Night"
       }
     ],
     "Rushing yards": [
@@ -1639,15 +1639,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Chuba Hubbard",
-        "team": "CAR",
-        "opp": "GB",
-        "pos": "RB",
-        "gp": 6,
-        "proj": 47.8,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Rico Dowdle",
         "team": "PIT",
         "opp": "CLE",
@@ -1682,15 +1673,6 @@
         "gp": 4,
         "proj": 46.6,
         "window": "Sunday Night"
-      },
-      {
-        "player": "Josh Jacobs",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "RB",
-        "gp": 1,
-        "proj": 45.5,
-        "window": "Thursday Night"
       },
       {
         "player": "Kimani Vidal",
@@ -1790,6 +1772,24 @@
         "gp": 1,
         "proj": 33.8,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Ollie Gordon II",
+        "team": "MIA",
+        "opp": "NE",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 31.9,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 31.8,
+        "window": "Sunday Night"
       }
     ],
     "Carries": [
@@ -2001,24 +2001,6 @@
         "window": "Sunday Night"
       },
       {
-        "player": "Josh Jacobs",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "RB",
-        "gp": 1,
-        "proj": 11.6,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Chuba Hubbard",
-        "team": "CAR",
-        "opp": "GB",
-        "pos": "RB",
-        "gp": 6,
-        "proj": 11.0,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Emanuel Wilson",
         "team": "SEA",
         "opp": "CHI",
@@ -2145,13 +2127,31 @@
         "window": "Sunday Late"
       },
       {
-        "player": "MarShawn Lloyd",
-        "team": "GB",
-        "opp": "CAR",
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "PHI",
         "pos": "RB",
-        "gp": 7,
-        "proj": 7.7,
-        "window": "Thursday Night"
+        "gp": 5,
+        "proj": 7.5,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Brian Robinson Jr.",
+        "team": "ATL",
+        "opp": "TB",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 6.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Sean Tucker",
+        "team": "TB",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 6.2,
+        "window": "Sunday Early"
       }
     ],
     "Receiving yards": [
@@ -2228,15 +2228,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Tetairoa McMillan",
-        "team": "CAR",
-        "opp": "GB",
-        "pos": "WR",
-        "gp": 6,
-        "proj": 85.0,
-        "window": "Thursday Night"
-      },
-      {
         "player": "CeeDee Lamb",
         "team": "DAL",
         "opp": "ARI",
@@ -2253,15 +2244,6 @@
         "gp": 3,
         "proj": 83.9,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Christian Watson",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "WR",
-        "gp": 7,
-        "proj": 81.9,
-        "window": "Thursday Night"
       },
       {
         "player": "Brock Bowers",
@@ -2408,24 +2390,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Matthew Golden",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "WR",
-        "gp": 7,
-        "proj": 55.6,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Jalen Coker",
-        "team": "CAR",
-        "opp": "GB",
-        "pos": "WR",
-        "gp": 5,
-        "proj": 54.7,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Luther Burden III",
         "team": "CHI",
         "opp": "SEA",
@@ -2507,13 +2471,49 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Tucker Kraft",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "TE",
+        "player": "KC Concepcion",
+        "team": "CLE",
+        "opp": "PIT",
+        "pos": "WR",
         "gp": 7,
-        "proj": 45.1,
-        "window": "Thursday Night"
+        "proj": 44.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Dallas Goedert",
+        "team": "PHI",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 44.2,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Jahmyr Gibbs",
+        "team": "DET",
+        "opp": "MIN",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 43.2,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "A.J. Brown",
+        "team": "NE",
+        "opp": "MIA",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 43.2,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Keenan Allen",
+        "team": "IND",
+        "opp": "JAX",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 42.7,
+        "window": "Sunday Early"
       }
     ],
     "Receptions": [
@@ -2606,15 +2606,6 @@
         "gp": 4,
         "proj": 5.6,
         "window": "Sunday Night"
-      },
-      {
-        "player": "Tetairoa McMillan",
-        "team": "CAR",
-        "opp": "GB",
-        "pos": "WR",
-        "gp": 6,
-        "proj": 5.4,
-        "window": "Thursday Night"
       },
       {
         "player": "Garrett Wilson",
@@ -2716,15 +2707,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Christian Watson",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "WR",
-        "gp": 7,
-        "proj": 4.8,
-        "window": "Thursday Night"
-      },
-      {
         "player": "DK Metcalf",
         "team": "PIT",
         "opp": "CLE",
@@ -2741,24 +2723,6 @@
         "gp": 6,
         "proj": 4.7,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Jalen Coker",
-        "team": "CAR",
-        "opp": "GB",
-        "pos": "WR",
-        "gp": 5,
-        "proj": 4.6,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Tucker Kraft",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "TE",
-        "gp": 7,
-        "proj": 4.6,
-        "window": "Thursday Night"
       },
       {
         "player": "Tee Higgins",
@@ -2815,15 +2779,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Pierre Strong Jr.",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "RB",
-        "gp": 2,
-        "proj": 4.2,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Chase Brown",
         "team": "CIN",
         "opp": "TEN",
@@ -2851,15 +2806,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Matthew Golden",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "WR",
-        "gp": 7,
-        "proj": 4.1,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Khalil Shakir",
         "team": "BUF",
         "opp": "BAL",
@@ -2875,6 +2821,60 @@
         "pos": "TE",
         "gp": 7,
         "proj": 4.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tre Tucker",
+        "team": "LV",
+        "opp": "NYJ",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 4.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Kyle Pitts Sr.",
+        "team": "ATL",
+        "opp": "TB",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 4.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jakobi Meyers",
+        "team": "JAX",
+        "opp": "IND",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 4.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Travis Kelce",
+        "team": "KC",
+        "opp": "DEN",
+        "pos": "TE",
+        "gp": 6,
+        "proj": 4.1,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Harold Fannin Jr.",
+        "team": "CLE",
+        "opp": "PIT",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 4.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Bijan Robinson",
+        "team": "ATL",
+        "opp": "TB",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 4.0,
         "window": "Sunday Early"
       }
     ],
@@ -2932,15 +2932,6 @@
         "gp": 7,
         "proj": 10.5,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Tetairoa McMillan",
-        "team": "CAR",
-        "opp": "GB",
-        "pos": "WR",
-        "gp": 6,
-        "proj": 9.0,
-        "window": "Thursday Night"
       },
       {
         "player": "Brock Bowers",
@@ -3024,15 +3015,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Christian Watson",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "WR",
-        "gp": 7,
-        "proj": 7.7,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Rashee Rice",
         "team": "KC",
         "opp": "DEN",
@@ -3076,15 +3058,6 @@
         "gp": 7,
         "proj": 7.3,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Matthew Golden",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "WR",
-        "gp": 7,
-        "proj": 7.1,
-        "window": "Thursday Night"
       },
       {
         "player": "Keenan Allen",
@@ -3159,24 +3132,6 @@
         "window": "Monday Night"
       },
       {
-        "player": "Jalen Coker",
-        "team": "CAR",
-        "opp": "GB",
-        "pos": "WR",
-        "gp": 5,
-        "proj": 6.5,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Tucker Kraft",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "TE",
-        "gp": 7,
-        "proj": 6.5,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Jahmyr Gibbs",
         "team": "DET",
         "opp": "MIN",
@@ -3238,6 +3193,51 @@
         "gp": 7,
         "proj": 6.0,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Harold Fannin Jr.",
+        "team": "CLE",
+        "opp": "PIT",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 6.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Josh Downs",
+        "team": "IND",
+        "opp": "JAX",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 6.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jakobi Meyers",
+        "team": "JAX",
+        "opp": "IND",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 6.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Ashton Jeanty",
+        "team": "LV",
+        "opp": "NYJ",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 5.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Travis Kelce",
+        "team": "KC",
+        "opp": "DEN",
+        "pos": "TE",
+        "gp": 6,
+        "proj": 5.8,
+        "window": "Sunday Late"
       }
     ],
     "Passing yards": [
@@ -3278,15 +3278,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Jordan Love",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "QB",
-        "gp": 7,
-        "proj": 271.8,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Drew Lock",
         "team": "SEA",
         "opp": "CHI",
@@ -3303,15 +3294,6 @@
         "gp": 7,
         "proj": 265.7,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Bryce Young",
-        "team": "CAR",
-        "opp": "GB",
-        "pos": "QB",
-        "gp": 6,
-        "proj": 263.6,
-        "window": "Thursday Night"
       },
       {
         "player": "Caleb Williams",
@@ -3420,15 +3402,6 @@
         "gp": 7,
         "proj": 219.7,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Tyrod Taylor",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "QB",
-        "gp": 1,
-        "proj": 218.5,
-        "window": "Thursday Night"
       },
       {
         "player": "Case Keenum",
@@ -3613,24 +3586,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Jordan Love",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "QB",
-        "gp": 7,
-        "proj": 37.6,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Tyrod Taylor",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "QB",
-        "gp": 1,
-        "proj": 37.6,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Jared Goff",
         "team": "DET",
         "opp": "MIN",
@@ -3656,15 +3611,6 @@
         "gp": 5,
         "proj": 36.0,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Bryce Young",
-        "team": "CAR",
-        "opp": "GB",
-        "pos": "QB",
-        "gp": 6,
-        "proj": 35.2,
-        "window": "Thursday Night"
       },
       {
         "player": "Aaron Rodgers",
@@ -4110,15 +4056,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Tetairoa McMillan",
-        "team": "CAR",
-        "opp": "GB",
-        "pos": "WR",
-        "gp": 6,
-        "proj": 85.0,
-        "window": "Thursday Night"
-      },
-      {
         "player": "CeeDee Lamb",
         "team": "DAL",
         "opp": "ARI",
@@ -4126,15 +4063,6 @@
         "gp": 7,
         "proj": 84.3,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Christian Watson",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "WR",
-        "gp": 7,
-        "proj": 81.9,
-        "window": "Thursday Night"
       },
       {
         "player": "Bucky Irving",
@@ -4171,15 +4099,6 @@
         "gp": 6,
         "proj": 78.6,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Josh Jacobs",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "RB",
-        "gp": 1,
-        "proj": 77.4,
-        "window": "Thursday Night"
       },
       {
         "player": "Chase Brown",
@@ -4272,21 +4191,48 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Chuba Hubbard",
-        "team": "CAR",
-        "opp": "GB",
-        "pos": "RB",
-        "gp": 6,
-        "proj": 67.1,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Trey McBride",
         "team": "ARI",
         "opp": "DAL",
         "pos": "TE",
         "gp": 7,
         "proj": 66.2,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Rome Odunze",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 65.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rico Dowdle",
+        "team": "PIT",
+        "opp": "CLE",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 65.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Caleb Douglas",
+        "team": "MIA",
+        "opp": "NE",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 64.8,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Jameson Williams",
+        "team": "DET",
+        "opp": "MIN",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 64.3,
         "window": "Sunday Early"
       }
     ],
@@ -4328,24 +4274,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Jordan Love",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "QB",
-        "gp": 7,
-        "proj": 24.01,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Tyrod Taylor",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "QB",
-        "gp": 1,
-        "proj": 23.85,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Joe Burrow",
         "team": "CIN",
         "opp": "TEN",
@@ -4380,15 +4308,6 @@
         "gp": 7,
         "proj": 22.49,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Bryce Young",
-        "team": "CAR",
-        "opp": "GB",
-        "pos": "QB",
-        "gp": 6,
-        "proj": 22.22,
-        "window": "Thursday Night"
       },
       {
         "player": "Daniel Jones",
@@ -4663,24 +4582,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Jordan Love",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "QB",
-        "gp": 7,
-        "proj": 1.74,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Tyrod Taylor",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "QB",
-        "gp": 1,
-        "proj": 1.73,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Jared Goff",
         "team": "DET",
         "opp": "MIN",
@@ -4706,15 +4607,6 @@
         "gp": 7,
         "proj": 1.68,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Bryce Young",
-        "team": "CAR",
-        "opp": "GB",
-        "pos": "QB",
-        "gp": 6,
-        "proj": 1.63,
-        "window": "Thursday Night"
       },
       {
         "player": "Aaron Rodgers",
@@ -4980,15 +4872,6 @@
     ],
     "Interceptions": [
       {
-        "player": "Tyrod Taylor",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "QB",
-        "gp": 1,
-        "proj": 0.82,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Jacoby Brissett",
         "team": "ARI",
         "opp": "DAL",
@@ -5025,15 +4908,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Bryce Young",
-        "team": "CAR",
-        "opp": "GB",
-        "pos": "QB",
-        "gp": 6,
-        "proj": 0.73,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Dak Prescott",
         "team": "DAL",
         "opp": "ARI",
@@ -5050,15 +4924,6 @@
         "gp": 7,
         "proj": 0.73,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Jordan Love",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "QB",
-        "gp": 7,
-        "proj": 0.71,
-        "window": "Thursday Night"
       },
       {
         "player": "Joe Burrow",
@@ -5405,15 +5270,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Josh Jacobs",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "RB",
-        "gp": 1,
-        "proj": 15.5,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Kenneth Walker III",
         "team": "KC",
         "opp": "DEN",
@@ -5457,15 +5313,6 @@
         "gp": 7,
         "proj": 12.8,
         "window": "Monday Night"
-      },
-      {
-        "player": "Chuba Hubbard",
-        "team": "CAR",
-        "opp": "GB",
-        "pos": "RB",
-        "gp": 6,
-        "proj": 12.7,
-        "window": "Thursday Night"
       },
       {
         "player": "Ja'Marr Chase",
@@ -5657,15 +5504,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Pierre Strong Jr.",
-        "team": "GB",
-        "opp": "CAR",
-        "pos": "RB",
-        "gp": 2,
-        "proj": 7.2,
-        "window": "Thursday Night"
-      },
-      {
         "player": "J.K. Dobbins",
         "team": "DEN",
         "opp": "KC",
@@ -5681,6 +5519,33 @@
         "pos": "TE",
         "gp": 7,
         "proj": 6.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Rashee Rice",
+        "team": "KC",
+        "opp": "DEN",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 6.8,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 6.7,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Quinshon Judkins",
+        "team": "CLE",
+        "opp": "PIT",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 6.4,
         "window": "Sunday Early"
       }
     ]
