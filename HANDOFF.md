@@ -154,6 +154,34 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — NBA late scratches now move their teammates: a player ruled Out after the nightly is dropped AND his teammates get the tested teammate-out bump, on every NBA page. 2026-10-30 (3)
+
+Izzy (10-30): "feed the NBA the news DraftKings has". Before this, the live
+injury overlay (engines/live_injuries, LIVE_TTL 600 s) took a late scratch
+off the board, but his teammates kept their morning numbers while the book
+moved their lines.
+
+**Now:** live_injuries.overlay keeps each removed NBA row as
+g["{side}_out_live_rows"] = [{pid, name, min, mu}]. nba_view.load() calls
+nba_context.late_out_bump(rows, outs, model["context"]) per side: the SAME
+bump() the nightly uses for players already out (ctx["out"], fitted and
+tested), with the scratch's projected minutes / stats as the absence. A
+scratch under ROT_MIN moves nobody; a stat with no fitted bump stays put;
+combos are re-summed from their parts; each moved row gets late_news and a
+why note "<name> ruled out since this morning: pts +x%". Pages through
+nv.load(): Live, NBA, Next Man Up, First Basket, Milestones, Bet Finder,
+Long Shots, NBA Sim, NBA Trends, NBA Props. Chances are recomputed from mu
+at view time, so they follow.
+
+NOT measured separately: the bump's size is the nightly's tested one; the
+late-news path just applies it at the right time. Confirmed starters /
+minutes from the book are NOT fed yet — measure value first.
+
+Tests: test_nba_late_news. Controls red: bump not applied; a deep-bench
+scratch counted.
+
+---
+
 ## PICK UP HERE — The matchup letter follows THIS SEASON'S rank vs his position (HOF's way), with the games behind it: "A+ · +17% (30th vs PF · 5 g)"; positions from ESPN depth charts. 2026-10-30 (2)
 
 Izzy (10-30, CHA @ WSH): "On HOF Naz has A+ but ours is a C+ — why can't we
@@ -758,53 +786,3 @@ market — price typed.
 FILES: app/engines/nba_early.py (NEW), nba_precompute.py,
 app/views/NBA_First_Basket.py, tests/test_nba_early.py (NEW),
 tests/test_nba_first_confirmed.py, HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — First Site-vs-DraftKings read: the NBA model's over chances run ~11 points under the book's; a nightly bias line now measures whether the model under-projects this season. 2026-10-25 (4)
-
-**Suite 170, FAILING: none.** tests/test_nba_context.py +2 checks
-(control red: the ratio inverted); tests/test_nba_pbp.py +6 (control red:
-9:00 exactly left out).
-
-READ (scorecard 10-25 4 PM; graded nights: NBA 10-24 only, 7 games, 637
-main lines). Brier site vs book: every NBA market worse (0.27-0.30 vs
-0.24-0.25; pa / pr / pra fail at z -2.5 to -2.9); flagged plays -6% to
--30% ROI. Direction, measured from data/props/graded/nba.json: site mean
-P(over) 0.38, book 0.49, actual 0.58. The site leaned UNDER by 5+ points
-on 448 of 637 lines and those went over 58%. Not the calibration curve
-(raw 0.36, delivered 0.34 on all captured rows incl. ladders), not the
-league environment (115.08 vs 115.36). So the projections themselves sat
-below DraftKings' lines. One night of correlated games — not a verdict
-yet — but too one-sided to wait on blind.
-NHL: site ~= book on every market (Brier within 0.01), still grading.
-
-NEW DIAGNOSTIC: nba_context.fit returns "bias" — mean projected vs
-actual per stat on unseen player-games, this season vs last season's
-test window, all and 20+ projected minutes; nightly prints "[verify] NBA
-projection bias ...". NEXT: if this season's ratio sits clearly above 1
-(e.g. 1.05+) while last season's is ~1.00, the fix is a this-season
-level correction fitted walk-forward and tested (adopt only if it
-beats); if both ~1.00, look at minutes (team minutes target 220,
-beta 0.5) and at capture time (12:39Z, before lineup news).
-
-FIRST 3 MINUTES (Izzy: "I need players to score in the first 3 minutes
-... a market I like to bet on"). Step 1, the data: nba_pbp.parse now
-records "early" {pid: [points, made FGs]} for period 1 with 9:00 or
-more left (exactly 9:00 counts), "early_team" {team: points}, and
-"team_first_fg" {team: first FG record} (team first basket market).
-This season's games get it from the nightly's play-by-play; last
-season's needs ONE re-run of "NBA prior play-by-play" (nba-pbp-prior.yml,
-30-60 min), which now prints "[verify] first 3 minutes: ... a starter
-scored in the first 3 minutes X%". DraftKings' feed has no such market
-(10-24 type list) — price typed in. NEXT: the model, fitted and tested
-on that data (his early points rate per start, shrunk toward his share
-of team scoring x the team's early points), then a section on First
-Basket.
-
-FILES: app/engines/nba_context.py, nba_precompute.py,
-tests/test_nba_context.py, app/engines/nba_pbp.py, nba_pbp_prior.py,
-.github/workflows/nba-pbp-prior.yml, tests/test_nba_pbp.py, HANDOFF.md,
-HANDOFF_ARCHIVE.md
-
----

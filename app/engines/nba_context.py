@@ -743,6 +743,41 @@ def letter_teams(book, dvp=None):
     return nba or sorted(ids)
 
 
+def late_out_bump(rows, out_rows, ctx):
+    """LATE NEWS (10-30). A player ruled out after the nightly (the pages'
+    live injury check, engines/live_injuries) leaves the board — and his
+    teammates now get the same TESTED teammate-out bump the nightly gives a
+    morning absence (bump(), fitted on last season: context "out"), so their
+    projections move the way the book's lines do. He has missed no games
+    yet (m = 0). Rows are changed in place; returns {stat: multiplier}."""
+    cfg = (ctx or {}).get("out") or {}
+    outs = [(0, o.get("min") or 0.0, o.get("mu") or {}) for o in (out_rows or [])
+            if (o.get("min") or 0.0) >= ROT_MIN and o.get("mu")]
+    if not outs or not any(cfg.get(st) for st in nm.BASE):
+        return {}
+    present = {st: sum((r.get("mu") or {}).get(st, 0.0) for r in rows) for st in nm.BASE}
+    b = bump(outs, present, cfg)
+    if all(abs(v - 1.0) < 1e-9 for v in b.values()):
+        return {}
+    names = ", ".join(o.get("name") or "" for o in out_rows if (o.get("min") or 0) >= ROT_MIN)
+    lab = {"pts": "pts", "reb": "reb", "ast": "ast", "tpm": "3s"}
+    for r in rows:
+        mu = dict(r.get("mu") or {})
+        for st in nm.BASE:
+            if mu.get(st) is not None:
+                mu[st] = round(mu[st] * b[st], 3)
+        for c, parts in nm.COMBOS.items():
+            if all(mu.get(x) is not None for x in parts):
+                mu[c] = round(sum(mu[x] for x in parts), 3)
+        r["mu"] = mu
+        r["late_news"] = {k: round(v, 3) for k, v in b.items()}
+        up = [f"{lab[s]} {100 * (v - 1):+.0f}%" for s, v in b.items() if v - 1 >= 0.01]
+        if up:
+            note = f"{names} ruled out since this morning: " + ", ".join(up)
+            r["why"] = (r.get("why") + " · " if r.get("why") else "") + note
+    return b
+
+
 def apply_tonight(rows, opp_id, opp_abbr, book, outs, out_names, ctx, day, dvp=None):
     """One team's rows for tonight with the context applied in place:
     each row's mu, plus row["ctx"] = {"opp": {stat: f}, "bump": {stat: b}}

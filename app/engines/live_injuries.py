@@ -70,13 +70,15 @@ def _status(p, f):
             or (f.get("by_name") or {}).get(av.name_key(p.get("name"))))
 
 
-def _apply(rows, f, newly_out, label):
+def _apply(rows, f, newly_out, label, removed=None):
     keep = []
     for p in rows or []:
         st = _status(p, f)
         if st and av.is_out(st):
             if not av.is_out(p.get("status")):
                 newly_out.append(f"{p.get('name')} ({st})")
+                if removed is not None:
+                    removed.append(p)
             continue
         if st and st != p.get("status"):
             p = dict(p, status=st, status_live=True)
@@ -94,10 +96,17 @@ def overlay(games, f, league):
     for g in games:
         for side in ("away", "home"):
             newly = []
+            removed = []
             for k in lists:
                 key = f"{side}_{k}"
                 if key in g:
-                    g[key] = _apply(g[key], f, newly, k)
+                    g[key] = _apply(g[key], f, newly, k, removed if k == "props" else None)
+            if removed and league == "nba":
+                # the rows themselves (minutes, projection) — what the NBA
+                # teammate-out bump needs (engines/nba_view.load, 10-30)
+                g[f"{side}_out_live_rows"] = [
+                    {"pid": r.get("pid"), "name": r.get("name"), "min": r.get("min"),
+                     "mu": dict(r.get("mu") or {})} for r in removed]
             if newly:
                 g[f"{side}_out_live"] = sorted(set(newly))
                 g[f"{side}_held_out"] = sorted(set((g.get(f"{side}_held_out") or [])

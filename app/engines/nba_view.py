@@ -15,6 +15,15 @@ def load():
     from engines.slate_guard import payload_field
     games, _d, _cur = li.load_slate_live("nba")
     model = payload_field("nba", "model") or {}
+    # LATE NEWS (10-30): a player ruled out since the nightly leaves the
+    # board (the live check) AND his teammates get the tested teammate-out
+    # bump, so their projections move with the news (nba_context.late_out_bump)
+    from engines import nba_context as _nc
+    for g in games or []:
+        for side in ("away", "home"):
+            outs = g.get(f"{side}_out_live_rows")
+            if outs and g.get(f"{side}_props"):
+                _nc.late_out_bump(g[f"{side}_props"], outs, (model or {}).get("context"))
     return games or [], model, (lambda k, default=None: payload_field("nba", k, default))
 
 
