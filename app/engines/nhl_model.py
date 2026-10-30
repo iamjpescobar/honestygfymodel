@@ -946,9 +946,9 @@ def why_line(name, pos, r, env, toi, opp_abbr, dvp_card_sog, exp_sog, exp_pts):
 #   assists in the number A +8.7 .. F -8.5%; raw by position A +5.2 .. F -9.5%
 #   points  in the number A +8.3 .. F -8.1%; raw by position A +6.0 .. F -7.6%
 # (beat-their-baseline vs the defense, team or C/W/D, sorted no better.)
-# So the letter is tonight's matchup ratio — the one the chance already
-# uses — placed against how that ratio ran over last season's games
-# (fifteen equal steps, A+ .. F-). The C / W / D card stays as context.
+# So the 10-29 letter was tonight's matchup ratio. From 10-30 (Izzy's call)
+# the LETTER is the C / W / D card's and this matchup letter is context on
+# the card ("matchup_grade" / "matchup_ratio") — see letter_cards.
 LETTER_FAMS = {"sog": "shot", "g": "goal", "a": "goal", "pts": "goal"}
 
 
@@ -986,19 +986,27 @@ def matchup_letter(ratio, cuts):
 
 
 def letter_cards(cards, sr, gr, cuts):
-    """The row's cards with the matchup letter in place (in place): each
-    stat's card gets "grade" (the letter), "matchup_ratio" and
-    "letter_basis"; a stat with no position card gets a card of its own."""
+    """The row's cards (10-30, Izzy: "make sure it's what the defense allows
+    to the position"): the LETTER is the C / W / D card's — what this
+    defense allows to his position, reliability-adjusted, with its size —
+    and tonight's team matchup (the 10-29 letter, which sorted games better
+    on last season: shots A +6.0 .. F -9.4% vs raw C/W/D A +5.0 .. F -9.3%)
+    rides along as context: "matchup_grade" and "matchup_ratio". A stat
+    with no position card takes the matchup letter, labelled so."""
     out = dict(cards or {})
     for st, fam in LETTER_FAMS.items():
         ratio = sr if fam == "shot" else gr
         g = matchup_letter(ratio, (cuts or {}).get(fam))
-        if not g:
-            continue
         c = dict(out.get(st) or {"stat": st})
-        if c.get("grade"):
-            c["position_grade"] = c["grade"]
-        c.update({"grade": g, "matchup_ratio": round(ratio, 3), "letter_basis": "matchup"})
+        if g:
+            c.update({"matchup_grade": g, "matchup_ratio": round(ratio, 3)})
+        if c.get("grade") and c.get("rank"):
+            c["letter_basis"] = "position"
+        elif g:
+            c.update({"grade": g, "letter_basis": "matchup",
+                      "effect_pct": round(100 * (ratio - 1), 1)})
+        else:
+            continue
         out[st] = c
     return out
 
@@ -1271,6 +1279,9 @@ def build(current_finals, prior, current_skaters=None, current_id_of=None, slate
                              # the scales in the number, 1.0 unless adopted)
                              "shots": shs,
                              "dvp": {st: c for st, c in cards.items() if c},
+                             # against everyone (HOF's "Overall", 10-30)
+                             "dvp_all": {st: c for st in DVP_STATS
+                                         if (c := dm.card(dvp, opp_id, "ALL", st))} if dvp else {},
                              "why": why_line(sk.get("name") or p.get("name"), pos, r, env, sc,
                                              opp_abbr, cards.get("sog"),
                                              pr["_exp_sog"], pr["_exp_pts"]),

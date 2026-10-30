@@ -387,6 +387,11 @@ def card(table, defense, group, stat):
         "per_game": value, "league": league, "vs_league_pct": vs,
         "rank": rank, "of": of, "tier": tier(rank, of), "grade": letter,
         "grade_reliability": rel_n, "n_eff": round(n_eff, 1),
+        # the size shown beside the letter (10-30): the gap to the league,
+        # shrunk by how much of it is real at this many games (Kelley) — a
+        # four-game swing reads small, an established one at full size
+        "effect_pct": (round(rel_n * vs, 1) if (rel_n is not None and vs is not None)
+                       else vs),
         "cur": row.get("cur"), "n_cur": row.get("n_cur"), "rank_cur": row.get("rank_cur"),
         "of_cur": g["ranked"]["cur"],
         "prior": row.get("prior"), "n_prior": row.get("n_prior"),
@@ -470,9 +475,11 @@ def notice(c, stat_label, group_label, defense_label, fmt="{:.1f}"):
 def badge(c):
     """Short cell text with the A-F matchup letter first (10-26):
     'A · 3rd-most' / 'F · 2nd-fewest' / 'C · 14th-most' / '—'."""
-    if c and c.get("matchup_ratio") is not None and c.get("grade"):
-        # NHL (10-29): the letter is tonight's matchup in the number
-        return f"{c['grade']} · x{c['matchup_ratio']:.2f}"
+    if c and c.get("grade") and c.get("effect_pct") is not None:
+        # 10-30: the letter and its size — what this defense allows to his
+        # position vs the league ("B+ · +4%")
+        from engines import matchup_grade as mg
+        return mg.with_size(c["grade"], c["effect_pct"])
     if not c or not c.get("rank"):
         return "—"
     short = rank_text(c).rsplit(" of ", 1)[0]

@@ -154,6 +154,73 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Matchup letters are what the defense allows to the player's POSITION in every league (Izzy's call), shown HOF-style: "Def vs pos  D · -4% (9th vs PG)" + "Overall D  1st" (1st = toughest); NBA on FIVE positions. 2026-10-30
+
+Izzy (after MEM @ POR, 10-29: every Memphis player read C- on points and
+he skipped Boozer, who went 15/9/8): "I need that to be vs the defense ...
+players to have their own grade ... make sure it's what the defense allows
+to the position."
+
+**Now:**
+- NBA (nba_context.apply_tonight): LETTER = defense_matchup card for his
+  G / F / C group (this season + last, reliability-adjusted, A+..F-); the
+  opponent-factor rank (10-29) is context in ctx["grade"][st]["factor_grade"]
+  and fills a stat with no card. r["grade_size"][st] = the card's
+  effect_pct.
+- NHL (nhl_model.letter_cards): LETTER = the C / W / D card's; tonight's
+  matchup letter / ratio ride on the card as "matchup_grade" /
+  "matchup_ratio"; a stat with no card takes the matchup letter
+  (letter_basis "matchup").
+- NFL unchanged (QB / RB / WR / TE cards).
+- defense_matchup.card adds "effect_pct" = reliability_at_n x vs_league_pct
+  (a few games read small); badge() = "B+ · +4%"; matchup_grade.with_size
+  (Under flips letter AND sign), base() reads "B+ · +4%".
+- Column "Matchup" -> "Def vs pos" (Bet Finder, NBA Props, NBA Trends);
+  caption says it is a matchup read, not a pick.
+
+**Measured and on record (so the next session does not re-litigate it):**
+walk-forward on last season, points vs the projection by letter — raw
+"allowed to his position" A +0.4 B +1.6 C -1.4 D -0.9 F -3.3%; the team
+opponent factor A +4.7 B +1.8 C -1.3 D -4.3 F -5.1%. NHL: the team matchup
+(SOG A +6.0 .. F -9.4) vs raw C/W/D (A +5.0 .. F -9.3, goals out of order).
+Izzy chose position letters knowing this; the MATCHUP GRADE line in the
+nightly (Site vs DraftKings, per letter: site / book / hit) is the live
+check. If A / F stop separating there, show him the numbers.
+Note: within a team, the same position still shares a letter on a stat
+(it grades the DEFENSE vs that position). A per-player matchup (style /
+role) was offered and declined for now.
+
+HOF (screenshot 10-30, Trae Young Reb+Ast vs CHA): shows the defense's rank
+vs his position AND overall, 1st = toughest (vs PG reb 7th / ast 9th; overall
+reb 1st) and graded it "D"; reading those ranks on fifteen steps gave D- / D
+before Izzy said D. So every row now carries matchup_grade.tough_rank of its
+position card ("grade_rank") and of the "ALL" card ("overall_rank",
+nba_context.dvp_overall; NHL rows "dvp_all"): "Def vs pos" reads
+"D · -4% (9th)", and an "Overall D" column sits beside it (Bet Finder, NBA
+Props, NBA Trends).
+
+FIVE NBA POSITIONS (same batch; Izzy: "a team might be tough against a PG on
+one thing but weak against a SG"). ESPN gives G / F / C (last season 274 G,
+218 F, 87 C, 3 others), so nba_context.positions5 assigns from how he plays:
+guards at/above the guards' median assists per 36 (regulars, 300+ min) are
+PG, below SG; forwards at/above the forwards' median rebounds per 36 are PF,
+below SF; C stays; an ESPN five-position label is kept. Last season: PG at
+4.41 ast/36, PF at 7.04 reb/36; 131 PG / 145 SG / 118 SF / 101 PF / 87 C
+(Trae, Curry, Booker PG; Klay SG; LeBron SF; Giannis, Tatum, Draymond PF).
+dvp_table(five=True) default; the table carries pos_of / pos_cuts; row_pos
+grades tonight's row at the SAME position. Split-half reliability of points
+allowed: PG 0.54, SG 0.40, SF 0.00, PF 0.00, C 0.40 (3-pos: G 0.57, F 0.003)
+— the guard split is real; forwards stay noise and read near C. Rank text
+says the position: "9th vs PG". dvp_table(five=False) keeps G / F / C.
+
+Tests: test_nba_letters, test_nhl_letters, test_matchup_grade (rewritten).
+Controls red: factor letter first; NHL card letter overwritten; Under not
+flipping the size's sign; tough_rank counted from the softest; overall read
+from the position group (test_overall_rank); guard split on rebounds; tonight's
+row graded at its ESPN group (test_nba_positions5).
+
+---
+
 ## PICK UP HERE — Live tested for every NBA stat (play-by-play rebounds / assists / threes), anchored calls that beat DraftKings get past THIN, NHL goal ratings' search un-pinned with a nightly form check. 2026-10-29 (2)
 
 Izzy: "simulators as close as possible to the outcome ... some projections
@@ -728,67 +795,5 @@ thin (z 1.8) -> kept 115.36; NHL 179 games kept 3.15; NFL 93 games kept
 FILES: app/engines/nba_first.py, app/views/NBA_First_Basket.py,
 nba_precompute.py, tests/test_nba_first_confirmed.py, HANDOFF.md,
 HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — First Basket rebuilt on the CONFIRMED starting five; NBA Trends picks a team first; every game model follows today's scoring when it is measured to help. 2026-10-25 (2)
-
-**Suite 170, FAILING: none.** New: tests/test_nba_first_confirmed.py,
-tests/test_nba_trends_picker.py, tests/test_environment.py;
-test_nba_first.py and test_bet_finder_why.py updated. Controls red
-(exit 1): reprice ignoring `sure`; rho_confirmed counted over the test
-window; four starters taken as a lineup; team_players keeping Out rows;
-slate_teams listing a team twice; environment applied on the prior test
-alone; _ewma_errors scoring a game after adding it; build() ignoring an
-applied environment; the NFL no-price note removed.
-
-FIRST BASKET (Izzy: "not set up the right way ... Surprise me").
-MEASURED on last season's play-by-play (offline proxy reproduced the
-nightly's 2.35 vs 2.40): every first field goal, 1,235 of 1,235, came
-from one of the ten STARTERS, but the projected five missed a starter
-in ~9% of games, so the model kept ~10% for "someone else". Priced on
-the REAL five: 2.27 vs 2.35 log loss per game (paired z 16.9, 592
-games), calibrated 4%-19%. Team scoring strength for the first-team call:
-nothing (z 0.07) — not built; first team stays THIN.
-  engine: price_game(five=, sure=), _walk(confirmed=), fit() returns
-  "confirmed" {n, loss, rho, verdict, calibration} and
-  params.rho_confirmed (fit side only); pool_row, reprice (the page's
-  re-price, identical to the nightly's price when nothing is confirmed),
-  pregame_starters (ESPN box / rosters, exactly five).
-  nightly: first_basket_game ships "pool", "five", "home", "away"; the
-  verify line adds "CONFIRMED five ... vs projected five".
-  page: tonight's board on top (best 3 per game, Confirmed / Projected);
-  per game, ESPN's posted five auto-confirms (cached 5 min), otherwise
-  pick the five and flip "Lineup is out"; confirmed calls go through
-  the confirmed curve. Until the next nightly ships "pool" the page says
-  lineup confirming is coming and shows the projected prices.
-UNKNOWN: whether ESPN's summary marks starters BEFORE tip (pregame shape
-never probed). If it never does, the manual switch is the path.
-
-NBA TRENDS: Team first (tonight's teams, game-time order), then
-"Player (available tonight)" — ruled-out players dropped and named
-under the picker, most projected minutes first, doubt tags shown.
-
-ADAPTIVE ("today's game style", all four sports). Player form is
-already recency-weighted where it was measured to help (NBA half-lives,
-NHL TOI windows). The gap: every game model's league scoring rate was
-LAST season's average until 150 games this season. MEASURED on last
-season's finals: the NBA drifted ~10 points in-season (Oct 235, Feb 225,
-Apr 236) and a recency-weighted rate beat flat (hl 100, z 2.04); NHL,
-MLB, NFL no (z <= 0.9). game_model.environment tests it per sport every
-night, twice (half-life vs flat on last season; then on this season's
-games, each priced before it, vs the rate in use) and uses it only when
-both beat; game_model.build and nfl_game_model.build apply it
-(league "from" ends "+environment"). The sims ride the game models.
-NEXT: read "[verify] <SPORT> scoring environment" in the nightly.
-
-Bet Finder NFL rows now say DraftKings' free feed posts the line but no
-price (probe 10-25: 0 of 744 / 664 items priced in every variant).
-
-FILES: app/engines/nba_first.py, app/views/NBA_First_Basket.py,
-nba_precompute.py, app/engines/nba_view.py, app/views/NBA_Trends.py,
-app/engines/game_model.py, app/engines/nfl_game_model.py,
-app/engines/nhl_model.py, nfl_precompute.py, mlb_model_precompute.py,
-app/views/Bet_Finder.py, tests (above), HANDOFF.md, HANDOFF_ARCHIVE.md
 
 ---

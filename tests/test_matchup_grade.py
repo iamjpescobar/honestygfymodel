@@ -60,8 +60,12 @@ tbl = {"stats": {"g": {"W": {"teams": {"1": {"blend": 0.9, "rank": 2},
 c1, c2 = dm.card(tbl, "1", "W", "g"), dm.card(tbl, "2", "W", "g")
 check("every defense-vs-position card carries its letter",
       mg.base(c1["grade"]) == "A" and mg.base(c2["grade"]) == "F")
-check("the badge leads with the letter: 'A+ · 2nd-most', 'F- · 2nd-fewest'",
-      dm.badge(c1) == f"{c1['grade']} · 2nd-most" and dm.badge(c2) == f"{c2['grade']} · 2nd-fewest")
+check("the badge is the letter and its size vs the league: 'A+ · +50%', 'F- · -33%'",
+      dm.badge(c1) == f"{c1['grade']} · +50%" and dm.badge(c2) == f"{c2['grade']} · -33%"
+      and dm.badge({"grade": "B", "rank": 3, "of": 32}).startswith("B · 3rd"))
+check("letter with size; the Under flips both",
+      mg.with_size("B+", 4.2) == "B+ · +4%" and mg.with_size("B+", 4.2, "Under") == "D- · -4%"
+      and mg.with_size("C", None) == "C" and mg.base("B+ · +4%") == "B")
 check("the notice says the grade", dm.notice(c1, "goals", "wingers", "MTL").startswith(
     "Matchup grade A"))
 check("MLB starter and lineup cards carry it too",
@@ -138,11 +142,11 @@ src = {p: (ROOT / p).read_text(encoding="utf-8") for p in (
     "app/views/Bet_Finder.py", "app/views/NBA_Props.py", "app/views/NBA_Trends.py",
     "app/views/Site_vs_Book.py", "book_props_grade.py", "app/engines/book_grade.py",
     "app/engines/model_view.py")}
-check("the Bet Finder shows a Matchup column for the side picked (an Under flips it)",
-      'base.insert(1, "Matchup", [_grade_of(r, stat, side) for r in players])'
+check("the Bet Finder shows a 'Def vs pos' column for the side picked (an Under flips it)",
+      'base.insert(1, "Def vs pos", [_grade_of(r, stat, side) for r in players])'
       in src["app/views/Bet_Finder.py"]
-      and 'if side == "Under" else g' in src["app/views/Bet_Finder.py"]
-      and '"Matchup": r.get("grade") or "—"' in src["app/views/Bet_Finder.py"])
+      and 'return mg.with_size(g, size, side, rank)' in src["app/views/Bet_Finder.py"]
+      and '"Def vs pos": r.get("grade") or "—"' in src["app/views/Bet_Finder.py"])
 check("NBA Props and Trends show the letter", 'nv.grade(r, stat, side)' in
       src["app/views/NBA_Props.py"] and 'nv.grade(r, st_)' in src["app/views/NBA_Trends.py"])
 check("the capture saves the letter beside the chance; the grader reports per letter",
@@ -152,7 +156,7 @@ check("the capture saves the letter beside the chance; the grader reports per le
 check("the boards colour by letter", 'GRADE_STYLE = {' in src["app/engines/model_view.py"])
 _nbp = (ROOT / "nba_precompute.py").read_text(encoding="utf-8")
 check("the NBA nightly says, per stat, whether its letters are by position (10-28)",
-      'NBA position context cards: defense vs position' in _nbp
+      'NBA matchup letters: defense vs position' in _nbp
       and 'dvp=dvp)' in _nbp and 'by position (G/F/C)' in _nbp)
 
 if failures:

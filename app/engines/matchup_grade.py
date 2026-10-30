@@ -109,9 +109,39 @@ def grade_pm(rank, of):
 
 
 def base(g):
-    """'B+' -> 'B'; None / anything else -> None."""
-    g = str(g or "")
+    """'B+' -> 'B' (also 'B+ · +4%'); None / anything else -> None."""
+    g = str(g or "").split(" ", 1)[0]
     return g[0] if g[:1] in LETTERS and len(g) <= 2 and g[1:] in ("", "+", "-") else None
+
+
+def with_size(g, pct, side="Over", rank=None):
+    """'B+ · +4% (9th)' — the letter (flipped for the Under) with the size of
+    the matchup (its sign flipped too) and, when given, the defense's rank
+    counted from the TOUGHEST (1st = allows the least — how HOF and most
+    research apps count, 10-30); the rank is a fact about the defense, so it
+    is not flipped."""
+    if not base(g):
+        return g
+    g = str(g).split(" ", 1)[0]
+    if side == "Under":
+        g = flip(g)
+        pct = -pct if pct is not None else None
+    out = g if pct is None else f"{g} · {pct:+.0f}%"
+    return out + (f" ({rank})" if rank else "")
+
+
+def tough_rank(card):
+    """'1st' .. '30th' counted from the toughest defense (the card's rank is
+    1 = allows the MOST), or None."""
+    try:
+        rank, of = int(card.get("rank")), int(card.get("of"))
+    except (TypeError, ValueError, AttributeError):
+        return None
+    if rank < 1 or rank > of:
+        return None
+    n = of - rank + 1
+    suf = "th" if 10 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    return f"{n}{suf}"
 
 
 def flip(g):
@@ -119,7 +149,7 @@ def flip(g):
     b = base(g)
     if not b:
         return g
-    m = str(g)[1:]
+    m = str(g).split(" ", 1)[0][1:]
     return LETTERS[4 - LETTERS.index(b)] + {"+": "-", "-": "+", "": ""}[m]
 
 

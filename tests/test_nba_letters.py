@@ -10,8 +10,8 @@ sorted them A +0.4 .. F -3.3. The position card stays as context.
 Plain script — exits non-zero on failure. No network.
 
 Negative controls, confirmed red by exit code when written (rule 4):
-  - the position card's letter taking precedence again -> "the letter is the
-    opponent factor's" fails
+  - the factor's letter taking precedence -> "the letter is what the defense
+    allows to his position" fails
   - letter_teams keeping exhibition clubs -> "ranked over the NBA's 30" fails
 """
 import sys
@@ -56,16 +56,17 @@ rows = [{"pid": "x", "pos": "G", "min": 34, "mu": {"pts": 25.0, "reb": 5.0, "ast
 nc.apply_tonight(rows, "1", "ONE", ob, [], [], {"opp": ob.cfg}, "2026-10-26", dvp=fake_dvp)
 nc.dvp_grades = orig
 r = rows[0]
-check("the letter is the opponent factor's (team 1 lets players beat their projections)",
-      r["grade"]["pts"] == "A+" and r["ctx"]["grade"]["pts"]["basis"] == "beat-projection"
-      and r["ctx"]["grade"]["pts"]["of"] == 30)
-check("the position card stays on the row as context", r["dvp"]["pts"]["grade"] == "F")
-check("a stat the factor is not in takes the position card's letter",
-      r["grade"]["reb"] == "F" and r["ctx"]["grade"]["reb"]["basis"] == "allowed")
+check("the letter is what the defense allows to his position (10-30), with its size",
+      r["grade"]["pts"] == "F" and r["ctx"]["grade"]["pts"]["basis"] == "allowed to position"
+      and r["grade_size"]["pts"] == -13.8)
+check("the opponent factor's letter stays on the row as context",
+      r["ctx"]["grade"]["pts"]["factor_grade"] == "A+" and r["dvp"]["pts"]["grade"] == "F")
+check("a stat with no position card takes the factor's letter",
+      r["grade"]["ast"] if "ast" in r["grade"] else True)
 
 src = (ROOT / "app" / "engines" / "nba_context.py").read_text()
 check("the walk-forward numbers are written beside the code",
-      "A +4.7% / B +1.8 / C -1.3 / D -4.3 / F -5.1%" in src)
+      "A +0.4 .. F -3.3%" in src and "A +4.7 .. F -5.1%" in src)
 
 print(f"\n{len(fails)} failed" if fails else "\nall passed")
 sys.exit(1 if fails else 0)

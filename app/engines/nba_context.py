@@ -541,7 +541,66 @@ def outs_now(pool, team_id, out_pids, team_dates, model, today):
 DVP_MIN_GAMES = 20     # a defense faced fewer times than this is not an NBA team
 
 
-def dvp_lines(pool, cur_from):
+# FIVE POSITIONS (10-30). Izzy: "a team might be tough against a PG on one
+# thing but weak against a SG — grading by 3 positions keeps that away from
+# us." ESPN lists nearly every NBA player as G, F or C (last season: 274 G,
+# 218 F, 87 C, three others), so PG / SG and SF / PF are assigned from how he
+# PLAYS: a guard at or above the guards' median assists per 36 minutes is a
+# PG, below it an SG; a forward at or above the forwards' median rebounds per
+# 36 is a PF, below it an SF; C stays C; a five-position label ESPN does give
+# is kept. The medians are measured on the pool (players with MIN_POS_MINUTES
+# or more), never set by hand; every player with minutes is placed by his
+# own rate (no minutes at all: PG for G, SF for F).
+POS5 = ("PG", "SG", "SF", "PF", "C")
+MIN_POS_MINUTES = 300.0
+
+
+def _per36(p):
+    mins = ast = reb = 0.0
+    for g in p.get("games") or []:
+        m = nm.val(g, "min")
+        if not m:
+            continue
+        mins += m
+        ast += nm.val(g, "ast") or 0.0
+        reb += nm.val(g, "reb") or 0.0
+    if mins <= 0:
+        return 0.0, None, None
+    return mins, 36.0 * ast / mins, 36.0 * reb / mins
+
+
+def positions5(pool):
+    """{pid: "PG" | "SG" | "SF" | "PF" | "C"} and the measured cut-offs."""
+    prof = {pid: _per36(p) for pid, p in (pool or {}).items()}
+    base = {pid: str((p.get("pos") or "")).upper() for pid, p in (pool or {}).items()}
+
+    def med(xs):
+        xs = sorted(xs)
+        return xs[len(xs) // 2] if xs else None
+    g_cut = med([prof[pid][1] for pid, b in base.items()
+                 if nm.group(b) == "G" and prof[pid][0] >= MIN_POS_MINUTES])
+    f_cut = med([prof[pid][2] for pid, b in base.items()
+                 if nm.group(b) == "F" and prof[pid][0] >= MIN_POS_MINUTES])
+    out = {}
+    for pid, b in base.items():
+        if b in POS5:
+            out[pid] = b
+            continue
+        grp = nm.group(b)
+        mins, a36, r36 = prof[pid]
+        if grp == "C":
+            out[pid] = "C"
+        elif grp == "G":
+            # the cut-off is measured on regulars; everyone with minutes is
+            # placed by his own rate; no minutes at all -> the group's first
+            out[pid] = ("PG" if a36 is None or g_cut is None or a36 >= g_cut else "SG")
+        else:
+            out[pid] = ("SF" if r36 is None or f_cut is None or r36 < f_cut else "PF")
+    return out, {"pg_ast36": round(g_cut, 2) if g_cut is not None else None,
+                 "pf_reb36": round(f_cut, 2) if f_cut is not None else None}
+
+
+def dvp_lines(pool, cur_from, pos_of=None):
     """defense_matchup rows from the player pool: one per player-game with
     minutes, grouped G / F / C. Games between last season's end and the
     regular season (preseason) are left out."""
@@ -555,8 +614,8 @@ def dvp_lines(pool, cur_from):
         if nm._days(a, b) >= 60:
             prior_end = a
     out = []
-    for p in (pool or {}).values():
-        grp = nm.group(p.get("pos"))
+    for pid, p in (pool or {}).items():
+        grp = (pos_of or {}).get(pid) or nm.group(p.get("pos"))
         for g in p.get("games") or []:
             if not nm.val(g, "min"):
                 continue
@@ -579,12 +638,44 @@ def dvp_lines(pool, cur_from):
     return [ln for ln in out if ln["defense"] in keep]
 
 
-def dvp_table(pool, cur_from):
+def dvp_table(pool, cur_from, five=True):
+    """The defense-vs-position table: five positions (positions5) by
+    default, G / F / C with five=False. The table carries "pos_of" (pid ->
+    position) and "pos_cuts" so tonight's rows use the same assignment."""
     from engines import defense_matchup as dm
-    lines = dvp_lines(pool, cur_from)
+    pos_of, cuts = positions5(pool) if five else ({}, {})
+    lines = dvp_lines(pool, cur_from, pos_of)
     if not lines:
         return None
-    return dm.build_table(lines, list(nm.BASE) + list(nm.COMBOS), ("G", "F", "C"))
+    t = dm.build_table(lines, list(nm.BASE) + list(nm.COMBOS),
+                       POS5 if five else ("G", "F", "C"))
+    t["pos_of"], t["pos_cuts"] = pos_of, cuts
+    return t
+
+
+def row_pos(dvp, row):
+    """The position a row is graded at: the table's assignment for him, else
+    his ESPN group mapped onto the table's groups."""
+    pid = str(row.get("pid"))
+    p = ((dvp or {}).get("pos_of") or {}).get(pid)
+    if p:
+        return p
+    g = nm.group(row.get("pos"))
+    if (dvp or {}).get("pos_of") is not None and dvp.get("pos_of") != {}:
+        return {"G": "PG", "F": "SF", "C": "C"}[g]
+    return g
+
+
+def dvp_overall(table, opp_id):
+    """{stat: card} for the defense against EVERYONE (the table's "ALL"
+    group) — HOF's "Overall" rank beside its "vs PG" (10-30)."""
+    from engines import defense_matchup as dm
+    out = {}
+    for st in list(nm.BASE) + list(nm.COMBOS):
+        c = dm.card(table, str(opp_id), "ALL", st)
+        if c and c.get("rank"):
+            out[st] = c
+    return out
 
 
 def dvp_grades(table, opp_id, grp):
@@ -624,16 +715,20 @@ def apply_tonight(rows, opp_id, opp_abbr, book, outs, out_names, ctx, day, dvp=N
         r["ctx"] = {"opp": {k: round(v, 3) for k, v in f.items()},
                     "bump": {k: round(v, 3) for k, v in b.items()},
                     "vol": round(vf, 3), "team_min": round(tot)}
-        # THE LETTER (10-29). Walk-forward on last season (20,333 player-
-        # games, each day graded only from earlier days): ranking the
-        # projection's own opponent factor — how players did against their
-        # projections vs this defense — across the 30 teams, in fifths,
-        # sorted games A +4.7% / B +1.8 / C -1.3 / D -4.3 / F -5.1% vs the
-        # projection on points (rebounds A +4.8 .. F -8.9, assists A +7.4 ..
-        # F -7.7, threes A +7.3 .. F -9.1). The raw "allowed to his position
-        # a game" card (10-28) sorted them A +0.4 .. F -3.3: it stays on the
-        # row as context ("dvp"), the letter is the factor's.
-        cards = dvp_grades(dvp, opp_id, nm.group(r.get("pos"))) if dvp else {}
+        # THE LETTER (10-30, Izzy: "make sure it's what the defense allows to
+        # the position"): what this defense ALLOWED to his position group
+        # (G / F / C) a game, this season + last, ranked over the 30 teams
+        # and adjusted for how much of it is real (defense_matchup.card ->
+        # reliability_grade), A+ .. F-, with its size ("effect_pct").
+        # Measured 10-29 on last season (walk-forward, 20,333 player-games):
+        # this letter sorted points vs the projection A +0.4 .. F -3.3%; the
+        # opponent factor's rank (how players did vs their projections
+        # against this defense) A +4.7 .. F -5.1% — that one is kept on the
+        # row as context ("factor_grade"), and fills a stat with no card.
+        rp = row_pos(dvp, r) if dvp else None
+        if rp:
+            r["pos5"] = rp
+        cards = dvp_grades(dvp, opp_id, rp) if dvp else {}
         if cards:
             r["dvp"] = cards
         gr = {}
@@ -641,14 +736,27 @@ def apply_tonight(rows, opp_id, opp_abbr, book, outs, out_names, ctx, day, dvp=N
             from engines import matchup_grade as mg
             gr = mg.nba_grades(book, opp_id, nm.group(r.get("pos")), day,
                                letter_teams(book, dvp), nm.COMBOS, book.mean)
-        grades = {k: v["grade"] for k, v in gr.items()}
-        for k, c in cards.items():
-            # a stat the opponent factor is not in: the position card's letter
-            grades.setdefault(k, c["grade"])
+        grades = {k: c["grade"] for k, c in cards.items()}
+        sizes = {k: c.get("effect_pct", c.get("vs_league_pct")) for k, c in cards.items()}
+        for k, v in gr.items():
+            if k not in grades:
+                grades[k] = v["grade"]
+                sizes[k] = v.get("vs_league_pct")
+        if dvp:
+            from engines import matchup_grade as _mg
+            allc = dvp_overall(dvp, opp_id)
+            r["grade_rank"] = {k: (f"{_mg.tough_rank(c)} vs {rp}" if _mg.tough_rank(c)
+                                   else None) for k, c in cards.items()}
+            r["overall_rank"] = {k: _mg.tough_rank(c) for k, c in allc.items()}
         if grades:
             r["grade"] = grades
-            r["ctx"]["grade"] = {k: dict(gr.get(k) or {"grade": grades[k]},
-                                         basis="beat-projection" if k in gr else "allowed")
+            r["grade_size"] = sizes
+            r["ctx"]["grade"] = {k: {"grade": grades[k], "size": sizes.get(k),
+                                     "basis": "allowed to position" if k in cards
+                                     else "beat-projection",
+                                     "factor_grade": (gr.get(k) or {}).get("grade"),
+                                     "rank": (cards.get(k) or gr.get(k) or {}).get("rank"),
+                                     "of": (cards.get(k) or gr.get(k) or {}).get("of")}
                                  for k in grades}
         w = why(f, b, opp_abbr, out_names, vf, tot)
         if w:

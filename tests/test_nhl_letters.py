@@ -12,8 +12,8 @@ Plain script — exits non-zero on failure. No network.
 Negative controls, confirmed red by exit code when written (rule 4):
   - matchup_letter reading the cut points upside down -> "a soft matchup is
     an A" fails
-  - letter_cards leaving the position letter in place -> "the letter is the
-    matchup's; the position letter stays as context" fails
+  - letter_cards overwriting the position letter -> "the letter is the
+    position card's" fails
   - shots graded on the goal ratio -> "shots read the shot ratio, goals /
     assists / points the goal ratio" fails
 """
@@ -47,14 +47,16 @@ check("no ratio or no cuts: no letter",
 C = {"goal": cuts, "shot": cuts}
 cards = {"sog": {"stat": "sog", "grade": "F", "rank": 30, "of": 32, "per_game": 5.0}}
 out = hm.letter_cards(cards, 1.19, 0.81, C)
-check("the letter is the matchup's; the position letter stays as context",
-      out["sog"]["grade"] == "A+" and out["sog"]["position_grade"] == "F"
-      and out["sog"]["rank"] == 30 and out["sog"]["letter_basis"] == "matchup")
+check("the letter is the position card's (10-30); the team matchup rides along as context",
+      out["sog"]["grade"] == "F" and out["sog"]["matchup_grade"] == "A+"
+      and out["sog"]["rank"] == 30 and out["sog"]["letter_basis"] == "position")
 check("shots read the shot ratio, goals / assists / points the goal ratio",
-      out["sog"]["matchup_ratio"] == 1.19 and out["g"]["grade"] == "F-"
-      and out["a"]["matchup_ratio"] == 0.81 and out["pts"]["grade"] == "F-")
-check("a stat with no position card gets a card of its own", "g" in out and "rank" not in out["g"])
-check("the badge shows the letter and the matchup", dm.badge(out["sog"]) == "A+ · x1.19")
+      out["sog"]["matchup_ratio"] == 1.19 and out["g"]["matchup_grade"] == "F-"
+      and out["a"]["matchup_ratio"] == 0.81 and out["pts"]["matchup_grade"] == "F-")
+check("a stat with no position card takes the matchup letter, labelled so",
+      out["g"]["grade"] == "F-" and out["g"]["letter_basis"] == "matchup" and "rank" not in out["g"])
+check("the badge shows the letter and its size",
+      dm.badge(out["g"]) == "F- · -19%")
 check("cards without a matchup ratio keep the old badge",
       dm.badge({"grade": "B", "rank": 3, "of": 32}).startswith("B · 3rd"))
 

@@ -54,7 +54,7 @@ with card("nbat_head"):
         ch = None
         if model and line is not None:
             ch, _raw, _sup = nv.chance(r, st_, line, model)
-        tab.append({"Stat": lab, "Matchup": nv.grade(r, st_), "Proj": round(r["mu"][st_], 1),
+        tab.append({"Stat": lab, "Def vs pos": nv.grade(r, st_), "Overall D": nv.overall(r, st_), "Proj": round(r["mu"][st_], 1),
                     "His line": line,
                     "Over %": "—" if ch is None else f"{100 * ch:.0f}%",
                     "Worth it at": (mm.fmt_american(mm.fair_american(ch))
@@ -73,7 +73,7 @@ with card("nbat_head"):
         for k in frame.index:
             if _ch[k] is not None:
                 o.at[k, "Over %"] = mv.chance_css(_ch[k])
-            o.at[k, "Matchup"] = mv.matchup_css(frame.at[k, "Matchup"])
+            o.at[k, "Def vs pos"] = mv.matchup_css(frame.at[k, "Def vs pos"])
         return o
     st.dataframe(mv.painted(pd.DataFrame(tab), _paint), hide_index=True, width="stretch",
                  key="nbat_tab")

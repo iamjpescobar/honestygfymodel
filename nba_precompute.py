@@ -808,20 +808,23 @@ def main(today=None):
     tags = sum(1 for r in rosters.values() for x in r.values() if x.get("status"))
     print(f"  [verify] NBA injuries: {tags} roster tags, {len(feed['by_id'])} league-list tags")
 
-    # what each defense allowed to G / F / C (10-28, nba_context.dvp_table):
-    # the position CONTEXT card on each row; the letter is the opponent
-    # factor's (10-29) — own try, costs the cards only
+    # what each defense allowed to G / F / C (nba_context.dvp_table): the
+    # A+..F- LETTER on each row (10-30) — own try, costs the letters only
     dvp = None
     try:
         dvp = nc.dvp_table(pool, cur_from)
         if dvp:
             _p = (dvp["stats"].get("pts") or {})
-            print(f"  [verify] NBA position context cards: defense vs position over {dvp['of']} teams "
-                  f"(the LETTERS rank the opponent factor, nba_context.apply_tonight); "
+            print(f"  [verify] NBA positions (five, from how they play): "
+                  f"{dict(__import__('collections').Counter(dvp['pos_of'].values()))}; "
+                  f"PG at {dvp['pos_cuts'].get('pg_ast36')}+ ast/36 among guards, PF at "
+                  f"{dvp['pos_cuts'].get('pf_reb36')}+ reb/36 among forwards")
+            print(f"  [verify] NBA matchup letters: defense vs position over {dvp['of']} teams "
+                  f"(10-30: the LETTER is this card; the team factor is context); "
                   + "; ".join(f"pts to {grp}: league {(_p.get(grp) or {}).get('league')}/g, "
                               f"last-season weight {(_p.get(grp) or {}).get('weight')}, "
                               f"split-half reliability {(_p.get(grp) or {}).get('reliability')}"
-                              for grp in ("G", "F", "C")))
+                              for grp in nc.POS5))
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NBA defense-vs-position table failed: {type(exc).__name__}: {exc}")
     book, team_dates = None, {}

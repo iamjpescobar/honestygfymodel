@@ -109,6 +109,7 @@ def _nhl_groups(item):
             _f = av.flag(p)
             sk.append({"_name": f"{p.get('name')} ({abbr})" + (f" ⚠ {_f}" if _f else ""),
                        "_why": p.get("why"), "_dvp": p.get("dvp") or {},
+                       "_dvp_all": p.get("dvp_all") or {},
                        "_pmfs": nm.skater_pmfs(p.get("mu"), sog_disp), "_pid": p.get("pid")})
         for gp in g.get(f"{side}_goalie_props") or []:
             pm = nm.saves_pmf(gp.get("exp_sa"), shot_disp, gp.get("sv_pct"))
@@ -267,6 +268,9 @@ def _nba_groups(item):
                          + nv.tags(r),
                          "_why": r.get("why"), "_untested": bool(r.get("new")),
                          "_grade": r.get("grade") or {},
+                         "_grade_size": r.get("grade_size") or {},
+                         "_grade_rank": r.get("grade_rank") or {},
+                         "_overall_rank": r.get("overall_rank") or {},
                          "_pmfs": nm.player_pmfs(r.get("mu"), model.get("sizes")),
                          "_pid": r.get("pid")})
     stats = tuple((s, lab, (0.5,)) for s, lab in nm.PAGE_STATS
@@ -335,7 +339,8 @@ def _call_css(tier):
 
 
 MATCHUP_IN_NUMBER = {
-    "NBA": "The matchup is already IN our chance (the opponent factor, tested).",
+    "NBA": "The team's opponent factor is IN our chance (tested); the position split is "
+           "context.",
     "NFL": "The matchup is already IN our chance (the defense multiplier).",
     "MLB": "The matchup is already IN our chance (batter vs tonight's starter).",
     "NHL": "That matchup is already IN our chance; the C / W / D split is context only "
@@ -358,15 +363,6 @@ def _anchor_b(sport, stat, main):
         return None
 
 
-MATCHUP_HOW = {
-    "NBA": "How players have done against their own projections vs this defense, ranked "
-           "over the 30 teams (tested on last season: A spots ran +4.7% over projection on "
-           "points, F spots -5.1%).",
-    "NHL": "Tonight's team matchup (shots / goals the game model expects vs this team's "
-           "norm), placed against last season's matchups.",
-}
-
-
 def _anchor_beats(sport, stat, main):
     """True when this market's anchored chances beat DraftKings' own on the
     walk-forward test — the market has then earned its way past THIN."""
@@ -387,11 +383,26 @@ def _grade_of(r, stat, side="Over"):
     the sport has no matchup number for this stat."""
     from engines import matchup_grade as mg
     g = (r.get("_grade") or {}).get(stat)
+    size = (r.get("_grade_size") or {}).get(stat)
+    rank = (r.get("_grade_rank") or {}).get(stat)
     if not g:
-        g = mg.from_card((r.get("_dvp") or {}).get(stat))
+        c = (r.get("_dvp") or {}).get(stat)
+        g = mg.from_card(c)
+        size = (c or {}).get("effect_pct", (c or {}).get("vs_league_pct"))
+        rank = mg.tough_rank(c) if (c or {}).get("letter_basis", "position") == "position" \
+            else None
     if not g:
         return "—"
-    return mg.flip(g) if side == "Under" else g
+    return mg.with_size(g, size, side, rank)
+
+
+def _overall_of(r, stat):
+    """The defense's overall rank on this stat (1st = toughest), or '—'."""
+    from engines import matchup_grade as mg
+    x = (r.get("_overall_rank") or {}).get(stat)
+    if not x:
+        x = mg.tough_rank((r.get("_dvp_all") or {}).get(stat))
+    return x or "—"
 
 
 def _results_table(res, key, line_col=True):
@@ -401,7 +412,7 @@ def _results_table(res, key, line_col=True):
     df = pd.DataFrame([{
         "Call": bf.TIER_LABEL[r["tier"]], "Player": r["name"],
         **({"Line": r.get("line_label")} if line_col else {}),
-        "Matchup": r.get("grade") or "—",
+        "Def vs pos": r.get("grade") or "—",
         "Your price": _amer(r["price"]), "Our chance": _pct(r["chance"]),
         "Book says": _pct(r.get("book")),
         "Worth it at": _amer(r["worth"]), "Edge": f"{100 * r['edge']:+.1f} pts",
@@ -413,7 +424,7 @@ def _results_table(res, key, line_col=True):
         for i in frame.index:
             out.at[i, "Call"] = _call_css(res[i]["tier"])
             out.at[i, "Our chance"] = mv.chance_css(res[i]["chance"])
-            out.at[i, "Matchup"] = mv.matchup_css(res[i].get("grade"))
+            out.at[i, "Def vs pos"] = mv.matchup_css(res[i].get("grade"))
         return out
     st.dataframe(mv.painted(df, _paint), hide_index=True, width="stretch", key=key)
 
@@ -600,11 +611,13 @@ else:
                                  for i, r in enumerate(players)])
             if has_book:
                 base.insert(1, "DraftKings", [_dk(r) for r in players])
-            base.insert(1, "Matchup", [_grade_of(r, stat, side) for r in players])
+            if any(_overall_of(r, stat) != "—" for r in players):
+                base.insert(1, "Overall D", [_overall_of(r, stat) for r in players])
+            base.insert(1, "Def vs pos", [_grade_of(r, stat, side) for r in players])
             ed_key = f"bf_ed_{sport}_{gi}_{gname}_{stat}_{side}_{line}"
             edited = st.data_editor(
                 base, key=ed_key, hide_index=True, width="stretch",
-                disabled=["Player", "DraftKings", "Matchup"] + ([] if per_player else ["Line"]),
+                disabled=["Player", "DraftKings", "Def vs pos", "Overall D"] + ([] if per_player else ["Line"]),
                 column_config={
                     "Line": st.column_config.NumberColumn(step=0.5, format="%.1f"),
                     "Your price": st.column_config.NumberColumn(
@@ -618,10 +631,13 @@ else:
                 })
 
             if any(_grade_of(r, stat, side) != "—" for r in players):
-                st.caption("**Matchup** = A+ (great spot) to F- (very tough) for the side you "
-                           "picked. " + MATCHUP_HOW.get(sport, "Tonight's opponent ranked on what "
-                           "it gives up on this stat to his kind of player.") + " "
-                           + MATCHUP_IN_NUMBER.get(sport, ""))
+                st.caption("**Def vs pos** = what tonight's defense allows to his position, "
+                           "A+ (gives up the most) to F- (the least), for the side you picked, "
+                           "with the size: '+4%' = 4% more than the league allows that "
+                           "position (a few games read small until they hold up) and the "
+                           "defense's rank vs his position, **1st = toughest** (allows the "
+                           "least). **Overall D** = its rank against everyone. A matchup "
+                           "read, not a pick — the Chance and your price decide.")
             res, ref = [], []
             for i, r in enumerate(players):
                 ln = float(edited.at[i, "Line"]) if per_player else line

@@ -61,7 +61,7 @@ for t in TEAMS:
         games.append(["2026-01-15", t, "132374", 30.0, 40.0, 5.0, 3.0, 1.0, 1.0, 0.5, 2.0])
         pool[pid] = {"name": pid, "pos": pos, "team": t, "games": games}
 
-t = nc.dvp_table(pool, "2026-10-21")
+t = nc.dvp_table(pool, "2026-10-21", five=False)
 check("ranked over the NBA teams only (exhibition clubs dropped)",
       t["of"] == 30 and "132374" not in t["teams"])
 lines = nc.dvp_lines(pool, "2026-10-21")

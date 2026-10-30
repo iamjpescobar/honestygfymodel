@@ -200,7 +200,13 @@ def grade(row, stat, side="Over"):
     g = (row.get("grade") or {}).get(stat)
     if not mg.base(g):
         return "—"
-    return mg.flip(g) if side == "Under" else g
+    return mg.with_size(g, (row.get("grade_size") or {}).get(stat), side,
+                        (row.get("grade_rank") or {}).get(stat))
+
+
+def overall(row, stat):
+    """The defense's overall rank on this stat, 1st = toughest, or '—'."""
+    return (row.get("overall_rank") or {}).get(stat) or "—"
 
 
 def slate_teams(rows):
