@@ -41735,7 +41735,8 @@
           "team": "Golden State Valkyries",
           "stat": "ast",
           "line": 0.6,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": "4398674",
@@ -41746,7 +41747,7 @@
           "result": "hit"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     },
     "2026-10-31": {
