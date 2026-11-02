@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-11-02 12:41",
+  "generated_at_et": "2026-11-02 15:05",
   "week": 8,
   "league": {
     "team_games": 238,
@@ -1079,7 +1079,7 @@
         "opp": "CHI",
         "pos": "WR",
         "gp": 7,
-        "proj": 50,
+        "proj": 51,
         "window": "Monday Night"
       },
       {
@@ -1119,21 +1119,21 @@
         "window": "Monday Night"
       },
       {
-        "player": "Roschon Johnson",
-        "team": "CHI",
-        "opp": "SEA",
-        "pos": "RB",
-        "gp": 4,
-        "proj": 22,
-        "window": "Monday Night"
-      },
-      {
         "player": "Colston Loveland",
         "team": "CHI",
         "opp": "SEA",
         "pos": "TE",
         "gp": 7,
         "proj": 22,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Roschon Johnson",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 21,
         "window": "Monday Night"
       },
       {
@@ -1160,7 +1160,7 @@
         "opp": "CHI",
         "pos": "WR",
         "gp": 4,
-        "proj": 17,
+        "proj": 18,
         "window": "Monday Night"
       },
       {
@@ -2102,7 +2102,7 @@
         "opp": "SEA",
         "pos": "RB",
         "gp": 7,
-        "proj": 17.0,
+        "proj": 16.7,
         "window": "Monday Night"
       },
       {
@@ -2111,7 +2111,7 @@
         "opp": "CHI",
         "pos": "WR",
         "gp": 7,
-        "proj": 15.7,
+        "proj": 15.9,
         "window": "Monday Night"
       },
       {
@@ -2120,7 +2120,7 @@
         "opp": "CHI",
         "pos": "RB",
         "gp": 7,
-        "proj": 10.3,
+        "proj": 10.5,
         "window": "Monday Night"
       },
       {
@@ -2133,19 +2133,19 @@
         "window": "Monday Night"
       },
       {
-        "player": "Rome Odunze",
-        "team": "CHI",
-        "opp": "SEA",
-        "pos": "WR",
+        "player": "AJ Barner",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "TE",
         "gp": 7,
         "proj": 3.4,
         "window": "Monday Night"
       },
       {
-        "player": "AJ Barner",
-        "team": "SEA",
-        "opp": "CHI",
-        "pos": "TE",
+        "player": "Rome Odunze",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
         "gp": 7,
         "proj": 3.3,
         "window": "Monday Night"
@@ -2156,7 +2156,7 @@
         "opp": "SEA",
         "pos": "TE",
         "gp": 7,
-        "proj": 2.7,
+        "proj": 2.6,
         "window": "Monday Night"
       },
       {
@@ -2165,16 +2165,7 @@
         "opp": "SEA",
         "pos": "RB",
         "gp": 4,
-        "proj": 2.6,
-        "window": "Monday Night"
-      },
-      {
-        "player": "Luther Burden III",
-        "team": "CHI",
-        "opp": "SEA",
-        "pos": "WR",
-        "gp": 7,
-        "proj": 2.1,
+        "proj": 2.5,
         "window": "Monday Night"
       },
       {
@@ -2184,6 +2175,15 @@
         "pos": "WR",
         "gp": 7,
         "proj": 2.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Luther Burden III",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 2.0,
         "window": "Monday Night"
       },
       {
@@ -2201,7 +2201,7 @@
         "opp": "SEA",
         "pos": "WR",
         "gp": 7,
-        "proj": 0.9,
+        "proj": 0.8,
         "window": "Monday Night"
       },
       {
@@ -2210,6 +2210,15 @@
         "opp": "SEA",
         "pos": "WR",
         "gp": 3,
+        "proj": 0.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brady Russell",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "FB",
+        "gp": 2,
         "proj": 0.3,
         "window": "Monday Night"
       },
@@ -2228,15 +2237,6 @@
         "opp": "SEA",
         "pos": "TE",
         "gp": 3,
-        "proj": 0.2,
-        "window": "Monday Night"
-      },
-      {
-        "player": "Brady Russell",
-        "team": "SEA",
-        "opp": "CHI",
-        "pos": "FB",
-        "gp": 2,
         "proj": 0.2,
         "window": "Monday Night"
       }
