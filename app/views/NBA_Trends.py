@@ -142,6 +142,95 @@ if _seasons:
 else:
     st.caption("Shot profile and team ranks appear after the next nightly build.")
 
+# 11-02 (Izzy): double-doubles / triple-doubles — what happened in his
+# games (chips count games where it HAPPENED) and the simulator's chance
+# tonight, untested so it reads THIN (engines/nba_doubles)
+from engines import nba_doubles as _dd  # noqa: E402
+from engines.trend_chart import render_trend_bars as _bars, window_hit_chips as _chips  # noqa: E402
+
+
+@st.cache_data(ttl=900, show_spinner=False, max_entries=64)
+def _dd_sim(key, mu_h, mu_a, sd_m, sd_t, player, sizes, links):
+    import json
+    import zlib
+    from engines import nba_sim as _ns
+    from engines import sim_settings as _ss
+    sim = _ns.simulate(mu_h, mu_a, sd_m, sd_t, [json.loads(player)], json.loads(sizes),
+                       json.loads(links), n=_ss.settings("nba")["games"],
+                       seed=zlib.crc32(key.encode()))
+    return _dd.sim_chance(next(iter(sim["stats"].values())))
+
+
+_ddc = None
+try:
+    from engines import nba_sim as _ns
+    import json as _js
+    _g = next((g for g in games for sd in ("home", "away")
+               if any(str(x.get("pid")) == str(r.get("pid")) for x in g.get(f"{sd}_props") or [])),
+              None)
+    _pj = (_g or {}).get("model") or {}
+    _sm = _pget("sim") or {}
+    if _g and _pj.get("mu_home") and model:
+        _side = "home" if any(str(x.get("pid")) == str(r.get("pid"))
+                              for x in _g.get("home_props") or []) else "away"
+        _sds = _sm.get("sds") or [_pj.get("sd_margin"), _pj.get("sd_total")]
+        if None not in _sds:
+            _ddc = _dd_sim(f"{_g.get('event_id')}|{r.get('pid')}|{r['mu'].get('pts')}",
+                           _pj["mu_home"], _pj["mu_away"], _sds[0], _sds[1],
+                           _js.dumps({"pid": r["pid"], "side": _side, "min": r["min"],
+                                      "mu": r["mu"]}),
+                           _js.dumps(model.get("sizes") or {}),
+                           _js.dumps(_sm.get("links") or _ns.DEFAULT_LINKS))
+except Exception:  # noqa: BLE001 — the chance is extra; the history still shows
+    _ddc = None
+
+with card("nbat_dd"):
+    st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Double-double / '
+                f'Triple-double</div>', unsafe_allow_html=True)
+    _hist = _dd.history(r, pre)
+    _reg = [n for _l, n, _w, t, _o in _hist if t != "PRE"]
+    _h2h = [n for _l, n, _w, t, o in _hist if t != "PRE" and o == r.get("opp")]
+    if _ddc:
+        _c1, _c2 = st.columns(2)
+        for _col, _k, _lab in ((_c1, "dd", "Double-double"), (_c2, "td", "Triple-double")):
+            _p = _ddc[_k]
+            _fair = (mm.fmt_american(mm.fair_american(_p)) if 0.01 <= _p <= 0.99 else "—")
+            _col.markdown(
+                f'<div style="font-size:var(--lc-text-tiny);color:{COLOR["text_muted"]};'
+                f'text-transform:uppercase;letter-spacing:0.06em;">{_lab} tonight · THIN</div>'
+                f'<div style="font-size:var(--lc-text-body-lg);font-weight:800;">'
+                f'{"<1%" if _p < 0.005 else f"{100 * _p:.0f}%"}</div>'
+                f'<div style="color:{COLOR["text_muted"]};">worth it at {_fair}</div>',
+                unsafe_allow_html=True)
+        st.caption("From the simulator (his projected points / rebounds / assists drawn "
+                   "together through minutes, blowouts and pace). UNTESTED for one player's "
+                   "doubles — read it beside his record below, never alone.")
+    if not _reg:
+        st.caption("No regular-season games for him yet.")
+    else:
+        for _lab, _line, _need in (("Double-double", _dd.DD_LINE, 2),
+                                   ("Triple-double", _dd.TD_LINE, 3)):
+            st.markdown(f"**{_lab}** — games he had it")
+            _chips(_reg, _line, win, windows=("Season", "L20", "L10", "L5", "H2H"),
+                   extra={"H2H": _h2h})
+            _how = _dd.how_he_got_them(_hist, _need)
+            if _how:
+                st.caption("How: " + ", ".join(f"{k} {v}" for k, v in _how.items()))
+        _shown = _hist
+        if win == "H2H":
+            _shown = [h for h in _hist if h[3] != "PRE" and h[4] == r.get("opp")]
+        from engines.trend_chart import WINDOW_N as _WN
+        _n = _WN.get(win)
+        if _n and win != "H2H":
+            _ri = [i for i, h in enumerate(_shown) if h[3] != "PRE"]
+            _shown = _shown[_ri[-_n]:] if len(_ri) >= _n else _shown
+        if _shown:
+            _bars([h[0] for h in _shown], [h[1] for h in _shown],
+                  "Stats at 10+", _dd.DD_LINE)
+            st.caption("Each bar = how many of points / rebounds / assists reached 10 that game "
+                       "(2 = double-double, 3 = triple-double); the dashed line is the "
+                       "double-double mark. Steals / blocks are not counted.")
+
 for st_, lab in (("pts", "Points"), ("reb", "Rebounds"), ("ast", "Assists"),
                  ("tpm", "3-pointers made"), ("pra", "Pts + Reb + Ast")):
     with card(f"nbat_{st_}"):

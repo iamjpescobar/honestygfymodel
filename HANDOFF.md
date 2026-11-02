@@ -154,6 +154,37 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Double-doubles / triple-doubles on NBA Trends: his record game by game (chips per window, how he got them) and the simulator's chance tonight, read THIN (untested). 2026-11-02 (2)
+
+Izzy (11-02, needed before 7 PM): "how can I research double doubles and
+triple doubles?" Nothing on the site covered them.
+
+**engines/nba_doubles:** game_cats = how many of pts / reb / ast reached 10
+in a game (a missing stat drops the game — never 0); history from the
+shipped trend rows; how_he_got_them ("PTS+REB 5"); sim_chance = share of
+SIMULATED games with 2+ (3+) at 10+ — the same simulated game, never
+marginals multiplied (his stats rise together on big-minute nights).
+
+**Page (NBA_Trends card "Double-double / Triple-double"):** tonight's
+chance from nba_sim.simulate run for that one player in his game (game
+model mu / sds, sim links, model sizes; cached 15 min), labelled "· THIN"
+with "worth it at" (shown 1-99% only); chips Season / L20 / L10 / L5 / H2H on
+the games he HAD it (window_hit_chips with line 1.5 / 2.5 on the count of
+categories); a bar chart of categories at 10+ with the double-double mark.
+
+UNTESTED: the sim's links were tested on parlays of DIFFERENT players, not
+one player's stats together (they move together only through minutes /
+blowout / pace in the sim, so it may run LOW on doubles). Next: a
+walk-forward check of sim double-double chances vs last season's results
+(prior_season games) before the THIN label can lift; DraftKings
+double-double lines are not in our prop feed (not checked yet). Steals /
+blocks not projected or counted.
+
+Tests: test_nba_doubles. Controls red: a missing stat read as 0; the
+chance as marginals multiplied.
+
+---
+
 ## PICK UP HERE — NBA Trends gets a research section: a shot-profile court (his zones vs tonight's defense by zone, ranked), team ranks (pace, rating, paint / 3PT / FT points, rebounds), L20 / H2H windows and a minutes line. Display only. 2026-11-02
 
 Izzy (11-02, a competitor screenshot): "make our NBA research page similar
@@ -747,55 +778,4 @@ pipeline at the source (minutes first), test, adopt only if it beats.
 FILES: app/engines/book_grade.py, book_props_grade.py,
 app/views/Bet_Finder.py, app/views/Site_vs_Book.py,
 tests/test_book_grade.py, tests/test_matchup_grade.py, HANDOFF.md,
-HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — Matchup grade A-F on every prop (Bet Finder, NBA Props / Trends, every "Defense vs pos" board), and a check of whether the letter knows more than the chance. 2026-10-26
-
-**Suite 172, FAILING: none.** New tests/test_matchup_grade.py (controls
-red: the letter upside down; grade_event dropping the letter; the NBA
-opponent ranked against itself only). Ships in the same zip as the
-first-3-minutes batch (not pushed before this one was built).
-
-Izzy: "DeBrincat anytime goal prop would be graded a B ... I want that to
-be a factor on the whole site and anything prop related".
-
-THE LETTER (engines/matchup_grade): tonight's opponent RANKED on what it
-gives up on this stat to his kind of player, cut in fifths (32 teams:
-7 A / 6 B / 6 C / 6 D / 7 F; 30: 6 each). Nothing new measured — each
-sport's own matchup number: NHL / NFL defense vs position cards, MLB
-starter (batters) and lineup (pitchers) cards — all now carry "grade" —
-and the NBA opponent factor the props model already uses, ranked over
-every team for his position group (nba_context.apply_tonight sets
-row["grade"] and ctx.grade; combos rank the league-mean-weighted factor).
-The letter is about the OVER; the Bet Finder and NBA Props flip it for
-an Under (an F defense is an A spot for the under).
-
-IN THE CHANCE? NOT ADDED AGAIN. NBA / NFL / MLB matchups are already in
-the projection; the NHL position split is context (validate_dvp did not
-beat). Stacking the letter on top would count the matchup twice. Instead
-every captured line now carries its letter (book_grade.capture 6th
-element; graded rows get it as element 10; old 5-element captures still
-grade), and the nightly prints "[verify] MATCHUP GRADE <lg>: A n= site
-book hit ..." with scorecard.json "grades"; Site vs DraftKings shows
-"Matchup grade check" (per letter: our chance, DK's, went over, over vs
-us). NEXT: once each letter has ~300 lines, if A rows go over clearly
-more than the site said and F rows less, fit a letter adjustment and
-test it walk-forward (adopt only if it beats); if flat, the matchup is
-priced in and the letter stays a read.
-
-WHERE IT SHOWS: dm.badge -> "A · 3rd-most" (every Defense vs pos column:
-NHL / NFL / MLB boards, NHL Goal Edge, NFL TD Edge), colours by letter
-(model_view.GRADE_STYLE); dm.notice -> "Matchup grade A — ..."; Bet
-Finder: a Matchup column in the editor and the judged table, with a
-caption saying per sport whether the matchup is in the chance; NBA Props
-(editor + chances), NBA Trends (per stat).
-
-FILES: app/engines/matchup_grade.py (NEW), app/engines/defense_matchup.py,
-app/engines/model_view.py, app/engines/nba_context.py,
-app/engines/nba_view.py, app/engines/book_grade.py, book_props_grade.py,
-app/views/Bet_Finder.py, app/views/NBA_Props.py, app/views/NBA_Trends.py,
-app/views/Site_vs_Book.py, app/views/NHL_Goal_Edge.py,
-app/views/NFL_TD_Edge.py, tests/test_matchup_grade.py (NEW), HANDOFF.md,
 HANDOFF_ARCHIVE.md

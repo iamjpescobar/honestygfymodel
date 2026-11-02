@@ -10,6 +10,57 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — Matchup grade A-F on every prop (Bet Finder, NBA Props / Trends, every "Defense vs pos" board), and a check of whether the letter knows more than the chance. 2026-10-26
+
+**Suite 172, FAILING: none.** New tests/test_matchup_grade.py (controls
+red: the letter upside down; grade_event dropping the letter; the NBA
+opponent ranked against itself only). Ships in the same zip as the
+first-3-minutes batch (not pushed before this one was built).
+
+Izzy: "DeBrincat anytime goal prop would be graded a B ... I want that to
+be a factor on the whole site and anything prop related".
+
+THE LETTER (engines/matchup_grade): tonight's opponent RANKED on what it
+gives up on this stat to his kind of player, cut in fifths (32 teams:
+7 A / 6 B / 6 C / 6 D / 7 F; 30: 6 each). Nothing new measured — each
+sport's own matchup number: NHL / NFL defense vs position cards, MLB
+starter (batters) and lineup (pitchers) cards — all now carry "grade" —
+and the NBA opponent factor the props model already uses, ranked over
+every team for his position group (nba_context.apply_tonight sets
+row["grade"] and ctx.grade; combos rank the league-mean-weighted factor).
+The letter is about the OVER; the Bet Finder and NBA Props flip it for
+an Under (an F defense is an A spot for the under).
+
+IN THE CHANCE? NOT ADDED AGAIN. NBA / NFL / MLB matchups are already in
+the projection; the NHL position split is context (validate_dvp did not
+beat). Stacking the letter on top would count the matchup twice. Instead
+every captured line now carries its letter (book_grade.capture 6th
+element; graded rows get it as element 10; old 5-element captures still
+grade), and the nightly prints "[verify] MATCHUP GRADE <lg>: A n= site
+book hit ..." with scorecard.json "grades"; Site vs DraftKings shows
+"Matchup grade check" (per letter: our chance, DK's, went over, over vs
+us). NEXT: once each letter has ~300 lines, if A rows go over clearly
+more than the site said and F rows less, fit a letter adjustment and
+test it walk-forward (adopt only if it beats); if flat, the matchup is
+priced in and the letter stays a read.
+
+WHERE IT SHOWS: dm.badge -> "A · 3rd-most" (every Defense vs pos column:
+NHL / NFL / MLB boards, NHL Goal Edge, NFL TD Edge), colours by letter
+(model_view.GRADE_STYLE); dm.notice -> "Matchup grade A — ..."; Bet
+Finder: a Matchup column in the editor and the judged table, with a
+caption saying per sport whether the matchup is in the chance; NBA Props
+(editor + chances), NBA Trends (per stat).
+
+FILES: app/engines/matchup_grade.py (NEW), app/engines/defense_matchup.py,
+app/engines/model_view.py, app/engines/nba_context.py,
+app/engines/nba_view.py, app/engines/book_grade.py, book_props_grade.py,
+app/views/Bet_Finder.py, app/views/NBA_Props.py, app/views/NBA_Trends.py,
+app/views/Site_vs_Book.py, app/views/NHL_Goal_Edge.py,
+app/views/NFL_TD_Edge.py, tests/test_matchup_grade.py (NEW), HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — NBA "scores in the first 3 minutes": fitted, tested, priced on the First Basket page; confirmed-five First Basket now BEATS. 2026-10-25 (5)
 
 **Suite 171, FAILING: none.** New tests/test_nba_early.py (controls red:
