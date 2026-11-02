@@ -1,6 +1,8 @@
 """NBA Player Trends (10-20) — one player, every stat: his projection
 tonight, his usual line and the chance over it, and a game-by-game chart
 per stat across last season, this season and (toggle) the preseason.
+11-02: L20 / H2H windows, a minutes line, the shot profile vs tonight's
+defense and the two teams' ranks (engines/nba_research).
 """
 import pandas as pd
 import streamlit as st
@@ -37,9 +39,10 @@ pi = c1.selectbox("Player (available tonight)", range(len(avail)),
                   format_func=lambda i: nv.player_label(avail[i]), key=f"nbat_p_{teams[ti][0]}")
 if ruled_out:
     st.caption(f"Ruled out tonight, not listed: {', '.join(ruled_out)}.")
-c2, c3 = st.columns([1, 1])
-win = c2.selectbox("Window", ["L5", "L10", "L25", "Season"], index=1, key="nbat_w")
+c2, c3, c4 = st.columns([1, 1, 1])
+win = c2.selectbox("Window", ["L5", "L10", "L20", "Season", "H2H"], index=1, key="nbat_w")
 pre = c3.toggle("Show preseason", value=True, key="nbat_pre")
+show_min = c4.toggle("Minutes line", value=False, key="nbat_min")
 r = avail[pi]
 
 with card("nbat_head"):
@@ -80,10 +83,70 @@ with card("nbat_head"):
     mv.render_chance_legend()
     st.caption((r.get("why") or "") + " · Price any line on NBA Props or the Bet Finder.")
 
+# 11-02 (Izzy): the shot profile and the team ranks (engines/nba_research,
+# built in the nightly from the play-by-play). Display only.
+from engines import nba_research as _nr  # noqa: E402
+from engines import nba_research_view as _rv  # noqa: E402
+
+_res = _pget("research") or {}
+_seasons = [(k, _res.get(f"{k}_label") or k) for k in ("cur", "last") if _res.get(k)]
+if _seasons:
+    _si = st.radio("Research season", range(len(_seasons)), horizontal=True,
+                   format_func=lambda i: _seasons[i][1], key="nbat_rs")
+    _blk = _res[_seasons[_si][0]]
+    _opp_id, _team_id = r.get("opp_id"), r.get("team_id")
+    _dtab = (_blk.get("defense") or {})
+    _prof = _nr.profile((_blk.get("players") or {}).get(str(r.get("pid"))))
+    with card("nbat_shots"):
+        st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">Shot profile · '
+                    f'{r["name"]} vs {r["opp"]}</div>', unsafe_allow_html=True)
+        _pz = (_blk.get("players") or {}).get(str(r.get("pid"))) or {}
+        if not _prof or not any(z["att"] for z in _prof):
+            st.caption("No checked shots for him this season yet (his play-by-play has to add "
+                       "up to his box score before a game counts).")
+        else:
+            _cells = _rv.zone_cells(_prof, (_dtab.get("teams") or {}).get(_opp_id))
+            st.markdown(_rv.court_img(_cells), unsafe_allow_html=True)
+            st.caption(f"Tint = how much of his shooting comes from the zone (blue least, orange "
+                       f"most); the white box is his share; #rank = {r['opp']}'s defense there by "
+                       f"opponents' FG% (1st = toughest, red; 30th = softest, green). "
+                       f"{_pz.get('games', 0)} of his games, "
+                       f"{(_dtab.get('games') or {}).get(_opp_id, 0)} of {r['opp']}'s.")
+            st.dataframe(pd.DataFrame(_rv.zone_rows(_prof, (_dtab.get("teams") or {}).get(_opp_id),
+                                                    _dtab.get("league"), r["opp"])),
+                         hide_index=True, width="stretch", key="nbat_zones")
+        _src = _blk.get("src") or {}
+        if _src.get("text"):
+            st.caption(f"{_src.get('text')} games read from the distance written in the play "
+                       f"(no shot coordinates): their threes are \"side unknown\".")
+    with card("nbat_ranks"):
+        st.markdown(f'<div class="pf-card-title" style="color:{COLOR["gold"]};">vs Opponent · '
+                    f'team ranks</div>', unsafe_allow_html=True)
+        _flip = st.radio("View", [0, 1], horizontal=True, key="nbat_flip",
+                         format_func=lambda i: (f"{r['team']} offense vs {r['opp']} defense",
+                                                f"{r['team']} defense vs {r['opp']} offense")[i])
+        _rr = _rv.rank_rows(_blk.get("ranks"), _team_id, _opp_id, r["team"], r["opp"], bool(_flip))
+        if not any(x["left_rank"] or x["right_rank"] for x in _rr):
+            st.caption("No team ranks for these two teams yet.")
+        else:
+            _l = f"{r['team']} {'D' if _flip else 'O'}"
+            _rt = f"{r['opp']} {'O' if _flip else 'D'}"
+            st.dataframe(pd.DataFrame([{
+                "": x["metric"],
+                _l: "—" if x["left"] is None else f"{x['left']} ({_rv.ordinal(x['left_rank'])})",
+                _rt: "—" if x["right"] is None else f"{x['right']} ({_rv.ordinal(x['right_rank'])})",
+                "What": x["desc"]} for x in _rr]), hide_index=True, width="stretch",
+                key="nbat_rk")
+            st.caption("Offense: 1st = most. Defense: 1st = toughest (least allowed). Pace: 1st = "
+                       "fastest. Research context — not in the projection or the letter.")
+else:
+    st.caption("Shot profile and team ranks appear after the next nightly build.")
+
 for st_, lab in (("pts", "Points"), ("reb", "Rebounds"), ("ast", "Assists"),
                  ("tpm", "3-pointers made"), ("pra", "Pts + Reb + Ast")):
     with card(f"nbat_{st_}"):
         st.markdown(f"**{lab}** — line {nv.his_line(r, st_)}")
-        nv.render_trend(r, st_, nv.his_line(r, st_) or 0.5, win, pre, key=f"nbat_tr_{st_}")
+        nv.render_trend(r, st_, nv.his_line(r, st_) or 0.5, win, pre, key=f"nbat_tr_{st_}",
+                        minutes=show_min)
 
 footer()

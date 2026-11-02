@@ -92,6 +92,8 @@ def main():
     print(f"  [verify] first 3 minutes: read in {s['has']['early']} games, each team's first "
           f"field goal in {s['has']['team_first_fg']}; a starter scored in the first 3 minutes "
           f"{100 * s['starter_scores_early']:.1f}% of the time")
+    from engines import nba_research as nr  # 11-02: the shot profile
+    print(nr.verify_line("last season", list(games.values())))
     print(f"  [verify] quarter lines that don't add up to the final: {len(bad)}"
           + (f" (first: {bad[:3]})" if bad else ""))
     fg = {}

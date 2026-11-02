@@ -1003,6 +1003,12 @@ def main(today=None):
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::NBA milestones failed: {type(exc).__name__}: {exc}")
 
+    research = None
+    try:
+        research = build_research(slate, cur_pbp, cur_from)
+    except Exception as exc:  # noqa: BLE001 — research context never blocks the build
+        print(f"::warning::NBA research failed: {type(exc).__name__}: {exc}")
+
     (OUT / "games.json").write_text(json.dumps({
         "generated_at_et": now.strftime("%Y-%m-%d %H:%M"),
         "source": "ESPN public NBA API (scoreboard + game summaries + rosters)",
@@ -1019,8 +1025,35 @@ def main(today=None):
         "teams": {tid: {"abbr": a, "logo": team_logo.get(tid)} for tid, a in team_abbr.items()},
         "role_watch": watch,
         "milestones_happened": happened,
+        "research": research,
     }, ensure_ascii=False, separators=(",", ":")))
     print(f"NBA: wrote games.json ({slate_date}, {len(slate)} games)")
+
+
+def build_research(slate, cur_pbp, cur_from):
+    """11-02 (engines/nba_research): the shot profile and team ranks for
+    NBA Trends — this season from tonight's play-by-play, last season from
+    data/nba/prior_pbp.json once the nba-pbp-prior workflow has re-read it
+    with shots. Display only."""
+    from engines import nba_research as nr
+    pids = sorted({str(r.get("pid")) for g in slate for side in ("home", "away")
+                   for r in (g.get(f"{side}_props") or []) if r.get("pid")})
+    cur = list(cur_pbp.values())
+    print(nr.verify_line("this season", cur))
+    out = {"cur": nr.season_block(cur, cur_from, pids=pids), "last": None,
+           "cur_label": "26-27", "last_label": "25-26"}
+    try:
+        prior = list((json.loads(PBP_PATH.read_text()).get("games") or {}).values()) \
+            if PBP_PATH.exists() else []
+    except Exception:  # noqa: BLE001
+        prior = []
+    if any(g.get("shots") for g in prior):
+        print(nr.verify_line("last season", prior))
+        out["last"] = nr.season_block(prior, pids=pids)
+    else:
+        print("  [verify] NBA SHOTS last season: not in data/nba/prior_pbp.json yet - run the "
+              "'NBA prior play-by-play' workflow once to add it")
+    return out
 
 
 def prior_game_rows(prior_finals):

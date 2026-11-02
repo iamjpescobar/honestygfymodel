@@ -33,7 +33,8 @@ def teams(summary):
 
 def parse(summary):
     """{pid: {"name", "pos", "team_id", "opp_id", "starter", "min", "pts",
-    "reb", "ast", "tpm", "stl", "blk", "tov"}} for everyone who played."""
+    "reb", "ast", "tpm", "stl", "blk", "tov"} + (when ESPN sends them)
+    "fgm", "fga", "ftm", "fta", "tpa", "oreb"} for everyone who played."""
     blocks = (((summary or {}).get("boxscore") or {}).get("players") or [])
     ids = [str(((b.get("team") or {}).get("id")) or "") for b in blocks]
     out = {}
@@ -45,6 +46,11 @@ def parse(summary):
                 continue
             idx = {k: labels.index(v) for k, v in LABELS.items() if v in labels}
             t3 = labels.index("3PT") if "3PT" in labels else None
+            # 11-02 (shot profile): field goals / free throws "made-att" and
+            # offensive rebounds, for the shot check and the team ranks
+            pairs = {k: labels.index(v) for k, v in (("fg", "FG"), ("ft", "FT"), ("tp", "3PT"))
+                     if v in labels}
+            oreb = labels.index("OREB") if "OREB" in labels else None
             for ent in grp.get("athletes") or []:
                 if ent.get("didNotPlay"):
                     continue
@@ -55,6 +61,13 @@ def parse(summary):
                 line = {k: ef.num(stats[j]) for k, j in idx.items() if j < len(stats)}
                 if t3 is not None and t3 < len(stats):
                     line["tpm"] = _made(stats[t3])
+                for k, j in pairs.items():
+                    if j < len(stats):
+                        m_, a_ = ef.pair(stats[j])
+                        if a_ is not None:
+                            line[f"{k}m"], line[f"{k}a"] = m_, a_
+                if oreb is not None and oreb < len(stats):
+                    line["oreb"] = ef.num(stats[oreb])
                 if not line.get("min"):
                     continue
                 line.update({"name": ath.get("displayName") or ath.get("shortName"),

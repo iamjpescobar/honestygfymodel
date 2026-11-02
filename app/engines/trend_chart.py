@@ -36,19 +36,23 @@ import streamlit as st
 
 from styles.kc_theme import COLOR
 
-WINDOW_N = {"Season": None, "L25": 25, "L15": 15, "L10": 10, "L5": 5}
+WINDOW_N = {"Season": None, "L25": 25, "L20": 20, "L15": 15, "L10": 10, "L5": 5}
 
 
 def window_hit_chips(values, line: float, active_label: str,
-                     windows=("Season", "L25", "L10", "L5")) -> None:
+                     windows=("Season", "L25", "L10", "L5"), extra=None) -> None:
     """Chip per window: cleared/total and percent, computed over the
     FULL chronological value list handed in. Color: teal >= 60%, gold
     45-59%, red below — same scale everywhere so chips read instantly.
     The active window gets a teal outline."""
     cells = []
+    extra = extra or {}
     for lbl in windows:
         n = WINDOW_N.get(lbl)
-        sub = values if n is None else values[-n:]
+        if lbl in extra:                 # e.g. H2H: its own games, handed in
+            sub = extra[lbl]
+        else:
+            sub = values if n is None else values[-n:]
         if not sub:
             continue
         hit = sum(1 for v in sub if v is not None and v > line)
@@ -74,7 +78,7 @@ def window_hit_chips(values, line: float, active_label: str,
 
 
 def render_trend_bars(labels, values, stat_label: str, line: float,
-                      logos=None) -> None:
+                      logos=None, second=None, second_label=None) -> None:
     """Labeled bar chart for one window's games, oldest to newest.
     logos: optional list of image URLs (or None per game), same length
     as labels — rendered as a row of opponent logos under the bars so
@@ -151,6 +155,14 @@ def render_trend_bars(labels, values, stat_label: str, line: float,
     ).encode(y="y:Q")
 
     layers = [bars, text, rule]
+    # 11-02: an optional second series (minutes) as a line on its own axis
+    sec = None
+    if second and len(second) == len(labels) and any(v is not None for v in second):
+        sdf = pd.DataFrame({"Game": labels, "s": second}).dropna()
+        sec = alt.Chart(sdf).mark_line(point=True, color=COLOR["warn"], strokeWidth=2).encode(
+            x=alt.X("Game:N", sort=order),
+            y=alt.Y("s:Q", title=second_label or "", axis=alt.Axis(orient="right")),
+            tooltip=[alt.Tooltip("Game:N"), alt.Tooltip("s:Q", title=second_label or "")])
     if has_logos:
         ldf = pd.DataFrame({"Game": labels,
                             "url": [u or "" for u in logos],
@@ -164,7 +176,10 @@ def render_trend_bars(labels, values, stat_label: str, line: float,
                     url="url:N",
                 )
             )
+    chart = alt.layer(*layers)
+    if sec is not None:
+        chart = alt.layer(chart, sec).resolve_scale(y="independent")
     st.altair_chart(
-        alt.layer(*layers).properties(height=250).configure_view(strokeOpacity=0),
+        chart.properties(height=250).configure_view(strokeOpacity=0),
         width="stretch",
     )

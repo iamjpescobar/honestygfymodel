@@ -198,6 +198,8 @@ def all_props(games):
         for side, other in (("away", "home"), ("home", "away")):
             for r in g.get(f"{side}_props") or []:
                 out.append(dict(r, team=g.get(f"{side}_abbr"), opp=g.get(f"{other}_abbr"),
+                                team_id=str(g.get(f"{side}_id") or ""),
+                                opp_id=str(g.get(f"{other}_id") or ""),
                                 game=label, time=g.get("time_et")))
     return out
 
@@ -267,14 +269,47 @@ def trend_values(row, stat, include_pre=False):
     return out
 
 
-def render_trend(row, stat, line, window="L10", include_pre=False, key="nba_tr"):
+def h2h_values(row, stat):
+    """[(label, value, tag)] of his regular games vs tonight's opponent."""
+    opp = row.get("opp")
+    out = []
+    for g in row.get("trend") or []:
+        if g.get("tag") != "PRE" and opp and g.get("opp") == opp and g.get(stat) is not None:
+            out.append((f"{g['date'][5:].replace('-', '/')} {opp}", g[stat], g.get("tag")))
+    return out
+
+
+def trend_minutes(row, labels, include_pre=False):
+    """Minutes for each shown game, matched by label (None where missing)."""
+    by = {}
+    for g in row.get("trend") or []:
+        md = g["date"][5:].replace("-", "/")
+        pre = "PRE " if g.get("tag") == "PRE" else ""
+        by[f"{pre}{md} {g.get('opp') or ''}".strip()] = g.get("min")
+    return [by.get(lb) for lb in labels]
+
+
+def render_trend(row, stat, line, window="L10", include_pre=False, key="nba_tr",
+                 minutes=False):
     import streamlit as st
     from engines.trend_chart import WINDOW_N, render_trend_bars, window_hit_chips
     reg = [v for _l, v, t in trend_values(row, stat) if t != "PRE"]
     if not reg and not include_pre:
         st.caption("No regular-season games for him yet.")
         return
-    window_hit_chips(reg, line, window, windows=("Season", "L25", "L10", "L5"))
+    h2h = h2h_values(row, stat)
+    window_hit_chips(reg, line, window, windows=("Season", "L20", "L10", "L5", "H2H"),
+                     extra={"H2H": [v for _l, v, _t in h2h]})
+    if window == "H2H":
+        if not h2h:
+            st.caption(f"No games vs {row.get('opp')} in his last {len(reg)}.")
+            return
+        labels = [l for l, _v, _t in h2h]
+        render_trend_bars(labels, [v for _l, v, _t in h2h], nm.LABEL.get(stat, stat), line,
+                          second=trend_minutes(row, labels) if minutes else None,
+                          second_label="Minutes")
+        st.caption(f"His games vs {row.get('opp')} in the shipped history (both seasons).")
+        return
     shown = trend_values(row, stat, include_pre)
     n = WINDOW_N.get(window)
     if n:
@@ -282,8 +317,11 @@ def render_trend(row, stat, line, window="L10", include_pre=False, key="nba_tr")
         regs = [i for i, (_l, _v, t) in enumerate(shown) if t != "PRE"]
         start = regs[-n] if len(regs) >= n else 0
         shown = shown[start:]
-    render_trend_bars([l for l, _v, _t in shown], [v for _l, v, _t in shown],
-                      nm.LABEL.get(stat, stat), line)
+    _labels = [l for l, _v, _t in shown]
+    render_trend_bars(_labels, [v for _l, v, _t in shown],
+                      nm.LABEL.get(stat, stat), line,
+                      second=trend_minutes(row, _labels, include_pre) if minutes else None,
+                      second_label="Minutes")
     seasons = {t for _l, _v, t in shown}
     st.caption("Hit chips count regular-season games only (\"Season\" = every game shipped: this "
                "season, then last season's latest). "

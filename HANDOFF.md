@@ -154,6 +154,57 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — NBA Trends gets a research section: a shot-profile court (his zones vs tonight's defense by zone, ranked), team ranks (pace, rating, paint / 3PT / FT points, rebounds), L20 / H2H windows and a minutes line. Display only. 2026-11-02
+
+Izzy (11-02, a competitor screenshot): "make our NBA research page similar
+to this — I love that shot profile thing". Play types (spot up, PnR) were
+NOT built: Synergy tracking is a paid feed and the NBA stats site blocks
+servers — anything made up would be a guess dressed as data.
+
+**Data (nightly, no new fetch):** nba_box.parse now also reads FG / FT /
+3PT made-att and OREB (fgm, fga, ftm, fta, tpa, oreb; the model's game
+tuple is unchanged). nba_pbp.parse adds shots(): each field goal's zone —
+rim (<= 4 ft), paint, mid, corner3 (within 9 ft of the basket along the
+floor = below the break), above3 — from ESPN's shot coordinates, with the
+basket FOUND from where layups / dunks sit (either axis, either end), used
+only when 70%+ of a game's shots land within 3 ft of the distance written
+in the play; otherwise zones from that written distance ("three" / "two"
+when the side / distance is unknown). A blocked shot is the shooter's
+(named after "blocks" in the text). shots_ok = players whose shots equal
+their box FGA / FGM; teams_shots_ok = teams where everyone does — only
+those games count (missing is not zero). team_box = team box totals.
+**ESPN's coordinate format is NOT verified** (blocked in the sandbox): read
+the "[verify] NBA SHOTS this season" line — games by coordinates vs by
+written distance, coordinate agreement, players / teams matching the box.
+If "by coordinates" is 0, the feed's shape differs: everything falls back to
+the written distance (no corner / above-break split) until fixed.
+
+**Research (engines/nba_research, built by nba_precompute.build_research
+into games.json "research"):** per season (cur; last once the
+"NBA prior play-by-play" workflow is RE-RUN, it re-reads 2025-26 with
+shots): the slate players' zones, each defense's opponents' FG% by zone
+ranked 1st = lowest (toughest, like Overall D), league FG% by zone, and
+team ranks — possessions = FGA - OREB + TO + 0.44 FTA; pace per 48;
+rating per 100; paint points = 2 x made rim + paint shots (checked games);
+offense 1st = most, defense 1st = least allowed, pace 1st = fastest.
+
+**Page (NBA_Trends, engines/nba_research_view):** season radio, the court
+(base64 SVG <img>: tint = his share, white box = share, #rank badge red top
+third / green bottom third), the zone table, the team-ranks table with an
+offense-vs-defense flip; chart windows L5 / L10 / L20 / Season / H2H (his
+regular games vs tonight's opponent, both seasons) and a "Minutes line"
+toggle (trend_chart: WINDOW_N L20, chips extra=, bars second=).
+
+NOT in any projection, chance or letter. Next: after a few weeks of shots,
+walk-forward test whether a zone matchup (his rim share x their rim FG%
+rank) predicts points vs the projection; in the letter only if it beats.
+
+Tests: test_nba_research. Controls red: axes assumed fixed; a blocked shot
+credited to the blocker; a defense counting its own shots; zone ranks
+reversed.
+
+---
+
 ## PICK UP HERE — NBA late scratches now move their teammates: a player ruled Out after the nightly is dropped AND his teammates get the tested teammate-out bump, on every NBA page. 2026-10-30 (3)
 
 Izzy (10-30): "feed the NBA the news DraftKings has". Before this, the live
@@ -748,41 +799,3 @@ app/views/Bet_Finder.py, app/views/NBA_Props.py, app/views/NBA_Trends.py,
 app/views/Site_vs_Book.py, app/views/NHL_Goal_Edge.py,
 app/views/NFL_TD_Edge.py, tests/test_matchup_grade.py (NEW), HANDOFF.md,
 HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — NBA "scores in the first 3 minutes": fitted, tested, priced on the First Basket page; confirmed-five First Basket now BEATS. 2026-10-25 (5)
-
-**Suite 171, FAILING: none.** New tests/test_nba_early.py (controls red:
-_walk adding the game before pricing; an unprojected starter at 0.1
-points; "beats" on the league rate alone). test_nba_first_confirmed.py:
-the page render now includes the first-3-minutes card (control red: the
-card's data withheld).
-
-READ 10-25 3 PM nightly (included first_basket_fix): CONFIRMED five
-log loss 2.2915 vs projected 2.3411 -> BEATS (z 2.92), real starters
-with no projection 1.7%. Confirmed First Basket calls are no longer
-capped. The projection-bias line (pushed 5 PM) is not in that run.
-"NBA prior play-by-play" re-run: 1,235 / 1,235 games with first-3-minute
-scoring and each team's first FG; a starter scored in the first 3
-minutes 46.6% of the time.
-
-FIRST 3 MINUTES — engines/nba_early. MEASURED offline on that file
-(proxy projections, test from 2026-01-20, 5,920 starter-games): any
-point: Brier 0.2419 vs league rate 0.2487 (z 7.7) vs his own shrunk
-record 0.2435 (z 2.7) -> beats both, calibrated 30-65%. A made FG: beats
-the league rate, thin vs his own record. Team / opponent early pace:
-fitted weight 0 -> not in the number. The number: share of his five's
-projected points -> 1 - exp(-C (5 share)^G), blended LAM with his own
-record shrunk K starts to the league rate. Nightly: ne.fit on the same
-rows / windows as First Basket, "[verify] NBA first 3 minutes (pts|fg)",
-payload "first3", per game first_basket.early = game_block (starts, pts
-hits, fg hits per pool player). Page: card under the players, market
-"Any point" / "A made field goal", the five in use (ESPN / yours /
-projected), delivered through the curve, judged by bf.judge; THIN cap
-unless its verdict beats both baselines. DraftKings' feed has no such
-market — price typed.
-
-FILES: app/engines/nba_early.py (NEW), nba_precompute.py,
-app/views/NBA_First_Basket.py, tests/test_nba_early.py (NEW),
-tests/test_nba_first_confirmed.py, HANDOFF.md, HANDOFF_ARCHIVE.md
