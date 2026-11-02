@@ -1,0 +1,2245 @@
+{
+  "generated_at_et": "2026-11-02 11:19",
+  "week": 8,
+  "league": {
+    "team_games": 238,
+    "td_per_point": 0.1083,
+    "points_pg": 23.0,
+    "td_pg": 2.49,
+    "ypc": 4.2,
+    "yards_per_target": 7.42,
+    "catch_rate": 0.672,
+    "carries_pg": 26.9,
+    "targets_pg": 31.6,
+    "td_per_opportunity": 0.04254,
+    "prior_strength": 500.5,
+    "prior_a": 21.2908,
+    "prior_b": 479.2236,
+    "players_fitted": 501,
+    "touches_fitted": 13917,
+    "qb_priors": {
+      "cmp": [
+        0.64079,
+        653.44
+      ],
+      "td": [
+        0.04642,
+        811.8
+      ],
+      "int": [
+        0.02131,
+        2175.88
+      ]
+    },
+    "prop_spreads": {
+      "Rushing yards": {
+        "kind": "yards",
+        "cv": 0.8747,
+        "players": 184,
+        "games": 870
+      },
+      "Carries": {
+        "kind": "count",
+        "size": 20.472,
+        "players": 187,
+        "games": 878
+      },
+      "Receiving yards": {
+        "kind": "yards",
+        "cv": 0.837,
+        "players": 360,
+        "games": 1831
+      },
+      "Receptions": {
+        "kind": "count",
+        "size": null,
+        "players": 360,
+        "games": 1831
+      },
+      "Targets": {
+        "kind": "count",
+        "size": null,
+        "players": 363,
+        "games": 1837
+      },
+      "Passing yards": {
+        "kind": "yards",
+        "cv": 0.3653,
+        "players": 45,
+        "games": 252
+      },
+      "Pass attempts": {
+        "kind": "count",
+        "size": 25.712,
+        "players": 45,
+        "games": 252
+      },
+      "Rush + rec yards": {
+        "kind": "yards",
+        "cv": 0.8177,
+        "players": 420,
+        "games": 2208
+      },
+      "Completions": {
+        "kind": "count",
+        "size": 30.96,
+        "players": 45,
+        "games": 252
+      },
+      "Passing TDs": {
+        "kind": "count",
+        "size": null,
+        "players": 42,
+        "games": 245
+      },
+      "Interceptions": {
+        "kind": "count",
+        "size": null,
+        "players": 38,
+        "games": 234
+      }
+    },
+    "prior_weights": {
+      "share": 0.5823,
+      "catch": 1.0,
+      "ypc": 0.0079,
+      "ypt": 0.0086,
+      "td": 1.0,
+      "qb_rate": 1.0,
+      "ypa": 0.0038
+    },
+    "prior_weight_report": {
+      "share": {
+        "weight": 0.5823,
+        "n_players": 802,
+        "loglik_gain": 8751.56
+      },
+      "catch": {
+        "weight": 1.0,
+        "n_players": 334,
+        "loglik_gain": 51.65
+      },
+      "ypc": {
+        "weight": 0.0079,
+        "n_players": 188,
+        "loglik_gain": 44.1
+      },
+      "ypt": {
+        "weight": 0.0086,
+        "n_players": 334,
+        "loglik_gain": 297.61
+      },
+      "td": {
+        "weight": 1.0,
+        "n_players": 395,
+        "loglik_gain": 8.94
+      },
+      "qb_rate": {
+        "weight": 1.0,
+        "n_players": 144,
+        "loglik_gain": 3.77
+      },
+      "ypa": {
+        "weight": 0.0038,
+        "n_players": 48,
+        "loglik_gain": 60.02
+      }
+    },
+    "prop_validation": {
+      "n": 31047,
+      "pass_yds": {
+        "n": 711,
+        "model_brier": 0.2486,
+        "baseline_brier": 0.3034,
+        "verdict": {
+          "n": 711,
+          "diff": 0.05487,
+          "se": 0.00993,
+          "z": 5.52,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "10-19%",
+            "n": 1,
+            "predicted": 0.114,
+            "actual": 0.0
+          },
+          {
+            "band": "20-29%",
+            "n": 8,
+            "predicted": 0.246,
+            "actual": 0.5
+          },
+          {
+            "band": "30-39%",
+            "n": 40,
+            "predicted": 0.363,
+            "actual": 0.475
+          },
+          {
+            "band": "40-49%",
+            "n": 440,
+            "predicted": 0.459,
+            "actual": 0.493
+          },
+          {
+            "band": "50-59%",
+            "n": 107,
+            "predicted": 0.536,
+            "actual": 0.542
+          },
+          {
+            "band": "60-69%",
+            "n": 47,
+            "predicted": 0.643,
+            "actual": 0.617
+          },
+          {
+            "band": "70-79%",
+            "n": 25,
+            "predicted": 0.75,
+            "actual": 0.6
+          },
+          {
+            "band": "80-89%",
+            "n": 24,
+            "predicted": 0.85,
+            "actual": 0.75
+          },
+          {
+            "band": "90-99%",
+            "n": 19,
+            "predicted": 0.939,
+            "actual": 0.737
+          }
+        ]
+      },
+      "pass_cmp": {
+        "n": 711,
+        "model_brier": 0.2408,
+        "baseline_brier": 0.2839,
+        "verdict": {
+          "n": 711,
+          "diff": 0.04313,
+          "se": 0.01006,
+          "z": 4.29,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 1,
+            "predicted": 0.09,
+            "actual": 0.0
+          },
+          {
+            "band": "10-19%",
+            "n": 12,
+            "predicted": 0.17,
+            "actual": 0.333
+          },
+          {
+            "band": "20-29%",
+            "n": 38,
+            "predicted": 0.264,
+            "actual": 0.289
+          },
+          {
+            "band": "30-39%",
+            "n": 192,
+            "predicted": 0.356,
+            "actual": 0.453
+          },
+          {
+            "band": "40-49%",
+            "n": 253,
+            "predicted": 0.442,
+            "actual": 0.431
+          },
+          {
+            "band": "50-59%",
+            "n": 81,
+            "predicted": 0.54,
+            "actual": 0.506
+          },
+          {
+            "band": "60-69%",
+            "n": 45,
+            "predicted": 0.646,
+            "actual": 0.644
+          },
+          {
+            "band": "70-79%",
+            "n": 32,
+            "predicted": 0.743,
+            "actual": 0.625
+          },
+          {
+            "band": "80-89%",
+            "n": 20,
+            "predicted": 0.865,
+            "actual": 0.75
+          },
+          {
+            "band": "90-99%",
+            "n": 37,
+            "predicted": 0.961,
+            "actual": 0.811
+          }
+        ]
+      },
+      "pass_att": {
+        "n": 711,
+        "model_brier": 0.2506,
+        "baseline_brier": 0.2977,
+        "verdict": {
+          "n": 711,
+          "diff": 0.04701,
+          "se": 0.01021,
+          "z": 4.6,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 1,
+            "predicted": 0.054,
+            "actual": 0.0
+          },
+          {
+            "band": "10-19%",
+            "n": 6,
+            "predicted": 0.147,
+            "actual": 0.5
+          },
+          {
+            "band": "20-29%",
+            "n": 23,
+            "predicted": 0.258,
+            "actual": 0.391
+          },
+          {
+            "band": "30-39%",
+            "n": 176,
+            "predicted": 0.368,
+            "actual": 0.466
+          },
+          {
+            "band": "40-49%",
+            "n": 336,
+            "predicted": 0.441,
+            "actual": 0.458
+          },
+          {
+            "band": "50-59%",
+            "n": 52,
+            "predicted": 0.547,
+            "actual": 0.481
+          },
+          {
+            "band": "60-69%",
+            "n": 42,
+            "predicted": 0.652,
+            "actual": 0.5
+          },
+          {
+            "band": "70-79%",
+            "n": 17,
+            "predicted": 0.752,
+            "actual": 0.824
+          },
+          {
+            "band": "80-89%",
+            "n": 20,
+            "predicted": 0.851,
+            "actual": 0.65
+          },
+          {
+            "band": "90-99%",
+            "n": 38,
+            "predicted": 0.964,
+            "actual": 0.763
+          }
+        ]
+      },
+      "pass_td": {
+        "n": 711,
+        "model_brier": 0.228,
+        "baseline_brier": 0.2861,
+        "verdict": {
+          "n": 711,
+          "diff": 0.05804,
+          "se": 0.0102,
+          "z": 5.69,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 22,
+            "predicted": 0.053,
+            "actual": 0.045
+          },
+          {
+            "band": "10-19%",
+            "n": 54,
+            "predicted": 0.165,
+            "actual": 0.204
+          },
+          {
+            "band": "20-29%",
+            "n": 88,
+            "predicted": 0.246,
+            "actual": 0.295
+          },
+          {
+            "band": "30-39%",
+            "n": 131,
+            "predicted": 0.368,
+            "actual": 0.45
+          },
+          {
+            "band": "40-49%",
+            "n": 236,
+            "predicted": 0.443,
+            "actual": 0.407
+          },
+          {
+            "band": "50-59%",
+            "n": 55,
+            "predicted": 0.528,
+            "actual": 0.582
+          },
+          {
+            "band": "60-69%",
+            "n": 21,
+            "predicted": 0.667,
+            "actual": 0.714
+          },
+          {
+            "band": "70-79%",
+            "n": 95,
+            "predicted": 0.752,
+            "actual": 0.621
+          },
+          {
+            "band": "80-89%",
+            "n": 9,
+            "predicted": 0.819,
+            "actual": 0.889
+          }
+        ]
+      },
+      "pass_int": {
+        "n": 711,
+        "model_brier": 0.2252,
+        "baseline_brier": 0.2723,
+        "verdict": {
+          "n": 711,
+          "diff": 0.04701,
+          "se": 0.00799,
+          "z": 5.88,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 26,
+            "predicted": 0.055,
+            "actual": 0.154
+          },
+          {
+            "band": "10-19%",
+            "n": 110,
+            "predicted": 0.16,
+            "actual": 0.164
+          },
+          {
+            "band": "20-29%",
+            "n": 39,
+            "predicted": 0.238,
+            "actual": 0.154
+          },
+          {
+            "band": "30-39%",
+            "n": 90,
+            "predicted": 0.366,
+            "actual": 0.533
+          },
+          {
+            "band": "40-49%",
+            "n": 332,
+            "predicted": 0.454,
+            "actual": 0.455
+          },
+          {
+            "band": "50-59%",
+            "n": 114,
+            "predicted": 0.525,
+            "actual": 0.465
+          }
+        ]
+      },
+      "rush_yds": {
+        "n": 1835,
+        "model_brier": 0.2535,
+        "baseline_brier": 0.2844,
+        "verdict": {
+          "n": 1835,
+          "diff": 0.03092,
+          "se": 0.00552,
+          "z": 5.6,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 28,
+            "predicted": 0.045,
+            "actual": 0.5
+          },
+          {
+            "band": "10-19%",
+            "n": 33,
+            "predicted": 0.159,
+            "actual": 0.455
+          },
+          {
+            "band": "20-29%",
+            "n": 56,
+            "predicted": 0.252,
+            "actual": 0.411
+          },
+          {
+            "band": "30-39%",
+            "n": 162,
+            "predicted": 0.357,
+            "actual": 0.364
+          },
+          {
+            "band": "40-49%",
+            "n": 808,
+            "predicted": 0.478,
+            "actual": 0.443
+          },
+          {
+            "band": "50-59%",
+            "n": 664,
+            "predicted": 0.514,
+            "actual": 0.438
+          },
+          {
+            "band": "60-69%",
+            "n": 64,
+            "predicted": 0.638,
+            "actual": 0.594
+          },
+          {
+            "band": "70-79%",
+            "n": 11,
+            "predicted": 0.759,
+            "actual": 0.818
+          },
+          {
+            "band": "80-89%",
+            "n": 8,
+            "predicted": 0.817,
+            "actual": 0.5
+          },
+          {
+            "band": "90-99%",
+            "n": 1,
+            "predicted": 1.0,
+            "actual": 1.0
+          }
+        ]
+      },
+      "carries": {
+        "n": 1261,
+        "model_brier": 0.2575,
+        "baseline_brier": 0.2853,
+        "verdict": {
+          "n": 1261,
+          "diff": 0.02778,
+          "se": 0.00672,
+          "z": 4.13,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 41,
+            "predicted": 0.051,
+            "actual": 0.39
+          },
+          {
+            "band": "10-19%",
+            "n": 60,
+            "predicted": 0.151,
+            "actual": 0.383
+          },
+          {
+            "band": "20-29%",
+            "n": 98,
+            "predicted": 0.257,
+            "actual": 0.337
+          },
+          {
+            "band": "30-39%",
+            "n": 180,
+            "predicted": 0.359,
+            "actual": 0.444
+          },
+          {
+            "band": "40-49%",
+            "n": 695,
+            "predicted": 0.455,
+            "actual": 0.469
+          },
+          {
+            "band": "50-59%",
+            "n": 119,
+            "predicted": 0.528,
+            "actual": 0.513
+          },
+          {
+            "band": "60-69%",
+            "n": 31,
+            "predicted": 0.647,
+            "actual": 0.387
+          },
+          {
+            "band": "70-79%",
+            "n": 21,
+            "predicted": 0.75,
+            "actual": 0.571
+          },
+          {
+            "band": "80-89%",
+            "n": 7,
+            "predicted": 0.876,
+            "actual": 0.857
+          },
+          {
+            "band": "90-99%",
+            "n": 9,
+            "predicted": 0.962,
+            "actual": 0.556
+          }
+        ]
+      },
+      "targets": {
+        "n": 5236,
+        "model_brier": 0.2422,
+        "baseline_brier": 0.2851,
+        "verdict": {
+          "n": 5236,
+          "diff": 0.04291,
+          "se": 0.00298,
+          "z": 14.41,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 163,
+            "predicted": 0.055,
+            "actual": 0.221
+          },
+          {
+            "band": "10-19%",
+            "n": 304,
+            "predicted": 0.157,
+            "actual": 0.322
+          },
+          {
+            "band": "20-29%",
+            "n": 580,
+            "predicted": 0.256,
+            "actual": 0.369
+          },
+          {
+            "band": "30-39%",
+            "n": 1265,
+            "predicted": 0.355,
+            "actual": 0.398
+          },
+          {
+            "band": "40-49%",
+            "n": 1760,
+            "predicted": 0.443,
+            "actual": 0.418
+          },
+          {
+            "band": "50-59%",
+            "n": 875,
+            "predicted": 0.529,
+            "actual": 0.527
+          },
+          {
+            "band": "60-69%",
+            "n": 147,
+            "predicted": 0.644,
+            "actual": 0.537
+          },
+          {
+            "band": "70-79%",
+            "n": 82,
+            "predicted": 0.745,
+            "actual": 0.707
+          },
+          {
+            "band": "80-89%",
+            "n": 42,
+            "predicted": 0.846,
+            "actual": 0.833
+          },
+          {
+            "band": "90-99%",
+            "n": 18,
+            "predicted": 0.926,
+            "actual": 0.722
+          }
+        ]
+      },
+      "scrim_yds": {
+        "n": 5675,
+        "model_brier": 0.2511,
+        "baseline_brier": 0.2893,
+        "verdict": {
+          "n": 5675,
+          "diff": 0.03813,
+          "se": 0.00324,
+          "z": 11.75,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 19,
+            "predicted": 0.037,
+            "actual": 0.632
+          },
+          {
+            "band": "10-19%",
+            "n": 49,
+            "predicted": 0.158,
+            "actual": 0.367
+          },
+          {
+            "band": "20-29%",
+            "n": 112,
+            "predicted": 0.259,
+            "actual": 0.446
+          },
+          {
+            "band": "30-39%",
+            "n": 274,
+            "predicted": 0.359,
+            "actual": 0.423
+          },
+          {
+            "band": "40-49%",
+            "n": 2718,
+            "predicted": 0.479,
+            "actual": 0.439
+          },
+          {
+            "band": "50-59%",
+            "n": 2136,
+            "predicted": 0.518,
+            "actual": 0.451
+          },
+          {
+            "band": "60-69%",
+            "n": 213,
+            "predicted": 0.641,
+            "actual": 0.582
+          },
+          {
+            "band": "70-79%",
+            "n": 107,
+            "predicted": 0.748,
+            "actual": 0.617
+          },
+          {
+            "band": "80-89%",
+            "n": 44,
+            "predicted": 0.843,
+            "actual": 0.818
+          },
+          {
+            "band": "90-99%",
+            "n": 3,
+            "predicted": 1.0,
+            "actual": 1.0
+          }
+        ]
+      },
+      "rec_yds": {
+        "n": 5115,
+        "model_brier": 0.2561,
+        "baseline_brier": 0.2863,
+        "verdict": {
+          "n": 5115,
+          "diff": 0.03021,
+          "se": 0.00339,
+          "z": 8.92,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 116,
+            "predicted": 0.04,
+            "actual": 0.543
+          },
+          {
+            "band": "10-19%",
+            "n": 104,
+            "predicted": 0.155,
+            "actual": 0.394
+          },
+          {
+            "band": "20-29%",
+            "n": 205,
+            "predicted": 0.256,
+            "actual": 0.439
+          },
+          {
+            "band": "30-39%",
+            "n": 401,
+            "predicted": 0.358,
+            "actual": 0.409
+          },
+          {
+            "band": "40-49%",
+            "n": 2372,
+            "predicted": 0.474,
+            "actual": 0.416
+          },
+          {
+            "band": "50-59%",
+            "n": 1627,
+            "predicted": 0.519,
+            "actual": 0.462
+          },
+          {
+            "band": "60-69%",
+            "n": 178,
+            "predicted": 0.643,
+            "actual": 0.517
+          },
+          {
+            "band": "70-79%",
+            "n": 81,
+            "predicted": 0.738,
+            "actual": 0.642
+          },
+          {
+            "band": "80-89%",
+            "n": 29,
+            "predicted": 0.842,
+            "actual": 0.862
+          },
+          {
+            "band": "90-99%",
+            "n": 2,
+            "predicted": 1.0,
+            "actual": 1.0
+          }
+        ]
+      },
+      "rec": {
+        "n": 5164,
+        "model_brier": 0.2386,
+        "baseline_brier": 0.2686,
+        "verdict": {
+          "n": 5164,
+          "diff": 0.03006,
+          "se": 0.00288,
+          "z": 10.44,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 170,
+            "predicted": 0.06,
+            "actual": 0.194
+          },
+          {
+            "band": "10-19%",
+            "n": 285,
+            "predicted": 0.164,
+            "actual": 0.288
+          },
+          {
+            "band": "20-29%",
+            "n": 670,
+            "predicted": 0.254,
+            "actual": 0.355
+          },
+          {
+            "band": "30-39%",
+            "n": 1360,
+            "predicted": 0.354,
+            "actual": 0.39
+          },
+          {
+            "band": "40-49%",
+            "n": 1542,
+            "predicted": 0.445,
+            "actual": 0.44
+          },
+          {
+            "band": "50-59%",
+            "n": 920,
+            "predicted": 0.533,
+            "actual": 0.537
+          },
+          {
+            "band": "60-69%",
+            "n": 123,
+            "predicted": 0.647,
+            "actual": 0.634
+          },
+          {
+            "band": "70-79%",
+            "n": 56,
+            "predicted": 0.751,
+            "actual": 0.679
+          },
+          {
+            "band": "80-89%",
+            "n": 24,
+            "predicted": 0.855,
+            "actual": 0.833
+          },
+          {
+            "band": "90-99%",
+            "n": 14,
+            "predicted": 0.94,
+            "actual": 0.929
+          }
+        ]
+      },
+      "td": {
+        "n": 3206,
+        "model_brier": 0.16,
+        "baseline_brier": 0.1981,
+        "verdict": {
+          "n": 3206,
+          "diff": 0.03804,
+          "se": 0.00364,
+          "z": 10.46,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 1050,
+            "predicted": 0.064,
+            "actual": 0.109
+          },
+          {
+            "band": "10-19%",
+            "n": 1134,
+            "predicted": 0.146,
+            "actual": 0.196
+          },
+          {
+            "band": "20-29%",
+            "n": 541,
+            "predicted": 0.244,
+            "actual": 0.322
+          },
+          {
+            "band": "30-39%",
+            "n": 291,
+            "predicted": 0.343,
+            "actual": 0.34
+          },
+          {
+            "band": "40-49%",
+            "n": 110,
+            "predicted": 0.453,
+            "actual": 0.455
+          },
+          {
+            "band": "50-59%",
+            "n": 56,
+            "predicted": 0.538,
+            "actual": 0.536
+          },
+          {
+            "band": "60-69%",
+            "n": 22,
+            "predicted": 0.643,
+            "actual": 0.773
+          },
+          {
+            "band": "70-79%",
+            "n": 2,
+            "predicted": 0.718,
+            "actual": 0.5
+          }
+        ]
+      },
+      "matchup": {
+        "rush": {
+          "strength": 0.0,
+          "fitted": 0.5,
+          "n_train": 584,
+          "n": 1251,
+          "verdict": {
+            "n": 1251,
+            "diff": -0.00195,
+            "se": 0.00441,
+            "z": -0.44,
+            "verdict": "fails"
+          },
+          "in_number": false
+        },
+        "rec": {
+          "strength": 0.0,
+          "fitted": 0.5,
+          "n_train": 3255,
+          "n": 7024,
+          "verdict": {
+            "n": 7024,
+            "diff": 0.00165,
+            "se": 0.00173,
+            "z": 0.95,
+            "verdict": "thin"
+          },
+          "in_number": false
+        },
+        "pass": {
+          "strength": 0.0,
+          "fitted": 0.0,
+          "n_train": 231,
+          "n": 0,
+          "verdict": {
+            "verdict": null
+          },
+          "in_number": false
+        }
+      },
+      "matchup_in_number": {
+        "rush": false,
+        "rec": false,
+        "pass": false
+      },
+      "matchup_strength": {
+        "rush": 0.0,
+        "rec": 0.0,
+        "pass": 0.0
+      },
+      "weeks": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "seasons": {
+        "prior_rows": 21599,
+        "current_rows": 9448
+      }
+    },
+    "matchup_in_number": {
+      "rush": false,
+      "rec": false,
+      "pass": false
+    },
+    "matchup_strength": {
+      "rush": 0.0,
+      "rec": 0.0,
+      "pass": 0.0
+    }
+  },
+  "markets": {
+    "Anytime TD": [
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 52,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jaxon Smith-Njigba",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 50,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Emanuel Wilson",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 42,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Holani",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 30,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rome Odunze",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 25,
+        "window": "Monday Night"
+      },
+      {
+        "player": "AJ Barner",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 25,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Roschon Johnson",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 22,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Colston Loveland",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 22,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Luther Burden III",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 20,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Cooper Kupp",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 20,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tory Horton",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 17,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kalif Raymond",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 13,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Zavion Thomas",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Eric Saubert",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Sam Roush",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brady Russell",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "FB",
+        "gp": 2,
+        "proj": 7,
+        "window": "Monday Night"
+      }
+    ],
+    "Rushing yards": [
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 68.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Emanuel Wilson",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 41.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Caleb Williams",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 4,
+        "proj": 30.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Roschon Johnson",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 17.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Holani",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 15.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Sam Darnold",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 10.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drew Lock",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 8.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Case Keenum",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 6.0,
+        "window": "Monday Night"
+      }
+    ],
+    "Carries": [
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 16.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Emanuel Wilson",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 11.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Holani",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 5.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Roschon Johnson",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 4.9,
+        "window": "Monday Night"
+      }
+    ],
+    "Receiving yards": [
+      {
+        "player": "Jaxon Smith-Njigba",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 123.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rome Odunze",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 64.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Luther Burden III",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 55.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Cooper Kupp",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 33.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Colston Loveland",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 32.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "AJ Barner",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 27.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kalif Raymond",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 26.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 19.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tory Horton",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 19.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brady Russell",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "FB",
+        "gp": 2,
+        "proj": 17.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Roschon Johnson",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 14.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Sam Roush",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 11.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Zavion Thomas",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 11.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Holani",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 10.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Emanuel Wilson",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 8.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Eric Saubert",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 5.6,
+        "window": "Monday Night"
+      }
+    ],
+    "Receptions": [
+      {
+        "player": "Jaxon Smith-Njigba",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 8.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Luther Burden III",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 4.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Colston Loveland",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 3.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rome Odunze",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 3.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "AJ Barner",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 3.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Cooper Kupp",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 3.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kalif Raymond",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 2.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 2.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tory Horton",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 1.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Roschon Johnson",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 1.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Zavion Thomas",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 1.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Holani",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 1.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Sam Roush",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 1.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Emanuel Wilson",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 1.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brady Russell",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "FB",
+        "gp": 2,
+        "proj": 1.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Eric Saubert",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 0.8,
+        "window": "Monday Night"
+      }
+    ],
+    "Targets": [
+      {
+        "player": "Jaxon Smith-Njigba",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 11.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rome Odunze",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 6.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Colston Loveland",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 5.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Luther Burden III",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 5.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Cooper Kupp",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 4.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "AJ Barner",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 4.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 3.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kalif Raymond",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 3.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tory Horton",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 2.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Roschon Johnson",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 1.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Sam Roush",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 1.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Holani",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 1.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Zavion Thomas",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 1.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Eric Saubert",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 1.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brady Russell",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "FB",
+        "gp": 2,
+        "proj": 1.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Emanuel Wilson",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 1.2,
+        "window": "Monday Night"
+      }
+    ],
+    "Passing yards": [
+      {
+        "player": "Drew Lock",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 269.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Caleb Williams",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 4,
+        "proj": 263.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Sam Darnold",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 224.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Case Keenum",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 215.1,
+        "window": "Monday Night"
+      }
+    ],
+    "Pass attempts": [
+      {
+        "player": "Caleb Williams",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 4,
+        "proj": 32.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Case Keenum",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 32.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Sam Darnold",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 30.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drew Lock",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 30.7,
+        "window": "Monday Night"
+      }
+    ],
+    "Rush + rec yards": [
+      {
+        "player": "Jaxon Smith-Njigba",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 127.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 88.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rome Odunze",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 64.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Luther Burden III",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 58.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Emanuel Wilson",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 50.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Cooper Kupp",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 33.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Colston Loveland",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 32.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Roschon Johnson",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 31.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "AJ Barner",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 28.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kalif Raymond",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 26.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Holani",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 25.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tory Horton",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 19.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brady Russell",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "FB",
+        "gp": 2,
+        "proj": 17.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Zavion Thomas",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 15.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Sam Roush",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 11.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Eric Saubert",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 5.6,
+        "window": "Monday Night"
+      }
+    ],
+    "Completions": [
+      {
+        "player": "Case Keenum",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 20.62,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Sam Darnold",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 20.01,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Caleb Williams",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 4,
+        "proj": 19.95,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drew Lock",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 19.86,
+        "window": "Monday Night"
+      }
+    ],
+    "Passing TDs": [
+      {
+        "player": "Caleb Williams",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 4,
+        "proj": 1.49,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Sam Darnold",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 1.48,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drew Lock",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 1.48,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Case Keenum",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 1.47,
+        "window": "Monday Night"
+      }
+    ],
+    "Interceptions": [
+      {
+        "player": "Sam Darnold",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 0.74,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Case Keenum",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 0.68,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drew Lock",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 0.64,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Caleb Williams",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 4,
+        "proj": 0.61,
+        "window": "Monday Night"
+      }
+    ],
+    "2+ TDs": [
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 17.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jaxon Smith-Njigba",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 15.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Emanuel Wilson",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 10.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "George Holani",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 4.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rome Odunze",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 3.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "AJ Barner",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 3.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Colston Loveland",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 2.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Roschon Johnson",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 2.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Luther Burden III",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 2.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Cooper Kupp",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 2.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tory Horton",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 1.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kalif Raymond",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 0.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Zavion Thomas",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 0.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Eric Saubert",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 0.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Sam Roush",
+        "team": "CHI",
+        "opp": "SEA",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 0.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brady Russell",
+        "team": "SEA",
+        "opp": "CHI",
+        "pos": "FB",
+        "gp": 2,
+        "proj": 0.2,
+        "window": "Monday Night"
+      }
+    ]
+  }
+}
