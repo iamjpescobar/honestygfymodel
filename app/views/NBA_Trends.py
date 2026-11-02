@@ -192,19 +192,22 @@ with card("nbat_dd"):
     _h2h = [n for _l, n, _w, t, o in _hist if t != "PRE" and o == r.get("opp")]
     if _ddc:
         _c1, _c2 = st.columns(2)
-        for _col, _k, _lab in ((_c1, "dd", "Double-double"), (_c2, "td", "Triple-double")):
-            _p = _ddc[_k]
+        _shown_p = {"dd": _dd.dd_chance(_ddc["dd"], _dd.history(r)), "td": _ddc["td"]}
+        for _col, _k, _lab, _tag in ((_c1, "dd", "Double-double", "tested"),
+                                     (_c2, "td", "Triple-double", "THIN · runs low")):
+            _p = _shown_p[_k]
             _fair = (mm.fmt_american(mm.fair_american(_p)) if 0.01 <= _p <= 0.99 else "—")
             _col.markdown(
                 f'<div style="font-size:var(--lc-text-tiny);color:{COLOR["text_muted"]};'
-                f'text-transform:uppercase;letter-spacing:0.06em;">{_lab} tonight · THIN</div>'
+                f'text-transform:uppercase;letter-spacing:0.06em;">{_lab} tonight · {_tag}</div>'
                 f'<div style="font-size:var(--lc-text-body-lg);font-weight:800;">'
                 f'{"<1%" if _p < 0.005 else f"{100 * _p:.0f}%"}</div>'
                 f'<div style="color:{COLOR["text_muted"]};">worth it at {_fair}</div>',
                 unsafe_allow_html=True)
-        st.caption("From the simulator (his projected points / rebounds / assists drawn "
-                   "together through minutes, blowouts and pace). UNTESTED for one player's "
-                   "doubles — read it beside his record below, never alone.")
+        st.caption("Double-double: the simulator's chance blended with his last-30-game "
+                   "record — tested on last season's final 45 days, it beat both on their own. "
+                   "Triple-double: the simulator alone, which predicted about HALF the "
+                   "triple-doubles that happened last season — read it as a floor.")
     if not _reg:
         st.caption("No regular-season games for him yet.")
     else:

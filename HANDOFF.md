@@ -154,6 +154,33 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Double-double chance TESTED and fixed: the simulator alone ran low and was no better than his record; a measured blend of the two beats both on last season's unseen 45 days. Triple-double stays the simulator's, THIN (it predicted half). 2026-11-02 (3)
+
+Measured 11-02 (scratch scripts, local): nm.fit on data/nba/prior_season.json
+(38 s), nba_sim.build links / sds, nc.context_rows walk-forward rows, the
+test window's 6,652 player-games; nba_sim.simulate per player (n 4,000).
+- double-double happened 7.95%; simulator 6.9% (its <2% games: 0.5% said,
+  1.8% happened); simulator = independent marginals (Brier 0.05890 vs
+  0.05886) — it adds no within-player link beyond minutes / pace.
+- his record (last 30 regular games, shrunk 10 games to 7.95%) Brier 0.05889.
+- BLEND logit p = 0.3 + 0.3 logit(sim) + 0.8 logit(record), fitted on the
+  first 23 days (grid, log loss), scored on the last 22: log loss 0.2194 vs
+  sim 0.2325 / record 0.2242; paired by date (Brier) z 2.94 vs sim, 3.01 vs
+  record. Calibration on the unseen half 0.009/0.018 at the bottom, then
+  0.142/0.142, 0.259/0.264, 0.617/0.635.
+- triple-double: 45 happened, simulator 23. Not corrected (45 events).
+
+**Now:** nba_doubles.dd_chance(sim_dd, history) — the page's double-double
+chance, labelled "tested"; triple-double = the simulator's, "THIN · runs
+low". Constants DD_A/B/C, DD_K, DD_LEAGUE, DD_RECORD_N with the numbers
+beside them. Not on Bet Finder / Props (no DraftKings double-double lines
+checked in the feed). Next: a nightly re-check on this season's games as
+they grade; a triple-double correction once there are enough of them.
+
+Tests: test_nba_doubles (+6). Control red: the blend without the record.
+
+---
+
 ## PICK UP HERE — Double-doubles / triple-doubles on NBA Trends: his record game by game (chips per window, how he got them) and the simulator's chance tonight, read THIN (untested). 2026-11-02 (2)
 
 Izzy (11-02, needed before 7 PM): "how can I research double doubles and
@@ -731,51 +758,4 @@ both are one number in SIMS.
 FILES: app/engines/sim_settings.py (NEW), app/views/NHL_Sim.py,
 app/views/NBA_Sim.py, app/views/NFL_Sim.py, app/views/MLB_Sim.py,
 tests/test_sim_settings.py (NEW), tests/test_sim_counts.py, HANDOFF.md,
-HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — Markets clearly BEHIND DraftKings are capped at THIN now (not after 300 lines); every captured line keeps the projection we offered, so the next grade measures our projections against the box score. 2026-10-26 (2)
-
-**Suite 172, FAILING: none.** tests/test_book_grade.py +5 checks
-(controls red: "behind" on any fails without the z; ladder rungs counted
-twice in the projection check); test_matchup_grade.py follows the new
-graded-row shape.
-
-READ 10-26 10 AM nightly:
-  First 3 minutes on real projections: any point beats the league rate
-  (z 6.18) and his own record (z 2.74); a made FG beats both too (z 5.33
-  / 2.72). Not capped.
-  First Basket confirmed five: beats (z 2.84).
-  NBA projection bias (walk-forward test rows): last season x1.00 on
-  every stat (control clean); THIS season actual / projected x0.87 pts,
-  x0.93 reb, x0.86 ast (all rows), x0.88 pts (20+ min) — the walk-forward
-  OVER-projects returning players this season (~43 games in).
-  Site vs DraftKings, two NBA nights (10-24, 10-25): site mean over
-  chance 0.38 both nights vs DK 0.49 / 0.50, overs hit 0.58 / 0.51.
-  Implied from the captured chances at DK's main points line: our mean
-  ~0.9-1.1 points under DK's line (13.95 vs 14.83; 13.5 vs 14.63), plus
-  the negative-binomial skew (an even mean prices the over ~0.45). NBA
-  pts / pr / pa / pra / tpm fail at z -2.2 to -3.1 on 130-180 lines.
-  NHL: pts fails (z -2.96, n 304), g* fails (z -2.33), a / sog thin-ish;
-  site 0.40 vs DK 0.42 vs hit 0.43-0.44.
-  THE TWO NBA READS DISAGREE (walk-forward says too HIGH, tonight's
-  offered chances sit LOW vs DK and the box): the offered pipeline
-  (project_now, minutes, team-minutes 220 / beta 0.5, injuries) is not
-  the walk-forward pipeline. Not guessed at: measured next.
-
-CHANGES. book_grade.market_status: "behind" when n >= 100 and z <= -2
-(BEHIND_MIN / BEHIND_Z) — the Bet Finder caps it at THIN and labels it
-"BEHIND DraftKings so far"; Site vs DraftKings shows BEHIND DRAFTKINGS.
-Only ever a cap ("beats" still needs 300). capture saves our offered
-projection (the pmf mean) as element 7; grade_event appends [letter,
-our projection, what he did]; projection_bias -> nightly "[verify]
-OFFERED PROJECTION vs BOX <lg>: <stat> ours vs actual (x ratio, DK line,
-n)" and scorecard "bias". NEXT: two nights of that line; if NBA ours /
-actual sits clearly under 1 while DK's line ~ actual, fix the offered
-pipeline at the source (minutes first), test, adopt only if it beats.
-
-FILES: app/engines/book_grade.py, book_props_grade.py,
-app/views/Bet_Finder.py, app/views/Site_vs_Book.py,
-tests/test_book_grade.py, tests/test_matchup_grade.py, HANDOFF.md,
 HANDOFF_ARCHIVE.md
