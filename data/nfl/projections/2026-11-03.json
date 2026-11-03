@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-11-03 10:44",
+  "generated_at_et": "2026-11-03 12:37",
   "week": 9,
   "league": {
     "team_games": 240,
@@ -1164,15 +1164,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Derrick Henry",
-        "team": "BAL",
-        "opp": "JAX",
-        "pos": "RB",
-        "gp": 8,
-        "proj": 48,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Josh Jacobs",
         "team": "GB",
         "opp": "NE",
@@ -1180,6 +1171,15 @@
         "gp": 2,
         "proj": 48,
         "window": "Sunday Late"
+      },
+      {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "JAX",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 47,
+        "window": "Thursday Night"
       },
       {
         "player": "Ashton Jeanty",
@@ -1209,15 +1209,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Chuba Hubbard",
-        "team": "CAR",
-        "opp": "DEN",
-        "pos": "RB",
-        "gp": 7,
-        "proj": 46,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Ja'Marr Chase",
         "team": "CIN",
         "opp": "ATL",
@@ -1236,6 +1227,15 @@
         "window": "Sunday Early"
       },
       {
+        "player": "Chuba Hubbard",
+        "team": "CAR",
+        "opp": "DEN",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 45,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Rashee Rice",
         "team": "KC",
         "opp": "NYJ",
@@ -1250,7 +1250,7 @@
         "opp": "CAR",
         "pos": "RB",
         "gp": 8,
-        "proj": 44,
+        "proj": 43,
         "window": "Sunday Early"
       },
       {
@@ -1263,15 +1263,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Zach Charbonnet",
-        "team": "SEA",
-        "opp": "ARI",
-        "pos": "RB",
-        "gp": 1,
-        "proj": 42,
-        "window": "Sunday Late"
-      },
-      {
         "player": "Bucky Irving",
         "team": "TB",
         "opp": "CHI",
@@ -1281,13 +1272,13 @@
         "window": "Sunday Night"
       },
       {
-        "player": "Bhayshul Tuten",
-        "team": "JAX",
-        "opp": "BAL",
+        "player": "Zach Charbonnet",
+        "team": "SEA",
+        "opp": "ARI",
         "pos": "RB",
-        "gp": 7,
-        "proj": 40,
-        "window": "Thursday Night"
+        "gp": 1,
+        "proj": 41,
+        "window": "Sunday Late"
       },
       {
         "player": "Alvin Kamara",
@@ -1317,13 +1308,13 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Jaxon Smith-Njigba",
-        "team": "SEA",
-        "opp": "ARI",
-        "pos": "WR",
-        "gp": 8,
-        "proj": 40,
-        "window": "Sunday Late"
+        "player": "Bhayshul Tuten",
+        "team": "JAX",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 39,
+        "window": "Thursday Night"
       },
       {
         "player": "CeeDee Lamb",
@@ -1358,6 +1349,15 @@
         "opp": "LAC",
         "pos": "RB",
         "gp": 5,
+        "proj": 39,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Jaxon Smith-Njigba",
+        "team": "SEA",
+        "opp": "ARI",
+        "pos": "WR",
+        "gp": 8,
         "proj": 39,
         "window": "Sunday Late"
       },
@@ -5522,7 +5522,7 @@
         "opp": "JAX",
         "pos": "RB",
         "gp": 8,
-        "proj": 14.1,
+        "proj": 13.4,
         "window": "Thursday Night"
       },
       {
@@ -5540,15 +5540,6 @@
         "opp": "WSH",
         "pos": "WR",
         "gp": 6,
-        "proj": 12.8,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Chuba Hubbard",
-        "team": "CAR",
-        "opp": "DEN",
-        "pos": "RB",
-        "gp": 7,
         "proj": 12.8,
         "window": "Sunday Early"
       },
@@ -5571,12 +5562,21 @@
         "window": "Sunday Morning"
       },
       {
+        "player": "Chuba Hubbard",
+        "team": "CAR",
+        "opp": "DEN",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 12.3,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Jonah Coleman",
         "team": "DEN",
         "opp": "CAR",
         "pos": "RB",
         "gp": 3,
-        "proj": 12.3,
+        "proj": 11.9,
         "window": "Sunday Early"
       },
       {
@@ -5594,7 +5594,7 @@
         "opp": "CAR",
         "pos": "RB",
         "gp": 8,
-        "proj": 11.2,
+        "proj": 10.9,
         "window": "Sunday Early"
       },
       {
@@ -5607,15 +5607,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Zach Charbonnet",
-        "team": "SEA",
-        "opp": "ARI",
-        "pos": "RB",
-        "gp": 1,
-        "proj": 10.2,
-        "window": "Sunday Late"
-      },
-      {
         "player": "Bucky Irving",
         "team": "TB",
         "opp": "CHI",
@@ -5625,13 +5616,13 @@
         "window": "Sunday Night"
       },
       {
-        "player": "Bhayshul Tuten",
-        "team": "JAX",
-        "opp": "BAL",
+        "player": "Zach Charbonnet",
+        "team": "SEA",
+        "opp": "ARI",
         "pos": "RB",
-        "gp": 7,
-        "proj": 9.4,
-        "window": "Thursday Night"
+        "gp": 1,
+        "proj": 9.9,
+        "window": "Sunday Late"
       },
       {
         "player": "Saquon Barkley",
@@ -5652,13 +5643,13 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Jaxon Smith-Njigba",
-        "team": "SEA",
-        "opp": "ARI",
-        "pos": "WR",
-        "gp": 8,
-        "proj": 9.3,
-        "window": "Sunday Late"
+        "player": "Bhayshul Tuten",
+        "team": "JAX",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 9.1,
+        "window": "Thursday Night"
       },
       {
         "player": "Alvin Kamara",
@@ -5677,6 +5668,15 @@
         "gp": 8,
         "proj": 9.0,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Jaxon Smith-Njigba",
+        "team": "SEA",
+        "opp": "ARI",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 9.0,
+        "window": "Sunday Late"
       },
       {
         "player": "David Montgomery",
