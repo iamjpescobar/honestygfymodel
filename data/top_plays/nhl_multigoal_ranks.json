@@ -15363,6 +15363,640 @@
     "COL"
    ]
   },
+  "scorers": [
+   {
+    "chance2": 0.0188,
+    "g": 2.0,
+    "name": "Jaden Schwartz",
+    "pid": "5835",
+    "rank": 48
+   },
+   {
+    "chance2": 0.0168,
+    "g": 2.0,
+    "name": "Nazem Kadri",
+    "pid": "5349",
+    "rank": 57
+   }
+  ]
+ },
+ "2026-11-03": {
+  "games": [
+   "401892633",
+   "401892634",
+   "401892635",
+   "401892636",
+   "401892637",
+   "401892638",
+   "401892639",
+   "401892640",
+   "401892641",
+   "401892642",
+   "401892643"
+  ],
+  "n": 396,
+  "ranks": {
+   "2562624": [
+    76,
+    0.0226,
+    "Ryan Nugent-Hopkins",
+    "EDM"
+   ],
+   "2562629": [
+    35,
+    0.0302,
+    "Rickard Rakell",
+    "PIT"
+   ],
+   "2562632": [
+    38,
+    0.0297,
+    "Mark Scheifele",
+    "WPG"
+   ],
+   "2562637": [
+    33,
+    0.0306,
+    "Mika Zibanejad",
+    "NYR"
+   ],
+   "2563036": [
+    98,
+    0.0203,
+    "Vincent Trocheck",
+    "UTA"
+   ],
+   "2563057": [
+    96,
+    0.0203,
+    "William Karlsson",
+    "VGK"
+   ],
+   "2563060": [
+    8,
+    0.0449,
+    "Nikita Kucherov",
+    "TB"
+   ],
+   "2590852": [
+    94,
+    0.0206,
+    "J.T. Miller",
+    "NYR"
+   ],
+   "2968772": [
+    15,
+    0.0387,
+    "Filip Forsberg",
+    "NSH"
+   ],
+   "2970615": [
+    58,
+    0.0253,
+    "Tom Wilson",
+    "WSH"
+   ],
+   "2976844": [
+    91,
+    0.0207,
+    "Tomas Hertl",
+    "VGK"
+   ],
+   "2976849": [
+    62,
+    0.0245,
+    "Mark Jankowski",
+    "CAR"
+   ],
+   "3041969": [
+    7,
+    0.0458,
+    "Nathan MacKinnon",
+    "COL"
+   ],
+   "3042037": [
+    37,
+    0.03,
+    "Anthony Mantha",
+    "NJ"
+   ],
+   "3042050": [
+    42,
+    0.0282,
+    "Artturi Lehkonen",
+    "COL"
+   ],
+   "3042083": [
+    11,
+    0.0441,
+    "Jake Guentzel",
+    "TB"
+   ],
+   "3069687": [
+    88,
+    0.021,
+    "Josh Anderson",
+    "MTL"
+   ],
+   "3101": [
+    97,
+    0.0203,
+    "Alex Ovechkin",
+    "WSH"
+   ],
+   "3114": [
+    31,
+    0.0312,
+    "Sidney Crosby",
+    "PIT"
+   ],
+   "3114727": [
+    10,
+    0.0444,
+    "Leon Draisaitl",
+    "EDM"
+   ],
+   "3114736": [
+    19,
+    0.0377,
+    "William Nylander",
+    "TOR"
+   ],
+   "3114741": [
+    69,
+    0.0234,
+    "Nikolaj Ehlers",
+    "CAR"
+   ],
+   "3114766": [
+    25,
+    0.0336,
+    "Alex Tuch",
+    "WSH"
+   ],
+   "3114770": [
+    27,
+    0.0332,
+    "Nick Schmaltz",
+    "UTA"
+   ],
+   "3114985": [
+    84,
+    0.0211,
+    "Ivan Barbashev",
+    "VGK"
+   ],
+   "3120307": [
+    32,
+    0.0308,
+    "Viktor Arvidsson",
+    "DET"
+   ],
+   "3124": [
+    59,
+    0.0253,
+    "Evgeni Malkin",
+    "PIT"
+   ],
+   "3151187": [
+    64,
+    0.024,
+    "Brayden Point",
+    "TB"
+   ],
+   "3648002": [
+    40,
+    0.0288,
+    "Jack Eichel",
+    "VGK"
+   ],
+   "3895074": [
+    6,
+    0.0461,
+    "Connor McDavid",
+    "EDM"
+   ],
+   "3899937": [
+    79,
+    0.0217,
+    "Mitch Marner",
+    "VGK"
+   ],
+   "3899938": [
+    54,
+    0.0256,
+    "Mikko Rantanen",
+    "DAL"
+   ],
+   "3899951": [
+    92,
+    0.0207,
+    "Lawson Crouse",
+    "UTA"
+   ],
+   "3899952": [
+    14,
+    0.0393,
+    "Kyle Connor",
+    "WPG"
+   ],
+   "3899978": [
+    81,
+    0.0217,
+    "Timo Meier",
+    "NJ"
+   ],
+   "3899979": [
+    47,
+    0.0262,
+    "Brock Boeser",
+    "VAN"
+   ],
+   "3900169": [
+    75,
+    0.023,
+    "Travis Konecny",
+    "PHI"
+   ],
+   "3900240": [
+    49,
+    0.026,
+    "Jake DeBrusk",
+    "VAN"
+   ],
+   "3904098": [
+    57,
+    0.0253,
+    "Jack Roslovic",
+    "TOR"
+   ],
+   "3904173": [
+    34,
+    0.0302,
+    "Sebastian Aho",
+    "CAR"
+   ],
+   "3904183": [
+    93,
+    0.0206,
+    "Roope Hintz",
+    "DAL"
+   ],
+   "3941973": [
+    53,
+    0.0257,
+    "Anthony Cirelli",
+    "TB"
+   ],
+   "3942335": [
+    4,
+    0.0473,
+    "Kirill Kaprizov",
+    "MIN"
+   ],
+   "4024123": [
+    21,
+    0.0355,
+    "Auston Matthews",
+    "TOR"
+   ],
+   "4024857": [
+    44,
+    0.0276,
+    "Clayton Keller",
+    "UTA"
+   ],
+   "4063433": [
+    23,
+    0.0347,
+    "Alex DeBrincat",
+    "DET"
+   ],
+   "4065019": [
+    5,
+    0.0462,
+    "Brandon Hagel",
+    "TB"
+   ],
+   "4233555": [
+    45,
+    0.0272,
+    "Nico Hischier",
+    "NJ"
+   ],
+   "4233566": [
+    78,
+    0.022,
+    "Elias Pettersson",
+    "VAN"
+   ],
+   "4233583": [
+    70,
+    0.0234,
+    "Gabriel Vilardi",
+    "WPG"
+   ],
+   "4233586": [
+    28,
+    0.0321,
+    "Martin Necas",
+    "COL"
+   ],
+   "4233637": [
+    48,
+    0.026,
+    "Robert Thomas",
+    "STL"
+   ],
+   "4233648": [
+    66,
+    0.0239,
+    "Kailer Yamamoto",
+    "UTA"
+   ],
+   "4233875": [
+    20,
+    0.037,
+    "Jason Robertson",
+    "DAL"
+   ],
+   "4352683": [
+    30,
+    0.0316,
+    "Andrei Svechnikov",
+    "CAR"
+   ],
+   "4392072": [
+    68,
+    0.0237,
+    "Owen Tippett",
+    "PHI"
+   ],
+   "4565222": [
+    24,
+    0.0346,
+    "Jack Hughes",
+    "NJ"
+   ],
+   "4565230": [
+    67,
+    0.0238,
+    "Trevor Zegras",
+    "PHI"
+   ],
+   "4565231": [
+    74,
+    0.0231,
+    "Vasily Podkolzin",
+    "EDM"
+   ],
+   "4565233": [
+    17,
+    0.0381,
+    "Matt Boldy",
+    "MIN"
+   ],
+   "4565236": [
+    2,
+    0.0527,
+    "Cole Caufield",
+    "MTL"
+   ],
+   "4565237": [
+    52,
+    0.0258,
+    "Alex Newhook",
+    "MTL"
+   ],
+   "4587588": [
+    22,
+    0.0349,
+    "Pavel Dorofeyev",
+    "NYR"
+   ],
+   "4587713": [
+    82,
+    0.0214,
+    "Linus Karlsson",
+    "VAN"
+   ],
+   "4587943": [
+    100,
+    0.0201,
+    "Aliaksei Protas",
+    "WSH"
+   ],
+   "4697382": [
+    41,
+    0.0285,
+    "Alexis Lafreniere",
+    "NYR"
+   ],
+   "4697385": [
+    77,
+    0.022,
+    "Lucas Raymond",
+    "DET"
+   ],
+   "4697396": [
+    36,
+    0.0302,
+    "Seth Jarvis",
+    "CAR"
+   ],
+   "4697397": [
+    65,
+    0.0239,
+    "Dylan Holloway",
+    "STL"
+   ],
+   "4697404": [
+    61,
+    0.0246,
+    "Egor Chinakhov",
+    "PIT"
+   ],
+   "4697406": [
+    63,
+    0.0243,
+    "Tyson Foerster",
+    "PHI"
+   ],
+   "4697468": [
+    85,
+    0.0211,
+    "Will Cuylle",
+    "NYR"
+   ],
+   "4755684": [
+    43,
+    0.0276,
+    "Judd Caulfield",
+    "ANA"
+   ],
+   "4874718": [
+    95,
+    0.0204,
+    "Mason McTavish",
+    "STL"
+   ],
+   "4874723": [
+    3,
+    0.0486,
+    "Dylan Guenther",
+    "UTA"
+   ],
+   "4874740": [
+    18,
+    0.0378,
+    "Wyatt Johnston",
+    "DAL"
+   ],
+   "4874899": [
+    55,
+    0.0255,
+    "Logan Stankoven",
+    "CAR"
+   ],
+   "4874943": [
+    87,
+    0.021,
+    "Oliver Kapanen",
+    "MTL"
+   ],
+   "4915349": [
+    50,
+    0.0259,
+    "Juraj Slafkovsky",
+    "MTL"
+   ],
+   "4915855": [
+    72,
+    0.0232,
+    "Arseny Gritsyuk",
+    "NJ"
+   ],
+   "5037": [
+    12,
+    0.0426,
+    "Steven Stamkos",
+    "NSH"
+   ],
+   "5080143": [
+    9,
+    0.0445,
+    "Logan Cooley",
+    "UTA"
+   ],
+   "5080145": [
+    1,
+    0.0708,
+    "Cutter Gauthier",
+    "ANA"
+   ],
+   "5080159": [
+    39,
+    0.0294,
+    "Jonathan Lekkerimaki",
+    "VAN"
+   ],
+   "5080171": [
+    56,
+    0.0254,
+    "Jimmy Snuggerud",
+    "STL"
+   ],
+   "5103645": [
+    89,
+    0.0209,
+    "Jackson Blake",
+    "CAR"
+   ],
+   "5136617": [
+    83,
+    0.0212,
+    "Adam Fantilli",
+    "CBJ"
+   ],
+   "5149153": [
+    16,
+    0.0384,
+    "Leo Carlsson",
+    "ANA"
+   ],
+   "5149170": [
+    46,
+    0.0271,
+    "Matvei Michkov",
+    "PHI"
+   ],
+   "5149172": [
+    99,
+    0.0202,
+    "Ryan Leonard",
+    "WSH"
+   ],
+   "5149204": [
+    80,
+    0.0217,
+    "Gabe Perreault",
+    "NYR"
+   ],
+   "5172806": [
+    71,
+    0.0232,
+    "Avery Hayes",
+    "PIT"
+   ],
+   "5208": [
+    51,
+    0.0258,
+    "Ryan O'Reilly",
+    "NSH"
+   ],
+   "5216858": [
+    26,
+    0.0333,
+    "Beckett Sennecke",
+    "ANA"
+   ],
+   "5216887": [
+    73,
+    0.0232,
+    "Trevor Connelly",
+    "VGK"
+   ],
+   "5291941": [
+    86,
+    0.0211,
+    "Porter Martone",
+    "PHI"
+   ],
+   "5342529": [
+    90,
+    0.0208,
+    "Gavin McKenna",
+    "TOR"
+   ],
+   "5545": [
+    13,
+    0.0399,
+    "Mark Stone",
+    "VGK"
+   ],
+   "5798": [
+    60,
+    0.0251,
+    "Brock Nelson",
+    "COL"
+   ],
+   "5831": [
+    29,
+    0.0316,
+    "Mikael Granlund",
+    "ANA"
+   ]
+  },
   "scorers": null
  }
 }
