@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-11-03 12:37",
+  "generated_at_et": "2026-11-03 20:59",
   "week": 9,
   "league": {
     "team_games": 240,
@@ -1101,6 +1101,15 @@
         "window": "Sunday Early"
       },
       {
+        "player": "Kenneth Walker III",
+        "team": "KC",
+        "opp": "NYJ",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 59,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Bijan Robinson",
         "team": "ATL",
         "opp": "CIN",
@@ -1108,15 +1117,6 @@
         "gp": 8,
         "proj": 58,
         "window": "Sunday Morning"
-      },
-      {
-        "player": "Kenneth Walker III",
-        "team": "KC",
-        "opp": "NYJ",
-        "pos": "RB",
-        "gp": 7,
-        "proj": 58,
-        "window": "Sunday Early"
       },
       {
         "player": "Kyren Williams",
@@ -1142,7 +1142,7 @@
         "opp": "TB",
         "pos": "RB",
         "gp": 8,
-        "proj": 54,
+        "proj": 55,
         "window": "Sunday Night"
       },
       {
@@ -1173,15 +1173,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Derrick Henry",
-        "team": "BAL",
-        "opp": "JAX",
-        "pos": "RB",
-        "gp": 8,
-        "proj": 47,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Ashton Jeanty",
         "team": "LV",
         "opp": "SF",
@@ -1209,6 +1200,15 @@
         "window": "Sunday Early"
       },
       {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "JAX",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 45,
+        "window": "Thursday Night"
+      },
+      {
         "player": "Ja'Marr Chase",
         "team": "CIN",
         "opp": "ATL",
@@ -1216,6 +1216,15 @@
         "gp": 6,
         "proj": 45,
         "window": "Sunday Morning"
+      },
+      {
+        "player": "Rashee Rice",
+        "team": "KC",
+        "opp": "NYJ",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 45,
+        "window": "Sunday Early"
       },
       {
         "player": "Jonah Coleman",
@@ -1236,12 +1245,12 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Rashee Rice",
-        "team": "KC",
-        "opp": "NYJ",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 44,
+        "player": "Quinshon Judkins",
+        "team": "CLE",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 43,
         "window": "Sunday Early"
       },
       {
@@ -1268,7 +1277,7 @@
         "opp": "CHI",
         "pos": "RB",
         "gp": 7,
-        "proj": 42,
+        "proj": 43,
         "window": "Sunday Night"
       },
       {
@@ -1277,17 +1286,8 @@
         "opp": "ARI",
         "pos": "RB",
         "gp": 1,
-        "proj": 41,
+        "proj": 42,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Alvin Kamara",
-        "team": "NO",
-        "opp": "CLE",
-        "pos": "RB",
-        "gp": 6,
-        "proj": 40,
-        "window": "Sunday Early"
       },
       {
         "player": "Saquon Barkley",
@@ -1304,6 +1304,15 @@
         "opp": "GB",
         "pos": "RB",
         "gp": 6,
+        "proj": 40,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Jaxon Smith-Njigba",
+        "team": "SEA",
+        "opp": "ARI",
+        "pos": "WR",
+        "gp": 8,
         "proj": 40,
         "window": "Sunday Late"
       },
@@ -1353,15 +1362,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Jaxon Smith-Njigba",
-        "team": "SEA",
-        "opp": "ARI",
-        "pos": "WR",
-        "gp": 8,
-        "proj": 39,
-        "window": "Sunday Late"
-      },
-      {
         "player": "Aaron Jones Sr.",
         "team": "MIN",
         "opp": "BUF",
@@ -1380,31 +1380,31 @@
         "window": "Sunday Morning"
       },
       {
-        "player": "Quinshon Judkins",
-        "team": "CLE",
-        "opp": "NO",
-        "pos": "RB",
-        "gp": 7,
-        "proj": 38,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Chris Olave",
-        "team": "NO",
-        "opp": "CLE",
-        "pos": "WR",
-        "gp": 7,
-        "proj": 38,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Breece Hall",
         "team": "NYJ",
         "opp": "KC",
         "pos": "RB",
         "gp": 3,
-        "proj": 37,
+        "proj": 38,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Alvin Kamara",
+        "team": "NO",
+        "opp": "CLE",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 38,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Kyle Monangai",
+        "team": "CHI",
+        "opp": "TB",
+        "pos": "RB",
+        "gp": 4,
+        "proj": 38,
+        "window": "Sunday Night"
       },
       {
         "player": "Blake Corum",
@@ -1652,15 +1652,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Jeremiyah Love",
-        "team": "ARI",
-        "opp": "SEA",
-        "pos": "RB",
-        "gp": 6,
-        "proj": 46.9,
-        "window": "Sunday Late"
-      },
-      {
         "player": "Josh Jacobs",
         "team": "GB",
         "opp": "NE",
@@ -1785,6 +1776,15 @@
         "gp": 5,
         "proj": 35.5,
         "window": "Sunday Late"
+      },
+      {
+        "player": "Chris Rodriguez Jr.",
+        "team": "JAX",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 35.4,
+        "window": "Thursday Night"
       }
     ],
     "Carries": [
@@ -1939,15 +1939,6 @@
         "pos": "RB",
         "gp": 7,
         "proj": 13.4,
-        "window": "Sunday Late"
-      },
-      {
-        "player": "Jeremiyah Love",
-        "team": "ARI",
-        "opp": "SEA",
-        "pos": "RB",
-        "gp": 6,
-        "proj": 13.3,
         "window": "Sunday Late"
       },
       {
@@ -2147,6 +2138,15 @@
         "gp": 7,
         "proj": 8.7,
         "window": "Sunday Night"
+      },
+      {
+        "player": "Tyler Allgeier",
+        "team": "ARI",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 8.3,
+        "window": "Sunday Late"
       }
     ],
     "Receiving yards": [
@@ -5423,7 +5423,7 @@
         "opp": "LV",
         "pos": "RB",
         "gp": 7,
-        "proj": 31.4,
+        "proj": 31.9,
         "window": "Sunday Late"
       },
       {
@@ -5445,6 +5445,15 @@
         "window": "Sunday Early"
       },
       {
+        "player": "Kenneth Walker III",
+        "team": "KC",
+        "opp": "NYJ",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 22.3,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Bijan Robinson",
         "team": "ATL",
         "opp": "CIN",
@@ -5452,15 +5461,6 @@
         "gp": 8,
         "proj": 22.0,
         "window": "Sunday Morning"
-      },
-      {
-        "player": "Kenneth Walker III",
-        "team": "KC",
-        "opp": "NYJ",
-        "pos": "RB",
-        "gp": 7,
-        "proj": 21.7,
-        "window": "Sunday Early"
       },
       {
         "player": "Kyren Williams",
@@ -5486,7 +5486,7 @@
         "opp": "TB",
         "pos": "RB",
         "gp": 8,
-        "proj": 18.4,
+        "proj": 19.1,
         "window": "Sunday Night"
       },
       {
@@ -5513,17 +5513,8 @@
         "opp": "NE",
         "pos": "RB",
         "gp": 2,
-        "proj": 14.2,
+        "proj": 14.0,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Derrick Henry",
-        "team": "BAL",
-        "opp": "JAX",
-        "pos": "RB",
-        "gp": 8,
-        "proj": 13.4,
-        "window": "Thursday Night"
       },
       {
         "player": "Ashton Jeanty",
@@ -5531,7 +5522,7 @@
         "opp": "SF",
         "pos": "RB",
         "gp": 8,
-        "proj": 13.1,
+        "proj": 13.5,
         "window": "Sunday Late"
       },
       {
@@ -5553,6 +5544,15 @@
         "window": "Sunday Early"
       },
       {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "JAX",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 12.3,
+        "window": "Thursday Night"
+      },
+      {
         "player": "Ja'Marr Chase",
         "team": "CIN",
         "opp": "ATL",
@@ -5571,6 +5571,15 @@
         "window": "Sunday Early"
       },
       {
+        "player": "Rashee Rice",
+        "team": "KC",
+        "opp": "NYJ",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 12.1,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Jonah Coleman",
         "team": "DEN",
         "opp": "CAR",
@@ -5580,12 +5589,21 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Rashee Rice",
-        "team": "KC",
-        "opp": "NYJ",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 11.8,
+        "player": "Rhamondre Stevenson",
+        "team": "NE",
+        "opp": "GB",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 11.2,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Quinshon Judkins",
+        "team": "CLE",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 11.0,
         "window": "Sunday Early"
       },
       {
@@ -5598,21 +5616,12 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Rhamondre Stevenson",
-        "team": "NE",
-        "opp": "GB",
-        "pos": "RB",
-        "gp": 8,
-        "proj": 10.9,
-        "window": "Sunday Late"
-      },
-      {
         "player": "Bucky Irving",
         "team": "TB",
         "opp": "CHI",
         "pos": "RB",
         "gp": 7,
-        "proj": 10.2,
+        "proj": 10.7,
         "window": "Sunday Night"
       },
       {
@@ -5621,7 +5630,16 @@
         "opp": "ARI",
         "pos": "RB",
         "gp": 1,
-        "proj": 9.9,
+        "proj": 10.2,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "TreVeyon Henderson",
+        "team": "NE",
+        "opp": "GB",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 9.5,
         "window": "Sunday Late"
       },
       {
@@ -5634,31 +5652,13 @@
         "window": "Sunday Early"
       },
       {
-        "player": "TreVeyon Henderson",
-        "team": "NE",
-        "opp": "GB",
-        "pos": "RB",
-        "gp": 6,
+        "player": "Jaxon Smith-Njigba",
+        "team": "SEA",
+        "opp": "ARI",
+        "pos": "WR",
+        "gp": 8,
         "proj": 9.3,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Bhayshul Tuten",
-        "team": "JAX",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 7,
-        "proj": 9.1,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Alvin Kamara",
-        "team": "NO",
-        "opp": "CLE",
-        "pos": "RB",
-        "gp": 6,
-        "proj": 9.1,
-        "window": "Sunday Early"
       },
       {
         "player": "CeeDee Lamb",
@@ -5670,13 +5670,13 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Jaxon Smith-Njigba",
-        "team": "SEA",
-        "opp": "ARI",
-        "pos": "WR",
-        "gp": 8,
-        "proj": 9.0,
-        "window": "Sunday Late"
+        "player": "Bhayshul Tuten",
+        "team": "JAX",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 8.9,
+        "window": "Thursday Night"
       },
       {
         "player": "David Montgomery",
@@ -5715,21 +5715,21 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Quinshon Judkins",
-        "team": "CLE",
-        "opp": "NO",
+        "player": "Breece Hall",
+        "team": "NYJ",
+        "opp": "KC",
         "pos": "RB",
-        "gp": 7,
-        "proj": 8.3,
+        "gp": 3,
+        "proj": 8.5,
         "window": "Sunday Early"
       },
       {
-        "player": "Chris Olave",
+        "player": "Alvin Kamara",
         "team": "NO",
         "opp": "CLE",
-        "pos": "WR",
-        "gp": 7,
-        "proj": 8.2,
+        "pos": "RB",
+        "gp": 6,
+        "proj": 8.5,
         "window": "Sunday Early"
       },
       {
@@ -5742,13 +5742,13 @@
         "window": "Sunday Morning"
       },
       {
-        "player": "Breece Hall",
-        "team": "NYJ",
-        "opp": "KC",
+        "player": "Kyle Monangai",
+        "team": "CHI",
+        "opp": "TB",
         "pos": "RB",
-        "gp": 3,
+        "gp": 4,
         "proj": 8.1,
-        "window": "Sunday Early"
+        "window": "Sunday Night"
       },
       {
         "player": "Omarion Hampton",
@@ -5760,13 +5760,13 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Kyle Monangai",
-        "team": "CHI",
-        "opp": "TB",
+        "player": "Blake Corum",
+        "team": "LAR",
+        "opp": "WSH",
         "pos": "RB",
-        "gp": 4,
-        "proj": 7.8,
-        "window": "Sunday Night"
+        "gp": 8,
+        "proj": 7.7,
+        "window": "Sunday Early"
       }
     ]
   }
