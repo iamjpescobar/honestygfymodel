@@ -41774,7 +41774,8 @@
           "team": "Golden State Valkyries",
           "stat": "pts",
           "line": 5.3,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         },
         {
           "id": "2529622",
@@ -41870,10 +41871,11 @@
           "team": "Golden State Valkyries",
           "stat": "ast",
           "line": 0.6,
-          "result": null
+          "result": "dnp",
+          "dnp_reason": "no box-score line after 3 days"
         }
       ],
-      "graded": false,
+      "graded": true,
       "source": "ci"
     }
   },
