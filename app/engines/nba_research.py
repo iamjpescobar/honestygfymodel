@@ -17,8 +17,7 @@ nba-pbp-prior workflow is run again — last season.
 
 What counts (missing is never zero): a player's games count only where his
 play-by-play shots add up to his box-score FGA and FGM (shots_ok); a
-defense's games only where every opponent's shots check out
-(teams_shots_ok). Coordinates are used only in games where they agree with
+defense's zones from every opponent whose shots check out (11-04). Coordinates are used only in games where they agree with
 the distance written in the play; a season mixes the two only zone by
 zone ("three" / "two" when the side or the distance is unknown).
 
@@ -92,17 +91,23 @@ def defense_zones(games, since=None, until=None):
         sides = _sides(g)
         if len(sides) != 2:
             continue
-        ok = set(g.get("teams_shots_ok") or [])
+        # 11-04: every opponent whose shots add up to his box line counts
+        # (requiring the WHOLE team kept 61% of last season's team-games —
+        # one shot off for one player dropped the game); unchecked players
+        # are left out, never guessed
+        ok = set(g.get("shots_ok") or [])
         team_of = g.get("shot_team") or {}
         for d_team in sides:
             o_team = sides[1] if d_team == sides[0] else sides[0]
-            if o_team not in ok:
+            got = {}
+            for pid, zones in (g.get("shots") or {}).items():
+                if team_of.get(pid) == o_team and pid in ok:
+                    _add(got, zones)
+            if not got:
                 continue
             rec = out.setdefault(d_team, {"zones": {}, "games": 0})
             rec["games"] += 1
-            for pid, zones in (g.get("shots") or {}).items():
-                if team_of.get(pid) == o_team:
-                    _add(rec["zones"], zones)
+            _add(rec["zones"], got)
     return out
 
 

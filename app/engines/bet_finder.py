@@ -81,6 +81,25 @@ def anchor_chance(chance, price, other, b):
     return ma.anchored(chance, book, b), True
 
 
+# 11-03 (Izzy chose it): a market graded against DraftKings that has NOT
+# beaten it (book_grade.market_status "no_edge" / "behind") is priced at
+# DraftKings' own no-vig chance. Measured 11-03 on the graded record: where
+# the site's chance sat 3+ points off DraftKings', the plays lost at the
+# book's prices on every main NHL market (assists 770 plays -46.4 units,
+# points 731 -46.5, shots 643 -23.4, goals 139 -33.6, saves 62 -6.8) and
+# every main NBA one (-0.1 to -45.1 units, roi 0 to -6%) — roughly the vig.
+# So the edge there can only be a better price than DraftKings' fair one
+# (line shopping); our chance stays on the row beside it. At most VALUE.
+DK_FAIR_SUPPORT = {"measured": True, "in_range": False, "n": 0, "untested": False}
+
+
+def dk_fair(dk_price, dk_other):
+    """DraftKings' de-vigged chance for this side from BOTH of its prices at
+    the line, or None (one side posted, or no line)."""
+    ch, ok = anchor_chance(0.5, dk_price, dk_other, 0.0)
+    return ch if ok else None
+
+
 def support_at(row, stat, line, markets, calibration):
     """How well-measured this call is (model_view.support_for) — what the
     guard reads to decide whether the chance may carry STRONG."""

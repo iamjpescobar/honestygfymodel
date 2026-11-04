@@ -21,6 +21,8 @@ Negative controls, confirmed red by exit code when written (rule 4):
   - the defense counting its OWN team's shots -> "a defense is what its
     opponents shot" fails
   - zone ranks the wrong way round -> "1st = the lowest FG% allowed" fails
+  - (11-04) the defense counting an unchecked player's shots -> "a player
+    whose shots don't check out is left out" fails
 """
 import sys
 from pathlib import Path
@@ -176,9 +178,11 @@ check("a defense is what its opponents shot",
       dz["2"]["zones"]["rim"] == [12, 9] and dz["1"]["zones"]["above3"] == [8, 2]
       and "paint" not in dz["1"]["zones"])
 g_bad = dict(pb.parse(s2), date="2026-10-26", home="1", away="2")
-check("a game whose shots don't check out is not counted (missing is not zero)",
+d2 = nr.defense_zones([g1, g_bad])
+check("a player whose shots don't check out is left out (missing is not zero); his "
+      "checked teammates still count",
       nr.player_zones([g1, g_bad], "A")["games"] == 1
-      and nr.defense_zones([g1, g_bad])["2"]["games"] == 1)
+      and d2["2"]["games"] == 2 and d2["2"]["zones"]["rim"] == [17, 14])
 fake = {"X": {"zones": {"rim": [10, 5]}, "games": 3}, "Y": {"zones": {"rim": [10, 8]}, "games": 3},
         "Z": {"zones": {"rim": [10, 6]}, "games": 3}}
 tb = nr.defense_table(fake)

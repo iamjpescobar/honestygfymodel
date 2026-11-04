@@ -10,6 +10,45 @@ the state is accurate. For what is true now, read `HANDOFF.md`.
 
 ---
 
+## PICK UP HERE — Each simulator has its own settings (engines/sim_settings); runs are made in pieces and kept once, so the NHL simulator stops eating the server's memory. 2026-10-26 (3)
+
+**Suite 173, FAILING: none.** New tests/test_sim_settings.py (controls
+red: merge keeping the first piece; run ignoring the chunk; every piece
+on the same seed); tests/test_sim_counts.py reads the per-sport settings.
+
+Izzy: "NHL simulator be crashing on me ... maybe all of them need their
+own settings, I think all of them are sharing settings and logic". They
+were: every *_Sim page copied one block (st.cache_data, 4 runs kept, the
+whole game in one numpy pass).
+
+MEASURED 10-26 (the sims' own test games, one run): NHL 50,000 +147 MB
+while running, 31 MB kept; MLB 50,000 +81 MB / 25 MB; NBA +14 / 4; NFL
++26 / 5. st.cache_data pickles: every click unpickled a fresh 31 MB copy,
+and 4 runs were kept per page; the NHL parlay ran 50,000-game chunks
+on top. That is the crash.
+
+CHANGE: engines/sim_settings.SIMS, one entry per sport — games (as
+before: NHL / NBA / NFL 50,000, MLB 25,000), chunk (NHL 10,000, NBA /
+NFL 25,000, MLB 5,000), keep 2, sgp + sgp_chunk (NHL 200,000 / 10,000,
+NBA 500,000 / 100,000, NFL 200,000 / 50,000, MLB 50,000 / 5,000).
+sim_settings.run plays the run in pieces (seed + 7919 k each) and joins
+them (merge: arrays along axis 0, dicts key by key). Each page: SIM =
+_ss.settings("<sport>"), N_SIMS = SIM["games"], _run under
+st.cache_resource(ttl=900, max_entries=SIM["keep"]) (one shared copy,
+the pages never write into a sim), joint_precise(n=SIM["sgp"],
+chunk=SIM["sgp_chunk"]). NHL 50,000: peak 141 MB -> 62 MB (tracemalloc);
+means and a skater's point chance match one big run within noise; every
+sim's joined output has the same keys, shapes and dtypes as one run.
+NEXT if it still drops: lower NHL keep to 1 or its chunk to 5,000 —
+both are one number in SIMS.
+
+FILES: app/engines/sim_settings.py (NEW), app/views/NHL_Sim.py,
+app/views/NBA_Sim.py, app/views/NFL_Sim.py, app/views/MLB_Sim.py,
+tests/test_sim_settings.py (NEW), tests/test_sim_counts.py, HANDOFF.md,
+HANDOFF_ARCHIVE.md
+
+---
+
 ## PICK UP HERE — Markets clearly BEHIND DraftKings are capped at THIN now (not after 300 lines); every captured line keeps the projection we offered, so the next grade measures our projections against the box score. 2026-10-26 (2)
 
 **Suite 172, FAILING: none.** tests/test_book_grade.py +5 checks

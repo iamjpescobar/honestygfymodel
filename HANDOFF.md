@@ -154,6 +154,58 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — Bet Finder: markets that have not beaten DraftKings are priced at DK's own no-vig chance (bets = a better price than DK's fair one); NHL audit — every NHL prop market behind or even with DK, letters don't sort results on DK lines, game picks not logged since 10-04. 2026-11-03
+
+Izzy (11-03, NHL-only night): "check Bet Finder, models and all of the NHL
+things". Read from data/props/scorecard.json (as of 11-03):
+- NHL vs DraftKings, Brier site vs book: a 1,296 lines z -1.8; pts 1,289
+  z -2.04 (BEHIND); sog 1,067 z -0.66; g* 1,212 z -1.57; sv 90 z -1.28;
+  ladders sog* (93, z +2.18) and sv* (5) the only "beats" (too few).
+- The FLAGGED plays (site 3+ pts off DK, book_grade.EDGE_FLAG) at DK's
+  prices: a 770 plays -46.4 u, pts 731 -46.5, sog 643 -23.4, g* 139 -33.6,
+  sv 62 -6.8 (roi -4% to -24%). NBA the same (pts 777 -38.9, pr 730 -45.1,
+  reb 739 -30.7, tpm 591 -23.9, roi 0 to -6%). Those were THIN BETs with a
+  stake on the Bet Finder.
+- Izzy chose (AskUserQuestion): price at DK's fair.
+
+**Now (bet_finder.dk_fair / DK_FAIR_SUPPORT, views/Bet_Finder.py):** a
+market whose status is "no_edge" / "behind" (book_grade.market_status) and
+not an anchored-beats call takes DraftKings' de-vigged chance from DK's
+two prices AT THAT LINE (book_props.price_at; not the reader's typed
+prices) as the chance; our model's chance rides along ("Our model" column,
+row["ours"]); support in_range False -> VALUE at most, never STRONG. DK's
+own price -> SKIP (the vig); a better price at the reader's book -> BET.
+No DK pair at the line -> the old THIN cap. "beats" / "grading" markets
+unchanged. Market banner text says so.
+
+NHL findings NOT changed (report only):
+- MATCHUP GRADE nhl on DK lines (hit rate by letter): A 42.2% (n 685), B
+  46.0%, C 37.8%, D 37.1%, F 42.9% — the letter does not sort results at
+  the book's lines. Context only; don't lean on it for NHL props.
+- Projection level: assists x1.093 / points x1.070 under the box (n ~990),
+  but the level test does not beat (a z 0.46, pts z -1.17) -> stays off.
+  Saves over-projected ~5% (24.4 vs 23.3, n 66).
+- data/model_picks/nhl.json: 23 picks, all 10-03 / 10-04, none since —
+  either no market-anchored value or the logging broke; read "[verify] NHL
+  value picks logged this run" in the next nightly log.
+
+ALSO (11-04, same batch — dk_fair was not pushed yet): NBA shot profile,
+last season re-read by the prior workflow: 1,230 of 1,235 games by
+coordinates, 160,748 / 161,281 within 3 ft of the written distance — the
+coordinate reading is VERIFIED. League FG% by zone came out rim 65.2%,
+paint 44.3%, mid 41.2%, corner 3 38.5%, above-break 3 35.0% (NBA-like).
+But only 1,506 / 2,470 team-games had EVERY player's shots match the box
+(usually one shot off for one player — 771 teams +1 FGA), so
+nba_research.defense_zones now counts each opponent whose own shots check
+out (shots_ok) instead of whole teams: every team-game counts, unchecked
+players left out. Paint points (team_ranks) still need the whole team.
+
+Tests: test_bet_finder_dk_fair; test_nba_research (+1). Controls red:
+dk_fair from one price; the support allowing the full range (STRONG); the
+defense counting an unchecked player's shots.
+
+---
+
 ## PICK UP HERE — Double-double chance TESTED and fixed: the simulator alone ran low and was no better than his record; a measured blend of the two beats both on last season's unseen 45 days. Triple-double stays the simulator's, THIN (it predicted half). 2026-11-02 (3)
 
 Measured 11-02 (scratch scripts, local): nm.fit on data/nba/prior_season.json
@@ -720,42 +772,3 @@ app/views/NBA_First_Basket.py, app/engines/ufc.py,
 tests/test_summary_cache.py (NEW), tests/test_ufc.py,
 tests/test_nba_first_confirmed.py, HANDOFF.md, HANDOFF_ARCHIVE.md;
 removed: loscappers-full-batch.zip, loscappers-prop-colours.zip
-
----
-
-## PICK UP HERE — Each simulator has its own settings (engines/sim_settings); runs are made in pieces and kept once, so the NHL simulator stops eating the server's memory. 2026-10-26 (3)
-
-**Suite 173, FAILING: none.** New tests/test_sim_settings.py (controls
-red: merge keeping the first piece; run ignoring the chunk; every piece
-on the same seed); tests/test_sim_counts.py reads the per-sport settings.
-
-Izzy: "NHL simulator be crashing on me ... maybe all of them need their
-own settings, I think all of them are sharing settings and logic". They
-were: every *_Sim page copied one block (st.cache_data, 4 runs kept, the
-whole game in one numpy pass).
-
-MEASURED 10-26 (the sims' own test games, one run): NHL 50,000 +147 MB
-while running, 31 MB kept; MLB 50,000 +81 MB / 25 MB; NBA +14 / 4; NFL
-+26 / 5. st.cache_data pickles: every click unpickled a fresh 31 MB copy,
-and 4 runs were kept per page; the NHL parlay ran 50,000-game chunks
-on top. That is the crash.
-
-CHANGE: engines/sim_settings.SIMS, one entry per sport — games (as
-before: NHL / NBA / NFL 50,000, MLB 25,000), chunk (NHL 10,000, NBA /
-NFL 25,000, MLB 5,000), keep 2, sgp + sgp_chunk (NHL 200,000 / 10,000,
-NBA 500,000 / 100,000, NFL 200,000 / 50,000, MLB 50,000 / 5,000).
-sim_settings.run plays the run in pieces (seed + 7919 k each) and joins
-them (merge: arrays along axis 0, dicts key by key). Each page: SIM =
-_ss.settings("<sport>"), N_SIMS = SIM["games"], _run under
-st.cache_resource(ttl=900, max_entries=SIM["keep"]) (one shared copy,
-the pages never write into a sim), joint_precise(n=SIM["sgp"],
-chunk=SIM["sgp_chunk"]). NHL 50,000: peak 141 MB -> 62 MB (tracemalloc);
-means and a skater's point chance match one big run within noise; every
-sim's joined output has the same keys, shapes and dtypes as one run.
-NEXT if it still drops: lower NHL keep to 1 or its chunk to 5,000 —
-both are one number in SIMS.
-
-FILES: app/engines/sim_settings.py (NEW), app/views/NHL_Sim.py,
-app/views/NBA_Sim.py, app/views/NFL_Sim.py, app/views/MLB_Sim.py,
-tests/test_sim_settings.py (NEW), tests/test_sim_counts.py, HANDOFF.md,
-HANDOFF_ARCHIVE.md

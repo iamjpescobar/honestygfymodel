@@ -416,6 +416,8 @@ def _results_table(res, key, line_col=True):
         **({"Line": r.get("line_label")} if line_col else {}),
         "Def vs pos": r.get("grade") or "—",
         "Your price": _amer(r["price"]), "Our chance": _pct(r["chance"]),
+        **({"Our model": _pct(r.get("ours")) if r.get("ours") is not None else "—"}
+           if any(x.get("ours") is not None for x in res) else {}),
         "Book says": _pct(r.get("book")),
         "Worth it at": _amer(r["worth"]), "Edge": f"{100 * r['edge']:+.1f} pts",
         "Stake": (f"${r['stake']:.2f}" if r.get("stake") else "—"),
@@ -549,10 +551,10 @@ else:
                 except Exception:  # noqa: BLE001
                     pass
                 _lab = {"beats": ("BEATS DRAFTKINGS", COLOR["stat_high"]),
-                        "no_edge": ("NO EDGE PROVEN vs DraftKings — calls capped at THIN",
-                                    COLOR["warn"]),
-                        "behind": ("BEHIND DraftKings so far — calls capped at THIN",
-                                   COLOR["error"]),
+                        "no_edge": ("NO EDGE PROVEN vs DraftKings — priced at DK's fair "
+                                    "chance (bets = a better price than DK's)", COLOR["warn"]),
+                        "behind": ("BEHIND DraftKings so far — priced at DK's fair chance "
+                                   "(bets = a better price than DK's)", COLOR["error"]),
                         "grading": (f"BEING GRADED vs DraftKings ({_mk['n']} of "
                                     f"{_bg.MIN_GRADED} lines) — not proven yet",
                                     COLOR["text_muted"])}[_mk["status"]]
@@ -670,15 +672,30 @@ else:
                 _sup = bf.support_at(r, stat, ln, grp["markets"], grp["cal"])
                 if _mk["status"] in ("no_edge", "behind") and not (
                         _anc and _anchor_beats(sport, stat, _main)):
-                    # graded against DraftKings and did not beat it: THIN at most
-                    # — unless this chance is ANCHORED and the anchored chances
-                    # beat DraftKings' own on their walk-forward test (10-29)
-                    _sup = dict(_sup or {}, untested=True)
+                    # graded against DraftKings and did not beat it (11-03):
+                    # priced at DraftKings' own no-vig chance at this line, so a
+                    # BET means your price beats DK's fair one; our chance rides
+                    # along. No DK pair at the line: THIN at most, as before.
+                    _fair = bf.dk_fair(_bp.price_at(_bk(r), ln, side),
+                                       _bp.price_at(_bk(r), ln, other)) if _bk(r) else None
+                    if _fair is not None:
+                        row.update(ours=ch, chance=_fair, worth=mm.fair_american(_fair),
+                                   basis="dk_fair")
+                        ch = _fair
+                        _sup = dict(bf.DK_FAIR_SUPPORT, n=_mk.get("n") or 0)
+                    else:
+                        _sup = dict(_sup or {}, untested=True)
                 j = bf.judge(ch, _yp, _stk, _os, _sup)
                 if j:
                     res.append(dict(row, price=bf.valid_price(_yp), support=_sup, **j))
             res.sort(key=lambda x: (bf.CALL_ORDER[x["tier"]], -x["edge"]))
 
+            if any(x.get("basis") == "dk_fair" for x in ref):
+                st.caption("**Priced at DraftKings' fair chance**: this market has not beaten "
+                           "DraftKings on the graded record, so the chance is DK's own (its two "
+                           "prices with the vig taken out). A BET here means YOUR book pays more "
+                           "than DK's fair price — line shopping, the edge that is real. Our "
+                           "chance is shown beside it. VALUE at most.")
             if any(x.get("basis") == "anchored" for x in ref):
                 st.caption("**Chance anchored to DraftKings** where both of its prices are in: "
                            "it keeps only the share of our disagreement with the book that has "
@@ -703,8 +720,12 @@ else:
                 st.caption("Type a price in **Your price** for anyone you're looking at. "
                            "Until then, here is what each one is worth:")
                 ref.sort(key=lambda x: -x["chance"])
+                _has_ours = any(r.get("ours") is not None for r in ref)
                 ref_df = pd.DataFrame([{"Player": r["name"], "Line": r["line_label"],
                                         "Our chance": _pct(r["chance"]),
+                                        **({"Our model": _pct(r.get("ours"))
+                                            if r.get("ours") is not None else "—"}
+                                           if _has_ours else {}),
                                         "Worth it at": _amer(r["worth"])} for r in ref])
 
                 def _paint_ref(frame):
