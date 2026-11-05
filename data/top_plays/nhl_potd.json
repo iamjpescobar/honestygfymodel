@@ -573,6 +573,7 @@
    "why": "3.53 shots and 1.70 points a game over 97 games (this season + last, pulled toward the forward average) \u00b7 ice time 22.9 min over his last 5 vs 23.1 on his rate \u2192 shots x1.00 \u00b7 NJ matchup sets tonight's shot volume x0.91 and scoring x0.96 (in the number) \u00b7 NJ allows the 3rd-fewest of 32 shots to centres (7.7 a game vs 9.6; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.19 expected shots, 1.62 expected points \u00b7 PP1 by minutes (4.5 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 4.0,
    "at_least": 1,
    "date": "2026-11-04",
    "fair": -252,
@@ -587,11 +588,32 @@
    "p_cal": 0.7156,
    "player": "Artemi Panarin",
    "player_id": "3891952",
-   "result": null,
+   "result": "hit",
    "start": "2026-11-04T22:00:00-05:00",
    "stat": "pts",
    "team": "Los Angeles Kings",
    "why": "2.89 shots and 1.01 points a game over 91 games (this season + last, pulled toward the forward average) \u00b7 ice time 23.2 min over his last 5 vs 21.0 on his rate \u2192 shots x1.05 \u00b7 SJ matchup sets tonight's shot volume x1.13 and scoring x1.18 (in the number) \u00b7 SJ allows the 11th-most of 32 shots to wingers (10.9 a game vs 10.3; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.42 expected shots, 1.28 expected points \u00b7 PP1 by minutes (4.6 PP min a game over his last 5; context, not in the number)"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-11-05",
+   "fair": -507,
+   "game": "Anaheim Ducks @ Edmonton Oilers",
+   "game_id": "401892657",
+   "label": "Pts O0.5",
+   "logged_at": "2026-11-05T16:08:54+00:00",
+   "market": "pt1",
+   "matchup": null,
+   "matchup_tier": null,
+   "p": 0.8642,
+   "p_cal": 0.8352,
+   "player": "Connor McDavid",
+   "player_id": "3895074",
+   "result": null,
+   "start": "2026-11-05T20:00:00-05:00",
+   "stat": "pts",
+   "team": "Edmonton Oilers",
+   "why": "3.51 shots and 1.70 points a game over 98 games (this season + last, pulled toward the forward average) \u00b7 ice time 23.2 min over his last 5 vs 23.1 on his rate \u2192 shots x1.00 \u00b7 ANA matchup sets tonight's shot volume x1.04 and scoring x1.17 (in the number) \u00b7 ANA allows the 14th-fewest of 32 shots to centres (9.1 a game vs 9.5; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.66 expected shots, 2.00 expected points \u00b7 PP1 by minutes (4.6 PP min a game over his last 5; context, not in the number)"
   }
  ]
 }
