@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-11-06 10:37",
+  "generated_at_et": "2026-11-06 12:15",
   "week": 9,
   "league": {
     "team_games": 242,
@@ -1116,7 +1116,7 @@
         "opp": "NYJ",
         "pos": "RB",
         "gp": 7,
-        "proj": 59,
+        "proj": 60,
         "window": "Sunday Early"
       },
       {
@@ -1183,6 +1183,15 @@
         "window": "Sunday Late"
       },
       {
+        "player": "Amon-Ra St. Brown",
+        "team": "DET",
+        "opp": "MIA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 46,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Puka Nacua",
         "team": "LAR",
         "opp": "WSH",
@@ -1228,15 +1237,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Amon-Ra St. Brown",
-        "team": "DET",
-        "opp": "MIA",
-        "pos": "WR",
-        "gp": 7,
-        "proj": 45,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Jonah Coleman",
         "team": "DEN",
         "opp": "CAR",
@@ -1252,6 +1252,15 @@
         "pos": "RB",
         "gp": 8,
         "proj": 44,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Breece Hall",
+        "team": "NYJ",
+        "opp": "KC",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 43,
         "window": "Sunday Early"
       },
       {
@@ -1363,11 +1372,11 @@
         "window": "Monday Night"
       },
       {
-        "player": "Breece Hall",
+        "player": "Braelon Allen",
         "team": "NYJ",
         "opp": "KC",
         "pos": "RB",
-        "gp": 3,
+        "gp": 8,
         "proj": 38,
         "window": "Sunday Early"
       },
@@ -1414,15 +1423,6 @@
         "pos": "WR",
         "gp": 8,
         "proj": 37,
-        "window": "Sunday Late"
-      },
-      {
-        "player": "Omarion Hampton",
-        "team": "LAC",
-        "opp": "HOU",
-        "pos": "RB",
-        "gp": 7,
-        "proj": 36,
         "window": "Sunday Late"
       }
     ],
@@ -2296,15 +2296,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Garrett Wilson",
-        "team": "NYJ",
-        "opp": "KC",
-        "pos": "WR",
-        "gp": 8,
-        "proj": 70.1,
-        "window": "Sunday Early"
-      },
-      {
         "player": "George Pickens",
         "team": "DAL",
         "opp": "IND",
@@ -2510,6 +2501,15 @@
         "gp": 7,
         "proj": 46.4,
         "window": "Sunday Late"
+      },
+      {
+        "player": "Keenan Allen",
+        "team": "IND",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 46.1,
+        "window": "Sunday Early"
       }
     ],
     "Receptions": [
@@ -2616,15 +2616,6 @@
         "player": "George Pickens",
         "team": "DAL",
         "opp": "IND",
-        "pos": "WR",
-        "gp": 8,
-        "proj": 5.4,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Garrett Wilson",
-        "team": "NYJ",
-        "opp": "KC",
         "pos": "WR",
         "gp": 8,
         "proj": 5.4,
@@ -2872,6 +2863,15 @@
         "gp": 3,
         "proj": 4.2,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Travis Kelce",
+        "team": "KC",
+        "opp": "NYJ",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 4.2,
+        "window": "Sunday Early"
       }
     ],
     "Targets": [
@@ -2981,15 +2981,6 @@
         "pos": "WR",
         "gp": 4,
         "proj": 8.5,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Garrett Wilson",
-        "team": "NYJ",
-        "opp": "KC",
-        "pos": "WR",
-        "gp": 8,
-        "proj": 8.4,
         "window": "Sunday Early"
       },
       {
@@ -3234,6 +3225,15 @@
         "gp": 5,
         "proj": 6.2,
         "window": "Sunday Night"
+      },
+      {
+        "player": "Jahmyr Gibbs",
+        "team": "DET",
+        "opp": "MIA",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 6.1,
+        "window": "Sunday Early"
       }
     ],
     "Passing yards": [
@@ -3418,15 +3418,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Jacoby Brissett",
-        "team": "ARI",
-        "opp": "SEA",
-        "pos": "QB",
-        "gp": 8,
-        "proj": 220.5,
-        "window": "Sunday Late"
-      },
-      {
         "player": "Tyrod Taylor",
         "team": "GB",
         "opp": "NE",
@@ -3581,15 +3572,6 @@
       }
     ],
     "Pass attempts": [
-      {
-        "player": "Jacoby Brissett",
-        "team": "ARI",
-        "opp": "SEA",
-        "pos": "QB",
-        "gp": 8,
-        "proj": 39.1,
-        "window": "Sunday Late"
-      },
       {
         "player": "Gardner Minshew II",
         "team": "ARI",
@@ -4250,15 +4232,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Garrett Wilson",
-        "team": "NYJ",
-        "opp": "KC",
-        "pos": "WR",
-        "gp": 8,
-        "proj": 70.1,
-        "window": "Sunday Early"
-      },
-      {
         "player": "George Pickens",
         "team": "DAL",
         "opp": "IND",
@@ -4284,6 +4257,15 @@
         "gp": 8,
         "proj": 68.8,
         "window": "Sunday Night"
+      },
+      {
+        "player": "Josh Jacobs",
+        "team": "GB",
+        "opp": "NE",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 68.6,
+        "window": "Sunday Late"
       }
     ],
     "Completions": [
@@ -4295,15 +4277,6 @@
         "gp": 6,
         "proj": 25.22,
         "window": "Sunday Morning"
-      },
-      {
-        "player": "Jacoby Brissett",
-        "team": "ARI",
-        "opp": "SEA",
-        "pos": "QB",
-        "gp": 8,
-        "proj": 25.1,
-        "window": "Sunday Late"
       },
       {
         "player": "Gardner Minshew II",
@@ -4686,15 +4659,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Jacoby Brissett",
-        "team": "ARI",
-        "opp": "SEA",
-        "pos": "QB",
-        "gp": 8,
-        "proj": 1.72,
-        "window": "Sunday Late"
-      },
-      {
         "player": "Tyrod Taylor",
         "team": "GB",
         "opp": "NE",
@@ -5001,15 +4965,6 @@
         "gp": 3,
         "proj": 0.83,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Jacoby Brissett",
-        "team": "ARI",
-        "opp": "SEA",
-        "pos": "QB",
-        "gp": 8,
-        "proj": 0.81,
-        "window": "Sunday Late"
       },
       {
         "player": "Joe Burrow",
@@ -5325,7 +5280,7 @@
         "opp": "MIA",
         "pos": "RB",
         "gp": 7,
-        "proj": 34.8,
+        "proj": 35.3,
         "window": "Sunday Early"
       },
       {
@@ -5370,7 +5325,7 @@
         "opp": "NYJ",
         "pos": "RB",
         "gp": 7,
-        "proj": 22.4,
+        "proj": 22.9,
         "window": "Sunday Early"
       },
       {
@@ -5469,7 +5424,16 @@
         "opp": "MIA",
         "pos": "WR",
         "gp": 7,
-        "proj": 12.4,
+        "proj": 12.6,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Rashee Rice",
+        "team": "KC",
+        "opp": "NYJ",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 12.3,
         "window": "Sunday Early"
       },
       {
@@ -5491,21 +5455,21 @@
         "window": "Sunday Morning"
       },
       {
-        "player": "Rashee Rice",
-        "team": "KC",
-        "opp": "NYJ",
-        "pos": "WR",
-        "gp": 4,
-        "proj": 12.0,
-        "window": "Sunday Early"
-      },
-      {
         "player": "J.K. Dobbins",
         "team": "DEN",
         "opp": "CAR",
         "pos": "RB",
         "gp": 8,
         "proj": 11.3,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Breece Hall",
+        "team": "NYJ",
+        "opp": "KC",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 10.8,
         "window": "Sunday Early"
       },
       {
@@ -5581,15 +5545,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Ollie Gordon II",
-        "team": "MIA",
-        "opp": "DET",
-        "pos": "RB",
-        "gp": 6,
-        "proj": 8.8,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Zach Charbonnet",
         "team": "SEA",
         "opp": "ARI",
@@ -5608,6 +5563,15 @@
         "window": "Sunday Morning"
       },
       {
+        "player": "Ollie Gordon II",
+        "team": "MIA",
+        "opp": "DET",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 8.7,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Aaron Jones Sr.",
         "team": "MIN",
         "opp": "BUF",
@@ -5617,12 +5581,12 @@
         "window": "Monday Night"
       },
       {
-        "player": "Breece Hall",
+        "player": "Braelon Allen",
         "team": "NYJ",
         "opp": "KC",
         "pos": "RB",
-        "gp": 3,
-        "proj": 8.5,
+        "gp": 8,
+        "proj": 8.2,
         "window": "Sunday Early"
       },
       {
@@ -5669,15 +5633,6 @@
         "gp": 8,
         "proj": 7.7,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Omarion Hampton",
-        "team": "LAC",
-        "opp": "HOU",
-        "pos": "RB",
-        "gp": 7,
-        "proj": 7.3,
-        "window": "Sunday Late"
       }
     ]
   }
