@@ -595,6 +595,7 @@
    "why": "2.89 shots and 1.01 points a game over 91 games (this season + last, pulled toward the forward average) \u00b7 ice time 23.2 min over his last 5 vs 21.0 on his rate \u2192 shots x1.05 \u00b7 SJ matchup sets tonight's shot volume x1.13 and scoring x1.18 (in the number) \u00b7 SJ allows the 11th-most of 32 shots to wingers (10.9 a game vs 10.3; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.42 expected shots, 1.28 expected points \u00b7 PP1 by minutes (4.6 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 4.0,
    "at_least": 1,
    "date": "2026-11-05",
    "fair": -507,
@@ -609,11 +610,32 @@
    "p_cal": 0.8352,
    "player": "Connor McDavid",
    "player_id": "3895074",
-   "result": null,
+   "result": "hit",
    "start": "2026-11-05T20:00:00-05:00",
    "stat": "pts",
    "team": "Edmonton Oilers",
    "why": "3.51 shots and 1.70 points a game over 98 games (this season + last, pulled toward the forward average) \u00b7 ice time 23.2 min over his last 5 vs 23.1 on his rate \u2192 shots x1.00 \u00b7 ANA matchup sets tonight's shot volume x1.04 and scoring x1.17 (in the number) \u00b7 ANA allows the 14th-fewest of 32 shots to centres (9.1 a game vs 9.5; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.66 expected shots, 2.00 expected points \u00b7 PP1 by minutes (4.6 PP min a game over his last 5; context, not in the number)"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-11-06",
+   "fair": -269,
+   "game": "San Jose Sharks @ Minnesota Wild",
+   "game_id": "401892660",
+   "label": "Pts O0.5",
+   "logged_at": "2026-11-06T15:42:27+00:00",
+   "market": "pt1",
+   "matchup": null,
+   "matchup_tier": null,
+   "p": 0.7428,
+   "p_cal": 0.7293,
+   "player": "Kirill Kaprizov",
+   "player_id": "3942335",
+   "result": null,
+   "start": "2026-11-06T20:00:00-05:00",
+   "stat": "pts",
+   "team": "Minnesota Wild",
+   "why": "3.35 shots and 1.14 points a game over 95 games (this season + last, pulled toward the forward average) \u00b7 ice time 22.3 min over his last 5 vs 22.1 on his rate \u2192 shots x1.00 \u00b7 SJ matchup sets tonight's shot volume x1.12 and scoring x1.19 (in the number) \u00b7 SJ allows the 8th-most of 32 shots to wingers (11.7 a game vs 10.4; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.78 expected shots, 1.36 expected points \u00b7 PP1 by minutes (5.4 PP min a game over his last 5; context, not in the number)"
   }
  ]
 }

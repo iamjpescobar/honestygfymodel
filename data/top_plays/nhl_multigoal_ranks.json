@@ -17328,6 +17328,660 @@
     "COL"
    ]
   },
+  "scorers": [
+   {
+    "chance2": 0.0363,
+    "g": 3.0,
+    "name": "Logan Cooley",
+    "pid": "5080143",
+    "rank": 20
+   },
+   {
+    "chance2": 0.0329,
+    "g": 2.0,
+    "name": "Pavel Zacha",
+    "pid": "3899949",
+    "rank": 23
+   },
+   {
+    "chance2": 0.0292,
+    "g": 2.0,
+    "name": "Anthony Mantha",
+    "pid": "3042037",
+    "rank": 33
+   },
+   {
+    "chance2": 0.0274,
+    "g": 2.0,
+    "name": "Beckett Sennecke",
+    "pid": "5216858",
+    "rank": 44
+   },
+   {
+    "chance2": null,
+    "g": 2.0,
+    "name": "Ilya Mikheyev",
+    "pid": "4422415",
+    "rank": null
+   },
+   {
+    "chance2": null,
+    "g": 2.0,
+    "name": "Pavel Mintyukov",
+    "pid": "5080154",
+    "rank": null
+   }
+  ]
+ },
+ "2026-11-06": {
+  "games": [
+   "401892659",
+   "401892660",
+   "401892661"
+  ],
+  "n": 108,
+  "ranks": {
+   "2555315": [
+    28,
+    0.0197,
+    "Charlie Coyle",
+    "CBJ"
+   ],
+   "2562600": [
+    83,
+    0.0026,
+    "Jonas Brodin",
+    "MIN"
+   ],
+   "2562636": [
+    36,
+    0.0181,
+    "Ryan Strome",
+    "CGY"
+   ],
+   "2563026": [
+    12,
+    0.0248,
+    "Blake Coleman",
+    "MIN"
+   ],
+   "2593315": [
+    15,
+    0.0241,
+    "Jason Zucker",
+    "BUF"
+   ],
+   "2976839": [
+    74,
+    0.0047,
+    "Jacob Trouba",
+    "SJ"
+   ],
+   "2976850": [
+    81,
+    0.0029,
+    "Olli Maatta",
+    "MIN"
+   ],
+   "3025608": [
+    84,
+    0.0024,
+    "Nick Jensen",
+    "ANA"
+   ],
+   "3041996": [
+    58,
+    0.009,
+    "Sean Monahan",
+    "CBJ"
+   ],
+   "3041997": [
+    82,
+    0.0026,
+    "Darnell Nurse",
+    "SJ"
+   ],
+   "3042003": [
+    42,
+    0.0171,
+    "Valeri Nichushkin",
+    "CBJ"
+   ],
+   "3042048": [
+    56,
+    0.0098,
+    "Michael McCarron",
+    "MIN"
+   ],
+   "3042063": [
+    23,
+    0.021,
+    "Ryan Hartman",
+    "MIN"
+   ],
+   "3068087": [
+    75,
+    0.0045,
+    "Damon Severson",
+    "CBJ"
+   ],
+   "3069411": [
+    91,
+    0.0019,
+    "Barclay Goodrow",
+    "SJ"
+   ],
+   "3149839": [
+    93,
+    0.0015,
+    "Jake Middleton",
+    "CGY"
+   ],
+   "3151741": [
+    78,
+    0.004,
+    "Danton Heinen",
+    "CBJ"
+   ],
+   "3527554": [
+    60,
+    0.0088,
+    "Frank Vatrano",
+    "ANA"
+   ],
+   "3797": [
+    25,
+    0.0203,
+    "Mikael Backlund",
+    "CGY"
+   ],
+   "3899939": [
+    79,
+    0.004,
+    "Ivan Provorov",
+    "CBJ"
+   ],
+   "3899972": [
+    43,
+    0.017,
+    "Zach Werenski",
+    "CBJ"
+   ],
+   "3904091": [
+    8,
+    0.0279,
+    "Joel Eriksson Ek",
+    "MIN"
+   ],
+   "3904188": [
+    77,
+    0.0043,
+    "Yakov Trenin",
+    "MIN"
+   ],
+   "3939718": [
+    65,
+    0.007,
+    "Conor Garland",
+    "CBJ"
+   ],
+   "3942335": [
+    1,
+    0.0935,
+    "Kirill Kaprizov",
+    "MIN"
+   ],
+   "4002": [
+    89,
+    0.0019,
+    "Zach Bogosian",
+    "MIN"
+   ],
+   "4024959": [
+    96,
+    0.0014,
+    "Dante Fabbro",
+    "CBJ"
+   ],
+   "4024988": [
+    4,
+    0.0434,
+    "Tage Thompson",
+    "BUF"
+   ],
+   "4063240": [
+    70,
+    0.0052,
+    "Beck Malenstyn",
+    "BUF"
+   ],
+   "4064781": [
+    29,
+    0.0195,
+    "Mathieu Olivier",
+    "CBJ"
+   ],
+   "4233627": [
+    31,
+    0.0192,
+    "Josh Norris",
+    "BUF"
+   ],
+   "4233685": [
+    13,
+    0.0244,
+    "Morgan Frost",
+    "CGY"
+   ],
+   "4272192": [
+    27,
+    0.0198,
+    "Mason Marchment",
+    "SJ"
+   ],
+   "4294163": [
+    39,
+    0.0178,
+    "Rasmus Dahlin",
+    "BUF"
+   ],
+   "4320548": [
+    54,
+    0.01,
+    "Quinn Hughes",
+    "MIN"
+   ],
+   "4320625": [
+    64,
+    0.0075,
+    "Nico Sturm",
+    "MIN"
+   ],
+   "4352747": [
+    92,
+    0.0018,
+    "Ty Dellandrea",
+    "SJ"
+   ],
+   "4352750": [
+    11,
+    0.0251,
+    "Joel Farabee",
+    "CGY"
+   ],
+   "4378656": [
+    51,
+    0.0108,
+    "Mattias Samuelsson",
+    "BUF"
+   ],
+   "4378669": [
+    55,
+    0.0099,
+    "Ryan McLeod",
+    "BUF"
+   ],
+   "4378686": [
+    85,
+    0.0023,
+    "Kevin Bahl",
+    "CGY"
+   ],
+   "4391255": [
+    26,
+    0.02,
+    "Kiefer Sherwood",
+    "SJ"
+   ],
+   "4392782": [
+    95,
+    0.0014,
+    "Jake Christiansen",
+    "CBJ"
+   ],
+   "4392883": [
+    47,
+    0.0147,
+    "Martin Pospisil",
+    "CGY"
+   ],
+   "4419696": [
+    98,
+    0.0013,
+    "Zach Metsa",
+    "BUF"
+   ],
+   "4565233": [
+    2,
+    0.0597,
+    "Matt Boldy",
+    "MIN"
+   ],
+   "4565238": [
+    53,
+    0.0102,
+    "Peyton Krebs",
+    "BUF"
+   ],
+   "4565257": [
+    35,
+    0.0187,
+    "Bobby Brink",
+    "MIN"
+   ],
+   "4565262": [
+    68,
+    0.0059,
+    "Jackson LaCombe",
+    "ANA"
+   ],
+   "4565270": [
+    100,
+    0.0011,
+    "Drew Helleson",
+    "ANA"
+   ],
+   "4587843": [
+    32,
+    0.0192,
+    "Yegor Sharangovich",
+    "CGY"
+   ],
+   "4697389": [
+    9,
+    0.0265,
+    "Jack Quinn",
+    "BUF"
+   ],
+   "4697453": [
+    86,
+    0.0022,
+    "Yan Kuznetsov",
+    "CGY"
+   ],
+   "4697681": [
+    97,
+    0.0013,
+    "Louis Crevier",
+    "BUF"
+   ],
+   "4755684": [
+    18,
+    0.0218,
+    "Judd Caulfield",
+    "ANA"
+   ],
+   "4781553": [
+    46,
+    0.0149,
+    "Kent Johnson",
+    "CBJ"
+   ],
+   "4781556": [
+    67,
+    0.006,
+    "Owen Power",
+    "BUF"
+   ],
+   "4799741": [
+    94,
+    0.0015,
+    "Matt Kiersted",
+    "MIN"
+   ],
+   "4874725": [
+    62,
+    0.0081,
+    "Cole Sillinger",
+    "CBJ"
+   ],
+   "4874730": [
+    22,
+    0.0211,
+    "Matt Coronato",
+    "CGY"
+   ],
+   "4874749": [
+    80,
+    0.0039,
+    "Nolan Allan",
+    "SJ"
+   ],
+   "4874863": [
+    66,
+    0.0067,
+    "Olen Zellweger",
+    "BUF"
+   ],
+   "4874870": [
+    20,
+    0.0216,
+    "Josh Doan",
+    "BUF"
+   ],
+   "4874919": [
+    33,
+    0.019,
+    "Matthew Knies",
+    "CBJ"
+   ],
+   "4895527": [
+    76,
+    0.0043,
+    "Tyson Kozak",
+    "BUF"
+   ],
+   "4915344": [
+    57,
+    0.0095,
+    "Simon Nemec",
+    "CGY"
+   ],
+   "4968": [
+    48,
+    0.014,
+    "Alex Killorn",
+    "ANA"
+   ],
+   "4996085": [
+    61,
+    0.0083,
+    "Tim Washe",
+    "ANA"
+   ],
+   "5073306": [
+    59,
+    0.0089,
+    "Adam Klapka",
+    "CGY"
+   ],
+   "5080145": [
+    3,
+    0.0508,
+    "Cutter Gauthier",
+    "ANA"
+   ],
+   "5080154": [
+    73,
+    0.0049,
+    "Pavel Mintyukov",
+    "ANA"
+   ],
+   "5080156": [
+    50,
+    0.0114,
+    "Denton Mateychuk",
+    "CBJ"
+   ],
+   "5080160": [
+    24,
+    0.0205,
+    "Noah Ostlund",
+    "BUF"
+   ],
+   "5080172": [
+    21,
+    0.0215,
+    "Danila Yurov",
+    "MIN"
+   ],
+   "5080175": [
+    52,
+    0.0104,
+    "Filip Bystedt",
+    "SJ"
+   ],
+   "5080176": [
+    41,
+    0.0172,
+    "Jiri Kulich",
+    "BUF"
+   ],
+   "5080220": [
+    69,
+    0.0054,
+    "Tristan Luneau",
+    "ANA"
+   ],
+   "5103533": [
+    88,
+    0.0021,
+    "David Spacek",
+    "MIN"
+   ],
+   "5103702": [
+    99,
+    0.0012,
+    "Tyson Hinds",
+    "ANA"
+   ],
+   "5136607": [
+    40,
+    0.0176,
+    "Collin Graf",
+    "SJ"
+   ],
+   "5136617": [
+    16,
+    0.0231,
+    "Adam Fantilli",
+    "CBJ"
+   ],
+   "5149153": [
+    6,
+    0.0326,
+    "Leo Carlsson",
+    "ANA"
+   ],
+   "5149155": [
+    14,
+    0.0242,
+    "Will Smith",
+    "SJ"
+   ],
+   "5149186": [
+    34,
+    0.0189,
+    "Zach Benson",
+    "BUF"
+   ],
+   "5173614": [
+    90,
+    0.0019,
+    "Travis Mitchell",
+    "ANA"
+   ],
+   "5188608": [
+    63,
+    0.0076,
+    "Jonathan Castagna",
+    "CGY"
+   ],
+   "5188613": [
+    17,
+    0.022,
+    "Aydar Suniev",
+    "CGY"
+   ],
+   "5188651": [
+    87,
+    0.0021,
+    "Eric Pohlkamp",
+    "SJ"
+   ],
+   "5206628": [
+    5,
+    0.0403,
+    "Macklin Celebrini",
+    "SJ"
+   ],
+   "5216858": [
+    7,
+    0.0279,
+    "Beckett Sennecke",
+    "ANA"
+   ],
+   "5216878": [
+    71,
+    0.0052,
+    "Zayne Parekh",
+    "CGY"
+   ],
+   "5216897": [
+    19,
+    0.0218,
+    "Matvei Gridin",
+    "CGY"
+   ],
+   "5291934": [
+    44,
+    0.0165,
+    "Michael Misa",
+    "SJ"
+   ],
+   "5291946": [
+    45,
+    0.0151,
+    "Roger McQueen",
+    "ANA"
+   ],
+   "5302535": [
+    30,
+    0.0192,
+    "Maxim Shabanov",
+    "MIN"
+   ],
+   "5361658": [
+    49,
+    0.0121,
+    "Nikita Klepov",
+    "ANA"
+   ],
+   "5361709": [
+    38,
+    0.0179,
+    "Ivar Stenberg",
+    "SJ"
+   ],
+   "5526": [
+    72,
+    0.0051,
+    "Tyler Pitlick",
+    "MIN"
+   ],
+   "5550": [
+    37,
+    0.0179,
+    "Tyler Toffoli",
+    "SJ"
+   ],
+   "5831": [
+    10,
+    0.026,
+    "Mikael Granlund",
+    "ANA"
+   ]
+  },
   "scorers": null
  }
 }
