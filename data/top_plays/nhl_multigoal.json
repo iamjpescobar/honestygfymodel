@@ -6568,6 +6568,7 @@
    "why": "2.51 shots and 0.99 points a game over 96 games (this season + last, pulled toward the forward average) \u00b7 ice time 19.5 min over his last 5 vs 20.1 on his rate \u2192 shots x0.99 \u00b7 SJ matchup sets tonight's shot volume x1.12 and scoring x1.19 (in the number) \u00b7 SJ allows the 12th-most of 32 shots to centres (10.1 a game vs 9.5; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 2.77 expected shots, 1.15 expected points \u00b7 PP1 by minutes (2.2 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 1.0,
    "at_least": 2,
    "date": "2026-11-07",
    "fair": 2610,
@@ -6582,13 +6583,14 @@
    "p_cal": 0.0369,
    "player": "Steven Stamkos",
    "player_id": "5037",
-   "result": null,
+   "result": "miss",
    "start": "2026-11-07T13:00:00-05:00",
    "stat": "g",
    "team": "NSH",
    "why": "2.48 shots and 0.81 points a game over 98 games (this season + last, pulled toward the forward average) \u00b7 ice time 18.6 min over his last 5 vs 18.0 on his rate \u2192 shots x1.02 \u00b7 STL matchup sets tonight's shot volume x1.07 and scoring x1.05 (in the number) \u00b7 STL allows the 14th-most of 32 shots to centres (9.9 a game vs 9.5; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 2.68 expected shots, 0.87 expected points \u00b7 PP1 by minutes (4.2 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 1.0,
    "at_least": 2,
    "date": "2026-11-07",
    "fair": 2837,
@@ -6603,13 +6605,14 @@
    "p_cal": 0.034,
    "player": "Alex Tuch",
    "player_id": "3114766",
-   "result": null,
+   "result": "miss",
    "start": "2026-11-07T12:30:00-05:00",
    "stat": "g",
    "team": "WSH",
    "why": "2.49 shots and 0.80 points a game over 93 games (this season + last, pulled toward the forward average) \u00b7 ice time 19.1 min over his last 5 vs 19.0 on his rate \u2192 shots x1.00 \u00b7 FLA matchup sets tonight's shot volume x0.95 and scoring x1.12 (in the number) \u00b7 FLA allows the 4th-fewest of 32 shots to wingers (8.6 a game vs 10.4; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 2.37 expected shots, 0.90 expected points \u00b7 PP2 by minutes (1.5 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 0.0,
    "at_least": 2,
    "date": "2026-11-07",
    "fair": 2899,
@@ -6624,11 +6627,32 @@
    "p_cal": 0.0334,
    "player": "Filip Forsberg",
    "player_id": "2968772",
-   "result": null,
+   "result": "miss",
    "start": "2026-11-07T13:00:00-05:00",
    "stat": "g",
    "team": "NSH",
    "why": "2.88 shots and 0.91 points a game over 98 games (this season + last, pulled toward the forward average) \u00b7 ice time 20.4 min over his last 5 vs 19.1 on his rate \u2192 shots x1.03 \u00b7 STL matchup sets tonight's shot volume x1.07 and scoring x1.05 (in the number) \u00b7 STL allows the 15th-most of 32 shots to wingers (10.6 a game vs 10.4; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.17 expected shots, 1.01 expected points \u00b7 PP1 by minutes (4.0 PP min a game over his last 5; context, not in the number)"
+  },
+  {
+   "at_least": 2,
+   "date": "2026-11-07",
+   "fair": 1965,
+   "game": "VAN @ EDM",
+   "game_id": "401892673",
+   "label": "Goal O1.5",
+   "logged_at": "2026-11-08T01:19:53+00:00",
+   "market": "g2",
+   "matchup": null,
+   "matchup_tier": null,
+   "p": 0.0989,
+   "p_cal": 0.0484,
+   "player": "Zach Hyman",
+   "player_id": "5509",
+   "result": null,
+   "start": "2026-11-07T22:00:00-05:00",
+   "stat": "g",
+   "team": "EDM",
+   "why": "2.63 shots and 0.78 points a game over 64 games (this season + last, pulled toward the forward average) \u00b7 ice time 17.4 min over his last 5 vs 19.8 on his rate \u2192 shots x0.94 \u00b7 VAN matchup sets tonight's shot volume x1.15 and scoring x1.29 (in the number) \u00b7 VAN allows the 1st-most of 32 shots to wingers (13.8 a game vs 10.4; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 2.84 expected shots, 0.91 expected points \u00b7 PP2 by minutes (3.1 PP min a game over his last 5; context, not in the number)"
   }
  ]
 }
