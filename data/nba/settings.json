@@ -1,12 +1,35 @@
 {
  "settings": {
   "hl": 2,
-  "k": 600,
-  "hl_long": 120,
+  "k": 300,
+  "hl_long": 60,
   "k_long": 100,
   "down_pull": 0.3
  },
- "since": "2026-10-22",
- "source": "fit on 2025-26, window 2026-01-07 to 2026-02-26",
- "history": []
+ "since": "2026-11-11",
+ "source": "re-tuned on 2026-03-05 to 2026-10-27; beat the old settings on 2026-10-27 to 2026-11-10 (z=3.69)",
+ "history": [
+  {
+   "date": "2026-11-11",
+   "from": {
+    "hl": 2,
+    "k": 600,
+    "hl_long": 120,
+    "k_long": 100,
+    "down_pull": 0.3
+   },
+   "to": {
+    "hl": 2,
+    "k": 300,
+    "hl_long": 60,
+    "k_long": 100,
+    "down_pull": 0.3
+   },
+   "z": 3.69,
+   "window": [
+    "2026-10-27",
+    "2026-11-10"
+   ]
+  }
+ ]
 }
