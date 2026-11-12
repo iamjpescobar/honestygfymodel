@@ -7449,6 +7449,7 @@
    "why": "2.89 shots and 0.92 points a game over 100 games (this season + last, pulled toward the forward average) \u00b7 ice time 19.7 min over his last 5 vs 19.2 on his rate \u2192 shots x1.01 \u00b7 ANA matchup sets tonight's shot volume x0.97 and scoring x1.08 (in the number) \u00b7 ANA allows the 14th-most of 32 shots to wingers (10.9 a game vs 10.4; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 2.84 expected shots, 1.02 expected points \u00b7 PP1 by minutes (3.9 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 3.0,
    "at_least": 2,
    "date": "2026-11-11",
    "fair": 2330,
@@ -7463,13 +7464,14 @@
    "p_cal": 0.0411,
    "player": "Nikita Kucherov",
    "player_id": "2563060",
-   "result": null,
+   "result": "hit",
    "start": "2026-11-11T19:00:00-05:00",
    "stat": "g",
    "team": "TB",
    "why": "2.99 shots and 1.53 points a game over 93 games (this season + last, pulled toward the forward average) \u00b7 ice time 22.6 min over his last 5 vs 20.5 on his rate \u2192 shots x1.05 \u00b7 BUF matchup sets tonight's shot volume x0.98 and scoring x0.91 (in the number) \u00b7 BUF allows the 3rd-most of 32 shots to wingers (12.6 a game vs 10.4; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.07 expected shots, 1.49 expected points \u00b7 PP1 by minutes (5.9 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 1.0,
    "at_least": 2,
    "date": "2026-11-11",
    "fair": 2543,
@@ -7484,13 +7486,14 @@
    "p_cal": 0.0378,
    "player": "Tage Thompson",
    "player_id": "4024988",
-   "result": null,
+   "result": "miss",
    "start": "2026-11-11T19:00:00-05:00",
    "stat": "g",
    "team": "BUF",
    "why": "3.44 shots and 0.97 points a game over 98 games (this season + last, pulled toward the forward average) \u00b7 ice time 19.1 min over his last 5 vs 19.3 on his rate \u2192 shots x1.00 \u00b7 TB matchup sets tonight's shot volume x0.95 and scoring x0.94 (in the number) \u00b7 TB allows the 2nd-fewest of 32 shots to centres (7.7 a game vs 9.5; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.27 expected shots, 0.91 expected points \u00b7 PP1 by minutes (3.7 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 0.0,
    "at_least": 2,
    "date": "2026-11-11",
    "fair": 2551,
@@ -7505,7 +7508,7 @@
    "p_cal": 0.0377,
    "player": "Jake Guentzel",
    "player_id": "3042083",
-   "result": null,
+   "result": "miss",
    "start": "2026-11-11T19:00:00-05:00",
    "stat": "g",
    "team": "TB",

@@ -4,10 +4,10 @@
   "k": 300,
   "hl_long": 60,
   "k_long": 100,
-  "down_pull": 0.3
+  "down_pull": 0.2
  },
  "since": "2026-11-11",
- "source": "re-tuned on 2026-03-05 to 2026-10-27; beat the old settings on 2026-10-27 to 2026-11-10 (z=3.69)",
+ "source": "re-tuned on 2026-03-06 to 2026-10-28; beat the old settings on 2026-10-28 to 2026-11-11 (z=7.47)",
  "history": [
   {
    "date": "2026-11-11",
@@ -29,6 +29,28 @@
    "window": [
     "2026-10-27",
     "2026-11-10"
+   ]
+  },
+  {
+   "date": "2026-11-11",
+   "from": {
+    "hl": 2,
+    "k": 300,
+    "hl_long": 60,
+    "k_long": 100,
+    "down_pull": 0.3
+   },
+   "to": {
+    "hl": 2,
+    "k": 300,
+    "hl_long": 60,
+    "k_long": 100,
+    "down_pull": 0.2
+   },
+   "z": 7.47,
+   "window": [
+    "2026-10-28",
+    "2026-11-11"
    ]
   }
  ]
