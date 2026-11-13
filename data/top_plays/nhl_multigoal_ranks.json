@@ -21863,6 +21863,512 @@
     "COL"
    ]
   },
+  "scorers": [
+   {
+    "chance2": 0.0524,
+    "g": 3.0,
+    "name": "Matt Boldy",
+    "pid": "4565233",
+    "rank": 2
+   },
+   {
+    "chance2": 0.0408,
+    "g": 2.0,
+    "name": "Brandon Hagel",
+    "pid": "4065019",
+    "rank": 13
+   },
+   {
+    "chance2": 0.0313,
+    "g": 2.0,
+    "name": "Sebastian Aho",
+    "pid": "3904173",
+    "rank": 35
+   },
+   {
+    "chance2": 0.0272,
+    "g": 2.0,
+    "name": "Mark Scheifele",
+    "pid": "2562632",
+    "rank": 51
+   },
+   {
+    "chance2": 0.0236,
+    "g": 2.0,
+    "name": "Shane Pinto",
+    "pid": "4565255",
+    "rank": 70
+   },
+   {
+    "chance2": 0.0215,
+    "g": 2.0,
+    "name": "Anton Lundell",
+    "pid": "4697395",
+    "rank": 85
+   },
+   {
+    "chance2": null,
+    "g": 2.0,
+    "name": "Casey Mittelstadt",
+    "pid": "4233575",
+    "rank": null
+   },
+   {
+    "chance2": null,
+    "g": 2.0,
+    "name": "Frank Nazar",
+    "pid": "5080157",
+    "rank": null
+   },
+   {
+    "chance2": null,
+    "g": 2.0,
+    "name": "Dawson Mercer",
+    "pid": "4697401",
+    "rank": null
+   }
+  ]
+ },
+ "2026-11-13": {
+  "games": [
+   "401892706",
+   "401892707"
+  ],
+  "n": 72,
+  "ranks": {
+   "2562625": [
+    55,
+    0.0021,
+    "Jamie Oleksiak",
+    "VAN"
+   ],
+   "2562637": [
+    4,
+    0.0478,
+    "Mika Zibanejad",
+    "NYR"
+   ],
+   "2563057": [
+    21,
+    0.0199,
+    "William Karlsson",
+    "VGK"
+   ],
+   "2590852": [
+    14,
+    0.0271,
+    "J.T. Miller",
+    "NYR"
+   ],
+   "2967072": [
+    32,
+    0.0134,
+    "Jonathan Marchessault",
+    "NSH"
+   ],
+   "2968772": [
+    5,
+    0.0417,
+    "Filip Forsberg",
+    "NSH"
+   ],
+   "2976844": [
+    12,
+    0.028,
+    "Tomas Hertl",
+    "VGK"
+   ],
+   "2976856": [
+    68,
+    0.0006,
+    "Brady Skjei",
+    "NSH"
+   ],
+   "3025616": [
+    58,
+    0.0019,
+    "Nic Dowd",
+    "VGK"
+   ],
+   "3042055": [
+    47,
+    0.0074,
+    "Shea Theodore",
+    "VGK"
+   ],
+   "3042095": [
+    23,
+    0.0194,
+    "Oliver Bjorkstrand",
+    "NYR"
+   ],
+   "3069394": [
+    33,
+    0.0132,
+    "Alexander Kerfoot",
+    "NSH"
+   ],
+   "3114985": [
+    19,
+    0.0214,
+    "Ivan Barbashev",
+    "VGK"
+   ],
+   "3114995": [
+    60,
+    0.0012,
+    "Marcus Pettersson",
+    "NYR"
+   ],
+   "3151096": [
+    22,
+    0.0197,
+    "Victor Olofsson",
+    "VGK"
+   ],
+   "3648002": [
+    7,
+    0.0389,
+    "Jack Eichel",
+    "VGK"
+   ],
+   "3899937": [
+    15,
+    0.0266,
+    "Mitch Marner",
+    "VGK"
+   ],
+   "3899979": [
+    10,
+    0.0291,
+    "Brock Boeser",
+    "VAN"
+   ],
+   "3900240": [
+    17,
+    0.0262,
+    "Jake DeBrusk",
+    "VAN"
+   ],
+   "3904185": [
+    71,
+    0.0005,
+    "Jeremy Lauzon",
+    "VGK"
+   ],
+   "3904186": [
+    41,
+    0.0106,
+    "Rasmus Andersson",
+    "VGK"
+   ],
+   "3942292": [
+    39,
+    0.0112,
+    "Vladislav Gavrikov",
+    "NYR"
+   ],
+   "3942638": [
+    62,
+    0.0009,
+    "Parker Wotherspoon",
+    "VGK"
+   ],
+   "3942866": [
+    57,
+    0.002,
+    "Guillaume Brisebois",
+    "VAN"
+   ],
+   "4024989": [
+    20,
+    0.0211,
+    "Brett Howden",
+    "VGK"
+   ],
+   "4063502": [
+    48,
+    0.0072,
+    "Taylor Raddysh",
+    "NYR"
+   ],
+   "4063606": [
+    61,
+    0.0012,
+    "Dylan Coghlan",
+    "VGK"
+   ],
+   "4063607": [
+    49,
+    0.0039,
+    "Filip Hronek",
+    "VAN"
+   ],
+   "4197146": [
+    36,
+    0.0122,
+    "Adam Fox",
+    "NYR"
+   ],
+   "4233566": [
+    24,
+    0.0191,
+    "Elias Pettersson",
+    "VAN"
+   ],
+   "4233720": [
+    34,
+    0.0126,
+    "Eeli Tolvanen",
+    "NYR"
+   ],
+   "4233870": [
+    67,
+    0.0007,
+    "Nicolas Hague",
+    "NSH"
+   ],
+   "4331579": [
+    38,
+    0.0112,
+    "Paul Cotter",
+    "VAN"
+   ],
+   "4342107": [
+    66,
+    0.0007,
+    "Ilya Lyubushkin",
+    "NSH"
+   ],
+   "4378671": [
+    46,
+    0.0082,
+    "Jack Drury",
+    "NSH"
+   ],
+   "4392471": [
+    43,
+    0.0103,
+    "Ross Colton",
+    "NSH"
+   ],
+   "4419638": [
+    59,
+    0.0014,
+    "Nick Perbix",
+    "NSH"
+   ],
+   "4425678": [
+    42,
+    0.0105,
+    "Jonas Rondbjerg",
+    "VGK"
+   ],
+   "4565269": [
+    56,
+    0.0021,
+    "Jayden Struble",
+    "NSH"
+   ],
+   "4565272": [
+    50,
+    0.0034,
+    "Matthew Robertson",
+    "NYR"
+   ],
+   "4587588": [
+    2,
+    0.0492,
+    "Pavel Dorofeyev",
+    "NYR"
+   ],
+   "4587713": [
+    26,
+    0.0175,
+    "Linus Karlsson",
+    "VAN"
+   ],
+   "4588750": [
+    9,
+    0.0298,
+    "Tye Kartye",
+    "NYR"
+   ],
+   "4697382": [
+    6,
+    0.0401,
+    "Alexis Lafreniere",
+    "NYR"
+   ],
+   "4697391": [
+    30,
+    0.0164,
+    "Marco Rossi",
+    "VAN"
+   ],
+   "4697402": [
+    63,
+    0.0009,
+    "Braden Schneider",
+    "NYR"
+   ],
+   "4697413": [
+    27,
+    0.0174,
+    "Mavrik Bourque",
+    "NSH"
+   ],
+   "4697468": [
+    13,
+    0.0273,
+    "Will Cuylle",
+    "NYR"
+   ],
+   "4697711": [
+    72,
+    0.0005,
+    "Daemon Hunt",
+    "NSH"
+   ],
+   "4697765": [
+    64,
+    0.0009,
+    "Adam Wilsby",
+    "NSH"
+   ],
+   "4712146": [
+    31,
+    0.0152,
+    "Drew O'Connor",
+    "VAN"
+   ],
+   "4874882": [
+    65,
+    0.0007,
+    "Scott Morrow",
+    "NYR"
+   ],
+   "4894222": [
+    29,
+    0.0171,
+    "Adam Edstrom",
+    "NSH"
+   ],
+   "4996099": [
+    25,
+    0.0189,
+    "Max Sasson",
+    "VAN"
+   ],
+   "5037": [
+    3,
+    0.0485,
+    "Steven Stamkos",
+    "NSH"
+   ],
+   "5080144": [
+    35,
+    0.0122,
+    "Shane Wright",
+    "NSH"
+   ],
+   "5080159": [
+    16,
+    0.0264,
+    "Jonathan Lekkerimaki",
+    "VAN"
+   ],
+   "5080163": [
+    37,
+    0.0115,
+    "Liam Ohgren",
+    "VAN"
+   ],
+   "5092": [
+    70,
+    0.0005,
+    "Luke Schenn",
+    "VAN"
+   ],
+   "5149180": [
+    54,
+    0.0023,
+    "Tom Willander",
+    "VAN"
+   ],
+   "5149204": [
+    8,
+    0.0306,
+    "Gabe Perreault",
+    "NYR"
+   ],
+   "5188334": [
+    69,
+    0.0006,
+    "Victor Mancini",
+    "VAN"
+   ],
+   "5188348": [
+    28,
+    0.0173,
+    "Jaroslav Chmelar",
+    "NYR"
+   ],
+   "5188370": [
+    44,
+    0.009,
+    "Noah Laba",
+    "NYR"
+   ],
+   "5202": [
+    53,
+    0.0025,
+    "Brayden McNabb",
+    "VGK"
+   ],
+   "5206642": [
+    52,
+    0.0026,
+    "Zeev Buium",
+    "VAN"
+   ],
+   "5208": [
+    18,
+    0.0259,
+    "Ryan O'Reilly",
+    "NSH"
+   ],
+   "5216887": [
+    11,
+    0.0285,
+    "Trevor Connelly",
+    "VGK"
+   ],
+   "5238086": [
+    51,
+    0.0027,
+    "Elias N. Pettersson",
+    "VAN"
+   ],
+   "5272307": [
+    40,
+    0.0107,
+    "Braeden Bowman",
+    "VGK"
+   ],
+   "5436": [
+    45,
+    0.0088,
+    "Roman Josi",
+    "NSH"
+   ],
+   "5545": [
+    1,
+    0.0514,
+    "Mark Stone",
+    "VGK"
+   ]
+  },
   "scorers": null
  }
 }
