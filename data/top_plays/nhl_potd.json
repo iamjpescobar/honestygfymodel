@@ -771,6 +771,7 @@
    "why": "3.01 shots and 1.55 points a game over 94 games (this season + last, pulled toward the forward average) \u00b7 ice time 21.3 min over his last 5 vs 20.5 on his rate \u2192 shots x1.02 \u00b7 CBJ matchup sets tonight's shot volume x1.00 and scoring x0.95 (in the number) \u00b7 CBJ allows the 14th-fewest of 32 shots to wingers (10.1 a game vs 10.4; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.07 expected shots, 1.53 expected points \u00b7 PP1 by minutes (5.6 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 0.0,
    "at_least": 1,
    "date": "2026-11-13",
    "fair": -222,
@@ -785,11 +786,32 @@
    "p_cal": 0.6892,
    "player": "Jack Eichel",
    "player_id": "3648002",
-   "result": null,
+   "result": "miss",
    "start": "2026-11-13T22:00:00-05:00",
    "stat": "pts",
    "team": "Vegas Golden Knights",
    "why": "3.25 shots and 1.17 points a game over 94 games (this season + last, pulled toward the forward average) \u00b7 ice time 21.5 min over his last 5 vs 21.0 on his rate \u2192 shots x1.01 \u00b7 NSH matchup sets tonight's shot volume x1.09 and scoring x1.04 (in the number) \u00b7 NSH allows the 15th-fewest of 32 shots to centres (9.3 a game vs 9.5; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.58 expected shots, 1.23 expected points \u00b7 PP1 by minutes (3.5 PP min a game over his last 5; context, not in the number)"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-11-14",
+   "fair": -506,
+   "game": "Edmonton Oilers @ Toronto Maple Leafs",
+   "game_id": "401892710",
+   "label": "Pts O0.5",
+   "logged_at": "2026-11-14T14:50:37+00:00",
+   "market": "pt1",
+   "matchup": null,
+   "matchup_tier": null,
+   "p": 0.8676,
+   "p_cal": 0.835,
+   "player": "Connor McDavid",
+   "player_id": "3895074",
+   "result": null,
+   "start": "2026-11-14T19:00:00-05:00",
+   "stat": "pts",
+   "team": "Edmonton Oilers",
+   "why": "3.49 shots and 1.72 points a game over 102 games (this season + last, pulled toward the forward average) \u00b7 ice time 24.5 min over his last 5 vs 23.1 on his rate \u2192 shots x1.03 \u00b7 TOR matchup sets tonight's shot volume x1.06 and scoring x1.13 (in the number) \u00b7 TOR allows the 7th-most of 32 shots to centres (10.5 a game vs 9.5; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.81 expected shots, 2.02 expected points \u00b7 PP1 by minutes (3.6 PP min a game over his last 5; context, not in the number)"
   }
  ]
 }
