@@ -1,0 +1,1293 @@
+{
+  "generated_at_et": "2026-11-16 12:47",
+  "week": 10,
+  "league": {
+    "team_games": 296,
+    "td_per_point": 0.1079,
+    "points_pg": 23.0,
+    "td_pg": 2.49,
+    "ypc": 4.18,
+    "yards_per_target": 7.47,
+    "catch_rate": 0.67,
+    "carries_pg": 26.9,
+    "targets_pg": 31.4,
+    "td_per_opportunity": 0.04263,
+    "prior_strength": 408.3,
+    "prior_a": 17.4068,
+    "prior_b": 390.8718,
+    "players_fitted": 540,
+    "touches_fitted": 17263,
+    "qb_priors": {
+      "cmp": [
+        0.6385,
+        325.98
+      ],
+      "td": [
+        0.04687,
+        427.53
+      ],
+      "int": [
+        0.02236,
+        1979.29
+      ]
+    },
+    "prop_spreads": {
+      "Rushing yards": {
+        "kind": "yards",
+        "cv": 0.8206,
+        "players": 201,
+        "games": 1096
+      },
+      "Carries": {
+        "kind": "count",
+        "size": 18.108,
+        "players": 208,
+        "games": 1113
+      },
+      "Receiving yards": {
+        "kind": "yards",
+        "cv": 0.8437,
+        "players": 387,
+        "games": 2293
+      },
+      "Receptions": {
+        "kind": "count",
+        "size": null,
+        "players": 387,
+        "games": 2293
+      },
+      "Targets": {
+        "kind": "count",
+        "size": 1933.125,
+        "players": 391,
+        "games": 2301
+      },
+      "Passing yards": {
+        "kind": "yards",
+        "cv": 0.381,
+        "players": 50,
+        "games": 316
+      },
+      "Pass attempts": {
+        "kind": "count",
+        "size": 24.703,
+        "players": 50,
+        "games": 316
+      },
+      "Rush + rec yards": {
+        "kind": "yards",
+        "cv": 0.8009,
+        "players": 448,
+        "games": 2757
+      },
+      "Completions": {
+        "kind": "count",
+        "size": 31.964,
+        "players": 50,
+        "games": 316
+      },
+      "Passing TDs": {
+        "kind": "count",
+        "size": null,
+        "players": 45,
+        "games": 305
+      },
+      "Interceptions": {
+        "kind": "count",
+        "size": null,
+        "players": 42,
+        "games": 296
+      }
+    },
+    "prior_weights": {
+      "share": 0.5658,
+      "catch": 1.0,
+      "ypc": 0.0089,
+      "ypt": 0.0105,
+      "td": 1.0,
+      "qb_rate": 0.348,
+      "ypa": 0.0
+    },
+    "prior_weight_report": {
+      "share": {
+        "weight": 0.5658,
+        "n_players": 844,
+        "loglik_gain": 10604.0
+      },
+      "catch": {
+        "weight": 1.0,
+        "n_players": 349,
+        "loglik_gain": 65.26
+      },
+      "ypc": {
+        "weight": 0.0089,
+        "n_players": 206,
+        "loglik_gain": 59.2
+      },
+      "ypt": {
+        "weight": 0.0105,
+        "n_players": 349,
+        "loglik_gain": 394.61
+      },
+      "td": {
+        "weight": 1.0,
+        "n_players": 417,
+        "loglik_gain": 11.55
+      },
+      "qb_rate": {
+        "weight": 0.348,
+        "n_players": 162,
+        "loglik_gain": 2.55
+      },
+      "ypa": {
+        "weight": 0.0,
+        "n_players": 54,
+        "loglik_gain": 0.0
+      }
+    }
+  },
+  "markets": {
+    "Anytime TD": [
+      {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 60,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Omarion Hampton",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 37,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kimani Vidal",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 30,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Zay Flowers",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 30,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Justice Hill",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 22,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Quentin Johnston",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 21,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mark Andrews",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "TE",
+        "gp": 9,
+        "proj": 20,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Keaton Mitchell",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 17,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ja'Kobi Lane",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 14,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Oronde Gadsden",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "TE",
+        "gp": 8,
+        "proj": 13,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rashod Bateman",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 13,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Josh Cuevas",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 11,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tre' Harris",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 10,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rasheen Ali",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 10,
+        "window": "Monday Night"
+      },
+      {
+        "player": "KeAndre Lambert-Smith",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brenen Thompson",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Charlie Kolar",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 7,
+        "window": "Monday Night"
+      }
+    ],
+    "Rushing yards": [
+      {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 71.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Omarion Hampton",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 42.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kimani Vidal",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 36.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Justin Herbert",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 23.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Keaton Mitchell",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 16.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Joe Fagnano",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 8.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rasheen Ali",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 5.8,
+        "window": "Monday Night"
+      }
+    ],
+    "Carries": [
+      {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 18.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Omarion Hampton",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 13.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kimani Vidal",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 9.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Keaton Mitchell",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 5.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rasheen Ali",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 1.5,
+        "window": "Monday Night"
+      }
+    ],
+    "Receiving yards": [
+      {
+        "player": "Zay Flowers",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 83.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Quentin Johnston",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 46.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rashod Bateman",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 34.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tre' Harris",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 28.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mark Andrews",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "TE",
+        "gp": 9,
+        "proj": 28.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Josh Cuevas",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 28.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Oronde Gadsden",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "TE",
+        "gp": 8,
+        "proj": 24.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ja'Kobi Lane",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 23.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "KeAndre Lambert-Smith",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 20.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Charlie Kolar",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 18.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brenen Thompson",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 15.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Justice Hill",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 13.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Omarion Hampton",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 12.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Keaton Mitchell",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 10.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 8.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kimani Vidal",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 7.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rasheen Ali",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 6.8,
+        "window": "Monday Night"
+      }
+    ],
+    "Receptions": [
+      {
+        "player": "Zay Flowers",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 5.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mark Andrews",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "TE",
+        "gp": 9,
+        "proj": 3.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Quentin Johnston",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 2.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Oronde Gadsden",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "TE",
+        "gp": 8,
+        "proj": 2.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tre' Harris",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 2.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Justice Hill",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 2.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Omarion Hampton",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 2.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ja'Kobi Lane",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 2.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Josh Cuevas",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 2.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rashod Bateman",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 1.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Keaton Mitchell",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 1.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Charlie Kolar",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 1.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kimani Vidal",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 1.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "KeAndre Lambert-Smith",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 1.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 1.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brenen Thompson",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 1.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rasheen Ali",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 0.8,
+        "window": "Monday Night"
+      }
+    ],
+    "Targets": [
+      {
+        "player": "Zay Flowers",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 7.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Quentin Johnston",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 5.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mark Andrews",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "TE",
+        "gp": 9,
+        "proj": 4.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Oronde Gadsden",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "TE",
+        "gp": 8,
+        "proj": 3.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tre' Harris",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 3.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brenen Thompson",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 3.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ja'Kobi Lane",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 3.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rashod Bateman",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 3.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Justice Hill",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 3.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "KeAndre Lambert-Smith",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 3.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Charlie Kolar",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 2.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Josh Cuevas",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 2.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Omarion Hampton",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 2.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kimani Vidal",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 2.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Keaton Mitchell",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 2.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 1.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rasheen Ali",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 1.0,
+        "window": "Monday Night"
+      }
+    ],
+    "Passing yards": [
+      {
+        "player": "Justin Herbert",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 209.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Joe Fagnano",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 113.5,
+        "window": "Monday Night"
+      }
+    ],
+    "Pass attempts": [
+      {
+        "player": "Justin Herbert",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 29.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Joe Fagnano",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 26.7,
+        "window": "Monday Night"
+      }
+    ],
+    "Rush + rec yards": [
+      {
+        "player": "Zay Flowers",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 88.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 80.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Omarion Hampton",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 54.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Quentin Johnston",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 47.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kimani Vidal",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 44.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Justice Hill",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 35.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rashod Bateman",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 34.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tre' Harris",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 29.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mark Andrews",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "TE",
+        "gp": 9,
+        "proj": 28.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Josh Cuevas",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 28.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Keaton Mitchell",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 27.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Oronde Gadsden",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "TE",
+        "gp": 8,
+        "proj": 25.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ja'Kobi Lane",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 23.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "KeAndre Lambert-Smith",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 20.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Charlie Kolar",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 18.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brenen Thompson",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 15.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rasheen Ali",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 12.6,
+        "window": "Monday Night"
+      }
+    ],
+    "Completions": [
+      {
+        "player": "Justin Herbert",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 18.57,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Joe Fagnano",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 16.69,
+        "window": "Monday Night"
+      }
+    ],
+    "Passing TDs": [
+      {
+        "player": "Justin Herbert",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 1.22,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Joe Fagnano",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 1.15,
+        "window": "Monday Night"
+      }
+    ],
+    "Interceptions": [
+      {
+        "player": "Justin Herbert",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 0.73,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Joe Fagnano",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 0.63,
+        "window": "Monday Night"
+      }
+    ],
+    "2+ TDs": [
+      {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 23.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Omarion Hampton",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 7.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kimani Vidal",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 5.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Zay Flowers",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 4.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Justice Hill",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 2.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Quentin Johnston",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 2.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mark Andrews",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "TE",
+        "gp": 9,
+        "proj": 2.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Keaton Mitchell",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 1.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ja'Kobi Lane",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 1.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Oronde Gadsden",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "TE",
+        "gp": 8,
+        "proj": 0.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rashod Bateman",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 0.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Josh Cuevas",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 0.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tre' Harris",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 0.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rasheen Ali",
+        "team": "BAL",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 0.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "KeAndre Lambert-Smith",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 0.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Brenen Thompson",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 0.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Charlie Kolar",
+        "team": "LAC",
+        "opp": "BAL",
+        "pos": "TE",
+        "gp": 5,
+        "proj": 0.3,
+        "window": "Monday Night"
+      }
+    ]
+  }
+}
