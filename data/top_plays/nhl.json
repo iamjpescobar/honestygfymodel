@@ -9453,6 +9453,7 @@
    "why": "2.69 shots and 1.07 points a game over 103 games (this season + last, pulled toward the forward average) \u00b7 ice time 21.8 min over his last 5 vs 19.1 on his rate \u2192 shots x1.06 \u00b7 VAN matchup sets tonight's shot volume x1.14 and scoring x1.30 (in the number) \u00b7 VAN allows the 1st-most of 32 shots to wingers (13.3 a game vs 10.4; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.25 expected shots, 1.54 expected points \u00b7 PP1 by minutes (3.8 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 2.0,
    "at_least": 2,
    "date": "2026-11-16",
    "fair": -373,
@@ -9467,7 +9468,7 @@
    "p_cal": 0.7885,
    "player": "Cole Caufield",
    "player_id": "4565236",
-   "result": null,
+   "result": "hit",
    "start": "2026-11-16T19:30:00-05:00",
    "stat": "sog",
    "team": "Montreal Canadiens",
@@ -9488,7 +9489,7 @@
    "p_cal": 0.7679,
    "player": "Pavel Dorofeyev",
    "player_id": "4587588",
-   "result": null,
+   "result": "void",
    "start": "2026-11-16T19:30:00-05:00",
    "stat": "sog",
    "team": "New York Rangers",
@@ -9516,6 +9517,7 @@
    "why": "2.28 shots and 0.50 points a game over 103 games (this season + last, pulled toward the forward average) \u00b7 ice time 15.5 min over his last 5 vs 15.3 on his rate \u2192 shots x1.01 \u00b7 VAN matchup sets tonight's shot volume x1.14 and scoring x1.30 (in the number) \u00b7 VAN allows the 1st-most of 32 shots to wingers (13.3 a game vs 10.4; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 2.60 expected shots, 0.65 expected points"
   },
   {
+   "actual": 2.0,
    "at_least": 2,
    "date": "2026-11-16",
    "fair": -253,
@@ -9530,7 +9532,7 @@
    "p_cal": 0.7165,
    "player": "Mika Zibanejad",
    "player_id": "2562637",
-   "result": null,
+   "result": "hit",
    "start": "2026-11-16T19:30:00-05:00",
    "stat": "sog",
    "team": "New York Rangers",
@@ -9600,6 +9602,7 @@
    "why": "2.59 shots and 0.51 points a game over 101 games (this season + last, pulled toward the forward average) \u00b7 ice time 17.3 min over his last 5 vs 16.9 on his rate \u2192 shots x1.01 \u00b7 UTA matchup sets tonight's shot volume x0.89 and scoring x0.98 (in the number) \u00b7 UTA allows the 10th-fewest of 32 shots to wingers (9.7 a game vs 10.4; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 2.33 expected shots, 0.51 expected points \u00b7 PP1 by minutes (3.4 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 0.0,
    "at_least": 1,
    "date": "2026-11-16",
    "fair": -179,
@@ -9614,7 +9617,7 @@
    "p_cal": 0.6419,
    "player": "Nick Suzuki",
    "player_id": "4233594",
-   "result": null,
+   "result": "miss",
    "start": "2026-11-16T19:30:00-05:00",
    "stat": "pts",
    "team": "Montreal Canadiens",
