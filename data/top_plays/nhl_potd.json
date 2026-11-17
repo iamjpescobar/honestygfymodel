@@ -837,6 +837,7 @@
    "why": "3.49 shots and 1.71 points a game over 103 games (this season + last, pulled toward the forward average) \u00b7 ice time 24.2 min over his last 5 vs 23.1 on his rate \u2192 shots x1.02 \u00b7 PHI matchup sets tonight's shot volume x0.97 and scoring x0.96 (in the number) \u00b7 PHI allows the 15th-fewest of 32 shots to centres (9.4 a game vs 9.5; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.45 expected shots, 1.70 expected points \u00b7 PP1 by minutes (3.1 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 1.0,
    "at_least": 1,
    "date": "2026-11-16",
    "fair": -258,
@@ -851,11 +852,32 @@
    "p_cal": 0.7205,
    "player": "Clayton Keller",
    "player_id": "4024857",
-   "result": null,
+   "result": "hit",
    "start": "2026-11-16T21:30:00-05:00",
    "stat": "pts",
    "team": "Utah Mammoth",
    "why": "2.69 shots and 1.07 points a game over 103 games (this season + last, pulled toward the forward average) \u00b7 ice time 21.8 min over his last 5 vs 19.1 on his rate \u2192 shots x1.06 \u00b7 VAN matchup sets tonight's shot volume x1.14 and scoring x1.30 (in the number) \u00b7 VAN allows the 1st-most of 32 shots to wingers (13.3 a game vs 10.4; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.25 expected shots, 1.54 expected points \u00b7 PP1 by minutes (3.8 PP min a game over his last 5; context, not in the number)"
+  },
+  {
+   "at_least": 1,
+   "date": "2026-11-17",
+   "fair": -408,
+   "game": "Edmonton Oilers @ Florida Panthers",
+   "game_id": "401892730",
+   "label": "Pts O0.5",
+   "logged_at": "2026-11-17T17:24:58+00:00",
+   "market": "pt1",
+   "matchup": null,
+   "matchup_tier": null,
+   "p": 0.8303,
+   "p_cal": 0.8033,
+   "player": "Connor McDavid",
+   "player_id": "3895074",
+   "result": null,
+   "start": "2026-11-17T19:00:00-05:00",
+   "stat": "pts",
+   "team": "Edmonton Oilers",
+   "why": "3.49 shots and 1.72 points a game over 104 games (this season + last, pulled toward the forward average) \u00b7 ice time 23.8 min over his last 5 vs 23.1 on his rate \u2192 shots x1.01 \u00b7 FLA matchup sets tonight's shot volume x0.92 and scoring x1.01 (in the number) \u00b7 FLA allows the 12th-fewest of 32 shots to centres (8.9 a game vs 9.5; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.25 expected shots, 1.77 expected points \u00b7 PP1 by minutes (2.6 PP min a game over his last 5; context, not in the number)"
   }
  ]
 }
