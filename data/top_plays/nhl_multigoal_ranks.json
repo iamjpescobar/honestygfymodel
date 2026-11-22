@@ -26762,6 +26762,669 @@
     "ANA"
    ]
   },
+  "scorers": [
+   {
+    "chance2": 0.0354,
+    "g": 2.0,
+    "name": "Tim Stutzle",
+    "pid": "4697384",
+    "rank": 16
+   },
+   {
+    "chance2": 0.0339,
+    "g": 2.0,
+    "name": "Andrei Svechnikov",
+    "pid": "4352683",
+    "rank": 17
+   },
+   {
+    "chance2": 0.0228,
+    "g": 3.0,
+    "name": "Sam Bennett",
+    "pid": "3114732",
+    "rank": 88
+   },
+   {
+    "chance2": null,
+    "g": 4.0,
+    "name": "Elias Lindholm",
+    "pid": "3041994",
+    "rank": null
+   },
+   {
+    "chance2": null,
+    "g": 2.0,
+    "name": "Ondrej Palat",
+    "pid": "2590389",
+    "rank": null
+   },
+   {
+    "chance2": null,
+    "g": 2.0,
+    "name": "Jonatan Berggren",
+    "pid": "4378660",
+    "rank": null
+   },
+   {
+    "chance2": null,
+    "g": 2.0,
+    "name": "Marco Rossi",
+    "pid": "4697391",
+    "rank": null
+   }
+  ]
+ },
+ "2026-11-22": {
+  "games": [
+   "401892768",
+   "401892769",
+   "401892770",
+   "401892771",
+   "401892772"
+  ],
+  "n": 180,
+  "ranks": {
+   "2562629": [
+    20,
+    0.0265,
+    "Rickard Rakell",
+    "PIT"
+   ],
+   "2562637": [
+    21,
+    0.0261,
+    "Mika Zibanejad",
+    "NYR"
+   ],
+   "2563060": [
+    6,
+    0.0419,
+    "Nikita Kucherov",
+    "TB"
+   ],
+   "2590852": [
+    55,
+    0.0181,
+    "J.T. Miller",
+    "NYR"
+   ],
+   "2592095": [
+    68,
+    0.0162,
+    "Teuvo Teravainen",
+    "CHI"
+   ],
+   "2593315": [
+    53,
+    0.0184,
+    "Jason Zucker",
+    "BUF"
+   ],
+   "2968829": [
+    98,
+    0.007,
+    "Zemgus Girgensons",
+    "TB"
+   ],
+   "2976849": [
+    39,
+    0.0201,
+    "Mark Jankowski",
+    "CAR"
+   ],
+   "2989376": [
+    86,
+    0.0105,
+    "Jordan Martinook",
+    "CAR"
+   ],
+   "3025662": [
+    83,
+    0.011,
+    "Shayne Gostisbehere",
+    "CAR"
+   ],
+   "3042056": [
+    9,
+    0.0325,
+    "Tyler Bertuzzi",
+    "CHI"
+   ],
+   "3042081": [
+    37,
+    0.0204,
+    "Pavel Buchnevich",
+    "STL"
+   ],
+   "3042083": [
+    5,
+    0.0423,
+    "Jake Guentzel",
+    "TB"
+   ],
+   "3067879": [
+    89,
+    0.0092,
+    "Justin Dowling",
+    "NYR"
+   ],
+   "3114": [
+    18,
+    0.0269,
+    "Sidney Crosby",
+    "PIT"
+   ],
+   "3114727": [
+    1,
+    0.0515,
+    "Leon Draisaitl",
+    "EDM"
+   ],
+   "3114775": [
+    45,
+    0.019,
+    "Kasperi Kapanen",
+    "EDM"
+   ],
+   "3115033": [
+    60,
+    0.0176,
+    "Ryan Donato",
+    "CHI"
+   ],
+   "3151187": [
+    35,
+    0.0207,
+    "Brayden Point",
+    "TB"
+   ],
+   "3541": [
+    62,
+    0.0175,
+    "Jordan Staal",
+    "CAR"
+   ],
+   "3735": [
+    33,
+    0.0214,
+    "Patrick Kane",
+    "CHI"
+   ],
+   "3792": [
+    74,
+    0.0141,
+    "David Perron",
+    "DAL"
+   ],
+   "3895074": [
+    3,
+    0.0459,
+    "Connor McDavid",
+    "EDM"
+   ],
+   "3899938": [
+    12,
+    0.0313,
+    "Mikko Rantanen",
+    "DAL"
+   ],
+   "3899979": [
+    14,
+    0.0297,
+    "Brock Boeser",
+    "VAN"
+   ],
+   "3900240": [
+    24,
+    0.0254,
+    "Jake DeBrusk",
+    "VAN"
+   ],
+   "3904173": [
+    16,
+    0.0273,
+    "Sebastian Aho",
+    "CAR"
+   ],
+   "3904183": [
+    25,
+    0.0243,
+    "Roope Hintz",
+    "DAL"
+   ],
+   "3941973": [
+    28,
+    0.0231,
+    "Anthony Cirelli",
+    "TB"
+   ],
+   "3942061": [
+    64,
+    0.0174,
+    "Tommy Novak",
+    "PIT"
+   ],
+   "3998": [
+    47,
+    0.0187,
+    "Jamie Benn",
+    "DAL"
+   ],
+   "4024988": [
+    7,
+    0.0395,
+    "Tage Thompson",
+    "BUF"
+   ],
+   "4024998": [
+    82,
+    0.0115,
+    "Sam Steel",
+    "DAL"
+   ],
+   "4197130": [
+    77,
+    0.0132,
+    "Cole Smith",
+    "CHI"
+   ],
+   "4233536": [
+    91,
+    0.0086,
+    "Miro Heiskanen",
+    "DAL"
+   ],
+   "4233611": [
+    94,
+    0.0078,
+    "Juuso Valimaki",
+    "CAR"
+   ],
+   "4233627": [
+    65,
+    0.0171,
+    "Josh Norris",
+    "BUF"
+   ],
+   "4233637": [
+    17,
+    0.027,
+    "Robert Thomas",
+    "STL"
+   ],
+   "4233643": [
+    27,
+    0.0235,
+    "Filip Chytil",
+    "VAN"
+   ],
+   "4233875": [
+    2,
+    0.0465,
+    "Jason Robertson",
+    "DAL"
+   ],
+   "4271732": [
+    63,
+    0.0174,
+    "Pius Suter",
+    "STL"
+   ],
+   "4294163": [
+    71,
+    0.0147,
+    "Rasmus Dahlin",
+    "BUF"
+   ],
+   "4319879": [
+    87,
+    0.0103,
+    "Eric Robinson",
+    "CAR"
+   ],
+   "4331579": [
+    73,
+    0.0144,
+    "Paul Cotter",
+    "VAN"
+   ],
+   "4352683": [
+    11,
+    0.0318,
+    "Andrei Svechnikov",
+    "CAR"
+   ],
+   "4352722": [
+    38,
+    0.0203,
+    "Evan Bouchard",
+    "EDM"
+   ],
+   "4378656": [
+    100,
+    0.0069,
+    "Mattias Samuelsson",
+    "BUF"
+   ],
+   "4378660": [
+    69,
+    0.0161,
+    "Jonatan Berggren",
+    "STL"
+   ],
+   "4422415": [
+    49,
+    0.0186,
+    "Ilya Mikheyev",
+    "TB"
+   ],
+   "4565231": [
+    22,
+    0.0259,
+    "Vasily Podkolzin",
+    "EDM"
+   ],
+   "4565238": [
+    95,
+    0.0076,
+    "Peyton Krebs",
+    "BUF"
+   ],
+   "4565246": [
+    76,
+    0.0134,
+    "Connor McMichael",
+    "STL"
+   ],
+   "4587713": [
+    36,
+    0.0206,
+    "Linus Karlsson",
+    "VAN"
+   ],
+   "4588004": [
+    92,
+    0.0083,
+    "Connor Dewar",
+    "PIT"
+   ],
+   "4588205": [
+    56,
+    0.018,
+    "Pontus Holmberg",
+    "TB"
+   ],
+   "4588750": [
+    50,
+    0.0185,
+    "Tye Kartye",
+    "NYR"
+   ],
+   "4697382": [
+    26,
+    0.0239,
+    "Alexis Lafreniere",
+    "NYR"
+   ],
+   "4697389": [
+    30,
+    0.0227,
+    "Jack Quinn",
+    "BUF"
+   ],
+   "4697391": [
+    42,
+    0.0194,
+    "Marco Rossi",
+    "VAN"
+   ],
+   "4697396": [
+    19,
+    0.0267,
+    "Seth Jarvis",
+    "CAR"
+   ],
+   "4697397": [
+    23,
+    0.0258,
+    "Dylan Holloway",
+    "STL"
+   ],
+   "4697404": [
+    40,
+    0.0198,
+    "Egor Chinakhov",
+    "PIT"
+   ],
+   "4697409": [
+    44,
+    0.0192,
+    "Jake Neighbours",
+    "STL"
+   ],
+   "4697468": [
+    43,
+    0.0194,
+    "Will Cuylle",
+    "NYR"
+   ],
+   "4697470": [
+    99,
+    0.0069,
+    "Gage Goncalves",
+    "TB"
+   ],
+   "4712146": [
+    70,
+    0.0148,
+    "Drew O'Connor",
+    "VAN"
+   ],
+   "4874718": [
+    32,
+    0.0216,
+    "Mason McTavish",
+    "STL"
+   ],
+   "4874740": [
+    4,
+    0.0429,
+    "Wyatt Johnston",
+    "DAL"
+   ],
+   "4874870": [
+    54,
+    0.0184,
+    "Josh Doan",
+    "BUF"
+   ],
+   "4874899": [
+    29,
+    0.0227,
+    "Logan Stankoven",
+    "CAR"
+   ],
+   "4874940": [
+    93,
+    0.0082,
+    "Colton Dach",
+    "EDM"
+   ],
+   "4915850": [
+    96,
+    0.0074,
+    "Alexander Nikishin",
+    "CAR"
+   ],
+   "5077308": [
+    80,
+    0.0119,
+    "Andrei Kuzmenko",
+    "PIT"
+   ],
+   "5080157": [
+    10,
+    0.0319,
+    "Frank Nazar",
+    "CHI"
+   ],
+   "5080159": [
+    31,
+    0.0226,
+    "Jonathan Lekkerimaki",
+    "VAN"
+   ],
+   "5080160": [
+    81,
+    0.0119,
+    "Noah Ostlund",
+    "BUF"
+   ],
+   "5080163": [
+    75,
+    0.0139,
+    "Liam Ohgren",
+    "VAN"
+   ],
+   "5080171": [
+    15,
+    0.0293,
+    "Jimmy Snuggerud",
+    "STL"
+   ],
+   "5080176": [
+    58,
+    0.0178,
+    "Jiri Kulich",
+    "BUF"
+   ],
+   "5080227": [
+    79,
+    0.0122,
+    "Ryan Greene",
+    "CHI"
+   ],
+   "5103645": [
+    34,
+    0.0209,
+    "Jackson Blake",
+    "CAR"
+   ],
+   "5118": [
+    78,
+    0.0132,
+    "John Carlson",
+    "TB"
+   ],
+   "5149178": [
+    72,
+    0.0146,
+    "Dalibor Dvorsky",
+    "STL"
+   ],
+   "5149186": [
+    67,
+    0.0163,
+    "Zach Benson",
+    "BUF"
+   ],
+   "5149194": [
+    85,
+    0.0105,
+    "Oliver Moore",
+    "CHI"
+   ],
+   "5149204": [
+    41,
+    0.0197,
+    "Gabe Perreault",
+    "NYR"
+   ],
+   "5149231": [
+    8,
+    0.0379,
+    "Roman Kantserov",
+    "CHI"
+   ],
+   "5164": [
+    90,
+    0.0088,
+    "Erik Karlsson",
+    "PIT"
+   ],
+   "5188348": [
+    88,
+    0.0101,
+    "Jaroslav Chmelar",
+    "NYR"
+   ],
+   "5188510": [
+    84,
+    0.0107,
+    "Aleksanteri Kaskimaki",
+    "STL"
+   ],
+   "5188640": [
+    46,
+    0.0188,
+    "Ty Mueller",
+    "VAN"
+   ],
+   "5206840": [
+    97,
+    0.0074,
+    "Owen Michaels",
+    "EDM"
+   ],
+   "5209793": [
+    52,
+    0.0184,
+    "Arttu Hyry",
+    "DAL"
+   ],
+   "5216901": [
+    57,
+    0.0178,
+    "Sam O'Reilly",
+    "TB"
+   ],
+   "5229176": [
+    66,
+    0.0165,
+    "Justin Hryckowian",
+    "DAL"
+   ],
+   "5291935": [
+    48,
+    0.0186,
+    "Anton Frondell",
+    "CHI"
+   ],
+   "5291947": [
+    51,
+    0.0185,
+    "Ben Kindel",
+    "PIT"
+   ],
+   "5428": [
+    59,
+    0.0177,
+    "Taylor Hall",
+    "CAR"
+   ],
+   "5430": [
+    61,
+    0.0175,
+    "Tyler Seguin",
+    "DAL"
+   ],
+   "5509": [
+    13,
+    0.0306,
+    "Zach Hyman",
+    "EDM"
+   ]
+  },
   "scorers": null
  }
 }
