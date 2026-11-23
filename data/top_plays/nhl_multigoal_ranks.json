@@ -27425,6 +27425,636 @@
     "EDM"
    ]
   },
+  "scorers": [
+   {
+    "chance2": 0.0395,
+    "g": 2.0,
+    "name": "Tage Thompson",
+    "pid": "4024988",
+    "rank": 7
+   },
+   {
+    "chance2": 0.0379,
+    "g": 3.0,
+    "name": "Roman Kantserov",
+    "pid": "5149231",
+    "rank": 8
+   }
+  ]
+ },
+ "2026-11-23": {
+  "games": [
+   "401892773",
+   "401892774",
+   "401892775",
+   "401892776",
+   "401892777",
+   "401892778",
+   "401892779"
+  ],
+  "n": 251,
+  "ranks": {
+   "2555315": [
+    56,
+    0.0189,
+    "Charlie Coyle",
+    "CBJ"
+   ],
+   "2562596": [
+    100,
+    0.0156,
+    "Joel Armia",
+    "LA"
+   ],
+   "2562632": [
+    14,
+    0.0272,
+    "Mark Scheifele",
+    "WPG"
+   ],
+   "2563026": [
+    34,
+    0.0217,
+    "Blake Coleman",
+    "MIN"
+   ],
+   "2563036": [
+    48,
+    0.02,
+    "Vincent Trocheck",
+    "UTA"
+   ],
+   "2593131": [
+    72,
+    0.0182,
+    "Jean-Gabriel Pageau",
+    "NYI"
+   ],
+   "3042002": [
+    7,
+    0.0327,
+    "Bo Horvat",
+    "NYI"
+   ],
+   "3042003": [
+    83,
+    0.0175,
+    "Valeri Nichushkin",
+    "CBJ"
+   ],
+   "3042063": [
+    55,
+    0.019,
+    "Ryan Hartman",
+    "MIN"
+   ],
+   "3042086": [
+    47,
+    0.02,
+    "Anthony Duclair",
+    "NYI"
+   ],
+   "3067858": [
+    88,
+    0.0171,
+    "Chandler Stephenson",
+    "SEA"
+   ],
+   "3067951": [
+    49,
+    0.0198,
+    "Connor Brown",
+    "NJ"
+   ],
+   "3114736": [
+    13,
+    0.0278,
+    "William Nylander",
+    "TOR"
+   ],
+   "3114743": [
+    53,
+    0.0194,
+    "Kevin Fiala",
+    "LA"
+   ],
+   "3114802": [
+    15,
+    0.0267,
+    "Adrian Kempe",
+    "LA"
+   ],
+   "3149649": [
+    89,
+    0.0171,
+    "Frederick Gaudreau",
+    "SEA"
+   ],
+   "3149829": [
+    66,
+    0.0183,
+    "Michael Amadio",
+    "OTT"
+   ],
+   "3149843": [
+    99,
+    0.0156,
+    "Darren Raddysh",
+    "TOR"
+   ],
+   "3648008": [
+    93,
+    0.0165,
+    "Evan Rodrigues",
+    "NJ"
+   ],
+   "3775": [
+    95,
+    0.0165,
+    "Claude Giroux",
+    "OTT"
+   ],
+   "3797": [
+    92,
+    0.0165,
+    "Mikael Backlund",
+    "CGY"
+   ],
+   "3891952": [
+    20,
+    0.0244,
+    "Artemi Panarin",
+    "LA"
+   ],
+   "3899946": [
+    70,
+    0.0182,
+    "Mathew Barzal",
+    "NYI"
+   ],
+   "3899951": [
+    51,
+    0.0197,
+    "Lawson Crouse",
+    "UTA"
+   ],
+   "3899952": [
+    5,
+    0.0345,
+    "Kyle Connor",
+    "WPG"
+   ],
+   "3899972": [
+    75,
+    0.018,
+    "Zach Werenski",
+    "CBJ"
+   ],
+   "3899978": [
+    40,
+    0.0211,
+    "Timo Meier",
+    "NJ"
+   ],
+   "3904091": [
+    43,
+    0.0209,
+    "Joel Eriksson Ek",
+    "MIN"
+   ],
+   "3904098": [
+    26,
+    0.0229,
+    "Jack Roslovic",
+    "TOR"
+   ],
+   "3942335": [
+    2,
+    0.0546,
+    "Kirill Kaprizov",
+    "MIN"
+   ],
+   "3942905": [
+    63,
+    0.0187,
+    "Troy Terry",
+    "ANA"
+   ],
+   "4024123": [
+    10,
+    0.0299,
+    "Auston Matthews",
+    "TOR"
+   ],
+   "4024857": [
+    27,
+    0.0228,
+    "Clayton Keller",
+    "UTA"
+   ],
+   "4064781": [
+    74,
+    0.0181,
+    "Mathieu Olivier",
+    "CBJ"
+   ],
+   "4233555": [
+    24,
+    0.0232,
+    "Nico Hischier",
+    "NJ"
+   ],
+   "4233568": [
+    81,
+    0.0176,
+    "Cody Glass",
+    "NJ"
+   ],
+   "4233583": [
+    31,
+    0.0221,
+    "Gabriel Vilardi",
+    "WPG"
+   ],
+   "4233594": [
+    19,
+    0.0245,
+    "Nick Suzuki",
+    "MTL"
+   ],
+   "4233648": [
+    38,
+    0.0214,
+    "Kailer Yamamoto",
+    "UTA"
+   ],
+   "4233685": [
+    65,
+    0.0184,
+    "Morgan Frost",
+    "CGY"
+   ],
+   "4268771": [
+    61,
+    0.0187,
+    "Jesper Bratt",
+    "NJ"
+   ],
+   "4271734": [
+    11,
+    0.029,
+    "Drake Batherson",
+    "OTT"
+   ],
+   "4272192": [
+    58,
+    0.0188,
+    "Mason Marchment",
+    "SJ"
+   ],
+   "4352750": [
+    50,
+    0.0197,
+    "Joel Farabee",
+    "CGY"
+   ],
+   "4393049": [
+    91,
+    0.0167,
+    "Jake Evans",
+    "MTL"
+   ],
+   "4565222": [
+    12,
+    0.0283,
+    "Jack Hughes",
+    "NJ"
+   ],
+   "4565223": [
+    69,
+    0.0183,
+    "Kaapo Kakko",
+    "SEA"
+   ],
+   "4565228": [
+    29,
+    0.0227,
+    "Dylan Cozens",
+    "OTT"
+   ],
+   "4565233": [
+    3,
+    0.0409,
+    "Matt Boldy",
+    "MIN"
+   ],
+   "4565236": [
+    4,
+    0.0397,
+    "Cole Caufield",
+    "MTL"
+   ],
+   "4565237": [
+    36,
+    0.0215,
+    "Alex Newhook",
+    "MTL"
+   ],
+   "4565244": [
+    23,
+    0.0234,
+    "Simon Holmstrom",
+    "NYI"
+   ],
+   "4565255": [
+    17,
+    0.0248,
+    "Shane Pinto",
+    "OTT"
+   ],
+   "4565257": [
+    90,
+    0.0169,
+    "Bobby Brink",
+    "MIN"
+   ],
+   "4587580": [
+    62,
+    0.0187,
+    "Matias Maccelli",
+    "NYI"
+   ],
+   "4587837": [
+    96,
+    0.0163,
+    "Fabian Zetterlund",
+    "OTT"
+   ],
+   "4587843": [
+    98,
+    0.0158,
+    "Yegor Sharangovich",
+    "CGY"
+   ],
+   "4697383": [
+    37,
+    0.0214,
+    "Quinton Byfield",
+    "LA"
+   ],
+   "4697384": [
+    9,
+    0.0314,
+    "Tim Stutzle",
+    "OTT"
+   ],
+   "4697392": [
+    68,
+    0.0183,
+    "Cole Perfetti",
+    "WPG"
+   ],
+   "4697401": [
+    84,
+    0.0175,
+    "Dawson Mercer",
+    "WPG"
+   ],
+   "4697411": [
+    94,
+    0.0165,
+    "Ridly Greig",
+    "OTT"
+   ],
+   "4697447": [
+    45,
+    0.0203,
+    "Emil Heineman",
+    "NYI"
+   ],
+   "4697725": [
+    52,
+    0.0195,
+    "Alex Laferriere",
+    "LA"
+   ],
+   "4755684": [
+    71,
+    0.0182,
+    "Judd Caulfield",
+    "ANA"
+   ],
+   "4781552": [
+    39,
+    0.0212,
+    "Matty Beniers",
+    "SEA"
+   ],
+   "4781553": [
+    78,
+    0.0178,
+    "Kent Johnson",
+    "CBJ"
+   ],
+   "4874730": [
+    73,
+    0.0182,
+    "Matt Coronato",
+    "CGY"
+   ],
+   "4874734": [
+    85,
+    0.0173,
+    "Zack Bolduc",
+    "MTL"
+   ],
+   "4874741": [
+    60,
+    0.0187,
+    "Mackie Samoskevich",
+    "SEA"
+   ],
+   "4874919": [
+    41,
+    0.021,
+    "Matthew Knies",
+    "CBJ"
+   ],
+   "4915349": [
+    35,
+    0.0216,
+    "Juraj Slafkovsky",
+    "MTL"
+   ],
+   "4915855": [
+    54,
+    0.0192,
+    "Arseny Gritsyuk",
+    "NJ"
+   ],
+   "4915856": [
+    97,
+    0.0159,
+    "Dmitri Voronkov",
+    "CBJ"
+   ],
+   "5032": [
+    25,
+    0.0229,
+    "Jordan Eberle",
+    "SEA"
+   ],
+   "5048894": [
+    16,
+    0.0261,
+    "Bobby McMann",
+    "SEA"
+   ],
+   "5080143": [
+    6,
+    0.0344,
+    "Logan Cooley",
+    "UTA"
+   ],
+   "5080145": [
+    1,
+    0.0629,
+    "Cutter Gauthier",
+    "ANA"
+   ],
+   "5080172": [
+    46,
+    0.0202,
+    "Danila Yurov",
+    "MIN"
+   ],
+   "5136607": [
+    80,
+    0.0177,
+    "Collin Graf",
+    "SJ"
+   ],
+   "5136617": [
+    42,
+    0.021,
+    "Adam Fantilli",
+    "CBJ"
+   ],
+   "5149153": [
+    18,
+    0.0247,
+    "Leo Carlsson",
+    "ANA"
+   ],
+   "5149155": [
+    32,
+    0.0221,
+    "Will Smith",
+    "SJ"
+   ],
+   "5149189": [
+    79,
+    0.0178,
+    "Matthew Wood",
+    "SEA"
+   ],
+   "5149211": [
+    57,
+    0.0188,
+    "Easton Cowan",
+    "TOR"
+   ],
+   "5160": [
+    28,
+    0.0228,
+    "John Tavares",
+    "TOR"
+   ],
+   "5206628": [
+    8,
+    0.0315,
+    "Macklin Celebrini",
+    "SJ"
+   ],
+   "5216877": [
+    64,
+    0.0186,
+    "Berkly Catton",
+    "SEA"
+   ],
+   "5216897": [
+    86,
+    0.0172,
+    "Matvei Gridin",
+    "CGY"
+   ],
+   "5219": [
+    44,
+    0.0206,
+    "Brayden Schenn",
+    "NYI"
+   ],
+   "5291933": [
+    30,
+    0.0222,
+    "Matthew Schaefer",
+    "NYI"
+   ],
+   "5291934": [
+    76,
+    0.0179,
+    "Michael Misa",
+    "SJ"
+   ],
+   "5291952": [
+    21,
+    0.024,
+    "Victor Eklund",
+    "NYI"
+   ],
+   "5302535": [
+    59,
+    0.0187,
+    "Maxim Shabanov",
+    "MIN"
+   ],
+   "5342529": [
+    82,
+    0.0176,
+    "Gavin McKenna",
+    "TOR"
+   ],
+   "5361709": [
+    33,
+    0.0219,
+    "Ivar Stenberg",
+    "SJ"
+   ],
+   "5517": [
+    67,
+    0.0183,
+    "Kyle Palmieri",
+    "NYI"
+   ],
+   "5560": [
+    77,
+    0.0179,
+    "Mats Zuccarello",
+    "LA"
+   ],
+   "5793": [
+    87,
+    0.0171,
+    "Anders Lee",
+    "UTA"
+   ],
+   "5831": [
+    22,
+    0.0239,
+    "Mikael Granlund",
+    "ANA"
+   ]
+  },
   "scorers": null
  }
 }
