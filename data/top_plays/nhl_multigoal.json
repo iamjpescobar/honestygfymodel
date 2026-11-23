@@ -9604,6 +9604,7 @@
    "why": "2.55 shots and 0.99 points a game over 102 games (this season + last, pulled toward the forward average) \u00b7 ice time 19.1 min over his last 5 vs 20.0 on his rate \u2192 shots x0.98 \u00b7 PIT matchup sets tonight's shot volume x1.05 and scoring x1.07 (in the number) \u00b7 PIT allows the 10th-most of 32 shots to centres (10.2 a game vs 9.5; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 2.62 expected shots, 1.02 expected points \u00b7 PP1 by minutes (3.1 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 0.0,
    "at_least": 2,
    "date": "2026-11-22",
    "fair": 2266,
@@ -9618,13 +9619,14 @@
    "p_cal": 0.0423,
    "player": "Jake Guentzel",
    "player_id": "3042083",
-   "result": null,
+   "result": "miss",
    "start": "2026-11-22T17:00:00-05:00",
    "stat": "g",
    "team": "TB",
    "why": "2.68 shots and 1.06 points a game over 103 games (this season + last, pulled toward the forward average) \u00b7 ice time 22.5 min over his last 5 vs 20.5 on his rate \u2192 shots x1.04 \u00b7 BUF matchup sets tonight's shot volume x1.05 and scoring x0.98 (in the number) \u00b7 BUF allows the 5th-fewest of 32 shots to centres (8.3 a game vs 9.5; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 2.95 expected shots, 1.12 expected points \u00b7 PP1 by minutes (2.4 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 1.0,
    "at_least": 2,
    "date": "2026-11-22",
    "fair": 2288,
@@ -9639,13 +9641,14 @@
    "p_cal": 0.0419,
    "player": "Nikita Kucherov",
    "player_id": "2563060",
-   "result": null,
+   "result": "miss",
    "start": "2026-11-22T17:00:00-05:00",
    "stat": "g",
    "team": "TB",
    "why": "2.99 shots and 1.54 points a game over 98 games (this season + last, pulled toward the forward average) \u00b7 ice time 20.1 min over his last 5 vs 20.5 on his rate \u2192 shots x0.99 \u00b7 BUF matchup sets tonight's shot volume x1.05 and scoring x0.98 (in the number) \u00b7 BUF allows the 2nd-most of 32 shots to wingers (12.9 a game vs 10.4; context, not in the number \u2014 the position split did not beat the team-level matchup on unseen games) \u00b7 \u2192 3.13 expected shots, 1.49 expected points \u00b7 PP1 by minutes (2.4 PP min a game over his last 5; context, not in the number)"
   },
   {
+   "actual": 2.0,
    "at_least": 2,
    "date": "2026-11-22",
    "fair": 2433,
@@ -9660,7 +9663,7 @@
    "p_cal": 0.0395,
    "player": "Tage Thompson",
    "player_id": "4024988",
-   "result": null,
+   "result": "hit",
    "start": "2026-11-22T17:00:00-05:00",
    "stat": "g",
    "team": "BUF",

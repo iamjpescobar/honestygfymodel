@@ -1,0 +1,2320 @@
+{
+  "generated_at_et": "2026-11-22 21:21",
+  "week": 11,
+  "league": {
+    "team_games": 320,
+    "td_per_point": 0.1075,
+    "points_pg": 23.1,
+    "td_pg": 2.48,
+    "ypc": 4.19,
+    "yards_per_target": 7.43,
+    "catch_rate": 0.667,
+    "carries_pg": 26.9,
+    "targets_pg": 31.4,
+    "td_per_opportunity": 0.04258,
+    "prior_strength": 315.0,
+    "prior_a": 13.4136,
+    "prior_b": 301.5957,
+    "players_fitted": 549,
+    "touches_fitted": 18670,
+    "qb_priors": {
+      "cmp": [
+        0.63692,
+        244.45
+      ],
+      "td": [
+        0.04675,
+        392.98
+      ],
+      "int": [
+        0.022,
+        2327.05
+      ]
+    },
+    "prop_spreads": {
+      "Rushing yards": {
+        "kind": "yards",
+        "cv": 0.8276,
+        "players": 213,
+        "games": 1196
+      },
+      "Carries": {
+        "kind": "count",
+        "size": 16.864,
+        "players": 220,
+        "games": 1216
+      },
+      "Receiving yards": {
+        "kind": "yards",
+        "cv": 0.872,
+        "players": 395,
+        "games": 2490
+      },
+      "Receptions": {
+        "kind": "count",
+        "size": null,
+        "players": 395,
+        "games": 2490
+      },
+      "Targets": {
+        "kind": "count",
+        "size": 190.359,
+        "players": 399,
+        "games": 2498
+      },
+      "Passing yards": {
+        "kind": "yards",
+        "cv": 0.3861,
+        "players": 53,
+        "games": 344
+      },
+      "Pass attempts": {
+        "kind": "count",
+        "size": 23.808,
+        "players": 53,
+        "games": 344
+      },
+      "Rush + rec yards": {
+        "kind": "yards",
+        "cv": 0.8078,
+        "players": 463,
+        "games": 2997
+      },
+      "Completions": {
+        "kind": "count",
+        "size": 32.604,
+        "players": 53,
+        "games": 344
+      },
+      "Passing TDs": {
+        "kind": "count",
+        "size": null,
+        "players": 46,
+        "games": 329
+      },
+      "Interceptions": {
+        "kind": "count",
+        "size": null,
+        "players": 44,
+        "games": 322
+      }
+    },
+    "prior_weights": {
+      "share": 0.5693,
+      "catch": 0.8793,
+      "ypc": 0.0063,
+      "ypt": 0.0106,
+      "td": 1.0,
+      "qb_rate": 0.3068,
+      "ypa": 0.0
+    },
+    "prior_weight_report": {
+      "share": {
+        "weight": 0.5693,
+        "n_players": 854,
+        "loglik_gain": 11422.07
+      },
+      "catch": {
+        "weight": 0.8793,
+        "n_players": 354,
+        "loglik_gain": 69.26
+      },
+      "ypc": {
+        "weight": 0.0063,
+        "n_players": 207,
+        "loglik_gain": 51.07
+      },
+      "ypt": {
+        "weight": 0.0106,
+        "n_players": 354,
+        "loglik_gain": 419.61
+      },
+      "td": {
+        "weight": 1.0,
+        "n_players": 422,
+        "loglik_gain": 12.61
+      },
+      "qb_rate": {
+        "weight": 0.3068,
+        "n_players": 168,
+        "loglik_gain": 3.16
+      },
+      "ypa": {
+        "weight": 0.0,
+        "n_players": 56,
+        "loglik_gain": 0.0
+      }
+    },
+    "prop_validation": {
+      "n": 34878,
+      "pass_yds": {
+        "n": 774,
+        "model_brier": 0.251,
+        "baseline_brier": 0.2976,
+        "verdict": {
+          "n": 774,
+          "diff": 0.04652,
+          "se": 0.00923,
+          "z": 5.04,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "10-19%",
+            "n": 4,
+            "predicted": 0.158,
+            "actual": 0.5
+          },
+          {
+            "band": "20-29%",
+            "n": 9,
+            "predicted": 0.259,
+            "actual": 0.444
+          },
+          {
+            "band": "30-39%",
+            "n": 38,
+            "predicted": 0.368,
+            "actual": 0.526
+          },
+          {
+            "band": "40-49%",
+            "n": 488,
+            "predicted": 0.461,
+            "actual": 0.486
+          },
+          {
+            "band": "50-59%",
+            "n": 108,
+            "predicted": 0.536,
+            "actual": 0.528
+          },
+          {
+            "band": "60-69%",
+            "n": 55,
+            "predicted": 0.641,
+            "actual": 0.636
+          },
+          {
+            "band": "70-79%",
+            "n": 30,
+            "predicted": 0.75,
+            "actual": 0.5
+          },
+          {
+            "band": "80-89%",
+            "n": 27,
+            "predicted": 0.853,
+            "actual": 0.778
+          },
+          {
+            "band": "90-99%",
+            "n": 15,
+            "predicted": 0.937,
+            "actual": 0.667
+          }
+        ]
+      },
+      "pass_cmp": {
+        "n": 775,
+        "model_brier": 0.2421,
+        "baseline_brier": 0.2828,
+        "verdict": {
+          "n": 775,
+          "diff": 0.04069,
+          "se": 0.00964,
+          "z": 4.22,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 3,
+            "predicted": 0.089,
+            "actual": 0.333
+          },
+          {
+            "band": "10-19%",
+            "n": 13,
+            "predicted": 0.166,
+            "actual": 0.308
+          },
+          {
+            "band": "20-29%",
+            "n": 37,
+            "predicted": 0.264,
+            "actual": 0.297
+          },
+          {
+            "band": "30-39%",
+            "n": 213,
+            "predicted": 0.356,
+            "actual": 0.427
+          },
+          {
+            "band": "40-49%",
+            "n": 279,
+            "predicted": 0.442,
+            "actual": 0.437
+          },
+          {
+            "band": "50-59%",
+            "n": 84,
+            "predicted": 0.542,
+            "actual": 0.476
+          },
+          {
+            "band": "60-69%",
+            "n": 47,
+            "predicted": 0.648,
+            "actual": 0.66
+          },
+          {
+            "band": "70-79%",
+            "n": 34,
+            "predicted": 0.746,
+            "actual": 0.618
+          },
+          {
+            "band": "80-89%",
+            "n": 24,
+            "predicted": 0.861,
+            "actual": 0.75
+          },
+          {
+            "band": "90-99%",
+            "n": 41,
+            "predicted": 0.961,
+            "actual": 0.78
+          }
+        ]
+      },
+      "pass_att": {
+        "n": 775,
+        "model_brier": 0.2504,
+        "baseline_brier": 0.2959,
+        "verdict": {
+          "n": 775,
+          "diff": 0.04554,
+          "se": 0.00964,
+          "z": 4.72,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 3,
+            "predicted": 0.073,
+            "actual": 0.333
+          },
+          {
+            "band": "10-19%",
+            "n": 8,
+            "predicted": 0.151,
+            "actual": 0.5
+          },
+          {
+            "band": "20-29%",
+            "n": 23,
+            "predicted": 0.262,
+            "actual": 0.391
+          },
+          {
+            "band": "30-39%",
+            "n": 195,
+            "predicted": 0.368,
+            "actual": 0.472
+          },
+          {
+            "band": "40-49%",
+            "n": 360,
+            "predicted": 0.44,
+            "actual": 0.447
+          },
+          {
+            "band": "50-59%",
+            "n": 57,
+            "predicted": 0.545,
+            "actual": 0.491
+          },
+          {
+            "band": "60-69%",
+            "n": 43,
+            "predicted": 0.649,
+            "actual": 0.535
+          },
+          {
+            "band": "70-79%",
+            "n": 22,
+            "predicted": 0.748,
+            "actual": 0.727
+          },
+          {
+            "band": "80-89%",
+            "n": 23,
+            "predicted": 0.845,
+            "actual": 0.652
+          },
+          {
+            "band": "90-99%",
+            "n": 41,
+            "predicted": 0.963,
+            "actual": 0.78
+          }
+        ]
+      },
+      "pass_td": {
+        "n": 775,
+        "model_brier": 0.2313,
+        "baseline_brier": 0.2841,
+        "verdict": {
+          "n": 775,
+          "diff": 0.05275,
+          "se": 0.00963,
+          "z": 5.48,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 19,
+            "predicted": 0.051,
+            "actual": 0.053
+          },
+          {
+            "band": "10-19%",
+            "n": 61,
+            "predicted": 0.165,
+            "actual": 0.213
+          },
+          {
+            "band": "20-29%",
+            "n": 97,
+            "predicted": 0.246,
+            "actual": 0.32
+          },
+          {
+            "band": "30-39%",
+            "n": 143,
+            "predicted": 0.367,
+            "actual": 0.427
+          },
+          {
+            "band": "40-49%",
+            "n": 255,
+            "predicted": 0.443,
+            "actual": 0.42
+          },
+          {
+            "band": "50-59%",
+            "n": 57,
+            "predicted": 0.528,
+            "actual": 0.614
+          },
+          {
+            "band": "60-69%",
+            "n": 27,
+            "predicted": 0.674,
+            "actual": 0.667
+          },
+          {
+            "band": "70-79%",
+            "n": 107,
+            "predicted": 0.751,
+            "actual": 0.617
+          },
+          {
+            "band": "80-89%",
+            "n": 9,
+            "predicted": 0.819,
+            "actual": 0.889
+          }
+        ]
+      },
+      "pass_int": {
+        "n": 775,
+        "model_brier": 0.2295,
+        "baseline_brier": 0.2755,
+        "verdict": {
+          "n": 775,
+          "diff": 0.04601,
+          "se": 0.00763,
+          "z": 6.03,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 22,
+            "predicted": 0.054,
+            "actual": 0.136
+          },
+          {
+            "band": "10-19%",
+            "n": 119,
+            "predicted": 0.16,
+            "actual": 0.185
+          },
+          {
+            "band": "20-29%",
+            "n": 39,
+            "predicted": 0.237,
+            "actual": 0.128
+          },
+          {
+            "band": "30-39%",
+            "n": 85,
+            "predicted": 0.366,
+            "actual": 0.506
+          },
+          {
+            "band": "40-49%",
+            "n": 379,
+            "predicted": 0.454,
+            "actual": 0.472
+          },
+          {
+            "band": "50-59%",
+            "n": 131,
+            "predicted": 0.525,
+            "actual": 0.473
+          }
+        ]
+      },
+      "rush_yds": {
+        "n": 2047,
+        "model_brier": 0.2553,
+        "baseline_brier": 0.2848,
+        "verdict": {
+          "n": 2047,
+          "diff": 0.02953,
+          "se": 0.00522,
+          "z": 5.65,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 31,
+            "predicted": 0.042,
+            "actual": 0.452
+          },
+          {
+            "band": "10-19%",
+            "n": 48,
+            "predicted": 0.159,
+            "actual": 0.458
+          },
+          {
+            "band": "20-29%",
+            "n": 64,
+            "predicted": 0.257,
+            "actual": 0.469
+          },
+          {
+            "band": "30-39%",
+            "n": 184,
+            "predicted": 0.356,
+            "actual": 0.37
+          },
+          {
+            "band": "40-49%",
+            "n": 878,
+            "predicted": 0.476,
+            "actual": 0.446
+          },
+          {
+            "band": "50-59%",
+            "n": 728,
+            "predicted": 0.517,
+            "actual": 0.433
+          },
+          {
+            "band": "60-69%",
+            "n": 88,
+            "predicted": 0.638,
+            "actual": 0.58
+          },
+          {
+            "band": "70-79%",
+            "n": 12,
+            "predicted": 0.737,
+            "actual": 0.833
+          },
+          {
+            "band": "80-89%",
+            "n": 11,
+            "predicted": 0.822,
+            "actual": 0.545
+          },
+          {
+            "band": "90-99%",
+            "n": 3,
+            "predicted": 1.0,
+            "actual": 0.667
+          }
+        ]
+      },
+      "carries": {
+        "n": 1410,
+        "model_brier": 0.2592,
+        "baseline_brier": 0.2867,
+        "verdict": {
+          "n": 1410,
+          "diff": 0.02756,
+          "se": 0.00638,
+          "z": 4.32,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 46,
+            "predicted": 0.053,
+            "actual": 0.37
+          },
+          {
+            "band": "10-19%",
+            "n": 72,
+            "predicted": 0.154,
+            "actual": 0.389
+          },
+          {
+            "band": "20-29%",
+            "n": 116,
+            "predicted": 0.259,
+            "actual": 0.353
+          },
+          {
+            "band": "30-39%",
+            "n": 226,
+            "predicted": 0.361,
+            "actual": 0.469
+          },
+          {
+            "band": "40-49%",
+            "n": 742,
+            "predicted": 0.454,
+            "actual": 0.465
+          },
+          {
+            "band": "50-59%",
+            "n": 118,
+            "predicted": 0.534,
+            "actual": 0.517
+          },
+          {
+            "band": "60-69%",
+            "n": 44,
+            "predicted": 0.653,
+            "actual": 0.341
+          },
+          {
+            "band": "70-79%",
+            "n": 27,
+            "predicted": 0.742,
+            "actual": 0.556
+          },
+          {
+            "band": "80-89%",
+            "n": 11,
+            "predicted": 0.863,
+            "actual": 0.909
+          },
+          {
+            "band": "90-99%",
+            "n": 8,
+            "predicted": 0.966,
+            "actual": 0.5
+          }
+        ]
+      },
+      "targets": {
+        "n": 5847,
+        "model_brier": 0.2429,
+        "baseline_brier": 0.2852,
+        "verdict": {
+          "n": 5847,
+          "diff": 0.04229,
+          "se": 0.00281,
+          "z": 15.04,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 172,
+            "predicted": 0.054,
+            "actual": 0.221
+          },
+          {
+            "band": "10-19%",
+            "n": 350,
+            "predicted": 0.157,
+            "actual": 0.329
+          },
+          {
+            "band": "20-29%",
+            "n": 656,
+            "predicted": 0.257,
+            "actual": 0.375
+          },
+          {
+            "band": "30-39%",
+            "n": 1401,
+            "predicted": 0.355,
+            "actual": 0.396
+          },
+          {
+            "band": "40-49%",
+            "n": 1928,
+            "predicted": 0.443,
+            "actual": 0.418
+          },
+          {
+            "band": "50-59%",
+            "n": 994,
+            "predicted": 0.529,
+            "actual": 0.52
+          },
+          {
+            "band": "60-69%",
+            "n": 185,
+            "predicted": 0.643,
+            "actual": 0.568
+          },
+          {
+            "band": "70-79%",
+            "n": 99,
+            "predicted": 0.744,
+            "actual": 0.687
+          },
+          {
+            "band": "80-89%",
+            "n": 48,
+            "predicted": 0.854,
+            "actual": 0.812
+          },
+          {
+            "band": "90-99%",
+            "n": 14,
+            "predicted": 0.93,
+            "actual": 0.714
+          }
+        ]
+      },
+      "scrim_yds": {
+        "n": 6331,
+        "model_brier": 0.251,
+        "baseline_brier": 0.2887,
+        "verdict": {
+          "n": 6331,
+          "diff": 0.03769,
+          "se": 0.00305,
+          "z": 12.36,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 21,
+            "predicted": 0.041,
+            "actual": 0.619
+          },
+          {
+            "band": "10-19%",
+            "n": 53,
+            "predicted": 0.16,
+            "actual": 0.377
+          },
+          {
+            "band": "20-29%",
+            "n": 123,
+            "predicted": 0.256,
+            "actual": 0.447
+          },
+          {
+            "band": "30-39%",
+            "n": 343,
+            "predicted": 0.358,
+            "actual": 0.411
+          },
+          {
+            "band": "40-49%",
+            "n": 2961,
+            "predicted": 0.477,
+            "actual": 0.438
+          },
+          {
+            "band": "50-59%",
+            "n": 2381,
+            "predicted": 0.52,
+            "actual": 0.45
+          },
+          {
+            "band": "60-69%",
+            "n": 265,
+            "predicted": 0.641,
+            "actual": 0.57
+          },
+          {
+            "band": "70-79%",
+            "n": 125,
+            "predicted": 0.745,
+            "actual": 0.616
+          },
+          {
+            "band": "80-89%",
+            "n": 55,
+            "predicted": 0.847,
+            "actual": 0.818
+          },
+          {
+            "band": "90-99%",
+            "n": 4,
+            "predicted": 1.0,
+            "actual": 1.0
+          }
+        ]
+      },
+      "rec_yds": {
+        "n": 5727,
+        "model_brier": 0.2554,
+        "baseline_brier": 0.2849,
+        "verdict": {
+          "n": 5727,
+          "diff": 0.02948,
+          "se": 0.00317,
+          "z": 9.3,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 117,
+            "predicted": 0.038,
+            "actual": 0.556
+          },
+          {
+            "band": "10-19%",
+            "n": 112,
+            "predicted": 0.152,
+            "actual": 0.393
+          },
+          {
+            "band": "20-29%",
+            "n": 219,
+            "predicted": 0.254,
+            "actual": 0.438
+          },
+          {
+            "band": "30-39%",
+            "n": 486,
+            "predicted": 0.359,
+            "actual": 0.409
+          },
+          {
+            "band": "40-49%",
+            "n": 2618,
+            "predicted": 0.474,
+            "actual": 0.414
+          },
+          {
+            "band": "50-59%",
+            "n": 1844,
+            "predicted": 0.521,
+            "actual": 0.453
+          },
+          {
+            "band": "60-69%",
+            "n": 210,
+            "predicted": 0.644,
+            "actual": 0.538
+          },
+          {
+            "band": "70-79%",
+            "n": 87,
+            "predicted": 0.739,
+            "actual": 0.621
+          },
+          {
+            "band": "80-89%",
+            "n": 31,
+            "predicted": 0.842,
+            "actual": 0.903
+          },
+          {
+            "band": "90-99%",
+            "n": 3,
+            "predicted": 1.0,
+            "actual": 1.0
+          }
+        ]
+      },
+      "rec": {
+        "n": 5774,
+        "model_brier": 0.2385,
+        "baseline_brier": 0.2682,
+        "verdict": {
+          "n": 5774,
+          "diff": 0.02968,
+          "se": 0.0027,
+          "z": 10.98,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 185,
+            "predicted": 0.061,
+            "actual": 0.184
+          },
+          {
+            "band": "10-19%",
+            "n": 320,
+            "predicted": 0.163,
+            "actual": 0.287
+          },
+          {
+            "band": "20-29%",
+            "n": 774,
+            "predicted": 0.254,
+            "actual": 0.349
+          },
+          {
+            "band": "30-39%",
+            "n": 1468,
+            "predicted": 0.354,
+            "actual": 0.392
+          },
+          {
+            "band": "40-49%",
+            "n": 1721,
+            "predicted": 0.444,
+            "actual": 0.441
+          },
+          {
+            "band": "50-59%",
+            "n": 1038,
+            "predicted": 0.534,
+            "actual": 0.533
+          },
+          {
+            "band": "60-69%",
+            "n": 157,
+            "predicted": 0.646,
+            "actual": 0.573
+          },
+          {
+            "band": "70-79%",
+            "n": 67,
+            "predicted": 0.749,
+            "actual": 0.657
+          },
+          {
+            "band": "80-89%",
+            "n": 29,
+            "predicted": 0.857,
+            "actual": 0.862
+          },
+          {
+            "band": "90-99%",
+            "n": 15,
+            "predicted": 0.937,
+            "actual": 0.933
+          }
+        ]
+      },
+      "td": {
+        "n": 3868,
+        "model_brier": 0.1613,
+        "baseline_brier": 0.1973,
+        "verdict": {
+          "n": 3868,
+          "diff": 0.03604,
+          "se": 0.00321,
+          "z": 11.22,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 1280,
+            "predicted": 0.064,
+            "actual": 0.116
+          },
+          {
+            "band": "10-19%",
+            "n": 1385,
+            "predicted": 0.146,
+            "actual": 0.194
+          },
+          {
+            "band": "20-29%",
+            "n": 633,
+            "predicted": 0.244,
+            "actual": 0.322
+          },
+          {
+            "band": "30-39%",
+            "n": 350,
+            "predicted": 0.344,
+            "actual": 0.354
+          },
+          {
+            "band": "40-49%",
+            "n": 122,
+            "predicted": 0.451,
+            "actual": 0.459
+          },
+          {
+            "band": "50-59%",
+            "n": 69,
+            "predicted": 0.539,
+            "actual": 0.565
+          },
+          {
+            "band": "60-69%",
+            "n": 25,
+            "predicted": 0.648,
+            "actual": 0.76
+          },
+          {
+            "band": "70-79%",
+            "n": 4,
+            "predicted": 0.719,
+            "actual": 0.75
+          }
+        ]
+      },
+      "matchup": {
+        "rush": {
+          "strength": 0.0,
+          "fitted": 0.5,
+          "n_train": 584,
+          "n": 1463,
+          "verdict": {
+            "n": 1463,
+            "diff": -0.00132,
+            "se": 0.00419,
+            "z": -0.31,
+            "verdict": "fails"
+          },
+          "in_number": false
+        },
+        "rec": {
+          "strength": 0.0,
+          "fitted": 0.5,
+          "n_train": 3255,
+          "n": 8246,
+          "verdict": {
+            "n": 8246,
+            "diff": -4e-05,
+            "se": 0.00071,
+            "z": -0.06,
+            "verdict": "fails"
+          },
+          "in_number": false
+        },
+        "pass": {
+          "strength": 0.0,
+          "fitted": 0.0,
+          "n_train": 231,
+          "n": 0,
+          "verdict": {
+            "verdict": null
+          },
+          "in_number": false
+        }
+      },
+      "matchup_in_number": {
+        "rush": false,
+        "rec": false,
+        "pass": false
+      },
+      "matchup_strength": {
+        "rush": 0.0,
+        "rec": 0.0,
+        "pass": 0.0
+      },
+      "weeks": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "seasons": {
+        "prior_rows": 21599,
+        "current_rows": 13279
+      }
+    },
+    "matchup_in_number": {
+      "rush": false,
+      "rec": false,
+      "pass": false
+    },
+    "matchup_strength": {
+      "rush": 0.0,
+      "rec": 0.0,
+      "pass": 0.0
+    }
+  },
+  "markets": {
+    "Anytime TD": [
+      {
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 53,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ja'Marr Chase",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 48,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tee Higgins",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 42,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 35,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Stefon Diggs",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 31,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Samaje Perine",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 30,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Austin Ekeler",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 28,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Antonio Williams",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 20,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mike Gesicki",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 19,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chig Okonkwo",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 18,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dohnte Meyers",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 16,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Van Jefferson",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 16,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mitchell Tinsley",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 15,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Treylon Burks",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 15,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tahj Brooks",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 13,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Craig Reynolds",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 11,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drew Sample",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 10,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ben Sinnott",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 9,
+        "window": "Monday Night"
+      }
+    ],
+    "Rushing yards": [
+      {
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 50.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 7,
+        "proj": 44.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 32.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Samaje Perine",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 21.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Austin Ekeler",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 20.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Athan Kaliakmanis",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 19.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tahj Brooks",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 7.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Joe Burrow",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 6.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Craig Reynolds",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 5.2,
+        "window": "Monday Night"
+      }
+    ],
+    "Carries": [
+      {
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 12.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 7.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Austin Ekeler",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 6.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Samaje Perine",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 5.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tahj Brooks",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 2.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Craig Reynolds",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 2.6,
+        "window": "Monday Night"
+      }
+    ],
+    "Receiving yards": [
+      {
+        "player": "Ja'Marr Chase",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 116.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tee Higgins",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 86.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Stefon Diggs",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 45.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Treylon Burks",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 37.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Antonio Williams",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 36.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chig Okonkwo",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 34.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mike Gesicki",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 28.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dohnte Meyers",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 28.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Van Jefferson",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 27.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 26.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mitchell Tinsley",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 20.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ben Sinnott",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 16.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 15.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Austin Ekeler",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 13.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drew Sample",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 11.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Samaje Perine",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 8.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tahj Brooks",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 0.9,
+        "window": "Monday Night"
+      }
+    ],
+    "Receptions": [
+      {
+        "player": "Ja'Marr Chase",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 7.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tee Higgins",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 5.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Stefon Diggs",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 5.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 4.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chig Okonkwo",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 3.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Antonio Williams",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 3.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dohnte Meyers",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 2.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mike Gesicki",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 2.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 2.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Van Jefferson",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 2.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Treylon Burks",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 1.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ben Sinnott",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 1.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Austin Ekeler",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 1.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drew Sample",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 1.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Samaje Perine",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 1.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mitchell Tinsley",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 1.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tahj Brooks",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 0.1,
+        "window": "Monday Night"
+      }
+    ],
+    "Targets": [
+      {
+        "player": "Ja'Marr Chase",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 11.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tee Higgins",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 7.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Stefon Diggs",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 6.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 5.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chig Okonkwo",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 5.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Antonio Williams",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 4.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Van Jefferson",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 3.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Treylon Burks",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 3.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dohnte Meyers",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 3.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mike Gesicki",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 3.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mitchell Tinsley",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 3.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 2.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Austin Ekeler",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 2.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ben Sinnott",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 2.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drew Sample",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 2.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Samaje Perine",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 1.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tahj Brooks",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 0.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Craig Reynolds",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 0.0,
+        "window": "Monday Night"
+      }
+    ],
+    "Passing yards": [
+      {
+        "player": "Joe Burrow",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 309.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 7,
+        "proj": 219.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Athan Kaliakmanis",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 176.0,
+        "window": "Monday Night"
+      }
+    ],
+    "Pass attempts": [
+      {
+        "player": "Joe Burrow",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 37.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Athan Kaliakmanis",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 31.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 7,
+        "proj": 31.2,
+        "window": "Monday Night"
+      }
+    ],
+    "Rush + rec yards": [
+      {
+        "player": "Ja'Marr Chase",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 116.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tee Higgins",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 86.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 76.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 48.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Stefon Diggs",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 45.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Treylon Burks",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 37.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Antonio Williams",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 36.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Austin Ekeler",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 34.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chig Okonkwo",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 34.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dohnte Meyers",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 29.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Samaje Perine",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 29.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mike Gesicki",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 28.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Van Jefferson",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 27.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mitchell Tinsley",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 20.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ben Sinnott",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 16.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drew Sample",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 11.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tahj Brooks",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 8.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Craig Reynolds",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 5.2,
+        "window": "Monday Night"
+      }
+    ],
+    "Completions": [
+      {
+        "player": "Joe Burrow",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 25.81,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 7,
+        "proj": 19.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Athan Kaliakmanis",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 19.2,
+        "window": "Monday Night"
+      }
+    ],
+    "Passing TDs": [
+      {
+        "player": "Joe Burrow",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 2.37,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 7,
+        "proj": 1.45,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Athan Kaliakmanis",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 1.42,
+        "window": "Monday Night"
+      }
+    ],
+    "Interceptions": [
+      {
+        "player": "Joe Burrow",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 0.79,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Athan Kaliakmanis",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 0.69,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 7,
+        "proj": 0.65,
+        "window": "Monday Night"
+      }
+    ],
+    "2+ TDs": [
+      {
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 17.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ja'Marr Chase",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 14.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tee Higgins",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 10.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 7.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Stefon Diggs",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 5.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Samaje Perine",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 5.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Austin Ekeler",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 4.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Antonio Williams",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 2.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mike Gesicki",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 2.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chig Okonkwo",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "TE",
+        "gp": 7,
+        "proj": 1.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Dohnte Meyers",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 1.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Van Jefferson",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 1.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Treylon Burks",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 1.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mitchell Tinsley",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 1.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Tahj Brooks",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 2,
+        "proj": 0.9,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Craig Reynolds",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 1,
+        "proj": 0.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drew Sample",
+        "team": "CIN",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 4,
+        "proj": 0.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Ben Sinnott",
+        "team": "WSH",
+        "opp": "CIN",
+        "pos": "TE",
+        "gp": 3,
+        "proj": 0.4,
+        "window": "Monday Night"
+      }
+    ]
+  }
+}
