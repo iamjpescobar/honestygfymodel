@@ -223,8 +223,11 @@ def project_player(p, team, opp, league, implied_pts):
     # and spikes, which is why this says "attempts" and not "dropbacks").
     if p.get("role") == "QB" and team_tgt:
         out["pass_att"] = round(team_tgt, 1)
-        ypa = ((p.get("pass_yds") / p.get("pass_att"))
-               if p.get("pass_att") else None)
+        # 11-22: a quarterback can carry attempts with NO passing yards in
+        # the feed (a backup's line, a partial box) — missing is not zero,
+        # so no yards-per-attempt and no passing-yards projection for him
+        ypa = ((p["pass_yds"] / p["pass_att"])
+               if p.get("pass_att") and p.get("pass_yds") is not None else None)
         if ypa:
             out["ypa_adj"] = round(ypa * pass_mult, 2)
             out["pass_yds"] = round(out["pass_att"] * out["ypa_adj"], 1)

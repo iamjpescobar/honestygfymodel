@@ -154,6 +154,23 @@ shuffled last season earns nothing.
 
 ---
 
+## PICK UP HERE — NFL Projections and NFL Simulator crashed on a quarterback with pass attempts but no passing yards (TypeError None / float); fixed: no yards-per-attempt when either piece is missing. 2026-11-22
+
+Izzy (11-22, Sunday): NFL Projections (Rushing yards) and the NFL
+Simulator (MIN @ SF) showed "TypeError: unsupported operand type(s) for /:
+'NoneType' and 'float'" at nfl_projection.project_player line 226,
+ypa = p.get("pass_yds") / p.get("pass_att"). One QB in the feed carried
+attempts with no yards; every page projecting a whole roster
+(projection_rows, nfl_sim, model_view, edge_boards) died on him.
+
+**Now:** ypa only when pass_att is truthy AND pass_yds is not None — no
+passing-yards projection for that QB (missing is not zero), the rest of
+his line and every other player unchanged.
+
+Tests: test_nfl_qb_missing_yards. Control red: the old division.
+
+---
+
 ## PICK UP HERE — Bet Finder: markets that have not beaten DraftKings are priced at DK's own no-vig chance (bets = a better price than DK's fair one); NHL audit — every NHL prop market behind or even with DK, letters don't sort results on DK lines, game picks not logged since 10-04. 2026-11-03
 
 Izzy (11-03, NHL-only night): "check Bet Finder, models and all of the NHL
@@ -717,58 +734,3 @@ x1.13-1.23 on one night: watch before touching.
 
 FILES: app/engines/nba_context.py, nba_precompute.py,
 tests/test_nba_context.py, HANDOFF.md, HANDOFF_ARCHIVE.md
-
----
-
-## PICK UP HERE — Speed and space audit: finished games fetched once, NPB fails fast, prop day files kept 14 days, First Basket / UFC stop waiting on the network one call at a time. 2026-10-26 (4)
-
-**Suite 174, FAILING: none.** New tests/test_summary_cache.py (controls
-red: a final served 2 h after it started; a game in progress kept; a
-20-day file still waiting to be graded dropped). tests/test_ufc.py +1
-(control red: one worker). tests/test_nba_first_confirmed.py +2 (control
-red: lineup window always open).
-
-MEASURED 10-26:
-  Repo: 40 MB tracked, .git pack 10 MB. Biggest: hr_research ndjson
-  (13 MB, ~6 MB a month while MLB plays), prior-season files (1-2 MB each,
-  fixed), data/props day files 3.5 MB and ~1.5 MB more a day (each run
-  rewrites today's). Two stale uploads tracked at the root:
-  loscappers-full-batch.zip, loscappers-prop-colours.zip (*.zip is in
-  .gitignore; they came in through "Add files via upload").
-  Published archive: 45 MB gz / 104 MB (95 MB = 2,603 Statcast parquet
-  files; payload JSONs 1-2 MB each). Left alone (MLB pages read it).
-  Nightly 10 AM: 35 min. NHL 9.1 (every final of the season re-fetched
-  every run), NPB 5.1 (npb.jp ConnectTimeout x ~14 at 25 s), tests 7.7,
-  MLB statcast 4.3, NBA 3.1.
-  Every page rendered on the real archive (AppTest, 41 views), no
-  exception. Slow only where the page calls the network as you wait:
-  First Basket 33.8 s (one ESPN summary per slate game, every game), UFC
-  7.7 s (~26 calls one after another); NHL / NFL Tonight ~5 s (live
-  injury feed; this sandbox has no network, so those are upper bounds).
-
-CHANGES:
-  espn_feed.fetch_summary: with ESPN_SUMMARY_CACHE set (nightly only), a
-  FINAL fetched 36+ h after its start is kept gzipped and reused; anything
-  else fetched live; only for the real fetcher (a test's fake never
-  writes it). nightly-data.yml: env PYTHONUNBUFFERED=1 +
-  ESPN_SUMMARY_CACHE, an actions/cache@v4 step (continue-on-error) for
-  .cache/espn-summaries; .gitignore .cache/.
-  npb_precompute._npb_get: connect timeout 8 s; the first connection
-  failure marks npb.jp down for the run.
-  book_props_snapshot.prune: day files dropped at 14 days when nothing
-  in them waits to be graded, at 30 days regardless (graded rows stay in
-  data/props/graded); prints "[verify] BOOK PROPS: N day files ... removed".
-  First Basket: ESPN asked only for games within 2.5 h of tip
-  (nba_first.lineup_window), all at once (8 threads, 6 s timeout, one try).
-  ufc.build: fight odds fetched side by side (8 threads).
-NEXT: read the first nightly after this: the NHL / NBA / NFL steps should
-drop to minutes once the cache is warm (the first run after it still
-fetches everything); NPB ~10 s. With PYTHONUNBUFFERED, the NHL step's
-own slow parts become visible if it is still long.
-
-FILES: app/engines/espn_feed.py, npb_precompute.py, book_props_snapshot.py,
-.github/workflows/nightly-data.yml, .gitignore, app/engines/nba_first.py,
-app/views/NBA_First_Basket.py, app/engines/ufc.py,
-tests/test_summary_cache.py (NEW), tests/test_ufc.py,
-tests/test_nba_first_confirmed.py, HANDOFF.md, HANDOFF_ARCHIVE.md;
-removed: loscappers-full-batch.zip, loscappers-prop-colours.zip
