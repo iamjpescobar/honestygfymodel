@@ -1,0 +1,5776 @@
+{
+  "generated_at_et": "2026-11-25 13:22",
+  "week": 12,
+  "league": {
+    "team_games": 324,
+    "td_per_point": 0.1074,
+    "points_pg": 23.1,
+    "td_pg": 2.48,
+    "ypc": 4.19,
+    "yards_per_target": 7.44,
+    "catch_rate": 0.668,
+    "carries_pg": 26.8,
+    "targets_pg": 31.5,
+    "td_per_opportunity": 0.04249,
+    "prior_strength": 299.0,
+    "prior_a": 12.7064,
+    "prior_b": 286.3137,
+    "players_fitted": 549,
+    "touches_fitted": 18897,
+    "qb_priors": {
+      "cmp": [
+        0.63783,
+        232.74
+      ],
+      "td": [
+        0.04658,
+        395.99
+      ],
+      "int": [
+        0.02179,
+        1746.33
+      ]
+    },
+    "prop_spreads": {
+      "Rushing yards": {
+        "kind": "yards",
+        "cv": 0.8299,
+        "players": 213,
+        "games": 1209
+      },
+      "Carries": {
+        "kind": "count",
+        "size": 16.988,
+        "players": 221,
+        "games": 1232
+      },
+      "Receiving yards": {
+        "kind": "yards",
+        "cv": 0.8731,
+        "players": 396,
+        "games": 2526
+      },
+      "Receptions": {
+        "kind": "count",
+        "size": null,
+        "players": 396,
+        "games": 2526
+      },
+      "Targets": {
+        "kind": "count",
+        "size": 144.133,
+        "players": 400,
+        "games": 2534
+      },
+      "Passing yards": {
+        "kind": "yards",
+        "cv": 0.3864,
+        "players": 53,
+        "games": 349
+      },
+      "Pass attempts": {
+        "kind": "count",
+        "size": 23.979,
+        "players": 53,
+        "games": 349
+      },
+      "Rush + rec yards": {
+        "kind": "yards",
+        "cv": 0.8088,
+        "players": 464,
+        "games": 3037
+      },
+      "Completions": {
+        "kind": "count",
+        "size": 33.482,
+        "players": 53,
+        "games": 349
+      },
+      "Passing TDs": {
+        "kind": "count",
+        "size": null,
+        "players": 46,
+        "games": 334
+      },
+      "Interceptions": {
+        "kind": "count",
+        "size": null,
+        "players": 44,
+        "games": 327
+      }
+    },
+    "prior_weights": {
+      "share": 0.5647,
+      "catch": 0.8777,
+      "ypc": 0.007,
+      "ypt": 0.0102,
+      "td": 1.0,
+      "qb_rate": 0.328,
+      "ypa": 0.0
+    },
+    "prior_weight_report": {
+      "share": {
+        "weight": 0.5647,
+        "n_players": 854,
+        "loglik_gain": 11535.53
+      },
+      "catch": {
+        "weight": 0.8777,
+        "n_players": 354,
+        "loglik_gain": 68.94
+      },
+      "ypc": {
+        "weight": 0.007,
+        "n_players": 207,
+        "loglik_gain": 52.82
+      },
+      "ypt": {
+        "weight": 0.0102,
+        "n_players": 354,
+        "loglik_gain": 411.16
+      },
+      "td": {
+        "weight": 1.0,
+        "n_players": 422,
+        "loglik_gain": 13.63
+      },
+      "qb_rate": {
+        "weight": 0.328,
+        "n_players": 171,
+        "loglik_gain": 3.5
+      },
+      "ypa": {
+        "weight": 0.0,
+        "n_players": 57,
+        "loglik_gain": 0.0
+      }
+    },
+    "prop_validation": {
+      "n": 35099,
+      "pass_yds": {
+        "n": 779,
+        "model_brier": 0.251,
+        "baseline_brier": 0.2972,
+        "verdict": {
+          "n": 779,
+          "diff": 0.04619,
+          "se": 0.00917,
+          "z": 5.04,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "10-19%",
+            "n": 4,
+            "predicted": 0.158,
+            "actual": 0.5
+          },
+          {
+            "band": "20-29%",
+            "n": 10,
+            "predicted": 0.255,
+            "actual": 0.4
+          },
+          {
+            "band": "30-39%",
+            "n": 38,
+            "predicted": 0.368,
+            "actual": 0.526
+          },
+          {
+            "band": "40-49%",
+            "n": 490,
+            "predicted": 0.461,
+            "actual": 0.484
+          },
+          {
+            "band": "50-59%",
+            "n": 109,
+            "predicted": 0.536,
+            "actual": 0.532
+          },
+          {
+            "band": "60-69%",
+            "n": 56,
+            "predicted": 0.642,
+            "actual": 0.625
+          },
+          {
+            "band": "70-79%",
+            "n": 30,
+            "predicted": 0.749,
+            "actual": 0.5
+          },
+          {
+            "band": "80-89%",
+            "n": 27,
+            "predicted": 0.852,
+            "actual": 0.778
+          },
+          {
+            "band": "90-99%",
+            "n": 15,
+            "predicted": 0.937,
+            "actual": 0.667
+          }
+        ]
+      },
+      "pass_cmp": {
+        "n": 780,
+        "model_brier": 0.2435,
+        "baseline_brier": 0.2832,
+        "verdict": {
+          "n": 780,
+          "diff": 0.03963,
+          "se": 0.00961,
+          "z": 4.12,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 3,
+            "predicted": 0.088,
+            "actual": 0.333
+          },
+          {
+            "band": "10-19%",
+            "n": 15,
+            "predicted": 0.166,
+            "actual": 0.4
+          },
+          {
+            "band": "20-29%",
+            "n": 36,
+            "predicted": 0.265,
+            "actual": 0.278
+          },
+          {
+            "band": "30-39%",
+            "n": 216,
+            "predicted": 0.356,
+            "actual": 0.426
+          },
+          {
+            "band": "40-49%",
+            "n": 278,
+            "predicted": 0.442,
+            "actual": 0.439
+          },
+          {
+            "band": "50-59%",
+            "n": 84,
+            "predicted": 0.542,
+            "actual": 0.476
+          },
+          {
+            "band": "60-69%",
+            "n": 48,
+            "predicted": 0.648,
+            "actual": 0.667
+          },
+          {
+            "band": "70-79%",
+            "n": 34,
+            "predicted": 0.747,
+            "actual": 0.618
+          },
+          {
+            "band": "80-89%",
+            "n": 24,
+            "predicted": 0.862,
+            "actual": 0.75
+          },
+          {
+            "band": "90-99%",
+            "n": 42,
+            "predicted": 0.96,
+            "actual": 0.762
+          }
+        ]
+      },
+      "pass_att": {
+        "n": 780,
+        "model_brier": 0.2514,
+        "baseline_brier": 0.2957,
+        "verdict": {
+          "n": 780,
+          "diff": 0.04426,
+          "se": 0.00961,
+          "z": 4.6,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 3,
+            "predicted": 0.073,
+            "actual": 0.333
+          },
+          {
+            "band": "10-19%",
+            "n": 9,
+            "predicted": 0.151,
+            "actual": 0.556
+          },
+          {
+            "band": "20-29%",
+            "n": 23,
+            "predicted": 0.261,
+            "actual": 0.391
+          },
+          {
+            "band": "30-39%",
+            "n": 195,
+            "predicted": 0.368,
+            "actual": 0.472
+          },
+          {
+            "band": "40-49%",
+            "n": 362,
+            "predicted": 0.44,
+            "actual": 0.448
+          },
+          {
+            "band": "50-59%",
+            "n": 58,
+            "predicted": 0.544,
+            "actual": 0.5
+          },
+          {
+            "band": "60-69%",
+            "n": 43,
+            "predicted": 0.65,
+            "actual": 0.535
+          },
+          {
+            "band": "70-79%",
+            "n": 23,
+            "predicted": 0.749,
+            "actual": 0.696
+          },
+          {
+            "band": "80-89%",
+            "n": 23,
+            "predicted": 0.845,
+            "actual": 0.652
+          },
+          {
+            "band": "90-99%",
+            "n": 41,
+            "predicted": 0.963,
+            "actual": 0.78
+          }
+        ]
+      },
+      "pass_td": {
+        "n": 780,
+        "model_brier": 0.231,
+        "baseline_brier": 0.2837,
+        "verdict": {
+          "n": 780,
+          "diff": 0.05267,
+          "se": 0.00958,
+          "z": 5.5,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 19,
+            "predicted": 0.051,
+            "actual": 0.053
+          },
+          {
+            "band": "10-19%",
+            "n": 62,
+            "predicted": 0.165,
+            "actual": 0.21
+          },
+          {
+            "band": "20-29%",
+            "n": 99,
+            "predicted": 0.245,
+            "actual": 0.323
+          },
+          {
+            "band": "30-39%",
+            "n": 144,
+            "predicted": 0.367,
+            "actual": 0.424
+          },
+          {
+            "band": "40-49%",
+            "n": 256,
+            "predicted": 0.443,
+            "actual": 0.418
+          },
+          {
+            "band": "50-59%",
+            "n": 57,
+            "predicted": 0.528,
+            "actual": 0.614
+          },
+          {
+            "band": "60-69%",
+            "n": 27,
+            "predicted": 0.674,
+            "actual": 0.667
+          },
+          {
+            "band": "70-79%",
+            "n": 107,
+            "predicted": 0.751,
+            "actual": 0.617
+          },
+          {
+            "band": "80-89%",
+            "n": 9,
+            "predicted": 0.819,
+            "actual": 0.889
+          }
+        ]
+      },
+      "pass_int": {
+        "n": 780,
+        "model_brier": 0.2297,
+        "baseline_brier": 0.2745,
+        "verdict": {
+          "n": 780,
+          "diff": 0.04476,
+          "se": 0.0076,
+          "z": 5.89,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 22,
+            "predicted": 0.053,
+            "actual": 0.136
+          },
+          {
+            "band": "10-19%",
+            "n": 119,
+            "predicted": 0.16,
+            "actual": 0.185
+          },
+          {
+            "band": "20-29%",
+            "n": 39,
+            "predicted": 0.237,
+            "actual": 0.128
+          },
+          {
+            "band": "30-39%",
+            "n": 86,
+            "predicted": 0.367,
+            "actual": 0.512
+          },
+          {
+            "band": "40-49%",
+            "n": 383,
+            "predicted": 0.454,
+            "actual": 0.47
+          },
+          {
+            "band": "50-59%",
+            "n": 131,
+            "predicted": 0.526,
+            "actual": 0.466
+          }
+        ]
+      },
+      "rush_yds": {
+        "n": 2058,
+        "model_brier": 0.2551,
+        "baseline_brier": 0.2851,
+        "verdict": {
+          "n": 2058,
+          "diff": 0.02998,
+          "se": 0.0052,
+          "z": 5.76,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 31,
+            "predicted": 0.042,
+            "actual": 0.452
+          },
+          {
+            "band": "10-19%",
+            "n": 47,
+            "predicted": 0.16,
+            "actual": 0.447
+          },
+          {
+            "band": "20-29%",
+            "n": 65,
+            "predicted": 0.257,
+            "actual": 0.462
+          },
+          {
+            "band": "30-39%",
+            "n": 187,
+            "predicted": 0.356,
+            "actual": 0.374
+          },
+          {
+            "band": "40-49%",
+            "n": 881,
+            "predicted": 0.476,
+            "actual": 0.446
+          },
+          {
+            "band": "50-59%",
+            "n": 734,
+            "predicted": 0.517,
+            "actual": 0.431
+          },
+          {
+            "band": "60-69%",
+            "n": 85,
+            "predicted": 0.637,
+            "actual": 0.6
+          },
+          {
+            "band": "70-79%",
+            "n": 14,
+            "predicted": 0.732,
+            "actual": 0.786
+          },
+          {
+            "band": "80-89%",
+            "n": 11,
+            "predicted": 0.823,
+            "actual": 0.545
+          },
+          {
+            "band": "90-99%",
+            "n": 3,
+            "predicted": 1.0,
+            "actual": 0.667
+          }
+        ]
+      },
+      "carries": {
+        "n": 1418,
+        "model_brier": 0.259,
+        "baseline_brier": 0.2865,
+        "verdict": {
+          "n": 1418,
+          "diff": 0.02758,
+          "se": 0.00635,
+          "z": 4.35,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 46,
+            "predicted": 0.053,
+            "actual": 0.37
+          },
+          {
+            "band": "10-19%",
+            "n": 72,
+            "predicted": 0.154,
+            "actual": 0.389
+          },
+          {
+            "band": "20-29%",
+            "n": 117,
+            "predicted": 0.259,
+            "actual": 0.35
+          },
+          {
+            "band": "30-39%",
+            "n": 227,
+            "predicted": 0.361,
+            "actual": 0.467
+          },
+          {
+            "band": "40-49%",
+            "n": 746,
+            "predicted": 0.454,
+            "actual": 0.464
+          },
+          {
+            "band": "50-59%",
+            "n": 119,
+            "predicted": 0.534,
+            "actual": 0.521
+          },
+          {
+            "band": "60-69%",
+            "n": 44,
+            "predicted": 0.653,
+            "actual": 0.341
+          },
+          {
+            "band": "70-79%",
+            "n": 28,
+            "predicted": 0.741,
+            "actual": 0.536
+          },
+          {
+            "band": "80-89%",
+            "n": 11,
+            "predicted": 0.864,
+            "actual": 0.909
+          },
+          {
+            "band": "90-99%",
+            "n": 8,
+            "predicted": 0.965,
+            "actual": 0.5
+          }
+        ]
+      },
+      "targets": {
+        "n": 5882,
+        "model_brier": 0.2427,
+        "baseline_brier": 0.2851,
+        "verdict": {
+          "n": 5882,
+          "diff": 0.04232,
+          "se": 0.0028,
+          "z": 15.13,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 173,
+            "predicted": 0.055,
+            "actual": 0.22
+          },
+          {
+            "band": "10-19%",
+            "n": 349,
+            "predicted": 0.157,
+            "actual": 0.327
+          },
+          {
+            "band": "20-29%",
+            "n": 654,
+            "predicted": 0.256,
+            "actual": 0.375
+          },
+          {
+            "band": "30-39%",
+            "n": 1426,
+            "predicted": 0.355,
+            "actual": 0.396
+          },
+          {
+            "band": "40-49%",
+            "n": 1935,
+            "predicted": 0.442,
+            "actual": 0.418
+          },
+          {
+            "band": "50-59%",
+            "n": 999,
+            "predicted": 0.529,
+            "actual": 0.519
+          },
+          {
+            "band": "60-69%",
+            "n": 183,
+            "predicted": 0.642,
+            "actual": 0.568
+          },
+          {
+            "band": "70-79%",
+            "n": 100,
+            "predicted": 0.743,
+            "actual": 0.68
+          },
+          {
+            "band": "80-89%",
+            "n": 49,
+            "predicted": 0.853,
+            "actual": 0.837
+          },
+          {
+            "band": "90-99%",
+            "n": 14,
+            "predicted": 0.929,
+            "actual": 0.714
+          }
+        ]
+      },
+      "scrim_yds": {
+        "n": 6367,
+        "model_brier": 0.251,
+        "baseline_brier": 0.2886,
+        "verdict": {
+          "n": 6367,
+          "diff": 0.03757,
+          "se": 0.00303,
+          "z": 12.38,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 21,
+            "predicted": 0.042,
+            "actual": 0.619
+          },
+          {
+            "band": "10-19%",
+            "n": 52,
+            "predicted": 0.16,
+            "actual": 0.385
+          },
+          {
+            "band": "20-29%",
+            "n": 119,
+            "predicted": 0.255,
+            "actual": 0.437
+          },
+          {
+            "band": "30-39%",
+            "n": 350,
+            "predicted": 0.358,
+            "actual": 0.417
+          },
+          {
+            "band": "40-49%",
+            "n": 2978,
+            "predicted": 0.477,
+            "actual": 0.436
+          },
+          {
+            "band": "50-59%",
+            "n": 2396,
+            "predicted": 0.52,
+            "actual": 0.451
+          },
+          {
+            "band": "60-69%",
+            "n": 266,
+            "predicted": 0.64,
+            "actual": 0.568
+          },
+          {
+            "band": "70-79%",
+            "n": 128,
+            "predicted": 0.745,
+            "actual": 0.625
+          },
+          {
+            "band": "80-89%",
+            "n": 53,
+            "predicted": 0.848,
+            "actual": 0.811
+          },
+          {
+            "band": "90-99%",
+            "n": 4,
+            "predicted": 1.0,
+            "actual": 1.0
+          }
+        ]
+      },
+      "rec_yds": {
+        "n": 5762,
+        "model_brier": 0.2555,
+        "baseline_brier": 0.2848,
+        "verdict": {
+          "n": 5762,
+          "diff": 0.02934,
+          "se": 0.00315,
+          "z": 9.3,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 117,
+            "predicted": 0.038,
+            "actual": 0.556
+          },
+          {
+            "band": "10-19%",
+            "n": 112,
+            "predicted": 0.151,
+            "actual": 0.393
+          },
+          {
+            "band": "20-29%",
+            "n": 221,
+            "predicted": 0.254,
+            "actual": 0.439
+          },
+          {
+            "band": "30-39%",
+            "n": 486,
+            "predicted": 0.359,
+            "actual": 0.409
+          },
+          {
+            "band": "40-49%",
+            "n": 2642,
+            "predicted": 0.474,
+            "actual": 0.414
+          },
+          {
+            "band": "50-59%",
+            "n": 1850,
+            "predicted": 0.521,
+            "actual": 0.455
+          },
+          {
+            "band": "60-69%",
+            "n": 215,
+            "predicted": 0.644,
+            "actual": 0.54
+          },
+          {
+            "band": "70-79%",
+            "n": 85,
+            "predicted": 0.738,
+            "actual": 0.612
+          },
+          {
+            "band": "80-89%",
+            "n": 31,
+            "predicted": 0.841,
+            "actual": 0.903
+          },
+          {
+            "band": "90-99%",
+            "n": 3,
+            "predicted": 1.0,
+            "actual": 1.0
+          }
+        ]
+      },
+      "rec": {
+        "n": 5809,
+        "model_brier": 0.2386,
+        "baseline_brier": 0.2682,
+        "verdict": {
+          "n": 5809,
+          "diff": 0.02964,
+          "se": 0.00269,
+          "z": 11.01,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 185,
+            "predicted": 0.061,
+            "actual": 0.184
+          },
+          {
+            "band": "10-19%",
+            "n": 320,
+            "predicted": 0.163,
+            "actual": 0.287
+          },
+          {
+            "band": "20-29%",
+            "n": 783,
+            "predicted": 0.254,
+            "actual": 0.349
+          },
+          {
+            "band": "30-39%",
+            "n": 1480,
+            "predicted": 0.354,
+            "actual": 0.392
+          },
+          {
+            "band": "40-49%",
+            "n": 1728,
+            "predicted": 0.444,
+            "actual": 0.441
+          },
+          {
+            "band": "50-59%",
+            "n": 1043,
+            "predicted": 0.534,
+            "actual": 0.532
+          },
+          {
+            "band": "60-69%",
+            "n": 159,
+            "predicted": 0.646,
+            "actual": 0.572
+          },
+          {
+            "band": "70-79%",
+            "n": 67,
+            "predicted": 0.749,
+            "actual": 0.657
+          },
+          {
+            "band": "80-89%",
+            "n": 29,
+            "predicted": 0.857,
+            "actual": 0.862
+          },
+          {
+            "band": "90-99%",
+            "n": 15,
+            "predicted": 0.937,
+            "actual": 0.933
+          }
+        ]
+      },
+      "td": {
+        "n": 3904,
+        "model_brier": 0.161,
+        "baseline_brier": 0.1971,
+        "verdict": {
+          "n": 3904,
+          "diff": 0.03604,
+          "se": 0.00319,
+          "z": 11.28,
+          "verdict": "beats"
+        },
+        "calibration": [
+          {
+            "band": "0-9%",
+            "n": 1294,
+            "predicted": 0.064,
+            "actual": 0.116
+          },
+          {
+            "band": "10-19%",
+            "n": 1396,
+            "predicted": 0.146,
+            "actual": 0.193
+          },
+          {
+            "band": "20-29%",
+            "n": 640,
+            "predicted": 0.244,
+            "actual": 0.323
+          },
+          {
+            "band": "30-39%",
+            "n": 351,
+            "predicted": 0.344,
+            "actual": 0.356
+          },
+          {
+            "band": "40-49%",
+            "n": 124,
+            "predicted": 0.451,
+            "actual": 0.452
+          },
+          {
+            "band": "50-59%",
+            "n": 70,
+            "predicted": 0.539,
+            "actual": 0.571
+          },
+          {
+            "band": "60-69%",
+            "n": 25,
+            "predicted": 0.648,
+            "actual": 0.76
+          },
+          {
+            "band": "70-79%",
+            "n": 4,
+            "predicted": 0.719,
+            "actual": 0.75
+          }
+        ]
+      },
+      "matchup": {
+        "rush": {
+          "strength": 0.0,
+          "fitted": 0.5,
+          "n_train": 584,
+          "n": 1474,
+          "verdict": {
+            "n": 1474,
+            "diff": -0.0008,
+            "se": 0.00414,
+            "z": -0.19,
+            "verdict": "fails"
+          },
+          "in_number": false
+        },
+        "rec": {
+          "strength": 0.0,
+          "fitted": 0.5,
+          "n_train": 3255,
+          "n": 8316,
+          "verdict": {
+            "n": 8316,
+            "diff": 0.00112,
+            "se": 0.00137,
+            "z": 0.82,
+            "verdict": "thin"
+          },
+          "in_number": false
+        },
+        "pass": {
+          "strength": 0.0,
+          "fitted": 0.0,
+          "n_train": 231,
+          "n": 0,
+          "verdict": {
+            "verdict": null
+          },
+          "in_number": false
+        }
+      },
+      "matchup_in_number": {
+        "rush": false,
+        "rec": false,
+        "pass": false
+      },
+      "matchup_strength": {
+        "rush": 0.0,
+        "rec": 0.0,
+        "pass": 0.0
+      },
+      "weeks": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "seasons": {
+        "prior_rows": 21599,
+        "current_rows": 13500
+      }
+    },
+    "matchup_in_number": {
+      "rush": false,
+      "rec": false,
+      "pass": false
+    },
+    "matchup_strength": {
+      "rush": 0.0,
+      "rec": 0.0,
+      "pass": 0.0
+    }
+  },
+  "markets": {
+    "Anytime TD": [
+      {
+        "player": "Jahmyr Gibbs",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 67,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Javonte Williams",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 61,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Jonathan Taylor",
+        "team": "IND",
+        "opp": "NYG",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 61,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 57,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 56,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "James Cook III",
+        "team": "BUF",
+        "opp": "KC",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 56,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Jonah Coleman",
+        "team": "DEN",
+        "opp": "PIT",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 56,
+        "window": "Friday"
+      },
+      {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 55,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Kyren Williams",
+        "team": "LAR",
+        "opp": "GB",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 54,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 52,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Bijan Robinson",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 50,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Bhayshul Tuten",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 50,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Cam Skattebo",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 49,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Ja'Marr Chase",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 48,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Josh Jacobs",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 47,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Bucky Irving",
+        "team": "TB",
+        "opp": "CAR",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 47,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chuba Hubbard",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 45,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Quinshon Judkins",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 44,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Tee Higgins",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 43,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Amon-Ra St. Brown",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 42,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "David Montgomery",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 42,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Aaron Jones Sr.",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 40,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tony Pollard",
+        "team": "TEN",
+        "opp": "JAX",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 40,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Chris Rodriguez Jr.",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 40,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Ashton Jeanty",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 40,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "CeeDee Lamb",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 11,
+        "proj": 39,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Jacory Croskey-Merritt",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 39,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Kyle Monangai",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 38,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Breece Hall",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 38,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Ollie Gordon II",
+        "team": "MIA",
+        "opp": "NYJ",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 38,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Woody Marks",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 38,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Nico Collins",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 38,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Rhamondre Stevenson",
+        "team": "NE",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 38,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Blake Corum",
+        "team": "LAR",
+        "opp": "GB",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 37,
+        "window": "Wednesday"
+      },
+      {
+        "player": "George Pickens",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 37,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Parker Washington",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 37,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Omarion Hampton",
+        "team": "LAC",
+        "opp": "NE",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 37,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 36,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Travis Etienne Jr.",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 36,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jordan Mason",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 36,
+        "window": "Sunday Early"
+      }
+    ],
+    "Rushing yards": [
+      {
+        "player": "James Cook III",
+        "team": "BUF",
+        "opp": "KC",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 98.9,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Jahmyr Gibbs",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 96.0,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Bucky Irving",
+        "team": "TB",
+        "opp": "CAR",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 94.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Bijan Robinson",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 90.5,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jonathan Taylor",
+        "team": "IND",
+        "opp": "NYG",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 74.5,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jaylen Warren",
+        "team": "PIT",
+        "opp": "DEN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 73.4,
+        "window": "Friday"
+      },
+      {
+        "player": "Tony Pollard",
+        "team": "TEN",
+        "opp": "JAX",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 71.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 69.9,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 69.6,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Kyren Williams",
+        "team": "LAR",
+        "opp": "GB",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 66.2,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Javonte Williams",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 65.4,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Chuba Hubbard",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 62.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 61.7,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Cam Skattebo",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 59.2,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Kyle Monangai",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 57.7,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Omarion Hampton",
+        "team": "LAC",
+        "opp": "NE",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 57.5,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Braelon Allen",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 57.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jonah Coleman",
+        "team": "DEN",
+        "opp": "PIT",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 56.1,
+        "window": "Friday"
+      },
+      {
+        "player": "Zach Charbonnet",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 55.2,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Breece Hall",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 54.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 53.9,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Aaron Jones Sr.",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 53.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Quinshon Judkins",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 52.1,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Blake Corum",
+        "team": "LAR",
+        "opp": "GB",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 51.5,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Travis Etienne Jr.",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 51.5,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Ashton Jeanty",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 50.1,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 46.6,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Jordan Mason",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 46.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 45.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Bhayshul Tuten",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 44.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Ollie Gordon II",
+        "team": "MIA",
+        "opp": "NYJ",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 43.6,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Woody Marks",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 43.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Emanuel Wilson",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 41.4,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Bam Knight",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 40.3,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Rico Dowdle",
+        "team": "PIT",
+        "opp": "DEN",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 39.8,
+        "window": "Friday"
+      },
+      {
+        "player": "Jacory Croskey-Merritt",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 39.7,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Kenny Gainwell",
+        "team": "TB",
+        "opp": "CAR",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 39.4,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Kimani Vidal",
+        "team": "LAC",
+        "opp": "NE",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 38.6,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Rhamondre Stevenson",
+        "team": "NE",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 37.0,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Jadarian Price",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 36.4,
+        "window": "Sunday Late"
+      }
+    ],
+    "Carries": [
+      {
+        "player": "Bucky Irving",
+        "team": "TB",
+        "opp": "CAR",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 19.8,
+        "window": "Monday Night"
+      },
+      {
+        "player": "James Cook III",
+        "team": "BUF",
+        "opp": "KC",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 19.5,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Jahmyr Gibbs",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 19.4,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Jonathan Taylor",
+        "team": "IND",
+        "opp": "NYG",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 18.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Bijan Robinson",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 17.6,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 17.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 16.5,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Javonte Williams",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 16.2,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Tony Pollard",
+        "team": "TEN",
+        "opp": "JAX",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 15.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 15.6,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Quinshon Judkins",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 15.5,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Breece Hall",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 15.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Kyren Williams",
+        "team": "LAR",
+        "opp": "GB",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 14.9,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Ashton Jeanty",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 14.6,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Cam Skattebo",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 14.5,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Chuba Hubbard",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 14.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Omarion Hampton",
+        "team": "LAC",
+        "opp": "NE",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 14.1,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Jaylen Warren",
+        "team": "PIT",
+        "opp": "DEN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 13.3,
+        "window": "Friday"
+      },
+      {
+        "player": "Jonah Coleman",
+        "team": "DEN",
+        "opp": "PIT",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 13.2,
+        "window": "Friday"
+      },
+      {
+        "player": "Aaron Jones Sr.",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 13.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 12.5,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Travis Etienne Jr.",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 12.3,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 12.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Zach Charbonnet",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 12.0,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Josh Jacobs",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 11.8,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Woody Marks",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 11.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jordan Mason",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 11.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Braelon Allen",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 11.6,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Kyle Monangai",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 11.5,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Emanuel Wilson",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 11.4,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Bhayshul Tuten",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 11.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jacory Croskey-Merritt",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 10.8,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "David Montgomery",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 10.6,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Dameon Pierce",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 10.4,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Rico Dowdle",
+        "team": "PIT",
+        "opp": "DEN",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 10.3,
+        "window": "Friday"
+      },
+      {
+        "player": "Ollie Gordon II",
+        "team": "MIA",
+        "opp": "NYJ",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 9.9,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Rhamondre Stevenson",
+        "team": "NE",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 9.9,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Jadarian Price",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 9.8,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Blake Corum",
+        "team": "LAR",
+        "opp": "GB",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 9.7,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Audric Estime",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 9.0,
+        "window": "Sunday Early"
+      }
+    ],
+    "Receiving yards": [
+      {
+        "player": "Jaxon Smith-Njigba",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 118.4,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Ja'Marr Chase",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 107.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "CeeDee Lamb",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 11,
+        "proj": 91.7,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Chris Olave",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 88.9,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Christian Watson",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 88.1,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Tee Higgins",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 85.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Drake London",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 82.9,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Amon-Ra St. Brown",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 81.6,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Brock Bowers",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "TE",
+        "gp": 8,
+        "proj": 79.6,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Zay Flowers",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 79.5,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Omar Cooper Jr.",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 79.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "George Pickens",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 75.6,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Mike Evans",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 75.4,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Malik Nabers",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 74.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tetairoa McMillan",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 73.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Nico Collins",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 71.5,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Rashee Rice",
+        "team": "KC",
+        "opp": "BUF",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 70.5,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Garrett Wilson",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 70.3,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Matthew Golden",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 66.7,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Rome Odunze",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 65.3,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Parker Washington",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 64.6,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Justin Jefferson",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 63.6,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jameson Williams",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 63.2,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Carnell Tate",
+        "team": "TEN",
+        "opp": "JAX",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 63.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Trey McBride",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 11,
+        "proj": 61.2,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Travis Kelce",
+        "team": "KC",
+        "opp": "BUF",
+        "pos": "TE",
+        "gp": 10,
+        "proj": 60.4,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "DeVonta Smith",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 58.7,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "George Kittle",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "TE",
+        "gp": 10,
+        "proj": 57.3,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Khalil Shakir",
+        "team": "BUF",
+        "opp": "KC",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 56.7,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Caleb Douglas",
+        "team": "MIA",
+        "opp": "NYJ",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 56.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Harold Fannin Jr.",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "TE",
+        "gp": 10,
+        "proj": 55.9,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Jakobi Meyers",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 55.6,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Dalton Kincaid",
+        "team": "BUF",
+        "opp": "KC",
+        "pos": "TE",
+        "gp": 9,
+        "proj": 54.6,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Tre Tucker",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "WR",
+        "gp": 11,
+        "proj": 54.4,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Luther Burden III",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 53.0,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Deebo Samuel Sr.",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 52.9,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Denzel Boston",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 52.3,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Isaiah Likely",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "TE",
+        "gp": 10,
+        "proj": 52.2,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tank Dell",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 51.2,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Ladd McConkey",
+        "team": "LAC",
+        "opp": "NE",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 51.1,
+        "window": "Sunday Late"
+      }
+    ],
+    "Receptions": [
+      {
+        "player": "Jaxon Smith-Njigba",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 7.8,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Ja'Marr Chase",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 7.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Trey McBride",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 11,
+        "proj": 7.6,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "CeeDee Lamb",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 11,
+        "proj": 7.2,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Amon-Ra St. Brown",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 7.0,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Chris Olave",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 6.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Malik Nabers",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 6.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Brock Bowers",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "TE",
+        "gp": 8,
+        "proj": 6.1,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Zay Flowers",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 5.9,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "DeVonta Smith",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 5.7,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "George Pickens",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 5.7,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Jordyn Tyson",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 5.6,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Rashee Rice",
+        "team": "KC",
+        "opp": "BUF",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 5.4,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Garrett Wilson",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 5.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Omar Cooper Jr.",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 5.2,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Justin Jefferson",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 5.2,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tetairoa McMillan",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 5.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Drake London",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 5.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Nico Collins",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 5.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Stefon Diggs",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 5.0,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Christian Watson",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 4.9,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Tee Higgins",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 4.9,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Isaiah Likely",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "TE",
+        "gp": 10,
+        "proj": 4.9,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "George Kittle",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "TE",
+        "gp": 10,
+        "proj": 4.9,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Carnell Tate",
+        "team": "TEN",
+        "opp": "JAX",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 4.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 4.8,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Matthew Golden",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 4.7,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Max Hurleman",
+        "team": "PIT",
+        "opp": "DEN",
+        "pos": "WR",
+        "gp": 1,
+        "proj": 4.7,
+        "window": "Friday"
+      },
+      {
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 4.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "A.J. Brown",
+        "team": "NE",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 4.7,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Jahmyr Gibbs",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 4.6,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Tyler Warren",
+        "team": "IND",
+        "opp": "NYG",
+        "pos": "TE",
+        "gp": 9,
+        "proj": 4.5,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Sam LaPorta",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "TE",
+        "gp": 10,
+        "proj": 4.4,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Harold Fannin Jr.",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "TE",
+        "gp": 10,
+        "proj": 4.4,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Germie Bernard",
+        "team": "PIT",
+        "opp": "DEN",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 4.3,
+        "window": "Friday"
+      },
+      {
+        "player": "Dalton Schultz",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "TE",
+        "gp": 10,
+        "proj": 4.3,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Keenan Allen",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 4.3,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Luther Burden III",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 4.2,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Travis Kelce",
+        "team": "KC",
+        "opp": "BUF",
+        "pos": "TE",
+        "gp": 10,
+        "proj": 4.2,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Khalil Shakir",
+        "team": "BUF",
+        "opp": "KC",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 4.2,
+        "window": "Thursday Night"
+      }
+    ],
+    "Targets": [
+      {
+        "player": "Ja'Marr Chase",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 11.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "CeeDee Lamb",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 11,
+        "proj": 11.0,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Jaxon Smith-Njigba",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 10.7,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Chris Olave",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 10.5,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Amon-Ra St. Brown",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 10.0,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Trey McBride",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 11,
+        "proj": 10.0,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Malik Nabers",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 9.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "DeVonta Smith",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "WR",
+        "gp": 5,
+        "proj": 8.8,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "George Pickens",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 8.7,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Tetairoa McMillan",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 8.7,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Garrett Wilson",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 8.6,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Brock Bowers",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "TE",
+        "gp": 8,
+        "proj": 8.5,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Justin Jefferson",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 8.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Drake London",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 8.3,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Zay Flowers",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 8.3,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Nico Collins",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 8.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Matthew Golden",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 7.9,
+        "window": "Wednesday"
+      },
+      {
+        "player": "A.J. Brown",
+        "team": "NE",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 7.9,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Christian Watson",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 7.6,
+        "window": "Wednesday"
+      },
+      {
+        "player": "DK Metcalf",
+        "team": "PIT",
+        "opp": "DEN",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 7.5,
+        "window": "Friday"
+      },
+      {
+        "player": "Carnell Tate",
+        "team": "TEN",
+        "opp": "JAX",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 7.5,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tee Higgins",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 7.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Rashee Rice",
+        "team": "KC",
+        "opp": "BUF",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 7.3,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Isaiah Likely",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "TE",
+        "gp": 10,
+        "proj": 7.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jordyn Tyson",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 3,
+        "proj": 7.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Parker Washington",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 7.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Stefon Diggs",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 6.8,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Tyler Warren",
+        "team": "IND",
+        "opp": "NYG",
+        "pos": "TE",
+        "gp": 9,
+        "proj": 6.6,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Mike Evans",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 6.6,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Caleb Douglas",
+        "team": "MIA",
+        "opp": "NYJ",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 6.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Harold Fannin Jr.",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "TE",
+        "gp": 10,
+        "proj": 6.4,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Rome Odunze",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 6.3,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Keenan Allen",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 6.3,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "George Kittle",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "TE",
+        "gp": 10,
+        "proj": 6.3,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Tre Tucker",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "WR",
+        "gp": 11,
+        "proj": 6.3,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "KC Concepcion",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 6.3,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Jaylen Waddle",
+        "team": "DEN",
+        "opp": "PIT",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 6.2,
+        "window": "Friday"
+      },
+      {
+        "player": "Germie Bernard",
+        "team": "PIT",
+        "opp": "DEN",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 6.2,
+        "window": "Friday"
+      },
+      {
+        "player": "Omar Cooper Jr.",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 6.2,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Denzel Boston",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 6.2,
+        "window": "Sunday Night"
+      }
+    ],
+    "Passing yards": [
+      {
+        "player": "Tua Tagovailoa",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 324.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Joe Burrow",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "QB",
+        "gp": 9,
+        "proj": 308.2,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Shedeur Sanders",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 277.8,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Jordan Love",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 276.0,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Dak Prescott",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "QB",
+        "gp": 11,
+        "proj": 270.8,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Jared Goff",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 269.1,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Drew Lock",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 4,
+        "proj": 264.6,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Matthew Stafford",
+        "team": "LAR",
+        "opp": "GB",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 255.9,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Trevor Lawrence",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 255.2,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Brock Purdy",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 255.2,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "J.J. McCarthy",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 254.3,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Patrick Mahomes",
+        "team": "KC",
+        "opp": "BUF",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 254.1,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "C.J. Stroud",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 252.5,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Caleb Williams",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "QB",
+        "gp": 7,
+        "proj": 248.7,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Bryce Young",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 246.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Josh Allen",
+        "team": "BUF",
+        "opp": "KC",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 240.2,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Deshaun Watson",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "QB",
+        "gp": 9,
+        "proj": 231.6,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Tyler Shough",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 228.3,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 225.7,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Geno Smith",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "QB",
+        "gp": 11,
+        "proj": 221.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Carson Beck",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 213.0,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Fernando Mendoza",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 211.4,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Aaron Rodgers",
+        "team": "PIT",
+        "opp": "DEN",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 211.1,
+        "window": "Friday"
+      },
+      {
+        "player": "Case Keenum",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 210.4,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Sam Darnold",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 7,
+        "proj": 205.8,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Kirk Cousins",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "QB",
+        "gp": 11,
+        "proj": 205.6,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jameis Winston",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "QB",
+        "gp": 9,
+        "proj": 204.5,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Michael Penix Jr.",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 204.5,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Cade Klubnik",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 198.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Kyler Murray",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 188.3,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Cam Ward",
+        "team": "TEN",
+        "opp": "JAX",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 185.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Justin Herbert",
+        "team": "LAC",
+        "opp": "NE",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 183.2,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Josh Johnson",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 177.5,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Bo Nix",
+        "team": "DEN",
+        "opp": "PIT",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 176.6,
+        "window": "Friday"
+      },
+      {
+        "player": "Athan Kaliakmanis",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 176.5,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Jacoby Brissett",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 175.5,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Joe Milton",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 173.1,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Tanner McKee",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 171.9,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Baker Mayfield",
+        "team": "TB",
+        "opp": "CAR",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 159.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mac Jones",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 141.0,
+        "window": "Sunday Late"
+      }
+    ],
+    "Pass attempts": [
+      {
+        "player": "Joe Burrow",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "QB",
+        "gp": 9,
+        "proj": 37.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Dak Prescott",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "QB",
+        "gp": 11,
+        "proj": 37.3,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Tyler Shough",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 36.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Matthew Stafford",
+        "team": "LAR",
+        "opp": "GB",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 36.3,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Jordan Love",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 35.8,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Tyrod Taylor",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 35.8,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Josh Johnson",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 35.5,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Carson Beck",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 35.5,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Fernando Mendoza",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 34.2,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Bryce Young",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 34.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Aaron Rodgers",
+        "team": "PIT",
+        "opp": "DEN",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 34.0,
+        "window": "Friday"
+      },
+      {
+        "player": "J.J. McCarthy",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 33.2,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jameis Winston",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "QB",
+        "gp": 9,
+        "proj": 33.2,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "C.J. Stroud",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 33.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Davis Mills",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 33.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jared Goff",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 32.9,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Patrick Mahomes",
+        "team": "KC",
+        "opp": "BUF",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 31.6,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Justin Fields",
+        "team": "KC",
+        "opp": "BUF",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 31.6,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Deshaun Watson",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "QB",
+        "gp": 9,
+        "proj": 31.6,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Shedeur Sanders",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 31.6,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Caleb Williams",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "QB",
+        "gp": 7,
+        "proj": 31.4,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Case Keenum",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 31.4,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Athan Kaliakmanis",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 31.3,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 31.3,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Tanner McKee",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 30.7,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Joe Milton",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 30.7,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Trevor Lawrence",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 30.2,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Quinn Ewers",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 30.2,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Cam Ward",
+        "team": "TEN",
+        "opp": "JAX",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 29.9,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jacoby Brissett",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 29.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Joe Fagnano",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 29.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Sam Darnold",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 7,
+        "proj": 29.4,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Drew Lock",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 4,
+        "proj": 29.4,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Bo Nix",
+        "team": "DEN",
+        "opp": "PIT",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 29.1,
+        "window": "Friday"
+      },
+      {
+        "player": "Tommy DeVito",
+        "team": "NE",
+        "opp": "LAC",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 29.0,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Geno Smith",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "QB",
+        "gp": 11,
+        "proj": 28.9,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Cade Klubnik",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 28.9,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Josh Allen",
+        "team": "BUF",
+        "opp": "KC",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 28.7,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Michael Penix Jr.",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 28.6,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tua Tagovailoa",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 28.6,
+        "window": "Sunday Early"
+      }
+    ],
+    "Rush + rec yards": [
+      {
+        "player": "Jahmyr Gibbs",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 135.7,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Jaxon Smith-Njigba",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 122.2,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 120.6,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Bijan Robinson",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 119.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "James Cook III",
+        "team": "BUF",
+        "opp": "KC",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 110.8,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Ja'Marr Chase",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 108.3,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Bucky Irving",
+        "team": "TB",
+        "opp": "CAR",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 105.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Jaylen Warren",
+        "team": "PIT",
+        "opp": "DEN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 100.5,
+        "window": "Friday"
+      },
+      {
+        "player": "Jonathan Taylor",
+        "team": "IND",
+        "opp": "NYG",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 94.2,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Ashton Jeanty",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 92.3,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "CeeDee Lamb",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 11,
+        "proj": 91.4,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Chris Olave",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 88.9,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Kyren Williams",
+        "team": "LAR",
+        "opp": "GB",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 88.2,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Christian Watson",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 88.1,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Chuba Hubbard",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 86.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Breece Hall",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 86.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tee Higgins",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 85.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jonah Coleman",
+        "team": "DEN",
+        "opp": "PIT",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 84.5,
+        "window": "Friday"
+      },
+      {
+        "player": "Drake London",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 83.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tony Pollard",
+        "team": "TEN",
+        "opp": "JAX",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 83.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Zay Flowers",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 82.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Amon-Ra St. Brown",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 82.5,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Brock Bowers",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "TE",
+        "gp": 8,
+        "proj": 80.0,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Javonte Williams",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 79.9,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Omar Cooper Jr.",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "WR",
+        "gp": 4,
+        "proj": 79.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Cam Skattebo",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 78.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 78.2,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 78.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "George Pickens",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 76.2,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Mike Evans",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 75.4,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Malik Nabers",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 74.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tetairoa McMillan",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 73.1,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Nico Collins",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 72.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Deebo Samuel Sr.",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 72.4,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 72.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Rashee Rice",
+        "team": "KC",
+        "opp": "BUF",
+        "pos": "WR",
+        "gp": 7,
+        "proj": 71.3,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Garrett Wilson",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 70.3,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Quinshon Judkins",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 68.9,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Matthew Golden",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 68.5,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Kyle Monangai",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 68.0,
+        "window": "Thursday Night"
+      }
+    ],
+    "Completions": [
+      {
+        "player": "Joe Burrow",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "QB",
+        "gp": 9,
+        "proj": 26.08,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Dak Prescott",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "QB",
+        "gp": 11,
+        "proj": 24.46,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Tyler Shough",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 24.03,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Matthew Stafford",
+        "team": "LAR",
+        "opp": "GB",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 23.72,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Jordan Love",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 22.89,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Carson Beck",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 22.57,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Tyrod Taylor",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 22.56,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Josh Johnson",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 22.39,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Jared Goff",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 21.9,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Bryce Young",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 21.37,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Aaron Rodgers",
+        "team": "PIT",
+        "opp": "DEN",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 21.36,
+        "window": "Friday"
+      },
+      {
+        "player": "Fernando Mendoza",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 21.13,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "C.J. Stroud",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 21.12,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Davis Mills",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 20.63,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Patrick Mahomes",
+        "team": "KC",
+        "opp": "BUF",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 20.55,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Deshaun Watson",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "QB",
+        "gp": 9,
+        "proj": 20.39,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "J.J. McCarthy",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 20.33,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jameis Winston",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "QB",
+        "gp": 9,
+        "proj": 20.22,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Case Keenum",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 20.16,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Caleb Williams",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "QB",
+        "gp": 7,
+        "proj": 20.01,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Justin Fields",
+        "team": "KC",
+        "opp": "BUF",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 20.01,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 20.01,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Shedeur Sanders",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 19.72,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Drew Lock",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 4,
+        "proj": 19.54,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Tanner McKee",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 19.43,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Athan Kaliakmanis",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 19.25,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Quinn Ewers",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 19.23,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Geno Smith",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "QB",
+        "gp": 11,
+        "proj": 19.21,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Brock Purdy",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 19.18,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Trevor Lawrence",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 19.09,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Joe Milton",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 18.94,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Cam Ward",
+        "team": "TEN",
+        "opp": "JAX",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 18.87,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jacoby Brissett",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 18.83,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Josh Allen",
+        "team": "BUF",
+        "opp": "KC",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 18.71,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Sam Darnold",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 7,
+        "proj": 18.69,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Tua Tagovailoa",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 18.63,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Mac Jones",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 18.49,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Kyler Murray",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 18.37,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Cade Klubnik",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 18.23,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Joe Fagnano",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 18.22,
+        "window": "Sunday Early"
+      }
+    ],
+    "Passing TDs": [
+      {
+        "player": "Joe Burrow",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "QB",
+        "gp": 9,
+        "proj": 2.36,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Matthew Stafford",
+        "team": "LAR",
+        "opp": "GB",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 1.98,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Dak Prescott",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "QB",
+        "gp": 11,
+        "proj": 1.96,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Jordan Love",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 1.81,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Jared Goff",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 1.78,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "C.J. Stroud",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 1.75,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Brock Purdy",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 1.74,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Trevor Lawrence",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 1.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Patrick Mahomes",
+        "team": "KC",
+        "opp": "BUF",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 1.68,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Tyrod Taylor",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 1.63,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Bryce Young",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 1.63,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Josh Johnson",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 1.58,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Carson Beck",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 1.58,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Aaron Rodgers",
+        "team": "PIT",
+        "opp": "DEN",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 1.56,
+        "window": "Friday"
+      },
+      {
+        "player": "Tyler Shough",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 1.56,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Fernando Mendoza",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 1.56,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Jameis Winston",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "QB",
+        "gp": 9,
+        "proj": 1.54,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Drew Lock",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 4,
+        "proj": 1.53,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Davis Mills",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 1.47,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Caleb Williams",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "QB",
+        "gp": 7,
+        "proj": 1.46,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Shedeur Sanders",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 1.44,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Case Keenum",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 1.43,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Kirk Cousins",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "QB",
+        "gp": 11,
+        "proj": 1.43,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Athan Kaliakmanis",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 1.42,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Justin Fields",
+        "team": "KC",
+        "opp": "BUF",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 1.41,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Sam Darnold",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 7,
+        "proj": 1.41,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Quinn Ewers",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 1.38,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 1.38,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Josh Allen",
+        "team": "BUF",
+        "opp": "KC",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 1.37,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Tua Tagovailoa",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 1.36,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "J.J. McCarthy",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 1.35,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Geno Smith",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "QB",
+        "gp": 11,
+        "proj": 1.34,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tommy DeVito",
+        "team": "NE",
+        "opp": "LAC",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 1.31,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Mac Jones",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 1.3,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Cade Klubnik",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 1.28,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Joe Milton",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 1.26,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Joe Fagnano",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 1.25,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Michael Penix Jr.",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 1.23,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tanner McKee",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 1.22,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Bo Nix",
+        "team": "DEN",
+        "opp": "PIT",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 1.22,
+        "window": "Friday"
+      }
+    ],
+    "Interceptions": [
+      {
+        "player": "Carson Beck",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 0.81,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Tyrod Taylor",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 0.79,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Matthew Stafford",
+        "team": "LAR",
+        "opp": "GB",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 0.79,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Tyler Shough",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 0.79,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Joe Burrow",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "QB",
+        "gp": 9,
+        "proj": 0.77,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Josh Johnson",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 0.77,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Jordan Love",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 0.75,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Dak Prescott",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "QB",
+        "gp": 11,
+        "proj": 0.75,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Jameis Winston",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "QB",
+        "gp": 9,
+        "proj": 0.75,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "J.J. McCarthy",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 0.74,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Fernando Mendoza",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 0.73,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Bryce Young",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 0.73,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Sam Darnold",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 7,
+        "proj": 0.72,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Shedeur Sanders",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 0.71,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Davis Mills",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 0.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Aaron Rodgers",
+        "team": "PIT",
+        "opp": "DEN",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 0.69,
+        "window": "Friday"
+      },
+      {
+        "player": "Athan Kaliakmanis",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 0.69,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Caleb Williams",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "QB",
+        "gp": 7,
+        "proj": 0.68,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Case Keenum",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 0.68,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Joe Fagnano",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 0.68,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Justin Fields",
+        "team": "KC",
+        "opp": "BUF",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 0.67,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Tua Tagovailoa",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 0.67,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tanner McKee",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 0.66,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Joe Milton",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 0.66,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Josh Allen",
+        "team": "BUF",
+        "opp": "KC",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 0.66,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Trevor Lawrence",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 0.66,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Quinn Ewers",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 0.66,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "C.J. Stroud",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 0.66,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Justin Herbert",
+        "team": "LAC",
+        "opp": "NE",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 0.66,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Jared Goff",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 0.65,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Deshaun Watson",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "QB",
+        "gp": 9,
+        "proj": 0.65,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Patrick Mahomes",
+        "team": "KC",
+        "opp": "BUF",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 0.64,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Cade Klubnik",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 0.64,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Kirk Cousins",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "QB",
+        "gp": 11,
+        "proj": 0.64,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jacoby Brissett",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 0.64,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tommy DeVito",
+        "team": "NE",
+        "opp": "LAC",
+        "pos": "QB",
+        "gp": 3,
+        "proj": 0.64,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Michael Penix Jr.",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 0.63,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Cam Ward",
+        "team": "TEN",
+        "opp": "JAX",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 0.62,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 0.62,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Geno Smith",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "QB",
+        "gp": 11,
+        "proj": 0.61,
+        "window": "Sunday Early"
+      }
+    ],
+    "2+ TDs": [
+      {
+        "player": "Jahmyr Gibbs",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 30.3,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Jonathan Taylor",
+        "team": "IND",
+        "opp": "NYG",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 24.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Javonte Williams",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 23.8,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 21.0,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "James Cook III",
+        "team": "BUF",
+        "opp": "KC",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 20.3,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "D'Andre Swift",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 20.2,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Jonah Coleman",
+        "team": "DEN",
+        "opp": "PIT",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 19.6,
+        "window": "Friday"
+      },
+      {
+        "player": "Derrick Henry",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 18.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Kyren Williams",
+        "team": "LAR",
+        "opp": "GB",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 18.4,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 16.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Bijan Robinson",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 15.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Bhayshul Tuten",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 15.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Cam Skattebo",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 14.5,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Ja'Marr Chase",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 13.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Josh Jacobs",
+        "team": "GB",
+        "opp": "LAR",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 13.5,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Bucky Irving",
+        "team": "TB",
+        "opp": "CAR",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 13.2,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Chuba Hubbard",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 12.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Quinshon Judkins",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 11.6,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Tee Higgins",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 10.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "David Montgomery",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 10.5,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Amon-Ra St. Brown",
+        "team": "DET",
+        "opp": "CHI",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 10.4,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Tony Pollard",
+        "team": "TEN",
+        "opp": "JAX",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 9.6,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Aaron Jones Sr.",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 9.5,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Ashton Jeanty",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 9.4,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Chris Rodriguez Jr.",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 9.2,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "CeeDee Lamb",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 11,
+        "proj": 8.8,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Jacory Croskey-Merritt",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 8.7,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Ollie Gordon II",
+        "team": "MIA",
+        "opp": "NYJ",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 8.5,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Breece Hall",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 8.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Woody Marks",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 8.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Nico Collins",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "WR",
+        "gp": 8,
+        "proj": 8.2,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Rhamondre Stevenson",
+        "team": "NE",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 8.2,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Kyle Monangai",
+        "team": "CHI",
+        "opp": "DET",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 8.1,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Parker Washington",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 8.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "George Pickens",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 7.9,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Blake Corum",
+        "team": "LAR",
+        "opp": "GB",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 7.8,
+        "window": "Wednesday"
+      },
+      {
+        "player": "Omarion Hampton",
+        "team": "LAC",
+        "opp": "NE",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 7.7,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Jordan Mason",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 7.6,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Saquon Barkley",
+        "team": "PHI",
+        "opp": "DAL",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 7.3,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "Travis Etienne Jr.",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 7.3,
+        "window": "Sunday Early"
+      }
+    ]
+  }
+}
