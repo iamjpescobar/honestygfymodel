@@ -1,5 +1,5 @@
 {
-  "generated_at_et": "2026-11-25 13:22",
+  "generated_at_et": "2026-11-25 14:49",
   "week": 12,
   "league": {
     "team_games": 324,
@@ -1082,7 +1082,7 @@
         "opp": "PHI",
         "pos": "RB",
         "gp": 11,
-        "proj": 61,
+        "proj": 62,
         "window": "Thursday Night"
       },
       {
@@ -1093,15 +1093,6 @@
         "gp": 11,
         "proj": 61,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Christian McCaffrey",
-        "team": "SF",
-        "opp": "SEA",
-        "pos": "RB",
-        "gp": 10,
-        "proj": 57,
-        "window": "Sunday Late"
       },
       {
         "player": "D'Andre Swift",
@@ -1129,6 +1120,15 @@
         "gp": 5,
         "proj": 56,
         "window": "Friday"
+      },
+      {
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 56,
+        "window": "Sunday Late"
       },
       {
         "player": "Derrick Henry",
@@ -1185,15 +1185,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Ja'Marr Chase",
-        "team": "CIN",
-        "opp": "NO",
-        "pos": "WR",
-        "gp": 9,
-        "proj": 48,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Josh Jacobs",
         "team": "GB",
         "opp": "LAR",
@@ -1201,6 +1192,15 @@
         "gp": 3,
         "proj": 47,
         "window": "Wednesday"
+      },
+      {
+        "player": "Ja'Marr Chase",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 47,
+        "window": "Sunday Early"
       },
       {
         "player": "Bucky Irving",
@@ -1230,15 +1230,6 @@
         "window": "Sunday Night"
       },
       {
-        "player": "Tee Higgins",
-        "team": "CIN",
-        "opp": "NO",
-        "pos": "WR",
-        "gp": 9,
-        "proj": 43,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Amon-Ra St. Brown",
         "team": "DET",
         "opp": "CHI",
@@ -1248,6 +1239,15 @@
         "window": "Thursday Night"
       },
       {
+        "player": "Tee Higgins",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 42,
+        "window": "Sunday Early"
+      },
+      {
         "player": "David Montgomery",
         "team": "HOU",
         "opp": "BAL",
@@ -1255,6 +1255,15 @@
         "gp": 6,
         "proj": 42,
         "window": "Sunday Early"
+      },
+      {
+        "player": "CeeDee Lamb",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 11,
+        "proj": 41,
+        "window": "Thursday Night"
       },
       {
         "player": "Aaron Jones Sr.",
@@ -1293,11 +1302,11 @@
         "window": "Sunday Night"
       },
       {
-        "player": "CeeDee Lamb",
+        "player": "George Pickens",
         "team": "DAL",
         "opp": "PHI",
         "pos": "WR",
-        "gp": 11,
+        "gp": 10,
         "proj": 39,
         "window": "Thursday Night"
       },
@@ -1374,15 +1383,6 @@
         "window": "Wednesday"
       },
       {
-        "player": "George Pickens",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "WR",
-        "gp": 10,
-        "proj": 37,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Parker Washington",
         "team": "JAX",
         "opp": "TEN",
@@ -1410,21 +1410,21 @@
         "window": "Thursday Night"
       },
       {
-        "player": "Travis Etienne Jr.",
-        "team": "NO",
-        "opp": "CIN",
-        "pos": "RB",
-        "gp": 5,
-        "proj": 36,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Jordan Mason",
         "team": "MIN",
         "opp": "ATL",
         "pos": "RB",
         "gp": 6,
         "proj": 36,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Travis Etienne Jr.",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 5,
+        "proj": 35,
         "window": "Sunday Early"
       }
     ],
@@ -5421,6 +5421,15 @@
         "window": "Thursday Night"
       },
       {
+        "player": "Javonte Williams",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 25.7,
+        "window": "Thursday Night"
+      },
+      {
         "player": "Jonathan Taylor",
         "team": "IND",
         "opp": "NYG",
@@ -5428,24 +5437,6 @@
         "gp": 11,
         "proj": 24.7,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Javonte Williams",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "RB",
-        "gp": 11,
-        "proj": 23.8,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Christian McCaffrey",
-        "team": "SF",
-        "opp": "SEA",
-        "pos": "RB",
-        "gp": 10,
-        "proj": 21.0,
-        "window": "Sunday Late"
       },
       {
         "player": "James Cook III",
@@ -5464,6 +5455,15 @@
         "gp": 10,
         "proj": 20.2,
         "window": "Thursday Night"
+      },
+      {
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 20.1,
+        "window": "Sunday Late"
       },
       {
         "player": "Jonah Coleman",
@@ -5498,7 +5498,7 @@
         "opp": "NO",
         "pos": "RB",
         "gp": 9,
-        "proj": 16.8,
+        "proj": 16.5,
         "window": "Sunday Early"
       },
       {
@@ -5529,15 +5529,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Ja'Marr Chase",
-        "team": "CIN",
-        "opp": "NO",
-        "pos": "WR",
-        "gp": 9,
-        "proj": 13.8,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Josh Jacobs",
         "team": "GB",
         "opp": "LAR",
@@ -5545,6 +5536,15 @@
         "gp": 3,
         "proj": 13.5,
         "window": "Wednesday"
+      },
+      {
+        "player": "Ja'Marr Chase",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 13.5,
+        "window": "Sunday Early"
       },
       {
         "player": "Bucky Irving",
@@ -5579,7 +5579,7 @@
         "opp": "NO",
         "pos": "WR",
         "gp": 9,
-        "proj": 10.8,
+        "proj": 10.5,
         "window": "Sunday Early"
       },
       {
@@ -5598,6 +5598,15 @@
         "pos": "WR",
         "gp": 10,
         "proj": 10.4,
+        "window": "Thursday Night"
+      },
+      {
+        "player": "CeeDee Lamb",
+        "team": "DAL",
+        "opp": "PHI",
+        "pos": "WR",
+        "gp": 11,
+        "proj": 9.6,
         "window": "Thursday Night"
       },
       {
@@ -5637,12 +5646,12 @@
         "window": "Sunday Early"
       },
       {
-        "player": "CeeDee Lamb",
+        "player": "George Pickens",
         "team": "DAL",
         "opp": "PHI",
         "pos": "WR",
-        "gp": 11,
-        "proj": 8.8,
+        "gp": 10,
+        "proj": 8.7,
         "window": "Thursday Night"
       },
       {
@@ -5718,15 +5727,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "George Pickens",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "WR",
-        "gp": 10,
-        "proj": 7.9,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Blake Corum",
         "team": "LAR",
         "opp": "GB",
@@ -5763,13 +5763,13 @@
         "window": "Thursday Night"
       },
       {
-        "player": "Travis Etienne Jr.",
-        "team": "NO",
-        "opp": "CIN",
-        "pos": "RB",
-        "gp": 5,
-        "proj": 7.3,
-        "window": "Sunday Early"
+        "player": "Trey McBride",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 11,
+        "proj": 7.2,
+        "window": "Sunday Late"
       }
     ]
   }
