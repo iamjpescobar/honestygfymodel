@@ -1,143 +1,143 @@
 {
-  "generated_at_et": "2026-11-26 14:30",
+  "generated_at_et": "2026-11-26 23:02",
   "week": 12,
   "league": {
-    "team_games": 326,
-    "td_per_point": 0.1072,
-    "points_pg": 23.1,
-    "td_pg": 2.47,
-    "ypc": 4.2,
-    "yards_per_target": 7.44,
+    "team_games": 330,
+    "td_per_point": 0.1074,
+    "points_pg": 23.2,
+    "td_pg": 2.5,
+    "ypc": 4.21,
+    "yards_per_target": 7.46,
     "catch_rate": 0.668,
     "carries_pg": 26.9,
     "targets_pg": 31.5,
-    "td_per_opportunity": 0.0424,
-    "prior_strength": 293.2,
-    "prior_a": 12.4331,
-    "prior_b": 280.7792,
-    "players_fitted": 549,
-    "touches_fitted": 19008,
+    "td_per_opportunity": 0.04279,
+    "prior_strength": 297.4,
+    "prior_a": 12.7258,
+    "prior_b": 284.6624,
+    "players_fitted": 552,
+    "touches_fitted": 19256,
     "qb_priors": {
       "cmp": [
-        0.63781,
-        231.4
+        0.63839,
+        236.22
       ],
       "td": [
-        0.04645,
-        401.76
+        0.04659,
+        439.45
       ],
       "int": [
-        0.02197,
-        1798.06
+        0.02196,
+        2591.96
       ]
     },
     "prop_spreads": {
       "Rushing yards": {
         "kind": "yards",
-        "cv": 0.8335,
-        "players": 213,
-        "games": 1217
+        "cv": 0.8314,
+        "players": 215,
+        "games": 1235
       },
       "Carries": {
         "kind": "count",
-        "size": 15.96,
-        "players": 221,
-        "games": 1240
+        "size": 15.745,
+        "players": 223,
+        "games": 1258
       },
       "Receiving yards": {
         "kind": "yards",
-        "cv": 0.8724,
+        "cv": 0.8742,
         "players": 397,
-        "games": 2543
+        "games": 2571
       },
       "Receptions": {
         "kind": "count",
         "size": null,
         "players": 397,
-        "games": 2543
+        "games": 2571
       },
       "Targets": {
         "kind": "count",
-        "size": 140.878,
+        "size": 144.956,
         "players": 401,
-        "games": 2551
+        "games": 2579
       },
       "Passing yards": {
         "kind": "yards",
-        "cv": 0.3869,
+        "cv": 0.3866,
         "players": 53,
-        "games": 351
+        "games": 355
       },
       "Pass attempts": {
         "kind": "count",
-        "size": 23.743,
+        "size": 23.881,
         "players": 53,
-        "games": 351
+        "games": 355
       },
       "Rush + rec yards": {
         "kind": "yards",
-        "cv": 0.8096,
-        "players": 464,
-        "games": 3055
+        "cv": 0.8102,
+        "players": 465,
+        "games": 3091
       },
       "Completions": {
         "kind": "count",
-        "size": 33.01,
+        "size": 33.221,
         "players": 53,
-        "games": 351
+        "games": 355
       },
       "Passing TDs": {
         "kind": "count",
         "size": null,
-        "players": 46,
-        "games": 336
+        "players": 47,
+        "games": 342
       },
       "Interceptions": {
         "kind": "count",
         "size": null,
-        "players": 44,
-        "games": 329
+        "players": 45,
+        "games": 335
       }
     },
     "prior_weights": {
-      "share": 0.5494,
-      "catch": 0.8598,
-      "ypc": 0.0093,
-      "ypt": 0.0101,
+      "share": 0.5439,
+      "catch": 0.8443,
+      "ypc": 0.0387,
+      "ypt": 0.0097,
       "td": 1.0,
-      "qb_rate": 0.3021,
+      "qb_rate": 0.2918,
       "ypa": 0.0
     },
     "prior_weight_report": {
       "share": {
-        "weight": 0.5494,
+        "weight": 0.5439,
         "n_players": 854,
-        "loglik_gain": 11579.69
+        "loglik_gain": 11737.59
       },
       "catch": {
-        "weight": 0.8598,
+        "weight": 0.8443,
         "n_players": 354,
-        "loglik_gain": 68.43
+        "loglik_gain": 68.56
       },
       "ypc": {
-        "weight": 0.0093,
+        "weight": 0.0387,
         "n_players": 208,
-        "loglik_gain": 58.09
+        "loglik_gain": 70.17
       },
       "ypt": {
-        "weight": 0.0101,
+        "weight": 0.0097,
         "n_players": 354,
-        "loglik_gain": 412.13
+        "loglik_gain": 416.87
       },
       "td": {
         "weight": 1.0,
         "n_players": 422,
-        "loglik_gain": 13.93
+        "loglik_gain": 13.75
       },
       "qb_rate": {
-        "weight": 0.3021,
+        "weight": 0.2918,
         "n_players": 171,
-        "loglik_gain": 3.18
+        "loglik_gain": 2.86
       },
       "ypa": {
         "weight": 0.0,
@@ -146,16 +146,16 @@
       }
     },
     "prop_validation": {
-      "n": 35199,
+      "n": 35388,
       "pass_yds": {
-        "n": 781,
-        "model_brier": 0.2509,
-        "baseline_brier": 0.2969,
+        "n": 785,
+        "model_brier": 0.2508,
+        "baseline_brier": 0.2964,
         "verdict": {
-          "n": 781,
-          "diff": 0.04604,
-          "se": 0.00914,
-          "z": 5.04,
+          "n": 785,
+          "diff": 0.04562,
+          "se": 0.0091,
+          "z": 5.01,
           "verdict": "beats"
         },
         "calibration": [
@@ -179,21 +179,21 @@
           },
           {
             "band": "40-49%",
-            "n": 492,
+            "n": 494,
             "predicted": 0.461,
-            "actual": 0.482
+            "actual": 0.484
           },
           {
             "band": "50-59%",
-            "n": 109,
+            "n": 110,
             "predicted": 0.536,
-            "actual": 0.532
+            "actual": 0.536
           },
           {
             "band": "60-69%",
-            "n": 56,
+            "n": 57,
             "predicted": 0.642,
-            "actual": 0.625
+            "actual": 0.632
           },
           {
             "band": "70-79%",
@@ -216,13 +216,13 @@
         ]
       },
       "pass_cmp": {
-        "n": 782,
+        "n": 786,
         "model_brier": 0.2433,
-        "baseline_brier": 0.283,
+        "baseline_brier": 0.2828,
         "verdict": {
-          "n": 782,
-          "diff": 0.03962,
-          "se": 0.00958,
+          "n": 786,
+          "diff": 0.0395,
+          "se": 0.00954,
           "z": 4.14,
           "verdict": "beats"
         },
@@ -235,27 +235,27 @@
           },
           {
             "band": "10-19%",
-            "n": 14,
-            "predicted": 0.164,
-            "actual": 0.357
+            "n": 15,
+            "predicted": 0.166,
+            "actual": 0.4
           },
           {
             "band": "20-29%",
-            "n": 37,
-            "predicted": 0.264,
-            "actual": 0.297
+            "n": 36,
+            "predicted": 0.265,
+            "actual": 0.278
           },
           {
             "band": "30-39%",
-            "n": 215,
+            "n": 216,
             "predicted": 0.356,
-            "actual": 0.428
+            "actual": 0.431
           },
           {
             "band": "40-49%",
-            "n": 281,
+            "n": 283,
             "predicted": 0.442,
-            "actual": 0.434
+            "actual": 0.435
           },
           {
             "band": "50-59%",
@@ -271,9 +271,9 @@
           },
           {
             "band": "70-79%",
-            "n": 34,
-            "predicted": 0.746,
-            "actual": 0.618
+            "n": 35,
+            "predicted": 0.748,
+            "actual": 0.629
           },
           {
             "band": "80-89%",
@@ -284,27 +284,27 @@
           {
             "band": "90-99%",
             "n": 41,
-            "predicted": 0.961,
+            "predicted": 0.962,
             "actual": 0.78
           }
         ]
       },
       "pass_att": {
-        "n": 782,
-        "model_brier": 0.2512,
-        "baseline_brier": 0.2955,
+        "n": 786,
+        "model_brier": 0.2511,
+        "baseline_brier": 0.2954,
         "verdict": {
-          "n": 782,
-          "diff": 0.04423,
-          "se": 0.00959,
-          "z": 4.61,
+          "n": 786,
+          "diff": 0.04426,
+          "se": 0.00954,
+          "z": 4.64,
           "verdict": "beats"
         },
         "calibration": [
           {
             "band": "0-9%",
             "n": 3,
-            "predicted": 0.074,
+            "predicted": 0.073,
             "actual": 0.333
           },
           {
@@ -322,14 +322,14 @@
           {
             "band": "30-39%",
             "n": 195,
-            "predicted": 0.369,
+            "predicted": 0.368,
             "actual": 0.472
           },
           {
             "band": "40-49%",
-            "n": 364,
+            "n": 367,
             "predicted": 0.44,
-            "actual": 0.445
+            "actual": 0.447
           },
           {
             "band": "50-59%",
@@ -339,9 +339,9 @@
           },
           {
             "band": "60-69%",
-            "n": 43,
+            "n": 44,
             "predicted": 0.649,
-            "actual": 0.535
+            "actual": 0.545
           },
           {
             "band": "70-79%",
@@ -352,7 +352,7 @@
           {
             "band": "80-89%",
             "n": 23,
-            "predicted": 0.844,
+            "predicted": 0.845,
             "actual": 0.652
           },
           {
@@ -364,14 +364,14 @@
         ]
       },
       "pass_td": {
-        "n": 782,
-        "model_brier": 0.231,
-        "baseline_brier": 0.2835,
+        "n": 786,
+        "model_brier": 0.2306,
+        "baseline_brier": 0.2838,
         "verdict": {
-          "n": 782,
-          "diff": 0.05251,
-          "se": 0.00955,
-          "z": 5.5,
+          "n": 786,
+          "diff": 0.05329,
+          "se": 0.00957,
+          "z": 5.57,
           "verdict": "beats"
         },
         "calibration": [
@@ -389,21 +389,21 @@
           },
           {
             "band": "20-29%",
-            "n": 100,
+            "n": 101,
             "predicted": 0.246,
-            "actual": 0.32
+            "actual": 0.317
           },
           {
             "band": "30-39%",
-            "n": 144,
+            "n": 145,
             "predicted": 0.367,
-            "actual": 0.424
+            "actual": 0.421
           },
           {
             "band": "40-49%",
-            "n": 256,
+            "n": 257,
             "predicted": 0.443,
-            "actual": 0.418
+            "actual": 0.42
           },
           {
             "band": "50-59%",
@@ -419,9 +419,9 @@
           },
           {
             "band": "70-79%",
-            "n": 107,
+            "n": 108,
             "predicted": 0.751,
-            "actual": 0.617
+            "actual": 0.62
           },
           {
             "band": "80-89%",
@@ -432,14 +432,14 @@
         ]
       },
       "pass_int": {
-        "n": 782,
-        "model_brier": 0.2294,
-        "baseline_brier": 0.2739,
+        "n": 786,
+        "model_brier": 0.2295,
+        "baseline_brier": 0.2752,
         "verdict": {
-          "n": 782,
-          "diff": 0.04452,
-          "se": 0.00759,
-          "z": 5.87,
+          "n": 786,
+          "diff": 0.0457,
+          "se": 0.00761,
+          "z": 6.01,
           "verdict": "beats"
         },
         "calibration": [
@@ -469,101 +469,101 @@
           },
           {
             "band": "40-49%",
-            "n": 383,
+            "n": 386,
             "predicted": 0.454,
-            "actual": 0.47
+            "actual": 0.472
           },
           {
             "band": "50-59%",
-            "n": 133,
+            "n": 134,
             "predicted": 0.525,
-            "actual": 0.474
+            "actual": 0.478
           }
         ]
       },
       "rush_yds": {
-        "n": 2064,
-        "model_brier": 0.2547,
-        "baseline_brier": 0.2849,
+        "n": 2081,
+        "model_brier": 0.2538,
+        "baseline_brier": 0.2854,
         "verdict": {
-          "n": 2064,
-          "diff": 0.03021,
-          "se": 0.00519,
-          "z": 5.82,
+          "n": 2081,
+          "diff": 0.03164,
+          "se": 0.00531,
+          "z": 5.96,
           "verdict": "beats"
         },
         "calibration": [
           {
             "band": "0-9%",
-            "n": 31,
-            "predicted": 0.043,
-            "actual": 0.452
+            "n": 30,
+            "predicted": 0.044,
+            "actual": 0.433
           },
           {
             "band": "10-19%",
-            "n": 43,
-            "predicted": 0.159,
-            "actual": 0.442
+            "n": 46,
+            "predicted": 0.158,
+            "actual": 0.413
           },
           {
             "band": "20-29%",
-            "n": 67,
-            "predicted": 0.254,
-            "actual": 0.463
+            "n": 70,
+            "predicted": 0.259,
+            "actual": 0.443
           },
           {
             "band": "30-39%",
-            "n": 187,
-            "predicted": 0.355,
-            "actual": 0.369
+            "n": 177,
+            "predicted": 0.356,
+            "actual": 0.367
           },
           {
             "band": "40-49%",
-            "n": 886,
+            "n": 888,
             "predicted": 0.476,
-            "actual": 0.447
+            "actual": 0.448
           },
           {
             "band": "50-59%",
-            "n": 738,
+            "n": 740,
             "predicted": 0.517,
-            "actual": 0.43
+            "actual": 0.435
           },
           {
             "band": "60-69%",
-            "n": 85,
-            "predicted": 0.638,
-            "actual": 0.612
+            "n": 90,
+            "predicted": 0.639,
+            "actual": 0.544
           },
           {
             "band": "70-79%",
-            "n": 13,
-            "predicted": 0.738,
-            "actual": 0.769
+            "n": 19,
+            "predicted": 0.744,
+            "actual": 0.842
           },
           {
             "band": "80-89%",
-            "n": 11,
-            "predicted": 0.823,
-            "actual": 0.545
+            "n": 12,
+            "predicted": 0.833,
+            "actual": 0.583
           },
           {
             "band": "90-99%",
-            "n": 3,
+            "n": 9,
             "predicted": 1.0,
             "actual": 0.667
           }
         ]
       },
       "carries": {
-        "n": 1422,
-        "model_brier": 0.259,
-        "baseline_brier": 0.2864,
+        "n": 1429,
+        "model_brier": 0.2588,
+        "baseline_brier": 0.2859,
         "verdict": {
-          "n": 1422,
-          "diff": 0.02741,
-          "se": 0.00631,
-          "z": 4.34,
+          "n": 1429,
+          "diff": 0.02711,
+          "se": 0.00628,
+          "z": 4.32,
           "verdict": "beats"
         },
         "calibration": [
@@ -575,50 +575,50 @@
           },
           {
             "band": "10-19%",
-            "n": 71,
-            "predicted": 0.154,
-            "actual": 0.408
+            "n": 70,
+            "predicted": 0.155,
+            "actual": 0.414
           },
           {
             "band": "20-29%",
-            "n": 120,
+            "n": 121,
             "predicted": 0.259,
-            "actual": 0.342
+            "actual": 0.339
           },
           {
             "band": "30-39%",
-            "n": 227,
-            "predicted": 0.362,
-            "actual": 0.471
+            "n": 231,
+            "predicted": 0.361,
+            "actual": 0.468
           },
           {
             "band": "40-49%",
-            "n": 747,
+            "n": 748,
             "predicted": 0.454,
             "actual": 0.463
           },
           {
             "band": "50-59%",
             "n": 121,
-            "predicted": 0.533,
+            "predicted": 0.532,
             "actual": 0.512
           },
           {
             "band": "60-69%",
-            "n": 48,
-            "predicted": 0.654,
-            "actual": 0.354
+            "n": 50,
+            "predicted": 0.652,
+            "actual": 0.34
           },
           {
             "band": "70-79%",
             "n": 24,
-            "predicted": 0.742,
+            "predicted": 0.74,
             "actual": 0.542
           },
           {
             "band": "80-89%",
             "n": 11,
-            "predicted": 0.859,
+            "predicted": 0.857,
             "actual": 0.909
           },
           {
@@ -630,14 +630,14 @@
         ]
       },
       "targets": {
-        "n": 5898,
-        "model_brier": 0.2427,
-        "baseline_brier": 0.2851,
+        "n": 5926,
+        "model_brier": 0.2428,
+        "baseline_brier": 0.285,
         "verdict": {
-          "n": 5898,
-          "diff": 0.04243,
-          "se": 0.00279,
-          "z": 15.22,
+          "n": 5926,
+          "diff": 0.0422,
+          "se": 0.00278,
+          "z": 15.19,
           "verdict": "beats"
         },
         "calibration": [
@@ -655,44 +655,44 @@
           },
           {
             "band": "20-29%",
-            "n": 652,
+            "n": 657,
             "predicted": 0.256,
-            "actual": 0.374
+            "actual": 0.377
           },
           {
             "band": "30-39%",
-            "n": 1433,
+            "n": 1442,
             "predicted": 0.355,
-            "actual": 0.396
+            "actual": 0.395
           },
           {
             "band": "40-49%",
-            "n": 1942,
+            "n": 1948,
             "predicted": 0.442,
             "actual": 0.418
           },
           {
             "band": "50-59%",
-            "n": 1003,
+            "n": 1011,
             "predicted": 0.529,
-            "actual": 0.517
+            "actual": 0.518
           },
           {
             "band": "60-69%",
-            "n": 183,
+            "n": 185,
             "predicted": 0.643,
-            "actual": 0.568
+            "actual": 0.562
           },
           {
             "band": "70-79%",
-            "n": 97,
-            "predicted": 0.742,
-            "actual": 0.691
+            "n": 95,
+            "predicted": 0.743,
+            "actual": 0.695
           },
           {
             "band": "80-89%",
             "n": 49,
-            "predicted": 0.851,
+            "predicted": 0.85,
             "actual": 0.837
           },
           {
@@ -704,70 +704,70 @@
         ]
       },
       "scrim_yds": {
-        "n": 6383,
-        "model_brier": 0.251,
-        "baseline_brier": 0.2885,
+        "n": 6414,
+        "model_brier": 0.2509,
+        "baseline_brier": 0.2884,
         "verdict": {
-          "n": 6383,
-          "diff": 0.03753,
-          "se": 0.00303,
-          "z": 12.4,
+          "n": 6414,
+          "diff": 0.03746,
+          "se": 0.00302,
+          "z": 12.41,
           "verdict": "beats"
         },
         "calibration": [
           {
             "band": "0-9%",
             "n": 20,
-            "predicted": 0.039,
+            "predicted": 0.038,
             "actual": 0.65
           },
           {
             "band": "10-19%",
             "n": 51,
-            "predicted": 0.16,
+            "predicted": 0.159,
             "actual": 0.392
           },
           {
             "band": "20-29%",
             "n": 122,
-            "predicted": 0.257,
-            "actual": 0.418
+            "predicted": 0.258,
+            "actual": 0.426
           },
           {
             "band": "30-39%",
-            "n": 350,
-            "predicted": 0.359,
-            "actual": 0.417
+            "n": 351,
+            "predicted": 0.36,
+            "actual": 0.407
           },
           {
             "band": "40-49%",
-            "n": 2987,
+            "n": 2997,
             "predicted": 0.477,
             "actual": 0.437
           },
           {
             "band": "50-59%",
-            "n": 2402,
+            "n": 2418,
             "predicted": 0.52,
-            "actual": 0.451
+            "actual": 0.452
           },
           {
             "band": "60-69%",
-            "n": 268,
+            "n": 267,
             "predicted": 0.641,
-            "actual": 0.567
+            "actual": 0.569
           },
           {
             "band": "70-79%",
-            "n": 127,
-            "predicted": 0.745,
-            "actual": 0.614
+            "n": 134,
+            "predicted": 0.746,
+            "actual": 0.597
           },
           {
             "band": "80-89%",
-            "n": 52,
-            "predicted": 0.848,
-            "actual": 0.827
+            "n": 50,
+            "predicted": 0.849,
+            "actual": 0.84
           },
           {
             "band": "90-99%",
@@ -778,14 +778,14 @@
         ]
       },
       "rec_yds": {
-        "n": 5778,
-        "model_brier": 0.2557,
-        "baseline_brier": 0.285,
+        "n": 5805,
+        "model_brier": 0.2556,
+        "baseline_brier": 0.2848,
         "verdict": {
-          "n": 5778,
-          "diff": 0.02929,
-          "se": 0.00315,
-          "z": 9.31,
+          "n": 5805,
+          "diff": 0.02916,
+          "se": 0.00313,
+          "z": 9.32,
           "verdict": "beats"
         },
         "calibration": [
@@ -797,119 +797,119 @@
           },
           {
             "band": "10-19%",
-            "n": 115,
+            "n": 114,
             "predicted": 0.152,
-            "actual": 0.391
+            "actual": 0.386
           },
           {
             "band": "20-29%",
-            "n": 218,
+            "n": 216,
             "predicted": 0.254,
-            "actual": 0.445
+            "actual": 0.449
           },
           {
             "band": "30-39%",
-            "n": 485,
+            "n": 493,
             "predicted": 0.358,
-            "actual": 0.406
+            "actual": 0.402
           },
           {
             "band": "40-49%",
-            "n": 2652,
+            "n": 2664,
             "predicted": 0.474,
-            "actual": 0.413
+            "actual": 0.414
           },
           {
             "band": "50-59%",
-            "n": 1859,
+            "n": 1870,
             "predicted": 0.521,
-            "actual": 0.455
+            "actual": 0.457
           },
           {
             "band": "60-69%",
-            "n": 214,
+            "n": 215,
             "predicted": 0.644,
-            "actual": 0.533
+            "actual": 0.53
           },
           {
             "band": "70-79%",
-            "n": 84,
-            "predicted": 0.738,
-            "actual": 0.631
+            "n": 83,
+            "predicted": 0.739,
+            "actual": 0.627
           },
           {
             "band": "80-89%",
             "n": 31,
-            "predicted": 0.841,
+            "predicted": 0.839,
             "actual": 0.903
           },
           {
             "band": "90-99%",
-            "n": 3,
+            "n": 2,
             "predicted": 1.0,
             "actual": 1.0
           }
         ]
       },
       "rec": {
-        "n": 5825,
+        "n": 5853,
         "model_brier": 0.2386,
-        "baseline_brier": 0.2682,
+        "baseline_brier": 0.2681,
         "verdict": {
-          "n": 5825,
-          "diff": 0.02961,
-          "se": 0.00268,
-          "z": 11.04,
+          "n": 5853,
+          "diff": 0.02952,
+          "se": 0.00267,
+          "z": 11.05,
           "verdict": "beats"
         },
         "calibration": [
           {
             "band": "0-9%",
-            "n": 186,
+            "n": 184,
             "predicted": 0.061,
-            "actual": 0.183
+            "actual": 0.185
           },
           {
             "band": "10-19%",
-            "n": 317,
+            "n": 318,
             "predicted": 0.163,
-            "actual": 0.284
+            "actual": 0.28
           },
           {
             "band": "20-29%",
-            "n": 789,
+            "n": 796,
             "predicted": 0.254,
-            "actual": 0.35
+            "actual": 0.351
           },
           {
             "band": "30-39%",
-            "n": 1483,
+            "n": 1491,
             "predicted": 0.354,
-            "actual": 0.392
+            "actual": 0.391
           },
           {
             "band": "40-49%",
-            "n": 1733,
+            "n": 1741,
             "predicted": 0.444,
-            "actual": 0.441
+            "actual": 0.442
           },
           {
             "band": "50-59%",
-            "n": 1050,
-            "predicted": 0.534,
-            "actual": 0.53
+            "n": 1057,
+            "predicted": 0.535,
+            "actual": 0.531
           },
           {
             "band": "60-69%",
             "n": 158,
-            "predicted": 0.646,
-            "actual": 0.589
+            "predicted": 0.647,
+            "actual": 0.576
           },
           {
             "band": "70-79%",
-            "n": 65,
+            "n": 64,
             "predicted": 0.748,
-            "actual": 0.646
+            "actual": 0.656
           },
           {
             "band": "80-89%",
@@ -926,58 +926,58 @@
         ]
       },
       "td": {
-        "n": 3920,
-        "model_brier": 0.1608,
-        "baseline_brier": 0.1966,
+        "n": 3951,
+        "model_brier": 0.1609,
+        "baseline_brier": 0.1965,
         "verdict": {
-          "n": 3920,
-          "diff": 0.03582,
-          "se": 0.00319,
-          "z": 11.24,
+          "n": 3951,
+          "diff": 0.03556,
+          "se": 0.00317,
+          "z": 11.22,
           "verdict": "beats"
         },
         "calibration": [
           {
             "band": "0-9%",
-            "n": 1302,
+            "n": 1311,
             "predicted": 0.064,
             "actual": 0.115
           },
           {
             "band": "10-19%",
-            "n": 1402,
+            "n": 1412,
             "predicted": 0.146,
             "actual": 0.193
           },
           {
             "band": "20-29%",
-            "n": 641,
+            "n": 646,
             "predicted": 0.244,
-            "actual": 0.324
+            "actual": 0.325
           },
           {
             "band": "30-39%",
-            "n": 352,
+            "n": 355,
             "predicted": 0.344,
             "actual": 0.358
           },
           {
             "band": "40-49%",
-            "n": 124,
-            "predicted": 0.451,
-            "actual": 0.452
+            "n": 125,
+            "predicted": 0.45,
+            "actual": 0.448
           },
           {
             "band": "50-59%",
-            "n": 70,
-            "predicted": 0.539,
-            "actual": 0.571
+            "n": 72,
+            "predicted": 0.538,
+            "actual": 0.583
           },
           {
             "band": "60-69%",
-            "n": 25,
+            "n": 26,
             "predicted": 0.648,
-            "actual": 0.76
+            "actual": 0.769
           },
           {
             "band": "70-79%",
@@ -992,13 +992,13 @@
           "strength": 0.0,
           "fitted": 0.5,
           "n_train": 584,
-          "n": 1480,
+          "n": 1497,
           "verdict": {
-            "n": 1480,
-            "diff": -0.00052,
-            "se": 0.00409,
-            "z": -0.13,
-            "verdict": "fails"
+            "n": 1497,
+            "diff": 0.00023,
+            "se": 0.00375,
+            "z": 0.06,
+            "verdict": "thin"
           },
           "in_number": false
         },
@@ -1006,13 +1006,13 @@
           "strength": 0.0,
           "fitted": 0.5,
           "n_train": 3255,
-          "n": 8348,
+          "n": 8403,
           "verdict": {
-            "n": 8348,
-            "diff": 0.00109,
-            "se": 0.00137,
-            "z": 0.8,
-            "verdict": "thin"
+            "n": 8403,
+            "diff": -7e-05,
+            "se": 0.00069,
+            "z": -0.1,
+            "verdict": "fails"
           },
           "in_number": false
         },
@@ -1052,7 +1052,7 @@
       ],
       "seasons": {
         "prior_rows": 21599,
-        "current_rows": 13600
+        "current_rows": 13789
       }
     },
     "matchup_in_number": {
@@ -1068,15 +1068,6 @@
   },
   "markets": {
     "Anytime TD": [
-      {
-        "player": "Javonte Williams",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "RB",
-        "gp": 11,
-        "proj": 64,
-        "window": "Thursday Night"
-      },
       {
         "player": "Jonathan Taylor",
         "team": "IND",
@@ -1105,15 +1096,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "James Cook III",
-        "team": "BUF",
-        "opp": "KC",
-        "pos": "RB",
-        "gp": 10,
-        "proj": 55,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Derrick Henry",
         "team": "BAL",
         "opp": "HOU",
@@ -1128,7 +1110,7 @@
         "opp": "NO",
         "pos": "RB",
         "gp": 9,
-        "proj": 51,
+        "proj": 52,
         "window": "Sunday Early"
       },
       {
@@ -1195,15 +1177,6 @@
         "window": "Sunday Night"
       },
       {
-        "player": "CeeDee Lamb",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "WR",
-        "gp": 11,
-        "proj": 42,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Tee Higgins",
         "team": "CIN",
         "opp": "NO",
@@ -1240,15 +1213,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "George Pickens",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "WR",
-        "gp": 10,
-        "proj": 40,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Aaron Jones Sr.",
         "team": "MIN",
         "opp": "ATL",
@@ -1281,7 +1245,7 @@
         "opp": "MIA",
         "pos": "RB",
         "gp": 6,
-        "proj": 38,
+        "proj": 39,
         "window": "Sunday Early"
       },
       {
@@ -1312,13 +1276,13 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Saquon Barkley",
-        "team": "PHI",
-        "opp": "DAL",
-        "pos": "RB",
+        "player": "Nico Collins",
+        "team": "HOU",
+        "opp": "BAL",
+        "pos": "WR",
         "gp": 8,
         "proj": 37,
-        "window": "Thursday Night"
+        "window": "Sunday Early"
       },
       {
         "player": "Ollie Gordon II",
@@ -1326,16 +1290,7 @@
         "opp": "NYJ",
         "pos": "RB",
         "gp": 9,
-        "proj": 37,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Nico Collins",
-        "team": "HOU",
-        "opp": "BAL",
-        "pos": "WR",
-        "gp": 8,
-        "proj": 37,
+        "proj": 36,
         "window": "Sunday Early"
       },
       {
@@ -1366,6 +1321,15 @@
         "window": "Sunday Early"
       },
       {
+        "player": "Braelon Allen",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 34,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Zach Charbonnet",
         "team": "SEA",
         "opp": "SF",
@@ -1384,15 +1348,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Braelon Allen",
-        "team": "NYJ",
-        "opp": "MIA",
-        "pos": "RB",
-        "gp": 11,
-        "proj": 33,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Omarion Hampton",
         "team": "LAC",
         "opp": "NE",
@@ -1402,24 +1357,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Emmett Johnson",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "RB",
-        "gp": 10,
-        "proj": 32,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Rashee Rice",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "WR",
-        "gp": 7,
-        "proj": 31,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Tyler Allgeier",
         "team": "ARI",
         "opp": "WSH",
@@ -1427,25 +1364,79 @@
         "gp": 11,
         "proj": 31,
         "window": "Sunday Late"
+      },
+      {
+        "player": "Jaylen Warren",
+        "team": "PIT",
+        "opp": "DEN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 30,
+        "window": "Friday"
+      },
+      {
+        "player": "Samaje Perine",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 30,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Malik Nabers",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 30,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Garrett Wilson",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 30,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 30,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Brock Bowers",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "TE",
+        "gp": 8,
+        "proj": 30,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Tetairoa McMillan",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 29,
+        "window": "Monday Night"
       }
     ],
     "Rushing yards": [
-      {
-        "player": "James Cook III",
-        "team": "BUF",
-        "opp": "KC",
-        "pos": "RB",
-        "gp": 10,
-        "proj": 98.9,
-        "window": "Thursday Night"
-      },
       {
         "player": "Bucky Irving",
         "team": "TB",
         "opp": "CAR",
         "pos": "RB",
         "gp": 9,
-        "proj": 94.6,
+        "proj": 93.9,
         "window": "Monday Night"
       },
       {
@@ -1463,7 +1454,7 @@
         "opp": "NYG",
         "pos": "RB",
         "gp": 11,
-        "proj": 74.7,
+        "proj": 75.4,
         "window": "Sunday Early"
       },
       {
@@ -1472,7 +1463,7 @@
         "opp": "DEN",
         "pos": "RB",
         "gp": 10,
-        "proj": 74.0,
+        "proj": 73.4,
         "window": "Friday"
       },
       {
@@ -1481,7 +1472,7 @@
         "opp": "JAX",
         "pos": "RB",
         "gp": 10,
-        "proj": 71.1,
+        "proj": 71.0,
         "window": "Sunday Early"
       },
       {
@@ -1490,7 +1481,7 @@
         "opp": "HOU",
         "pos": "RB",
         "gp": 11,
-        "proj": 69.9,
+        "proj": 70.8,
         "window": "Sunday Early"
       },
       {
@@ -1499,17 +1490,8 @@
         "opp": "SEA",
         "pos": "RB",
         "gp": 10,
-        "proj": 69.1,
+        "proj": 68.5,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Javonte Williams",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "RB",
-        "gp": 11,
-        "proj": 65.6,
-        "window": "Thursday Night"
       },
       {
         "player": "Chuba Hubbard",
@@ -1517,7 +1499,7 @@
         "opp": "TB",
         "pos": "RB",
         "gp": 10,
-        "proj": 62.8,
+        "proj": 62.9,
         "window": "Monday Night"
       },
       {
@@ -1535,7 +1517,7 @@
         "opp": "NE",
         "pos": "RB",
         "gp": 10,
-        "proj": 57.5,
+        "proj": 57.7,
         "window": "Sunday Late"
       },
       {
@@ -1557,31 +1539,22 @@
         "window": "Friday"
       },
       {
-        "player": "Zach Charbonnet",
-        "team": "SEA",
-        "opp": "SF",
-        "pos": "RB",
-        "gp": 3,
-        "proj": 55.5,
-        "window": "Sunday Late"
-      },
-      {
         "player": "Breece Hall",
         "team": "NYJ",
         "opp": "MIA",
         "pos": "RB",
         "gp": 6,
-        "proj": 54.6,
+        "proj": 55.4,
         "window": "Sunday Early"
       },
       {
-        "player": "Saquon Barkley",
-        "team": "PHI",
-        "opp": "DAL",
+        "player": "Zach Charbonnet",
+        "team": "SEA",
+        "opp": "SF",
         "pos": "RB",
-        "gp": 8,
-        "proj": 53.9,
-        "window": "Thursday Night"
+        "gp": 3,
+        "proj": 54.7,
+        "window": "Sunday Late"
       },
       {
         "player": "Aaron Jones Sr.",
@@ -1593,6 +1566,15 @@
         "window": "Sunday Early"
       },
       {
+        "player": "Quinshon Judkins",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 51.9,
+        "window": "Sunday Night"
+      },
+      {
         "player": "Travis Etienne Jr.",
         "team": "NO",
         "opp": "CIN",
@@ -1602,21 +1584,12 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Quinshon Judkins",
-        "team": "CLE",
-        "opp": "LV",
-        "pos": "RB",
-        "gp": 9,
-        "proj": 51.7,
-        "window": "Sunday Night"
-      },
-      {
         "player": "Ashton Jeanty",
         "team": "LV",
         "opp": "CLE",
         "pos": "RB",
         "gp": 11,
-        "proj": 49.7,
+        "proj": 49.9,
         "window": "Sunday Night"
       },
       {
@@ -1625,7 +1598,16 @@
         "opp": "ATL",
         "pos": "RB",
         "gp": 6,
-        "proj": 46.2,
+        "proj": 46.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 46.1,
         "window": "Sunday Early"
       },
       {
@@ -1634,17 +1616,8 @@
         "opp": "ARI",
         "pos": "QB",
         "gp": 8,
-        "proj": 45.9,
+        "proj": 45.4,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Chase Brown",
-        "team": "CIN",
-        "opp": "NO",
-        "pos": "RB",
-        "gp": 9,
-        "proj": 45.7,
-        "window": "Sunday Early"
       },
       {
         "player": "Bhayshul Tuten",
@@ -1661,7 +1634,7 @@
         "opp": "NYJ",
         "pos": "RB",
         "gp": 9,
-        "proj": 43.6,
+        "proj": 43.4,
         "window": "Sunday Early"
       },
       {
@@ -1679,16 +1652,7 @@
         "opp": "SF",
         "pos": "RB",
         "gp": 7,
-        "proj": 41.7,
-        "window": "Sunday Late"
-      },
-      {
-        "player": "Bam Knight",
-        "team": "ARI",
-        "opp": "WSH",
-        "pos": "RB",
-        "gp": 7,
-        "proj": 40.2,
+        "proj": 41.9,
         "window": "Sunday Late"
       },
       {
@@ -1697,7 +1661,7 @@
         "opp": "DEN",
         "pos": "RB",
         "gp": 7,
-        "proj": 39.9,
+        "proj": 40.6,
         "window": "Friday"
       },
       {
@@ -1706,7 +1670,7 @@
         "opp": "ARI",
         "pos": "RB",
         "gp": 6,
-        "proj": 39.7,
+        "proj": 40.4,
         "window": "Sunday Late"
       },
       {
@@ -1719,12 +1683,21 @@
         "window": "Monday Night"
       },
       {
+        "player": "Bam Knight",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 39.3,
+        "window": "Sunday Late"
+      },
+      {
         "player": "Kimani Vidal",
         "team": "LAC",
         "opp": "NE",
         "pos": "RB",
         "gp": 8,
-        "proj": 38.6,
+        "proj": 38.0,
         "window": "Sunday Late"
       },
       {
@@ -1733,7 +1706,7 @@
         "opp": "LAC",
         "pos": "RB",
         "gp": 10,
-        "proj": 37.4,
+        "proj": 37.7,
         "window": "Sunday Late"
       },
       {
@@ -1760,17 +1733,8 @@
         "opp": "BAL",
         "pos": "RB",
         "gp": 6,
-        "proj": 33.6,
+        "proj": 34.3,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Sean Tucker",
-        "team": "TB",
-        "opp": "CAR",
-        "pos": "RB",
-        "gp": 3,
-        "proj": 33.6,
-        "window": "Monday Night"
       },
       {
         "player": "Anthony Tyus III",
@@ -1789,6 +1753,42 @@
         "gp": 8,
         "proj": 32.6,
         "window": "Sunday Late"
+      },
+      {
+        "player": "Tyler Allgeier",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 32.4,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Sean Tucker",
+        "team": "TB",
+        "opp": "CAR",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 32.3,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Mike Washington Jr.",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 30.9,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Chris Rodriguez Jr.",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 30.8,
+        "window": "Sunday Early"
       }
     ],
     "Carries": [
@@ -1800,15 +1800,6 @@
         "gp": 9,
         "proj": 19.8,
         "window": "Monday Night"
-      },
-      {
-        "player": "James Cook III",
-        "team": "BUF",
-        "opp": "KC",
-        "pos": "RB",
-        "gp": 10,
-        "proj": 19.5,
-        "window": "Thursday Night"
       },
       {
         "player": "Jonathan Taylor",
@@ -1836,15 +1827,6 @@
         "gp": 11,
         "proj": 17.4,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Javonte Williams",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "RB",
-        "gp": 11,
-        "proj": 16.2,
-        "window": "Thursday Night"
       },
       {
         "player": "Tony Pollard",
@@ -1906,7 +1888,7 @@
         "opp": "TB",
         "pos": "RB",
         "gp": 10,
-        "proj": 14.2,
+        "proj": 14.3,
         "window": "Monday Night"
       },
       {
@@ -1944,15 +1926,6 @@
         "gp": 10,
         "proj": 13.0,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Saquon Barkley",
-        "team": "PHI",
-        "opp": "DAL",
-        "pos": "RB",
-        "gp": 8,
-        "proj": 12.5,
-        "window": "Thursday Night"
       },
       {
         "player": "Travis Etienne Jr.",
@@ -2045,15 +2018,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Dameon Pierce",
-        "team": "PHI",
-        "opp": "DAL",
-        "pos": "RB",
-        "gp": 3,
-        "proj": 10.5,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Rico Dowdle",
         "team": "PIT",
         "opp": "DEN",
@@ -2104,7 +2068,7 @@
         "opp": "NE",
         "pos": "RB",
         "gp": 8,
-        "proj": 8.8,
+        "proj": 8.7,
         "window": "Sunday Late"
       },
       {
@@ -2117,15 +2081,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Alvin Kamara",
-        "team": "NO",
-        "opp": "CIN",
-        "pos": "RB",
-        "gp": 9,
-        "proj": 8.1,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Tyler Allgeier",
         "team": "ARI",
         "opp": "WSH",
@@ -2133,6 +2088,15 @@
         "gp": 11,
         "proj": 8.1,
         "window": "Sunday Late"
+      },
+      {
+        "player": "Alvin Kamara",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 8.0,
+        "window": "Sunday Early"
       },
       {
         "player": "Mike Washington Jr.",
@@ -2151,6 +2115,42 @@
         "gp": 9,
         "proj": 8.0,
         "window": "Monday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 7.7,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Chris Rodriguez Jr.",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 7.4,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Bam Knight",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "RB",
+        "gp": 7,
+        "proj": 7.3,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Corey Kiner",
+        "team": "NE",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 6.6,
+        "window": "Sunday Late"
       }
     ],
     "Receiving yards": [
@@ -2173,21 +2173,12 @@
         "window": "Sunday Early"
       },
       {
-        "player": "CeeDee Lamb",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "WR",
-        "gp": 11,
-        "proj": 92.6,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Chris Olave",
         "team": "NO",
         "opp": "CIN",
         "pos": "WR",
         "gp": 10,
-        "proj": 88.9,
+        "proj": 89.0,
         "window": "Sunday Early"
       },
       {
@@ -2236,15 +2227,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "George Pickens",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "WR",
-        "gp": 10,
-        "proj": 75.6,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Mike Evans",
         "team": "SF",
         "opp": "SEA",
@@ -2279,15 +2261,6 @@
         "gp": 8,
         "proj": 71.5,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Rashee Rice",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "WR",
-        "gp": 7,
-        "proj": 70.5,
-        "window": "Thursday Night"
       },
       {
         "player": "Garrett Wilson",
@@ -2331,26 +2304,8 @@
         "opp": "WSH",
         "pos": "TE",
         "gp": 11,
-        "proj": 61.2,
+        "proj": 61.1,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Travis Kelce",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "TE",
-        "gp": 10,
-        "proj": 60.4,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "DeVonta Smith",
-        "team": "PHI",
-        "opp": "DAL",
-        "pos": "WR",
-        "gp": 5,
-        "proj": 58.7,
-        "window": "Thursday Night"
       },
       {
         "player": "George Kittle",
@@ -2360,15 +2315,6 @@
         "gp": 10,
         "proj": 57.3,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Khalil Shakir",
-        "team": "BUF",
-        "opp": "KC",
-        "pos": "WR",
-        "gp": 10,
-        "proj": 56.7,
-        "window": "Thursday Night"
       },
       {
         "player": "Caleb Douglas",
@@ -2396,15 +2342,6 @@
         "gp": 10,
         "proj": 55.6,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Dalton Kincaid",
-        "team": "BUF",
-        "opp": "KC",
-        "pos": "TE",
-        "gp": 9,
-        "proj": 54.6,
-        "window": "Thursday Night"
       },
       {
         "player": "Tre Tucker",
@@ -2470,15 +2407,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "DJ Moore",
-        "team": "BUF",
-        "opp": "KC",
-        "pos": "WR",
-        "gp": 8,
-        "proj": 49.4,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Max Hurleman",
         "team": "PIT",
         "opp": "DEN",
@@ -2502,7 +2430,7 @@
         "opp": "TB",
         "pos": "WR",
         "gp": 2,
-        "proj": 47.8,
+        "proj": 47.9,
         "window": "Monday Night"
       },
       {
@@ -2513,6 +2441,78 @@
         "gp": 3,
         "proj": 45.8,
         "window": "Friday"
+      },
+      {
+        "player": "KC Concepcion",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 45.8,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Jalen Coker",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 45.6,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Stefon Diggs",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 45.4,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Antonio Williams",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 44.8,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Jordan Watkins",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 44.6,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "DK Metcalf",
+        "team": "PIT",
+        "opp": "DEN",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 44.2,
+        "window": "Friday"
+      },
+      {
+        "player": "Hunter Henry",
+        "team": "NE",
+        "opp": "LAC",
+        "pos": "TE",
+        "gp": 10,
+        "proj": 44.0,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Mack Hollins",
+        "team": "NE",
+        "opp": "LAC",
+        "pos": "WR",
+        "gp": 6,
+        "proj": 43.9,
+        "window": "Sunday Late"
       }
     ],
     "Receptions": [
@@ -2542,15 +2542,6 @@
         "gp": 11,
         "proj": 7.6,
         "window": "Sunday Late"
-      },
-      {
-        "player": "CeeDee Lamb",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "WR",
-        "gp": 11,
-        "proj": 7.2,
-        "window": "Thursday Night"
       },
       {
         "player": "Chris Olave",
@@ -2589,24 +2580,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "DeVonta Smith",
-        "team": "PHI",
-        "opp": "DAL",
-        "pos": "WR",
-        "gp": 5,
-        "proj": 5.7,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "George Pickens",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "WR",
-        "gp": 10,
-        "proj": 5.7,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Jordyn Tyson",
         "team": "NO",
         "opp": "CIN",
@@ -2614,15 +2587,6 @@
         "gp": 3,
         "proj": 5.6,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Rashee Rice",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "WR",
-        "gp": 7,
-        "proj": 5.4,
-        "window": "Thursday Night"
       },
       {
         "player": "Garrett Wilson",
@@ -2814,22 +2778,13 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Travis Kelce",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "TE",
-        "gp": 10,
-        "proj": 4.2,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Khalil Shakir",
-        "team": "BUF",
-        "opp": "KC",
-        "pos": "WR",
-        "gp": 10,
-        "proj": 4.2,
-        "window": "Thursday Night"
+        "player": "Ashton Jeanty",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 4.3,
+        "window": "Sunday Night"
       },
       {
         "player": "Deebo Samuel Sr.",
@@ -2839,24 +2794,6 @@
         "gp": 7,
         "proj": 4.2,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Ashton Jeanty",
-        "team": "LV",
-        "opp": "CLE",
-        "pos": "RB",
-        "gp": 11,
-        "proj": 4.2,
-        "window": "Sunday Night"
-      },
-      {
-        "player": "Dallas Goedert",
-        "team": "PHI",
-        "opp": "DAL",
-        "pos": "TE",
-        "gp": 8,
-        "proj": 4.1,
-        "window": "Thursday Night"
       },
       {
         "player": "DK Metcalf",
@@ -2875,18 +2812,72 @@
         "gp": 10,
         "proj": 4.1,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Juwan Johnson",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "TE",
+        "gp": 10,
+        "proj": 4.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "T.J. Hockenson",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "TE",
+        "gp": 9,
+        "proj": 4.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jakobi Meyers",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 4.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "KC Concepcion",
+        "team": "CLE",
+        "opp": "LV",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 4.0,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Jalen Coker",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 4.0,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Devaughn Vele",
+        "team": "NO",
+        "opp": "CIN",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 3.9,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Bijan Robinson",
+        "team": "ATL",
+        "opp": "MIN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 3.9,
+        "window": "Sunday Early"
       }
     ],
     "Targets": [
-      {
-        "player": "CeeDee Lamb",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "WR",
-        "gp": 11,
-        "proj": 11.1,
-        "window": "Thursday Night"
-      },
       {
         "player": "Ja'Marr Chase",
         "team": "CIN",
@@ -2931,24 +2922,6 @@
         "gp": 10,
         "proj": 9.7,
         "window": "Sunday Early"
-      },
-      {
-        "player": "DeVonta Smith",
-        "team": "PHI",
-        "opp": "DAL",
-        "pos": "WR",
-        "gp": 5,
-        "proj": 8.8,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "George Pickens",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "WR",
-        "gp": 10,
-        "proj": 8.7,
-        "window": "Thursday Night"
       },
       {
         "player": "Tetairoa McMillan",
@@ -3048,15 +3021,6 @@
         "gp": 9,
         "proj": 7.4,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Rashee Rice",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "WR",
-        "gp": 7,
-        "proj": 7.3,
-        "window": "Thursday Night"
       },
       {
         "player": "Isaiah Likely",
@@ -3237,6 +3201,42 @@
         "gp": 10,
         "proj": 6.0,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Christian McCaffrey",
+        "team": "SF",
+        "opp": "SEA",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 5.9,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Chase Brown",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 5.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Harrison Wallace III",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "WR",
+        "gp": 2,
+        "proj": 5.8,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Ashton Jeanty",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 5.7,
+        "window": "Sunday Night"
       }
     ],
     "Passing yards": [
@@ -3264,17 +3264,8 @@
         "opp": "LV",
         "pos": "QB",
         "gp": 3,
-        "proj": 278.1,
+        "proj": 277.8,
         "window": "Sunday Night"
-      },
-      {
-        "player": "Dak Prescott",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "QB",
-        "gp": 11,
-        "proj": 270.8,
-        "window": "Thursday Night"
       },
       {
         "player": "Drew Lock",
@@ -3313,15 +3304,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Patrick Mahomes",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "QB",
-        "gp": 10,
-        "proj": 254.1,
-        "window": "Thursday Night"
-      },
-      {
         "player": "C.J. Stroud",
         "team": "HOU",
         "opp": "BAL",
@@ -3336,17 +3318,8 @@
         "opp": "TB",
         "pos": "QB",
         "gp": 10,
-        "proj": 246.2,
+        "proj": 246.6,
         "window": "Monday Night"
-      },
-      {
-        "player": "Josh Allen",
-        "team": "BUF",
-        "opp": "KC",
-        "pos": "QB",
-        "gp": 10,
-        "proj": 240.2,
-        "window": "Thursday Night"
       },
       {
         "player": "Deshaun Watson",
@@ -3511,24 +3484,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Joe Milton",
-        "team": "PHI",
-        "opp": "DAL",
-        "pos": "QB",
-        "gp": 2,
-        "proj": 172.8,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Tanner McKee",
-        "team": "PHI",
-        "opp": "DAL",
-        "pos": "QB",
-        "gp": 3,
-        "proj": 171.9,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Baker Mayfield",
         "team": "TB",
         "opp": "CAR",
@@ -3612,15 +3567,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Dak Prescott",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "QB",
-        "gp": 11,
-        "proj": 37.3,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Tyler Shough",
         "team": "NO",
         "opp": "CIN",
@@ -3702,24 +3648,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Patrick Mahomes",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "QB",
-        "gp": 10,
-        "proj": 31.6,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Justin Fields",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "QB",
-        "gp": 3,
-        "proj": 31.6,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Deshaun Watson",
         "team": "CLE",
         "opp": "LV",
@@ -3754,24 +3682,6 @@
         "gp": 8,
         "proj": 31.3,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Tanner McKee",
-        "team": "PHI",
-        "opp": "DAL",
-        "pos": "QB",
-        "gp": 3,
-        "proj": 30.7,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Joe Milton",
-        "team": "PHI",
-        "opp": "DAL",
-        "pos": "QB",
-        "gp": 2,
-        "proj": 30.7,
-        "window": "Thursday Night"
       },
       {
         "player": "Trevor Lawrence",
@@ -3873,15 +3783,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Josh Allen",
-        "team": "BUF",
-        "opp": "KC",
-        "pos": "QB",
-        "gp": 10,
-        "proj": 28.7,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Michael Penix Jr.",
         "team": "ATL",
         "opp": "MIN",
@@ -3961,6 +3862,15 @@
         "gp": 6,
         "proj": 26.2,
         "window": "Monday Night"
+      },
+      {
+        "player": "Jalon Daniels",
+        "team": "TB",
+        "opp": "CAR",
+        "pos": "QB",
+        "gp": 5,
+        "proj": 26.2,
+        "window": "Monday Night"
       }
     ],
     "Rush + rec yards": [
@@ -3970,7 +3880,7 @@
         "opp": "SF",
         "pos": "WR",
         "gp": 10,
-        "proj": 122.2,
+        "proj": 122.1,
         "window": "Sunday Late"
       },
       {
@@ -3988,17 +3898,8 @@
         "opp": "SEA",
         "pos": "RB",
         "gp": 10,
-        "proj": 119.3,
+        "proj": 118.7,
         "window": "Sunday Late"
-      },
-      {
-        "player": "James Cook III",
-        "team": "BUF",
-        "opp": "KC",
-        "pos": "RB",
-        "gp": 10,
-        "proj": 110.8,
-        "window": "Thursday Night"
       },
       {
         "player": "Ja'Marr Chase",
@@ -4015,7 +3916,7 @@
         "opp": "CAR",
         "pos": "RB",
         "gp": 9,
-        "proj": 105.2,
+        "proj": 104.5,
         "window": "Monday Night"
       },
       {
@@ -4024,7 +3925,7 @@
         "opp": "DEN",
         "pos": "RB",
         "gp": 10,
-        "proj": 101.8,
+        "proj": 101.2,
         "window": "Friday"
       },
       {
@@ -4033,17 +3934,8 @@
         "opp": "NYG",
         "pos": "RB",
         "gp": 11,
-        "proj": 94.4,
+        "proj": 95.1,
         "window": "Sunday Early"
-      },
-      {
-        "player": "CeeDee Lamb",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "WR",
-        "gp": 11,
-        "proj": 92.3,
-        "window": "Thursday Night"
       },
       {
         "player": "Ashton Jeanty",
@@ -4051,7 +3943,7 @@
         "opp": "CLE",
         "pos": "RB",
         "gp": 11,
-        "proj": 91.9,
+        "proj": 92.9,
         "window": "Sunday Night"
       },
       {
@@ -4060,7 +3952,7 @@
         "opp": "CIN",
         "pos": "WR",
         "gp": 10,
-        "proj": 88.9,
+        "proj": 89.0,
         "window": "Sunday Early"
       },
       {
@@ -4069,7 +3961,7 @@
         "opp": "MIA",
         "pos": "RB",
         "gp": 6,
-        "proj": 86.2,
+        "proj": 87.0,
         "window": "Sunday Early"
       },
       {
@@ -4078,7 +3970,7 @@
         "opp": "TB",
         "pos": "RB",
         "gp": 10,
-        "proj": 86.1,
+        "proj": 86.2,
         "window": "Monday Night"
       },
       {
@@ -4114,7 +4006,7 @@
         "opp": "JAX",
         "pos": "RB",
         "gp": 10,
-        "proj": 83.0,
+        "proj": 82.9,
         "window": "Sunday Early"
       },
       {
@@ -4125,15 +4017,6 @@
         "gp": 10,
         "proj": 82.8,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Javonte Williams",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "RB",
-        "gp": 11,
-        "proj": 80.1,
-        "window": "Thursday Night"
       },
       {
         "player": "Brock Bowers",
@@ -4168,17 +4051,8 @@
         "opp": "HOU",
         "pos": "RB",
         "gp": 11,
-        "proj": 78.0,
+        "proj": 78.9,
         "window": "Sunday Early"
-      },
-      {
-        "player": "George Pickens",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "WR",
-        "gp": 10,
-        "proj": 76.2,
-        "window": "Thursday Night"
       },
       {
         "player": "Mike Evans",
@@ -4217,31 +4091,22 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Deebo Samuel Sr.",
-        "team": "SF",
-        "opp": "SEA",
-        "pos": "WR",
-        "gp": 7,
-        "proj": 72.4,
-        "window": "Sunday Late"
-      },
-      {
         "player": "Chase Brown",
         "team": "CIN",
         "opp": "NO",
         "pos": "RB",
         "gp": 9,
-        "proj": 72.0,
+        "proj": 72.4,
         "window": "Sunday Early"
       },
       {
-        "player": "Rashee Rice",
-        "team": "KC",
-        "opp": "BUF",
+        "player": "Deebo Samuel Sr.",
+        "team": "SF",
+        "opp": "SEA",
         "pos": "WR",
         "gp": 7,
-        "proj": 71.3,
-        "window": "Thursday Night"
+        "proj": 71.9,
+        "window": "Sunday Late"
       },
       {
         "player": "Garrett Wilson",
@@ -4258,7 +4123,7 @@
         "opp": "LV",
         "pos": "RB",
         "gp": 9,
-        "proj": 68.5,
+        "proj": 68.7,
         "window": "Sunday Night"
       },
       {
@@ -4276,8 +4141,17 @@
         "opp": "TEN",
         "pos": "WR",
         "gp": 10,
-        "proj": 67.4,
+        "proj": 67.2,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Omarion Hampton",
+        "team": "LAC",
+        "opp": "NE",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 67.0,
+        "window": "Sunday Late"
       },
       {
         "player": "Braelon Allen",
@@ -4289,24 +4163,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Omarion Hampton",
-        "team": "LAC",
-        "opp": "NE",
-        "pos": "RB",
-        "gp": 10,
-        "proj": 66.8,
-        "window": "Sunday Late"
-      },
-      {
-        "player": "Emmett Johnson",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "RB",
-        "gp": 10,
-        "proj": 66.2,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Travis Etienne Jr.",
         "team": "NO",
         "opp": "CIN",
@@ -4316,13 +4172,67 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Saquon Barkley",
-        "team": "PHI",
-        "opp": "DAL",
-        "pos": "RB",
+        "player": "Carnell Tate",
+        "team": "TEN",
+        "opp": "JAX",
+        "pos": "WR",
         "gp": 8,
-        "proj": 63.4,
-        "window": "Thursday Night"
+        "proj": 63.1,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Justin Jefferson",
+        "team": "MIN",
+        "opp": "ATL",
+        "pos": "WR",
+        "gp": 9,
+        "proj": 62.7,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Kenny Gainwell",
+        "team": "TB",
+        "opp": "CAR",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 62.5,
+        "window": "Monday Night"
+      },
+      {
+        "player": "Rhamondre Stevenson",
+        "team": "NE",
+        "opp": "LAC",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 62.0,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Bhayshul Tuten",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 61.8,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Trey McBride",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "TE",
+        "gp": 11,
+        "proj": 61.1,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Zach Charbonnet",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "RB",
+        "gp": 3,
+        "proj": 59.4,
+        "window": "Sunday Late"
       }
     ],
     "Completions": [
@@ -4332,17 +4242,8 @@
         "opp": "NO",
         "pos": "QB",
         "gp": 9,
-        "proj": 26.09,
+        "proj": 26.1,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Dak Prescott",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "QB",
-        "gp": 11,
-        "proj": 24.43,
-        "window": "Thursday Night"
       },
       {
         "player": "Tyler Shough",
@@ -4350,7 +4251,7 @@
         "opp": "CIN",
         "pos": "QB",
         "gp": 10,
-        "proj": 24.04,
+        "proj": 24.02,
         "window": "Sunday Early"
       },
       {
@@ -4359,7 +4260,7 @@
         "opp": "WSH",
         "pos": "QB",
         "gp": 1,
-        "proj": 22.57,
+        "proj": 22.59,
         "window": "Sunday Late"
       },
       {
@@ -4368,7 +4269,7 @@
         "opp": "WSH",
         "pos": "QB",
         "gp": 1,
-        "proj": 22.4,
+        "proj": 22.43,
         "window": "Sunday Late"
       },
       {
@@ -4377,7 +4278,7 @@
         "opp": "TB",
         "pos": "QB",
         "gp": 10,
-        "proj": 21.37,
+        "proj": 21.36,
         "window": "Monday Night"
       },
       {
@@ -4386,7 +4287,7 @@
         "opp": "CLE",
         "pos": "QB",
         "gp": 3,
-        "proj": 21.12,
+        "proj": 21.15,
         "window": "Sunday Night"
       },
       {
@@ -4395,7 +4296,7 @@
         "opp": "BAL",
         "pos": "QB",
         "gp": 10,
-        "proj": 21.11,
+        "proj": 21.13,
         "window": "Sunday Early"
       },
       {
@@ -4404,17 +4305,8 @@
         "opp": "BAL",
         "pos": "QB",
         "gp": 1,
-        "proj": 20.64,
+        "proj": 20.68,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Patrick Mahomes",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "QB",
-        "gp": 10,
-        "proj": 20.59,
-        "window": "Thursday Night"
       },
       {
         "player": "Deshaun Watson",
@@ -4431,7 +4323,7 @@
         "opp": "IND",
         "pos": "QB",
         "gp": 6,
-        "proj": 20.34,
+        "proj": 20.37,
         "window": "Sunday Early"
       },
       {
@@ -4440,7 +4332,7 @@
         "opp": "IND",
         "pos": "QB",
         "gp": 9,
-        "proj": 20.24,
+        "proj": 20.22,
         "window": "Sunday Early"
       },
       {
@@ -4449,17 +4341,8 @@
         "opp": "ARI",
         "pos": "QB",
         "gp": 8,
-        "proj": 20.04,
+        "proj": 20.02,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Justin Fields",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "QB",
-        "gp": 3,
-        "proj": 20.03,
-        "window": "Thursday Night"
       },
       {
         "player": "Shedeur Sanders",
@@ -4467,7 +4350,7 @@
         "opp": "LV",
         "pos": "QB",
         "gp": 3,
-        "proj": 19.74,
+        "proj": 19.77,
         "window": "Sunday Night"
       },
       {
@@ -4476,17 +4359,8 @@
         "opp": "SF",
         "pos": "QB",
         "gp": 4,
-        "proj": 19.55,
+        "proj": 19.53,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Tanner McKee",
-        "team": "PHI",
-        "opp": "DAL",
-        "pos": "QB",
-        "gp": 3,
-        "proj": 19.44,
-        "window": "Thursday Night"
       },
       {
         "player": "Athan Kaliakmanis",
@@ -4494,7 +4368,7 @@
         "opp": "ARI",
         "pos": "QB",
         "gp": 1,
-        "proj": 19.25,
+        "proj": 19.28,
         "window": "Sunday Late"
       },
       {
@@ -4503,7 +4377,16 @@
         "opp": "TEN",
         "pos": "QB",
         "gp": 1,
-        "proj": 19.23,
+        "proj": 19.24,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Geno Smith",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "QB",
+        "gp": 11,
+        "proj": 19.19,
         "window": "Sunday Early"
       },
       {
@@ -4512,17 +4395,8 @@
         "opp": "SEA",
         "pos": "QB",
         "gp": 10,
-        "proj": 19.21,
+        "proj": 19.19,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Geno Smith",
-        "team": "NYJ",
-        "opp": "MIA",
-        "pos": "QB",
-        "gp": 11,
-        "proj": 19.2,
-        "window": "Sunday Early"
       },
       {
         "player": "Trevor Lawrence",
@@ -4534,21 +4408,12 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Joe Milton",
-        "team": "PHI",
-        "opp": "DAL",
-        "pos": "QB",
-        "gp": 2,
-        "proj": 18.94,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Cam Ward",
         "team": "TEN",
         "opp": "JAX",
         "pos": "QB",
         "gp": 10,
-        "proj": 18.88,
+        "proj": 18.9,
         "window": "Sunday Early"
       },
       {
@@ -4557,17 +4422,8 @@
         "opp": "HOU",
         "pos": "QB",
         "gp": 10,
-        "proj": 18.84,
+        "proj": 18.85,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Josh Allen",
-        "team": "BUF",
-        "opp": "KC",
-        "pos": "QB",
-        "gp": 10,
-        "proj": 18.71,
-        "window": "Thursday Night"
       },
       {
         "player": "Sam Darnold",
@@ -4575,7 +4431,7 @@
         "opp": "SF",
         "pos": "QB",
         "gp": 7,
-        "proj": 18.64,
+        "proj": 18.65,
         "window": "Sunday Late"
       },
       {
@@ -4584,7 +4440,7 @@
         "opp": "MIN",
         "pos": "QB",
         "gp": 1,
-        "proj": 18.61,
+        "proj": 18.62,
         "window": "Sunday Early"
       },
       {
@@ -4593,7 +4449,7 @@
         "opp": "SEA",
         "pos": "QB",
         "gp": 3,
-        "proj": 18.47,
+        "proj": 18.45,
         "window": "Sunday Late"
       },
       {
@@ -4602,7 +4458,7 @@
         "opp": "ATL",
         "pos": "QB",
         "gp": 6,
-        "proj": 18.37,
+        "proj": 18.39,
         "window": "Sunday Early"
       },
       {
@@ -4611,7 +4467,7 @@
         "opp": "MIA",
         "pos": "QB",
         "gp": 1,
-        "proj": 18.23,
+        "proj": 18.25,
         "window": "Sunday Early"
       },
       {
@@ -4620,7 +4476,7 @@
         "opp": "HOU",
         "pos": "QB",
         "gp": 2,
-        "proj": 18.22,
+        "proj": 18.25,
         "window": "Sunday Early"
       },
       {
@@ -4629,7 +4485,7 @@
         "opp": "ATL",
         "pos": "QB",
         "gp": 11,
-        "proj": 18.21,
+        "proj": 18.23,
         "window": "Sunday Early"
       },
       {
@@ -4647,7 +4503,7 @@
         "opp": "LAC",
         "pos": "QB",
         "gp": 3,
-        "proj": 17.99,
+        "proj": 18.02,
         "window": "Sunday Late"
       },
       {
@@ -4656,7 +4512,7 @@
         "opp": "MIN",
         "pos": "QB",
         "gp": 8,
-        "proj": 17.69,
+        "proj": 17.71,
         "window": "Sunday Early"
       },
       {
@@ -4665,7 +4521,7 @@
         "opp": "NE",
         "pos": "QB",
         "gp": 10,
-        "proj": 17.3,
+        "proj": 17.28,
         "window": "Sunday Late"
       },
       {
@@ -4674,7 +4530,7 @@
         "opp": "CAR",
         "pos": "QB",
         "gp": 5,
-        "proj": 16.51,
+        "proj": 16.52,
         "window": "Monday Night"
       },
       {
@@ -4683,8 +4539,17 @@
         "opp": "CAR",
         "pos": "QB",
         "gp": 6,
-        "proj": 16.15,
+        "proj": 16.14,
         "window": "Monday Night"
+      },
+      {
+        "player": "Kyle McCord",
+        "team": "MIA",
+        "opp": "NYJ",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 15.88,
+        "window": "Sunday Early"
       }
     ],
     "Passing TDs": [
@@ -4694,17 +4559,8 @@
         "opp": "NO",
         "pos": "QB",
         "gp": 9,
-        "proj": 2.35,
+        "proj": 2.32,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Dak Prescott",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "QB",
-        "gp": 11,
-        "proj": 1.96,
-        "window": "Thursday Night"
       },
       {
         "player": "C.J. Stroud",
@@ -4712,7 +4568,7 @@
         "opp": "BAL",
         "pos": "QB",
         "gp": 10,
-        "proj": 1.75,
+        "proj": 1.74,
         "window": "Sunday Early"
       },
       {
@@ -4721,7 +4577,7 @@
         "opp": "SEA",
         "pos": "QB",
         "gp": 10,
-        "proj": 1.73,
+        "proj": 1.71,
         "window": "Sunday Late"
       },
       {
@@ -4730,17 +4586,8 @@
         "opp": "TEN",
         "pos": "QB",
         "gp": 10,
-        "proj": 1.7,
+        "proj": 1.69,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Patrick Mahomes",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "QB",
-        "gp": 10,
-        "proj": 1.68,
-        "window": "Thursday Night"
       },
       {
         "player": "Bryce Young",
@@ -4757,7 +4604,7 @@
         "opp": "WSH",
         "pos": "QB",
         "gp": 1,
-        "proj": 1.58,
+        "proj": 1.59,
         "window": "Sunday Late"
       },
       {
@@ -4766,7 +4613,7 @@
         "opp": "WSH",
         "pos": "QB",
         "gp": 1,
-        "proj": 1.58,
+        "proj": 1.59,
         "window": "Sunday Late"
       },
       {
@@ -4775,7 +4622,7 @@
         "opp": "CIN",
         "pos": "QB",
         "gp": 10,
-        "proj": 1.56,
+        "proj": 1.57,
         "window": "Sunday Early"
       },
       {
@@ -4802,7 +4649,7 @@
         "opp": "SF",
         "pos": "QB",
         "gp": 4,
-        "proj": 1.52,
+        "proj": 1.51,
         "window": "Sunday Late"
       },
       {
@@ -4811,7 +4658,7 @@
         "opp": "BAL",
         "pos": "QB",
         "gp": 1,
-        "proj": 1.47,
+        "proj": 1.48,
         "window": "Sunday Early"
       },
       {
@@ -4820,7 +4667,7 @@
         "opp": "LV",
         "pos": "QB",
         "gp": 3,
-        "proj": 1.44,
+        "proj": 1.45,
         "window": "Sunday Night"
       },
       {
@@ -4842,15 +4689,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Justin Fields",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "QB",
-        "gp": 3,
-        "proj": 1.41,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Sam Darnold",
         "team": "SEA",
         "opp": "SF",
@@ -4858,6 +4696,15 @@
         "gp": 7,
         "proj": 1.41,
         "window": "Sunday Late"
+      },
+      {
+        "player": "Quinn Ewers",
+        "team": "JAX",
+        "opp": "TEN",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 1.38,
+        "window": "Sunday Early"
       },
       {
         "player": "Jayden Daniels",
@@ -4869,21 +4716,12 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Josh Allen",
-        "team": "BUF",
-        "opp": "KC",
+        "player": "J.J. McCarthy",
+        "team": "NYG",
+        "opp": "IND",
         "pos": "QB",
-        "gp": 10,
-        "proj": 1.37,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Quinn Ewers",
-        "team": "JAX",
-        "opp": "TEN",
-        "pos": "QB",
-        "gp": 1,
-        "proj": 1.37,
+        "gp": 6,
+        "proj": 1.36,
         "window": "Sunday Early"
       },
       {
@@ -4893,15 +4731,6 @@
         "pos": "QB",
         "gp": 1,
         "proj": 1.36,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "J.J. McCarthy",
-        "team": "NYG",
-        "opp": "IND",
-        "pos": "QB",
-        "gp": 6,
-        "proj": 1.34,
         "window": "Sunday Early"
       },
       {
@@ -4937,17 +4766,8 @@
         "opp": "MIA",
         "pos": "QB",
         "gp": 1,
-        "proj": 1.28,
+        "proj": 1.29,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Joe Milton",
-        "team": "PHI",
-        "opp": "DAL",
-        "pos": "QB",
-        "gp": 2,
-        "proj": 1.25,
-        "window": "Thursday Night"
       },
       {
         "player": "Joe Fagnano",
@@ -4955,7 +4775,7 @@
         "opp": "HOU",
         "pos": "QB",
         "gp": 2,
-        "proj": 1.24,
+        "proj": 1.26,
         "window": "Sunday Early"
       },
       {
@@ -4964,17 +4784,8 @@
         "opp": "MIN",
         "pos": "QB",
         "gp": 8,
-        "proj": 1.23,
+        "proj": 1.24,
         "window": "Sunday Early"
-      },
-      {
-        "player": "Tanner McKee",
-        "team": "PHI",
-        "opp": "DAL",
-        "pos": "QB",
-        "gp": 3,
-        "proj": 1.22,
-        "window": "Thursday Night"
       },
       {
         "player": "Bo Nix",
@@ -4982,7 +4793,7 @@
         "opp": "PIT",
         "pos": "QB",
         "gp": 10,
-        "proj": 1.22,
+        "proj": 1.23,
         "window": "Friday"
       },
       {
@@ -4991,7 +4802,7 @@
         "opp": "ATL",
         "pos": "QB",
         "gp": 6,
-        "proj": 1.2,
+        "proj": 1.21,
         "window": "Sunday Early"
       },
       {
@@ -5000,8 +4811,17 @@
         "opp": "LV",
         "pos": "QB",
         "gp": 9,
-        "proj": 1.18,
+        "proj": 1.2,
         "window": "Sunday Night"
+      },
+      {
+        "player": "Jacoby Brissett",
+        "team": "BAL",
+        "opp": "HOU",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 1.16,
+        "window": "Sunday Early"
       },
       {
         "player": "Baker Mayfield",
@@ -5011,15 +4831,6 @@
         "gp": 6,
         "proj": 1.16,
         "window": "Monday Night"
-      },
-      {
-        "player": "Jacoby Brissett",
-        "team": "BAL",
-        "opp": "HOU",
-        "pos": "QB",
-        "gp": 10,
-        "proj": 1.15,
-        "window": "Sunday Early"
       },
       {
         "player": "Jalon Daniels",
@@ -5036,7 +4847,7 @@
         "opp": "JAX",
         "pos": "QB",
         "gp": 10,
-        "proj": 1.13,
+        "proj": 1.14,
         "window": "Sunday Early"
       },
       {
@@ -5047,26 +4858,35 @@
         "gp": 10,
         "proj": 1.13,
         "window": "Sunday Late"
+      },
+      {
+        "player": "Kyle McCord",
+        "team": "MIA",
+        "opp": "NYJ",
+        "pos": "QB",
+        "gp": 2,
+        "proj": 1.08,
+        "window": "Sunday Early"
       }
     ],
     "Interceptions": [
-      {
-        "player": "Carson Beck",
-        "team": "ARI",
-        "opp": "WSH",
-        "pos": "QB",
-        "gp": 1,
-        "proj": 0.81,
-        "window": "Sunday Late"
-      },
       {
         "player": "Tyler Shough",
         "team": "NO",
         "opp": "CIN",
         "pos": "QB",
         "gp": 10,
-        "proj": 0.79,
+        "proj": 0.8,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Carson Beck",
+        "team": "ARI",
+        "opp": "WSH",
+        "pos": "QB",
+        "gp": 1,
+        "proj": 0.8,
+        "window": "Sunday Late"
       },
       {
         "player": "Joe Burrow",
@@ -5074,7 +4894,7 @@
         "opp": "NO",
         "pos": "QB",
         "gp": 9,
-        "proj": 0.77,
+        "proj": 0.79,
         "window": "Sunday Early"
       },
       {
@@ -5085,15 +4905,6 @@
         "gp": 1,
         "proj": 0.77,
         "window": "Sunday Late"
-      },
-      {
-        "player": "Dak Prescott",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "QB",
-        "gp": 11,
-        "proj": 0.75,
-        "window": "Thursday Night"
       },
       {
         "player": "Jameis Winston",
@@ -5132,22 +4943,22 @@
         "window": "Monday Night"
       },
       {
-        "player": "Sam Darnold",
-        "team": "SEA",
-        "opp": "SF",
-        "pos": "QB",
-        "gp": 7,
-        "proj": 0.72,
-        "window": "Sunday Late"
-      },
-      {
         "player": "Davis Mills",
         "team": "HOU",
         "opp": "BAL",
         "pos": "QB",
         "gp": 1,
-        "proj": 0.71,
+        "proj": 0.72,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Sam Darnold",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 7,
+        "proj": 0.7,
+        "window": "Sunday Late"
       },
       {
         "player": "Shedeur Sanders",
@@ -5155,7 +4966,7 @@
         "opp": "LV",
         "pos": "QB",
         "gp": 3,
-        "proj": 0.71,
+        "proj": 0.7,
         "window": "Sunday Night"
       },
       {
@@ -5168,39 +4979,12 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Justin Fields",
-        "team": "KC",
-        "opp": "BUF",
+        "player": "C.J. Stroud",
+        "team": "HOU",
+        "opp": "BAL",
         "pos": "QB",
-        "gp": 3,
+        "gp": 10,
         "proj": 0.68,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Joe Fagnano",
-        "team": "BAL",
-        "opp": "HOU",
-        "pos": "QB",
-        "gp": 2,
-        "proj": 0.68,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Tanner McKee",
-        "team": "PHI",
-        "opp": "DAL",
-        "pos": "QB",
-        "gp": 3,
-        "proj": 0.67,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Tua Tagovailoa",
-        "team": "ATL",
-        "opp": "MIN",
-        "pos": "QB",
-        "gp": 1,
-        "proj": 0.67,
         "window": "Sunday Early"
       },
       {
@@ -5222,49 +5006,22 @@
         "window": "Sunday Early"
       },
       {
-        "player": "C.J. Stroud",
-        "team": "HOU",
-        "opp": "BAL",
+        "player": "Joe Fagnano",
+        "team": "BAL",
+        "opp": "HOU",
         "pos": "QB",
-        "gp": 10,
+        "gp": 2,
         "proj": 0.67,
         "window": "Sunday Early"
       },
       {
-        "player": "Joe Milton",
-        "team": "PHI",
-        "opp": "DAL",
+        "player": "Tua Tagovailoa",
+        "team": "ATL",
+        "opp": "MIN",
         "pos": "QB",
-        "gp": 2,
+        "gp": 1,
         "proj": 0.66,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Josh Allen",
-        "team": "BUF",
-        "opp": "KC",
-        "pos": "QB",
-        "gp": 10,
-        "proj": 0.66,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Justin Herbert",
-        "team": "LAC",
-        "opp": "NE",
-        "pos": "QB",
-        "gp": 10,
-        "proj": 0.66,
-        "window": "Sunday Late"
-      },
-      {
-        "player": "Patrick Mahomes",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "QB",
-        "gp": 10,
-        "proj": 0.65,
-        "window": "Thursday Night"
+        "window": "Sunday Early"
       },
       {
         "player": "Deshaun Watson",
@@ -5272,8 +5029,17 @@
         "opp": "LV",
         "pos": "QB",
         "gp": 9,
-        "proj": 0.65,
+        "proj": 0.66,
         "window": "Sunday Night"
+      },
+      {
+        "player": "Jayden Daniels",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "QB",
+        "gp": 8,
+        "proj": 0.65,
+        "window": "Sunday Late"
       },
       {
         "player": "Cade Klubnik",
@@ -5321,6 +5087,15 @@
         "window": "Sunday Late"
       },
       {
+        "player": "Justin Herbert",
+        "team": "LAC",
+        "opp": "NE",
+        "pos": "QB",
+        "gp": 10,
+        "proj": 0.64,
+        "window": "Sunday Late"
+      },
+      {
         "player": "Cam Ward",
         "team": "TEN",
         "opp": "JAX",
@@ -5330,13 +5105,13 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Jayden Daniels",
-        "team": "WSH",
-        "opp": "ARI",
+        "player": "Geno Smith",
+        "team": "NYJ",
+        "opp": "MIA",
         "pos": "QB",
-        "gp": 8,
-        "proj": 0.63,
-        "window": "Sunday Late"
+        "gp": 11,
+        "proj": 0.62,
+        "window": "Sunday Early"
       },
       {
         "player": "Kyler Murray",
@@ -5346,6 +5121,15 @@
         "gp": 6,
         "proj": 0.62,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Drew Lock",
+        "team": "SEA",
+        "opp": "SF",
+        "pos": "QB",
+        "gp": 4,
+        "proj": 0.62,
+        "window": "Sunday Late"
       },
       {
         "player": "Brock Purdy",
@@ -5366,22 +5150,13 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Geno Smith",
-        "team": "NYJ",
-        "opp": "MIA",
+        "player": "Bo Nix",
+        "team": "DEN",
+        "opp": "PIT",
         "pos": "QB",
-        "gp": 11,
+        "gp": 10,
         "proj": 0.61,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Drew Lock",
-        "team": "SEA",
-        "opp": "SF",
-        "pos": "QB",
-        "gp": 4,
-        "proj": 0.61,
-        "window": "Sunday Late"
+        "window": "Friday"
       },
       {
         "player": "Jalon Daniels",
@@ -5389,17 +5164,8 @@
         "opp": "CAR",
         "pos": "QB",
         "gp": 5,
-        "proj": 0.61,
-        "window": "Monday Night"
-      },
-      {
-        "player": "Bo Nix",
-        "team": "DEN",
-        "opp": "PIT",
-        "pos": "QB",
-        "gp": 10,
         "proj": 0.6,
-        "window": "Friday"
+        "window": "Monday Night"
       },
       {
         "player": "Kyle McCord",
@@ -5409,18 +5175,18 @@
         "gp": 2,
         "proj": 0.58,
         "window": "Sunday Early"
+      },
+      {
+        "player": "Baker Mayfield",
+        "team": "TB",
+        "opp": "CAR",
+        "pos": "QB",
+        "gp": 6,
+        "proj": 0.58,
+        "window": "Monday Night"
       }
     ],
     "2+ TDs": [
-      {
-        "player": "Javonte Williams",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "RB",
-        "gp": 11,
-        "proj": 26.8,
-        "window": "Thursday Night"
-      },
       {
         "player": "Jonathan Taylor",
         "team": "IND",
@@ -5436,7 +5202,7 @@
         "opp": "PIT",
         "pos": "RB",
         "gp": 5,
-        "proj": 20.3,
+        "proj": 20.4,
         "window": "Friday"
       },
       {
@@ -5447,15 +5213,6 @@
         "gp": 10,
         "proj": 19.7,
         "window": "Sunday Late"
-      },
-      {
-        "player": "James Cook III",
-        "team": "BUF",
-        "opp": "KC",
-        "pos": "RB",
-        "gp": 10,
-        "proj": 19.4,
-        "window": "Thursday Night"
       },
       {
         "player": "Derrick Henry",
@@ -5544,7 +5301,7 @@
         "opp": "NO",
         "pos": "WR",
         "gp": 9,
-        "proj": 10.6,
+        "proj": 10.5,
         "window": "Sunday Early"
       },
       {
@@ -5555,15 +5312,6 @@
         "gp": 6,
         "proj": 10.4,
         "window": "Sunday Early"
-      },
-      {
-        "player": "CeeDee Lamb",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "WR",
-        "gp": 11,
-        "proj": 10.1,
-        "window": "Thursday Night"
       },
       {
         "player": "Tony Pollard",
@@ -5611,13 +5359,13 @@
         "window": "Sunday Night"
       },
       {
-        "player": "George Pickens",
-        "team": "DAL",
-        "opp": "PHI",
-        "pos": "WR",
-        "gp": 10,
-        "proj": 9.2,
-        "window": "Thursday Night"
+        "player": "Breece Hall",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "RB",
+        "gp": 6,
+        "proj": 8.7,
+        "window": "Sunday Early"
       },
       {
         "player": "Jacory Croskey-Merritt",
@@ -5625,15 +5373,15 @@
         "opp": "ARI",
         "pos": "RB",
         "gp": 6,
-        "proj": 8.6,
+        "proj": 8.5,
         "window": "Sunday Late"
       },
       {
-        "player": "Breece Hall",
-        "team": "NYJ",
-        "opp": "MIA",
+        "player": "Woody Marks",
+        "team": "HOU",
+        "opp": "BAL",
         "pos": "RB",
-        "gp": 6,
+        "gp": 9,
         "proj": 8.3,
         "window": "Sunday Early"
       },
@@ -5647,15 +5395,6 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Woody Marks",
-        "team": "HOU",
-        "opp": "BAL",
-        "pos": "RB",
-        "gp": 9,
-        "proj": 8.2,
-        "window": "Sunday Early"
-      },
-      {
         "player": "Nico Collins",
         "team": "HOU",
         "opp": "BAL",
@@ -5665,13 +5404,13 @@
         "window": "Sunday Early"
       },
       {
-        "player": "Saquon Barkley",
-        "team": "PHI",
-        "opp": "DAL",
+        "player": "Jordan Mason",
+        "team": "MIN",
+        "opp": "ATL",
         "pos": "RB",
-        "gp": 8,
-        "proj": 7.9,
-        "window": "Thursday Night"
+        "gp": 6,
+        "proj": 7.6,
+        "window": "Sunday Early"
       },
       {
         "player": "Ollie Gordon II",
@@ -5679,16 +5418,7 @@
         "opp": "NYJ",
         "pos": "RB",
         "gp": 9,
-        "proj": 7.8,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Jordan Mason",
-        "team": "MIN",
-        "opp": "ATL",
-        "pos": "RB",
-        "gp": 6,
-        "proj": 7.5,
+        "proj": 7.4,
         "window": "Sunday Early"
       },
       {
@@ -5728,6 +5458,15 @@
         "window": "Sunday Late"
       },
       {
+        "player": "Braelon Allen",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "RB",
+        "gp": 11,
+        "proj": 6.4,
+        "window": "Sunday Early"
+      },
+      {
         "player": "Omarion Hampton",
         "team": "LAC",
         "opp": "NE",
@@ -5737,33 +5476,6 @@
         "window": "Sunday Late"
       },
       {
-        "player": "Braelon Allen",
-        "team": "NYJ",
-        "opp": "MIA",
-        "pos": "RB",
-        "gp": 11,
-        "proj": 6.1,
-        "window": "Sunday Early"
-      },
-      {
-        "player": "Emmett Johnson",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "RB",
-        "gp": 10,
-        "proj": 5.9,
-        "window": "Thursday Night"
-      },
-      {
-        "player": "Rashee Rice",
-        "team": "KC",
-        "opp": "BUF",
-        "pos": "WR",
-        "gp": 7,
-        "proj": 5.3,
-        "window": "Thursday Night"
-      },
-      {
         "player": "Tyler Allgeier",
         "team": "ARI",
         "opp": "WSH",
@@ -5771,6 +5483,69 @@
         "gp": 11,
         "proj": 5.3,
         "window": "Sunday Late"
+      },
+      {
+        "player": "Brock Bowers",
+        "team": "LV",
+        "opp": "CLE",
+        "pos": "TE",
+        "gp": 8,
+        "proj": 5.2,
+        "window": "Sunday Night"
+      },
+      {
+        "player": "Rachaad White",
+        "team": "WSH",
+        "opp": "ARI",
+        "pos": "RB",
+        "gp": 8,
+        "proj": 5.1,
+        "window": "Sunday Late"
+      },
+      {
+        "player": "Samaje Perine",
+        "team": "CIN",
+        "opp": "NO",
+        "pos": "RB",
+        "gp": 9,
+        "proj": 5.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Malik Nabers",
+        "team": "NYG",
+        "opp": "IND",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 5.0,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Jaylen Warren",
+        "team": "PIT",
+        "opp": "DEN",
+        "pos": "RB",
+        "gp": 10,
+        "proj": 4.9,
+        "window": "Friday"
+      },
+      {
+        "player": "Garrett Wilson",
+        "team": "NYJ",
+        "opp": "MIA",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 4.9,
+        "window": "Sunday Early"
+      },
+      {
+        "player": "Tetairoa McMillan",
+        "team": "CAR",
+        "opp": "TB",
+        "pos": "WR",
+        "gp": 10,
+        "proj": 4.7,
+        "window": "Monday Night"
       }
     ]
   }
